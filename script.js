@@ -1,4 +1,3 @@
-// ================= Firebase Imports =================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getAuth,
@@ -8,9 +7,8 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ================= Firebase Config =================
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
+  apiKey: "AIzaSyDKmg8OT4hdG_bNIWTapfY5cP9dM2kyGps",
   authDomain: "mwaniki-scholars.firebaseapp.com",
   projectId: "mwaniki-scholars",
   storageBucket: "mwaniki-scholars.firebasestorage.app",
@@ -21,34 +19,19 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// ================= UI Elements =================
-const authSection = document.querySelector(".auth-box");
+// UI
+const authSection = document.getElementById("authSection");
 const courseArea = document.getElementById("courseArea");
 const message = document.getElementById("message");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
 
-// ================= Courses =================
-const medicalCourseNames = [
-  "Anatomy","Physiology","Biochemistry","Pathology","Pharmacology","Microbiology",
-  "Pediatrics","Obstetrics","Gynecology","Surgery","Psychiatry","Radiology"
-];
-
-const courses = {};
-medicalCourseNames.forEach(course => {
-  courses[course] = {
-    units: Array.from({ length: 3 }, (_, i) => ({
-      title: `${course} Unit ${i+1}`,
-      notes: `${course} is a vital medical subject focusing on patient care, disease understanding, and clinical practice.`,
-      image: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Human_anatomy.png"
-    }))
-  };
-});
-
-// ================= Auth State =================
+// AUTH STATE
 onAuthStateChanged(auth, (user) => {
   if (user) {
     authSection.style.display = "none";
     courseArea.style.display = "block";
-    message.textContent = `Welcome, ${user.email}`;
+    message.textContent = `Welcome ${user.email}`;
     generateCourseButtons();
   } else {
     authSection.style.display = "block";
@@ -56,30 +39,53 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ================= Auth Functions =================
-window.signUp = () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  createUserWithEmailAndPassword(auth, email, password)
+// AUTH
+window.signUp = () =>
+  createUserWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
     .then(() => alert("Account created!"))
     .catch(err => alert(err.message));
-};
 
-window.login = () => {
-  const email = emailInput.value;
-  const password = passwordInput.value;
-  signInWithEmailAndPassword(auth, email, password)
+window.login = () =>
+  signInWithEmailAndPassword(auth, emailInput.value, passwordInput.value)
     .then(() => alert("Login successful"))
     .catch(err => alert(err.message));
-};
 
 window.logout = () => signOut(auth);
 
-// ================= Generate Course Buttons =================
+// 🧠 FULL MEDICAL COURSE LIST
+const medicalCourseNames = [
+"Anatomy","Physiology","Biochemistry","Pathology","Pharmacology","Microbiology","Hematology",
+"Immunology","Genetics","Histology","Embryology","Neuroscience","Cardiology","Neurology",
+"Dermatology","Endocrinology","Gastroenterology","Nephrology","Pulmonology","Rheumatology",
+"Oncology","Radiology","Surgery","Orthopedics","Urology","Anesthesiology","Emergency Medicine",
+"Internal Medicine","Family Medicine","Geriatrics","Pediatrics","Neonatology","Obstetrics",
+"Gynecology","Psychiatry","Ophthalmology","ENT","Dentistry","Public Health","Epidemiology",
+"Biostatistics","Community Medicine","Infectious Diseases","Toxicology","Forensic Medicine",
+"Sports Medicine","Critical Care","Pain Medicine","Nuclear Medicine","Plastic Surgery",
+"Cardiothoracic Surgery","Vascular Surgery","Neurosurgery","General Surgery","Trauma Medicine",
+"Reproductive Medicine","Clinical Research","Medical Ethics","Health Informatics",
+"Telemedicine","Nutrition","Physiotherapy","Palliative Care","Rehabilitation Medicine",
+"Sleep Medicine","Transfusion Medicine","Laboratory Medicine","Clinical Pharmacology",
+"Preventive Medicine","Lifestyle Medicine","Tropical Medicine","Disaster Medicine",
+"Addiction Medicine","Gastro Surgery","Neuro Radiology","Cardiac Imaging","Medical Education"
+];
+
+// COURSE CONTENT
+const courses = {};
+medicalCourseNames.forEach(course => {
+  courses[course] = {
+    units: Array.from({ length: 5 }, (_, i) => ({
+      title: `${course} Unit ${i+1}`,
+      notes: `Detailed clinical concepts and exam-focused notes for ${course}.`,
+      image: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Human_anatomy.png"
+    }))
+  };
+});
+
+// BUTTONS
 function generateCourseButtons() {
   const container = document.getElementById("courseButtons");
   container.innerHTML = "";
-
   Object.keys(courses).forEach(course => {
     const btn = document.createElement("button");
     btn.textContent = course;
@@ -89,74 +95,40 @@ function generateCourseButtons() {
   });
 }
 
-// ================= Load Course =================
+// LOAD COURSE
 function loadCourse(courseName) {
   const content = document.getElementById("courseContent");
   content.innerHTML = `<h2>${courseName}</h2>`;
-
   courses[courseName].units.forEach(unit => {
-    const div = document.createElement("div");
-    div.className = "unitCard";
-    div.innerHTML = `
-      <h3>${unit.title}</h3>
-      <p>${unit.notes}</p>
-      <img src="${unit.image}" width="200">
-      <button onclick="startQuiz('${courseName}')">Start Quiz</button>
-    `;
-    content.appendChild(div);
+    content.innerHTML += `
+      <div class="unitCard">
+        <h3>${unit.title}</h3>
+        <p>${unit.notes}</p>
+        <img src="${unit.image}" width="200">
+        <button onclick="startQuiz('${courseName}')">Start Quiz</button>
+      </div>`;
   });
 }
 
-// ================= REAL EXAM STYLE QUIZ =================
+// QUIZ
 function generateQuiz(course) {
-  return Array.from({ length: 10 }, (_, i) => ({
-    question: `${course} clinical question ${i+1}: Choose the correct answer.`,
-    options: [
-      "Option A",
-      "Option B",
-      "Option C",
-      "Option D"
-    ],
-    answer: 0
+  return Array.from({length:10}, (_,i)=>({
+    question:`${course} clinical exam question ${i+1}?`,
+    options:["A","B","C","D"],
+    answer:"A"
   }));
 }
 
-window.startQuiz = function(course) {
+window.startQuiz = (course) => {
   const quizArea = document.getElementById("quizArea");
-  quizArea.innerHTML = `<h2>${course} Exam Quiz</h2>`;
-
-  const quiz = generateQuiz(course);
-  let score = 0;
-
-  quiz.forEach((q, index) => {
-    const qDiv = document.createElement("div");
-    qDiv.innerHTML = `<p><b>${index+1}. ${q.question}</b></p>`;
-
-    q.options.forEach((opt, i) => {
-      const btn = document.createElement("button");
-      btn.textContent = opt;
-      btn.onclick = () => {
-        if (i === q.answer) {
-          btn.style.background = "green";
-          score++;
-        } else {
-          btn.style.background = "red";
-        }
-        btn.disabled = true;
-      };
-      qDiv.appendChild(btn);
+  quizArea.innerHTML = `<h2>${course} Quiz</h2>`;
+  generateQuiz(course).forEach((q,i)=>{
+    quizArea.innerHTML += `<p><b>${i+1}. ${q.question}</b></p>`;
+    q.options.forEach(opt=>{
+      quizArea.innerHTML += `<button onclick="alert('${opt===q.answer?"Correct":"Wrong"}')">${opt}</button>`;
     });
-
-    quizArea.appendChild(qDiv);
-    quizArea.appendChild(document.createElement("hr"));
+    quizArea.innerHTML += "<hr>";
   });
-
-  const submitBtn = document.createElement("button");
-  submitBtn.textContent = "Submit Exam";
-  submitBtn.onclick = () => {
-    quizArea.innerHTML += `<h3>Your Score: ${score}/${quiz.length}</h3>`;
-  };
-  quizArea.appendChild(submitBtn);
 };
 
-console.log("APP FULLY LOADED 🚀");
+console.log("FULL SYSTEM LOADED ✅");
