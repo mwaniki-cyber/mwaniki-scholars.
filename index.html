@@ -5,72 +5,55 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mwaniki Scholars 📚</title>
 
-  <!-- Google Verification -->
   <meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg" />
 
   <style>
-    body { font-family: Arial; padding:20px; background:#f4f6f8; }
-    h1 { text-align:center; color:#2c3e50; }
+    body { font-family: Arial; background:#f4f6f7; padding:20px; }
+    h1 { text-align:center; }
 
-    .auth-box {
-      max-width:400px; margin:auto; padding:20px;
-      background:#fff; border-radius:8px;
-      box-shadow:0 0 10px rgba(0,0,0,0.1);
-      text-align:center;
+    .box {
+      max-width:1000px;
+      margin:auto;
+      background:white;
+      padding:20px;
+      border-radius:10px;
+      box-shadow:0 0 10px rgba(0,0,0,.1);
+      margin-top:20px;
     }
 
-    input { width:90%; padding:10px; margin:10px 0; }
+    #courseButtons { display:flex; flex-wrap:wrap; gap:8px; }
+    .courseBtn { background:#3498db; color:white; border:none; padding:8px; border-radius:5px; }
 
-    button {
-      padding:10px 15px; margin:5px;
-      border:none; border-radius:5px;
-      cursor:pointer;
-    }
-
-    #courseArea {
-      max-width:1100px; margin:20px auto;
-      padding:20px; background:#fff;
-      border-radius:8px;
-      box-shadow:0 0 10px rgba(0,0,0,0.1);
-    }
-
-    #courseButtons { display:flex; flex-wrap:wrap; gap:10px; }
-    .courseBtn { background:#3498db; color:white; flex:1 0 21%; }
-
-    .unitCard {
-      border:1px solid #ddd; padding:15px;
-      margin:10px 0; border-radius:8px;
-      background:#fafafa;
-    }
-
-    #quizArea { margin-top:20px; padding:15px; background:#eaf2f8; border-radius:8px; }
-    #quizArea button { background:#27ae60; color:white; }
+    .unitCard { border:1px solid #ccc; padding:10px; margin-top:10px; border-radius:6px; }
+    #quizArea { margin-top:20px; background:#eaf2f8; padding:10px; }
   </style>
 </head>
-
 <body>
 
-<h1>Mwaniki Scholars 📚</h1>
+<h1>Mwaniki Scholars 🎓</h1>
 
-<div class="auth-box" id="authSection">
-  <h2>Student Login</h2>
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
-  <div>
-    <button onclick="signUp()">Sign Up</button>
-    <button onclick="login()">Login</button>
-    <button onclick="logout()">Logout</button>
-  </div>
+<div class="box" id="authSection">
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email"><br>
+  <input type="password" id="password" placeholder="Password"><br>
+  <button onclick="signUp()">Sign Up</button>
+  <button onclick="login()">Login</button>
+  <button onclick="logout()">Logout</button>
   <p id="message"></p>
 </div>
 
-<div id="courseArea" style="display:none;">
-  <h2>Learning Portal 🎓</h2>
+<div class="box" id="courseArea" style="display:none;">
+  <h2>Courses</h2>
   <div id="courseButtons"></div>
   <div id="courseContent"></div>
   <div id="quizArea"></div>
+  <div id="booksArea"></div>
 </div>
 
 <script type="module" src="script.js"></script>
+<script type="module" src="notes.js"></script>
+<script type="module" src="quizbank.js"></script>
+<script type="module" src="books.js"></script>
+
 </body>
 </html>
