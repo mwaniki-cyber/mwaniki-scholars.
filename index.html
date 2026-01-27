@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mwaniki Scholars 📚</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    .auth-box {
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .auth-box input {
+      width: 90%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .auth-box button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    #courseArea {
+      max-width: 1000px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    #courseButtons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .courseBtn {
+      padding: 10px 15px;
+      cursor: pointer;
+      background: #3498db;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      flex: 1 0 21%;
+      text-align: center;
+    }
+
+    .unitCard {
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+      background: #fdfdfd;
+    }
+
+    .unitCard img {
+      display: block;
+      margin: 10px 0;
+      max-width: 100%;
+    }
+
+    #quizArea {
+      margin-top: 20px;
+      padding: 15px;
+      background: #eaf2f8;
+      border-radius: 8px;
+    }
+
+    #quizArea button {
+      margin: 5px 5px 5px 0;
+      padding: 5px 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #27ae60;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mwaniki Scholars 📚</h1>
+
+  <!-- AUTH UI -->
+  <div class="auth-box" id="authSection">
+    <h2>Student Login</h2>
+    <input type="email" id="email" placeholder="Enter email" />
+    <input type="password" id="password" placeholder="Enter password" />
+    <div>
+      <button onclick="signUp()">Sign Up</button>
+      <button onclick="login()">Login</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+    <p id="message"></p>
+  </div>
+
+  <!-- COURSE UI -->
+  <div id="courseArea" style="display:none;">
+    <h2>Welcome to Mwaniki Scholars Learning Portal 🎓</h2>
+    <p>Select a course to begin:</p>
+    <div id="courseButtons"></div>
+    <div id="courseContent"></div>
+    <div id="quizArea"></div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script type="module" src="script.js"></script>
+</body>
+</html>
