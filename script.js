@@ -1,10 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-import { notes } from "./notes.js";
-import { quizBank } from "./quizbank.js";
-import { books } from "./books.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDKmg8OT4hdG_bNIWTapfY5cP9dM2kyGps",
@@ -20,101 +16,122 @@ const auth = getAuth(app);
 
 const authSection = document.getElementById("authSection");
 const courseArea = document.getElementById("courseArea");
+const message = document.getElementById("message");
+const adminPanel = document.getElementById("adminPanel");
 
-window.signUp = () => createUserWithEmailAndPassword(auth,email.value,password.value);
-window.login = () => signInWithEmailAndPassword(auth,email.value,password.value);
-window.logout = () => signOut(auth);
-
-onAuthStateChanged(auth,user=>{
-  if(user){
-    authSection.style.display="none";
-    courseArea.style.display="block";
+// ======= AUTH =======
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    authSection.style.display = "none";
+    courseArea.style.display = "block";
+    message.textContent = `Welcome ${user.email}`;
     generateCourseButtons();
+    if (user.email === "admin@mwaniki.com") adminPanel.style.display = "block";
   } else {
-    authSection.style.display="block";
-    courseArea.style.display="none";
+    authSection.style.display = "block";
+    courseArea.style.display = "none";
+    adminPanel.style.display = "none";
   }
 });
 
+window.signUp = () => {
+  createUserWithEmailAndPassword(auth, email.value, password.value)
+  .then(()=>alert("Account created")).catch(e=>alert(e.message));
+};
+window.login = () => {
+  signInWithEmailAndPassword(auth, email.value, password.value)
+  .then(()=>alert("Login success")).catch(e=>alert(e.message));
+};
+window.logout = () => signOut(auth);
+
+// ======= COURSES =======
+const medicalCourseNames = [
+"Anatomy","Physiology","Biochemistry","Pathology","Pharmacology","Microbiology",
+"Hematology","Immunology","Genetics","Histology","Embryology","Neuroscience",
+"Cardiology","Neurology","Dermatology","Endocrinology","Gastroenterology","Nephrology",
+"Pulmonology","Rheumatology","Oncology","Radiology","Surgery","Orthopedics","Urology",
+"Anesthesiology","Emergency Medicine","Internal Medicine","Family Medicine","Geriatrics",
+"Pediatrics","Neonatology","Obstetrics","Gynecology","Psychiatry","Ophthalmology","ENT",
+"Dentistry","Public Health","Epidemiology","Biostatistics","Community Medicine",
+"Infectious Diseases","Toxicology","Forensic Medicine","Sports Medicine","Critical Care",
+"Pain Medicine","Nuclear Medicine","Plastic Surgery","Cardiothoracic Surgery",
+"Vascular Surgery","Neurosurgery","General Surgery","Trauma Medicine","Reproductive Medicine",
+"Clinical Research","Medical Ethics","Health Informatics","Telemedicine","Nutrition",
+"Physiotherapy","Palliative Care","Rehabilitation Medicine","Sleep Medicine",
+"Transfusion Medicine","Laboratory Medicine","Clinical Pharmacology","Preventive Medicine",
+"Lifestyle Medicine","Tropical Medicine","Disaster Medicine","Addiction Medicine",
+"Neuro Radiology","Cardiac Imaging","Medical Education"
+];
+
+const courses = {};
+medicalCourseNames.forEach(c=>{
+  courses[c]={units:Array.from({length:5},(_,i)=>({
+    title:`${c} Unit ${i+1}`,
+    notes:`${c} university-level clinical concepts, pathophysiology, diagnostics, and management.`,
+    image:"https://upload.wikimedia.org/wikipedia/commons/6/6e/Human_anatomy.png"
+  }))};
+});
+
 function generateCourseButtons(){
-  const container=document.getElementById("courseButtons");
-  container.innerHTML="";
-  Object.keys(notes).forEach(course=>{
+  const box=document.getElementById("courseButtons"); box.innerHTML="";
+  Object.keys(courses).forEach(c=>{
     const btn=document.createElement("button");
-    btn.textContent=course;
-    btn.className="courseBtn";
-    btn.onclick=()=>loadCourse(course);
-    container.appendChild(btn);
+    btn.textContent=c; btn.className="courseBtn";
+    btn.onclick=()=>loadCourse(c);
+    box.appendChild(btn);
   });
 }
 
-function loadCourse(course){
+function loadCourse(name){
   const content=document.getElementById("courseContent");
-  content.innerHTML=`<h2>${course}</h2>`;
-
-  notes[course].forEach(unit=>{
+  content.innerHTML=`<h2>${name}</h2>`;
+  courses[name].units.forEach(u=>{
     content.innerHTML+=`
       <div class="unitCard">
-        <h3>${unit.title}</h3>
-        <p>${unit.text}</p>
-        <img src="${unit.image}" width="250">
-        <button onclick="startQuiz('${course}')">Take Quiz</button>
+      <h3>${u.title}</h3>
+      <p>${u.notes}</p>
+      <img src="${u.image}" width="200">
+      <button onclick="startQuiz('${name}')">Start Quiz</button>
       </div>`;
   });
+}
 
-  loadBooks(course);
+// ===== QUIZ =====
+function generateQuiz(course){
+  const answers=["A","B","C","D"];
+  return Array.from({length:20},(_,i)=>({
+    question:`${course} clinical exam question ${i+1}?`,
+    options:["Option A","Option B","Option C","Option D"],
+    answer:answers[Math.floor(Math.random()*4)]
+  }));
 }
 
 window.startQuiz=(course)=>{
-  const quizArea=document.getElementById("quizArea");
-  quizArea.innerHTML=`<h2>${course} Quiz</h2>`;
-  quizBank[course].forEach(q=>{
-    quizArea.innerHTML+=`<p>${q.q}</p>`;
+  const area=document.getElementById("quizArea");
+  let score=0; let time=300;
+  const quiz=generateQuiz(course);
+  area.innerHTML=`<h2>${course} Quiz</h2><div class="timer">Time: <span id="time">${time}</span>s</div>`;
+  
+  const timer=setInterval(()=>{ time--; document.getElementById("time").textContent=time;
+    if(time<=0){clearInterval(timer);alert("Time up! Score: "+score);}},1000);
+
+  quiz.forEach((q,i)=>{
+    area.innerHTML+=`<p>${i+1}. ${q.question}</p>`;
+    ["A","B","C","D"].forEach(opt=>{
+      const b=document.createElement("button");
+      b.textContent=opt;
+      b.onclick=()=>{ if(opt===q.answer) score++; };
+      area.appendChild(b);
+    });
+    area.innerHTML+="<hr>";
   });
 };
 
-function loadBooks(course){
-  const area=document.getElementById("booksArea");
-  area.innerHTML="<h2>Books</h2>";
-  books[course]?.forEach(b=>{
-    area.innerHTML+=`<a href="${b.link}" target="_blank">${b.title}</a><br>`;
-  });
-}
-export const notes = {
-Anatomy: [
-  {
-    title:"Skeletal System",
-    text:"The human skeleton has 206 bones providing support and protection.",
-    image:"https://upload.wikimedia.org/wikipedia/commons/3/3d/Human_skeleton_front_en.svg"
-  },
-  {
-    title:"Muscular System",
-    text:"Muscles produce movement via contraction.",
-    image:"https://upload.wikimedia.org/wikipedia/commons/2/2c/Muscular_system.svg"
-  }
-],
-Physiology: [
-  {
-    title:"Cardiac Physiology",
-    text:"The heart pumps blood via coordinated electrical impulses.",
-    image:"https://upload.wikimedia.org/wikipedia/commons/0/0b/Heart_diagram-en.svg"
-  }
-]
+// ===== ADMIN =====
+window.addCourse=()=>{
+  const name=document.getElementById("newCourseName").value;
+  courses[name]={units:[{title:`${name} Intro`,notes:"Admin added course.",image:"https://upload.wikimedia.org/wikipedia/commons/6/6e/Human_anatomy.png"}]};
+  generateCourseButtons();
 };
-export const quizBank = {
-Anatomy: [
-  { q:"How many bones in adult human body?" },
-  { q:"Which bone protects the brain?" }
-],
-Physiology: [
-  { q:"What controls heart rhythm?" }
-]
-};
-export const books = {
-Anatomy:[
-  { title:"Gray's Anatomy", link:"https://example.com/grays" }
-],
-Physiology:[
-  { title:"Guyton Physiology", link:"https://example.com/guyton" }
-]
-};
+
+console.log("Mwaniki Scholars University System Loaded 🚀");

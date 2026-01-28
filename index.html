@@ -1,59 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mwaniki Scholars 📚</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Mwaniki Scholars University</title>
 
-  <meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg" />
+<!-- GOOGLE VERIFICATION -->
+<meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg" />
 
-  <style>
-    body { font-family: Arial; background:#f4f6f7; padding:20px; }
-    h1 { text-align:center; }
+<style>
+body { font-family: Arial; background:#f4f6f9; margin:0; padding:20px; }
+h1 { text-align:center; color:#2c3e50; }
 
-    .box {
-      max-width:1000px;
-      margin:auto;
-      background:white;
-      padding:20px;
-      border-radius:10px;
-      box-shadow:0 0 10px rgba(0,0,0,.1);
-      margin-top:20px;
-    }
+.auth-box, #courseArea, #adminPanel {
+  background:white; padding:20px; border-radius:8px;
+  max-width:1000px; margin:20px auto;
+  box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
 
-    #courseButtons { display:flex; flex-wrap:wrap; gap:8px; }
-    .courseBtn { background:#3498db; color:white; border:none; padding:8px; border-radius:5px; }
+input, button { padding:10px; margin:5px; }
 
-    .unitCard { border:1px solid #ccc; padding:10px; margin-top:10px; border-radius:6px; }
-    #quizArea { margin-top:20px; background:#eaf2f8; padding:10px; }
-  </style>
+#courseButtons { display:flex; flex-wrap:wrap; gap:10px; }
+.courseBtn { background:#3498db; color:white; border:none; border-radius:5px; cursor:pointer; }
+.unitCard { border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:6px; }
+#quizArea { background:#eef5ff; padding:15px; border-radius:8px; }
+.timer { font-weight:bold; color:red; }
+</style>
 </head>
+
 <body>
 
-<h1>Mwaniki Scholars 🎓</h1>
+<h1>Mwaniki Scholars Medical University 🎓</h1>
 
-<div class="box" id="authSection">
-  <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email"><br>
-  <input type="password" id="password" placeholder="Password"><br>
+<div class="auth-box" id="authSection">
+  <h2>Student Login</h2>
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
   <button onclick="signUp()">Sign Up</button>
   <button onclick="login()">Login</button>
   <button onclick="logout()">Logout</button>
   <p id="message"></p>
 </div>
 
-<div class="box" id="courseArea" style="display:none;">
+<div id="courseArea" style="display:none;">
   <h2>Courses</h2>
   <div id="courseButtons"></div>
   <div id="courseContent"></div>
   <div id="quizArea"></div>
-  <div id="booksArea"></div>
+</div>
+
+<div id="adminPanel" style="display:none;">
+  <h2>Admin Panel</h2>
+  <input id="newCourseName" placeholder="New Course Name">
+  <button onclick="addCourse()">Add Course</button>
 </div>
 
 <script type="module" src="script.js"></script>
-<script type="module" src="notes.js"></script>
-<script type="module" src="quizbank.js"></script>
-<script type="module" src="books.js"></script>
-
 </body>
 </html>
