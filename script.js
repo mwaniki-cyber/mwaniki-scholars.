@@ -1,18 +1,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged
+  getAuth, createUserWithEmailAndPassword,
+  signInWithEmailAndPassword, signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-/* ================= FIREBASE ================= */
 const firebaseConfig = {
   apiKey: "AIzaSyDKmg8OT4hdG_bNIWTapfY5cP9dM2kyGps",
   authDomain: "mwaniki-scholars.firebaseapp.com",
   projectId: "mwaniki-scholars",
-  storageBucket: "mwaniki-scholars.firebasestorage.app",
+  storageBucket: "mwaniki-scholars.appspot.com",
   messagingSenderId: "383333905328",
   appId: "1:383333905328:web:082e968df7bf4093999c75"
 };
@@ -20,136 +16,125 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* ================= UI ================= */
-const authSection = document.getElementById("authSection");
-const courseArea = document.getElementById("courseArea");
-const message = document.getElementById("message");
-const adminPanel = document.getElementById("adminPanel");
-
-/* ================= AUTH STATE ================= */
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    authSection.style.display = "none";
-    courseArea.style.display = "block";
-    message.textContent = "Welcome " + user.email;
-    generateCourseButtons();
-  } else {
-    authSection.style.display = "block";
-    courseArea.style.display = "none";
-    message.textContent = "";
-  }
-});
-
-/* ================= AUTH FUNCTIONS ================= */
-window.signUp = function () {
-  const emailVal = document.getElementById("email").value;
-  const passwordVal = document.getElementById("password").value;
-
-  createUserWithEmailAndPassword(auth, emailVal, passwordVal)
-    .then(() => alert("Account created"))
-    .catch(err => alert(err.message));
-};
-
-window.login = function () {
-  const emailVal = document.getElementById("email").value;
-  const passwordVal = document.getElementById("password").value;
-
-  signInWithEmailAndPassword(auth, emailVal, passwordVal)
-    .then(() => alert("Login successful"))
-    .catch(err => alert(err.message));
-};
-
-window.logout = function () {
-  signOut(auth);
-};
-
-/* ================= COURSES ================= */
-const medicalCourseNames = [
+const courses = [
 "Anatomy","Physiology","Biochemistry","Pathology","Pharmacology","Microbiology",
 "Hematology","Immunology","Genetics","Histology","Embryology","Neuroscience",
 "Cardiology","Neurology","Dermatology","Endocrinology","Gastroenterology","Nephrology",
 "Pulmonology","Rheumatology","Oncology","Radiology","Surgery","Orthopedics","Urology",
 "Anesthesiology","Emergency Medicine","Internal Medicine","Family Medicine","Geriatrics",
-"Pediatrics","Neonatology","Obstetrics","Gynecology","Psychiatry","Ophthalmology","ENT"
+"Pediatrics","Neonatology","Obstetrics","Gynecology","Psychiatry","Ophthalmology","ENT",
+"Dentistry","Public Health","Epidemiology","Biostatistics","Community Medicine",
+"Infectious Diseases","Toxicology","Forensic Medicine","Sports Medicine","Critical Care",
+"Pain Medicine","Nuclear Medicine","Plastic Surgery","Cardiothoracic Surgery",
+"Vascular Surgery","Neurosurgery","General Surgery","Trauma Medicine","Reproductive Medicine",
+"Clinical Research","Medical Ethics","Health Informatics","Telemedicine","Nutrition",
+"Physiotherapy","Palliative Care","Rehabilitation Medicine","Sleep Medicine",
+"Transfusion Medicine","Laboratory Medicine","Clinical Pharmacology","Preventive Medicine",
+"Lifestyle Medicine","Tropical Medicine","Disaster Medicine","Addiction Medicine",
+"Gastro Surgery","Neuro Radiology","Cardiac Imaging","Medical Education",
+"Allergy & Clinical Immunology","Andrology","Audiology","Burns & Plastic Reconstruction",
+"Clinical Neurophysiology","Colorectal Surgery","Diabetology","Fetal Medicine"
 ];
 
-const courses = {};
-medicalCourseNames.forEach(courseName => {
-  courses[courseName] = {
-    units: Array.from({ length: 5 }, (_, i) => ({
-      title: `${courseName} Unit ${i + 1}`,
-      contentText: `${courseName} clinical university-level knowledge and exam concepts.`,
-      image: "https://upload.wikimedia.org/wikipedia/commons/6/6e/Human_anatomy.png"
-    }))
-  };
+const authSection = document.getElementById("authSection");
+const courseArea = document.getElementById("courseArea");
+const adminPanel = document.getElementById("adminPanel");
+const message = document.getElementById("message");
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    authSection.style.display = "none";
+    courseArea.style.display = "block";
+    message.textContent = "Welcome " + user.email;
+    if (user.email === "admin@mwaniki.com") adminPanel.style.display = "block";
+    generateCourseButtons();
+  } else {
+    authSection.style.display = "block";
+    courseArea.style.display = "none";
+  }
 });
 
-/* ================= BUTTONS ================= */
-function generateCourseButtons() {
-  const container = document.getElementById("courseButtons");
-  container.innerHTML = "";
-  Object.keys(courses).forEach(c => {
-    const btn = document.createElement("button");
-    btn.textContent = c;
-    btn.className = "courseBtn";
-    btn.onclick = () => loadCourse(c);
-    container.appendChild(btn);
+window.signUp = () => {
+  createUserWithEmailAndPassword(auth, email.value, password.value)
+    .then(()=>alert("Account created"))
+    .catch(e=>alert(e.message));
+};
+
+window.login = () => {
+  signInWithEmailAndPassword(auth, email.value, password.value)
+    .then(()=>alert("Logged in"))
+    .catch(e=>alert(e.message));
+};
+
+window.logout = () => signOut(auth);
+
+function generateCourseButtons(){
+  const div = document.getElementById("courseButtons");
+  div.innerHTML="";
+  courses.forEach(c=>{
+    const b=document.createElement("button");
+    b.textContent=c;
+    b.className="courseBtn";
+    b.onclick=()=>loadCourse(c);
+    div.appendChild(b);
   });
 }
 
-/* ================= LOAD COURSE ================= */
-function loadCourse(name) {
-  const contentDiv = document.getElementById("courseContent");
-  contentDiv.innerHTML = `<h2>${name}</h2>`;
-
-  courses[name].units.forEach(u => {
-    contentDiv.innerHTML += `
+function loadCourse(course){
+  const content=document.getElementById("courseContent");
+  content.innerHTML=`<h2>${course}</h2>`;
+  for(let i=1;i<=5;i++){
+    content.innerHTML+=`
       <div class="unitCard">
-        <h3>${u.title}</h3>
-        <p>${u.contentText}</p>
-        <img src="${u.image}" width="200">
-        <button onclick="startQuiz('${name}')">Start Quiz</button>
+        <h3>${course} Unit ${i}</h3>
+        <p>University-level notes covering clinical principles, pathology, diagnostics and management.</p>
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6e/Human_anatomy.png" width="200">
+        <br>
+        <a href="#" download>📥 Download Notes</a>
+        <button onclick="startQuiz('${course}')">Start Quiz</button>
       </div>`;
-  });
+  }
 }
 
-/* ================= QUIZ ================= */
-function generateQuiz(course) {
-  const answers = ["A","B","C","D"];
-  return Array.from({ length: 20 }, (_, i) => ({
-    question: `${course} clinical question ${i + 1}?`,
-    options: ["A","B","C","D"],
-    answer: answers[Math.floor(Math.random()*4)]
-  }));
+function generateQuiz(course){
+  const q=[];
+  const answers=["A","B","C","D"];
+  for(let i=1;i<=10;i++){
+    q.push({
+      question:`${course} clinical question ${i}?`,
+      options:["Option A","Option B","Option C","Option D"],
+      answer:answers[i%4]
+    });
+  }
+  return q;
 }
 
-window.startQuiz = function(course) {
-  const area = document.getElementById("quizArea");
-  let score = 0;
-  let time = 300;
-
-  const quiz = generateQuiz(course);
-  area.innerHTML = `<h2>${course} Quiz</h2>Time: <span id="timer">${time}</span>s`;
-
-  const t = setInterval(() => {
+window.startQuiz=(course)=>{
+  const area=document.getElementById("quizArea");
+  const quiz=generateQuiz(course);
+  let score=0;
+  let time=120;
+  const timer=setInterval(()=>{
     time--;
-    document.getElementById("timer").textContent = time;
-    if(time <= 0){
-      clearInterval(t);
-      alert("Time up! Score: "+score);
-    }
+    if(time<=0){clearInterval(timer); finish();}
   },1000);
 
+  area.innerHTML=`<h2>${course} Quiz</h2><p>Time Left: <span id="t">${time}</span>s</p>`;
+  const tSpan=area.querySelector("#t");
+
   quiz.forEach((q,i)=>{
-    area.innerHTML += `<p>${i+1}. ${q.question}</p>`;
+    const p=document.createElement("p");
+    p.textContent=(i+1)+". "+q.question;
+    area.appendChild(p);
     q.options.forEach(opt=>{
       const b=document.createElement("button");
       b.textContent=opt;
-      b.onclick=()=>{ if(opt===q.answer) score++; };
+      b.onclick=()=>{if(opt===q.options["ABCD".indexOf(q.answer)])score++;};
       area.appendChild(b);
     });
-    area.innerHTML+="<hr>";
   });
-};
 
-console.log("SYSTEM RUNNING PERFECTLY 🚀");
+  function finish(){
+    area.innerHTML+=`<h3>Score: ${score}/${quiz.length}</h3>`;
+  }
+};
