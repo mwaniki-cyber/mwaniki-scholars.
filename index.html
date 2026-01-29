@@ -1,55 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mwaniki Scholars University</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg" />
+<title>Mwaniki Scholars Medical University</title>
 
-  <!-- GOOGLE VERIFICATION -->
-  <meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg" />
-
-  <style>
-    body {font-family: Arial; margin:0; background:#f4f6f9;}
-    header {background:#0b5ed7; color:white; padding:15px; text-align:center;}
-    .container {max-width:1200px; margin:auto; padding:20px;}
-    .auth-box, .panel {background:white; padding:20px; border-radius:8px; margin-bottom:20px;}
-    input {padding:10px; margin:5px 0; width:100%;}
-    button {padding:8px 14px; margin:5px; border:none; border-radius:5px; cursor:pointer;}
-    .courseBtn {background:#0d6efd; color:white;}
-    .unitCard {border:1px solid #ddd; padding:15px; margin:10px 0; border-radius:6px;}
-    #quizArea {background:#eef6ff; padding:15px; border-radius:6px;}
-    .admin {background:#fff3cd; padding:10px; border-radius:6px;}
-  </style>
+<style>
+body{font-family:Arial;margin:0;background:#eef5f7}
+header{background:#0a3d62;color:white;padding:15px;text-align:center;font-size:22px}
+.auth-box,#courseArea{max-width:1100px;margin:20px auto;background:white;padding:20px;border-radius:8px;box-shadow:0 0 10px rgba(0,0,0,.1)}
+input{padding:10px;width:90%;margin:8px 0}
+button{padding:8px 14px;background:#16a085;border:none;color:white;border-radius:5px;cursor:pointer;margin:5px}
+#searchBar{width:100%;padding:12px;border:2px solid #16a085;border-radius:6px}
+.courseBtn{display:block;width:100%;margin:6px 0;background:#1abc9c}
+.unitCard{border:1px solid #ddd;padding:12px;margin:12px 0;border-radius:6px;background:#f9fdfd}
+#quizArea{margin-top:20px;background:#e8f8f5;padding:15px;border-radius:8px}
+.timer{font-weight:bold;color:#c0392b}
+</style>
 </head>
 
 <body>
-<header><h1>Mwaniki Scholars Medical University 🎓</h1></header>
 
-<div class="container">
+<header>🏥 Mwaniki Scholars Medical University</header>
 
-  <!-- AUTH -->
-  <div class="auth-box" id="authSection">
-    <h2>Student Login</h2>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button onclick="signUp()">Sign Up</button>
-    <button onclick="login()">Login</button>
-    <button onclick="logout()">Logout</button>
-    <p id="message"></p>
-  </div>
+<div class="auth-box" id="authSection">
+<h2>Student Login</h2>
+<input type="email" id="email" placeholder="Email">
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="signUp()">Sign Up</button>
+<button onclick="login()">Login</button>
+<button onclick="logout()">Logout</button>
+<p id="message"></p>
+</div>
 
-  <!-- COURSES -->
-  <div id="courseArea" style="display:none;">
-    <div id="adminPanel" class="admin" style="display:none;">
-      <h3>Admin Panel</h3>
-      <p>Upload materials via Firebase Storage console.</p>
-    </div>
-
-    <h2>Select Course</h2>
-    <div id="courseButtons"></div>
-    <div id="courseContent"></div>
-    <div id="quizArea"></div>
-  </div>
+<div id="courseArea" style="display:none;">
+<h2>Search Course</h2>
+<input type="text" id="searchBar" placeholder="Type course name...">
+<div id="courseButtons"></div>
+<div id="courseContent"></div>
+<div id="quizArea"></div>
 </div>
 
 <script type="module" src="script.js"></script>
