@@ -2,55 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <!-- GOOGLE VERIFICATION -->
 <meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg" />
 
-<title>Mwaniki Scholars Medical University</title>
+<title>Mwaniki Scholars University</title>
 
 <style>
-body{margin:0;font-family:Arial;background:#e8f5f2;color:#033}
-header{background:#0a6d62;color:white;padding:15px;text-align:center;font-size:22px;font-weight:bold}
-.logo{font-size:26px}
-.container{padding:20px}
-.auth-box, .admin-box{background:white;padding:20px;border-radius:10px;max-width:400px;margin:auto;box-shadow:0 0 10px #aaa}
-input{width:100%;padding:10px;margin:8px 0;border-radius:6px;border:1px solid #ccc}
-button{padding:10px 15px;border:none;border-radius:6px;background:#0a6d62;color:white;margin:5px;cursor:pointer}
-button:hover{opacity:0.9}
-.course-card{background:white;margin:10px;padding:15px;border-radius:10px;box-shadow:0 0 8px #bbb}
-.unit{margin:10px 0;padding:10px;background:#f4fffd;border-radius:8px}
-.quiz-btn{background:#146c43}
-.timer{color:red;font-weight:bold}
+body{font-family:Arial;margin:0;background:#eef7f6;color:#063;}
+header{background:#0b6b63;color:white;padding:15px;text-align:center;font-size:22px}
+.auth-box,#courseArea,#adminPanel{max-width:1100px;margin:20px auto;background:white;padding:20px;border-radius:8px;box-shadow:0 0 10px #ccc}
+input{padding:10px;margin:5px;width:90%}
+button{padding:8px 14px;margin:5px;border:none;border-radius:4px;cursor:pointer}
+.courseBtn{background:#0b6b63;color:white}
+.unitCard{border:1px solid #ccc;padding:12px;margin:12px 0;border-radius:6px}
+#quizArea{background:#e0f2f1;padding:15px;border-radius:6px}
+.searchBox{width:100%;padding:10px;margin-bottom:10px}
+.timer{font-weight:bold;color:#b71c1c}
+.logo{font-size:26px;font-weight:bold}
 </style>
 </head>
 
 <body>
 
-<header>
-<div class="logo">🏥 Mwaniki Scholars Medical University</div>
-</header>
-
-<div class="container">
-
-<div id="message"></div>
+<header class="logo">🏥 Mwaniki Scholars University</header>
 
 <div class="auth-box" id="authSection">
-<h3>Student Login</h3>
+<h2>Student Login</h2>
 <input type="email" id="email" placeholder="Email">
 <input type="password" id="password" placeholder="Password">
+<button onclick="signUp()">Sign Up</button>
 <button onclick="login()">Login</button>
-<button onclick="signUp()">Create Account</button>
+<button onclick="logout()">Logout</button>
+<p id="message"></p>
 </div>
 
 <div id="courseArea" style="display:none;">
-<input type="text" id="searchBar" placeholder="Search Course..." onkeyup="searchCourses()">
+<h2>Course Library</h2>
+<input type="text" id="searchInput" class="searchBox" placeholder="Search course...">
 <div id="courseButtons"></div>
 <div id="courseContent"></div>
 <div id="quizArea"></div>
-<button onclick="logout()">Logout</button>
 </div>
 
+<div id="adminPanel" style="display:none;">
+<h2>Admin Panel</h2>
+<p>Total Courses: <span id="courseCount"></span></p>
 </div>
 
 <script type="module" src="script.js"></script>
