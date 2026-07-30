@@ -1,62 +1,435 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<!-- GOOGLE VERIFICATION -->
-<meta name="google-site-verification" content="hstGKVSdcgsEVTBM_3es2g4FC_F3zpZFs9an4V6k5tg"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Mwaniki Scholars University</title>
+<title>Mwaniki Scholars Medical University</title>
 
 <style>
-body{font-family:Arial;background:#eef6f9;margin:0;padding:0}
-header{background:#0b6e6e;color:white;padding:15px;text-align:center}
-.logo{font-size:22px;font-weight:bold}
-.auth-box,#courseArea,#adminPanel{
-max-width:1000px;margin:20px auto;padding:20px;background:white;
-border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)
+body{
+font-family:Arial,sans-serif;
+background:#eef6f9;
+margin:0;
+padding:0;
 }
-input,button{padding:10px;margin:5px;border-radius:5px;border:1px solid #ccc}
-button{background:#0b6e6e;color:white;cursor:pointer}
-.courseBtn{display:inline-block;margin:5px;padding:8px 12px}
-.unitCard{border:1px solid #ddd;padding:10px;margin:10px 0;border-radius:8px}
-.timer{font-weight:bold;color:red}
-.resultBox{background:#dff0d8;padding:10px;margin-top:10px;border-radius:6px}
+
+header{
+background:#0b6e6e;
+color:white;
+padding:15px;
+text-align:center;
+}
+
+.logo{
+font-size:22px;
+font-weight:bold;
+}
+
+
+.auth-container{
+position:relative;
+max-width:1000px;
+height:450px;
+margin:20px auto;
+overflow:hidden;
+border-radius:15px;
+}
+
+
+.medical-bg{
+position:absolute;
+width:100%;
+height:100%;
+background:linear-gradient(135deg,#002b36,#006064,#0b6e6e);
+overflow:hidden;
+}
+
+
+.auth-box{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+z-index:10;
+background:rgba(255,255,255,.15);
+backdrop-filter:blur(10px);
+padding:25px;
+width:320px;
+border-radius:15px;
+text-align:center;
+color:rgb(200, 184, 184);
+}
+
+
+input,button,select{
+
+padding:10px;
+margin:5px;
+border-radius:5px;
+border:1px solid #ccc;
+
+}
+
+
+button{
+
+background:#0b6e6e;
+color:white;
+cursor:pointer;
+
+}
+
+
+button:hover{
+
+background:#064747;
+
+}
+
+
+#courseArea,
+#adminPanel{
+
+max-width:1000px;
+margin:20px auto;
+padding:20px;
+background:white;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,.1);
+
+}
+
+
+.courseBtn{
+
+display:inline-block;
+margin:5px;
+
+}
+
+
+.unitCard{
+
+border:1px solid #ccc;
+padding:15px;
+margin:10px 0;
+border-radius:8px;
+
+}
+
+
+.resultBox{
+
+background:#dff0d8;
+padding:10px;
+margin-top:10px;
+
+}
+
+
+.cross{
+
+position:absolute;
+font-size:45px;
+color:rgba(255,255,255,.15);
+animation:float 12s infinite;
+
+}
+
+
+.c1{left:10%;}
+.c2{left:35%;animation-delay:3s;}
+.c3{left:65%;animation-delay:6s;}
+.c4{left:90%;animation-delay:9s;}
+
+
+@keyframes float{
+
+0%{
+transform:translateY(450px);
+opacity:0;
+}
+
+50%{
+opacity:1;
+}
+
+100%{
+transform:translateY(-100px);
+opacity:0;
+}
+
+}
+
+
+.ecg{
+
+position:absolute;
+bottom:50px;
+width:200%;
+animation:moveECG 8s linear infinite;
+
+}
+
+
+.ecg svg{
+
+width:100%;
+height:100px;
+
+}
+
+
+@keyframes moveECG{
+
+from{
+transform:translateX(0);
+}
+
+to{
+transform:translateX(-50%);
+}
+
+}
+
 </style>
+
 </head>
+
 
 <body>
 
+
 <header>
-<div class="logo">🏥 Mwaniki Scholars Medical University</div>
+
+<div class="logo">
+🏥 Mwaniki Scholars Medical University
+</div>
+
 </header>
 
-<!-- LOGIN -->
+
+
+<!-- LOGIN AREA -->
+
+<div class="auth-container">
+
+
+<div class="medical-bg">
+
+
+<div class="cross c1">✚</div>
+<div class="cross c2">✚</div>
+<div class="cross c3">✚</div>
+<div class="cross c4">✚</div>
+
+
+<div class="ecg">
+
+<svg viewBox="0 0 1200 120">
+
+<polyline
+
+fill="none"
+
+stroke="#00ff99"
+
+stroke-width="4"
+
+points="0,60 100,60 150,20 200,100 250,60 1200,60"
+
+/>
+
+</svg>
+
+</div>
+
+
+</div>
+
+
+
+
 <div class="auth-box" id="authSection">
-<h2>Student Login</h2>
-<input type="email" id="email" placeholder="Email">
-<input type="password" id="password" placeholder="Password">
-<button onclick="signUp()">Sign Up</button>
-<button onclick="login()">Login</button>
-<button onclick="logout()">Logout</button>
+
+
+<h2>
+Student Login
+</h2>
+
+
+<input 
+type="email"
+id="email"
+placeholder="Email">
+
+
+<input
+type="password"
+id="password"
+placeholder="Password">
+
+
+<button onclick="signUp()">
+Sign Up
+</button>
+
+
+<button onclick="login()">
+Login
+</button>
+
+
+<button onclick="logout()">
+Logout
+</button>
+
+
 </div>
 
-<!-- COURSES -->
+
+</div>
+
+
+
+
+<!-- COURSE AREA -->
+
 <div id="courseArea" style="display:none">
-<h2>Course Library</h2>
-<input type="text" id="searchInput" placeholder="Search course...">
+
+
+<h2>
+📚 Course Library
+</h2>
+
+
+<input
+type="text"
+id="searchInput"
+placeholder="Search course">
+
+
 <div id="courseButtons"></div>
+
+
 <div id="courseContent"></div>
+
+
 <div id="quizArea"></div>
+
+
 </div>
 
-<!-- ADMIN -->
+
+
+
+
+<!-- ADMIN PANEL -->
+
+<!-- ================= ADMIN UPLOAD PANEL ================= -->
+
 <div id="adminPanel" style="display:none">
-<h3>Admin Panel</h3>
-<p>Welcome Admin. Future analytics & uploads go here.</p>
+
+<h2>⚙ Mwaniki Scholars Admin Upload Center</h2>
+
+
+<div class="upload-box">
+
+
+<label>
+Select Course
+</label>
+
+<br>
+
+<select id="courseSelect">
+
+</select>
+
+
+<br><br>
+
+
+<label>
+Select Unit
+</label>
+
+<br>
+
+
+<select id="unitSelect">
+
+<option value="1">
+Unit 1
+</option>
+
+<option value="2">
+Unit 2
+</option>
+
+<option value="3">
+Unit 3
+</option>
+
+<option value="4">
+Unit 4
+</option>
+
+<option value="5">
+Unit 5
+</option>
+
+</select>
+
+
+<br><br>
+
+
+<label>
+Choose Notes File
+</label>
+
+<br>
+
+
+<input 
+type="file"
+id="noteFile"
+accept=".pdf,.doc,.docx,.ppt,.pptx">
+
+
+
+<br><br>
+
+
+
+<button onclick="uploadNotes()">
+
+📤 Upload Notes
+
+</button>
+
+
+
+<div id="uploadProgress">
+
 </div>
 
+
+<p id="uploadStatus">
+
+</p>
+
+
+</div>
+
+
+</div>
 <script type="module" src="script.js"></script>
+
 </body>
+
 </html>
