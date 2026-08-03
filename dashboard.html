@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mwaniki Scholars Student Dashboard</title>
+
+
+<style>
+
+*{
+box-sizing:border-box;
+font-family:"Segoe UI",Arial,sans-serif;
+}
+
+body{
+margin:0;
+background:#f4f9ff;
+}
+
+
+header{
+
+background:linear-gradient(135deg,#063970,#0b7285);
+
+color:white;
+
+padding:20px;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+}
+
+
+.logo{
+
+font-size:24px;
+
+font-weight:bold;
+
+}
+
+
+.profile{
+
+background:white;
+
+color:#063970;
+
+padding:10px 20px;
+
+border-radius:30px;
+
+}
+
+
+
+.container{
+
+padding:30px;
+
+}
+
+
+
+.grid{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+
+gap:25px;
+
+}
+
+
+
+.card{
+
+background:white;
+
+padding:25px;
+
+border-radius:20px;
+
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+margin-bottom:25px;
+
+}
+
+
+
+.card h2{
+
+color:#063970;
+
+}
+
+
+
+.card p{
+
+color:#64748b;
+
+}
+
+
+
+button{
+
+background:#0b7285;
+
+color:white;
+
+border:none;
+
+padding:12px 20px;
+
+border-radius:10px;
+
+cursor:pointer;
+
+}
+
+
+
+button:hover{
+
+background:#064747;
+
+}
+
+
+
+input,textarea{
+
+width:100%;
+
+padding:12px;
+
+border-radius:10px;
+
+border:1px solid #ddd;
+
+margin:8px 0;
+
+}
+
+
+
+.course-item{
+
+background:#eef7fb;
+
+padding:15px;
+
+margin:10px 0;
+
+border-radius:12px;
+
+cursor:pointer;
+
+}
+
+
+
+.course-item:hover{
+
+background:#d7f0f7;
+
+}
+
+
+
+.unit-card{
+
+background:#ffffff;
+
+border-left:5px solid #0b7285;
+
+padding:15px;
+
+margin:10px 0;
+
+border-radius:10px;
+
+box-shadow:0 3px 10px rgba(0,0,0,.05);
+
+}
+
+
+</style>
+
+</head>
+
+
+
+<body>
+
+
+
+<header>
+
+
+<div class="logo">
+
+🏥 Mwaniki Scholars
+
+</div>
+
+
+<div class="profile">
+
+🎓 Student
+
+</div>
+
+
+</header>
+
+
+
+
+
+
+<div class="container">
+
+
+
+<h1>
+
+🎓 Student Learning Dashboard
+
+</h1>
+
+
+<p>
+
+Access medical courses, notes, quizzes and consultations.
+
+</p>
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+
+📚 Medical Course Library
+
+</h2>
+
+
+
+<input
+
+type="text"
+
+id="courseSearch"
+
+placeholder="🔎 Search course"
+
+>
+
+
+
+<div id="courseList">
+
+Loading courses...
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="grid">
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+
+📄 Notes Library
+
+</h2>
+
+
+<p>
+
+Lecture notes and revision materials.
+
+</p>
+
+
+<div id="notesArea">
+
+Select a course.
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+
+📝 Quiz Center
+
+</h2>
+
+
+<p>
+
+Practice medical questions and test yourself.
+
+</p>
+
+
+<div id="quizArea">
+
+Select a unit to start quiz.
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+
+🤖 AI Medical Tutor
+
+</h2>
+
+
+<p>
+
+Ask questions about medical topics.
+
+</p>
+
+
+
+<textarea 
+
+id="aiQuestion"
+
+placeholder="Type your medical question here...">
+
+</textarea>
+
+
+
+<button onclick="askAI()">
+
+🤖 Ask AI Tutor
+
+</button>
+
+
+
+<div id="aiAnswer">
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+
+👨‍🏫 Tutor Consultation
+
+</h2>
+
+
+
+<p>
+
+Request help from a medical tutor.
+
+</p>
+
+
+
+<input
+
+id="studentName"
+
+placeholder="Your name"
+
+>
+
+
+<input
+
+id="topic"
+
+placeholder="Topic needing help"
+
+>
+
+
+<input
+
+id="preferredTime"
+
+placeholder="Preferred consultation time"
+
+>
+
+
+
+<button onclick="bookTutor()">
+
+📅 Book Tutor
+
+</button>
+
+
+
+<div id="bookingResult">
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+
+📊 Learning Progress
+
+</h2>
+
+
+<p>
+
+Monitor your performance.
+
+</p>
+
+
+<div id="progress">
+
+0%
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<script type="module" src="firebase.js"></script>
+
+<script type="module" src="courses.js"></script>
+
+<script type="module" src="dashboard.js"></script>
+
+<script type="module" src="quiz.js"></script>
+
+<script src="aiTutor.js"></script>
+
+
+
+</body>
+
+
+</html>
