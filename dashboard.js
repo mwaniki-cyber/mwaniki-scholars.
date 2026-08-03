@@ -1,99 +1,90 @@
-console.log("Mwaniki Scholars Dashboard Loaded 🚀");
+import { courses } from "./courses.js";
 
 
-// ==============================
-// COURSE BUTTONS
-// ==============================
-
-const courseButtons = document.querySelectorAll(".course-card button");
+// ================================
+// ELEMENTS
+// ================================
 
 
-courseButtons.forEach(button => {
+const courseList =
+document.getElementById("courseList");
 
-    button.addEventListener("click", () => {
 
-        alert("Course page coming soon 🚀");
+const search =
+document.getElementById("courseSearch");
 
-    });
+
+const notesArea =
+document.getElementById("notesArea");
+
+
+const quizArea =
+document.getElementById("quizArea");
+
+
+
+
+
+// ================================
+// LOAD COURSES
+// ================================
+
+
+function loadCourses(filter=""){
+
+
+courseList.innerHTML="";
+
+
+
+Object.keys(courses)
+
+.filter(course=>
+
+course.toLowerCase()
+
+.includes(filter.toLowerCase())
+
+)
+
+
+.forEach(course=>{
+
+
+const div=document.createElement("div");
+
+
+div.className="course-item";
+
+
+div.innerHTML=
+
+`
+<h3>📚 ${course}</h3>
+
+<p>
+${courses[course].units.length} Units Available
+</p>
+`;
+
+
+
+div.onclick=()=>{
+
+
+showUnits(course);
+
+
+};
+
+
+
+courseList.appendChild(div);
+
+
 
 });
 
-
-
-
-// ==============================
-// SIDEBAR ACTIVE MENU
-// ==============================
-
-const menuItems = document.querySelectorAll(".sidebar li");
-
-
-menuItems.forEach(item => {
-
-    item.addEventListener("click", () => {
-
-
-        menuItems.forEach(menu => {
-
-            menu.classList.remove("active");
-
-        });
-
-
-        item.classList.add("active");
-
-
-    });
-
-});
-
-
-
-
-// ==============================
-// COURSE SEARCH
-// ==============================
-
-const searchBox = document.querySelector(".search input");
-
-
-if(searchBox){
-
-
-    searchBox.addEventListener("keyup", () => {
-
-
-        let searchValue = searchBox.value.toLowerCase();
-
-
-        const cards = document.querySelectorAll(".course-card");
-
-
-        cards.forEach(card => {
-
-
-            let courseName = card.innerText.toLowerCase();
-
-
-            if(courseName.includes(searchValue)){
-
-
-                card.style.display = "block";
-
-
-            }else{
-
-
-                card.style.display = "none";
-
-
-            }
-
-
-        });
-
-
-    });
 
 
 }
@@ -101,29 +92,191 @@ if(searchBox){
 
 
 
-// ==============================
-// LOGOUT PLACEHOLDER
-// ==============================
-
-const menu = document.querySelectorAll(".sidebar li");
+// ================================
+// SHOW UNITS
+// ================================
 
 
-menu.forEach(item => {
+
+function showUnits(course){
 
 
-    if(item.innerText.includes("Logout")){
+notesArea.innerHTML=
+
+`
+
+<h3>
+${course} Notes
+</h3>
+
+`;
 
 
-        item.addEventListener("click",()=>{
+
+quizArea.innerHTML=
+
+`
+
+<h3>
+${course} Quiz
+</h3>
+
+<p>
+Select a unit to start questions.
+</p>
+
+`;
 
 
-            alert("Firebase logout will be connected here");
 
 
-        });
+
+courses[course].units.forEach(unit=>{
 
 
-    }
+
+const card=document.createElement("div");
+
+
+card.className="unit-card";
+
+
+
+card.innerHTML=
+
+`
+
+<h4>
+📖 ${unit.title}
+</h4>
+
+
+<p>
+${unit.notes}
+</p>
+
+
+<button>
+
+📄 Open Notes
+
+</button>
+
+
+<button>
+
+📝 Quiz
+
+</button>
+
+`;
+
+
+
+
+
+const buttons=card.querySelectorAll("button");
+
+
+
+
+// NOTES BUTTON
+
+
+buttons[0].onclick=()=>{
+
+
+const url=
+
+"https://mwaniki-cyber.github.io/mwaniki-scholars/notes/"
+
++
+
+unit.file;
+
+
+
+window.open(url,"_blank");
+
+
+};
+
+
+
+
+// QUIZ BUTTON
+
+
+buttons[1].onclick=()=>{
+
+
+quizArea.innerHTML=
+
+`
+
+<h3>
+📝 ${unit.title} Quiz
+</h3>
+
+
+<p>
+Quiz system loading...
+</p>
+
+`;
+
+
+
+};
+
+
+
+notesArea.appendChild(card);
+
 
 
 });
+
+
+
+}
+
+
+
+
+
+// ================================
+// SEARCH
+// ================================
+
+
+search.addEventListener(
+
+"input",
+
+()=>{
+
+
+loadCourses(search.value);
+
+
+}
+
+);
+
+
+
+
+
+// ================================
+// START
+// ================================
+
+
+loadCourses();
+
+
+
+console.log(
+"🎓 Student dashboard loaded"
+);
