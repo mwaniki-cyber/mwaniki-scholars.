@@ -34,3 +34,173 @@ button:hover {
   background: #1a5edb;
 }
 
+.auth-container{
+position:relative;
+height:500px;
+max-width:1000px;
+margin:20px auto;
+overflow:hidden;
+border-radius:15px;
+box-shadow:0 0 20px rgba(0,0,0,.25);
+}
+
+.medical-bg{
+position:absolute;
+width:100%;
+height:100%;
+background:linear-gradient(135deg,#001f3f,#004d66,#0b6e6e);
+overflow:hidden;
+}
+
+.auth-box{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+z-index:10;
+width:320px;
+padding:25px;
+background:rgba(255,255,255,.15);
+backdrop-filter:blur(10px);
+border-radius:15px;
+color:white;
+text-align:center;
+}
+
+.auth-box input{
+width:90%;
+padding:10px;
+margin:8px;
+border:none;
+border-radius:5px;
+}
+
+.auth-box button{
+width:95%;
+padding:10px;
+margin:8px;
+background:#00b894;
+border:none;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.auth-box button:hover{
+background:#00d1a0;
+}
+
+.cross{
+position:absolute;
+font-size:45px;
+color:rgba(255,255,255,.15);
+animation:float 12s linear infinite;
+}
+
+.c1{left:5%;animation-delay:0s;}
+.c2{left:35%;animation-delay:3s;}
+.c3{left:65%;animation-delay:6s;}
+.c4{left:90%;animation-delay:9s;}
+
+@keyframes float{
+
+0%{
+transform:translateY(520px) rotate(0deg);
+opacity:0;
+}
+
+20%{
+opacity:1;
+}
+
+80%{
+opacity:1;
+}
+
+100%{
+transform:translateY(-150px) rotate(360deg);
+opacity:0;
+}
+
+}
+
+.ecg{
+position:absolute;
+width:200%;
+bottom:90px;
+animation:ecgMove 8s linear infinite;
+}
+
+.ecg svg{
+width:100%;
+height:120px;
+}
+
+@keyframes ecgMove{
+
+0%{
+transform:translateX(0);
+}
+
+100%{
+transform:translateX(-50%);
+}
+
+}
+
+.pulse{
+position:absolute;
+top:50%;
+left:50%;
+width:20px;
+height:20px;
+background:#ff7700;
+border-radius:50%;
+transform:translate(-50%,-50%);
+animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+
+0%{
+box-shadow:0 0 0 0 rgba(0,255,153,.8);
+}
+
+70%{
+box-shadow:0 0 0 80px rgba(0,255,153,0);
+}
+
+100%{
+box-shadow:0 0 0 0 rgba(0,255,153,0);
+}
+
+}
+.upload-box{
+
+background:#f5f9ff;
+
+padding:20px;
+
+border-radius:10px;
+
+border:1px solid #ddd;
+
+}
+
+
+#uploadProgress{
+
+margin-top:15px;
+
+font-weight:bold;
+
+}
+
+
+#uploadStatus{
+
+padding:10px;
+
+border-radius:5px;
+
+}
