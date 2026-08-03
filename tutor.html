@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mwaniki Scholars Tutor Portal</title>
+
+
+<style>
+
+*{
+box-sizing:border-box;
+font-family:"Segoe UI",Arial,sans-serif;
+}
+
+
+body{
+
+margin:0;
+
+background:#f4f9ff;
+
+}
+
+
+
+header{
+
+background:linear-gradient(135deg,#063970,#0b7285);
+
+color:white;
+
+padding:25px;
+
+text-align:center;
+
+}
+
+
+
+.logo{
+
+font-size:28px;
+
+font-weight:bold;
+
+}
+
+
+
+.container{
+
+padding:30px;
+
+}
+
+
+
+.grid{
+
+display:grid;
+
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+
+gap:25px;
+
+}
+
+
+
+.card{
+
+background:white;
+
+padding:25px;
+
+border-radius:20px;
+
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+
+}
+
+
+
+.card h2{
+
+color:#063970;
+
+}
+
+
+
+.card p{
+
+color:#64748b;
+
+}
+
+
+
+button{
+
+background:#0b7285;
+
+color:white;
+
+border:none;
+
+padding:12px 20px;
+
+border-radius:10px;
+
+cursor:pointer;
+
+}
+
+
+button:hover{
+
+background:#064747;
+
+}
+
+
+
+input,textarea,select{
+
+width:100%;
+
+padding:12px;
+
+margin:8px 0;
+
+border-radius:10px;
+
+border:1px solid #ddd;
+
+}
+
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+
+<header>
+
+
+<div class="logo">
+
+👨‍🏫 Mwaniki Scholars Tutor Portal
+
+</div>
+
+
+<p>
+Teach • Mentor • Guide Future Medical Professionals
+</p>
+
+
+</header>
+
+
+
+
+
+<div class="container">
+
+
+
+<h1>
+Welcome Tutor 👋
+</h1>
+
+
+<div class="grid">
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+📚 My Courses
+</h2>
+
+
+<p>
+Create and manage your medical lessons.
+</p>
+
+
+<button>
+
+Manage Courses
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+📤 Upload Material
+</h2>
+
+
+<p>
+Upload notes, slides and learning resources.
+</p>
+
+
+
+<input 
+type="file"
+accept=".pdf,.doc,.ppt">
+
+
+<button>
+
+Upload Notes
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+🎥 Video Lessons
+</h2>
+
+
+<p>
+Add recorded lectures for students.
+</p>
+
+
+
+<input
+type="file"
+accept="video/*">
+
+
+
+<button>
+
+Upload Video
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+💬 Student Questions
+</h2>
+
+
+<p>
+Answer questions from learners.
+</p>
+
+
+
+<button>
+
+Open Questions
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+📅 Consultations
+</h2>
+
+
+<p>
+Manage student appointments.
+</p>
+
+
+<button>
+
+View Requests
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h2>
+⭐ Tutor Profile
+</h2>
+
+
+<p>
+Manage your teaching profile and ratings.
+</p>
+
+
+<button>
+
+Edit Profile
+
+</button>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+<script type="module" src="firebase.js"></script>
+
+
+</body>
+
+
+</html>
