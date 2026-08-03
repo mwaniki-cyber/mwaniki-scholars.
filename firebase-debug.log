@@ -1,0 +1,121 @@
+[debug] [2026-06-11T08:11:20.758Z] ----------------------------------------------------------------------
+[debug] [2026-06-11T08:11:20.780Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\jmwan\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js deploy --only hosting
+[debug] [2026-06-11T08:11:20.781Z] CLI Version:   15.19.1
+[debug] [2026-06-11T08:11:20.781Z] Platform:      win32
+[debug] [2026-06-11T08:11:20.781Z] Node Version:  v22.19.0
+[debug] [2026-06-11T08:11:20.783Z] Time:          Thu Jun 11 2026 11:11:20 GMT+0300 (East Africa Time)
+[debug] [2026-06-11T08:11:20.783Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-06-11T08:11:29.345Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-06-11T08:11:29.346Z] > authorizing via signed-in user (jmwaniki368@gmail.com)
+[debug] [2026-06-11T08:11:29.346Z] [iam] checking project mwaniki-scholars for permissions ["firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-06-11T08:11:29.348Z] Checked if tokens are valid: false, expires at: 1781094038494
+[debug] [2026-06-11T08:11:29.348Z] Checked if tokens are valid: false, expires at: 1781094038494
+[debug] [2026-06-11T08:11:29.348Z] > refreshing access token with scopes: []
+[debug] [2026-06-11T08:11:29.353Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-06-11T08:11:29.353Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-11T08:11:30.343Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-06-11T08:11:30.344Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-06-11T08:11:30.387Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/mwaniki-scholars:testIamPermissions [none]
+[debug] [2026-06-11T08:11:30.388Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/mwaniki-scholars:testIamPermissions  x-goog-user-project=mwaniki-scholars
+[debug] [2026-06-11T08:11:30.389Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mwaniki-scholars:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-06-11T08:11:31.583Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/mwaniki-scholars:testIamPermissions 200
+[debug] [2026-06-11T08:11:31.584Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/mwaniki-scholars:testIamPermissions {"permissions":["firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-06-11T08:11:31.589Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:31.589Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:31.592Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/mwaniki-scholars [none]
+[debug] [2026-06-11T08:11:32.401Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/mwaniki-scholars 200
+[debug] [2026-06-11T08:11:32.402Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/mwaniki-scholars {"projectId":"mwaniki-scholars","projectNumber":"383333905328","displayName":"Drmwaniki medics","name":"projects/mwaniki-scholars","resources":{"hostingSite":"mwaniki-scholars"},"state":"ACTIVE","etag":"1_56f65dad-bbe4-4e35-b045-40bce53a29c3"}
+[info] 
+[info] === Deploying to 'mwaniki-scholars'...
+[info] 
+[info] i  deploying hosting 
+[debug] [2026-06-11T08:11:32.429Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:32.430Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:32.431Z] >>> [apiv2][query] GET https://firebasehosting.googleapis.com/v1beta1/projects/mwaniki-scholars/sites/mwaniki-scholars [none]
+[debug] [2026-06-11T08:11:34.478Z] <<< [apiv2][status] GET https://firebasehosting.googleapis.com/v1beta1/projects/mwaniki-scholars/sites/mwaniki-scholars 200
+[debug] [2026-06-11T08:11:34.479Z] <<< [apiv2][body] GET https://firebasehosting.googleapis.com/v1beta1/projects/mwaniki-scholars/sites/mwaniki-scholars {"name":"projects/mwaniki-scholars/sites/mwaniki-scholars","defaultUrl":"https://mwaniki-scholars.web.app","appId":"1:383333905328:web:082e968df7bf4093999c75","type":"DEFAULT_SITE"}
+[debug] [2026-06-11T08:11:34.495Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:34.495Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:34.496Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions [none]
+[debug] [2026-06-11T08:11:34.496Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions {"status":"CREATED","labels":{"deployment-tool":"cli-firebase"}}
+[debug] [2026-06-11T08:11:37.213Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions 200
+[debug] [2026-06-11T08:11:37.213Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions {"name":"projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862","status":"CREATED","config":{},"labels":{"deployment-tool":"cli-firebase"}}
+[info] i  hosting[mwaniki-scholars]: beginning deploy... 
+[info] i  hosting[mwaniki-scholars]: found 3 files in . 
+[debug] [2026-06-11T08:11:56.097Z] [hosting] uploading with 200 concurrency
+[debug] [2026-06-11T08:11:56.110Z] [hosting] hash cache [] not populated
+[debug] [2026-06-11T08:11:56.224Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:56.227Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:56.234Z] [hosting] hash cache [] stored for 3 files
+[debug] [2026-06-11T08:11:56.235Z] [hosting][hash queue][FINAL] {"max":69,"min":51,"avg":57.333333333333336,"active":0,"complete":3,"success":3,"errored":0,"retried":0,"total":3,"elapsed":85}
+[debug] [2026-06-11T08:11:56.238Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862:populateFiles [none]
+[debug] [2026-06-11T08:11:56.239Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862:populateFiles {"files":{"/script.js":"41f59905e827c644784df1c358a96570772112b8be787c8490a471c13034f113","/style.css":"65cfd81a44525196f7dc7cca3c8edc803f3758b1f89f8b1809e3181a5737707f","/index.html":"42c2f6e775d07095735296bec6ad675d95f252df3c9ad0bdd0d587b360432311"}}
+[debug] [2026-06-11T08:11:57.892Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862:populateFiles 200
+[debug] [2026-06-11T08:11:57.893Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862:populateFiles {"uploadRequiredHashes":["65cfd81a44525196f7dc7cca3c8edc803f3758b1f89f8b1809e3181a5737707f","42c2f6e775d07095735296bec6ad675d95f252df3c9ad0bdd0d587b360432311","41f59905e827c644784df1c358a96570772112b8be787c8490a471c13034f113"],"uploadUrl":"https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files"}
+[debug] [2026-06-11T08:11:57.897Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:57.897Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:57.899Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:57.899Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:57.901Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:57.901Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:57.902Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/65cfd81a44525196f7dc7cca3c8edc803f3758b1f89f8b1809e3181a5737707f [none]
+[debug] [2026-06-11T08:11:57.902Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/65cfd81a44525196f7dc7cca3c8edc803f3758b1f89f8b1809e3181a5737707f [stream]
+[debug] [2026-06-11T08:11:57.925Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/42c2f6e775d07095735296bec6ad675d95f252df3c9ad0bdd0d587b360432311 [none]
+[debug] [2026-06-11T08:11:57.925Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/42c2f6e775d07095735296bec6ad675d95f252df3c9ad0bdd0d587b360432311 [stream]
+[debug] [2026-06-11T08:11:57.948Z] >>> [apiv2][query] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/41f59905e827c644784df1c358a96570772112b8be787c8490a471c13034f113 [none]
+[debug] [2026-06-11T08:11:57.949Z] >>> [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/41f59905e827c644784df1c358a96570772112b8be787c8490a471c13034f113 [stream]
+[debug] [2026-06-11T08:11:57.975Z] [hosting][populate queue][FINAL] {"max":1678,"min":1678,"avg":1678,"active":0,"complete":1,"success":1,"errored":0,"retried":0,"total":1,"elapsed":1752}
+[debug] [2026-06-11T08:11:57.976Z] [hosting] uploads queued: 3
+[debug] [2026-06-11T08:11:59.394Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/42c2f6e775d07095735296bec6ad675d95f252df3c9ad0bdd0d587b360432311 200
+[debug] [2026-06-11T08:11:59.394Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/42c2f6e775d07095735296bec6ad675d95f252df3c9ad0bdd0d587b360432311 [stream]
+[debug] [2026-06-11T08:11:59.425Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/65cfd81a44525196f7dc7cca3c8edc803f3758b1f89f8b1809e3181a5737707f 200
+[debug] [2026-06-11T08:11:59.425Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/65cfd81a44525196f7dc7cca3c8edc803f3758b1f89f8b1809e3181a5737707f [stream]
+[debug] [2026-06-11T08:11:59.517Z] <<< [apiv2][status] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/41f59905e827c644784df1c358a96570772112b8be787c8490a471c13034f113 200
+[debug] [2026-06-11T08:11:59.518Z] <<< [apiv2][body] POST https://upload-firebasehosting.googleapis.com/upload/sites/mwaniki-scholars/versions/bf096cbd95588862/files/41f59905e827c644784df1c358a96570772112b8be787c8490a471c13034f113 [stream]
+[debug] [2026-06-11T08:11:59.519Z] [hosting][upload queue][FINAL] {"max":1619,"min":1496,"avg":1548.6666666666667,"active":0,"complete":3,"success":3,"errored":0,"retried":0,"total":3,"elapsed":1625}
+[info] +  hosting[mwaniki-scholars]: file upload complete 
+[debug] [2026-06-11T08:11:59.596Z] [hosting] deploy completed after 3628ms
+[debug] [2026-06-11T08:11:59.597Z] [
+  {
+    "config": {
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "site": "mwaniki-scholars"
+    },
+    "version": "projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862"
+  }
+]
+[info] i  hosting[mwaniki-scholars]: finalizing version... 
+[debug] [2026-06-11T08:11:59.604Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:59.612Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:11:59.613Z] >>> [apiv2][query] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions/bf096cbd95588862 updateMask=status%2Cconfig
+[debug] [2026-06-11T08:11:59.614Z] >>> [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions/bf096cbd95588862 {"status":"FINALIZED","config":{}}
+[debug] [2026-06-11T08:12:01.272Z] <<< [apiv2][status] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions/bf096cbd95588862 200
+[debug] [2026-06-11T08:12:01.273Z] <<< [apiv2][body] PATCH https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/versions/bf096cbd95588862 {"name":"projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862","status":"FINALIZED","config":{},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-06-11T08:14:35.667511Z","createUser":{"email":"jmwaniki368@gmail.com"},"finalizeTime":"2026-06-11T08:15:00.969553Z","finalizeUser":{"email":"jmwaniki368@gmail.com"}}
+[debug] [2026-06-11T08:12:01.273Z] [hosting] finalized version for mwaniki-scholars:[object Object]
+[info] +  hosting[mwaniki-scholars]: version finalized 
+[info] i  hosting[mwaniki-scholars]: releasing new version... 
+[debug] [2026-06-11T08:12:01.278Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:12:01.279Z] Checked if tokens are valid: true, expires at: 1781169089345
+[debug] [2026-06-11T08:12:01.280Z] >>> [apiv2][query] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/channels/live/releases versionName=projects%2F383333905328%2Fsites%2Fmwaniki-scholars%2Fversions%2Fbf096cbd95588862
+[debug] [2026-06-11T08:12:01.280Z] >>> [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/channels/live/releases {}
+[debug] [2026-06-11T08:12:02.908Z] <<< [apiv2][status] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/channels/live/releases 200
+[debug] [2026-06-11T08:12:02.908Z] <<< [apiv2][body] POST https://firebasehosting.googleapis.com/v1beta1/projects/-/sites/mwaniki-scholars/channels/live/releases {"name":"projects/383333905328/sites/mwaniki-scholars/channels/live/releases/1781165701714000","version":{"name":"projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862","status":"FINALIZED","config":{},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-06-11T08:14:35.667511Z","createUser":{"email":"jmwaniki368@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocKfhbVEke_w2ZtlpxlUfG_sfXH8Ofc3XBOMQIU4tfQUhh65Ug=mo"},"finalizeTime":"2026-06-11T08:15:00.969553Z","finalizeUser":{"email":"jmwaniki368@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocKfhbVEke_w2ZtlpxlUfG_sfXH8Ofc3XBOMQIU4tfQUhh65Ug=mo"}},"type":"DEPLOY","releaseTime":"2026-06-11T08:15:01.714Z","releaseUser":{"email":"jmwaniki368@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocKfhbVEke_w2ZtlpxlUfG_sfXH8Ofc3XBOMQIU4tfQUhh65Ug=mo"}}
+[debug] [2026-06-11T08:12:02.908Z] [hosting] release: {"name":"projects/383333905328/sites/mwaniki-scholars/channels/live/releases/1781165701714000","version":{"name":"projects/383333905328/sites/mwaniki-scholars/versions/bf096cbd95588862","status":"FINALIZED","config":{},"labels":{"deployment-tool":"cli-firebase"},"createTime":"2026-06-11T08:14:35.667511Z","createUser":{"email":"jmwaniki368@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocKfhbVEke_w2ZtlpxlUfG_sfXH8Ofc3XBOMQIU4tfQUhh65Ug=mo"},"finalizeTime":"2026-06-11T08:15:00.969553Z","finalizeUser":{"email":"jmwaniki368@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocKfhbVEke_w2ZtlpxlUfG_sfXH8Ofc3XBOMQIU4tfQUhh65Ug=mo"}},"type":"DEPLOY","releaseTime":"2026-06-11T08:15:01.714Z","releaseUser":{"email":"jmwaniki368@gmail.com","imageUrl":"https://lh3.googleusercontent.com/a/ACg8ocKfhbVEke_w2ZtlpxlUfG_sfXH8Ofc3XBOMQIU4tfQUhh65Ug=mo"}}
+[info] +  hosting[mwaniki-scholars]: release complete 
+[info] 
+[info] +  Deploy complete! 
+[info] 
+[info] Project Console: https://console.firebase.google.com/project/mwaniki-scholars/overview
+[info] Hosting URL: https://mwaniki-scholars.web.app
+[debug] [2026-06-11T08:12:12.960Z] Error: Timed out.
+    at Timeout._onTimeout (C:\Users\jmwan\AppData\Roaming\npm\node_modules\firebase-tools\lib\utils.js:310:49)
+    at listOnTimeout (node:internal/timers:588:17)
+    at process.processTimers (node:internal/timers:523:7)
+[error] 
+[error] Error: An unexpected error has occurred.
