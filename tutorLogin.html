@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mwaniki Scholars Tutor Login</title>
+
+
+<style>
+
+body{
+
+margin:0;
+font-family:Segoe UI,Arial;
+background:#f4f9ff;
+display:flex;
+height:100vh;
+justify-content:center;
+align-items:center;
+
+}
+
+
+.login-box{
+
+background:white;
+padding:35px;
+width:350px;
+border-radius:20px;
+box-shadow:0 10px 30px rgba(0,0,0,.1);
+text-align:center;
+
+}
+
+
+
+input{
+
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:10px;
+border:1px solid #ddd;
+
+}
+
+
+
+button{
+
+width:100%;
+padding:12px;
+background:#0b7285;
+color:white;
+border:none;
+border-radius:10px;
+cursor:pointer;
+
+}
+
+
+
+button:hover{
+
+background:#064747;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<div class="login-box">
+
+
+<h1>
+
+👨‍🏫 Tutor Login
+
+</h1>
+
+
+<p>
+Mwaniki Scholars Medical University
+</p>
+
+
+
+
+<input
+
+id="tutorEmail"
+
+type="email"
+
+placeholder="Tutor email"
+
+>
+
+
+
+<input
+
+id="tutorPassword"
+
+type="password"
+
+placeholder="Password"
+
+>
+
+
+
+<button onclick="tutorLogin()">
+
+🔐 Login
+
+</button>
+
+
+
+<p id="loginStatus"></p>
+
+
+
+</div>
+
+
+
+
+
+<script type="module" src="tutorAuth.js"></script>
+
+
+</body>
+
+
+</html>
