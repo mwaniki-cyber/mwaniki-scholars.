@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Mwaniki Scholars | Tutor Registration</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<div class="login-container">
+
+    <h1>👨‍🏫 Tutor Registration</h1>
+
+    <input
+        id="fullName"
+        type="text"
+        placeholder="Full Name">
+
+    <input
+        id="email"
+        type="email"
+        placeholder="Email Address">
+
+    <input
+        id="phone"
+        type="text"
+        placeholder="Phone Number">
+
+    <input
+        id="specialization"
+        type="text"
+        placeholder="Specialization">
+
+    <input
+        id="password"
+        type="password"
+        placeholder="Password">
+
+    <button onclick="registerTutor()">
+        Create Tutor Account
+    </button>
+
+    <p id="status"></p>
+
+    <br>
+
+    <a href="tutorLogin.html">
+
+        Already have an account?
+
+        Login
+
+    </a>
+
+</div>
+
+<script type="module" src="tutorRegister.js"></script>
+
+</body>
+
+</html>
