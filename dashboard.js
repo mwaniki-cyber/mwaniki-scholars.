@@ -1,282 +1,274 @@
-import { courses } from "./courses.js";
+import { supabase } from "./supabase.js";
 
 
-// ================================
-// ELEMENTS
-// ================================
+// ======================================================
+// MWANIKI SCHOLARS STUDENT DASHBOARD
+// NOTES + PROGRESS
+// COURSES ARE HANDLED BY courses.js
+// ======================================================
 
 
-const courseList =
-document.getElementById("courseList");
+// ======================================================
+// LOAD NOTES
+// ======================================================
+
+async function loadNotes() {
+
+    const notesBox =
+        document.getElementById("notesArea");
 
 
-const search =
-document.getElementById("courseSearch");
+    if (!notesBox) {
+
+        console.warn(
+            "notesArea not found"
+        );
+
+        return;
+    }
 
 
-const notesArea =
-document.getElementById("notesArea");
+    notesBox.innerHTML =
+        "⏳ Loading notes...";
 
 
-const quizArea =
-document.getElementById("quizArea");
+    const { data, error } =
+        await supabase
+            .from("notes")
+            .select("*")
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
 
 
+    if (error) {
+
+        console.error(
+            "NOTES ERROR:",
+            error
+        );
 
 
+        notesBox.innerHTML =
+            "❌ " + error.message;
 
-// ================================
-// LOAD COURSES
-// ================================
-
-
-function loadCourses(filter=""){
+        return;
+    }
 
 
-courseList.innerHTML="";
+    if (!data || data.length === 0) {
+
+        notesBox.innerHTML =
+            "📄 No notes uploaded yet.";
+
+        return;
+    }
 
 
-
-Object.keys(courses)
-
-.filter(course=>
-
-course.toLowerCase()
-
-.includes(filter.toLowerCase())
-
-)
+    notesBox.innerHTML = "";
 
 
-.forEach(course=>{
+    data.forEach(note => {
+
+        const course =
+            note.course ||
+            "Course";
 
 
-const div=document.createElement("div");
+        const unit =
+            note.unit ||
+            "Unit";
 
 
-div.className="course-item";
+        const filename =
+            note.filename;
 
 
-div.innerHTML=
-
-`
-<h3>📚 ${course}</h3>
-
-<p>
-${courses[course].units.length} Units Available
-</p>
-`;
+        if (!filename) {
+            return;
+        }
 
 
-
-div.onclick=()=>{
-
-
-showUnits(course);
-
-
-};
+        const githubUrl =
+            "https://github.com/mwaniki-cyber/mwaniki-scholars/blob/main/notes/"
+            +
+            encodeURIComponent(filename);
 
 
+        notesBox.innerHTML += `
 
-courseList.appendChild(div);
+            <div class="note-card">
 
+                <h3>
+                    📚 ${course}
+                </h3>
 
+                <p>
+                    📝 ${unit}
+                </p>
 
-});
+                <p>
+                    📄 ${filename}
+                </p>
 
+                <a
+                    href="${githubUrl}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
 
+                    <button>
+                        📄 Open Notes
+                    </button>
+
+                </a>
+
+            </div>
+
+        `;
+
+    });
 
 }
 
 
 
+// ======================================================
+// SEARCH NOTES
+// ======================================================
 
-// ================================
-// SHOW UNITS
-// ================================
+const notesSearch =
+    document.getElementById("notesSearch");
 
 
+if (notesSearch) {
 
-function showUnits(course){
+    notesSearch.addEventListener(
+        "input",
+        function () {
 
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
 
-notesArea.innerHTML=
 
-`
+            document
+                .querySelectorAll(".note-card")
+                .forEach(card => {
 
-<h3>
-${course} Notes
-</h3>
+                    const text =
+                        card.textContent
+                            .toLowerCase();
 
-`;
 
+                    card.style.display =
+                        text.includes(search)
+                            ? ""
+                            : "none";
 
+                });
 
-quizArea.innerHTML=
-
-`
-
-<h3>
-${course} Quiz
-</h3>
-
-<p>
-Select a unit to start questions.
-</p>
-
-`;
-
-
-
-
-
-courses[course].units.forEach(unit=>{
-
-
-
-const card=document.createElement("div");
-
-
-card.className="unit-card";
-
-
-
-card.innerHTML=
-
-`
-
-<h4>
-📖 ${unit.title}
-</h4>
-
-
-<p>
-${unit.notes}
-</p>
-
-
-<button>
-
-📄 Open Notes
-
-</button>
-
-
-<button>
-
-📝 Quiz
-
-</button>
-
-`;
-
-
-
-
-
-const buttons=card.querySelectorAll("button");
-
-
-
-
-// NOTES BUTTON
-
-
-buttons[0].onclick=()=>{
-
-
-const url=
-
-"https://mwaniki-cyber.github.io/mwaniki-scholars/notes/"
-
-+
-
-unit.file;
-
-
-
-window.open(url,"_blank");
-
-
-};
-
-
-
-
-// QUIZ BUTTON
-
-
-buttons[1].onclick=()=>{
-
-
-quizArea.innerHTML=
-
-`
-
-<h3>
-📝 ${unit.title} Quiz
-</h3>
-
-
-<p>
-Quiz system loading...
-</p>
-
-`;
-
-
-
-};
-
-
-
-notesArea.appendChild(card);
-
-
-
-});
-
-
+        }
+    );
 
 }
 
 
 
+// ======================================================
+// QUIZ PROGRESS
+// ======================================================
+
+function updateProgressDisplay() {
+
+    const progressBox =
+        document.getElementById("progress");
 
 
-// ================================
-// SEARCH
-// ================================
+    if (!progressBox) {
+        return;
+    }
 
 
-search.addEventListener(
-
-"input",
-
-()=>{
+    let progress = [];
 
 
-loadCourses(search.value);
+    try {
 
+        progress =
+            JSON.parse(
+                localStorage.getItem(
+                    "mwanikiQuizProgress"
+                )
+            ) || [];
+
+    } catch (error) {
+
+        progress = [];
+
+    }
+
+
+    if (progress.length === 0) {
+
+        progressBox.innerHTML =
+            "0%";
+
+        return;
+    }
+
+
+    let totalScore = 0;
+    let totalQuestions = 0;
+
+
+    progress.forEach(item => {
+
+        totalScore +=
+            Number(item.score) || 0;
+
+        totalQuestions +=
+            Number(item.total) || 0;
+
+    });
+
+
+    const percentage =
+        totalQuestions > 0
+            ? Math.round(
+                (totalScore /
+                totalQuestions) * 100
+            )
+            : 0;
+
+
+    progressBox.innerHTML =
+        percentage + "%";
 
 }
 
-);
 
 
+// ======================================================
+// INITIALIZE
+// ======================================================
+
+async function initializeDashboard() {
+
+    await loadNotes();
+
+    updateProgressDisplay();
+
+}
 
 
-
-// ================================
-// START
-// ================================
-
-
-loadCourses();
-
+initializeDashboard();
 
 
 console.log(
-"🎓 Student dashboard loaded"
+    "🎓 Mwaniki Scholars Dashboard loaded"
 );

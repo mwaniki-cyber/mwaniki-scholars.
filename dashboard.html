@@ -17,10 +17,15 @@ box-sizing:border-box;
 font-family:"Segoe UI",Arial,sans-serif;
 }
 
+
 body{
+
 margin:0;
+
 background:#f4f9ff;
+
 }
+
 
 
 header{
@@ -40,6 +45,7 @@ align-items:center;
 }
 
 
+
 .logo{
 
 font-size:24px;
@@ -47,6 +53,7 @@ font-size:24px;
 font-weight:bold;
 
 }
+
 
 
 .profile{
@@ -75,7 +82,7 @@ padding:30px;
 
 display:grid;
 
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
 
 gap:25px;
 
@@ -157,6 +164,14 @@ margin:8px 0;
 
 
 
+textarea{
+
+height:120px;
+
+}
+
+
+
 .course-item{
 
 background:#eef7fb;
@@ -183,7 +198,7 @@ background:#d7f0f7;
 
 .unit-card{
 
-background:#ffffff;
+background:#fff;
 
 border-left:5px solid #0b7285;
 
@@ -193,15 +208,14 @@ margin:10px 0;
 
 border-radius:10px;
 
-box-shadow:0 3px 10px rgba(0,0,0,.05);
-
 }
+
 
 
 </style>
 
-</head>
 
+</head>
 
 
 <body>
@@ -245,7 +259,7 @@ box-shadow:0 3px 10px rgba(0,0,0,.05);
 
 <p>
 
-Access medical courses, notes, quizzes and consultations.
+Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
 
 </p>
 
@@ -253,42 +267,33 @@ Access medical courses, notes, quizzes and consultations.
 
 
 
-
-
-<div class="card">
-
-
-<h2>
-
-📚 Medical Course Library
-
-</h2>
+<!-- COURSES -->
 
 
 
-<input
+<section class="card">
 
-type="text"
+    <h2>📚 Medical Course Library</h2>
 
-id="courseSearch"
+    <input
+        id="courseSearch"
+        type="text"
+        placeholder="🔎 Search course"
+    >
 
-placeholder="🔎 Search course"
+    <div id="courseArea">
 
->
+        ⏳ Loading courses...
+
+    </div>
+
+</section>
 
 
-
-<div id="courseList">
-
-Loading courses...
-
-</div>
 
 
 
 </div>
-
-
 
 
 
@@ -302,37 +307,26 @@ Loading courses...
 
 
 
-<div class="card">
+<!-- NOTES -->
 
+<section class="card">
 
-<h2>
+    <h2>📄 Notes Library</h2>
 
-📄 Notes Library
+    <div id="notesArea">
 
-</h2>
+        ⏳ Loading notes...
 
+    </div>
 
-<p>
-
-Lecture notes and revision materials.
-
-</p>
-
-
-<div id="notesArea">
-
-Select a course.
-
-</div>
-
-
-</div>
+</section>
 
 
 
 
 
 
+<!-- QUIZ -->
 
 
 <div class="card">
@@ -341,20 +335,17 @@ Select a course.
 <h2>
 
 📝 Quiz Center
+<button id="sendQuizBtn" onclick="sendQuizToTutor()">
+📨 Send Quiz Results to Tutor
+</button>
 
+<p id="quizStatus"></p>
 </h2>
-
-
-<p>
-
-Practice medical questions and test yourself.
-
-</p>
 
 
 <div id="quizArea">
 
-Select a unit to start quiz.
+Select a unit to start quiz
 
 </div>
 
@@ -367,6 +358,8 @@ Select a unit to start quiz.
 
 
 
+
+<!-- AI -->
 
 
 <div class="card">
@@ -381,17 +374,17 @@ Select a unit to start quiz.
 
 <p>
 
-Ask questions about medical topics.
+Ask medical questions.
 
 </p>
 
 
 
-<textarea 
+<textarea
 
 id="aiQuestion"
 
-placeholder="Type your medical question here...">
+placeholder="Example: Explain diabetes mellitus">
 
 </textarea>
 
@@ -421,22 +414,25 @@ placeholder="Type your medical question here...">
 
 
 
+<!-- SEND QUESTION -->
+
+
 <div class="card">
 
 
 <h2>
 
-👨‍🏫 Tutor Consultation
+👨‍🏫 Ask Medical Tutor
 
 </h2>
 
 
-
 <p>
 
-Request help from a medical tutor.
+Send your question to a qualified tutor.
 
 </p>
+
 
 
 
@@ -444,39 +440,55 @@ Request help from a medical tutor.
 
 id="studentName"
 
-placeholder="Your name"
+placeholder="Your full name"
 
 >
+
+
+
+<input
+
+id="studentEmail"
+
+placeholder="Your email"
+
+>
+
+
 
 
 <input
 
 id="topic"
 
-placeholder="Topic needing help"
-
->
-
-
-<input
-
-id="preferredTime"
-
-placeholder="Preferred consultation time"
+placeholder="Topic"
 
 >
 
 
 
-<button onclick="bookTutor()">
 
-📅 Book Tutor
+<textarea
+
+id="studentMessage"
+
+placeholder="Write your question">
+
+</textarea>
+
+
+
+
+<button onclick="sendTutorMessage()">
+
+📨 Send Question
 
 </button>
 
 
 
-<div id="bookingResult">
+
+<div id="messageStatus">
 
 </div>
 
@@ -490,6 +502,9 @@ placeholder="Preferred consultation time"
 
 
 
+
+
+<!-- STUDENT INBOX -->
 
 
 <div class="card">
@@ -497,16 +512,74 @@ placeholder="Preferred consultation time"
 
 <h2>
 
-📊 Learning Progress
+📬 Tutor Replies
 
 </h2>
 
 
 <p>
 
-Monitor your performance.
+Check answers from tutors.
 
 </p>
+
+
+
+
+<input
+
+id="checkEmail"
+
+placeholder="Enter your email"
+
+>
+
+
+
+<button onclick="loadStudentAnswers()">
+
+📥 Load Answers
+
+</button>
+
+
+
+
+<div id="studentInbox">
+
+No messages yet.
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- PROGRESS -->
+
+
+<div class="card">
+
+
+<h2>
+
+📊 Progress
+
+</h2>
+
+
+<p>
+
+Track your learning.
+
+</p>
+
 
 
 <div id="progress">
@@ -524,23 +597,16 @@ Monitor your performance.
 
 
 
-
 </div>
-
-
-
-
 
 
 </div>
 
 
 
+<!-- SYSTEM FILES -->
 
-
-
-
-<script type="module" src="firebase.js"></script>
+<script type="module" src="supabase.js"></script>
 
 <script type="module" src="courses.js"></script>
 
@@ -550,9 +616,12 @@ Monitor your performance.
 
 <script src="aiTutor.js"></script>
 
+<script type="module" src="studentTutor.js"></script>
 
+<script type="module" src="studentInbox.js"></script>
 
 </body>
-
-
 </html>
+
+
+

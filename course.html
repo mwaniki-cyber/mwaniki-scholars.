@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Mwaniki Scholars Course</title>
+
+<style>
+
+*{
+box-sizing:border-box;
+font-family:"Segoe UI",Arial,sans-serif;
+}
+
+body{
+margin:0;
+background:#f4f9ff;
+color:#123;
+}
+
+header{
+background:linear-gradient(
+135deg,
+#063970,
+#0b7285
+);
+color:white;
+padding:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+flex-wrap:wrap;
+gap:10px;
+}
+
+.logo{
+font-size:24px;
+font-weight:bold;
+}
+
+.back-btn{
+background:white;
+color:#063970;
+border:none;
+padding:10px 16px;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+padding:25px;
+}
+
+.hero{
+background:white;
+padding:30px;
+border-radius:20px;
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+margin-bottom:25px;
+}
+
+.hero h1{
+color:#063970;
+margin-top:0;
+}
+
+.course-description{
+color:#555;
+font-size:16px;
+}
+
+.section{
+background:white;
+padding:25px;
+border-radius:20px;
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+margin-bottom:25px;
+}
+
+.section h2{
+color:#063970;
+}
+
+.unit{
+background:#eef7fb;
+border:1px solid #d9edf2;
+padding:20px;
+border-radius:15px;
+margin:15px 0;
+}
+
+.unit h3{
+margin-top:0;
+color:#063970;
+}
+
+.unit-buttons{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-top:15px;
+}
+
+button{
+background:#0b7285;
+color:white;
+border:none;
+padding:11px 17px;
+border-radius:10px;
+cursor:pointer;
+}
+
+button:hover{
+background:#064747;
+}
+
+.notes-list{
+margin-top:15px;
+}
+
+.note{
+background:white;
+padding:15px;
+border-radius:10px;
+margin:10px 0;
+border:1px solid #ddd;
+}
+
+.quiz-area{
+margin-top:20px;
+}
+
+.loading{
+text-align:center;
+padding:20px;
+color:#666;
+}
+
+.empty{
+padding:20px;
+background:#fff8e6;
+border-radius:12px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+<div class="logo">
+🏥 Mwaniki Scholars
+</div>
+
+<button
+class="back-btn"
+id="backButton">
+⬅️ Back to Dashboard
+</button>
+
+</header>
+
+
+
+<div class="container">
+
+
+<!-- COURSE INFORMATION -->
+
+<div class="hero">
+
+<h1 id="courseTitle">
+📚 Loading Course...
+</h1>
+
+<p
+id="courseDescription"
+class="course-description">
+Loading course information...
+</p>
+
+</div>
+
+
+
+<!-- UNITS -->
+
+<div class="section">
+
+<h2>
+📖 Course Units
+</h2>
+
+<div id="unitsArea">
+
+<div class="loading">
+⏳ Loading units...
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- NOTES -->
+
+<div class="section">
+
+<h2>
+📄 Course Notes
+</h2>
+
+<div id="notesArea">
+
+<div class="loading">
+⏳ Loading notes...
+</div>
+
+</div>
+
+</div>
+
+
+
+<!-- QUIZ -->
+
+<div class="section">
+
+<h2>
+📝 Quiz Center
+</h2>
+
+<div id="quizArea">
+
+<p>
+Select a unit above to start a quiz.
+</p>
+
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<script type="module">
+
+import { supabase }
+from "./supabase.js";
+
+
+// =====================================================
+// GET SELECTED COURSE
+// =====================================================
+
+const courseId =
+localStorage.getItem(
+"selectedCourse"
+);
+
+const courseName =
+localStorage.getItem(
+"selectedCourseName"
+);
+
+
+// =====================================================
+// ELEMENTS
+// =====================================================
+
+const courseTitle =
+document.getElementById(
+"courseTitle"
+);
+
+const courseDescription =
+document.getElementById(
+"courseDescription"
+);
+
+const unitsArea =
+document.getElementById(
+"unitsArea"
+);
+
+const notesArea =
+document.getElementById(
+"notesArea"
+);
+
+
+// =====================================================
+// BACK BUTTON
+// =====================================================
+
+document
+.getElementById("backButton")
+.addEventListener(
+"click",
+function(){
+
+window.location.href =
+"dashboard.html";
+
+}
+);
+
+
+// =====================================================
+// DISPLAY BASIC COURSE INFORMATION
+// =====================================================
+
+if(courseName){
+
+courseTitle.innerHTML =
+"📚 " + courseName;
+
+}
+
+else{
+
+courseTitle.innerHTML =
+"📚 Mwaniki Scholars Course";
+
+}
+
+
+
+// =====================================================
+// LOAD COURSE
+// =====================================================
+
+async function loadCourse(){
+
+if(!courseId){
+
+courseDescription.innerHTML =
+"⚠️ No course has been selected.";
+
+unitsArea.innerHTML =
+`
+<div class="empty">
+Please return to the dashboard
+and select a course.
+</div>
+`;
+
+return;
+
+}
+
+
+// =====================================================
+// TRY DATABASE COURSE
+// =====================================================
+
+const {data,error} =
+await supabase
+.from("courses")
+.select("*")
+.eq("id",courseId)
+.maybeSingle();
+
+
+if(!error && data){
+
+courseTitle.innerHTML =
+"📚 " +
+(
+data.name ||
+data.course_name ||
+data.course_title ||
+data.title ||
+courseName ||
+"Course"
+);
+
+
+courseDescription.innerHTML =
+(
+data.description ||
+data.course_description ||
+data.details ||
+"Medical learning course"
+);
+
+}
+
+else{
+
+courseDescription.innerHTML =
+"Medical learning course from Mwaniki Scholars.";
+
+}
+
+
+// =====================================================
+// LOAD UNITS
+// =====================================================
+
+await loadUnits();
+
+
+// =====================================================
+// LOAD NOTES
+// =====================================================
+
+await loadNotes();
+
+}
+
+
+
+// =====================================================
+// LOAD UNITS
+// =====================================================
+
+async function loadUnits(){
+
+unitsArea.innerHTML =
+"⏳ Loading units...";
+
+
+const {data,error} =
+await supabase
+.from("units")
+.select("*");
+
+
+if(error){
+
+console.warn(
+"Units table:",
+error.message
+);
+
+unitsArea.innerHTML =
+`
+<div class="empty">
+📖 Units are not available yet.
+</div>
+`;
+
+return;
+
+}
+
+
+if(!data || data.length===0){
+
+unitsArea.innerHTML =
+`
+<div class="empty">
+📖 No units have been added to this course yet.
+</div>
+`;
+
+return;
+
+}
+
+
+// =====================================================
+// FILTER UNITS
+// =====================================================
+
+let courseUnits =
+data.filter(unit => {
+
+return (
+
+String(
+unit.course_id
+) === String(courseId)
+
+||
+
+String(
+unit.course
+).toLowerCase() ===
+String(
+courseName
+).toLowerCase()
+
+);
+
+});
+
+
+// =====================================================
+// IF NO MATCH
+// =====================================================
+
+if(courseUnits.length===0){
+
+unitsArea.innerHTML =
+`
+<div class="empty">
+📖 No units have been added to this course yet.
+</div>
+`;
+
+return;
+
+}
+
+
+// =====================================================
+// DISPLAY UNITS
+// =====================================================
+
+unitsArea.innerHTML = "";
+
+
+courseUnits.forEach(
+(unit,index)=>{
+
+const unitName =
+unit.name ||
+unit.unit_name ||
+unit.title ||
+`Unit ${index+1}`;
+
+
+const unitId =
+unit.id;
+
+
+unitsArea.innerHTML += `
+
+<div class="unit">
+
+<h3>
+📘 ${unitName}
+</h3>
+
+<p>
+${unit.description || ""}
+</p>
+
+<div class="unit-buttons">
+
+<button
+class="quiz-button"
+data-unit="${unitName}">
+📝 Start Quiz
+</button>
+
+</div>
+
+</div>
+
+`;
+
+});
+
+
+// =====================================================
+// QUIZ BUTTONS
+// =====================================================
+
+document
+.querySelectorAll(".quiz-button")
+.forEach(button=>{
+
+button.addEventListener(
+"click",
+function(){
+
+const unitName =
+this.dataset.unit;
+
+
+if(
+typeof window.openQuiz ===
+"function"
+){
+
+window.openQuiz(
+unitName
+);
+
+}
+else{
+
+document.getElementById(
+"quizArea"
+).innerHTML = `
+
+<div class="empty">
+
+📝 Quiz engine is loading.
+
+Please try again.
+
+</div>
+
+`;
+
+}
+
+});
+
+});
+
+}
+
+
+
+// =====================================================
+// LOAD NOTES
+// =====================================================
+
+async function loadNotes(){
+
+notesArea.innerHTML =
+"⏳ Loading notes...";
+
+
+const {data,error} =
+await supabase
+.from("notes")
+.select("*");
+
+
+if(error){
+
+notesArea.innerHTML =
+`
+<div class="empty">
+📄 Notes unavailable.
+</div>
+`;
+
+return;
+
+}
+
+
+if(!data || data.length===0){
+
+notesArea.innerHTML =
+`
+<div class="empty">
+📄 No notes uploaded yet.
+</div>
+`;
+
+return;
+
+}
+
+
+// =====================================================
+// FILTER COURSE NOTES
+// =====================================================
+
+const courseNotes =
+data.filter(note=>{
+
+return (
+
+String(
+note.course_id
+) === String(courseId)
+
+||
+
+String(
+note.course
+).toLowerCase() ===
+String(
+courseName
+).toLowerCase()
+
+);
+
+});
+
+
+if(courseNotes.length===0){
+
+notesArea.innerHTML =
+`
+<div class="empty">
+📄 No notes uploaded for this course yet.
+</div>
+`;
+
+return;
+
+}
+
+
+notesArea.innerHTML = "";
+
+
+courseNotes.forEach(
+note=>{
+
+const filename =
+note.filename;
+
+
+const unit =
+note.unit ||
+note.unit_name ||
+"Course Notes";
+
+
+if(!filename){
+
+return;
+
+}
+
+
+const githubUrl =
+"https://github.com/mwaniki-cyber/mwaniki-scholars/blob/main/notes/"
++
+encodeURIComponent(
+filename
+);
+
+
+notesArea.innerHTML += `
+
+<div class="note">
+
+<strong>
+📘 ${unit}
+</strong>
+
+<p>
+📄 ${filename}
+</p>
+
+<a
+href="${githubUrl}"
+target="_blank"
+rel="noopener noreferrer">
+
+<button>
+📖 Open Notes
+</button>
+
+</a>
+
+</div>
+
+`;
+
+});
+
+}
+
+
+
+// =====================================================
+// START
+// =====================================================
+
+loadCourse();
+
+
+console.log(
+"📚 Course page loaded:",
+courseName
+);
+
+</script>
+
+
+<!-- QUIZ ENGINE -->
+
+<script
+type="module"
+src="./quiz.js">
+</script>
+
+
+</body>
+
+</html>
