@@ -2,407 +2,462 @@
 // MWANIKI SCHOLARS QUIZ ENGINE
 // ======================================
 
-
 const quizQuestions = {
 
+    "Anatomy Unit 1": [
 
-"Anatomy Unit 1":[
+        {
+            question: "What is the study of body structures called?",
+            options: [
+                "Physiology",
+                "Anatomy",
+                "Pharmacology",
+                "Pathology"
+            ],
+            answer: "Anatomy"
+        },
 
-{
-question:"What is the study of body structures called?",
-options:[
-"Physiology",
-"Anatomy",
-"Pharmacology",
-"Pathology"
-],
-answer:"Anatomy"
-},
+        {
+            question: "The basic structural unit of the human body is:",
+            options: [
+                "Organ",
+                "Tissue",
+                "Cell",
+                "System"
+            ],
+            answer: "Cell"
+        },
 
+        {
+            question: "The anatomical position describes the body:",
+            options: [
+                "Standing upright facing forward",
+                "Sitting down",
+                "Lying down",
+                "Running"
+            ],
+            answer: "Standing upright facing forward"
+        }
 
-{
-question:"The basic structural unit of the human body is:",
-options:[
-"Organ",
-"Tissue",
-"Cell",
-"System"
-],
-answer:"Cell"
-},
-
-
-{
-question:"The anatomical position describes the body:",
-options:[
-"Standing upright facing forward",
-"Sitting down",
-"Lying down",
-"Running"
-],
-answer:"Standing upright facing forward"
-}
-
-
-],
+    ],
 
 
+    "Physiology Unit 1": [
+
+        {
+            question: "The process of maintaining internal balance is called:",
+            options: [
+                "Homeostasis",
+                "Metabolism",
+                "Respiration",
+                "Digestion"
+            ],
+            answer: "Homeostasis"
+        },
+
+        {
+            question: "The powerhouse of the cell is:",
+            options: [
+                "Nucleus",
+                "Mitochondria",
+                "Ribosome",
+                "Golgi body"
+            ],
+            answer: "Mitochondria"
+        }
+
+    ],
 
 
-"Physiology Unit 1":[
+    "Microbiology Unit 1": [
 
+        {
+            question: "Microbiology is the study of:",
+            options: [
+                "Human bones",
+                "Microorganisms",
+                "Drugs",
+                "Organs"
+            ],
+            answer: "Microorganisms"
+        },
 
-{
-question:"The process of maintaining internal balance is called:",
-options:[
-"Homeostasis",
-"Metabolism",
-"Respiration",
-"Digestion"
-],
-answer:"Homeostasis"
-},
+        {
+            question: "Bacteria are classified as:",
+            options: [
+                "Prokaryotes",
+                "Eukaryotes",
+                "Viruses",
+                "Fungi"
+            ],
+            answer: "Prokaryotes"
+        }
 
-
-{
-question:"The powerhouse of the cell is:",
-options:[
-"Nucleus",
-"Mitochondria",
-"Ribosome",
-"Golgi body"
-],
-answer:"Mitochondria"
-}
-
-
-
-],
-
-
-
-
-
-"Microbiology Unit 1":[
-
-
-{
-question:"Microbiology is the study of:",
-options:[
-"Human bones",
-"Microorganisms",
-"Drugs",
-"Organs"
-],
-answer:"Microorganisms"
-},
-
-
-{
-question:"Bacteria are classified as:",
-options:[
-"Prokaryotes",
-"Eukaryotes",
-"Viruses",
-"Fungi"
-],
-answer:"Prokaryotes"
-}
-
-
-]
-
+    ]
 
 };
-
-
 
 
 // ======================================
 // OPEN QUIZ
 // ======================================
 
+window.openQuiz = function(unitName) {
 
-window.openQuiz=function(unitName){
+    const quizArea =
+        document.getElementById("quizArea");
 
 
+    if (!quizArea) {
 
-const quizArea=
+        console.error(
+            "quizArea element not found"
+        );
 
-document.getElementById("quizArea");
+        return;
+    }
 
 
+    const questions =
+        quizQuestions[unitName];
 
-const questions=
 
-quizQuestions[unitName];
+    if (!questions) {
 
+        quizArea.innerHTML = `
+            <p>
+                ⚠️ No quiz available for
+                <strong>${unitName}</strong>.
+            </p>
+        `;
 
+        return;
+    }
 
-if(!questions){
 
+    let html = `
+        <div class="quiz-container">
 
-quizArea.innerHTML=
+            <h3>
+                📝 ${unitName}
+            </h3>
 
-`
+            <form id="quizForm">
+    `;
 
-<h3>
-📝 Quiz Coming Soon
-</h3>
 
-<p>
-Questions are being prepared.
-</p>
+    questions.forEach((q, index) => {
 
-`;
+        html += `
 
+            <div class="quiz-question">
 
-return;
+                <p>
+                    <strong>
+                        ${index + 1}. ${q.question}
+                    </strong>
+                </p>
 
+        `;
 
-}
 
+        q.options.forEach(option => {
 
+            html += `
 
+                <label
+                    style="
+                    display:block;
+                    margin:8px 0;
+                    cursor:pointer;
+                    "
+                >
 
-let score=0;
+                    <input
+                        type="radio"
+                        name="q${index}"
+                        value="${option}"
+                    >
 
+                    ${option}
 
+                </label>
 
-quizArea.innerHTML=
+            `;
 
-`
+        });
 
-<h2>
-📝 ${unitName}
-</h2>
 
-<div id="questionBox"></div>
+        html += `
+            </div>
+        `;
 
-<button id="submitQuiz">
-Submit Quiz
-</button>
+    });
 
-`;
 
+    html += `
 
+                <button
+                    type="button"
+                    id="submitQuiz"
+                >
+                    ✅ Submit Quiz
+                </button>
 
-const box=
+            </form>
 
-document.getElementById("questionBox");
+            <div id="quizResult"></div>
 
+        </div>
+    `;
 
 
+    quizArea.innerHTML = html;
 
 
-questions.forEach((q,index)=>{
+    const submitButton =
+        document.getElementById("submitQuiz");
 
 
-box.innerHTML+=
+    submitButton.addEventListener(
+        "click",
+        function() {
 
+            let score = 0;
 
-`
 
-<div class="unit-card">
+            questions.forEach(
+                (q, index) => {
 
-<h4>
+                    const selected =
+                        document.querySelector(
+                            `input[name="q${index}"]:checked`
+                        );
 
-${index+1}. ${q.question}
 
-</h4>
+                    if (
+                        selected &&
+                        selected.value === q.answer
+                    ) {
 
+                        score++;
 
-${q.options.map(option=>
+                    }
 
+                }
+            );
 
-`
 
-<label>
+            const percentage =
+                Math.round(
+                    (score / questions.length) * 100
+                );
 
-<input
 
-type="radio"
+            const result =
+                document.getElementById(
+                    "quizResult"
+                );
 
-name="q${index}"
 
-value="${option}">
+            result.innerHTML = `
 
-${option}
+                <div
+                    style="
+                    margin-top:20px;
+                    padding:20px;
+                    border-radius:12px;
+                    background:#eef7fb;
+                    "
+                >
 
-</label>
+                    <h3>
+                        🎯 Quiz Result
+                    </h3>
 
-<br>
+                    <p>
+                        Score:
+                        <strong>
+                            ${score}/${questions.length}
+                        </strong>
+                    </p>
 
+                    <p>
+                        ${percentage}%
+                    </p>
 
-`
+                    ${
+                        percentage >= 70
+                        ? "🎉 Excellent work!"
+                        : "📚 Keep studying and try again!"
+                    }
 
-).join("")}
+                </div>
 
+            `;
 
-</div>
 
+            saveProgress(
+                unitName,
+                score,
+                questions.length
+            );
 
-`;
 
+            updateProgressDisplay();
 
-
-});
-
-
-
-
-
-document
-
-.getElementById("submitQuiz")
-
-.onclick=function(){
-
-
-
-score=0;
-
-
-
-questions.forEach((q,index)=>{
-
-
-const selected=
-
-document.querySelector(
-
-`input[name="q${index}"]:checked`
-
-);
-
-
-
-if(selected && selected.value===q.answer){
-
-score++;
-
-}
-
-
-});
-
-
-
-
-quizArea.innerHTML=
-
-`
-
-<div class="unit-card">
-
-
-<h2>
-🎉 Quiz Complete
-</h2>
-
-
-<h3>
-
-Score: ${score}/${questions.length}
-
-</h3>
-
-
-<p>
-
-Keep learning and improving.
-
-</p>
-
-
-</div>
-
-`;
-
-
-
-
-
-saveProgress(score,questions.length);
-
-
+        }
+    );
 
 };
-
-
-
-};
-
-
-
 
 
 // ======================================
 // SAVE PROGRESS
 // ======================================
 
+function saveProgress(
+    unitName,
+    score,
+    total
+) {
 
-function saveProgress(score,total){
-
-
-let progress=
-
-JSON.parse(
-
-localStorage.getItem("progress")
-
-)||[];
+    let progress = [];
 
 
+    try {
 
-progress.push({
+        progress =
+            JSON.parse(
+                localStorage.getItem(
+                    "mwanikiQuizProgress"
+                )
+            ) || [];
 
-score:score,
+    } catch (error) {
 
-total:total,
+        progress = [];
 
-date:new Date().toLocaleDateString()
-
-});
-
-
-
-localStorage.setItem(
-
-"progress",
-
-JSON.stringify(progress)
-
-);
+    }
 
 
+    progress.push({
 
-const progressBox=
+        unit: unitName,
 
-document.getElementById("progress");
+        score: score,
+
+        total: total,
+
+        percentage:
+            Math.round(
+                (score / total) * 100
+            ),
+
+        date:
+            new Date().toLocaleDateString()
+
+    });
 
 
-if(progressBox){
+    localStorage.setItem(
+        "mwanikiQuizProgress",
+        JSON.stringify(progress)
+    );
 
 
-progressBox.innerHTML=
-
-`
-
-${score}/${total}
-
-`;
+    console.log(
+        "📊 Quiz progress saved"
+    );
 
 }
 
 
+// ======================================
+// UPDATE PROGRESS DISPLAY
+// ======================================
+
+function updateProgressDisplay() {
+
+    const progressBox =
+        document.getElementById(
+            "progress"
+        );
+
+
+    if (!progressBox) {
+        return;
+    }
+
+
+    let progress = [];
+
+
+    try {
+
+        progress =
+            JSON.parse(
+                localStorage.getItem(
+                    "mwanikiQuizProgress"
+                )
+            ) || [];
+
+    } catch (error) {
+
+        progress = [];
+
+    }
+
+
+    if (
+        progress.length === 0
+    ) {
+
+        progressBox.innerHTML =
+            "0%";
+
+        return;
+
+    }
+
+
+    let totalScore = 0;
+    let totalQuestions = 0;
+
+
+    progress.forEach(item => {
+
+        totalScore +=
+            Number(item.score) || 0;
+
+        totalQuestions +=
+            Number(item.total) || 0;
+
+    });
+
+
+    const percentage =
+        totalQuestions > 0
+        ? Math.round(
+            (totalScore /
+            totalQuestions) * 100
+        )
+        : 0;
+
+
+    progressBox.innerHTML =
+        percentage + "%";
+
 }
 
 
+// ======================================
+// INITIALIZE
+// ======================================
+
+updateProgressDisplay();
 
 
 console.log(
-
-"📝 Quiz engine loaded"
-
+    "📝 Mwaniki Scholars Quiz Engine Loaded"
 );

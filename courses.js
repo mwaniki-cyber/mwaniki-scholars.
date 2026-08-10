@@ -1,272 +1,616 @@
-// =====================================
-// MWANIKI SCHOLARS COURSE DATABASE
-// =====================================
+import { supabase } from "./supabase.js";
 
+// =====================================================
+// MWANIKI SCHOLARS COURSE LIBRARY
+// =====================================================
 
-export const courses = {
+// Built-in Mwaniki Scholars medical course library
+const defaultCourses = [
 
-"Anatomy":{
+    {
+        id: "anatomy",
+        name: "Anatomy",
+        description: "Study of the structure of the human body."
+    },
 
-units:[
+    {
+        id: "physiology",
+        name: "Physiology",
+        description: "Study of normal functions and processes of the human body."
+    },
 
-{
-title:"Unit 1: Introduction to Anatomy",
-notes:"Anatomical terminology, body organization, planes and positions.",
-file:"Anatomy_Unit1.pdf"
-},
+    {
+        id: "biochemistry",
+        name: "Medical Biochemistry",
+        description: "Study of biochemical processes occurring in the human body."
+    },
 
-{
-title:"Unit 2: Skeletal System",
-notes:"Bones, joints and skeletal anatomy.",
-file:"Anatomy_Unit2.pdf"
-},
+    {
+        id: "microbiology",
+        name: "Medical Microbiology",
+        description: "Study of microorganisms and their role in human disease."
+    },
 
-{
-title:"Unit 3: Muscular System",
-notes:"Muscles, movement and clinical anatomy.",
-file:"Anatomy_Unit3.pdf"
-},
+    {
+        id: "bacteriology",
+        name: "Bacteriology",
+        description: "Study of bacteria, their characteristics and diseases."
+    },
 
-{
-title:"Unit 4: Nervous System",
-notes:"Brain, spinal cord and peripheral nerves.",
-file:"Anatomy_Unit4.pdf"
-},
+    {
+        id: "virology",
+        name: "Virology",
+        description: "Study of viruses and viral diseases."
+    },
 
-{
-title:"Unit 5: Applied Anatomy",
-notes:"Clinical applications of anatomy.",
-file:"Anatomy_Unit5.pdf"
-}
+    {
+        id: "mycology",
+        name: "Medical Mycology",
+        description: "Study of fungi and fungal infections."
+    },
 
-]
+    {
+        id: "parasitology",
+        name: "Medical Parasitology",
+        description: "Study of parasites and diseases caused by parasites."
+    },
 
-},
+    {
+        id: "immunology",
+        name: "Immunology",
+        description: "Study of the immune system and immune responses."
+    },
 
+    {
+        id: "pharmacology",
+        name: "Pharmacology",
+        description: "Study of drugs, their actions, uses and adverse effects."
+    },
 
+    {
+        id: "pathology",
+        name: "Pathology",
+        description: "Study of disease processes and pathological changes."
+    },
 
-"Physiology":{
+    {
+        id: "hematology",
+        name: "Hematology",
+        description: "Study of blood, blood cells and blood disorders."
+    },
 
-units:[
+    {
+        id: "histology",
+        name: "Histology",
+        description: "Microscopic study of cells and tissues."
+    },
 
-{
-title:"Unit 1: Cell Physiology",
-notes:"Cell structure, transport and homeostasis.",
-file:"Physiology_Unit1.pdf"
-},
+    {
+        id: "cytology",
+        name: "Cytology",
+        description: "Study of cells and cellular abnormalities."
+    },
 
-{
-title:"Unit 2: Blood Physiology",
-notes:"Blood cells, plasma and immunity.",
-file:"Physiology_Unit2.pdf"
-},
+    {
+        id: "molecular-biology",
+        name: "Molecular Biology",
+        description: "Study of DNA, RNA, genes and molecular processes."
+    },
 
-{
-title:"Unit 3: Cardiovascular Physiology",
-notes:"Heart function and circulation.",
-file:"Physiology_Unit3.pdf"
-},
+    {
+        id: "genetics",
+        name: "Medical Genetics",
+        description: "Study of heredity, genes and genetic disorders."
+    },
 
-{
-title:"Unit 4: Respiratory Physiology",
-notes:"Gas exchange and breathing mechanisms.",
-file:"Physiology_Unit4.pdf"
-},
+    {
+        id: "clinical-chemistry",
+        name: "Clinical Chemistry",
+        description: "Laboratory analysis of biochemical substances in body fluids."
+    },
 
-{
-title:"Unit 5: Renal Physiology",
-notes:"Kidney function and fluid balance.",
-file:"Physiology_Unit5.pdf"
-}
+    {
+        id: "medical-laboratory-science",
+        name: "Medical Laboratory Science",
+        description: "Principles and practices of diagnostic laboratory science."
+    },
 
-]
+    {
+        id: "medical-terminology",
+        name: "Medical Terminology",
+        description: "Study of terminology used in healthcare and medicine."
+    },
 
-},
+    {
+        id: "public-health",
+        name: "Public Health",
+        description: "Promotion of health and prevention of disease in populations."
+    },
 
+    {
+        id: "epidemiology",
+        name: "Epidemiology",
+        description: "Study of disease distribution, causes and control."
+    },
 
+    {
+        id: "nutrition",
+        name: "Human Nutrition",
+        description: "Study of nutrients, diet and their relationship to health."
+    },
 
+    {
+        id: "medical-ethics",
+        name: "Medical Ethics",
+        description: "Ethical principles governing healthcare practice."
+    },
 
-"Microbiology":{
+    {
+        id: "health-education",
+        name: "Health Education",
+        description: "Principles and methods of promoting healthy behavior."
+    },
 
-units:[
+    {
+        id: "nursing-fundamentals",
+        name: "Nursing Fundamentals",
+        description: "Fundamental principles of nursing care."
+    },
 
-{
-title:"Unit 1: Introduction to Microbiology",
-notes:"Microorganisms, classification and laboratory safety.",
-file:"Microbiology_Unit1.pdf"
-},
+    {
+        id: "community-health",
+        name: "Community Health",
+        description: "Healthcare delivery and disease prevention in communities."
+    },
 
+    {
+        id: "maternal-health",
+        name: "Maternal Health",
+        description: "Healthcare of women during pregnancy, childbirth and postpartum."
+    },
 
-{
-title:"Unit 2: Bacteriology",
-notes:"Bacterial structure, growth and identification.",
-file:"Microbiology_Unit2.pdf"
-},
+    {
+        id: "reproductive-health",
+        name: "Reproductive Health",
+        description: "Study of reproductive health and reproductive systems."
+    },
 
+    {
+        id: "paediatrics",
+        name: "Paediatrics",
+        description: "Medical care and diseases affecting children."
+    },
 
-{
-title:"Unit 3: Virology",
-notes:"Viruses and viral diseases.",
-file:"Microbiology_Unit3.pdf"
-},
+    {
+        id: "internal-medicine",
+        name: "Internal Medicine",
+        description: "Diagnosis and management of diseases affecting internal organs."
+    },
 
+    {
+        id: "surgery",
+        name: "General Surgery",
+        description: "Principles of surgical disease management and procedures."
+    },
 
-{
-title:"Unit 4: Mycology",
-notes:"Fungi and fungal infections.",
-file:"Microbiology_Unit4.pdf"
-},
+    {
+        id: "clinical-skills",
+        name: "Clinical Skills",
+        description: "Essential practical skills used in clinical healthcare."
+    },
 
+    {
+        id: "first-aid",
+        name: "First Aid",
+        description: "Immediate care provided to injured or suddenly ill persons."
+    },
 
-{
-title:"Unit 5: Medical Parasitology",
-notes:"Parasites of medical importance.",
-file:"Microbiology_Unit5.pdf"
-}
+    {
+        id: "medical-imaging",
+        name: "Medical Imaging",
+        description: "Principles of diagnostic medical imaging."
+    },
 
-]
+    {
+        id: "radiography",
+        name: "Radiography",
+        description: "Principles and practice of radiographic imaging."
+    },
 
-},
+    {
+        id: "infection-prevention",
+        name: "Infection Prevention and Control",
+        description: "Prevention and control of healthcare-associated infections."
+    },
 
+    {
+        id: "biosafety",
+        name: "Laboratory Biosafety",
+        description: "Safe handling of biological materials in healthcare laboratories."
+    },
 
+    {
+        id: "laboratory-management",
+        name: "Medical Laboratory Management",
+        description: "Management, quality systems and administration of laboratories."
+    },
 
+    {
+        id: "quality-assurance",
+        name: "Laboratory Quality Assurance",
+        description: "Quality control and quality assurance in laboratory medicine."
+    },
 
+    {
+        id: "phlebotomy",
+        name: "Phlebotomy",
+        description: "Principles and techniques of blood specimen collection."
+    },
 
-"Pharmacology":{
+    {
+        id: "blood-transfusion",
+        name: "Blood Transfusion Science",
+        description: "Principles of blood grouping, compatibility and transfusion."
+    },
 
-units:[
+    {
+        id: "immunohematology",
+        name: "Immunohematology",
+        description: "Study of blood group antigens, antibodies and transfusion reactions."
+    },
 
-{
-title:"Unit 1: General Pharmacology",
-notes:"Drug principles, absorption and distribution.",
-file:"Pharmacology_Unit1.pdf"
-},
+    {
+        id: "medical-parasitology",
+        name: "Clinical Parasitology",
+        description: "Laboratory diagnosis of parasitic infections."
+    },
 
+    {
+        id: "clinical-microbiology",
+        name: "Clinical Microbiology",
+        description: "Laboratory diagnosis of infectious diseases."
+    },
 
-{
-title:"Unit 2: Autonomic Pharmacology",
-notes:"Drugs affecting autonomic nervous system.",
-file:"Pharmacology_Unit2.pdf"
-},
+    {
+        id: "clinical-immunology",
+        name: "Clinical Immunology",
+        description: "Laboratory investigation of immune disorders."
+    },
 
+    {
+        id: "clinical-hematology",
+        name: "Clinical Hematology",
+        description: "Laboratory investigation of blood disorders."
+    },
 
-{
-title:"Unit 3: Antibiotics",
-notes:"Antimicrobial agents and resistance.",
-file:"Pharmacology_Unit3.pdf"
-},
+    {
+        id: "clinical-pathology",
+        name: "Clinical Pathology",
+        description: "Laboratory investigation of disease processes."
+    },
 
+    {
+        id: "urinalysis",
+        name: "Urinalysis",
+        description: "Physical, chemical and microscopic examination of urine."
+    },
 
-{
-title:"Unit 4: Cardiovascular Drugs",
-notes:"Drugs affecting the heart and vessels.",
-file:"Pharmacology_Unit4.pdf"
-},
+    {
+        id: "histopathology",
+        name: "Histopathology",
+        description: "Laboratory examination of tissues for disease diagnosis."
+    },
 
-
-{
-title:"Unit 5: Clinical Pharmacology",
-notes:"Safe prescribing and drug monitoring.",
-file:"Pharmacology_Unit5.pdf"
-}
-
-]
-
-}
-
-};
-
-
-
-// =====================================
-// ADDITIONAL MEDICAL COURSES
-// =====================================
-
-
-const extraCourses=[
-
-"Biochemistry",
-"Pathology",
-"Hematology",
-"Immunology",
-"Genetics",
-"Histology",
-"Embryology",
-"Neuroscience",
-"Cardiology",
-"Neurology",
-"Dermatology",
-"Endocrinology",
-"Gastroenterology",
-"Nephrology",
-"Pulmonology",
-"Rheumatology",
-"Oncology",
-"Radiology",
-"Surgery",
-"Orthopedics",
-"Urology",
-"Anesthesiology",
-"Emergency Medicine",
-"Internal Medicine",
-"Family Medicine",
-"Pediatrics",
-"Neonatology",
-"Obstetrics",
-"Gynecology",
-"Psychiatry",
-"Ophthalmology",
-"ENT",
-"Dentistry",
-"Public Health",
-"Epidemiology",
-"Biostatistics",
-"Community Medicine",
-"Infectious Diseases",
-"Toxicology",
-"Forensic Medicine",
-"Critical Care",
-"Nutrition",
-"Physiotherapy",
-"Palliative Care",
-"Laboratory Medicine",
-"Clinical Pharmacology",
-"Preventive Medicine",
-"Tropical Medicine"
+    {
+        id: "cytopathology",
+        name: "Cytopathology",
+        description: "Diagnosis of disease through examination of individual cells."
+    }
 
 ];
 
 
+// =====================================================
+// LOAD COURSES
+// =====================================================
 
-extraCourses.forEach(course=>{
+async function loadCourses() {
+
+    const courseArea =
+        document.getElementById("courseArea");
 
 
-if(!courses[course]){
+    if (!courseArea) {
+
+        console.error(
+            "❌ courseArea not found in dashboard.html"
+        );
+
+        return;
+    }
 
 
-courses[course]={
+    courseArea.innerHTML =
+        "<p>⏳ Loading courses...</p>";
 
-units:[1,2,3,4,5].map(num=>({
 
-title:`${course} Unit ${num}`,
+    let databaseCourses = [];
 
-notes:`${course} learning materials`,
 
-file:`${course.replaceAll(" ","_")}_Unit${num}.pdf`
+    try {
 
-}))
+        const { data, error } =
+            await supabase
+                .from("courses")
+                .select("*");
 
-};
 
+        if (error) {
+
+            console.warn(
+                "⚠️ Supabase courses could not be loaded:",
+                error.message
+            );
+
+        } else {
+
+            databaseCourses =
+                data || [];
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Course database unavailable:",
+            error
+        );
+
+    }
+
+
+    // =================================================
+    // COMBINE DATABASE + BUILT-IN COURSES
+    // =================================================
+
+    const allCourses = [
+        ...databaseCourses,
+        ...defaultCourses
+    ];
+
+
+    // Remove duplicate course names
+    const uniqueCourses = [];
+
+    const seen = new Set();
+
+
+    allCourses.forEach(course => {
+
+        const courseName =
+            course.name ||
+            course.course_name ||
+            course.course_title ||
+            course.title;
+
+
+        if (!courseName) {
+            return;
+        }
+
+
+        const key =
+            courseName
+                .toLowerCase()
+                .trim();
+
+
+        if (!seen.has(key)) {
+
+            seen.add(key);
+
+            uniqueCourses.push({
+
+                id:
+                    course.id ||
+                    "local-" + key
+                        .replace(/\s+/g, "-"),
+
+                name:
+                    courseName,
+
+                description:
+                    course.description ||
+                    course.course_description ||
+                    course.details ||
+                    "Medical learning course"
+
+            });
+
+        }
+
+    });
+
+
+    console.log(
+        "📚 Total courses available:",
+        uniqueCourses.length
+    );
+
+
+    // =================================================
+    // NO COURSES
+    // =================================================
+
+    if (
+        uniqueCourses.length === 0
+    ) {
+
+        courseArea.innerHTML = `
+            <p>
+                📚 No courses available yet.
+            </p>
+        `;
+
+        return;
+    }
+
+
+    // =================================================
+    // DISPLAY COURSES
+    // =================================================
+
+    courseArea.innerHTML = "";
+
+
+    uniqueCourses.forEach(course => {
+
+        const card =
+            document.createElement("div");
+
+
+        card.className =
+            "course-card";
+
+
+        card.innerHTML = `
+
+            <div
+                style="
+                padding:18px;
+                margin:10px 0;
+                border-radius:14px;
+                background:#eef7fb;
+                border:1px solid #d9edf2;
+                "
+            >
+
+                <h3
+                    style="
+                    margin:0 0 8px 0;
+                    color:#063970;
+                    "
+                >
+                    📚 ${course.name}
+                </h3>
+
+
+                <p>
+                    ${course.description}
+                </p>
+
+
+                <button
+                    class="open-course-button"
+                    data-course-id="${course.id}"
+                    data-course-name="${course.name}"
+                >
+                    📖 Open Course
+                </button>
+
+            </div>
+
+        `;
+
+
+        courseArea.appendChild(card);
+
+    });
+
+
+    // =================================================
+    // OPEN COURSE
+    // =================================================
+
+    document
+        .querySelectorAll(
+            ".open-course-button"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                function () {
+
+                    const courseId =
+                        this.dataset.courseId;
+
+
+                    const courseName =
+                        this.dataset.courseName;
+
+
+                    localStorage.setItem(
+                        "selectedCourse",
+                        courseId
+                    );
+
+
+                    localStorage.setItem(
+                        "selectedCourseName",
+                        courseName
+                    );
+
+
+                    window.location.href =
+                        "course.html";
+
+                }
+            );
+
+        });
+
+
+    // =================================================
+    // COURSE SEARCH
+    // =================================================
+
+    const search =
+        document.getElementById(
+            "courseSearch"
+        );
+
+
+    if (search) {
+
+        search.addEventListener(
+            "input",
+            function () {
+
+                const term =
+                    this.value
+                        .toLowerCase()
+                        .trim();
+
+
+                document
+                    .querySelectorAll(
+                        ".course-card"
+                    )
+                    .forEach(card => {
+
+                        const text =
+                            card.textContent
+                                .toLowerCase();
+
+
+                        card.style.display =
+                            text.includes(term)
+                                ? ""
+                                : "none";
+
+                    });
+
+            }
+        );
+
+    }
 
 }
 
 
-});
+// =====================================================
+// START COURSE SYSTEM
+// =====================================================
 
-
-
-console.log(
-"📚 Courses loaded:",
-Object.keys(courses).length
-);
+loadCourses();
