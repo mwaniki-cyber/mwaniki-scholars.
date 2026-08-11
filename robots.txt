@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin.html
+Disallow: /tutor.html
+Disallow: /tutorLogin.html
+
+Sitemap: https://mwaniki-cyber.github.io/mwaniki-scholars/sitemap.xml
