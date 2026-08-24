@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Mwaniki Scholars | Quiz Administration</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    font-family:"Segoe UI",Arial,sans-serif;
+}
+
+body{
+    margin:0;
+    background:#f4f9ff;
+    color:#333;
+}
+
+header{
+    background:linear-gradient(135deg,#063970,#0b7285);
+    color:white;
+    padding:20px;
+    text-align:center;
+    font-size:25px;
+    font-weight:bold;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:30px 20px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:18px;
+    box-shadow:0 8px 25px rgba(0,0,0,.10);
+    margin-bottom:25px;
+}
+
+h2{
+    color:#063970;
+    margin-top:0;
+}
+
+label{
+    display:block;
+    margin-top:15px;
+    margin-bottom:6px;
+    font-weight:bold;
+    color:#334155;
+}
+
+select,
+textarea,
+input{
+    width:100%;
+    padding:13px;
+    border:1px solid #d1d5db;
+    border-radius:10px;
+    font-size:15px;
+    outline:none;
+}
+
+textarea{
+    min-height:120px;
+    resize:vertical;
+}
+
+select:focus,
+textarea:focus,
+input:focus{
+    border-color:#0b7285;
+}
+
+.option-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:15px;
+}
+
+button{
+    background:#0b7285;
+    color:white;
+    border:none;
+    padding:13px 20px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    margin-top:20px;
+}
+
+button:hover{
+    background:#063970;
+}
+
+.secondary{
+    background:#64748b;
+}
+
+.secondary:hover{
+    background:#475569;
+}
+
+#status{
+    margin-top:15px;
+    padding:12px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+.question-card{
+    border:1px solid #d9edf2;
+    background:#f8fcff;
+    padding:18px;
+    border-radius:14px;
+    margin-top:15px;
+}
+
+.question-card h3{
+    color:#063970;
+    margin-top:0;
+}
+
+.delete-btn{
+    background:#b00020;
+    margin-top:10px;
+}
+
+.delete-btn:hover{
+    background:#7f0017;
+}
+
+.hidden{
+    display:none;
+}
+
+.back{
+    display:inline-block;
+    margin-top:10px;
+    color:#063970;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+@media(max-width:650px){
+
+    .option-grid{
+        grid-template-columns:1fr;
+    }
+
+    .container{
+        padding:20px 12px;
+    }
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+
+<header>
+
+📝 Mwaniki Scholars Quiz Administration
+
+</header>
+
+
+<div class="container">
+
+
+<!-- ADD QUESTION -->
+
+<div class="card">
+
+<h2>➕ Add Quiz Question</h2>
+
+<p>
+Select a course and unit, then create a question for students.
+</p>
+
+
+<label for="course">
+
+📚 Course
+
+</label>
+
+<select id="course">
+
+<option value="">
+⏳ Loading courses...
+</option>
+
+</select>
+
+
+<label for="unit">
+
+📖 Unit
+
+</label>
+
+<select id="unit">
+
+<option value="">
+Select a course first
+</option>
+
+</select>
+
+
+<label for="question">
+
+❓ Question
+
+</label>
+
+<textarea
+id="question"
+placeholder="Enter the quiz question..."
+></textarea>
+
+
+<div class="option-grid">
+
+
+<div>
+
+<label for="optionA">
+
+A
+
+</label>
+
+<input
+id="optionA"
+type="text"
+placeholder="Option A"
+>
+
+</div>
+
+
+<div>
+
+<label for="optionB">
+
+B
+
+</label>
+
+<input
+id="optionB"
+type="text"
+placeholder="Option B"
+>
+
+</div>
+
+
+<div>
+
+<label for="optionC">
+
+C
+
+</label>
+
+<input
+id="optionC"
+type="text"
+placeholder="Option C"
+>
+
+</div>
+
+
+<div>
+
+<label for="optionD">
+
+D
+
+</label>
+
+<input
+id="optionD"
+type="text"
+placeholder="Option D"
+>
+
+</div>
+
+
+</div>
+
+
+<label for="correctAnswer">
+
+✅ Correct Answer
+
+</label>
+
+<select id="correctAnswer">
+
+<option value="">
+Select correct answer
+</option>
+
+<option value="A">
+A
+</option>
+
+<option value="B">
+B
+</option>
+
+<option value="C">
+C
+</option>
+
+<option value="D">
+D
+</option>
+
+</select>
+
+
+<button id="saveQuestion">
+
+💾 Save Question
+
+</button>
+
+
+<div id="status"></div>
+
+
+</div>
+
+
+
+<!-- EXISTING QUESTIONS -->
+
+<div class="card">
+
+<h2>📋 Existing Questions</h2>
+
+<p>
+Select a course and unit above to view its questions.
+</p>
+
+<div id="questionsArea">
+
+No questions loaded.
+
+</div>
+
+</div>
+
+
+<a
+href="admin.html"
+class="back"
+>
+
+⬅ Back to Admin Dashboard
+
+</a>
+
+
+</div>
+
+
+<script type="module" src="quizAdmin.js"></script>
+
+</body>
+
+</html>

@@ -1,205 +1,290 @@
-// ======================================
-// MWANIKI SCHOLARS QUIZ ENGINE
-// ======================================
+import { supabase } from "./supabase.js";
 
-const quizQuestions = {
+// =====================================================
+// MWANIKI SCHOLARS - SUPABASE QUIZ ENGINE
+// =====================================================
 
-    "Anatomy Unit 1": [
-
-        {
-            question: "What is the study of body structures called?",
-            options: [
-                "Physiology",
-                "Anatomy",
-                "Pharmacology",
-                "Pathology"
-            ],
-            answer: "Anatomy"
-        },
-
-        {
-            question: "The basic structural unit of the human body is:",
-            options: [
-                "Organ",
-                "Tissue",
-                "Cell",
-                "System"
-            ],
-            answer: "Cell"
-        },
-
-        {
-            question: "The anatomical position describes the body:",
-            options: [
-                "Standing upright facing forward",
-                "Sitting down",
-                "Lying down",
-                "Running"
-            ],
-            answer: "Standing upright facing forward"
-        }
-
-    ],
+console.log("📝 Mwaniki Scholars Supabase Quiz Engine Loaded");
 
 
-    "Physiology Unit 1": [
+// =====================================================
+// QUIZ AREA
+// =====================================================
 
-        {
-            question: "The process of maintaining internal balance is called:",
-            options: [
-                "Homeostasis",
-                "Metabolism",
-                "Respiration",
-                "Digestion"
-            ],
-            answer: "Homeostasis"
-        },
-
-        {
-            question: "The powerhouse of the cell is:",
-            options: [
-                "Nucleus",
-                "Mitochondria",
-                "Ribosome",
-                "Golgi body"
-            ],
-            answer: "Mitochondria"
-        }
-
-    ],
-
-
-    "Microbiology Unit 1": [
-
-        {
-            question: "Microbiology is the study of:",
-            options: [
-                "Human bones",
-                "Microorganisms",
-                "Drugs",
-                "Organs"
-            ],
-            answer: "Microorganisms"
-        },
-
-        {
-            question: "Bacteria are classified as:",
-            options: [
-                "Prokaryotes",
-                "Eukaryotes",
-                "Viruses",
-                "Fungi"
-            ],
-            answer: "Prokaryotes"
-        }
-
-    ]
-
-};
-
-
-// ======================================
-// OPEN QUIZ
-// ======================================
-
-window.openQuiz = function(unitName) {
+function getQuizArea() {
 
     const quizArea =
         document.getElementById("quizArea");
 
-
     if (!quizArea) {
 
         console.error(
-            "quizArea element not found"
+            "❌ quizArea was not found"
         );
 
-        return;
+        return null;
     }
 
-
-    const questions =
-        quizQuestions[unitName];
-
-
-    if (!questions) {
-
-        quizArea.innerHTML = `
-            <p>
-                ⚠️ No quiz available for
-                <strong>${unitName}</strong>.
-            </p>
-        `;
-
-        return;
-    }
+    return quizArea;
+}
 
 
-    let html = `
-        <div class="quiz-container">
+// =====================================================
+// LOAD QUIZ
+// =====================================================
 
-            <h3>
-                📝 ${unitName}
-            </h3>
+window.loadQuiz = async function(unitId, unitTitle) {
 
-            <form id="quizForm">
+    console.log(
+        "📝 Loading quiz:",
+        unitTitle,
+        unitId
+    );
+
+    const quizArea = getQuizArea();
+
+    if (!quizArea) return;
+
+    quizArea.innerHTML = `
+        <div style="
+            padding:20px;
+            background:#eef7fb;
+            border-radius:12px;
+        ">
+            ⏳ Loading quiz questions...
+        </div>
     `;
 
 
-    questions.forEach((q, index) => {
+    try {
 
-        html += `
+        const {
+            data,
+            error
+        } = await supabase
+            .from("quiz_questions")
+            .select("*")
+            .eq("unit_id", unitId)
+            .order("id", {
+                ascending:true
+            });
 
-            <div class="quiz-question">
 
-                <p>
-                    <strong>
-                        ${index + 1}. ${q.question}
-                    </strong>
-                </p>
+        if (error) {
 
-        `;
+            console.error(
+                "❌ QUIZ LOAD ERROR:",
+                error
+            );
 
+            quizArea.innerHTML = `
+                <div style="
+                    padding:20px;
+                    background:#fff0f0;
+                    color:#b00020;
+                    border-radius:12px;
+                ">
 
-        q.options.forEach(option => {
+                    <h3>
+                        ❌ Failed to load quiz
+                    </h3>
 
-            html += `
+                    <p>
+                        ${escapeHTML(error.message)}
+                    </p>
 
-                <label
-                    style="
-                    display:block;
-                    margin:8px 0;
-                    cursor:pointer;
-                    "
-                >
-
-                    <input
-                        type="radio"
-                        name="q${index}"
-                        value="${option}"
-                    >
-
-                    ${option}
-
-                </label>
-
+                </div>
             `;
 
-        });
+            return;
+        }
 
 
-        html += `
+        console.log(
+            "📝 Quiz questions loaded:",
+            data
+        );
+
+
+        if (!data || data.length === 0) {
+
+            quizArea.innerHTML = `
+                <div style="
+                    padding:20px;
+                    background:#fff8e6;
+                    border-radius:12px;
+                ">
+
+                    <h3>
+                        📝 No quiz available yet
+                    </h3>
+
+                    <p>
+                        No questions have been added
+                        for <strong>
+                        ${escapeHTML(unitTitle)}
+                        </strong>.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        renderQuiz(
+            data,
+            unitId,
+            unitTitle
+        );
+
+    }
+
+    catch(error) {
+
+        console.error(
+            "❌ Unexpected quiz error:",
+            error
+        );
+
+        quizArea.innerHTML = `
+            <div style="
+                padding:20px;
+                background:#fff0f0;
+                color:#b00020;
+                border-radius:12px;
+            ">
+
+                ❌ ${escapeHTML(error.message)}
+
             </div>
         `;
 
-    });
+    }
+
+};
+
+
+// =====================================================
+// RENDER QUIZ
+// =====================================================
+
+function renderQuiz(
+    questions,
+    unitId,
+    unitTitle
+) {
+
+    const quizArea =
+        getQuizArea();
+
+    if (!quizArea) return;
+
+
+    let html = `
+
+        <div class="quiz-container">
+
+            <h2>
+                📝 ${escapeHTML(unitTitle)}
+            </h2>
+
+            <p>
+                ${questions.length}
+                question${questions.length === 1 ? "" : "s"}
+            </p>
+
+            <form id="quizForm">
+
+    `;
+
+
+    questions.forEach(
+        (q, index) => {
+
+            html += `
+
+                <div
+                    class="quiz-question"
+                    style="
+                        background:#ffffff;
+                        padding:20px;
+                        margin:15px 0;
+                        border-radius:14px;
+                        border:1px solid #d9edf2;
+                    "
+                >
+
+                    <h3>
+                        ${index + 1}.
+                        ${escapeHTML(q.question)}
+                    </h3>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="A"
+                        >
+                        A. ${escapeHTML(q.option_a)}
+                    </label>
+
+                    <br>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="B"
+                        >
+                        B. ${escapeHTML(q.option_b)}
+                    </label>
+
+                    <br>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="C"
+                        >
+                        C. ${escapeHTML(q.option_c)}
+                    </label>
+
+                    <br>
+
+                    <label>
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="D"
+                        >
+                        D. ${escapeHTML(q.option_d)}
+                    </label>
+
+                </div>
+
+            `;
+
+        }
+    );
 
 
     html += `
 
                 <button
                     type="button"
-                    id="submitQuiz"
+                    id="submitSupabaseQuiz"
+                    style="
+                        background:#0b7285;
+                        color:white;
+                        border:none;
+                        padding:14px 25px;
+                        border-radius:10px;
+                        cursor:pointer;
+                        font-size:16px;
+                    "
                 >
                     ✅ Submit Quiz
                 </button>
@@ -209,6 +294,7 @@ window.openQuiz = function(unitName) {
             <div id="quizResult"></div>
 
         </div>
+
     `;
 
 
@@ -216,110 +302,169 @@ window.openQuiz = function(unitName) {
 
 
     const submitButton =
-        document.getElementById("submitQuiz");
+        document.getElementById(
+            "submitSupabaseQuiz"
+        );
 
 
-    submitButton.addEventListener(
-        "click",
-        function() {
+    if (submitButton) {
 
-            let score = 0;
+        submitButton.addEventListener(
+            "click",
+            () => {
+
+                calculateQuiz(
+                    questions,
+                    unitId,
+                    unitTitle
+                );
+
+            }
+        );
+
+    }
+
+}
 
 
-            questions.forEach(
-                (q, index) => {
+// =====================================================
+// CALCULATE QUIZ
+// =====================================================
 
-                    const selected =
-                        document.querySelector(
-                            `input[name="q${index}"]:checked`
-                        );
+function calculateQuiz(
+    questions,
+    unitId,
+    unitTitle
+) {
+
+    let score = 0;
 
 
-                    if (
-                        selected &&
-                        selected.value === q.answer
-                    ) {
+    questions.forEach(q => {
 
-                        score++;
-
-                    }
-
-                }
+        const selected =
+            document.querySelector(
+                `input[name="question_${q.id}"]:checked`
             );
 
 
-            const percentage =
-                Math.round(
-                    (score / questions.length) * 100
-                );
+        if (
+            selected &&
+            selected.value ===
+            q.correct_answer
+        ) {
 
-
-            const result =
-                document.getElementById(
-                    "quizResult"
-                );
-
-
-            result.innerHTML = `
-
-                <div
-                    style="
-                    margin-top:20px;
-                    padding:20px;
-                    border-radius:12px;
-                    background:#eef7fb;
-                    "
-                >
-
-                    <h3>
-                        🎯 Quiz Result
-                    </h3>
-
-                    <p>
-                        Score:
-                        <strong>
-                            ${score}/${questions.length}
-                        </strong>
-                    </p>
-
-                    <p>
-                        ${percentage}%
-                    </p>
-
-                    ${
-                        percentage >= 70
-                        ? "🎉 Excellent work!"
-                        : "📚 Keep studying and try again!"
-                    }
-
-                </div>
-
-            `;
-
-
-            saveProgress(
-                unitName,
-                score,
-                questions.length
-            );
-
-
-            updateProgressDisplay();
+            score++;
 
         }
+
+    });
+
+
+    const total =
+        questions.length;
+
+
+    const percentage =
+        total > 0
+            ? Math.round(
+                (score / total) * 100
+            )
+            : 0;
+
+
+    const result =
+        document.getElementById(
+            "quizResult"
+        );
+
+
+    if (!result) return;
+
+
+    let message;
+
+
+    if (percentage >= 80) {
+
+        message =
+            "🎉 Excellent work!";
+
+    }
+
+    else if (percentage >= 70) {
+
+        message =
+            "👏 Good work!";
+
+    }
+
+    else if (percentage >= 50) {
+
+        message =
+            "📚 Keep studying and try again.";
+
+    }
+
+    else {
+
+        message =
+            "💪 Keep practicing. You can improve!";
+
+    }
+
+
+    result.innerHTML = `
+
+        <div style="
+            margin-top:20px;
+            padding:25px;
+            background:#eef7fb;
+            border-radius:15px;
+        ">
+
+            <h2>
+                🎯 Quiz Result
+            </h2>
+
+            <h3>
+                ${score} / ${total}
+            </h3>
+
+            <h3>
+                ${percentage}%
+            </h3>
+
+            <p>
+                ${message}
+            </p>
+
+        </div>
+
+    `;
+
+
+    saveQuizProgress(
+        unitId,
+        unitTitle,
+        score,
+        total,
+        percentage
     );
 
-};
+}
 
 
-// ======================================
-// SAVE PROGRESS
-// ======================================
+// =====================================================
+// SAVE LOCAL PROGRESS
+// =====================================================
 
-function saveProgress(
-    unitName,
+function saveQuizProgress(
+    unitId,
+    unitTitle,
     score,
-    total
+    total,
+    percentage
 ) {
 
     let progress = [];
@@ -334,7 +479,9 @@ function saveProgress(
                 )
             ) || [];
 
-    } catch (error) {
+    }
+
+    catch(error) {
 
         progress = [];
 
@@ -343,19 +490,19 @@ function saveProgress(
 
     progress.push({
 
-        unit: unitName,
+        unitId:unitId,
 
-        score: score,
+        unit:unitTitle,
 
-        total: total,
+        score:score,
 
-        percentage:
-            Math.round(
-                (score / total) * 100
-            ),
+        total:total,
+
+        percentage:percentage,
 
         date:
-            new Date().toLocaleDateString()
+            new Date()
+                .toLocaleDateString()
 
     });
 
@@ -373,91 +520,26 @@ function saveProgress(
 }
 
 
-// ======================================
-// UPDATE PROGRESS DISPLAY
-// ======================================
+// =====================================================
+// ESCAPE HTML
+// =====================================================
 
-function updateProgressDisplay() {
+function escapeHTML(value) {
 
-    const progressBox =
-        document.getElementById(
-            "progress"
-        );
-
-
-    if (!progressBox) {
-        return;
-    }
-
-
-    let progress = [];
-
-
-    try {
-
-        progress =
-            JSON.parse(
-                localStorage.getItem(
-                    "mwanikiQuizProgress"
-                )
-            ) || [];
-
-    } catch (error) {
-
-        progress = [];
-
-    }
-
-
-    if (
-        progress.length === 0
-    ) {
-
-        progressBox.innerHTML =
-            "0%";
-
-        return;
-
-    }
-
-
-    let totalScore = 0;
-    let totalQuestions = 0;
-
-
-    progress.forEach(item => {
-
-        totalScore +=
-            Number(item.score) || 0;
-
-        totalQuestions +=
-            Number(item.total) || 0;
-
-    });
-
-
-    const percentage =
-        totalQuestions > 0
-        ? Math.round(
-            (totalScore /
-            totalQuestions) * 100
-        )
-        : 0;
-
-
-    progressBox.innerHTML =
-        percentage + "%";
+    return String(value ?? "")
+        .replace(/&/g,"&amp;")
+        .replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;")
+        .replace(/"/g,"&quot;")
+        .replace(/'/g,"&#039;");
 
 }
 
 
-// ======================================
+// =====================================================
 // INITIALIZE
-// ======================================
-
-updateProgressDisplay();
-
+// =====================================================
 
 console.log(
-    "📝 Mwaniki Scholars Quiz Engine Loaded"
+    "✅ Quiz engine ready"
 );

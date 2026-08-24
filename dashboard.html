@@ -5,10 +5,10 @@
 
 <meta charset="UTF-8">
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
 
 <title>Mwaniki Scholars Student Dashboard</title>
-
 
 <style>
 
@@ -17,203 +17,120 @@ box-sizing:border-box;
 font-family:"Segoe UI",Arial,sans-serif;
 }
 
-
 body{
-
 margin:0;
-
 background:#f4f9ff;
-
 }
-
-
 
 header{
-
 background:linear-gradient(135deg,#063970,#0b7285);
-
 color:white;
-
 padding:20px;
-
 display:flex;
-
 justify-content:space-between;
-
 align-items:center;
-
 }
-
-
 
 .logo{
-
 font-size:24px;
-
 font-weight:bold;
-
 }
-
-
 
 .profile{
-
 background:white;
-
 color:#063970;
-
 padding:10px 20px;
-
 border-radius:30px;
-
 }
-
-
 
 .container{
-
 padding:30px;
-
 }
-
-
 
 .grid{
-
 display:grid;
-
 grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-
 gap:25px;
-
 }
-
-
 
 .card{
-
 background:white;
-
 padding:25px;
-
 border-radius:20px;
-
 box-shadow:0 8px 25px rgba(0,0,0,.08);
-
 margin-bottom:25px;
-
 }
-
-
 
 .card h2{
-
 color:#063970;
-
 }
-
-
 
 .card p{
-
 color:#64748b;
-
 }
-
-
 
 button{
-
 background:#0b7285;
-
 color:white;
-
 border:none;
-
 padding:12px 20px;
-
 border-radius:10px;
-
 cursor:pointer;
-
 }
-
-
 
 button:hover{
-
 background:#064747;
-
 }
 
-
-
-input,textarea{
-
+input,
+textarea{
 width:100%;
-
 padding:12px;
-
 border-radius:10px;
-
 border:1px solid #ddd;
-
 margin:8px 0;
-
 }
-
-
 
 textarea{
-
 height:120px;
-
 }
-
-
 
 .course-item{
-
 background:#eef7fb;
-
 padding:15px;
-
 margin:10px 0;
-
 border-radius:12px;
-
 cursor:pointer;
-
 }
-
-
 
 .course-item:hover{
-
 background:#d7f0f7;
-
 }
-
-
 
 .unit-card{
-
 background:#fff;
-
 border-left:5px solid #0b7285;
-
 padding:15px;
-
 margin:10px 0;
-
 border-radius:10px;
-
 }
 
+#totalCourses{
+color:#063970;
+margin:5px 0 0 0;
+font-size:36px;
+}
 
+.course-card{
+transition:transform .2s ease,box-shadow .2s ease;
+}
+
+.course-card:hover{
+transform:translateY(-3px);
+box-shadow:0 8px 20px rgba(0,0,0,.10);
+}
 
 </style>
-
 
 </head>
 
@@ -221,9 +138,7 @@ border-radius:10px;
 <body>
 
 
-
 <header>
-
 
 <div class="logo">
 
@@ -231,23 +146,30 @@ border-radius:10px;
 
 </div>
 
-
 <div class="profile">
 
 🎓 Student
 
 </div>
 
-
 </header>
 
 
-
-
-
+<!-- TOTAL COURSES -->
 
 <div class="container">
 
+<div class="card">
+
+<h2>
+📚 Total Courses
+</h2>
+
+<h1 id="totalCourses">
+0
+</h1>
+
+</div>
 
 
 <h1>
@@ -256,7 +178,6 @@ border-radius:10px;
 
 </h1>
 
-
 <p>
 
 Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
@@ -264,84 +185,71 @@ Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
 </p>
 
 
-
-
-
 <!-- COURSES -->
-
-
 
 <section class="card">
 
-    <h2>📚 Medical Course Library</h2>
+<h2>
+📚 Medical Course Library
+</h2>
 
-    <input
-        id="courseSearch"
-        type="text"
-        placeholder="🔎 Search course"
-    >
+<input
+id="courseSearch"
+type="text"
+placeholder="🔎 Search course"
+>
 
-    <div id="courseArea">
+<div id="courseArea">
 
-        ⏳ Loading courses...
+⏳ Loading courses...
 
-    </div>
+</div>
 
 </section>
-
-
-
-
 
 </div>
 
 
-
-
-
-
-
 <div class="grid">
-
-
-
 
 
 <!-- NOTES -->
 
 <section class="card">
 
-    <h2>📄 Notes Library</h2>
+<h2>
+📄 Notes Library
+</h2>
 
-    <div id="notesArea">
+<div id="notesArea">
 
-        ⏳ Loading notes...
+⏳ Loading notes...
 
-    </div>
+</div>
 
 </section>
 
 
-
-
-
-
 <!-- QUIZ -->
 
-
 <div class="card">
-
 
 <h2>
 
 📝 Quiz Center
-<button id="sendQuizBtn" onclick="sendQuizToTutor()">
+
+<button
+id="sendQuizBtn"
+onclick="sendQuizToTutor()"
+>
+
 📨 Send Quiz Results to Tutor
+
 </button>
 
 <p id="quizStatus"></p>
-</h2>
 
+</h2>
 
 <div id="quizArea">
 
@@ -349,21 +257,12 @@ Select a unit to start quiz
 
 </div>
 
-
 </div>
-
-
-
-
-
-
 
 
 <!-- AI -->
 
-
 <div class="card">
-
 
 <h2>
 
@@ -371,24 +270,16 @@ Select a unit to start quiz
 
 </h2>
 
-
 <p>
 
 Ask medical questions.
 
 </p>
 
-
-
 <textarea
-
 id="aiQuestion"
-
 placeholder="Example: Explain diabetes mellitus">
-
 </textarea>
-
-
 
 <button onclick="askAI()">
 
@@ -396,29 +287,16 @@ placeholder="Example: Explain diabetes mellitus">
 
 </button>
 
-
-
 <div id="aiAnswer">
 
 </div>
 
-
-
 </div>
-
-
-
-
-
-
-
 
 
 <!-- SEND QUESTION -->
 
-
 <div class="card">
-
 
 <h2>
 
@@ -426,58 +304,31 @@ placeholder="Example: Explain diabetes mellitus">
 
 </h2>
 
-
 <p>
 
 Send your question to a qualified tutor.
 
 </p>
 
-
-
-
 <input
-
 id="studentName"
-
 placeholder="Your full name"
-
 >
 
-
-
 <input
-
 id="studentEmail"
-
 placeholder="Your email"
-
 >
-
-
-
 
 <input
-
 id="topic"
-
 placeholder="Topic"
-
 >
-
-
-
 
 <textarea
-
 id="studentMessage"
-
 placeholder="Write your question">
-
 </textarea>
-
-
-
 
 <button onclick="sendTutorMessage()">
 
@@ -485,30 +336,16 @@ placeholder="Write your question">
 
 </button>
 
-
-
-
 <div id="messageStatus">
 
 </div>
 
-
-
 </div>
-
-
-
-
-
-
-
 
 
 <!-- STUDENT INBOX -->
 
-
 <div class="card">
-
 
 <h2>
 
@@ -516,25 +353,16 @@ placeholder="Write your question">
 
 </h2>
 
-
 <p>
 
 Check answers from tutors.
 
 </p>
 
-
-
-
 <input
-
 id="checkEmail"
-
 placeholder="Enter your email"
-
 >
-
-
 
 <button onclick="loadStudentAnswers()">
 
@@ -542,30 +370,18 @@ placeholder="Enter your email"
 
 </button>
 
-
-
-
 <div id="studentInbox">
 
 No messages yet.
 
 </div>
 
-
-
 </div>
-
-
-
-
-
 
 
 <!-- PROGRESS -->
 
-
 <div class="card">
-
 
 <h2>
 
@@ -573,14 +389,11 @@ No messages yet.
 
 </h2>
 
-
 <p>
 
 Track your learning.
 
 </p>
-
-
 
 <div id="progress">
 
@@ -588,40 +401,49 @@ Track your learning.
 
 </div>
 
-
-
-</div>
-
-
-
-
-
-
 </div>
 
 
 </div>
-
 
 
 <!-- SYSTEM FILES -->
 
-<script type="module" src="supabase.js"></script>
+<script
+type="module"
+src="./supabase.js">
+</script>
 
-<script type="module" src="courses.js"></script>
+<script
+type="module"
+src="./courses.js">
+</script>
 
-<script type="module" src="dashboard.js"></script>
+<script
+type="module"
+src="./dashboard.js">
+</script>
 
-<script type="module" src="quiz.js"></script>
+<script
+type="module"
+src="./quiz.js">
+</script>
 
-<script src="aiTutor.js"></script>
+<script
+src="./aiTutor.js">
+</script>
 
-<script type="module" src="studentTutor.js"></script>
+<script
+type="module"
+src="./studentTutor.js">
+</script>
 
-<script type="module" src="studentInbox.js"></script>
+<script
+type="module"
+src="./studentInbox.js">
+</script>
+
 
 </body>
+
 </html>
-
-
-
