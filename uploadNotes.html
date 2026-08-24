@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Mwaniki Scholars | Upload Notes</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+    font-family:"Segoe UI",Arial,sans-serif;
+}
+
+body{
+    margin:0;
+    background:#f4f9ff;
+}
+
+header{
+    background:linear-gradient(
+        135deg,
+        #063970,
+        #0b7285
+    );
+    color:white;
+    padding:20px;
+    text-align:center;
+    font-size:25px;
+    font-weight:bold;
+}
+
+.container{
+    padding:30px;
+    display:flex;
+    justify-content:center;
+}
+
+.card{
+    background:white;
+    padding:30px;
+    width:480px;
+    max-width:100%;
+    border-radius:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.15);
+}
+
+h2{
+    text-align:center;
+    color:#063970;
+}
+
+label{
+    display:block;
+    margin-top:18px;
+    font-weight:bold;
+    color:#334155;
+}
+
+select,
+input[type="file"]{
+
+    width:100%;
+
+    padding:13px;
+
+    margin-top:8px;
+
+    border-radius:10px;
+
+    border:1px solid #ccc;
+
+    background:white;
+
+    font-size:15px;
+
+}
+
+select:focus,
+input:focus{
+
+    outline:none;
+
+    border-color:#0b7285;
+
+}
+
+button{
+
+    width:100%;
+
+    margin-top:22px;
+
+    padding:14px;
+
+    border:none;
+
+    border-radius:10px;
+
+    background:#0b7285;
+
+    color:white;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+}
+
+button:hover{
+
+    background:#063970;
+
+}
+
+button:disabled{
+
+    background:#94a3b8;
+
+    cursor:not-allowed;
+
+}
+
+#status{
+
+    text-align:center;
+
+    font-weight:bold;
+
+    margin-top:18px;
+
+    line-height:1.5;
+
+}
+
+.back{
+
+    display:block;
+
+    margin-top:20px;
+
+    text-align:center;
+
+    color:#063970;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+📚 Mwaniki Scholars Notes Upload
+
+</header>
+
+
+<div class="container">
+
+
+<div class="card">
+
+
+<h2>
+
+📤 Upload Study Material
+
+</h2>
+
+
+<!-- =============================== -->
+<!-- COURSE -->
+<!-- =============================== -->
+
+<label for="course">
+
+📚 Course
+
+</label>
+
+
+<select id="course">
+
+<option value="">
+
+⏳ Loading courses...
+
+</option>
+
+</select>
+
+
+<!-- =============================== -->
+<!-- UNIT -->
+<!-- =============================== -->
+
+<label for="unit">
+
+📖 Unit
+
+</label>
+
+
+<select id="unit" disabled>
+
+<option value="">
+
+Select a course first
+
+</option>
+
+</select>
+
+
+<!-- =============================== -->
+<!-- FILE -->
+<!-- =============================== -->
+
+<label for="file">
+
+📄 Select Notes File
+
+</label>
+
+
+<input
+
+    id="file"
+
+    type="file"
+
+    accept=".pdf,.doc,.docx,.ppt,.pptx"
+
+
+>
+
+
+<!-- =============================== -->
+<!-- UPLOAD -->
+<!-- =============================== -->
+
+<button
+
+    id="uploadButton"
+
+    type="button"
+
+    onclick="uploadNotes()"
+
+>
+
+📤 Upload Notes
+
+</button>
+
+
+<!-- =============================== -->
+<!-- STATUS -->
+<!-- =============================== -->
+
+<div id="status">
+
+</div>
+
+
+<a
+    class="back"
+    href="admin.html"
+>
+
+⬅ Back to Admin Dashboard
+
+</a>
+
+
+</div>
+
+</div>
+
+
+<script
+    type="module"
+    src="uploadNotes.js"
+></script>
+
+
+</body>
+
+</html>
