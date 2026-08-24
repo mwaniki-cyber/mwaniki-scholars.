@@ -7,25 +7,55 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Mwaniki Scholars Admin</title>
+<title>Mwaniki Scholars Admin Dashboard</title>
+
 
 <style>
 
-body{
-font-family:Arial,sans-serif;
-background:#f4f8fc;
-margin:0;
+*{
+
+box-sizing:border-box;
+font-family:"Segoe UI",Arial;
+
 }
+
+
+body{
+
+margin:0;
+
+background:#f4f9ff;
+
+}
+
 
 
 header{
 
-background:#0f3d56;
+background:linear-gradient(135deg,#063970,#0b7285);
+
 color:white;
+
 padding:20px;
-text-align:center;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
 
 }
+
+
+
+.logo{
+
+font-size:25px;
+
+font-weight:bold;
+
+}
+
 
 
 .container{
@@ -35,122 +65,246 @@ padding:30px;
 }
 
 
-.cards{
-
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:20px;
-
-}
-
 
 .card{
 
 background:white;
+
 padding:25px;
-border-radius:15px;
-box-shadow:0 5px 20px rgba(0,0,0,.1);
+
+border-radius:20px;
+
+box-shadow:0 8px 25px rgba(0,0,0,.12);
+
+margin-bottom:20px;
 
 }
+
 
 
 button{
 
 background:#0b7285;
+
 color:white;
+
 border:none;
-padding:12px;
-border-radius:8px;
+
+padding:12px 20px;
+
+border-radius:10px;
+
 cursor:pointer;
+
+margin:5px;
+
+font-size:15px;
 
 }
 
+
+
+button:hover{
+
+background:#063970;
+
+}
+
+
+
+a{
+
+text-decoration:none;
+
+}
+
+
+
 </style>
 
+
 </head>
+
 
 
 <body>
 
 
+
 <header>
 
-<h1>
-⚙️ Mwaniki Scholars Admin Center
-</h1>
 
-<p>
-Control your learning platform
-</p>
+<div class="logo">
+
+⚙️ Mwaniki Scholars Admin
+
+</div>
+
+
+<div>
+
+Administrator Portal
+
+</div>
+
 
 </header>
+
+
 
 
 
 <div class="container">
 
 
-<div class="cards">
+<div class="card">
+
+
+<h2>
+
+📚 Learning Management
+
+</h2>
+
+
+<a href="uploadNotes.html">
+
+<button>
+
+📤 Upload Notes
+
+</button>
+
+</a>
+
+
+
+<a href="quizAdmin.html">
+
+<button>
+
+📝 Manage Quizzes
+
+</button>
+
+</a>
+
+
+
+</div>
+
+
+
 
 
 <div class="card">
 
-<h2>📚 Courses</h2>
 
-<p>
-Manage medical courses
-</p>
+<h2>
+
+👨‍🏫 Tutor Management
+
+</h2>
+
+
+<a href="createTutor.html">
 
 <button>
-Manage Courses
+
+➕ Create Tutor Account
+
 </button>
 
+</a>
+
+
+
+<a href="tutor.html">
+
+<button>
+
+👨‍🏫 View Tutor Portal
+
+</button>
+
+</a>
+
+
 </div>
+
+
 
 
 
 <div class="card">
 
-<h2>📄 Notes</h2>
+
+<h2>
+
+🎓 Student Management
+
+</h2>
+
 
 <p>
-Upload and organize notes
+
+Monitor students, courses and progress.
+
 </p>
 
-<button>
-Upload Notes
-</button>
 
-</div>
-
-
-
-
-<div class="card">
-
-<h2>🎥 Videos</h2>
-
-<p>
-Manage lectures
-</p>
+<a href="dashboard.html">
 
 <button>
-Upload Video
+
+🎓 Student Dashboard
+
 </button>
 
-</div>
-
-
-
-</div>
+</a>
 
 
 </div>
 
 
-<script type="module" src="firebase.js"></script>
+
+
+
+</div>
+
+
+
+
+
+
+<script type="module">
+
+
+import {supabase} from "./supabase.js";
+
+
+const {data}=await supabase.auth.getSession();
+
+
+
+if(!data.session){
+
+
+window.location.href="adminLogin.html";
+
+
+}
+
+
+
+</script>
+
+
+
+<script type="module" src="admin.js"></script>
 
 
 </body>
+
 
 </html>
