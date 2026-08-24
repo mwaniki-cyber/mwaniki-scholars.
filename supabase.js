@@ -1,32 +1,30 @@
-// =====================================
-// MWANIKI SCHOLARS SUPABASE CONNECTION
-// =====================================
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+// =====================================================
+// MWANIKI SCHOLARS - SUPABASE CONNECTION
+// =====================================================
+
+// Replace these with your project's values
+const SUPABASE_URL = "https://bazixdwtysmkkdeloerx.supabase.co";
+
+const SUPABASE_ANON_KEY = "sb_publishable_LfHAT9AAQ03BAyo1bQhVTg_Agk7MmjB";
 
 
-import { createClient } from 
-"https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+// =====================================================
+// CREATE SUPABASE CLIENT
+// =====================================================
+
+export const supabase =
+    createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+    );
 
 
-// SUPABASE PROJECT URL
+// =====================================================
+// CONNECTION MESSAGE
+// =====================================================
 
-const supabaseUrl = 
-"https://bazixdwtysmkkdeloerx.supabase.co";
-
-
-// PASTE YOUR SUPABASE PUBLISHABLE KEY HERE
-
-const supabaseKey = 
-"sb_publishable_LfHAT9AAQ03BAyo1bQhVTg_Agk7MmjB";
-
-
-
-// CREATE SUPABASE CONNECTION
-
-export const supabase = createClient(
-    supabaseUrl,
-    supabaseKey
+console.log(
+    "✅ Mwaniki Scholars Supabase Connected"
 );
-
-
-
-console.log("✅ Mwaniki Scholars Supabase Connected");
