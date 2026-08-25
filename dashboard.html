@@ -1,448 +1,1221 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+<meta
+name="viewport"
+content="width=device-width, initial-scale=1.0"
+
+>
 
 <title>Mwaniki Scholars Student Dashboard</title>
 
 <style>
 
-*{
-box-sizing:border-box;
-font-family:"Segoe UI",Arial,sans-serif;
+/* =========================================================
+   GLOBAL
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
-body{
-margin:0;
-background:#f4f9ff;
+body {
+    margin: 0;
+    background: #f4f9ff;
+    color: #17324d;
 }
 
-header{
-background:linear-gradient(135deg,#063970,#0b7285);
-color:white;
-padding:20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+header {
+
+    background:
+        linear-gradient(
+            135deg,
+            #063970,
+            #0b7285
+        );
+
+    color: white;
+
+    padding: 16px 25px;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    gap: 20px;
+
+    position: sticky;
+
+    top: 0;
+
+    z-index: 100;
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,.12);
 }
 
-.logo{
-font-size:24px;
-font-weight:bold;
+
+.logo {
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
 }
 
-.profile{
-background:white;
-color:#063970;
-padding:10px 20px;
-border-radius:30px;
+
+/* =========================================================
+   PERSONAL PROFILE HEADER
+   ========================================================= */
+
+.header-right {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
 }
 
-.container{
-padding:30px;
+
+.profile-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 6px 14px 6px 6px;
+
+    border-radius: 40px;
+
+    background:
+        rgba(255,255,255,.14);
+
+    border:
+        1px solid rgba(255,255,255,.25);
+
+    cursor: pointer;
+
+    transition:
+        .25s ease;
+
 }
 
-.grid{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:25px;
+
+.profile-card:hover {
+
+    background:
+        rgba(255,255,255,.25);
+
+    transform:
+        translateY(-2px);
+
 }
 
-.card{
-background:white;
-padding:25px;
-border-radius:20px;
-box-shadow:0 8px 25px rgba(0,0,0,.08);
-margin-bottom:25px;
+
+.profile-avatar {
+
+    width: 46px;
+
+    height: 46px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e6f4f7,
+            #d3edf2
+        );
+
+    color: #063970;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 23px;
+
+    font-weight: bold;
+
+    overflow: hidden;
+
+    flex-shrink: 0;
+
+    border:
+        2px solid rgba(255,255,255,.8);
 }
 
-.card h2{
-color:#063970;
+
+.profile-avatar img {
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+
 }
 
-.card p{
-color:#64748b;
+
+.profile-info {
+
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 100px;
+
+    max-width: 180px;
 }
 
-button{
-background:#0b7285;
-color:white;
-border:none;
-padding:12px 20px;
-border-radius:10px;
-cursor:pointer;
+
+.profile-name {
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 }
 
-button:hover{
-background:#064747;
+
+.profile-details {
+
+    color:
+        rgba(255,255,255,.82);
+
+    font-size: 11px;
+
+    margin-top: 2px;
+
+    white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 }
+
+
+.profile-button {
+
+    border:
+        1px solid rgba(255,255,255,.45);
+
+    background:
+        rgba(255,255,255,.12);
+
+    color: white;
+
+    padding:
+        10px 15px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    font-weight: 600;
+
+    transition: .2s ease;
+}
+
+
+.profile-button:hover {
+
+    background: white;
+
+    color: #063970;
+
+}
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.container {
+
+    padding: 30px;
+
+    max-width: 1400px;
+
+    margin: auto;
+}
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(280px, 1fr)
+        );
+
+    gap: 25px;
+}
+
+
+/* =========================================================
+   CARDS
+   ========================================================= */
+
+.card {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 8px 25px
+        rgba(0,0,0,.08);
+
+    margin-bottom: 25px;
+}
+
+
+.card h2 {
+
+    color: #063970;
+
+}
+
+
+.card p {
+
+    color: #64748b;
+
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+button {
+
+    background: #0b7285;
+
+    color: white;
+
+    border: none;
+
+    padding: 12px 20px;
+
+    border-radius: 10px;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+
+}
+
+
+button:hover {
+
+    background: #064747;
+
+}
+
+
+/* =========================================================
+   INPUTS
+   ========================================================= */
 
 input,
-textarea{
-width:100%;
-padding:12px;
-border-radius:10px;
-border:1px solid #ddd;
-margin:8px 0;
+textarea {
+
+    width: 100%;
+
+    padding: 12px;
+
+    border-radius: 10px;
+
+    border:
+        1px solid #ddd;
+
+    margin: 8px 0;
+
 }
 
-textarea{
-height:120px;
+
+input:focus,
+textarea:focus {
+
+    outline: none;
+
+    border-color: #0b7285;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(11,114,133,.1);
+
 }
 
-.course-item{
-background:#eef7fb;
-padding:15px;
-margin:10px 0;
-border-radius:12px;
-cursor:pointer;
+
+textarea {
+
+    height: 120px;
+
+    resize: vertical;
+
 }
 
-.course-item:hover{
-background:#d7f0f7;
+
+/* =========================================================
+   COURSE ITEMS
+   ========================================================= */
+
+.course-item {
+
+    background: #eef7fb;
+
+    padding: 15px;
+
+    margin: 10px 0;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    transition: .2s ease;
+
 }
 
-.unit-card{
-background:#fff;
-border-left:5px solid #0b7285;
-padding:15px;
-margin:10px 0;
-border-radius:10px;
+
+.course-item:hover {
+
+    background: #d7f0f7;
+
+    transform:
+        translateX(3px);
+
 }
 
-#totalCourses{
-color:#063970;
-margin:5px 0 0 0;
-font-size:36px;
+
+.unit-card {
+
+    background: #fff;
+
+    border-left:
+        5px solid #0b7285;
+
+    padding: 15px;
+
+    margin: 10px 0;
+
+    border-radius: 10px;
+
 }
 
-.course-card{
-transition:transform .2s ease,box-shadow .2s ease;
+
+/* =========================================================
+   COURSE COUNTER
+   ========================================================= */
+
+#totalCourses {
+
+    color: #063970;
+
+    margin: 5px 0 0 0;
+
+    font-size: 36px;
+
 }
 
-.course-card:hover{
-transform:translateY(-3px);
-box-shadow:0 8px 20px rgba(0,0,0,.10);
+
+.course-card {
+
+    transition:
+        transform .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.course-card:hover {
+
+    transform:
+        translateY(-3px);
+
+    box-shadow:
+        0 8px 20px
+        rgba(0,0,0,.10);
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    header {
+
+        padding: 12px 15px;
+
+        align-items: flex-start;
+
+    }
+
+
+    .logo {
+
+        font-size: 18px;
+
+    }
+
+
+    .header-right {
+
+        gap: 6px;
+
+    }
+
+
+    .profile-card {
+
+        padding:
+            4px;
+
+        border-radius: 50%;
+
+    }
+
+
+    .profile-info {
+
+        display: none;
+
+    }
+
+
+    .profile-avatar {
+
+        width: 42px;
+
+        height: 42px;
+
+    }
+
+
+    .profile-button {
+
+        padding:
+            9px 10px;
+
+        font-size: 12px;
+
+    }
+
+
+    .container {
+
+        padding: 15px;
+
+    }
+
 }
 
 </style>
 
 </head>
 
-
 <body>
 
+<!-- =======================================================
+     HEADER
+======================================================== -->
 
 <header>
 
+```
 <div class="logo">
 
-🏥 Mwaniki Scholars
+    🏥 Mwaniki Scholars
 
 </div>
 
-<div class="profile">
 
-🎓 Student
+<div class="header-right">
+
+
+    <!-- PERSONAL STUDENT IDENTITY -->
+
+    <div
+        class="profile-card"
+        id="studentProfileCard"
+        title="Open My Profile"
+    >
+
+
+        <div
+            class="profile-avatar"
+            id="studentAvatar"
+        >
+
+            👤
+
+        </div>
+
+
+        <div class="profile-info">
+
+
+            <div
+                class="profile-name"
+                id="studentDisplayName"
+            >
+
+                Loading...
+
+            </div>
+
+
+            <div
+                class="profile-details"
+                id="studentDisplayCourse"
+            >
+
+                Student
+
+            </div>
+
+
+        </div>
+
+
+    </div>
+
+
+    <!-- PROFILE BUTTON -->
+
+    <button
+        type="button"
+        class="profile-button"
+        id="myProfileButton"
+    >
+
+        👤 My Profile
+
+    </button>
+
 
 </div>
+```
 
 </header>
 
-
-<!-- TOTAL COURSES -->
+<!-- =======================================================
+     MAIN
+======================================================== -->
 
 <div class="container">
 
-<div class="card">
-
-<h2>
-📚 Total Courses
-</h2>
-
-<h1 id="totalCourses">
-0
-</h1>
-
-</div>
-
-
-<h1>
-
-🎓 Student Learning Dashboard
-
-</h1>
-
-<p>
-
-Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
-
-</p>
-
-
-<!-- COURSES -->
-
-<section class="card">
-
-<h2>
-📚 Medical Course Library
-</h2>
-
-<input
-id="courseSearch"
-type="text"
-placeholder="🔎 Search course"
->
-
-<div id="courseArea">
-
-⏳ Loading courses...
-
-</div>
-
-</section>
-
-</div>
-
-
-<div class="grid">
-
-
-<!-- NOTES -->
-
-<section class="card">
-
-<h2>
-📄 Notes Library
-</h2>
-
-<div id="notesArea">
-
-⏳ Loading notes...
-
-</div>
-
-</section>
-
-
-<!-- QUIZ -->
+```
+<!-- WELCOME -->
 
 <div class="card">
 
-<h2>
+    <h1>
+        🎓 Student Learning Dashboard
+    </h1>
 
-📝 Quiz Center
-
-<button
-id="sendQuizBtn"
-onclick="sendQuizToTutor()"
->
-
-📨 Send Quiz Results to Tutor
-
-</button>
-
-<p id="quizStatus"></p>
-
-</h2>
-
-<div id="quizArea">
-
-Select a unit to start quiz
-
-</div>
+    <p>
+        Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
+    </p>
 
 </div>
 
 
-<!-- AI -->
+<!-- ===================================================
+     COURSE LIBRARY
+==================================================== -->
 
 <div class="card">
 
-<h2>
+    <h2>
+        📚 Medical Course Library
+    </h2>
 
-🤖 AI Medical Tutor
 
-</h2>
+    <input
+        id="courseSearch"
+        type="text"
+        placeholder="🔎 Search course"
+    >
 
-<p>
 
-Ask medical questions.
+    <div id="coursesArea">
 
-</p>
+        ⏳ Loading courses...
 
-<textarea
-id="aiQuestion"
-placeholder="Example: Explain diabetes mellitus">
-</textarea>
-
-<button onclick="askAI()">
-
-🤖 Ask AI Tutor
-
-</button>
-
-<div id="aiAnswer">
-
-</div>
+    </div>
 
 </div>
 
 
-<!-- SEND QUESTION -->
+<!-- ===================================================
+     NOTES
+==================================================== -->
 
 <div class="card">
 
-<h2>
+    <h2>
+        📄 Notes Library
+    </h2>
 
-👨‍🏫 Ask Medical Tutor
 
-</h2>
+    <div id="notesArea">
 
-<p>
+        ⏳ Loading notes...
 
-Send your question to a qualified tutor.
-
-</p>
-
-<input
-id="studentName"
-placeholder="Your full name"
->
-
-<input
-id="studentEmail"
-placeholder="Your email"
->
-
-<input
-id="topic"
-placeholder="Topic"
->
-
-<textarea
-id="studentMessage"
-placeholder="Write your question">
-</textarea>
-
-<button onclick="sendTutorMessage()">
-
-📨 Send Question
-
-</button>
-
-<div id="messageStatus">
-
-</div>
+    </div>
 
 </div>
 
 
-<!-- STUDENT INBOX -->
+<!-- ===================================================
+     QUIZ CENTER
+==================================================== -->
 
 <div class="card">
 
-<h2>
+    <h2>
+        📝 Quiz Center
+    </h2>
 
-📬 Tutor Replies
 
-</h2>
+    <button
+        id="sendQuizBtn"
+        onclick="sendQuizToTutor()"
+    >
 
-<p>
+        📨 Send Quiz Results to Tutor
 
-Check answers from tutors.
+    </button>
 
-</p>
 
-<input
-id="checkEmail"
-placeholder="Enter your email"
->
+    <div
+        id="quizArea"
+        style="margin-top:20px;"
+    >
 
-<button onclick="loadStudentAnswers()">
+        Select a unit to start quiz
 
-📥 Load Answers
-
-</button>
-
-<div id="studentInbox">
-
-No messages yet.
-
-</div>
+    </div>
 
 </div>
 
 
-<!-- PROGRESS -->
+<!-- ===================================================
+     AI TUTOR
+==================================================== -->
 
 <div class="card">
 
-<h2>
+    <h2>
+        🤖 AI Medical Tutor
+    </h2>
 
-📊 Progress
 
-</h2>
+    <p>
+        Ask medical questions.
+    </p>
 
-<p>
 
-Track your learning.
+    <textarea
+        id="aiQuestion"
+        placeholder="Ask your medical question..."
+    ></textarea>
 
-</p>
 
-<div id="progress">
+    <button
+        onclick="askAI()"
+    >
 
-0%
+        🤖 Ask AI Tutor
+
+    </button>
+
+
+    <div
+        id="aiAnswer"
+        style="margin-top:15px;"
+    >
+
+    </div>
 
 </div>
 
+
+<!-- ===================================================
+     ASK MEDICAL TUTOR
+==================================================== -->
+
+<div class="card">
+
+    <h2>
+        👨‍🏫 Ask Medical Tutor
+    </h2>
+
+
+    <p>
+        Send your question to a qualified tutor.
+    </p>
+
+
+    <input
+        id="studentName"
+        placeholder="Your full name"
+    >
+
+
+    <input
+        id="studentEmail"
+        placeholder="Your email"
+    >
+
+
+    <input
+        id="topic"
+        placeholder="Topic"
+    >
+
+
+    <textarea
+        id="studentMessage"
+        placeholder="Write your question"
+    ></textarea>
+
+
+    <button
+        onclick="sendTutorMessage()"
+    >
+
+        📨 Send Question
+
+    </button>
+
+
+    <div
+        id="messageStatus"
+        style="margin-top:12px;"
+    >
+
+    </div>
+
 </div>
 
 
+<!-- ===================================================
+     STUDENT INBOX
+==================================================== -->
+
+<div class="card">
+
+    <h2>
+        📬 Tutor Replies
+    </h2>
+
+
+    <p>
+        Check answers from tutors.
+    </p>
+
+
+    <input
+        id="checkEmail"
+        placeholder="Enter your email"
+    >
+
+
+    <button
+        onclick="loadStudentAnswers()"
+    >
+
+        📥 Load Answers
+
+    </button>
+
+
+    <div
+        id="studentInbox"
+        style="margin-top:15px;"
+    >
+
+        <p>No messages yet.</p>
+
+    </div>
+
 </div>
 
 
-<!-- SYSTEM FILES -->
+<!-- ===================================================
+     PROGRESS
+==================================================== -->
+
+<div class="card">
+
+    <h2>
+        📊 Progress
+    </h2>
+
+
+    <p>
+        Track your learning.
+    </p>
+
+
+    <div id="progress">
+
+        <p>0%</p>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<!-- =======================================================
+     SYSTEM FILES
+======================================================== -->
 
 <script
-type="module"
-src="./supabase.js">
-</script>
+    type="module"
+    src="./supabase.js"
+></script>
 
 <script
-type="module"
-src="./courses.js">
-</script>
+    type="module"
+    src="./courses.js"
+></script>
 
 <script
-type="module"
-src="./dashboard.js">
-</script>
+    type="module"
+    src="./dashboard.js"
+></script>
 
 <script
-type="module"
-src="./quiz.js">
-</script>
+    type="module"
+    src="./quiz.js"
+></script>
 
 <script
-src="./aiTutor.js">
-</script>
+    src="./aiTutor.js"
+></script>
 
 <script
-type="module"
-src="./studentTutor.js">
-</script>
+    type="module"
+    src="./studentTutor.js"
+></script>
 
 <script
-type="module"
-src="./studentInbox.js">
-</script>
+    type="module"
+    src="./studentInbox.js"
+></script>
 
+<!-- =======================================================
+     PERSONAL PROFILE LOADER
+======================================================== -->
+
+<script type="module">
+
+import { supabase } from "./supabase.js";
+
+
+const profileCard =
+    document.getElementById(
+        "studentProfileCard"
+    );
+
+
+const profileButton =
+    document.getElementById(
+        "myProfileButton"
+    );
+
+
+const nameElement =
+    document.getElementById(
+        "studentDisplayName"
+    );
+
+
+const courseElement =
+    document.getElementById(
+        "studentDisplayCourse"
+    );
+
+
+const avatarElement =
+    document.getElementById(
+        "studentAvatar"
+    );
+
+
+/* =========================================================
+   OPEN PROFILE
+========================================================= */
+
+function openStudentProfile() {
+
+    window.location.href =
+        "studentProfile.html";
+
+}
+
+
+profileCard.addEventListener(
+    "click",
+    openStudentProfile
+);
+
+
+profileButton.addEventListener(
+    "click",
+    openStudentProfile
+);
+
+
+/* =========================================================
+   LOAD STUDENT IDENTITY
+========================================================= */
+
+async function loadStudentIdentity() {
+
+    try {
+
+
+        const {
+            data,
+            error
+        } =
+            await supabase.auth.getSession();
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+        const session =
+            data.session;
+
+
+        if (
+            !session ||
+            !session.user
+        ) {
+
+            window.location.href =
+                "studentLogin.html";
+
+            return;
+
+        }
+
+
+        const user =
+            session.user;
+
+
+        /* -------------------------------------------------
+           DEFAULT IDENTITY
+        ------------------------------------------------- */
+
+        nameElement.textContent =
+            user.email ||
+            "Student";
+
+
+        courseElement.textContent =
+            "Student";
+
+
+        /* -------------------------------------------------
+           LOAD DATABASE PROFILE
+        ------------------------------------------------- */
+
+        const {
+            data: profile,
+            error: profileError
+        } =
+            await supabase
+                .from("students")
+                .select(
+                    "full_name, course, level, photo_url"
+                )
+                .eq(
+                    "id",
+                    user.id
+                )
+                .maybeSingle();
+
+
+        if (profileError) {
+
+            console.warn(
+                "Student profile could not be loaded:",
+                profileError.message
+            );
+
+            return;
+
+        }
+
+
+        if (!profile) {
+
+            nameElement.textContent =
+                user.email ||
+                "Complete Your Profile";
+
+            courseElement.textContent =
+                "Student";
+
+            return;
+
+        }
+
+
+        /* -------------------------------------------------
+           NAME
+        ------------------------------------------------- */
+
+        if (profile.full_name) {
+
+            nameElement.textContent =
+                profile.full_name;
+
+        }
+
+
+        /* -------------------------------------------------
+           COURSE + LEVEL
+        ------------------------------------------------- */
+
+        let details =
+            profile.course ||
+            "Student";
+
+
+        if (profile.level) {
+
+            details +=
+                " • " +
+                profile.level;
+
+        }
+
+
+        courseElement.textContent =
+            details;
+
+
+        /* -------------------------------------------------
+           PHOTO
+        ------------------------------------------------- */
+
+        if (profile.photo_url) {
+
+            avatarElement.innerHTML = "";
+
+
+            const image =
+                document.createElement(
+                    "img"
+                );
+
+
+            image.src =
+                profile.photo_url;
+
+
+            image.alt =
+                "Student profile photo";
+
+
+            image.onerror =
+                function () {
+
+                    this.remove();
+
+                    avatarElement.textContent =
+                        "👤";
+
+                };
+
+
+            avatarElement.appendChild(
+                image
+            );
+
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Student identity error:",
+            error
+        );
+
+
+        nameElement.textContent =
+            "Student";
+
+
+        courseElement.textContent =
+            "My Profile";
+
+    }
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+loadStudentIdentity();
+
+</script>
 
 </body>
 
