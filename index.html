@@ -3,6 +3,10 @@
 
 <head>
 
+    <!-- =========================================
+         BASIC DOCUMENT SETTINGS
+    ========================================== -->
+
     <meta charset="UTF-8">
 
     <meta
@@ -10,9 +14,9 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+
     <!-- =========================================
-         MWANIKI SCHOLARS
-         SEO & WEBSITE INFORMATION
+         MWANIKI SCHOLARS SEO
     ========================================== -->
 
     <title>
@@ -21,12 +25,12 @@
 
     <meta
         name="description"
-        content="Mwaniki Scholars is a medical learning platform providing medical courses, notes, quizzes and self-testing resources for medical students."
+        content="Mwaniki Scholars is a medical learning platform for medical students, featuring medical courses, study notes, quizzes, self-testing and learning resources."
     >
 
     <meta
         name="keywords"
-        content="Mwaniki Scholars, medical education, medical students, anatomy, physiology, pharmacology, microbiology, pathology, medical courses, medical quizzes"
+        content="Mwaniki Scholars, medical learning, medical education, medical students, medical courses, anatomy, physiology, pharmacology, microbiology, pathology, medical quizzes"
     >
 
     <meta
@@ -39,15 +43,19 @@
         content="index, follow"
     >
 
-    <!-- Canonical URL -->
+
+    <!-- =========================================
+         CANONICAL URL
+    ========================================== -->
 
     <link
         rel="canonical"
-        href="https://mwaniki-cyber.github.io/mwaniki-scholars/"
+        href="https://mwaniki-cyber.github.io/mwaniki-scholars./"
     >
 
+
     <!-- =========================================
-         OPEN GRAPH
+         OPEN GRAPH / SOCIAL SHARING
     ========================================== -->
 
     <meta
@@ -57,7 +65,7 @@
 
     <meta
         property="og:description"
-        content="Medical courses, notes, quizzes and self-testing resources for medical students."
+        content="Medical courses, study notes, quizzes and self-testing resources for medical students."
     >
 
     <meta
@@ -67,8 +75,50 @@
 
     <meta
         property="og:url"
-        content="https://mwaniki-cyber.github.io/mwaniki-scholars/"
+        content="https://mwaniki-cyber.github.io/mwaniki-scholars./"
     >
+
+    <meta
+        property="og:site_name"
+        content="Mwaniki Scholars"
+    >
+
+
+    <!-- =========================================
+         TWITTER / SOCIAL PREVIEW
+    ========================================== -->
+
+    <meta
+        name="twitter:card"
+        content="summary"
+    >
+
+    <meta
+        name="twitter:title"
+        content="Mwaniki Scholars | Medical Learning Platform"
+    >
+
+    <meta
+        name="twitter:description"
+        content="Medical courses, notes, quizzes and self-testing resources for medical students."
+    >
+
+
+    <!-- =========================================
+         STRUCTURED DATA
+         Helps search engines understand the site
+    ========================================== -->
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "EducationalOrganization",
+        "name": "Mwaniki Scholars",
+        "url": "https://mwaniki-cyber.github.io/mwaniki-scholars./",
+        "description": "Mwaniki Scholars is a medical learning platform providing medical courses, study notes, quizzes and self-testing resources for medical students."
+    }
+    </script>
+
 
     <!-- =========================================
          PAGE STYLES
@@ -76,14 +126,15 @@
 
     <style>
 
-        /* =========================================
+        /* =====================================
            GLOBAL
-        ========================================== */
+        ===================================== */
 
         * {
             box-sizing: border-box;
             font-family: "Segoe UI", Arial, sans-serif;
         }
+
 
         html,
         body {
@@ -93,18 +144,16 @@
             min-height: 100%;
         }
 
+
         body {
-
             background: #eef7fb;
-
             color: #ffffff;
-
         }
 
 
-        /* =========================================
+        /* =====================================
            HEADER
-        ========================================== */
+        ===================================== */
 
         header {
 
@@ -124,7 +173,6 @@
             box-shadow:
                 0 4px 15px
                 rgba(0, 0, 0, 0.15);
-
         }
 
 
@@ -135,7 +183,6 @@
             font-weight: 700;
 
             letter-spacing: 0.5px;
-
         }
 
 
@@ -148,13 +195,12 @@
             opacity: 0.9;
 
             letter-spacing: 0.3px;
-
         }
 
 
-        /* =========================================
-           MAIN AUTH CONTAINER
-        ========================================== */
+        /* =====================================
+           AUTH CONTAINER
+        ===================================== */
 
         .auth-container {
 
@@ -173,13 +219,12 @@
             box-shadow:
                 0 10px 35px
                 rgba(0, 0, 0, 0.15);
-
         }
 
 
-        /* =========================================
+        /* =====================================
            MEDICAL BACKGROUND
-        ========================================== */
+        ===================================== */
 
         .medical-bg {
 
@@ -197,13 +242,12 @@
                     #0b7285,
                     #38bdf8
                 );
-
         }
 
 
-        /* =========================================
+        /* =====================================
            FLOATING MEDICAL CROSSES
-        ========================================== */
+        ===================================== */
 
         .cross {
 
@@ -221,66 +265,50 @@
 
             animation:
                 float 10s infinite;
-
         }
 
 
         .c1 {
-
             left: 10%;
-
         }
 
 
         .c2 {
-
             left: 35%;
-
             animation-delay: 2s;
-
         }
 
 
         .c3 {
-
             left: 65%;
-
             animation-delay: 4s;
-
         }
 
 
         .c4 {
-
             left: 85%;
-
             animation-delay: 6s;
-
         }
 
 
         @keyframes float {
 
             0% {
-
                 transform:
                     translateY(500px);
-
             }
 
             100% {
-
                 transform:
                     translateY(-100px);
-
             }
 
         }
 
 
-        /* =========================================
-           LOGIN BOX
-        ========================================== */
+        /* =====================================
+           AUTHENTICATION BOX
+        ===================================== */
 
         .auth-box {
 
@@ -320,13 +348,12 @@
             box-shadow:
                 0 8px 30px
                 rgba(0, 0, 0, 0.20);
-
         }
 
 
-        /* =========================================
-           WELCOME TEXT
-        ========================================== */
+        /* =====================================
+           WELCOME
+        ===================================== */
 
         .auth-box h2 {
 
@@ -335,7 +362,6 @@
             margin-bottom: 8px;
 
             font-size: 27px;
-
         }
 
 
@@ -348,13 +374,12 @@
             font-size: 15px;
 
             opacity: 0.9;
-
         }
 
 
-        /* =========================================
+        /* =====================================
            INPUTS
-        ========================================== */
+        ===================================== */
 
         input {
 
@@ -375,7 +400,6 @@
             background: white;
 
             color: #222;
-
         }
 
 
@@ -383,14 +407,18 @@
 
             box-shadow:
                 0 0 0 3px
-                rgba(56, 189, 248, 0.35);
-
+                rgba(
+                    56,
+                    189,
+                    248,
+                    0.35
+                );
         }
 
 
-        /* =========================================
+        /* =====================================
            BUTTONS
-        ========================================== */
+        ===================================== */
 
         button {
 
@@ -416,7 +444,6 @@
 
             transition:
                 0.25s ease;
-
         }
 
 
@@ -426,7 +453,6 @@
 
             transform:
                 translateY(-1px);
-
         }
 
 
@@ -434,13 +460,12 @@
 
             transform:
                 translateY(0);
-
         }
 
 
-        /* =========================================
+        /* =====================================
            FOOTER
-        ========================================== */
+        ===================================== */
 
         .footer {
 
@@ -452,34 +477,30 @@
 
             margin:
                 10px 20px 25px;
-
         }
 
 
-        /* =========================================
+        /* =====================================
            MOBILE RESPONSIVENESS
-        ========================================== */
+        ===================================== */
 
         @media (max-width: 600px) {
 
             header {
 
                 padding: 16px;
-
             }
 
 
             .logo {
 
                 font-size: 22px;
-
             }
 
 
             .tagline {
 
                 font-size: 12px;
-
             }
 
 
@@ -490,7 +511,6 @@
                 height: 550px;
 
                 border-radius: 20px;
-
             }
 
 
@@ -501,14 +521,12 @@
                 max-width: 350px;
 
                 padding: 25px;
-
             }
 
 
             .auth-box h2 {
 
                 font-size: 24px;
-
             }
 
         }
@@ -522,7 +540,7 @@
 
 
     <!-- =========================================
-         WEBSITE HEADER
+         MWANIKI SCHOLARS HEADER
     ========================================== -->
 
     <header>
@@ -551,8 +569,6 @@
     <div class="auth-container">
 
 
-        <!-- Medical background -->
-
         <div class="medical-bg">
 
 
@@ -580,7 +596,9 @@
 
 
 
-        <!-- Authentication box -->
+        <!-- =====================================
+             LOGIN BOX
+        ====================================== -->
 
         <div class="auth-box">
 
@@ -600,9 +618,7 @@
 
 
 
-            <!-- =====================================
-                 EMAIL
-            ====================================== -->
+            <!-- EMAIL -->
 
             <input
                 type="email"
@@ -613,9 +629,7 @@
 
 
 
-            <!-- =====================================
-                 PASSWORD
-            ====================================== -->
+            <!-- PASSWORD -->
 
             <input
                 type="password"
@@ -626,9 +640,7 @@
 
 
 
-            <!-- =====================================
-                 STUDENT ACCOUNT
-            ====================================== -->
+            <!-- CREATE ACCOUNT -->
 
             <button
                 type="button"
@@ -641,9 +653,7 @@
 
 
 
-            <!-- =====================================
-                 STUDENT LOGIN
-            ====================================== -->
+            <!-- STUDENT LOGIN -->
 
             <button
                 type="button"
@@ -656,9 +666,7 @@
 
 
 
-            <!-- =====================================
-                 TUTOR LOGIN
-            ====================================== -->
+            <!-- TUTOR LOGIN -->
 
             <button
                 type="button"
@@ -671,9 +679,7 @@
 
 
 
-            <!-- =====================================
-                 ADMIN LOGIN
-            ====================================== -->
+            <!-- ADMIN LOGIN -->
 
             <button
                 type="button"
@@ -686,7 +692,6 @@
 
 
         </div>
-
 
     </div>
 
