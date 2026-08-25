@@ -1,138 +1,145 @@
 import { supabase } from "./supabase.js";
 
+// ============================================================
+// MWANIKI SCHOLARS — STUDENT DASHBOARD
+// PERSONAL PROFILE + DASHBOARD IDENTITY
+// COURSES ARE HANDLED BY courses.js
+// ============================================================
+
 console.log("🎓 Mwaniki Scholars Dashboard Loaded");
 
 
 // ============================================================
-// LOAD LOGGED-IN STUDENT
+// GET CURRENT USER
 // ============================================================
 
-async function loadStudentProfile() {
+async function getCurrentUser() {
 
-    console.log("👤 Loading logged-in student...");
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
 
-    try {
-
-        const {
-            data,
-            error
-        } = await supabase.auth.getSession();
-
-
-        if (error) {
-
-            console.error(
-                "❌ Session error:",
-                error
-            );
-
-            return;
-        }
-
-
-        const session = data?.session;
-
-
-        if (!session) {
-
-            console.warn(
-                "⚠️ No active student session."
-            );
-
-            return;
-        }
-
-
-        const user = session.user;
-
-
-        console.log(
-            "✅ Logged-in student:",
-            user.email
-        );
-
-
-        // ====================================================
-        // GET STUDENT PROFILE FROM SUPABASE
-        // ====================================================
-
-        const {
-            data: student,
-            error: profileError
-        } = await supabase
-            .from("students")
-            .select(
-                "id, full_name, email, phone, course, level, photo_url"
-            )
-            .eq(
-                "id",
-                user.id
-            )
-            .maybeSingle();
-
-
-        if (profileError) {
-
-            console.error(
-                "❌ Student profile error:",
-                profileError
-            );
-
-            return;
-        }
-
-
-        // ====================================================
-        // NO PROFILE ROW
-        // ====================================================
-
-        if (!student) {
-
-            console.warn(
-                "⚠️ No student profile found."
-            );
-
-            displayDefaultProfile(user);
-
-            return;
-        }
-
-
-        console.log(
-            "✅ Student profile loaded:",
-            student
-        );
-
-
-        displayStudentProfile(
-            student,
-            user
-        );
-
-    }
-
-    catch (error) {
+    if (error) {
 
         console.error(
-            "❌ Dashboard error:",
+            "❌ Session error:",
             error
         );
 
+        return null;
     }
+
+    if (!data || !data.session) {
+
+        console.warn(
+            "⚠️ No active Supabase session."
+        );
+
+        return null;
+    }
+
+    return data.session.user;
 }
 
 
 // ============================================================
-// DISPLAY PERSONAL STUDENT PROFILE
+// LOAD STUDENT PROFILE
 // ============================================================
 
-function displayStudentProfile(
+async function loadStudentProfile() {
+
+    console.log(
+        "👤 Loading personal student profile..."
+    );
+
+    const user =
+        await getCurrentUser();
+
+    if (!user) {
+
+        console.warn(
+            "⚠️ No logged-in student."
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "✅ Logged-in user:",
+        user.email
+    );
+
+
+    // ========================================================
+    // FIND PROFILE USING AUTH USER UID
+    // ========================================================
+
+    const {
+        data: student,
+        error
+    } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+
+    if (error) {
+
+        console.error(
+            "❌ Could not load student profile:",
+            error
+        );
+
+        return;
+    }
+
+
+    // ========================================================
+    // PROFILE DOES NOT EXIST
+    // ========================================================
+
+    if (!student) {
+
+        console.warn(
+            "⚠️ No student profile exists for UID:",
+            user.id
+        );
+
+        showIncompleteProfile(
+            user
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "✅ Student profile found:",
+        student
+    );
+
+
+    displayStudentIdentity(
+        student,
+        user
+    );
+}
+
+
+// ============================================================
+// DISPLAY STUDENT IDENTITY
+// ============================================================
+
+function displayStudentIdentity(
     student,
     user
 ) {
 
     const name =
-        student.full_name?.trim() ||
+        student.full_name ||
         "Student";
 
 
@@ -143,17 +150,17 @@ function displayStudentProfile(
 
 
     const course =
-        student.course?.trim() ||
+        student.course ||
         "Course not set";
 
 
     const level =
-        student.level?.trim() ||
+        student.level ||
         "Level not set";
 
 
     const phone =
-        student.phone?.trim() ||
+        student.phone ||
         "";
 
 
@@ -163,7 +170,7 @@ function displayStudentProfile(
 
 
     // ========================================================
-    // HEADER PROFILE BUTTON
+    // TOP PROFILE BUTTON
     // ========================================================
 
     const profileButton =
@@ -177,17 +184,16 @@ function displayStudentProfile(
 
         if (photo) {
 
-            const img =
+            const image =
                 document.createElement("img");
 
+            image.src =
+                photo;
 
-            img.src = photo;
+            image.alt =
+                "Profile photo";
 
-            img.alt =
-                "Student profile photo";
-
-
-            img.style.cssText = `
+            image.style.cssText = `
                 width:38px;
                 height:38px;
                 border-radius:50%;
@@ -196,21 +202,22 @@ function displayStudentProfile(
                 margin-right:8px;
             `;
 
-
-            profileButton.appendChild(img);
-
+            profileButton.appendChild(
+                image
+            );
         }
 
 
-        const text =
+        const nameElement =
             document.createElement("span");
 
+        nameElement.textContent =
+            name;
 
-        text.textContent =
-            `👤 ${name}`;
 
-
-        profileButton.appendChild(text);
+        profileButton.appendChild(
+            nameElement
+        );
 
 
         profileButton.style.cursor =
@@ -224,24 +231,23 @@ function displayStudentProfile(
                     "studentProfile.html";
 
             };
-
     }
 
 
     // ========================================================
-    // FIND DASHBOARD
+    // DASHBOARD CONTAINER
     // ========================================================
 
-    const dashboard =
+    const container =
         document.querySelector(
             ".container"
         );
 
 
-    if (!dashboard) {
+    if (!container) {
 
         console.warn(
-            "⚠️ Dashboard .container not found."
+            "⚠️ .container not found."
         );
 
         return;
@@ -249,7 +255,7 @@ function displayStudentProfile(
 
 
     // ========================================================
-    // REMOVE OLD PROFILE
+    // REMOVE OLD PERSONAL PROFILE
     // ========================================================
 
     const oldProfile =
@@ -261,12 +267,11 @@ function displayStudentProfile(
     if (oldProfile) {
 
         oldProfile.remove();
-
     }
 
 
     // ========================================================
-    // CREATE PROFILE CARD
+    // CREATE PERSONAL PROFILE CARD
     // ========================================================
 
     const profileCard =
@@ -291,81 +296,66 @@ function displayStudentProfile(
 
         margin-bottom:25px;
 
-        border-radius:22px;
+        border-radius:20px;
 
         box-shadow:
-            0 12px 35px
+            0 10px 30px
             rgba(0,0,0,.15);
-
-        overflow:hidden;
     `;
 
 
     // ========================================================
-    // PROFILE LAYOUT
+    // PROFILE CONTENT
     // ========================================================
 
-    const layout =
+    const profileLayout =
         document.createElement("div");
 
 
-    layout.style.cssText = `
+    profileLayout.style.cssText = `
         display:flex;
-
         align-items:center;
-
-        gap:22px;
-
+        gap:20px;
         flex-wrap:wrap;
     `;
 
 
     // ========================================================
-    // PROFILE PHOTO
+    // PHOTO
     // ========================================================
 
-    const photoBox =
+    const photoArea =
         document.createElement("div");
 
 
     if (photo) {
 
-        const img =
+        const image =
             document.createElement("img");
 
 
-        img.src =
+        image.src =
             photo;
 
 
-        img.alt =
+        image.alt =
             `${name} profile photo`;
 
 
-        img.style.cssText = `
-            width:90px;
-
-            height:90px;
-
+        image.style.cssText = `
+            width:85px;
+            height:85px;
             border-radius:50%;
-
             object-fit:cover;
-
-            border:
-                4px solid
-                rgba(255,255,255,.85);
-
-            box-shadow:
-                0 6px 20px
-                rgba(0,0,0,.2);
+            border:3px solid white;
         `;
 
 
-        photoBox.appendChild(img);
+        photoArea.appendChild(
+            image
+        );
 
-    }
-
-    else {
+    } else {
 
         const placeholder =
             document.createElement("div");
@@ -376,38 +366,26 @@ function displayStudentProfile(
 
 
         placeholder.style.cssText = `
-            width:90px;
-
-            height:90px;
-
+            width:85px;
+            height:85px;
             border-radius:50%;
-
-            background:
-                rgba(255,255,255,.18);
-
+            background:rgba(255,255,255,.18);
             display:flex;
-
             align-items:center;
-
             justify-content:center;
-
             font-size:42px;
-
-            border:
-                4px solid
-                rgba(255,255,255,.5);
+            border:3px solid rgba(255,255,255,.5);
         `;
 
 
-        photoBox.appendChild(
+        photoArea.appendChild(
             placeholder
         );
-
     }
 
 
     // ========================================================
-    // STUDENT INFORMATION
+    // INFORMATION
     // ========================================================
 
     const information =
@@ -427,10 +405,8 @@ function displayStudentProfile(
 
 
     welcome.style.cssText = `
-        font-size:26px;
-
-        font-weight:700;
-
+        font-size:25px;
+        font-weight:bold;
         margin-bottom:8px;
     `;
 
@@ -440,75 +416,70 @@ function displayStudentProfile(
     );
 
 
-    const emailElement =
+    const emailLine =
         document.createElement("div");
 
 
-    emailElement.textContent =
+    emailLine.textContent =
         `📧 ${email}`;
 
 
-    emailElement.style.marginTop =
-        "5px";
-
-
     information.appendChild(
-        emailElement
+        emailLine
     );
 
 
-    const courseElement =
+    const courseLine =
         document.createElement("div");
 
 
-    courseElement.textContent =
+    courseLine.textContent =
         `🎓 ${course}`;
 
 
-    courseElement.style.marginTop =
+    courseLine.style.marginTop =
         "5px";
 
 
     information.appendChild(
-        courseElement
+        courseLine
     );
 
 
-    const levelElement =
+    const levelLine =
         document.createElement("div");
 
 
-    levelElement.textContent =
+    levelLine.textContent =
         `📚 ${level}`;
 
 
-    levelElement.style.marginTop =
+    levelLine.style.marginTop =
         "5px";
 
 
     information.appendChild(
-        levelElement
+        levelLine
     );
 
 
     if (phone) {
 
-        const phoneElement =
+        const phoneLine =
             document.createElement("div");
 
 
-        phoneElement.textContent =
+        phoneLine.textContent =
             `📱 ${phone}`;
 
 
-        phoneElement.style.marginTop =
+        phoneLine.style.marginTop =
             "5px";
 
 
         information.appendChild(
-            phoneElement
+            phoneLine
         );
-
     }
 
 
@@ -516,105 +487,90 @@ function displayStudentProfile(
     // MY PROFILE BUTTON
     // ========================================================
 
-    const profileButtonCard =
+    const myProfileButton =
         document.createElement("button");
 
 
-    profileButtonCard.type =
+    myProfileButton.type =
         "button";
 
 
-    profileButtonCard.textContent =
+    myProfileButton.textContent =
         "👤 My Profile";
 
 
-    profileButtonCard.style.cssText = `
-        background:#ffffff;
-
+    myProfileButton.style.cssText = `
+        background:white;
         color:#063970;
-
         border:none;
-
-        padding:13px 20px;
-
-        border-radius:12px;
-
+        padding:12px 18px;
+        border-radius:10px;
         cursor:pointer;
-
-        font-weight:700;
-
-        font-size:14px;
-
-        box-shadow:
-            0 5px 15px
-            rgba(0,0,0,.15);
+        font-weight:bold;
     `;
 
 
-    profileButtonCard.addEventListener(
-        "click",
+    myProfileButton.onclick =
         function () {
 
             window.location.href =
                 "studentProfile.html";
 
-        }
-    );
+        };
 
 
     // ========================================================
-    // BUILD PROFILE CARD
+    // BUILD PROFILE
     // ========================================================
 
-    layout.appendChild(
-        photoBox
+    profileLayout.appendChild(
+        photoArea
     );
 
 
-    layout.appendChild(
+    profileLayout.appendChild(
         information
     );
 
 
-    layout.appendChild(
-        profileButtonCard
+    profileLayout.appendChild(
+        myProfileButton
     );
 
 
     profileCard.appendChild(
-        layout
+        profileLayout
     );
 
 
     // ========================================================
-    // PUT PROFILE AT TOP OF DASHBOARD
+    // INSERT PROFILE ABOVE COURSES
     // ========================================================
 
-    dashboard.prepend(
+    container.prepend(
         profileCard
     );
 
 
     console.log(
-        "✅ Personal student profile displayed"
+        "✅ Personal student profile displayed."
     );
-
 }
 
 
 // ============================================================
-// DEFAULT PROFILE
+// NO PROFILE FOUND
 // ============================================================
 
-function displayDefaultProfile(user) {
+function showIncompleteProfile(user) {
 
-    const dashboard =
+    const container =
         document.querySelector(
             ".container"
         );
 
 
-    if (!dashboard) {
+    if (!container) {
 
         return;
     }
@@ -629,7 +585,6 @@ function displayDefaultProfile(user) {
     if (oldProfile) {
 
         oldProfile.remove();
-
     }
 
 
@@ -655,16 +610,15 @@ function displayDefaultProfile(user) {
 
         margin-bottom:25px;
 
-        border-radius:22px;
+        border-radius:20px;
 
         box-shadow:
-            0 12px 35px
+            0 10px 30px
             rgba(0,0,0,.15);
     `;
 
 
     profileCard.innerHTML = `
-
         <div
             style="
                 display:flex;
@@ -676,11 +630,10 @@ function displayDefaultProfile(user) {
 
             <div
                 style="
-                    width:85px;
-                    height:85px;
+                    width:80px;
+                    height:80px;
                     border-radius:50%;
-                    background:
-                        rgba(255,255,255,.18);
+                    background:rgba(255,255,255,.18);
                     display:flex;
                     align-items:center;
                     justify-content:center;
@@ -690,49 +643,37 @@ function displayDefaultProfile(user) {
                 👤
             </div>
 
-
             <div style="flex:1">
 
                 <div
                     style="
-                        font-size:25px;
-                        font-weight:700;
+                        font-size:24px;
+                        font-weight:bold;
                     "
                 >
                     Welcome, Student
                 </div>
 
-
-                <div
-                    style="
-                        margin-top:7px;
-                    "
-                >
+                <div style="margin-top:7px;">
                     📧 ${user.email || ""}
                 </div>
 
-
-                <div
-                    style="
-                        margin-top:7px;
-                    "
-                >
+                <div style="margin-top:7px;">
                     Complete your personal profile
                     to personalize your dashboard.
                 </div>
 
             </div>
 
-
             <button
-                id="completeStudentProfile"
+                id="completeProfileButton"
                 type="button"
                 style="
                     background:white;
                     color:#063970;
                     border:none;
-                    padding:13px 20px;
-                    border-radius:12px;
+                    padding:12px 18px;
+                    border-radius:10px;
                     cursor:pointer;
                     font-weight:bold;
                 "
@@ -741,18 +682,17 @@ function displayDefaultProfile(user) {
             </button>
 
         </div>
-
     `;
 
 
-    dashboard.prepend(
+    container.prepend(
         profileCard
     );
 
 
     const button =
         document.getElementById(
-            "completeStudentProfile"
+            "completeProfileButton"
         );
 
 
@@ -765,19 +705,12 @@ function displayDefaultProfile(user) {
                     "studentProfile.html";
 
             };
-
     }
-
-
-    console.warn(
-        "⚠️ Authenticated user has no students table row."
-    );
-
 }
 
 
 // ============================================================
-// START DASHBOARD
+// START
 // ============================================================
 
 loadStudentProfile();
