@@ -211,4 +211,92 @@ async function loadNotes() {
 
     }
 
+}// =====================================================
+// FORMAT NOTES
+// =====================================================
+
+function formatNotes(text) {
+
+    if (!text) return "";
+
+    let html =
+        escapeHTML(text);
+
+
+    // Headings
+    html = html.replace(
+        /^###### (.*)$/gm,
+        "<h6>$1</h6>"
+    );
+
+    html = html.replace(
+        /^##### (.*)$/gm,
+        "<h5>$1</h5>"
+    );
+
+    html = html.replace(
+        /^#### (.*)$/gm,
+        "<h4>$1</h4>"
+    );
+
+    html = html.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+    html = html.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    html = html.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
+
+
+    // Bold
+    html = html.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+
+    // Bullet points
+    html = html.replace(
+        /^[-*] (.*)$/gm,
+        "<li>$1</li>"
+    );
+
+
+    // Wrap consecutive list items
+    html = html.replace(
+        /(<li>.*<\/li>\n?)+/g,
+        match => `<ul>${match}</ul>`
+    );
+
+
+    // Horizontal rules
+    html = html.replace(
+        /^---$/gm,
+        "<hr>"
+    );
+
+
+    // Paragraph breaks
+    html = html.replace(
+        /\n{2,}/g,
+        "</p><p>"
+    );
+
+
+    // Remaining single line breaks
+    html = html.replace(
+        /\n/g,
+        "<br>"
+    );
+
+
+    return `<p>${html}</p>`;
+
 }
