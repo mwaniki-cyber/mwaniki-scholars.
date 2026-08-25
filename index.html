@@ -3,225 +3,517 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- =========================================
+         MWANIKI SCHOLARS
+         SEO & WEBSITE INFORMATION
+    ========================================== -->
+
+    <title>
+        Mwaniki Scholars | Medical Learning Platform
+    </title>
 
-<title>Mwaniki Scholars Medical University</title>
+    <meta
+        name="description"
+        content="Mwaniki Scholars is a medical learning platform providing medical courses, notes, quizzes and self-testing resources for medical students."
+    >
 
+    <meta
+        name="keywords"
+        content="Mwaniki Scholars, medical education, medical students, anatomy, physiology, pharmacology, microbiology, pathology, medical courses, medical quizzes"
+    >
 
-<style>
+    <meta
+        name="author"
+        content="Mwaniki Scholars"
+    >
 
-*{
-box-sizing:border-box;
-font-family:"Segoe UI",Arial,sans-serif;
-}
+    <meta
+        name="robots"
+        content="index, follow"
+    >
 
+    <!-- Canonical URL -->
 
-body{
+    <link
+        rel="canonical"
+        href="https://mwaniki-cyber.github.io/mwaniki-scholars/"
+    >
 
-margin:0;
-background:#eef7fb;
+    <!-- =========================================
+         OPEN GRAPH
+    ========================================== -->
 
-}
+    <meta
+        property="og:title"
+        content="Mwaniki Scholars | Medical Learning Platform"
+    >
 
+    <meta
+        property="og:description"
+        content="Medical courses, notes, quizzes and self-testing resources for medical students."
+    >
 
+    <meta
+        property="og:type"
+        content="website"
+    >
 
-header{
+    <meta
+        property="og:url"
+        content="https://mwaniki-cyber.github.io/mwaniki-scholars/"
+    >
 
-background:linear-gradient(135deg,#063970,#0b7285);
+    <!-- =========================================
+         PAGE STYLES
+    ========================================== -->
 
-color:white;
+    <style>
 
-padding:20px;
+        /* =========================================
+           GLOBAL
+        ========================================== */
 
-text-align:center;
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
 
-}
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100%;
+        }
 
+        body {
 
-.logo{
+            background: #eef7fb;
 
-font-size:26px;
+            color: #ffffff;
 
-font-weight:bold;
+        }
 
-}
 
+        /* =========================================
+           HEADER
+        ========================================== */
 
+        header {
 
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #0b7285
+                );
 
+            color: white;
 
-.auth-container{
+            padding: 20px;
 
-height:520px;
+            text-align: center;
 
-max-width:1100px;
+            box-shadow:
+                0 4px 15px
+                rgba(0, 0, 0, 0.15);
 
-margin:30px auto;
+        }
 
-position:relative;
 
-overflow:hidden;
+        .logo {
 
-border-radius:25px;
+            font-size: 28px;
 
-}
+            font-weight: 700;
 
+            letter-spacing: 0.5px;
 
+        }
 
-.medical-bg{
 
-position:absolute;
+        .tagline {
 
-width:100%;
+            margin-top: 6px;
 
-height:100%;
+            font-size: 14px;
 
-background:
+            opacity: 0.9;
 
-linear-gradient(
-135deg,
-#032b3a,
-#0b7285,
-#38bdf8
-);
+            letter-spacing: 0.3px;
 
-}
+        }
 
 
+        /* =========================================
+           MAIN AUTH CONTAINER
+        ========================================== */
 
+        .auth-container {
 
-.cross{
+            height: 520px;
 
-position:absolute;
+            max-width: 1100px;
 
-font-size:50px;
+            margin: 30px auto;
 
-color:rgba(255,255,255,.2);
+            position: relative;
 
-animation:float 10s infinite;
+            overflow: hidden;
 
-}
+            border-radius: 25px;
 
+            box-shadow:
+                0 10px 35px
+                rgba(0, 0, 0, 0.15);
 
-.c1{
-left:10%;
-}
+        }
 
-.c2{
-left:35%;
-animation-delay:2s;
-}
 
-.c3{
-left:65%;
-animation-delay:4s;
-}
+        /* =========================================
+           MEDICAL BACKGROUND
+        ========================================== */
 
-.c4{
-left:85%;
-animation-delay:6s;
-}
+        .medical-bg {
 
+            position: absolute;
 
+            width: 100%;
 
+            height: 100%;
 
-@keyframes float{
+            background:
 
+                linear-gradient(
+                    135deg,
+                    #032b3a,
+                    #0b7285,
+                    #38bdf8
+                );
 
-0%{
-transform:translateY(500px);
-}
+        }
 
 
-100%{
-transform:translateY(-100px);
-}
+        /* =========================================
+           FLOATING MEDICAL CROSSES
+        ========================================== */
 
+        .cross {
 
-}
+            position: absolute;
 
+            font-size: 50px;
 
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.20
+                );
 
+            animation:
+                float 10s infinite;
 
-.auth-box{
+        }
 
-position:absolute;
 
-top:50%;
+        .c1 {
 
-left:50%;
+            left: 10%;
 
-transform:translate(-50%,-50%);
+        }
 
-background:rgba(255,255,255,.15);
 
-backdrop-filter:blur(15px);
+        .c2 {
 
-padding:35px;
+            left: 35%;
 
-width:350px;
+            animation-delay: 2s;
 
-border-radius:20px;
+        }
 
-text-align:center;
 
-color:white;
+        .c3 {
 
-}
+            left: 65%;
 
+            animation-delay: 4s;
 
+        }
 
-input{
 
-width:90%;
+        .c4 {
 
-padding:14px;
+            left: 85%;
 
-margin:10px;
+            animation-delay: 6s;
 
-border:none;
+        }
 
-border-radius:10px;
 
-}
+        @keyframes float {
 
+            0% {
 
+                transform:
+                    translateY(500px);
 
-button{
+            }
 
-width:90%;
+            100% {
 
-padding:13px;
+                transform:
+                    translateY(-100px);
 
-margin:7px;
+            }
 
-border:none;
+        }
 
-border-radius:12px;
 
-background:#0b7285;
+        /* =========================================
+           LOGIN BOX
+        ========================================== */
 
-color:white;
+        .auth-box {
 
-font-size:15px;
+            position: absolute;
 
-cursor:pointer;
+            top: 50%;
 
-}
+            left: 50%;
 
+            transform:
+                translate(-50%, -50%);
 
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.15
+                );
 
-button:hover{
+            backdrop-filter:
+                blur(15px);
 
-background:#064747;
+            -webkit-backdrop-filter:
+                blur(15px);
 
-}
+            padding: 35px;
 
+            width: 350px;
 
+            border-radius: 20px;
 
-</style>
+            text-align: center;
+
+            color: white;
+
+            box-shadow:
+                0 8px 30px
+                rgba(0, 0, 0, 0.20);
+
+        }
+
+
+        /* =========================================
+           WELCOME TEXT
+        ========================================== */
+
+        .auth-box h2 {
+
+            margin-top: 0;
+
+            margin-bottom: 8px;
+
+            font-size: 27px;
+
+        }
+
+
+        .auth-box p {
+
+            margin-top: 0;
+
+            margin-bottom: 20px;
+
+            font-size: 15px;
+
+            opacity: 0.9;
+
+        }
+
+
+        /* =========================================
+           INPUTS
+        ========================================== */
+
+        input {
+
+            width: 90%;
+
+            padding: 14px;
+
+            margin: 10px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            outline: none;
+
+            font-size: 15px;
+
+            background: white;
+
+            color: #222;
+
+        }
+
+
+        input:focus {
+
+            box-shadow:
+                0 0 0 3px
+                rgba(56, 189, 248, 0.35);
+
+        }
+
+
+        /* =========================================
+           BUTTONS
+        ========================================== */
+
+        button {
+
+            width: 90%;
+
+            padding: 13px;
+
+            margin: 7px;
+
+            border: none;
+
+            border-radius: 12px;
+
+            background: #0b7285;
+
+            color: white;
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                0.25s ease;
+
+        }
+
+
+        button:hover {
+
+            background: #064747;
+
+            transform:
+                translateY(-1px);
+
+        }
+
+
+        button:active {
+
+            transform:
+                translateY(0);
+
+        }
+
+
+        /* =========================================
+           FOOTER
+        ========================================== */
+
+        .footer {
+
+            text-align: center;
+
+            color: #4b6570;
+
+            font-size: 13px;
+
+            margin:
+                10px 20px 25px;
+
+        }
+
+
+        /* =========================================
+           MOBILE RESPONSIVENESS
+        ========================================== */
+
+        @media (max-width: 600px) {
+
+            header {
+
+                padding: 16px;
+
+            }
+
+
+            .logo {
+
+                font-size: 22px;
+
+            }
+
+
+            .tagline {
+
+                font-size: 12px;
+
+            }
+
+
+            .auth-container {
+
+                margin: 20px 12px;
+
+                height: 550px;
+
+                border-radius: 20px;
+
+            }
+
+
+            .auth-box {
+
+                width: 90%;
+
+                max-width: 350px;
+
+                padding: 25px;
+
+            }
+
+
+            .auth-box h2 {
+
+                font-size: 24px;
+
+            }
+
+        }
+
+    </style>
 
 </head>
 
@@ -229,129 +521,198 @@ background:#064747;
 <body>
 
 
-<header>
+    <!-- =========================================
+         WEBSITE HEADER
+    ========================================== -->
 
-<div class="logo">
+    <header>
 
-🏥 Mwaniki Scholars Medical University
+        <div class="logo">
 
-</div>
+            🏥 MWANIKI SCHOLARS
 
-</header>
+        </div>
 
 
+        <div class="tagline">
 
+            Medical Learning & Knowledge Portal
 
+        </div>
 
-<div class="auth-container">
+    </header>
 
 
-<div class="medical-bg">
 
+    <!-- =========================================
+         LOGIN AREA
+    ========================================== -->
 
-<div class="cross c1">
-✚
-</div>
+    <div class="auth-container">
 
-<div class="cross c2">
-✚
-</div>
 
-<div class="cross c3">
-✚
-</div>
+        <!-- Medical background -->
 
-<div class="cross c4">
-✚
-</div>
+        <div class="medical-bg">
 
 
-</div>
+            <div class="cross c1">
+                ✚
+            </div>
 
 
+            <div class="cross c2">
+                ✚
+            </div>
 
 
+            <div class="cross c3">
+                ✚
+            </div>
 
 
-<div class="auth-box">
+            <div class="cross c4">
+                ✚
+            </div>
 
 
-<h2>
-Welcome
-</h2>
+        </div>
 
 
-<p>
-Medical learning platform
-</p>
 
+        <!-- Authentication box -->
 
+        <div class="auth-box">
 
-<input
-type="email"
-id="email"
-placeholder="Email">
 
+            <h2>
 
+                Welcome
 
-<input
-type="password"
-id="password"
-placeholder="Password">
+            </h2>
 
 
+            <p>
 
+                Learn • Practice • Test • Advance
 
+            </p>
 
-<button onclick="signUp()">
 
-📝 Create Account
 
-</button>
+            <!-- =====================================
+                 EMAIL
+            ====================================== -->
 
+            <input
+                type="email"
+                id="email"
+                placeholder="Email"
+                autocomplete="email"
+            >
 
 
 
-<button onclick="login()">
+            <!-- =====================================
+                 PASSWORD
+            ====================================== -->
 
-🎓 Student Login
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+                autocomplete="current-password"
+            >
 
-</button>
 
 
+            <!-- =====================================
+                 STUDENT ACCOUNT
+            ====================================== -->
 
+            <button
+                type="button"
+                onclick="signUp()"
+            >
 
+                📝 Create Account
 
-<button onclick="tutorLogin()">
+            </button>
 
-👨‍🏫 Tutor Login
 
-</button>
 
+            <!-- =====================================
+                 STUDENT LOGIN
+            ====================================== -->
 
+            <button
+                type="button"
+                onclick="login()"
+            >
 
+                🎓 Student Login
 
+            </button>
 
-<button onclick="adminLogin()">
 
-⚙️ Admin Login
 
-</button>
+            <!-- =====================================
+                 TUTOR LOGIN
+            ====================================== -->
 
+            <button
+                type="button"
+                onclick="tutorLogin()"
+            >
 
+                👨‍🏫 Tutor Login
 
+            </button>
 
 
-</div>
 
+            <!-- =====================================
+                 ADMIN LOGIN
+            ====================================== -->
 
-</div>
+            <button
+                type="button"
+                onclick="adminLogin()"
+            >
 
+                ⚙️ Admin Login
 
+            </button>
 
 
+        </div>
 
-<script type="module" src="script.js"></script>
+
+    </div>
+
+
+
+    <!-- =========================================
+         FOOTER
+    ========================================== -->
+
+    <div class="footer">
+
+        © 2026 Mwaniki Scholars —
+        Medical Learning & Knowledge Portal
+
+    </div>
+
+
+
+    <!-- =========================================
+         EXISTING AUTHENTICATION SCRIPT
+    ========================================== -->
+
+    <script
+        type="module"
+        src="script.js"
+    ></script>
 
 
 </body>
