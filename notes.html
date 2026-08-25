@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Medical Notes & Study Materials | Mwaniki Scholars
+    </title>
+
+    <meta
+        name="description"
+        content="Access medical study notes and learning resources from Mwaniki Scholars. Explore Anatomy, Physiology, Pharmacology, Microbiology, Pathology and other medical subjects."
+    >
+
+    <meta
+        name="keywords"
+        content="medical notes, medical study materials, anatomy notes, physiology notes, pharmacology notes, microbiology notes, pathology notes, Mwaniki Scholars"
+    >
+
+    <meta
+        name="robots"
+        content="index, follow"
+    >
+
+    <link
+        rel="canonical"
+        href="https://mwaniki-cyber.github.io/mwaniki-scholars./notes.html"
+    >
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="favicon.svg"
+    >
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            background: #eef7fb;
+
+            color: #16323f;
+        }
+
+
+        header {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #0b7285
+                );
+
+            color: white;
+
+            padding: 25px;
+
+            text-align: center;
+        }
+
+
+        .logo {
+
+            font-size: 28px;
+
+            font-weight: 700;
+        }
+
+
+        nav {
+
+            margin-top: 15px;
+        }
+
+
+        nav a {
+
+            color: white;
+
+            text-decoration: none;
+
+            margin: 0 10px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        nav a:hover {
+
+            text-decoration: underline;
+        }
+
+
+        .hero {
+
+            max-width: 900px;
+
+            margin: 40px auto 25px;
+
+            padding: 20px;
+
+            text-align: center;
+        }
+
+
+        .hero h1 {
+
+            color: #063970;
+
+            font-size: 36px;
+
+            margin-bottom: 12px;
+        }
+
+
+        .hero p {
+
+            color: #526b75;
+
+            line-height: 1.7;
+
+            max-width: 750px;
+
+            margin: auto;
+        }
+
+
+        .notes-container {
+
+            max-width: 1100px;
+
+            margin: 30px auto 60px;
+
+            padding: 20px;
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(250px, 1fr)
+                );
+
+            gap: 20px;
+        }
+
+
+        .note-card {
+
+            background: white;
+
+            border-radius: 18px;
+
+            padding: 25px;
+
+            box-shadow:
+                0 8px 25px
+                rgba(0, 0, 0, 0.08);
+
+            transition:
+                transform 0.25s ease,
+                box-shadow 0.25s ease;
+        }
+
+
+        .note-card:hover {
+
+            transform:
+                translateY(-5px);
+
+            box-shadow:
+                0 12px 30px
+                rgba(0, 0, 0, 0.13);
+        }
+
+
+        .icon {
+
+            font-size: 42px;
+
+            margin-bottom: 10px;
+        }
+
+
+        .note-card h2 {
+
+            color: #063970;
+
+            margin: 8px 0;
+        }
+
+
+        .note-card p {
+
+            color: #607681;
+
+            font-size: 14px;
+
+            line-height: 1.6;
+        }
+
+
+        .note-card a {
+
+            display: inline-block;
+
+            margin-top: 10px;
+
+            padding: 10px 16px;
+
+            background: #0b7285;
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 10px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+        }
+
+
+        .note-card a:hover {
+
+            background: #064747;
+        }
+
+
+        .info {
+
+            max-width: 900px;
+
+            margin: 0 auto 50px;
+
+            padding: 25px;
+
+            background: white;
+
+            border-left:
+                5px solid #0b7285;
+
+            border-radius: 12px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(0, 0, 0, 0.06);
+        }
+
+
+        .info h2 {
+
+            color: #063970;
+
+            margin-top: 0;
+        }
+
+
+        .info p {
+
+            color: #526b75;
+
+            line-height: 1.7;
+        }
+
+
+        footer {
+
+            background: #063970;
+
+            color: white;
+
+            text-align: center;
+
+            padding: 25px;
+
+            font-size: 13px;
+        }
+
+
+        @media (max-width: 600px) {
+
+            .hero h1 {
+
+                font-size: 28px;
+            }
+
+
+            nav a {
+
+                display: inline-block;
+
+                margin: 5px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <div class="logo">
+        🏥 Mwaniki Scholars
+    </div>
+
+
+    <nav>
+
+        <a href="index.html">
+            Home
+        </a>
+
+        <a href="courses.html">
+            Courses
+        </a>
+
+        <a href="notes.html">
+            Notes
+        </a>
+
+        <a href="quizzes.html">
+            Quizzes
+        </a>
+
+        <a href="about.html">
+            About
+        </a>
+
+    </nav>
+
+</header>
+
+
+
+<section class="hero">
+
+    <h1>
+        Medical Notes & Study Materials
+    </h1>
+
+
+    <p>
+
+        Mwaniki Scholars provides structured medical
+        learning resources designed to help students
+        understand important concepts, revise
+        efficiently and prepare for examinations.
+
+    </p>
+
+</section>
+
+
+
+<section class="notes-container">
+
+
+    <!-- ANATOMY -->
+
+    <div class="note-card">
+
+        <div class="icon">
+            🫀
+        </div>
+
+        <h2>
+            Anatomy Notes
+        </h2>
+
+        <p>
+
+            Study the structure of the human body,
+            anatomical terminology, tissues, organs,
+            body systems and clinically relevant
+            anatomy.
+
+        </p>
+
+        <a href="#">
+            View Anatomy Notes
+        </a>
+
+    </div>
+
+
+
+    <!-- PHYSIOLOGY -->
+
+    <div class="note-card">
+
+        <div class="icon">
+            ❤️
+        </div>
+
+        <h2>
+            Physiology Notes
+        </h2>
+
+        <p>
+
+            Review the normal functions of the human
+            body, including cardiovascular,
+            respiratory, renal, nervous and endocrine
+            systems.
+
+        </p>
+
+        <a href="#">
+            View Physiology Notes
+        </a>
+
+    </div>
+
+
+
+    <!-- PHARMACOLOGY -->
+
+    <div class="note-card">
+
+        <div class="icon">
+            💊
+        </div>
+
+        <h2>
+            Pharmacology Notes
+        </h2>
+
+        <p>
+
+            Explore pharmacological principles,
+            drug classifications, mechanisms of
+            action, therapeutic uses and adverse
+            effects.
+
+        </p>
+
+        <a href="#">
+            View Pharmacology Notes
+        </a>
+
+    </div>
+
+
+
+    <!-- MICROBIOLOGY -->
+
+    <div class="note-card">
+
+        <div class="icon">
+            🦠
+        </div>
+
+        <h2>
+            Microbiology Notes
+        </h2>
+
+        <p>
+
+            Learn about bacteria, viruses, fungi and
+            parasites, including their characteristics,
+            transmission, diagnosis and prevention.
+
+        </p>
+
+        <a href="#">
+            View Microbiology Notes
+        </a>
+
+    </div>
+
+
+
+    <!-- PATHOLOGY -->
+
+    <div class="note-card">
+
+        <div class="icon">
+            🔬
+        </div>
+
+        <h2>
+            Pathology Notes
+        </h2>
+
+        <p>
+
+            Study disease mechanisms including
+            cellular injury, inflammation, repair,
+            neoplasia and systemic pathology.
+
+        </p>
+
+        <a href="#">
+            View Pathology Notes
+        </a>
+
+    </div>
+
+
+
+    <!-- IMMUNOLOGY -->
+
+    <div class="note-card">
+
+        <div class="icon">
+            🛡️
+        </div>
+
+        <h2>
+            Immunology Notes
+        </h2>
+
+        <p>
+
+            Review immune system components,
+            antibodies, complement, hypersensitivity,
+            immune responses and immunological
+            disorders.
+
+        </p>
+
+        <a href="#">
+            View Immunology Notes
+        </a>
+
+    </div>
+
+
+</section>
+
+
+
+<section class="info">
+
+    <h2>
+        Study Smarter with Mwaniki Scholars
+    </h2>
+
+
+    <p>
+
+        Medical education requires consistent revision
+        and active learning. Mwaniki Scholars combines
+        structured courses, study materials and
+        self-testing resources to support students
+        throughout their medical education.
+
+    </p>
+
+
+    <p>
+
+        Use the notes alongside the quizzes and
+        self-testing tools available through the
+        Mwaniki Scholars learning platform.
+
+    </p>
+
+</section>
+
+
+
+<footer>
+
+    © 2026 Mwaniki Scholars
+
+    <br>
+
+    Medical Learning & Knowledge Portal
+
+</footer>
+
+
+</body>
+
+</html>
