@@ -34,15 +34,11 @@ const notesArea =
 
 if (!courseId) {
 
-    console.error(
-        "❌ No selected course found"
-    );
+    console.error("❌ No selected course found");
 
     if (courseTitle) {
-
         courseTitle.textContent =
             "❌ No course selected";
-
     }
 
 } else {
@@ -51,6 +47,326 @@ if (!courseId) {
         "📚 Loading selected course:",
         courseId
     );
+
+}
+
+
+// =====================================================
+// HTML ESCAPE
+// =====================================================
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// =====================================================
+// MARKDOWN RENDERER
+// =====================================================
+
+function renderMarkdown(markdown) {
+
+    if (!markdown) {
+        return "";
+    }
+
+    let html = escapeHTML(markdown);
+
+    // Code blocks
+    html = html.replace(
+        /```([\s\S]*?)```/g,
+        "<pre><code>$1</code></pre>"
+    );
+
+    // Headings
+    html = html.replace(
+        /^###### (.*)$/gm,
+        "<h6>$1</h6>"
+    );
+
+    html = html.replace(
+        /^##### (.*)$/gm,
+        "<h5>$1</h5>"
+    );
+
+    html = html.replace(
+        /^#### (.*)$/gm,
+        "<h4>$1</h4>"
+    );
+
+    html = html.replace(
+        /^### (.*)$/gm,
+        "<h3>$1</h3>"
+    );
+
+    html = html.replace(
+        /^## (.*)$/gm,
+        "<h2>$1</h2>"
+    );
+
+    html = html.replace(
+        /^# (.*)$/gm,
+        "<h1>$1</h1>"
+    );
+
+    // Horizontal rules
+    html = html.replace(
+        /^---$/gm,
+        "<hr>"
+    );
+
+    // Bold
+    html = html.replace(
+        /\*\*(.*?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+    // Italic
+    html = html.replace(
+        /\*(.*?)\*/g,
+        "<em>$1</em>"
+    );
+
+    // Unordered lists
+    html = html.replace(
+        /^(?:- .*(?:\n|$))+?/gm,
+        function(block) {
+
+            const items =
+                block
+                    .trim()
+                    .split("\n")
+                    .map(item =>
+                        item.replace(
+                            /^- (.*)$/,
+                            "<li>$1</li>"
+                        )
+                    )
+                    .join("");
+
+            return `<ul>${items}</ul>`;
+        }
+    );
+
+    // Ordered lists
+    html = html.replace(
+        /^(?:\d+\. .*(?:\n|$))+?/gm,
+        function(block) {
+
+            const items =
+                block
+                    .trim()
+                    .split("\n")
+                    .map(item =>
+                        item.replace(
+                            /^\d+\. (.*)$/,
+                            "<li>$1</li>"
+                        )
+                    )
+                    .join("");
+
+            return `<ol>${items}</ol>`;
+        }
+    );
+
+    // Preserve line breaks
+    html = html.replace(
+        /\n{2,}/g,
+        "</p><p>"
+    );
+
+    html =
+        "<p>" +
+        html +
+        "</p>";
+
+    return html;
+
+}
+
+
+// =====================================================
+// SHOW UNIT NOTES
+// =====================================================
+
+function showUnitNotes(unit) {
+
+    if (!notesArea) {
+
+        console.error(
+            "❌ notesArea not found"
+        );
+
+        return;
+    }
+
+
+    console.log(
+        "📄 Opening notes:",
+        unit.title,
+        unit.id
+    );
+
+
+    if (
+        !unit.notes ||
+        unit.notes.trim() === ""
+    ) {
+
+        notesArea.innerHTML = `
+
+            <div style="
+                padding:25px;
+                margin:20px 0;
+                background:#fff8e6;
+                border-radius:14px;
+                border:1px solid #f1d58a;
+            ">
+
+                <h3>
+                    📄 No notes available
+                </h3>
+
+                <p>
+                    No notes have been added for
+                    <strong>
+                        ${escapeHTML(unit.title)}
+                    </strong>
+                    yet.
+                </p>
+
+            </div>
+
+        `;
+
+        notesArea.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        return;
+    }
+
+
+    const renderedNotes =
+        renderMarkdown(unit.notes);
+
+
+    notesArea.innerHTML = `
+
+        <article
+            class="unit-notes"
+            data-unit-id="${unit.id}"
+            style="
+                background:#ffffff;
+                padding:30px;
+                margin:25px 0;
+                border-radius:18px;
+                border:1px solid #d9edf2;
+                box-shadow:
+                    0 8px 25px
+                    rgba(0,0,0,.08);
+                line-height:1.75;
+            "
+        >
+
+            <div style="
+                display:flex;
+                justify-content:space-between;
+                align-items:center;
+                gap:15px;
+                flex-wrap:wrap;
+                margin-bottom:25px;
+                padding-bottom:15px;
+                border-bottom:2px solid #eef5f7;
+            ">
+
+                <div>
+
+                    <div style="
+                        font-size:14px;
+                        color:#668;
+                        margin-bottom:5px;
+                    ">
+                        📚 ${escapeHTML(courseName || "Medical Course")}
+                    </div>
+
+                    <h2 style="
+                        margin:0;
+                        color:#063970;
+                    ">
+                        📖 ${escapeHTML(unit.title)}
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="closeNotesButton"
+                    style="
+                        padding:10px 16px;
+                        border:none;
+                        border-radius:10px;
+                        cursor:pointer;
+                        background:#eef5f7;
+                        color:#063970;
+                        font-weight:600;
+                    "
+                >
+                    ✕ Close
+                </button>
+
+            </div>
+
+
+            <div class="notes-content">
+
+                ${renderedNotes}
+
+            </div>
+
+        </article>
+
+    `;
+
+
+    const closeButton =
+        document.getElementById(
+            "closeNotesButton"
+        );
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            () => {
+
+                notesArea.innerHTML = "";
+
+                notesArea.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            }
+        );
+
+    }
+
+
+    notesArea.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
 
 }
 
@@ -91,7 +407,6 @@ async function loadCourse() {
             }
 
             return;
-
         }
 
 
@@ -118,7 +433,6 @@ async function loadCourse() {
                 "Medical learning course";
 
         }
-
 
     }
 
@@ -147,7 +461,6 @@ async function loadUnits() {
         );
 
         return;
-
     }
 
 
@@ -162,12 +475,24 @@ async function loadUnits() {
             data,
             error
         } = await supabase
+
             .from("units")
-            .select("*")
-            .eq("course_id", courseId)
-            .order("id", {
-                ascending: true
-            });
+
+            .select(
+                "id, course_id, title, notes, image"
+            )
+
+            .eq(
+                "course_id",
+                courseId
+            )
+
+            .order(
+                "id",
+                {
+                    ascending: true
+                }
+            );
 
 
         if (error) {
@@ -179,6 +504,7 @@ async function loadUnits() {
 
 
             unitsArea.innerHTML = `
+
                 <div style="
                     padding:20px;
                     background:#fff0f0;
@@ -191,16 +517,14 @@ async function loadUnits() {
                     </h3>
 
                     <p>
-                        ${escapeHTML(
-                            error.message
-                        )}
+                        ${escapeHTML(error.message)}
                     </p>
 
                 </div>
+
             `;
 
             return;
-
         }
 
 
@@ -210,9 +534,13 @@ async function loadUnits() {
         );
 
 
-        if (!data || data.length === 0) {
+        if (
+            !data ||
+            data.length === 0
+        ) {
 
             unitsArea.innerHTML = `
+
                 <div style="
                     padding:20px;
                     background:#fff8e6;
@@ -223,10 +551,10 @@ async function loadUnits() {
                     this course yet.
 
                 </div>
+
             `;
 
             return;
-
         }
 
 
@@ -237,7 +565,9 @@ async function loadUnits() {
             (unit, index) => {
 
                 const unitCard =
-                    document.createElement("div");
+                    document.createElement(
+                        "div"
+                    );
 
 
                 unitCard.className =
@@ -247,9 +577,40 @@ async function loadUnits() {
                 unitCard.innerHTML = `
 
                     <h3>
+
                         📖 Unit ${index + 1}:
                         ${escapeHTML(unit.title)}
+
                     </h3>
+
+
+                    ${
+                        unit.image
+                        ?
+
+                        `
+                        <div style="
+                            margin:15px 0;
+                        ">
+
+                            <img
+                                src="${escapeHTML(unit.image)}"
+                                alt="${escapeHTML(unit.title)}"
+                                style="
+                                    width:100%;
+                                    max-width:500px;
+                                    border-radius:14px;
+                                "
+                            >
+
+                        </div>
+                        `
+
+                        :
+
+                        ""
+                    }
+
 
                     <div style="
                         margin-top:15px;
@@ -258,25 +619,38 @@ async function loadUnits() {
                         flex-wrap:wrap;
                     ">
 
+
                         <button
                             class="start-quiz-button"
                             data-unit-id="${unit.id}"
                             data-unit-title="${escapeHTML(unit.title)}"
                         >
+
                             📝 Start Quiz
+
                         </button>
+
 
                         <button
                             class="view-notes-button"
                             data-unit-id="${unit.id}"
-                            data-unit-title="${escapeHTML(unit.title)}"
                         >
+
                             📄 View Notes
+
                         </button>
+
 
                     </div>
 
                 `;
+
+
+                // Store the actual unit object
+                // directly on the card.
+
+                unitCard._unitData =
+                    unit;
 
 
                 unitsArea.appendChild(
@@ -295,78 +669,83 @@ async function loadUnits() {
             .querySelectorAll(
                 ".start-quiz-button"
             )
-            .forEach(button => {
+            .forEach(
+                button => {
 
-                button.addEventListener(
-                    "click",
-                    function() {
+                    button.addEventListener(
+                        "click",
+                        function() {
 
-                        const unitId =
-                            this.dataset.unitId;
-
-                        const unitTitle =
-                            this.dataset.unitTitle;
+                            const unitId =
+                                this.dataset.unitId;
 
 
-                        console.log(
-                            "📝 Starting quiz:",
-                            unitTitle,
-                            unitId
-                        );
+                            const unitTitle =
+                                this.dataset.unitTitle;
 
 
-                        if (
-                            typeof window.loadQuiz ===
-                            "function"
-                        ) {
-
-                            window.loadQuiz(
-                                unitId,
-                                unitTitle
-                            );
-
-                        } else {
-
-                            console.error(
-                                "❌ quiz.js loadQuiz() not available"
+                            console.log(
+                                "📝 Starting quiz:",
+                                unitTitle,
+                                unitId
                             );
 
 
-                            const quizArea =
-                                document.getElementById(
-                                    "quizArea"
+                            if (
+                                typeof window.loadQuiz ===
+                                "function"
+                            ) {
+
+                                window.loadQuiz(
+                                    unitId,
+                                    unitTitle
+                                );
+
+                            } else {
+
+                                console.error(
+                                    "❌ quiz.js loadQuiz() not available"
                                 );
 
 
-                            if (quizArea) {
+                                const quizArea =
+                                    document.getElementById(
+                                        "quizArea"
+                                    );
 
-                                quizArea.innerHTML = `
-                                    <div style="
-                                        padding:20px;
-                                        background:#fff0f0;
-                                        color:#b00020;
-                                        border-radius:12px;
-                                    ">
 
-                                        ❌ Quiz engine
-                                        could not be loaded.
+                                if (quizArea) {
 
-                                        <br><br>
+                                    quizArea.innerHTML = `
 
-                                        Please refresh
-                                        the page.
+                                        <div style="
+                                            padding:20px;
+                                            background:#fff0f0;
+                                            color:#b00020;
+                                            border-radius:12px;
+                                        ">
 
-                                    </div>
-                                `;
+                                            ❌ Quiz engine
+                                            could not be loaded.
+
+                                            <br><br>
+
+                                            Please refresh
+                                            the page.
+
+                                        </div>
+
+                                    `;
+
+                                }
 
                             }
 
                         }
+                    );
 
-                    }
-                );
-
-            });
+                }
+            );
 
 
         // =================================================
@@ -377,81 +756,73 @@ async function loadUnits() {
             .querySelectorAll(
                 ".view-notes-button"
             )
-            .forEach(button => {
+            .forEach(
+                button => {
 
-                button.addEventListener(
-                    "click",
-                    function() {
+                    button.addEventListener(
+                        "click",
+                        function() {
 
-                        const unitId =
-                            this.dataset.unitId;
-
-
-                        const unitTitle =
-                            this.dataset.unitTitle;
-
-
-                        console.log(
-                            "📄 Showing notes for:",
-                            unitTitle,
-                            unitId
-                        );
+                            const unitId =
+                                Number(
+                                    this.dataset.unitId
+                                );
 
 
-                        const matchingNotes =
-                            document.querySelectorAll(
-                                `.note-card[data-unit-id="${unitId}"]`
+                            console.log(
+                                "📄 Showing notes for unit:",
+                                unitId
                             );
 
 
-                        if (
-                            matchingNotes.length > 0
-                        ) {
+                            const selectedUnit =
+                                data.find(
+                                    unit =>
+                                        Number(unit.id) ===
+                                        unitId
+                                );
 
-                            matchingNotes[0]
-                                .scrollIntoView({
-                                    behavior:
-                                        "smooth"
-                                });
 
-                        } else {
+                            if (!selectedUnit) {
 
-                            if (notesArea) {
+                                console.error(
+                                    "❌ Unit not found:",
+                                    unitId
+                                );
 
-                                notesArea.innerHTML += `
+                                if (notesArea) {
 
-                                    <div style="
-                                        padding:15px;
-                                        margin:10px 0;
-                                        background:#fff8e6;
-                                        border-radius:10px;
-                                    ">
+                                    notesArea.innerHTML = `
 
-                                        📄 No notes found
-                                        for
-                                        <strong>
-                                        ${escapeHTML(unitTitle)}
-                                        </strong>.
+                                        <div style="
+                                            padding:20px;
+                                            background:#fff0f0;
+                                            color:#b00020;
+                                            border-radius:12px;
+                                        ">
 
-                                    </div>
+                                            ❌ Could not find
+                                            this unit.
 
-                                `;
+                                        </div>
 
-                                notesArea
-                                    .scrollIntoView({
-                                        behavior:
-                                            "smooth"
-                                    });
+                                    `;
 
+                                }
+
+                                return;
                             }
 
+
+                            showUnitNotes(
+                                selectedUnit
+                            );
+
                         }
+                    );
 
-                    }
-                );
-
-            });
-
+                }
+            );
 
     }
 
@@ -464,6 +835,7 @@ async function loadUnits() {
 
 
         unitsArea.innerHTML = `
+
             <div style="
                 padding:20px;
                 background:#fff0f0;
@@ -474,12 +846,11 @@ async function loadUnits() {
                 ❌ Something went wrong.
 
                 <p>
-                    ${escapeHTML(
-                        error.message
-                    )}
+                    ${escapeHTML(error.message)}
                 </p>
 
             </div>
+
         `;
 
     }
@@ -488,261 +859,7 @@ async function loadUnits() {
 
 
 // =====================================================
-// LOAD NOTES FOR SELECTED COURSE
-// =====================================================
-
-async function loadNotes() {
-
-    if (!notesArea) {
-
-        console.warn(
-            "⚠️ notesArea not found"
-        );
-
-        return;
-
-    }
-
-
-    notesArea.innerHTML =
-        "⏳ Loading notes...";
-
-
-    try {
-
-        const {
-            data,
-            error
-        } = await supabase
-            .from("notes")
-            .select("*")
-            .eq("course_id", courseId)
-            .order("created_at", {
-                ascending:false
-            });
-
-
-        if (error) {
-
-            console.error(
-                "❌ NOTES ERROR:",
-                error
-            );
-
-
-            notesArea.innerHTML = `
-                <div style="
-                    padding:20px;
-                    background:#fff0f0;
-                    color:#b00020;
-                    border-radius:12px;
-                ">
-
-                    ❌ Failed to load notes
-
-                    <p>
-                        ${escapeHTML(
-                            error.message
-                        )}
-                    </p>
-
-                </div>
-            `;
-
-            return;
-
-        }
-
-
-        console.log(
-            "📄 Notes loaded:",
-            data
-        );
-
-
-        if (!data || data.length === 0) {
-
-            notesArea.innerHTML = `
-                <div style="
-                    padding:20px;
-                    background:#fff8e6;
-                    border-radius:12px;
-                ">
-
-                    📄 No notes available
-                    for this course yet.
-
-                </div>
-            `;
-
-            return;
-
-        }
-
-
-        notesArea.innerHTML = "";
-
-
-        data.forEach(note => {
-
-            const filename =
-                note.file_name ||
-                note.filename ||
-                "Study Notes";
-
-
-            const unit =
-                note.unit ||
-                "Course Material";
-
-
-            const fileUrl =
-                note.file_url ||
-                "";
-
-
-            const noteCard =
-                document.createElement("div");
-
-
-            noteCard.className =
-                "note-card";
-
-
-            noteCard.dataset.unitId =
-                note.unit_id || "";
-
-
-            noteCard.innerHTML = `
-
-                <div style="
-                    background:white;
-                    padding:20px;
-                    margin:12px 0;
-                    border-radius:14px;
-                    border:1px solid #d9edf2;
-                    box-shadow:
-                        0 4px 12px
-                        rgba(0,0,0,.06);
-                ">
-
-                    <h3 style="
-                        color:#063970;
-                        margin-top:0;
-                    ">
-
-                        📄 ${escapeHTML(filename)}
-
-                    </h3>
-
-                    <p>
-                        📖
-                        ${escapeHTML(unit)}
-                    </p>
-
-                    ${
-                        fileUrl
-                        ?
-
-                        `
-                        <a
-                            href="${escapeHTML(fileUrl)}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-
-                            <button>
-                                📖 Open Notes
-                            </button>
-
-                        </a>
-                        `
-
-                        :
-
-                        `
-                        <p style="
-                            color:#b00020;
-                        ">
-
-                            ⚠️ File URL unavailable.
-
-                        </p>
-                        `
-                    }
-
-                </div>
-
-            `;
-
-
-            notesArea.appendChild(
-                noteCard
-            );
-
-        });
-
-    }
-
-    catch (error) {
-
-        console.error(
-            "❌ Unexpected notes error:",
-            error
-        );
-
-
-        notesArea.innerHTML = `
-            <div style="
-                padding:20px;
-                background:#fff0f0;
-                color:#b00020;
-                border-radius:12px;
-            ">
-
-                ❌ Failed to load notes.
-
-            </div>
-        `;
-
-    }
-
-}
-
-
-// =====================================================
-// HTML ESCAPE
-// =====================================================
-
-function escapeHTML(value) {
-
-    return String(value ?? "")
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-// =====================================================
-// INITIALIZE COURSE PAGE
+// INITIALIZE COURSE
 // =====================================================
 
 async function initializeCourse() {
@@ -750,7 +867,6 @@ async function initializeCourse() {
     if (!courseId) {
 
         return;
-
     }
 
 
@@ -758,10 +874,12 @@ async function initializeCourse() {
 
     await loadUnits();
 
-    await loadNotes();
-
 }
 
+
+// =====================================================
+// START
+// =====================================================
 
 initializeCourse();
 
