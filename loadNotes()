@@ -1,0 +1,214 @@
+// =====================================================
+// LOAD DETAILED UNIT NOTES
+// =====================================================
+
+async function loadNotes() {
+
+    if (!notesArea) {
+
+        console.warn("⚠️ notesArea not found");
+        return;
+
+    }
+
+    notesArea.innerHTML = "⏳ Loading notes...";
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabase
+
+            .from("units")
+
+            .select(`
+                id,
+                title,
+                notes_content
+            `)
+
+            .eq("course_id", courseId)
+
+            .order("id", {
+                ascending: true
+            });
+
+
+        if (error) {
+
+            console.error(
+                "❌ DETAILED NOTES ERROR:",
+                error
+            );
+
+            notesArea.innerHTML = `
+                <div style="
+                    padding:20px;
+                    background:#fff0f0;
+                    color:#b00020;
+                    border-radius:12px;
+                ">
+
+                    ❌ Failed to load notes.
+
+                    <p>
+                        ${escapeHTML(error.message)}
+                    </p>
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        console.log(
+            "📚 Detailed unit notes loaded:",
+            data
+        );
+
+
+        if (!data || data.length === 0) {
+
+            notesArea.innerHTML = `
+                <div style="
+                    padding:20px;
+                    background:#fff8e6;
+                    border-radius:12px;
+                ">
+
+                    📄 No notes available
+                    for this course yet.
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        notesArea.innerHTML = "";
+
+
+        data.forEach(unit => {
+
+            if (
+                !unit.notes_content ||
+                !unit.notes_content.trim()
+            ) {
+
+                return;
+
+            }
+
+
+            const noteCard =
+                document.createElement("div");
+
+
+            noteCard.className =
+                "note-card";
+
+
+            noteCard.dataset.unitId =
+                unit.id;
+
+
+            noteCard.innerHTML = `
+
+                <div style="
+                    background:#ffffff;
+                    padding:25px;
+                    margin:20px 0;
+                    border-radius:16px;
+                    border:1px solid #d9edf2;
+                    box-shadow:
+                        0 5px 18px
+                        rgba(0,0,0,.07);
+                ">
+
+                    <h2 style="
+                        color:#063970;
+                        margin-top:0;
+                        margin-bottom:20px;
+                    ">
+
+                        📚 ${escapeHTML(unit.title)}
+
+                    </h2>
+
+
+                    <div
+                        style="
+                            line-height:1.8;
+                            color:#222;
+                            font-size:16px;
+                        "
+                    >
+
+                        ${formatNotes(
+                            unit.notes_content
+                        )}
+
+                    </div>
+
+                </div>
+
+            `;
+
+
+            notesArea.appendChild(
+                noteCard
+            );
+
+        });
+
+
+        if (
+            notesArea.children.length === 0
+        ) {
+
+            notesArea.innerHTML = `
+                <div style="
+                    padding:20px;
+                    background:#fff8e6;
+                    border-radius:12px;
+                ">
+
+                    📄 No detailed notes have
+                    been added to this course yet.
+
+                </div>
+            `;
+
+        }
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "❌ Unexpected detailed notes error:",
+            error
+        );
+
+        notesArea.innerHTML = `
+            <div style="
+                padding:20px;
+                background:#fff0f0;
+                color:#b00020;
+                border-radius:12px;
+            ">
+
+                ❌ Something went wrong
+                while loading the notes.
+
+            </div>
+        `;
+
+    }
+
+}
