@@ -1,25 +1,11 @@
 ```javascript
 import { supabase } from "./supabase.js";
 
-// ======================================================
-// MWANIKI SCHOLARS STUDENT DASHBOARD
-// STUDENT PROFILE + NOTES + PROGRESS
-// COURSES ARE HANDLED BY courses.js
-// ======================================================
-
 console.log("🎓 Mwaniki Scholars Dashboard starting...");
 
 
 // ======================================================
-// GLOBAL STUDENT DATA
-// ======================================================
-
-let currentUser = null;
-let currentStudent = null;
-
-
-// ======================================================
-// LOAD LOGGED-IN STUDENT PROFILE
+// STUDENT PROFILE
 // ======================================================
 
 async function loadStudentProfile() {
@@ -27,127 +13,107 @@ async function loadStudentProfile() {
     try {
 
         const {
-            data: {
-                session
-            },
+            data: sessionData,
             error: sessionError
         } = await supabase.auth.getSession();
 
-
         if (sessionError) {
-
-            console.error(
-                "SESSION ERROR:",
-                sessionError
-            );
-
+            console.error("Session error:", sessionError);
             return;
-
         }
 
-
-        // --------------------------------------------------
-        // NO ACTIVE SESSION
-        // --------------------------------------------------
+        const session = sessionData.session;
 
         if (!session || !session.user) {
 
-            console.warn(
-                "⚠️ No active student session."
-            );
+            console.warn("No logged-in student.");
 
             return;
-
         }
 
+        const user = session.user;
 
-        currentUser =
-            session.user;
-
-
-        console.log(
-            "👤 Logged-in user:",
-            currentUser.email
-        );
+        console.log("👤 Logged-in user:", user.email);
 
 
-        // --------------------------------------------------
-        // LOAD STUDENT PROFILE
-        // --------------------------------------------------
+        // ==================================================
+        // GET STUDENT PROFILE
+        // ==================================================
 
         const {
-            data,
-            error
+            data: student,
+            error: studentError
         } = await supabase
             .from("students")
-            .select(
-                "id, full_name, email, phone, course, level, photo_url"
-            )
-            .eq(
-                "id",
-                currentUser.id
-            )
+            .select("*")
+            .eq("id", user.id)
             .maybeSingle();
 
 
-        if (error) {
+        if (studentError) {
 
             console.error(
-                "STUDENT PROFILE ERROR:",
-                error
+                "Student profile error:",
+                studentError
             );
 
-            /*
-             * We still show the authenticated email.
-             * This prevents the entire dashboard from breaking
-             * if the students table has a temporary RLS problem.
-             */
-
-            currentStudent = {
+            showStudentProfile({
 
                 full_name:
-                    currentUser.user_metadata?.full_name ||
-                    currentUser.email?.split("@")[0] ||
+                    user.user_metadata?.full_name ||
+                    user.email?.split("@")[0] ||
                     "Student",
 
                 email:
-                    currentUser.email || "",
+                    user.email || "",
 
                 course: "",
                 level: "",
                 photo_url: ""
 
-            };
+            });
 
-        } else {
-
-            currentStudent =
-                data || {
-
-                    full_name:
-                        currentUser.user_metadata?.full_name ||
-                        currentUser.email?.split("@")[0] ||
-                        "Student",
-
-                    email:
-                        currentUser.email || "",
-
-                    course: "",
-                    level: "",
-                    photo_url: ""
-
-                };
-
+            return;
         }
 
 
-        renderStudentProfile();
+        if (student) {
 
+            console.log(
+                "✅ Student profile found:",
+                student
+            );
+
+            showStudentProfile(student);
+
+        } else {
+
+            console.warn(
+                "⚠️ No student profile found."
+            );
+
+            showStudentProfile({
+
+                full_name:
+                    user.user_metadata?.full_name ||
+                    user.email?.split("@")[0] ||
+                    "Student",
+
+                email:
+                    user.email || "",
+
+                course: "",
+                level: "",
+                photo_url: ""
+
+            });
+
+        }
 
     } catch (error) {
 
         console.error(
-            "PROFILE INITIALIZATION ERROR:",
+            "Profile loading failed:",
             error
         );
 
@@ -157,282 +123,161 @@ async function loadStudentProfile() {
 
 
 // ======================================================
-// CREATE / UPDATE DASHBOARD PROFILE DISPLAY
+// SHOW STUDENT PROFILE
 // ======================================================
 
-function renderStudentProfile() {
-
-    if (!currentStudent) {
-        return;
-    }
-
+function showStudentProfile(student) {
 
     const name =
-        currentStudent.full_name ||
-        currentUser?.email?.split("@")[0] ||
+        student.full_name ||
         "Student";
 
-
     const email =
-        currentStudent.email ||
-        currentUser?.email ||
+        student.email ||
         "";
-
 
     const course =
-        currentStudent.course ||
+        student.course ||
         "Course not set";
 
-
     const level =
-        currentStudent.level ||
+        student.level ||
         "Level not set";
 
-
     const photo =
-        currentStudent.photo_url ||
+        student.photo_url ||
         "";
 
 
-    // --------------------------------------------------
-    // FIND EXISTING PROFILE AREA
-    // --------------------------------------------------
+    // ==================================================
+    // CHANGE HEADER PROFILE
+    // ==================================================
 
-    let profileArea =
+    const profile =
         document.querySelector(".profile");
 
+    if (profile) {
 
-    // --------------------------------------------------
-    // IF NO PROFILE AREA EXISTS, CREATE ONE
-    // --------------------------------------------------
+        profile.innerHTML = `
 
-    if (!profileArea) {
+            <div
+                id="profileMenu"
+                style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                    cursor:pointer;
+                    background:white;
+                    color:#063970;
+                    padding:7px 14px;
+                    border-radius:30px;
+                    font-weight:600;
+                "
+            >
 
-        const header =
-            document.querySelector("header");
+                ${
+                    photo
+
+                    ?
+
+                    `<img
+                        src="${photo}"
+                        alt="Profile"
+                        style="
+                            width:40px;
+                            height:40px;
+                            object-fit:cover;
+                            border-radius:50%;
+                        "
+                    >`
+
+                    :
+
+                    `<div
+                        style="
+                            width:40px;
+                            height:40px;
+                            border-radius:50%;
+                            background:#e6f4f7;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            font-size:21px;
+                        "
+                    >
+                        👤
+                    </div>`
+                }
+
+                <span>
+                    ${name}
+                </span>
+
+            </div>
+
+        `;
 
 
-        if (header) {
-
-            profileArea =
-                document.createElement("div");
-
-            profileArea.className =
-                "profile";
-
-            header.appendChild(
-                profileArea
+        const profileMenu =
+            document.getElementById(
+                "profileMenu"
             );
+
+
+        if (profileMenu) {
+
+            profileMenu.onclick =
+                function () {
+
+                    window.location.href =
+                        "studentProfile.html";
+
+                };
 
         }
 
     }
 
 
-    if (!profileArea) {
+    // ==================================================
+    // CREATE PERSONAL PROFILE CARD
+    // ==================================================
+
+    const container =
+        document.querySelector(".container");
+
+
+    if (!container) {
+
+        console.warn(
+            "Dashboard .container not found."
+        );
+
         return;
     }
 
 
-    // --------------------------------------------------
-    // PROFILE BUTTON / DISPLAY
-    // --------------------------------------------------
+    // Remove an old card if one exists.
 
-    profileArea.innerHTML = `
-
-        <button
-            id="studentProfileButton"
-            type="button"
-            style="
-                display:flex;
-                align-items:center;
-                gap:10px;
-                border:none;
-                background:white;
-                color:#063970;
-                padding:8px 15px;
-                border-radius:30px;
-                cursor:pointer;
-                font-weight:600;
-            "
-        >
-
-            ${
-                photo
-
-                ?
-
-                `
-                <img
-                    src="${escapeHTML(photo)}"
-                    alt="Profile"
-                    style="
-                        width:38px;
-                        height:38px;
-                        border-radius:50%;
-                        object-fit:cover;
-                        border:2px solid #0b7285;
-                    "
-                >
-                `
-
-                :
-
-                `
-                <span
-                    style="
-                        width:38px;
-                        height:38px;
-                        border-radius:50%;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#e6f4f7;
-                        font-size:20px;
-                    "
-                >
-                    👤
-                </span>
-                `
-            }
-
-            <span>
-                ${escapeHTML(name)}
-            </span>
-
-        </button>
-
-    `;
-
-
-    const profileButton =
-        document.getElementById(
-            "studentProfileButton"
-        );
-
-
-    if (profileButton) {
-
-        profileButton.addEventListener(
-            "click",
-            function () {
-
-                window.location.href =
-                    "studentProfile.html";
-
-            }
-        );
-
-    }
-
-
-    // --------------------------------------------------
-    // UPDATE DASHBOARD WELCOME TEXT
-    // --------------------------------------------------
-
-    updateWelcomeText(
-        name,
-        email,
-        course,
-        level
-    );
-
-}
-
-
-// ======================================================
-// UPDATE WELCOME SECTION
-// ======================================================
-
-function updateWelcomeText(
-    name,
-    email,
-    course,
-    level
-) {
-
-    /*
-     * Look for an existing dashboard heading.
-     * We deliberately do not replace the entire dashboard,
-     * because courses.js and quiz.js use existing elements.
-     */
-
-    const headings =
-        document.querySelectorAll(
-            "h1, h2"
-        );
-
-
-    let welcomeHeading = null;
-
-
-    headings.forEach(
-        heading => {
-
-            const text =
-                heading.textContent
-                    .toLowerCase();
-
-
-            if (
-                text.includes("student learning dashboard")
-            ) {
-
-                welcomeHeading =
-                    heading;
-
-            }
-
-        }
-    );
-
-
-    if (welcomeHeading) {
-
-        welcomeHeading.innerHTML = `
-            🎓 Welcome, ${escapeHTML(name)}
-        `;
-
-    }
-
-
-    // --------------------------------------------------
-    // CREATE SMALL PERSONAL INFO CARD
-    // --------------------------------------------------
-
-    let existingCard =
+    const oldCard =
         document.getElementById(
             "studentPersonalCard"
         );
 
-
-    if (existingCard) {
-        return;
+    if (oldCard) {
+        oldCard.remove();
     }
 
 
-    const container =
-        document.querySelector(
-            ".container"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    existingCard =
+    const card =
         document.createElement("div");
 
-    existingCard.id =
+
+    card.id =
         "studentPersonalCard";
 
-    existingCard.className =
-        "card";
 
-
-    existingCard.style.cssText = `
+    card.style.cssText = `
 
         background:
             linear-gradient(
@@ -442,9 +287,10 @@ function updateWelcomeText(
             );
 
         color:white;
+        padding:25px;
         border-radius:20px;
-        padding:22px;
         margin-bottom:25px;
+
         box-shadow:
             0 10px 30px
             rgba(0,0,0,.12);
@@ -452,57 +298,51 @@ function updateWelcomeText(
     `;
 
 
-    existingCard.innerHTML = `
+    card.innerHTML = `
 
         <div
             style="
                 display:flex;
                 align-items:center;
-                gap:18px;
+                gap:20px;
                 flex-wrap:wrap;
             "
         >
 
             ${
-                currentStudent.photo_url
+                photo
 
                 ?
 
-                `
-                <img
-                    src="${escapeHTML(
-                        currentStudent.photo_url
-                    )}"
+                `<img
+                    src="${photo}"
                     alt="Student profile"
                     style="
-                        width:75px;
-                        height:75px;
+                        width:80px;
+                        height:80px;
                         border-radius:50%;
                         object-fit:cover;
                         border:3px solid white;
                     "
-                >
-                `
+                >`
 
                 :
 
-                `
-                <div
+                `<div
                     style="
-                        width:75px;
-                        height:75px;
+                        width:80px;
+                        height:80px;
                         border-radius:50%;
                         background:
                             rgba(255,255,255,.18);
                         display:flex;
                         align-items:center;
                         justify-content:center;
-                        font-size:38px;
+                        font-size:40px;
                     "
                 >
                     👤
-                </div>
-                `
+                </div>`
             }
 
 
@@ -510,138 +350,96 @@ function updateWelcomeText(
 
                 <div
                     style="
-                        font-size:23px;
+                        font-size:25px;
                         font-weight:bold;
-                        margin-bottom:5px;
                     "
                 >
-                    ${escapeHTML(name)}
-                </div>
-
-
-                <div
-                    style="
-                        opacity:.9;
-                        font-size:14px;
-                    "
-                >
-                    📧 ${escapeHTML(email)}
+                    Welcome, ${name}
                 </div>
 
 
                 <div
                     style="
                         margin-top:6px;
-                        font-size:14px;
+                        opacity:.9;
                     "
                 >
-                    🎓 ${escapeHTML(course)}
+                    📧 ${email}
+                </div>
+
+
+                <div
+                    style="
+                        margin-top:7px;
+                    "
+                >
+                    🎓 ${course}
                     &nbsp; • &nbsp;
-                    📚 ${escapeHTML(level)}
+                    📚 ${level}
                 </div>
 
             </div>
 
 
-            <div
+            <button
+                id="openStudentProfile"
+                type="button"
                 style="
                     margin-left:auto;
+                    background:white;
+                    color:#063970;
+                    border:none;
+                    padding:12px 18px;
+                    border-radius:10px;
+                    cursor:pointer;
+                    font-weight:bold;
                 "
             >
-
-                <button
-                    id="openProfileButton"
-                    type="button"
-                    style="
-                        background:white;
-                        color:#063970;
-                        border:none;
-                        padding:11px 17px;
-                        border-radius:10px;
-                        cursor:pointer;
-                        font-weight:bold;
-                    "
-                >
-                    👤 My Profile
-                </button>
-
-            </div>
+                👤 My Profile
+            </button>
 
         </div>
 
     `;
 
 
-    /*
-     * Insert personal card immediately after the header
-     * and before the course library.
-     */
+    // Put profile card before dashboard cards.
 
     const firstCard =
-        container.querySelector(
-            ".card"
-        );
+        container.querySelector(".card");
 
 
     if (firstCard) {
 
         container.insertBefore(
-            existingCard,
+            card,
             firstCard
         );
 
     } else {
 
-        container.prepend(
-            existingCard
-        );
+        container.prepend(card);
 
     }
 
 
-    const openProfileButton =
+    const profileButton =
         document.getElementById(
-            "openProfileButton"
+            "openStudentProfile"
         );
 
 
-    if (openProfileButton) {
+    if (profileButton) {
 
-        openProfileButton.addEventListener(
-            "click",
+        profileButton.onclick =
             function () {
 
                 window.location.href =
                     "studentProfile.html";
 
-            }
-        );
+            };
 
     }
-
-}
-
-
-// ======================================================
-// HTML ESCAPE
-// ======================================================
-
-function escapeHTML(value) {
-
-    if (value === null || value === undefined) {
-
-        return "";
-
-    }
-
-
-    return String(value)
-
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
 
 }
 
@@ -665,7 +463,6 @@ async function loadNotes() {
         );
 
         return;
-
     }
 
 
@@ -695,13 +492,11 @@ async function loadNotes() {
             error
         );
 
-
         notesBox.innerHTML =
             "❌ " +
             error.message;
 
         return;
-
     }
 
 
@@ -714,7 +509,6 @@ async function loadNotes() {
             "📄 No notes uploaded yet.";
 
         return;
-
     }
 
 
@@ -728,51 +522,26 @@ async function loadNotes() {
                 note.course ||
                 "Course";
 
-
             const unit =
                 note.unit ||
                 "Unit";
-
-
-            /*
-             * Your table uses file_name,
-             * not filename.
-             *
-             * We support both so old records
-             * do not break.
-             */
 
             const filename =
                 note.file_name ||
                 note.filename ||
                 "";
 
-
             if (!filename) {
                 return;
             }
 
 
-            let noteURL =
+            const url =
                 note.file_url ||
-                "";
-
-
-            /*
-             * If file_url exists, use it directly.
-             * Otherwise fall back to the GitHub notes folder.
-             */
-
-            if (!noteURL) {
-
-                noteURL =
-                    "https://github.com/mwaniki-cyber/mwaniki-scholars./blob/main/notes/"
-                    +
-                    encodeURIComponent(
-                        filename
-                    );
-
-            }
+                (
+                    "https://github.com/mwaniki-cyber/mwaniki-scholars./blob/main/notes/" +
+                    encodeURIComponent(filename)
+                );
 
 
             notesBox.innerHTML += `
@@ -791,22 +560,19 @@ async function loadNotes() {
                 >
 
                     <h3>
-                        📚 ${escapeHTML(course)}
+                        📚 ${course}
                     </h3>
 
-
                     <p>
-                        📝 ${escapeHTML(unit)}
+                        📝 ${unit}
                     </p>
 
-
                     <p>
-                        📄 ${escapeHTML(filename)}
+                        📄 ${filename}
                     </p>
-
 
                     <a
-                        href="${escapeHTML(noteURL)}"
+                        href="${url}"
                         target="_blank"
                         rel="noopener noreferrer"
                     >
@@ -830,7 +596,7 @@ async function loadNotes() {
 
 
 // ======================================================
-// SEARCH NOTES
+// NOTES SEARCH
 // ======================================================
 
 const notesSearch =
@@ -908,25 +674,17 @@ function updateProgressDisplay() {
 
     } catch (error) {
 
-        console.warn(
-            "Could not read quiz progress:",
-            error
-        );
-
         progress = [];
 
     }
 
 
-    if (
-        progress.length === 0
-    ) {
+    if (progress.length === 0) {
 
         progressBox.innerHTML =
             "0%";
 
         return;
-
     }
 
 
@@ -938,15 +696,10 @@ function updateProgressDisplay() {
         item => {
 
             totalScore +=
-                Number(
-                    item.score
-                ) || 0;
-
+                Number(item.score) || 0;
 
             totalQuestions +=
-                Number(
-                    item.total
-                ) || 0;
+                Number(item.total) || 0;
 
         }
     );
@@ -979,9 +732,8 @@ function updateProgressDisplay() {
 // LOGOUT
 // ======================================================
 
-async function logoutStudent() {
-
-    try {
+window.logoutStudent =
+    async function () {
 
         const {
             error
@@ -991,78 +743,32 @@ async function logoutStudent() {
 
         if (error) {
 
-            console.error(
-                "LOGOUT ERROR:",
-                error
-            );
-
             alert(
-                "Unable to log out: " +
+                "Logout failed: " +
                 error.message
             );
 
             return;
-
         }
 
 
         window.location.href =
             "studentLogin.html";
 
-
-    } catch (error) {
-
-        console.error(
-            "LOGOUT ERROR:",
-            error
-        );
-
-    }
-
-}
-
-
-// Make logout available to HTML if needed.
-
-window.logoutStudent =
-    logoutStudent;
+    };
 
 
 // ======================================================
-// INITIALIZE DASHBOARD
+// INITIALIZE
 // ======================================================
 
 async function initializeDashboard() {
 
-    /*
-     * Load the profile first so the dashboard identifies
-     * the actual logged-in student.
-     */
-
     await loadStudentProfile();
-
-
-    /*
-     * Existing notes functionality.
-     */
 
     await loadNotes();
 
-
-    /*
-     * Existing quiz progress functionality.
-     */
-
     updateProgressDisplay();
-
-
-    console.log(
-        "✅ Student profile loaded"
-    );
-
-    console.log(
-        "✅ Notes loaded"
-    );
 
     console.log(
         "✅ Dashboard initialization complete"
@@ -1073,10 +779,6 @@ async function initializeDashboard() {
 
 initializeDashboard();
 
-
-// ======================================================
-// FINAL LOG
-// ======================================================
 
 console.log(
     "🎓 Mwaniki Scholars Dashboard loaded"
