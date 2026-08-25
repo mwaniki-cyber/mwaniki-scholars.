@@ -386,4 +386,79 @@ grid-template-columns:1fr;
 }
 
 
+}/* =========================================================
+   STUDENT PROFILE BUTTON
+   ========================================================= */
+
+.profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    padding: 11px 18px;
+
+    border: 1px solid rgba(255, 255, 255, 0.35);
+
+    border-radius: 25px;
+
+    background: rgba(255, 255, 255, 0.12);
+
+    color: white;
+
+    font-size: 14px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    text-decoration: none;
+
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.profile-button:hover {
+
+    background: white;
+
+    color: #063970;
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.profile-button:active {
+
+    transform: translateY(0);
+
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .profile-actions {
+        width: 100%;
+    }
+
+    .profile-button {
+        width: 100%;
+        padding: 13px;
+    }
+
 }
