@@ -1,918 +1,775 @@
+```html
 <!DOCTYPE html>
-
 <html lang="en">
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
->
+    <title>Mwaniki Scholars | Student Dashboard</title>
 
-<title>Mwaniki Scholars Student Dashboard</title>
+    <style>
 
-<style>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
 
-/* =========================================================
-   GLOBAL
-   ========================================================= */
+        body {
+            margin: 0;
+            background: #f4f9ff;
+            color: #17324d;
+        }
 
-* {
-    box-sizing: border-box;
-    font-family: "Segoe UI", Arial, sans-serif;
-}
+        /* =====================================================
+           HEADER
+           ===================================================== */
 
-body {
-    margin: 0;
-    background: #f4f9ff;
-    color: #17324d;
-}
+        header {
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #0b7285
+                );
 
+            color: white;
 
-/* =========================================================
-   HEADER
-   ========================================================= */
+            padding: 20px 30px;
 
-header {
+            display: flex;
 
-    background:
-        linear-gradient(
-            135deg,
-            #063970,
-            #0b7285
-        );
+            justify-content: space-between;
 
-    color: white;
+            align-items: center;
 
-    padding: 16px 25px;
+            gap: 20px;
 
-    display: flex;
+            box-shadow:
+                0 5px 20px
+                rgba(0,0,0,.15);
 
-    justify-content: space-between;
+            position: sticky;
 
-    align-items: center;
+            top: 0;
 
-    gap: 20px;
+            z-index: 100;
+        }
 
-    position: sticky;
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
 
-    top: 0;
+        .profile {
+            background: white;
+            color: #063970;
+            padding: 10px 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            border: none;
+        }
 
-    z-index: 100;
+        .profile:hover {
+            background: #e9f7fa;
+        }
 
-    box-shadow:
-        0 5px 20px rgba(0,0,0,.12);
-}
+        /* =====================================================
+           MAIN CONTAINER
+           ===================================================== */
 
+        .container {
+            width: 100%;
+            max-width: 1250px;
+            margin: auto;
+            padding: 30px;
+        }
 
-.logo {
+        /* =====================================================
+           WELCOME
+           ===================================================== */
 
-    font-size: 24px;
+        .welcome-card {
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #0b7285
+                );
 
-    font-weight: bold;
+            color: white;
 
-    white-space: nowrap;
-}
+            padding: 35px;
 
+            border-radius: 25px;
 
-/* =========================================================
-   PERSONAL PROFILE HEADER
-   ========================================================= */
+            margin-bottom: 25px;
 
-.header-right {
+            box-shadow:
+                0 12px 35px
+                rgba(6,57,112,.2);
+        }
 
-    display: flex;
+        .welcome-card h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+        }
 
-    align-items: center;
+        .welcome-card p {
+            margin: 5px 0;
+            opacity: .9;
+        }
 
-    gap: 12px;
-}
+        #studentDisplayName {
+            font-weight: bold;
+        }
 
+        /* =====================================================
+           CARDS
+           ===================================================== */
 
-.profile-card {
+        .grid {
+            display: grid;
 
-    display: flex;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(280px, 1fr)
+                );
 
-    align-items: center;
+            gap: 25px;
+        }
 
-    gap: 10px;
+        .card {
+            background: white;
 
-    padding: 6px 14px 6px 6px;
+            padding: 25px;
 
-    border-radius: 40px;
+            border-radius: 20px;
 
-    background:
-        rgba(255,255,255,.14);
+            box-shadow:
+                0 8px 25px
+                rgba(0,0,0,.08);
 
-    border:
-        1px solid rgba(255,255,255,.25);
+            margin-bottom: 25px;
+        }
 
-    cursor: pointer;
+        .card h2 {
+            color: #063970;
+            margin-top: 0;
+        }
 
-    transition:
-        .25s ease;
+        .card p {
+            color: #64748b;
+        }
 
-}
+        /* =====================================================
+           COURSE COUNTER
+           ===================================================== */
 
+        .course-count-card {
+            text-align: center;
+        }
 
-.profile-card:hover {
+        #totalCourses {
+            color: #063970;
 
-    background:
-        rgba(255,255,255,.25);
+            margin: 5px 0 0 0;
 
-    transform:
-        translateY(-2px);
+            font-size: 48px;
 
-}
+            font-weight: bold;
+        }
 
+        /* =====================================================
+           BUTTONS
+           ===================================================== */
 
-.profile-avatar {
+        button {
+            background: #0b7285;
 
-    width: 46px;
+            color: white;
 
-    height: 46px;
+            border: none;
 
-    border-radius: 50%;
+            padding: 12px 20px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #e6f4f7,
-            #d3edf2
-        );
+            border-radius: 10px;
 
-    color: #063970;
+            cursor: pointer;
 
-    display: flex;
+            font-size: 14px;
 
-    align-items: center;
+            transition:
+                transform .2s ease,
+                background .2s ease;
+        }
 
-    justify-content: center;
+        button:hover {
+            background: #064747;
 
-    font-size: 23px;
+            transform:
+                translateY(-1px);
+        }
 
-    font-weight: bold;
+        button:disabled {
+            opacity: .6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-    overflow: hidden;
+        /* =====================================================
+           SEARCH
+           ===================================================== */
 
-    flex-shrink: 0;
+        input,
+        textarea {
+            width: 100%;
 
-    border:
-        2px solid rgba(255,255,255,.8);
-}
+            padding: 12px;
 
+            border-radius: 10px;
 
-.profile-avatar img {
+            border:
+                1px solid #ddd;
 
-    width: 100%;
+            margin: 8px 0;
 
-    height: 100%;
+            font-size: 15px;
 
-    object-fit: cover;
+            outline: none;
+        }
 
-}
+        input:focus,
+        textarea:focus {
+            border-color: #0b7285;
 
+            box-shadow:
+                0 0 0 3px
+                rgba(11,114,133,.1);
+        }
 
-.profile-info {
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
 
-    display: flex;
+        /* =====================================================
+           COURSE AREA
+           IMPORTANT: courses.js expects #courseArea
+           ===================================================== */
 
-    flex-direction: column;
+        #courseArea {
+            margin-top: 20px;
 
-    min-width: 100px;
+            min-height: 80px;
+        }
 
-    max-width: 180px;
-}
+        .course-item {
+            background: #eef7fb;
 
+            padding: 15px;
 
-.profile-name {
+            margin: 10px 0;
 
-    color: white;
+            border-radius: 12px;
 
-    font-size: 14px;
+            cursor: pointer;
 
-    font-weight: 700;
+            transition:
+                transform .2s ease,
+                background .2s ease,
+                box-shadow .2s ease;
+        }
 
-    white-space: nowrap;
+        .course-item:hover {
+            background: #d7f0f7;
 
-    overflow: hidden;
+            transform:
+                translateY(-2px);
 
-    text-overflow: ellipsis;
-}
+            box-shadow:
+                0 5px 15px
+                rgba(0,0,0,.08);
+        }
 
+        .course-card {
+            transition:
+                transform .2s ease,
+                box-shadow .2s ease;
+        }
 
-.profile-details {
+        .course-card:hover {
+            transform:
+                translateY(-3px);
 
-    color:
-        rgba(255,255,255,.82);
+            box-shadow:
+                0 8px 20px
+                rgba(0,0,0,.10);
+        }
 
-    font-size: 11px;
+        /* =====================================================
+           UNITS
+           ===================================================== */
 
-    margin-top: 2px;
+        .unit-card {
+            background: #fff;
 
-    white-space: nowrap;
+            border-left:
+                5px solid #0b7285;
 
-    overflow: hidden;
+            padding: 15px;
 
-    text-overflow: ellipsis;
-}
+            margin: 10px 0;
 
+            border-radius: 10px;
+        }
 
-.profile-button {
+        /* =====================================================
+           QUIZ
+           ===================================================== */
 
-    border:
-        1px solid rgba(255,255,255,.45);
+        #quizArea {
+            margin-top: 15px;
+        }
 
-    background:
-        rgba(255,255,255,.12);
+        #quizArea button {
+            margin-top: 10px;
+        }
 
-    color: white;
+        /* =====================================================
+           AI ANSWER
+           ===================================================== */
 
-    padding:
-        10px 15px;
+        #aiAnswer {
+            margin-top: 15px;
 
-    border-radius: 10px;
+            padding: 15px;
 
-    cursor: pointer;
+            background: #f4f9ff;
 
-    font-weight: 600;
+            border-radius: 12px;
 
-    transition: .2s ease;
-}
+            min-height: 20px;
 
+            color: #334155;
+        }
 
-.profile-button:hover {
+        /* =====================================================
+           TUTOR MESSAGES
+           ===================================================== */
 
-    background: white;
+        #messageStatus,
+        #profileStatus {
+            margin-top: 12px;
 
-    color: #063970;
+            text-align: center;
 
-}
+            min-height: 20px;
+        }
 
+        /* =====================================================
+           STUDENT INBOX
+           ===================================================== */
 
-/* =========================================================
-   CONTAINER
-   ========================================================= */
+        #studentInbox {
+            margin-top: 15px;
+        }
 
-.container {
+        /* =====================================================
+           PROGRESS
+           ===================================================== */
 
-    padding: 30px;
+        #progress {
+            background: #e5eef5;
 
-    max-width: 1400px;
+            border-radius: 20px;
 
-    margin: auto;
-}
+            height: 25px;
 
+            overflow: hidden;
 
-/* =========================================================
-   GRID
-   ========================================================= */
+            position: relative;
+        }
 
-.grid {
+        #progress p {
+            margin: 0;
 
-    display: grid;
+            padding: 3px 10px;
 
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(280px, 1fr)
-        );
+            text-align: center;
 
-    gap: 25px;
-}
+            font-weight: bold;
 
+            color: #063970;
+        }
 
-/* =========================================================
-   CARDS
-   ========================================================= */
+        /* =====================================================
+           EMPTY / LOADING
+           ===================================================== */
 
-.card {
+        .loading {
+            padding: 20px;
 
-    background: white;
+            text-align: center;
 
-    padding: 25px;
+            color: #64748b;
+        }
 
-    border-radius: 20px;
+        /* =====================================================
+           MOBILE
+           ===================================================== */
 
-    box-shadow:
-        0 8px 25px
-        rgba(0,0,0,.08);
+        @media (max-width: 700px) {
 
-    margin-bottom: 25px;
-}
+            header {
+                padding: 15px;
 
+                flex-direction: column;
 
-.card h2 {
+                align-items: stretch;
 
-    color: #063970;
+                text-align: center;
+            }
 
-}
+            .container {
+                padding: 15px;
+            }
 
+            .welcome-card {
+                padding: 25px;
+            }
 
-.card p {
+            .welcome-card h1 {
+                font-size: 25px;
+            }
 
-    color: #64748b;
+            .grid {
+                grid-template-columns: 1fr;
+            }
 
-}
+        }
 
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-button {
-
-    background: #0b7285;
-
-    color: white;
-
-    border: none;
-
-    padding: 12px 20px;
-
-    border-radius: 10px;
-
-    cursor: pointer;
-
-    transition: .2s ease;
-
-}
-
-
-button:hover {
-
-    background: #064747;
-
-}
-
-
-/* =========================================================
-   INPUTS
-   ========================================================= */
-
-input,
-textarea {
-
-    width: 100%;
-
-    padding: 12px;
-
-    border-radius: 10px;
-
-    border:
-        1px solid #ddd;
-
-    margin: 8px 0;
-
-}
-
-
-input:focus,
-textarea:focus {
-
-    outline: none;
-
-    border-color: #0b7285;
-
-    box-shadow:
-        0 0 0 3px
-        rgba(11,114,133,.1);
-
-}
-
-
-textarea {
-
-    height: 120px;
-
-    resize: vertical;
-
-}
-
-
-/* =========================================================
-   COURSE ITEMS
-   ========================================================= */
-
-.course-item {
-
-    background: #eef7fb;
-
-    padding: 15px;
-
-    margin: 10px 0;
-
-    border-radius: 12px;
-
-    cursor: pointer;
-
-    transition: .2s ease;
-
-}
-
-
-.course-item:hover {
-
-    background: #d7f0f7;
-
-    transform:
-        translateX(3px);
-
-}
-
-
-.unit-card {
-
-    background: #fff;
-
-    border-left:
-        5px solid #0b7285;
-
-    padding: 15px;
-
-    margin: 10px 0;
-
-    border-radius: 10px;
-
-}
-
-
-/* =========================================================
-   COURSE COUNTER
-   ========================================================= */
-
-#totalCourses {
-
-    color: #063970;
-
-    margin: 5px 0 0 0;
-
-    font-size: 36px;
-
-}
-
-
-.course-card {
-
-    transition:
-        transform .2s ease,
-        box-shadow .2s ease;
-
-}
-
-
-.course-card:hover {
-
-    transform:
-        translateY(-3px);
-
-    box-shadow:
-        0 8px 20px
-        rgba(0,0,0,.10);
-
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 700px) {
-
-    header {
-
-        padding: 12px 15px;
-
-        align-items: flex-start;
-
-    }
-
-
-    .logo {
-
-        font-size: 18px;
-
-    }
-
-
-    .header-right {
-
-        gap: 6px;
-
-    }
-
-
-    .profile-card {
-
-        padding:
-            4px;
-
-        border-radius: 50%;
-
-    }
-
-
-    .profile-info {
-
-        display: none;
-
-    }
-
-
-    .profile-avatar {
-
-        width: 42px;
-
-        height: 42px;
-
-    }
-
-
-    .profile-button {
-
-        padding:
-            9px 10px;
-
-        font-size: 12px;
-
-    }
-
-
-    .container {
-
-        padding: 15px;
-
-    }
-
-}
-
-</style>
+    </style>
 
 </head>
 
+
 <body>
 
-<!-- =======================================================
+
+<!-- =========================================================
      HEADER
-======================================================== -->
+     ========================================================= -->
 
 <header>
 
-```
-<div class="logo">
-
-    🏥 Mwaniki Scholars
-
-</div>
-
-
-<div class="header-right">
-
-
-    <!-- PERSONAL STUDENT IDENTITY -->
-
-    <div
-        class="profile-card"
-        id="studentProfileCard"
-        title="Open My Profile"
-    >
-
-
-        <div
-            class="profile-avatar"
-            id="studentAvatar"
-        >
-
-            👤
-
-        </div>
-
-
-        <div class="profile-info">
-
-
-            <div
-                class="profile-name"
-                id="studentDisplayName"
-            >
-
-                Loading...
-
-            </div>
-
-
-            <div
-                class="profile-details"
-                id="studentDisplayCourse"
-            >
-
-                Student
-
-            </div>
-
-
-        </div>
-
-
+    <div class="logo">
+        🏥 Mwaniki Scholars
     </div>
 
-
-    <!-- PROFILE BUTTON -->
-
     <button
+        class="profile"
+        id="profileButton"
         type="button"
-        class="profile-button"
-        id="myProfileButton"
+        onclick="window.location.href='studentProfile.html'"
     >
-
-        👤 My Profile
-
+        🎓 Student
     </button>
-
-
-</div>
-```
 
 </header>
 
-<!-- =======================================================
+
+<!-- =========================================================
      MAIN
-======================================================== -->
+     ========================================================= -->
 
-<div class="container">
+<main class="container">
 
-```
-<!-- WELCOME -->
 
-<div class="card">
+    <!-- =====================================================
+         PERSONAL WELCOME
+         ===================================================== -->
 
-    <h1>
-        🎓 Student Learning Dashboard
-    </h1>
+    <section class="welcome-card">
 
-    <p>
-        Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
-    </p>
+        <h1>
+            🎓 Welcome,
+            <span id="studentDisplayName">
+                Student
+            </span>
+        </h1>
 
-</div>
+        <p>
+            Your personal Mwaniki Scholars learning dashboard.
+        </p>
 
+        <p>
+            Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
+        </p>
 
-<!-- ===================================================
-     COURSE LIBRARY
-==================================================== -->
+    </section>
 
-<div class="card">
 
-    <h2>
-        📚 Medical Course Library
-    </h2>
+    <!-- =====================================================
+         COURSE COUNTER
+         ===================================================== -->
 
+    <section class="card course-count-card">
 
-    <input
-        id="courseSearch"
-        type="text"
-        placeholder="🔎 Search course"
-    >
+        <h2>
+            📚 Total Courses
+        </h2>
 
+        <div id="totalCourses">
+            0
+        </div>
 
-    <div id="coursesArea">
+        <p>
+            Available medical courses
+        </p>
 
-        ⏳ Loading courses...
+    </section>
 
-    </div>
 
-</div>
+    <!-- =====================================================
+         MEDICAL COURSE LIBRARY
+         ===================================================== -->
 
+    <section class="card">
 
-<!-- ===================================================
-     NOTES
-==================================================== -->
+        <h2>
+            📚 Medical Course Library
+        </h2>
 
-<div class="card">
+        <input
+            id="courseSearch"
+            type="text"
+            placeholder="🔎 Search course"
+        >
 
-    <h2>
-        📄 Notes Library
-    </h2>
+        <!-- IMPORTANT:
+             courses.js specifically looks for this element.
+        -->
 
+        <div id="courseArea">
 
-    <div id="notesArea">
+            <div class="loading">
+                ⏳ Loading courses...
+            </div>
 
-        ⏳ Loading notes...
+        </div>
 
-    </div>
+    </section>
 
-</div>
 
+    <!-- =====================================================
+         NOTES LIBRARY
+         ===================================================== -->
 
-<!-- ===================================================
-     QUIZ CENTER
-==================================================== -->
+    <section class="card">
 
-<div class="card">
+        <h2>
+            📄 Notes Library
+        </h2>
 
-    <h2>
-        📝 Quiz Center
-    </h2>
+        <div id="notesArea">
 
+            <div class="loading">
+                ⏳ Loading notes...
+            </div>
 
-    <button
-        id="sendQuizBtn"
-        onclick="sendQuizToTutor()"
-    >
+        </div>
 
-        📨 Send Quiz Results to Tutor
+    </section>
 
-    </button>
 
+    <!-- =====================================================
+         QUIZ CENTER
+         ===================================================== -->
 
-    <div
-        id="quizArea"
-        style="margin-top:20px;"
-    >
+    <section class="card">
 
-        Select a unit to start quiz
+        <h2>
+            📝 Quiz Center
+        </h2>
 
-    </div>
+        <p>
+            Test your knowledge after studying your course notes.
+        </p>
 
-</div>
+        <div id="quizArea">
 
+            <p>
+                Select a unit to start quiz
+            </p>
 
-<!-- ===================================================
-     AI TUTOR
-==================================================== -->
+        </div>
 
-<div class="card">
+        <button
+            id="sendQuizBtn"
+            onclick="sendQuizToTutor()"
+            type="button"
+        >
+            📨 Send Quiz Results to Tutor
+        </button>
 
-    <h2>
-        🤖 AI Medical Tutor
-    </h2>
+    </section>
 
 
-    <p>
-        Ask medical questions.
-    </p>
+    <!-- =====================================================
+         AI MEDICAL TUTOR
+         ===================================================== -->
 
+    <section class="card">
 
-    <textarea
-        id="aiQuestion"
-        placeholder="Ask your medical question..."
-    ></textarea>
+        <h2>
+            🤖 AI Medical Tutor
+        </h2>
 
+        <p>
+            Ask medical questions and get assistance with your studies.
+        </p>
 
-    <button
-        onclick="askAI()"
-    >
+        <textarea
+            id="aiQuestion"
+            placeholder="Ask your medical question..."
+        ></textarea>
 
-        🤖 Ask AI Tutor
+        <button
+            onclick="askAI()"
+            type="button"
+        >
+            🤖 Ask AI Tutor
+        </button>
 
-    </button>
+        <div id="aiAnswer"></div>
 
+    </section>
 
-    <div
-        id="aiAnswer"
-        style="margin-top:15px;"
-    >
 
-    </div>
+    <!-- =====================================================
+         ASK MEDICAL TUTOR
+         ===================================================== -->
 
-</div>
+    <section class="card">
 
+        <h2>
+            👨‍🏫 Ask Medical Tutor
+        </h2>
 
-<!-- ===================================================
-     ASK MEDICAL TUTOR
-==================================================== -->
+        <p>
+            Send your question to a qualified tutor.
+        </p>
 
-<div class="card">
+        <input
+            id="studentName"
+            placeholder="Your full name"
+        >
 
-    <h2>
-        👨‍🏫 Ask Medical Tutor
-    </h2>
+        <input
+            id="studentEmail"
+            placeholder="Your email"
+            type="email"
+        >
 
+        <input
+            id="topic"
+            placeholder="Topic"
+        >
 
-    <p>
-        Send your question to a qualified tutor.
-    </p>
+        <textarea
+            id="studentMessage"
+            placeholder="Write your question"
+        ></textarea>
 
+        <button
+            onclick="sendTutorMessage()"
+            type="button"
+        >
+            📨 Send Question
+        </button>
 
-    <input
-        id="studentName"
-        placeholder="Your full name"
-    >
+        <div id="messageStatus"></div>
 
+    </section>
 
-    <input
-        id="studentEmail"
-        placeholder="Your email"
-    >
 
+    <!-- =====================================================
+         STUDENT INBOX
+         ===================================================== -->
 
-    <input
-        id="topic"
-        placeholder="Topic"
-    >
+    <section class="card">
 
+        <h2>
+            📬 Tutor Replies
+        </h2>
 
-    <textarea
-        id="studentMessage"
-        placeholder="Write your question"
-    ></textarea>
+        <p>
+            Check answers and responses from tutors.
+        </p>
 
+        <input
+            id="checkEmail"
+            placeholder="Enter your email"
+            type="email"
+        >
 
-    <button
-        onclick="sendTutorMessage()"
-    >
+        <button
+            onclick="loadStudentAnswers()"
+            type="button"
+        >
+            📥 Load Answers
+        </button>
 
-        📨 Send Question
+        <div id="studentInbox">
 
-    </button>
+            <p>
+                No messages yet.
+            </p>
 
+        </div>
 
-    <div
-        id="messageStatus"
-        style="margin-top:12px;"
-    >
+    </section>
 
-    </div>
 
-</div>
+    <!-- =====================================================
+         PROGRESS
+         ===================================================== -->
 
+    <section class="card">
 
-<!-- ===================================================
-     STUDENT INBOX
-==================================================== -->
+        <h2>
+            📊 Progress
+        </h2>
 
-<div class="card">
+        <p>
+            Track your learning progress.
+        </p>
 
-    <h2>
-        📬 Tutor Replies
-    </h2>
+        <div id="progress">
 
+            <p>
+                0%
+            </p>
 
-    <p>
-        Check answers from tutors.
-    </p>
+        </div>
 
+    </section>
 
-    <input
-        id="checkEmail"
-        placeholder="Enter your email"
-    >
 
+</main>
 
-    <button
-        onclick="loadStudentAnswers()"
-    >
 
-        📥 Load Answers
-
-    </button>
-
-
-    <div
-        id="studentInbox"
-        style="margin-top:15px;"
-    >
-
-        <p>No messages yet.</p>
-
-    </div>
-
-</div>
-
-
-<!-- ===================================================
-     PROGRESS
-==================================================== -->
-
-<div class="card">
-
-    <h2>
-        📊 Progress
-    </h2>
-
-
-    <p>
-        Track your learning.
-    </p>
-
-
-    <div id="progress">
-
-        <p>0%</p>
-
-    </div>
-
-</div>
-```
-
-</div>
-
-<!-- =======================================================
+<!-- =========================================================
      SYSTEM FILES
-======================================================== -->
+     ========================================================= -->
 
 <script
     type="module"
@@ -948,275 +805,8 @@ textarea {
     src="./studentInbox.js"
 ></script>
 
-<!-- =======================================================
-     PERSONAL PROFILE LOADER
-======================================================== -->
-
-<script type="module">
-
-import { supabase } from "./supabase.js";
-
-
-const profileCard =
-    document.getElementById(
-        "studentProfileCard"
-    );
-
-
-const profileButton =
-    document.getElementById(
-        "myProfileButton"
-    );
-
-
-const nameElement =
-    document.getElementById(
-        "studentDisplayName"
-    );
-
-
-const courseElement =
-    document.getElementById(
-        "studentDisplayCourse"
-    );
-
-
-const avatarElement =
-    document.getElementById(
-        "studentAvatar"
-    );
-
-
-/* =========================================================
-   OPEN PROFILE
-========================================================= */
-
-function openStudentProfile() {
-
-    window.location.href =
-        "studentProfile.html";
-
-}
-
-
-profileCard.addEventListener(
-    "click",
-    openStudentProfile
-);
-
-
-profileButton.addEventListener(
-    "click",
-    openStudentProfile
-);
-
-
-/* =========================================================
-   LOAD STUDENT IDENTITY
-========================================================= */
-
-async function loadStudentIdentity() {
-
-    try {
-
-
-        const {
-            data,
-            error
-        } =
-            await supabase.auth.getSession();
-
-
-        if (error) {
-
-            throw error;
-
-        }
-
-
-        const session =
-            data.session;
-
-
-        if (
-            !session ||
-            !session.user
-        ) {
-
-            window.location.href =
-                "studentLogin.html";
-
-            return;
-
-        }
-
-
-        const user =
-            session.user;
-
-
-        /* -------------------------------------------------
-           DEFAULT IDENTITY
-        ------------------------------------------------- */
-
-        nameElement.textContent =
-            user.email ||
-            "Student";
-
-
-        courseElement.textContent =
-            "Student";
-
-
-        /* -------------------------------------------------
-           LOAD DATABASE PROFILE
-        ------------------------------------------------- */
-
-        const {
-            data: profile,
-            error: profileError
-        } =
-            await supabase
-                .from("students")
-                .select(
-                    "full_name, course, level, photo_url"
-                )
-                .eq(
-                    "id",
-                    user.id
-                )
-                .maybeSingle();
-
-
-        if (profileError) {
-
-            console.warn(
-                "Student profile could not be loaded:",
-                profileError.message
-            );
-
-            return;
-
-        }
-
-
-        if (!profile) {
-
-            nameElement.textContent =
-                user.email ||
-                "Complete Your Profile";
-
-            courseElement.textContent =
-                "Student";
-
-            return;
-
-        }
-
-
-        /* -------------------------------------------------
-           NAME
-        ------------------------------------------------- */
-
-        if (profile.full_name) {
-
-            nameElement.textContent =
-                profile.full_name;
-
-        }
-
-
-        /* -------------------------------------------------
-           COURSE + LEVEL
-        ------------------------------------------------- */
-
-        let details =
-            profile.course ||
-            "Student";
-
-
-        if (profile.level) {
-
-            details +=
-                " • " +
-                profile.level;
-
-        }
-
-
-        courseElement.textContent =
-            details;
-
-
-        /* -------------------------------------------------
-           PHOTO
-        ------------------------------------------------- */
-
-        if (profile.photo_url) {
-
-            avatarElement.innerHTML = "";
-
-
-            const image =
-                document.createElement(
-                    "img"
-                );
-
-
-            image.src =
-                profile.photo_url;
-
-
-            image.alt =
-                "Student profile photo";
-
-
-            image.onerror =
-                function () {
-
-                    this.remove();
-
-                    avatarElement.textContent =
-                        "👤";
-
-                };
-
-
-            avatarElement.appendChild(
-                image
-            );
-
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "Student identity error:",
-            error
-        );
-
-
-        nameElement.textContent =
-            "Student";
-
-
-        courseElement.textContent =
-            "My Profile";
-
-    }
-
-}
-
-
-/* =========================================================
-   START
-========================================================= */
-
-loadStudentIdentity();
-
-</script>
 
 </body>
 
 </html>
+```
