@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+
+  <defs>
+
+    <linearGradient id="bg"
+      x1="0"
+      y1="0"
+      x2="1"
+      y2="1">
+
+      <stop offset="0%" stop-color="#063970"/>
+      <stop offset="55%" stop-color="#087f8c"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+
+    </linearGradient>
+
+    <linearGradient id="cross"
+      x1="0"
+      y1="0"
+      x2="1"
+      y2="1">
+
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#dff9ff"/>
+
+    </linearGradient>
+
+    <filter id="shadow"
+      x="-30%"
+      y="-30%"
+      width="160%"
+      height="160%">
+
+      <feDropShadow
+        dx="0"
+        dy="4"
+        stdDeviation="4"
+        flood-opacity="0.35"/>
+
+    </filter>
+
+  </defs>
+
+
+  <!-- BACKGROUND -->
+
+  <rect
+    width="128"
+    height="128"
+    rx="30"
+    fill="url(#bg)"/>
+
+
+  <!-- OUTER GLOW -->
+
+  <circle
+    cx="64"
+    cy="64"
+    r="49"
+    fill="none"
+    stroke="#ffffff"
+    stroke-opacity="0.18"
+    stroke-width="3"/>
+
+
+  <!-- MEDICAL CROSS -->
+
+  <g filter="url(#shadow)">
+
+    <rect
+      x="49"
+      y="20"
+      width="30"
+      height="88"
+      rx="8"
+      fill="url(#cross)"/>
+
+    <rect
+      x="20"
+      y="49"
+      width="88"
+      height="30"
+      rx="8"
+      fill="url(#cross)"/>
+
+  </g>
+
+
+  <!-- CENTRAL M -->
+
+  <path
+    d="M39 64
+       L39 54
+       L48 54
+       L56 67
+       L64 52
+       L72 67
+       L80 54
+       L89 54
+       L89 74
+       L80 74
+       L80 65
+       L72 78
+       L64 64
+       L56 78
+       L48 65
+       L48 74
+       L39 74 Z"
+    fill="#063970"/>
+
+
+  <!-- SMALL HEART -->
+
+  <path
+    d="M64 94
+       C60 89 52 89 52 95
+       C52 101 64 108 64 108
+       C64 108 76 101 76 95
+       C76 89 68 89 64 94 Z"
+    fill="#ff4d6d"/>
+
+
+  <!-- HIGHLIGHT -->
+
+  <circle
+    cx="32"
+    cy="32"
+    r="5"
+    fill="#ffffff"
+    opacity="0.7"/>
+
+</svg>
