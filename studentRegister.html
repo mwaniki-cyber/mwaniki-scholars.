@@ -1,14 +1,386 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
 <title>Mwaniki Scholars | Student Registration</title>
 
-<link rel="stylesheet" href="style.css">
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    min-height: 100vh;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+    background:
+        radial-gradient(
+            circle at top right,
+            #0b7285,
+            transparent 35%
+        ),
+        linear-gradient(
+            135deg,
+            #031b2e,
+            #063970 55%,
+            #0b7285
+        );
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 25px;
+
+}
+
+
+.registration-card {
+
+    width: 100%;
+
+    max-width: 1000px;
+
+    background: white;
+
+    border-radius: 28px;
+
+    overflow: hidden;
+
+    display: grid;
+
+    grid-template-columns: 40% 60%;
+
+    box-shadow:
+        0 30px 80px
+        rgba(0,0,0,.35);
+
+}
+
+
+/* LEFT SIDE */
+
+.welcome-panel {
+
+    padding: 50px 40px;
+
+    color: white;
+
+    background:
+        linear-gradient(
+            150deg,
+            #063970,
+            #075985,
+            #0b7285
+        );
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+}
+
+
+.logo {
+
+    font-size: 55px;
+
+    margin-bottom: 15px;
+
+}
+
+
+.welcome-panel h1 {
+
+    margin: 0 0 15px;
+
+    font-size: 34px;
+
+}
+
+
+.welcome-panel p {
+
+    line-height: 1.7;
+
+    color:
+        rgba(255,255,255,.8);
+
+}
+
+
+.features {
+
+    margin-top: 25px;
+
+}
+
+
+.feature {
+
+    margin: 14px 0;
+
+    font-size: 15px;
+
+}
+
+
+/* RIGHT SIDE */
+
+.form-panel {
+
+    padding: 45px;
+
+}
+
+
+.form-panel h2 {
+
+    margin: 0;
+
+    color: #063970;
+
+    font-size: 30px;
+
+}
+
+
+.subtitle {
+
+    color: #718096;
+
+    margin-bottom: 25px;
+
+}
+
+
+.form-grid {
+
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 16px;
+
+}
+
+
+.field {
+
+    display: flex;
+
+    flex-direction: column;
+
+}
+
+
+.field.full {
+
+    grid-column: 1 / -1;
+
+}
+
+
+.field label {
+
+    font-size: 13px;
+
+    font-weight: bold;
+
+    margin-bottom: 7px;
+
+    color: #40566b;
+
+}
+
+
+.field input {
+
+    width: 100%;
+
+    padding: 14px;
+
+    border:
+        1px solid #d8e1e8;
+
+    border-radius: 12px;
+
+    font-size: 15px;
+
+    outline: none;
+
+}
+
+
+.field input:focus {
+
+    border-color: #0b7285;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(11,114,133,.1);
+
+}
+
+
+.register-button {
+
+    width: 100%;
+
+    padding: 16px;
+
+    margin-top: 22px;
+
+    border: 0;
+
+    border-radius: 13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #063970,
+            #0b7285
+        );
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: .25s;
+
+}
+
+
+.register-button:hover {
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 12px 25px
+        rgba(6,57,112,.25);
+
+}
+
+
+.register-button:disabled {
+
+    opacity: .65;
+
+    cursor: wait;
+
+}
+
+
+#registerStatus {
+
+    min-height: 25px;
+
+    margin: 16px 0;
+
+    text-align: center;
+
+    font-size: 14px;
+
+}
+
+
+.links {
+
+    text-align: center;
+
+    margin-top: 20px;
+
+    color: #718096;
+
+    font-size: 14px;
+
+}
+
+
+.links a {
+
+    color: #063970;
+
+    font-weight: bold;
+
+    text-decoration: none;
+
+}
+
+
+.links a:hover {
+
+    text-decoration: underline;
+
+}
+
+
+/* MOBILE */
+
+@media (max-width: 750px) {
+
+    .registration-card {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .welcome-panel {
+
+        padding: 35px;
+
+    }
+
+    .form-panel {
+
+        padding: 30px 22px;
+
+    }
+
+}
+
+
+@media (max-width: 500px) {
+
+    .form-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+    .field.full {
+
+        grid-column: auto;
+
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -16,93 +388,286 @@
 <body>
 
 
-<div class="login-container">
+<div class="registration-card">
 
 
-<h1>🎓 Student Registration</h1>
+    <!-- LEFT -->
 
-<h3>Mwaniki Scholars</h3>
-
-
-<input 
-id="studentName"
-type="text"
-placeholder="Full Name">
+    <section class="welcome-panel">
 
 
-<input 
-id="studentEmail"
-type="email"
-placeholder="Email Address">
+        <div class="logo">
+            🎓
+        </div>
 
 
-<input 
-id="studentPhone"
-type="text"
-placeholder="Phone Number">
+        <h1>
+            Welcome to Mwaniki Scholars
+        </h1>
 
 
-<input 
-id="studentCourse"
-type="text"
-placeholder="Course">
+        <p>
+            Create your student account and
+            start your medical learning journey.
+        </p>
 
 
-<input 
-id="studentLevel"
-type="text"
-placeholder="Level / Year">
+        <div class="features">
+
+            <div class="feature">
+                📚 Access medical courses
+            </div>
+
+            <div class="feature">
+                📝 Practice with quizzes
+            </div>
+
+            <div class="feature">
+                📖 Study detailed notes
+            </div>
+
+            <div class="feature">
+                🎯 Track your learning
+            </div>
+
+        </div>
 
 
-<input 
-id="studentPassword"
-type="password"
-placeholder="Password">
+    </section>
 
 
-<button onclick="registerStudent()">
+    <!-- FORM -->
 
-Create Student Account
-
-</button>
+    <section class="form-panel">
 
 
-<p id="registerStatus"></p>
+        <h2>
+            Create Student Account
+        </h2>
 
 
-<hr>
+        <p class="subtitle">
+            Enter your details to get started.
+        </p>
 
 
-<p>
-Already have an account?
-</p>
+        <form id="studentRegistrationForm">
 
 
-<a href="studentLogin.html">
-
-Login here
-
-</a>
+            <div class="form-grid">
 
 
-<br><br>
+                <div class="field full">
+
+                    <label for="studentName">
+                        Full Name
+                    </label>
+
+                    <input
+                        id="studentName"
+                        type="text"
+                        placeholder="Your full name"
+                        required
+                    >
+
+                </div>
 
 
-<a href="index.html">
+                <div class="field">
 
-🏠 Back Home
+                    <label for="studentEmail">
+                        Email Address
+                    </label>
 
-</a>
+                    <input
+                        id="studentEmail"
+                        type="email"
+                        placeholder="you@example.com"
+                        required
+                    >
 
+                </div>
+
+
+                <div class="field">
+
+                    <label for="studentPhone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        id="studentPhone"
+                        type="text"
+                        placeholder="Phone number"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="studentCourse">
+                        Course
+                    </label>
+
+                    <input
+                        id="studentCourse"
+                        type="text"
+                        placeholder="e.g. Nursing"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="studentLevel">
+                        Level / Year
+                    </label>
+
+                    <input
+                        id="studentLevel"
+                        type="text"
+                        placeholder="e.g. Year 2"
+                        required
+                    >
+
+                </div>
+
+
+                <div class="field full">
+
+                    <label for="studentPassword">
+                        Password
+                    </label>
+
+                    <input
+                        id="studentPassword"
+                        type="password"
+                        placeholder="Create a password"
+                        minlength="6"
+                        required
+                    >
+
+                </div>
+
+
+            </div>
+
+
+            <button
+                type="submit"
+                id="registerButton"
+                class="register-button"
+            >
+
+                ✨ Create Student Account
+
+            </button>
+
+
+        </form>
+
+
+        <div id="registerStatus"></div>
+
+
+        <div class="links">
+
+            Already have an account?
+
+            <a href="studentLogin.html">
+                Login here
+            </a>
+
+            <br><br>
+
+            <a href="index.html">
+                🏠 Back Home
+            </a>
+
+        </div>
+
+
+    </section>
 
 
 </div>
 
 
+<script type="module">
 
-<script type="module" src="studentRegister.js"></script>
+import "./studentRegister.js";
+
+
+const form =
+    document.getElementById(
+        "studentRegistrationForm"
+    );
+
+
+const button =
+    document.getElementById(
+        "registerButton"
+    );
+
+
+form.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+
+        if (
+            typeof window.registerStudent !==
+            "function"
+        ) {
+
+            document.getElementById(
+                "registerStatus"
+            ).textContent =
+                "❌ Registration system failed to load.";
+
+            console.error(
+                "registerStudent() is not available."
+            );
+
+            return;
+
+        }
+
+
+        button.disabled = true;
+
+        button.textContent =
+            "⏳ Creating Account...";
+
+
+        try {
+
+            await window.registerStudent();
+
+        }
+
+        finally {
+
+            button.disabled = false;
+
+            button.textContent =
+                "✨ Create Student Account";
+
+        }
+
+    }
+);
+
+</script>
 
 
 </body>
 
 </html>
+```
