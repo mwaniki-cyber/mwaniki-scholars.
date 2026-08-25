@@ -1,10 +1,20 @@
+```javascript
 import { supabase } from "./supabase.js";
 
+console.log("✅ Mwaniki Scholars Student Profile Loaded");
 
-console.log(
-    "✅ Mwaniki Scholars Student Profile Loaded"
-);
 
+/* =========================================================
+   CHANGE THIS ONLY IF YOUR STUDENT DASHBOARD HAS
+   A DIFFERENT FILENAME
+   ========================================================= */
+
+const DASHBOARD_PAGE = "studentDashboard.html";
+
+
+/* =========================================================
+   GLOBAL VARIABLES
+   ========================================================= */
 
 let currentUser = null;
 let selectedPhoto = null;
@@ -54,125 +64,189 @@ const dashboardButton =
 
 dashboardButton.addEventListener(
     "click",
-    () => {
+    function () {
 
         window.location.href =
-            "dashboard.html";
+            DASHBOARD_PAGE;
 
     }
 );
 
 
 /* =========================================================
-   LOAD USER
+   LOAD PROFILE
    ========================================================= */
 
 async function loadProfile() {
 
-    status.textContent =
-        "⏳ Loading your profile...";
-
-
-    const {
-        data: {
-            session
-        },
-        error
-    } =
-        await supabase.auth.getSession();
-
-
-    if (error) {
-
-        console.error(error);
+    try {
 
         status.textContent =
-            "❌ Unable to load your session.";
-
-        return;
-
-    }
+            "⏳ Loading your profile...";
 
 
-    if (!session || !session.user) {
+        /* -------------------------------------------------
+           GET CURRENT SESSION
+           ------------------------------------------------- */
 
-        window.location.href =
-            "studentLogin.html";
-
-        return;
-
-    }
-
-
-    currentUser =
-        session.user;
+        const {
+            data,
+            error
+        } =
+            await supabase.auth.getSession();
 
 
-    email.value =
-        currentUser.email || "";
+        if (error) {
+
+            console.error(
+                "Session error:",
+                error
+            );
+
+            status.textContent =
+                "❌ Unable to load your session.";
+
+            return;
+
+        }
 
 
-    /* =====================================================
-       LOAD STUDENT PROFILE
-       ===================================================== */
-
-    const {
-        data,
-        error: profileError
-    } =
-        await supabase
-            .from("students")
-            .select("*")
-            .eq("id", currentUser.id)
-            .maybeSingle();
+        const session =
+            data?.session;
 
 
-    if (profileError) {
+        /* -------------------------------------------------
+           USER NOT LOGGED IN
+           ------------------------------------------------- */
 
-        console.error(
-            "Profile loading error:",
-            profileError
-        );
+        if (
+            !session ||
+            !session.user
+        ) {
 
-        status.textContent =
-            "❌ " +
-            profileError.message;
+            window.location.href =
+                "studentLogin.html";
 
-        return;
+            return;
 
-    }
+        }
 
 
-    if (data) {
+        currentUser =
+            session.user;
+
+
+        /* -------------------------------------------------
+           EMAIL
+           ------------------------------------------------- */
+
+        email.value =
+            currentUser.email || "";
+
+
+        /* -------------------------------------------------
+           LOAD STUDENT DATABASE PROFILE
+           ------------------------------------------------- */
+
+        const {
+            data: profile,
+            error: profileError
+        } =
+            await supabase
+                .from("students")
+                .select(
+                    "id, full_name, email, phone, course, level, photo_url"
+                )
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .maybeSingle();
+
+
+        if (profileError) {
+
+            console.error(
+                "Profile loading error:",
+                profileError
+            );
+
+            status.textContent =
+                "❌ " +
+                profileError.message;
+
+            return;
+
+        }
+
+
+        /* -------------------------------------------------
+           NO PROFILE YET
+           ------------------------------------------------- */
+
+        if (!profile) {
+
+            status.textContent =
+                "ℹ️ Complete your profile below.";
+
+            return;
+
+        }
+
+
+        /* -------------------------------------------------
+           FILL FORM
+           ------------------------------------------------- */
 
         fullName.value =
-            data.full_name || "";
+            profile.full_name || "";
 
         phone.value =
-            data.phone || "";
+            profile.phone || "";
 
         course.value =
-            data.course || "";
+            profile.course || "";
 
         level.value =
-            data.level || "";
+            profile.level || "";
 
 
-        if (data.photo_url) {
+        /* -------------------------------------------------
+           EXISTING PHOTO
+           ------------------------------------------------- */
+
+        if (profile.photo_url) {
 
             showPhoto(
-                data.photo_url
+                profile.photo_url
             );
 
         }
 
+
+        status.textContent = "";
+
+
     }
 
+    catch (error) {
 
-    status.textContent = "";
+        console.error(
+            "Unexpected profile error:",
+            error
+        );
+
+        status.textContent =
+            "❌ Unable to load your profile.";
+
+    }
 
 }
 
+
+/* =========================================================
+   START PROFILE LOADING
+   ========================================================= */
 
 loadProfile();
 
@@ -186,7 +260,7 @@ photoInput.addEventListener(
     function () {
 
         const file =
-            this.files[0];
+            this.files?.[0];
 
 
         if (!file) {
@@ -196,66 +270,114 @@ photoInput.addEventListener(
         }
 
 
-        if (!file.type.startsWith("image/")) {
+        /* -------------------------------------------------
+           CHECK FILE TYPE
+           ------------------------------------------------- */
+
+        if (
+            !file.type ||
+            !file.type.startsWith("image/")
+        ) {
 
             status.textContent =
-                "❌ Please select an image file.";
+                "❌ Please select a valid image.";
+
+            this.value = "";
+
+            selectedPhoto = null;
 
             return;
 
         }
 
 
-        if (file.size > 5 * 1024 * 1024) {
+        /* -------------------------------------------------
+           CHECK FILE SIZE
+           ------------------------------------------------- */
+
+        const maxSize =
+            5 * 1024 * 1024;
+
+
+        if (file.size > maxSize) {
 
             status.textContent =
                 "❌ Image must be smaller than 5 MB.";
 
             this.value = "";
 
+            selectedPhoto = null;
+
             return;
 
         }
 
 
+        /* -------------------------------------------------
+           STORE SELECTED PHOTO
+           ------------------------------------------------- */
+
         selectedPhoto =
             file;
 
+
+        /* -------------------------------------------------
+           PREVIEW
+           ------------------------------------------------- */
 
         const previewURL =
             URL.createObjectURL(file);
 
 
-        showPhoto(previewURL);
+        showPhoto(
+            previewURL
+        );
 
 
         status.textContent =
-            "📷 New photo selected. Save your profile to upload it.";
+            "📷 Photo selected. Click Save Profile to upload it.";
 
     }
 );
 
 
 /* =========================================================
-   SHOW PHOTO
+   DISPLAY PHOTO
    ========================================================= */
 
 function showPhoto(url) {
 
     photoContainer.innerHTML = "";
 
+
     const img =
         document.createElement("img");
 
-    img.src = url;
+
+    img.src =
+        url;
+
 
     img.className =
         "profile-photo";
 
+
     img.alt =
         "Student profile photo";
 
-    photoContainer.appendChild(img);
+
+    img.onerror =
+        function () {
+
+            photoContainer.innerHTML =
+                '<div class="photo-placeholder">👤</div>';
+
+        };
+
+
+    photoContainer.appendChild(
+        img
+    );
 
 }
 
@@ -273,20 +395,21 @@ async function uploadPhoto() {
     }
 
 
-    const extension =
-        selectedPhoto.name
-            .split(".")
-            .pop()
-            .toLowerCase();
-
-
-    const filePath =
-        `${currentUser.id}/profile.${extension}`;
-
-
     status.textContent =
         "⏳ Uploading profile photo...";
 
+
+    /* -----------------------------------------------------
+       ALWAYS USE JPG AS THE STORED FILE
+       ----------------------------------------------------- */
+
+    const filePath =
+        `${currentUser.id}/profile.jpg`;
+
+
+    /* -----------------------------------------------------
+       UPLOAD
+       ----------------------------------------------------- */
 
     const {
         error
@@ -306,20 +429,50 @@ async function uploadPhoto() {
 
     if (error) {
 
+        console.error(
+            "Photo upload error:",
+            error
+        );
+
         throw error;
 
     }
 
+
+    /* -----------------------------------------------------
+       GET PUBLIC URL
+       ----------------------------------------------------- */
 
     const {
         data
     } =
         supabase.storage
             .from("student-profiles")
-            .getPublicUrl(filePath);
+            .getPublicUrl(
+                filePath
+            );
 
 
-    return data.publicUrl;
+    if (!data?.publicUrl) {
+
+        throw new Error(
+            "Photo uploaded but a public URL could not be generated."
+        );
+
+    }
+
+
+    /*
+       Add a cache-busting parameter so that when a student
+       replaces their photo, the browser doesn't keep showing
+       the old cached image.
+    */
+
+    return (
+        data.publicUrl +
+        "?t=" +
+        Date.now()
+    );
 
 }
 
@@ -335,6 +488,10 @@ form.addEventListener(
         event.preventDefault();
 
 
+        /* -------------------------------------------------
+           MAKE SURE USER EXISTS
+           ------------------------------------------------- */
+
         if (!currentUser) {
 
             status.textContent =
@@ -345,7 +502,33 @@ form.addEventListener(
         }
 
 
-        saveButton.disabled = true;
+        /* -------------------------------------------------
+           VALIDATE NAME
+           ------------------------------------------------- */
+
+        const name =
+            fullName.value.trim();
+
+
+        if (!name) {
+
+            status.textContent =
+                "❌ Please enter your full name.";
+
+            fullName.focus();
+
+            return;
+
+        }
+
+
+        /* -------------------------------------------------
+           DISABLE BUTTON
+           ------------------------------------------------- */
+
+        saveButton.disabled =
+            true;
+
 
         saveButton.textContent =
             "⏳ Saving...";
@@ -358,13 +541,13 @@ form.addEventListener(
         try {
 
 
-            let photoURL =
-                null;
-
-
             /* =============================================
                PHOTO
                ============================================= */
+
+            let photoURL =
+                null;
+
 
             if (selectedPhoto) {
 
@@ -381,7 +564,7 @@ form.addEventListener(
             const updateData = {
 
                 full_name:
-                    fullName.value.trim(),
+                    name,
 
                 phone:
                     phone.value.trim(),
@@ -395,6 +578,10 @@ form.addEventListener(
             };
 
 
+            /* =============================================
+               ADD PHOTO URL
+               ============================================= */
+
             if (photoURL) {
 
                 updateData.photo_url =
@@ -404,7 +591,7 @@ form.addEventListener(
 
 
             /* =============================================
-               UPDATE DATABASE
+               UPDATE STUDENT PROFILE
                ============================================= */
 
             const {
@@ -412,7 +599,9 @@ form.addEventListener(
             } =
                 await supabase
                     .from("students")
-                    .update(updateData)
+                    .update(
+                        updateData
+                    )
                     .eq(
                         "id",
                         currentUser.id
@@ -421,10 +610,19 @@ form.addEventListener(
 
             if (error) {
 
+                console.error(
+                    "Database update error:",
+                    error
+                );
+
                 throw error;
 
             }
 
+
+            /* =============================================
+               CLEAN UP
+               ============================================= */
 
             selectedPhoto =
                 null;
@@ -433,6 +631,10 @@ form.addEventListener(
             photoInput.value =
                 "";
 
+
+            /* =============================================
+               SUCCESS
+               ============================================= */
 
             status.textContent =
                 "✅ Profile saved successfully!";
@@ -450,7 +652,10 @@ form.addEventListener(
 
             status.textContent =
                 "❌ " +
-                error.message;
+                (
+                    error.message ||
+                    "Unable to save profile."
+                );
 
         }
 
@@ -459,6 +664,7 @@ form.addEventListener(
             saveButton.disabled =
                 false;
 
+
             saveButton.textContent =
                 "💾 Save Profile";
 
@@ -466,3 +672,4 @@ form.addEventListener(
 
     }
 );
+```
