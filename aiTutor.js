@@ -1,22 +1,81 @@
 import { supabase } from "./supabase.js";
 
-// ============================================================
-// MWANIKI SCHOLARS — PRIVATE AI TUTOR
-// Answers using Mwaniki Scholars notes + quiz content
-// ============================================================
-
-console.log("🤖 Mwaniki Scholars Private AI Tutor Loaded");
-
 
 // ============================================================
-// FIND ELEMENTS
+// MWANIKI SCHOLARS
+// PRIVATE AI MEDICAL TUTOR
+// ============================================================
+
+console.log(
+    "🤖 Mwaniki Scholars Private AI Tutor Loaded"
+);
+
+
+// ============================================================
+// ELEMENTS
 // ============================================================
 
 const questionBox =
-    document.getElementById("aiQuestion");
+    document.getElementById(
+        "aiQuestion"
+    );
+
 
 const answerBox =
-    document.getElementById("aiAnswer");
+    document.getElementById(
+        "aiAnswer"
+    );
+
+
+const askButton =
+    document.getElementById(
+        "askAIButton"
+    );
+
+
+// ============================================================
+// CHECK ELEMENTS
+// ============================================================
+
+if (!questionBox) {
+
+    console.error(
+        "❌ aiQuestion element not found"
+    );
+
+}
+
+
+if (!answerBox) {
+
+    console.error(
+        "❌ aiAnswer element not found"
+    );
+
+}
+
+
+if (!askButton) {
+
+    console.error(
+        "❌ askAIButton element not found"
+    );
+
+}
+
+
+// ============================================================
+// BUTTON EVENT
+// ============================================================
+
+if (askButton) {
+
+    askButton.addEventListener(
+        "click",
+        askAI
+    );
+
+}
 
 
 // ============================================================
@@ -25,14 +84,12 @@ const answerBox =
 
 async function askAI() {
 
-    console.log("🤖 Ask AI Tutor clicked");
+    console.log(
+        "🤖 Ask AI Tutor clicked"
+    );
 
 
     if (!questionBox) {
-
-        console.error(
-            "❌ aiQuestion element not found"
-        );
 
         return;
 
@@ -41,38 +98,81 @@ async function askAI() {
 
     if (!answerBox) {
 
-        console.error(
-            "❌ aiAnswer element not found"
-        );
-
         return;
 
     }
 
 
     const question =
-        questionBox.value.trim();
+        questionBox.value
+            .trim();
 
+
+    // ========================================================
+    // EMPTY QUESTION
+    // ========================================================
 
     if (!question) {
 
-        answerBox.innerHTML =
-            "⚠️ Please enter a medical question.";
+        answerBox.innerHTML = `
+
+            <div class="ai-response">
+
+                <h3>
+                    🤖 Mwaniki Scholars Tutor
+                </h3>
+
+                <p>
+                    ⚠️ Please enter a medical question.
+                </p>
+
+            </div>
+
+        `;
+
+        questionBox.focus();
 
         return;
 
     }
 
 
-    answerBox.innerHTML =
-        "⏳ Searching Mwaniki Scholars notes and quizzes...";
+    // ========================================================
+    // BUTTON STATE
+    // ========================================================
+
+    if (askButton) {
+
+        askButton.disabled = true;
+
+        askButton.textContent =
+            "⏳ Searching study material...";
+
+    }
+
+
+    answerBox.innerHTML = `
+
+        <div class="ai-response">
+
+            <h3>
+                🤖 Mwaniki Scholars Tutor
+            </h3>
+
+            <p>
+                🔎 Searching notes and quiz material...
+            </p>
+
+        </div>
+
+    `;
 
 
     try {
 
 
         // ====================================================
-        // SEARCH KNOWLEDGE BASE
+        // GET KNOWLEDGE
         // ====================================================
 
         const {
@@ -82,7 +182,7 @@ async function askAI() {
             await supabase
                 .from("knowledge_base")
                 .select(
-                    "source_type, course_id, unit_id, title, content"
+                    "id, source_type, course_id, unit_id, title, content"
                 )
                 .limit(1000);
 
@@ -94,26 +194,29 @@ async function askAI() {
                 error
             );
 
-            answerBox.innerHTML =
-                "❌ Unable to access Mwaniki Scholars study material.";
 
-            return;
+            answerBox.innerHTML = `
 
-        }
+                <div class="ai-response">
 
+                    <h3>
+                        🤖 Mwaniki Scholars Tutor
+                    </h3>
 
-        if (!data || data.length === 0) {
-
-            answerBox.innerHTML =
-                `
-                <div>
-                    <strong>📚 No study material found.</strong>
                     <p>
-                        The Mwaniki Scholars knowledge base does not
-                        contain notes or quiz material yet.
+                        ❌ Unable to access the Mwaniki
+                        Scholars knowledge base.
                     </p>
+
+                    <p>
+                        ${escapeHTML(
+                            error.message
+                        )}
+                    </p>
+
                 </div>
-                `;
+
+            `;
 
             return;
 
@@ -121,81 +224,91 @@ async function askAI() {
 
 
         // ====================================================
-        // FIND RELEVANT MATERIAL
+        // NO DATA
         // ====================================================
 
-        const words =
-            question
-                .toLowerCase()
-                .split(/\s+/)
-                .filter(word =>
-                    word.length > 2
-                );
+        if (
+            !data ||
+            data.length === 0
+        ) {
 
+            answerBox.innerHTML = `
+
+                <div class="ai-response">
+
+                    <h3>
+                        📚 Knowledge Base Empty
+                    </h3>
+
+                    <p>
+                        There are currently no notes or
+                        quiz questions available to the
+                        private tutor.
+                    </p>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        console.log(
+            `📚 Knowledge records found: ${data.length}`
+        );
+
+
+        // ====================================================
+        // SEARCH
+        // ====================================================
 
         const matches =
-            data
-                .map(item => {
-
-                    const text =
-                        (
-                            (item.title || "") +
-                            " " +
-                            (item.content || "")
-                        )
-                        .toLowerCase();
+            findRelevantMaterial(
+                question,
+                data
+            );
 
 
-                    let score = 0;
-
-
-                    words.forEach(word => {
-
-                        if (
-                            text.includes(word)
-                        ) {
-
-                            score++;
-
-                        }
-
-                    });
-
-
-                    return {
-                        ...item,
-                        score
-                    };
-
-                })
-                .filter(item =>
-                    item.score > 0
-                )
-                .sort(
-                    (a, b) =>
-                        b.score - a.score
-                )
-                .slice(0, 8);
+        console.log(
+            "🔎 Relevant material:",
+            matches
+        );
 
 
         // ====================================================
-        // NOTHING RELEVANT
+        // NO MATCH
         // ====================================================
 
-        if (matches.length === 0) {
+        if (
+            matches.length === 0
+        ) {
 
-            answerBox.innerHTML =
-                `
-                <div>
-                    <strong>📚 I couldn't find that in Mwaniki Scholars.</strong>
+            answerBox.innerHTML = `
+
+                <div class="ai-response">
+
+                    <h3>
+                        🤖 Mwaniki Scholars Tutor
+                    </h3>
 
                     <p>
-                        I can answer questions using the notes and
-                        quiz material currently available in the
-                        Mwaniki Scholars knowledge base.
+                        📚 I could not find enough
+                        information about that question
+                        in the Mwaniki Scholars notes and
+                        quizzes.
                     </p>
+
+                    <p>
+                        Try using the name of the medical
+                        topic, condition, structure,
+                        drug, investigation, or concept.
+                    </p>
+
                 </div>
-                `;
+
+            `;
 
             return;
 
@@ -203,22 +316,22 @@ async function askAI() {
 
 
         // ====================================================
-        // BUILD ANSWER FROM STORED MATERIAL
+        // GENERATE RESPONSE
         // ====================================================
 
-        const answer =
-            buildAnswer(
+        const response =
+            generateResponse(
                 question,
                 matches
             );
 
 
         answerBox.innerHTML =
-            answer;
+            response;
 
 
         console.log(
-            "✅ Answer generated from Mwaniki Scholars knowledge base"
+            "✅ Private tutor response generated"
         );
 
 
@@ -232,8 +345,42 @@ async function askAI() {
         );
 
 
-        answerBox.innerHTML =
-            "❌ The AI Tutor encountered an error while searching the study material.";
+        answerBox.innerHTML = `
+
+            <div class="ai-response">
+
+                <h3>
+                    🤖 Mwaniki Scholars Tutor
+                </h3>
+
+                <p>
+                    ❌ Something went wrong while
+                    searching the study material.
+                </p>
+
+                <p>
+                    ${escapeHTML(
+                        error.message ||
+                        "Unknown error"
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+    finally {
+
+        if (askButton) {
+
+            askButton.disabled = false;
+
+            askButton.textContent =
+                "🤖 Ask AI Tutor";
+
+        }
 
     }
 
@@ -241,19 +388,201 @@ async function askAI() {
 
 
 // ============================================================
-// BUILD ANSWER
+// FIND RELEVANT MATERIAL
 // ============================================================
 
-function buildAnswer(
+function findRelevantMaterial(
+    question,
+    records
+) {
+
+
+    // --------------------------------------------------------
+    // NORMALIZE QUESTION
+    // --------------------------------------------------------
+
+    const questionWords =
+        tokenize(question);
+
+
+    if (
+        questionWords.length === 0
+    ) {
+
+        return [];
+
+    }
+
+
+    // --------------------------------------------------------
+    // SCORE RECORDS
+    // --------------------------------------------------------
+
+    const scored =
+        records.map(
+            record => {
+
+                const title =
+                    String(
+                        record.title || ""
+                    );
+
+
+                const content =
+                    String(
+                        record.content || ""
+                    );
+
+
+                const combined =
+                    (
+                        title +
+                        " " +
+                        content
+                    )
+                    .toLowerCase();
+
+
+                const words =
+                    tokenize(
+                        combined
+                    );
+
+
+                let score = 0;
+
+
+                questionWords.forEach(
+                    word => {
+
+                        if (
+                            words.includes(
+                                word
+                            )
+                        ) {
+
+                            score += 3;
+
+                        }
+
+
+                        if (
+                            combined.includes(
+                                word
+                            )
+                        ) {
+
+                            score += 1;
+
+                        }
+
+                    }
+                );
+
+
+                // ------------------------------------------------
+                // TITLE MATCHES ARE MORE IMPORTANT
+                // ------------------------------------------------
+
+                const titleLower =
+                    title.toLowerCase();
+
+
+                questionWords.forEach(
+                    word => {
+
+                        if (
+                            titleLower.includes(
+                                word
+                            )
+                        ) {
+
+                            score += 5;
+
+                        }
+
+                    }
+                );
+
+
+                return {
+
+                    record,
+
+                    score
+
+                };
+
+            }
+        );
+
+
+    // --------------------------------------------------------
+    // SORT
+    // --------------------------------------------------------
+
+    scored.sort(
+        (a, b) =>
+            b.score - a.score
+    );
+
+
+    // --------------------------------------------------------
+    // ONLY RELEVANT RESULTS
+    // --------------------------------------------------------
+
+    return scored
+        .filter(
+            item =>
+                item.score > 0
+        )
+        .slice(
+            0,
+            8
+        )
+        .map(
+            item =>
+                item.record
+        );
+
+}
+
+
+// ============================================================
+// TOKENIZER
+// ============================================================
+
+function tokenize(text) {
+
+    return String(text)
+        .toLowerCase()
+        .replace(
+            /[^a-z0-9\s]/g,
+            " "
+        )
+        .split(
+            /\s+/
+        )
+        .filter(
+            word =>
+                word.length >= 3
+        );
+
+}
+
+
+// ============================================================
+// GENERATE RESPONSE
+// ============================================================
+
+function generateResponse(
     question,
     matches
 ) {
 
-    let html = "";
 
+    let html = `
 
-    html +=
-        `
         <div class="ai-response">
 
             <h3>
@@ -261,62 +590,88 @@ function buildAnswer(
             </h3>
 
             <p>
+
                 <strong>Question:</strong>
                 ${escapeHTML(question)}
+
             </p>
-        `;
+
+            <p>
+                📚 I found relevant Mwaniki Scholars
+                study material:
+            </p>
+
+    `;
 
 
     matches.forEach(
         (item, index) => {
 
-            html +=
-                `
-                <div
-                    style="
-                        margin-top:15px;
-                        padding:15px;
-                        background:#f4f9ff;
-                        border-radius:12px;
-                        border-left:4px solid #0b7285;
-                    "
-                >
+
+            const source =
+                item.source_type === "quiz"
+
+                    ? "📝 Quiz"
+
+                    : "📄 Note";
+
+
+            html += `
+
+                <div class="source-result">
 
                     <strong>
-                        📚 ${escapeHTML(
+                        ${source}
+                    </strong>
+
+
+                    <h4>
+                        ${escapeHTML(
                             item.title ||
                             "Study Material"
                         )}
-                    </strong>
+                    </h4>
 
-                    <p>
+
+                    <div>
+
                         ${formatContent(
-                            item.content || ""
+                            item.content ||
+                            ""
                         )}
-                    </p>
+
+                    </div>
 
                 </div>
-                `;
+
+            `;
 
         }
     );
 
 
-    html +=
-        `
-        <p
-            style="
-                margin-top:18px;
-                font-size:13px;
-                color:#64748b;
-            "
-        >
-            📖 Answer generated from Mwaniki Scholars
-            notes and quiz material.
-        </p>
+    html += `
+
+            <div
+                style="
+                    margin-top:18px;
+                    padding:12px;
+                    background:#eef7fb;
+                    border-radius:10px;
+                    font-size:13px;
+                    color:#526779;
+                "
+            >
+
+                🔒 This response is based on
+                Mwaniki Scholars knowledge-base
+                material.
+
+            </div>
 
         </div>
-        `;
+
+    `;
 
 
     return html;
@@ -328,32 +683,56 @@ function buildAnswer(
 // FORMAT CONTENT
 // ============================================================
 
-function formatContent(content) {
+function formatContent(
+    content
+) {
 
-    return escapeHTML(content)
-        .replace(/\n/g, "<br>");
+    return escapeHTML(
+        content
+    )
+    .replace(
+        /\n/g,
+        "<br>"
+    );
 
 }
 
 
 // ============================================================
-// HTML SECURITY
+// ESCAPE HTML
 // ============================================================
 
-function escapeHTML(value) {
+function escapeHTML(
+    value
+) {
 
     return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 
 }
 
 
 // ============================================================
-// MAKE ASKAI AVAILABLE TO DASHBOARD HTML
+// GLOBAL FUNCTION
 // ============================================================
 
 window.askAI =
@@ -361,5 +740,5 @@ window.askAI =
 
 
 console.log(
-    "✅ askAI() is available globally"
+    "✅ askAI() available"
 );
