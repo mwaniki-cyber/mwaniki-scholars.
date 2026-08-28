@@ -1,78 +1,40 @@
+```javascript
 import { supabase } from "./supabase.js";
 
-
 // ============================================================
-// MWANIKI SCHOLARS
-// PRIVATE AI MEDICAL TUTOR
-// ============================================================
-
-console.log(
-    "🤖 Mwaniki Scholars Private AI Tutor Loaded"
-);
-
-
-// ============================================================
-// ELEMENTS
+// MWANIKI SCHOLARS — PRIVATE AI TUTOR
+// Knowledge source:
+// 1. knowledge_base table
+// 2. Supabase notes/quiz material already imported there
 // ============================================================
 
-const questionBox =
-    document.getElementById(
-        "aiQuestion"
-    );
+console.log("🤖 Mwaniki Scholars Private AI Tutor Loaded");
 
+const questionBox = document.getElementById("aiQuestion");
+const answerBox = document.getElementById("aiAnswer");
+const askButton = document.getElementById("askAIButton");
 
-const answerBox =
-    document.getElementById(
-        "aiAnswer"
-    );
-
-
-const askButton =
-    document.getElementById(
-        "askAIButton"
-    );
+console.log("AI elements:", {
+    questionBox: !!questionBox,
+    answerBox: !!answerBox,
+    askButton: !!askButton
+});
 
 
 // ============================================================
-// CHECK ELEMENTS
-// ============================================================
-
-if (!questionBox) {
-
-    console.error(
-        "❌ aiQuestion element not found"
-    );
-
-}
-
-
-if (!answerBox) {
-
-    console.error(
-        "❌ aiAnswer element not found"
-    );
-
-}
-
-
-if (!askButton) {
-
-    console.error(
-        "❌ askAIButton element not found"
-    );
-
-}
-
-
-// ============================================================
-// BUTTON EVENT
+// BUTTON
 // ============================================================
 
 if (askButton) {
 
-    askButton.addEventListener(
-        "click",
-        askAI
+    askButton.addEventListener("click", askAI);
+
+    console.log("✅ AI Tutor button connected");
+
+} else {
+
+    console.error(
+        "❌ askAIButton not found"
     );
 
 }
@@ -84,38 +46,25 @@ if (askButton) {
 
 async function askAI() {
 
-    console.log(
-        "🤖 Ask AI Tutor clicked"
-    );
+    console.log("🤖 ASK AI BUTTON CLICKED");
 
+    if (!questionBox || !answerBox) {
 
-    if (!questionBox) {
-
-        return;
-
-    }
-
-
-    if (!answerBox) {
+        console.error(
+            "❌ AI interface elements missing"
+        );
 
         return;
-
     }
 
 
     const question =
-        questionBox.value
-            .trim();
+        questionBox.value.trim();
 
-
-    // ========================================================
-    // EMPTY QUESTION
-    // ========================================================
 
     if (!question) {
 
         answerBox.innerHTML = `
-
             <div class="ai-response">
 
                 <h3>
@@ -127,32 +76,25 @@ async function askAI() {
                 </p>
 
             </div>
-
         `;
 
         questionBox.focus();
 
         return;
-
     }
 
-
-    // ========================================================
-    // BUTTON STATE
-    // ========================================================
 
     if (askButton) {
 
         askButton.disabled = true;
 
         askButton.textContent =
-            "⏳ Searching study material...";
+            "⏳ Searching Mwaniki Scholars...";
 
     }
 
 
     answerBox.innerHTML = `
-
         <div class="ai-response">
 
             <h3>
@@ -160,20 +102,24 @@ async function askAI() {
             </h3>
 
             <p>
-                🔎 Searching notes and quiz material...
+                🔎 Searching your Mwaniki Scholars
+                notes and quizzes...
             </p>
 
         </div>
-
     `;
 
 
     try {
 
+        // ====================================================
+        // LOAD KNOWLEDGE BASE
+        // ====================================================
 
-        // ====================================================
-        // GET KNOWLEDGE
-        // ====================================================
+        console.log(
+            "📚 Searching knowledge_base..."
+        );
+
 
         const {
             data,
@@ -194,46 +140,24 @@ async function askAI() {
                 error
             );
 
-
-            answerBox.innerHTML = `
-
-                <div class="ai-response">
-
-                    <h3>
-                        🤖 Mwaniki Scholars Tutor
-                    </h3>
-
-                    <p>
-                        ❌ Unable to access the Mwaniki
-                        Scholars knowledge base.
-                    </p>
-
-                    <p>
-                        ${escapeHTML(
-                            error.message
-                        )}
-                    </p>
-
-                </div>
-
-            `;
+            showError(
+                "Unable to access the Mwaniki Scholars knowledge base.",
+                error.message
+            );
 
             return;
-
         }
 
 
-        // ====================================================
-        // NO DATA
-        // ====================================================
+        console.log(
+            "📚 Knowledge records:",
+            data?.length || 0
+        );
 
-        if (
-            !data ||
-            data.length === 0
-        ) {
+
+        if (!data || data.length === 0) {
 
             answerBox.innerHTML = `
-
                 <div class="ai-response">
 
                     <h3>
@@ -241,23 +165,15 @@ async function askAI() {
                     </h3>
 
                     <p>
-                        There are currently no notes or
-                        quiz questions available to the
-                        private tutor.
+                        No notes or quiz material is currently
+                        available to the private tutor.
                     </p>
 
                 </div>
-
             `;
 
             return;
-
         }
-
-
-        console.log(
-            `📚 Knowledge records found: ${data.length}`
-        );
 
 
         // ====================================================
@@ -272,21 +188,14 @@ async function askAI() {
 
 
         console.log(
-            "🔎 Relevant material:",
+            "🔎 Matching material:",
             matches
         );
 
 
-        // ====================================================
-        // NO MATCH
-        // ====================================================
-
-        if (
-            matches.length === 0
-        ) {
+        if (matches.length === 0) {
 
             answerBox.innerHTML = `
-
                 <div class="ai-response">
 
                     <h3>
@@ -294,46 +203,38 @@ async function askAI() {
                     </h3>
 
                     <p>
-                        📚 I could not find enough
-                        information about that question
+                        I could not find enough information
                         in the Mwaniki Scholars notes and
-                        quizzes.
+                        quizzes to answer that question.
                     </p>
 
                     <p>
-                        Try using the name of the medical
-                        topic, condition, structure,
-                        drug, investigation, or concept.
+                        Try asking with the exact medical
+                        topic, structure, condition,
+                        investigation, drug, or concept.
                     </p>
 
                 </div>
-
             `;
 
             return;
-
         }
 
 
         // ====================================================
-        // GENERATE RESPONSE
+        // DISPLAY ANSWER FROM WEBSITE KNOWLEDGE
         // ====================================================
 
-        const response =
+        answerBox.innerHTML =
             generateResponse(
                 question,
                 matches
             );
 
 
-        answerBox.innerHTML =
-            response;
-
-
         console.log(
             "✅ Private tutor response generated"
         );
-
 
     }
 
@@ -344,30 +245,10 @@ async function askAI() {
             error
         );
 
-
-        answerBox.innerHTML = `
-
-            <div class="ai-response">
-
-                <h3>
-                    🤖 Mwaniki Scholars Tutor
-                </h3>
-
-                <p>
-                    ❌ Something went wrong while
-                    searching the study material.
-                </p>
-
-                <p>
-                    ${escapeHTML(
-                        error.message ||
-                        "Unknown error"
-                    )}
-                </p>
-
-            </div>
-
-        `;
+        showError(
+            "Something went wrong while searching the study material.",
+            error.message
+        );
 
     }
 
@@ -388,18 +269,13 @@ async function askAI() {
 
 
 // ============================================================
-// FIND RELEVANT MATERIAL
+// SEARCH KNOWLEDGE
 // ============================================================
 
 function findRelevantMaterial(
     question,
     records
 ) {
-
-
-    // --------------------------------------------------------
-    // NORMALIZE QUESTION
-    // --------------------------------------------------------
 
     const questionWords =
         tokenize(question);
@@ -414,112 +290,94 @@ function findRelevantMaterial(
     }
 
 
-    // --------------------------------------------------------
-    // SCORE RECORDS
-    // --------------------------------------------------------
-
     const scored =
-        records.map(
-            record => {
+        records.map(record => {
 
-                const title =
-                    String(
-                        record.title || ""
-                    );
-
-
-                const content =
-                    String(
-                        record.content || ""
-                    );
+            const title =
+                String(
+                    record.title || ""
+                );
 
 
-                const combined =
-                    (
-                        title +
-                        " " +
-                        content
-                    )
-                    .toLowerCase();
+            const content =
+                String(
+                    record.content || ""
+                );
 
 
+            const combined =
+                (
+                    title +
+                    " " +
+                    content
+                ).toLowerCase();
+
+
+            const titleLower =
+                title.toLowerCase();
+
+
+            let score = 0;
+
+
+            questionWords.forEach(word => {
+
+                // Exact word match
                 const words =
-                    tokenize(
-                        combined
-                    );
+                    tokenize(combined);
 
 
-                let score = 0;
+                if (
+                    words.includes(word)
+                ) {
+
+                    score += 5;
+
+                }
 
 
-                questionWords.forEach(
-                    word => {
+                // Phrase/substring match
+                if (
+                    combined.includes(word)
+                ) {
 
-                        if (
-                            words.includes(
-                                word
-                            )
-                        ) {
+                    score += 2;
 
-                            score += 3;
-
-                        }
+                }
 
 
-                        if (
-                            combined.includes(
-                                word
-                            )
-                        ) {
+                // Title match
+                if (
+                    titleLower.includes(word)
+                ) {
 
-                            score += 1;
+                    score += 8;
 
-                        }
+                }
 
-                    }
-                );
+            });
 
 
-                // ------------------------------------------------
-                // TITLE MATCHES ARE MORE IMPORTANT
-                // ------------------------------------------------
+            // =================================================
+            // BONUS FOR QUIZ QUESTIONS
+            // =================================================
 
-                const titleLower =
-                    title.toLowerCase();
+            if (
+                record.source_type === "quiz"
+            ) {
 
-
-                questionWords.forEach(
-                    word => {
-
-                        if (
-                            titleLower.includes(
-                                word
-                            )
-                        ) {
-
-                            score += 5;
-
-                        }
-
-                    }
-                );
-
-
-                return {
-
-                    record,
-
-                    score
-
-                };
+                score += 1;
 
             }
-        );
 
 
-    // --------------------------------------------------------
-    // SORT
-    // --------------------------------------------------------
+            return {
+                record,
+                score
+            };
+
+        });
+
 
     scored.sort(
         (a, b) =>
@@ -527,19 +385,18 @@ function findRelevantMaterial(
     );
 
 
-    // --------------------------------------------------------
-    // ONLY RELEVANT RESULTS
-    // --------------------------------------------------------
-
     return scored
+
         .filter(
             item =>
                 item.score > 0
         )
+
         .slice(
             0,
             8
         )
+
         .map(
             item =>
                 item.record
@@ -555,14 +412,18 @@ function findRelevantMaterial(
 function tokenize(text) {
 
     return String(text)
+
         .toLowerCase()
+
         .replace(
             /[^a-z0-9\s]/g,
             " "
         )
+
         .split(
             /\s+/
         )
+
         .filter(
             word =>
                 word.length >= 3
@@ -580,10 +441,17 @@ function generateResponse(
     matches
 ) {
 
-
     let html = `
 
-        <div class="ai-response">
+        <div
+            class="ai-response"
+            style="
+                background:#f8fbfd;
+                padding:20px;
+                border-radius:15px;
+                margin-top:15px;
+            "
+        >
 
             <h3>
                 🤖 Mwaniki Scholars Tutor
@@ -591,63 +459,77 @@ function generateResponse(
 
             <p>
 
-                <strong>Question:</strong>
+                <strong>
+                    Question:
+                </strong>
+
                 ${escapeHTML(question)}
 
             </p>
 
+            <hr>
+
             <p>
-                📚 I found relevant Mwaniki Scholars
-                study material:
+                📚 Information found in
+                Mwaniki Scholars study material:
             </p>
 
     `;
 
 
-    matches.forEach(
-        (item, index) => {
+    matches.forEach(item => {
+
+        const source =
+            item.source_type === "quiz"
+                ? "📝 Quiz"
+                : "📄 Note";
 
 
-            const source =
-                item.source_type === "quiz"
+        html += `
 
-                    ? "📝 Quiz"
+            <div
+                style="
+                    background:white;
+                    border-left:5px solid #0b7285;
+                    padding:15px;
+                    margin:12px 0;
+                    border-radius:10px;
+                "
+            >
 
-                    : "📄 Note";
-
-
-            html += `
-
-                <div class="source-result">
+                <div>
 
                     <strong>
                         ${source}
                     </strong>
 
-
-                    <h4>
-                        ${escapeHTML(
-                            item.title ||
-                            "Study Material"
-                        )}
-                    </h4>
+                </div>
 
 
-                    <div>
+                <h4>
 
-                        ${formatContent(
-                            item.content ||
-                            ""
-                        )}
+                    ${escapeHTML(
+                        item.title ||
+                        "Study Material"
+                    )}
 
-                    </div>
+                </h4>
+
+
+                <div>
+
+                    ${formatContent(
+                        item.content ||
+                        ""
+                    )}
 
                 </div>
 
-            `;
+            </div>
 
-        }
-    );
+        `;
+
+    });
 
 
     html += `
@@ -658,14 +540,14 @@ function generateResponse(
                     padding:12px;
                     background:#eef7fb;
                     border-radius:10px;
-                    font-size:13px;
                     color:#526779;
+                    font-size:13px;
                 "
             >
 
-                🔒 This response is based on
-                Mwaniki Scholars knowledge-base
-                material.
+                🔒 This answer is based only on
+                Mwaniki Scholars' private
+                knowledge base.
 
             </div>
 
@@ -683,14 +565,11 @@ function generateResponse(
 // FORMAT CONTENT
 // ============================================================
 
-function formatContent(
-    content
-) {
+function formatContent(content) {
 
     return escapeHTML(
         content
-    )
-    .replace(
+    ).replace(
         /\n/g,
         "<br>"
     );
@@ -699,30 +578,85 @@ function formatContent(
 
 
 // ============================================================
-// ESCAPE HTML
+// ERROR DISPLAY
 // ============================================================
 
-function escapeHTML(
-    value
+function showError(
+    message,
+    details
 ) {
 
+    if (!answerBox) {
+        return;
+    }
+
+
+    answerBox.innerHTML = `
+
+        <div
+            class="ai-response"
+            style="
+                background:#fff5f5;
+                border-left:5px solid #dc2626;
+                padding:20px;
+                border-radius:12px;
+            "
+        >
+
+            <h3>
+                🤖 Mwaniki Scholars Tutor
+            </h3>
+
+            <p>
+                ❌ ${escapeHTML(message)}
+            </p>
+
+            <p
+                style="
+                    font-size:13px;
+                    color:#666;
+                "
+            >
+                ${escapeHTML(
+                    details || ""
+                )}
+            </p>
+
+        </div>
+
+    `;
+
+}
+
+
+// ============================================================
+// HTML ESCAPE
+// ============================================================
+
+function escapeHTML(value) {
+
     return String(value)
+
         .replace(
             /&/g,
             "&amp;"
         )
+
         .replace(
             /</g,
             "&lt;"
         )
+
         .replace(
             />/g,
             "&gt;"
         )
+
         .replace(
             /"/g,
             "&quot;"
         )
+
         .replace(
             /'/g,
             "&#039;"
@@ -732,7 +666,7 @@ function escapeHTML(
 
 
 // ============================================================
-// GLOBAL FUNCTION
+// GLOBAL ACCESS
 // ============================================================
 
 window.askAI =
@@ -740,5 +674,6 @@ window.askAI =
 
 
 console.log(
-    "✅ askAI() available"
+    "✅ Mwaniki Scholars Private AI Tutor Ready"
 );
+```
