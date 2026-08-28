@@ -1,186 +1,52 @@
 import { supabase } from "./supabase.js";
 
 // ============================================================
-// MWANIKI SCHOLARS
-// PRIVATE AI MEDICAL TUTOR
+// MWANIKI SCHOLARS — PRIVATE AI TUTOR
+// Answers using Mwaniki Scholars notes + quiz content
 // ============================================================
 
 console.log("🤖 Mwaniki Scholars Private AI Tutor Loaded");
 
 
 // ============================================================
-// CONFIGURATION
+// FIND ELEMENTS
 // ============================================================
 
-// IMPORTANT:
-// Keep your existing AI API endpoint/key configuration here
-// if your current tutor already has one.
-//
-// This tutor does NOT search Google or external websites.
-// It first searches the Mwaniki Scholars knowledge base.
+const questionBox =
+    document.getElementById("aiQuestion");
 
-
-// ============================================================
-// GET STUDENT
-// ============================================================
-
-async function getCurrentStudent() {
-
-    const {
-        data,
-        error
-    } = await supabase.auth.getSession();
-
-    if (error) {
-
-        console.error(
-            "Session error:",
-            error
-        );
-
-        return null;
-    }
-
-    if (!data.session) {
-
-        console.warn(
-            "No active student session."
-        );
-
-        return null;
-    }
-
-    return data.session.user;
-}
+const answerBox =
+    document.getElementById("aiAnswer");
 
 
 // ============================================================
-// SEARCH MWANIKI SCHOLARS KNOWLEDGE
-// ============================================================
-
-async function searchMwanikiKnowledge(
-    question
-) {
-
-    console.log(
-        "🔎 Searching Mwaniki Scholars knowledge..."
-    );
-
-    const {
-        data,
-        error
-    } =
-        await supabase.rpc(
-            "search_ai_knowledge",
-            {
-                search_query:
-                    question,
-
-                match_limit:
-                    8
-            }
-        );
-
-
-    if (error) {
-
-        console.error(
-            "Knowledge search error:",
-            error
-        );
-
-        throw error;
-    }
-
-
-    console.log(
-        "📚 Knowledge results:",
-        data
-    );
-
-
-    return data || [];
-}
-
-
-// ============================================================
-// BUILD KNOWLEDGE CONTEXT
-// ============================================================
-
-function buildKnowledgeContext(
-    results
-) {
-
-    if (
-        !results ||
-        results.length === 0
-    ) {
-
-        return `
-No directly matching Mwaniki Scholars
-material was found in the knowledge base.
-        `.trim();
-    }
-
-
-    return results
-        .map(
-            (item, index) => {
-
-                return `
-SOURCE ${index + 1}
-
-Type:
-${item.source_type}
-
-Title:
-${item.title || "Untitled"}
-
-Content:
-${item.content}
-                `.trim();
-
-            }
-        )
-        .join("\n\n-------------------------\n\n");
-}
-
-
-// ============================================================
-// AI QUESTION
+// ASK AI
 // ============================================================
 
 async function askAI() {
 
-    const questionBox =
-        document.getElementById(
-            "aiQuestion"
-        );
-
-
-    const answerBox =
-        document.getElementById(
-            "aiAnswer"
-        );
+    console.log("🤖 Ask AI Tutor clicked");
 
 
     if (!questionBox) {
 
         console.error(
-            "❌ aiQuestion element not found."
+            "❌ aiQuestion element not found"
         );
 
         return;
+
     }
 
 
     if (!answerBox) {
 
         console.error(
-            "❌ aiAnswer element not found."
+            "❌ aiAnswer element not found"
         );
 
         return;
+
     }
 
 
@@ -194,135 +60,166 @@ async function askAI() {
             "⚠️ Please enter a medical question.";
 
         return;
+
     }
 
 
     answerBox.innerHTML =
-        "🔎 Searching Mwaniki Scholars materials...";
+        "⏳ Searching Mwaniki Scholars notes and quizzes...";
 
 
     try {
 
-        // ----------------------------------------------------
-        // CURRENT STUDENT
-        // ----------------------------------------------------
 
-        const user =
-            await getCurrentStudent();
+        // ====================================================
+        // SEARCH KNOWLEDGE BASE
+        // ====================================================
+
+        const {
+            data,
+            error
+        } =
+            await supabase
+                .from("knowledge_base")
+                .select(
+                    "source_type, course_id, unit_id, title, content"
+                )
+                .limit(1000);
 
 
-        if (!user) {
+        if (error) {
+
+            console.error(
+                "❌ Knowledge base error:",
+                error
+            );
 
             answerBox.innerHTML =
-                "❌ Please log in before using the AI Tutor.";
+                "❌ Unable to access Mwaniki Scholars study material.";
 
             return;
+
         }
 
 
-        // ----------------------------------------------------
-        // SEARCH LOCAL KNOWLEDGE
-        // ----------------------------------------------------
+        if (!data || data.length === 0) {
 
-        const results =
-            await searchMwanikiKnowledge(
-                question
+            answerBox.innerHTML =
+                `
+                <div>
+                    <strong>📚 No study material found.</strong>
+                    <p>
+                        The Mwaniki Scholars knowledge base does not
+                        contain notes or quiz material yet.
+                    </p>
+                </div>
+                `;
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // FIND RELEVANT MATERIAL
+        // ====================================================
+
+        const words =
+            question
+                .toLowerCase()
+                .split(/\s+/)
+                .filter(word =>
+                    word.length > 2
+                );
+
+
+        const matches =
+            data
+                .map(item => {
+
+                    const text =
+                        (
+                            (item.title || "") +
+                            " " +
+                            (item.content || "")
+                        )
+                        .toLowerCase();
+
+
+                    let score = 0;
+
+
+                    words.forEach(word => {
+
+                        if (
+                            text.includes(word)
+                        ) {
+
+                            score++;
+
+                        }
+
+                    });
+
+
+                    return {
+                        ...item,
+                        score
+                    };
+
+                })
+                .filter(item =>
+                    item.score > 0
+                )
+                .sort(
+                    (a, b) =>
+                        b.score - a.score
+                )
+                .slice(0, 8);
+
+
+        // ====================================================
+        // NOTHING RELEVANT
+        // ====================================================
+
+        if (matches.length === 0) {
+
+            answerBox.innerHTML =
+                `
+                <div>
+                    <strong>📚 I couldn't find that in Mwaniki Scholars.</strong>
+
+                    <p>
+                        I can answer questions using the notes and
+                        quiz material currently available in the
+                        Mwaniki Scholars knowledge base.
+                    </p>
+                </div>
+                `;
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // BUILD ANSWER FROM STORED MATERIAL
+        // ====================================================
+
+        const answer =
+            buildAnswer(
+                question,
+                matches
             );
 
 
-        // ----------------------------------------------------
-        // BUILD CONTEXT
-        // ----------------------------------------------------
-
-        const knowledgeContext =
-            buildKnowledgeContext(
-                results
-            );
+        answerBox.innerHTML =
+            answer;
 
 
         console.log(
-            "📖 Context prepared for AI"
+            "✅ Answer generated from Mwaniki Scholars knowledge base"
         );
-
-
-        // ----------------------------------------------------
-        // SHOW RETRIEVED MATERIAL
-        // ----------------------------------------------------
-
-        if (
-            results.length === 0
-        ) {
-
-            answerBox.innerHTML = `
-                <div>
-                    <strong>
-                        📚 No matching Mwaniki Scholars material found.
-                    </strong>
-
-                    <p>
-                        This question is not currently covered
-                        by the indexed Mwaniki Scholars materials.
-                    </p>
-                </div>
-            `;
-
-            return;
-        }
-
-
-        // ----------------------------------------------------
-        // TEMPORARY LOCAL ANSWER
-        // ----------------------------------------------------
-        //
-        // We deliberately stop here for this step.
-        //
-        // This proves that the tutor can retrieve your
-        // private knowledge before we reconnect the external
-        // AI generation layer.
-        //
-
-        answerBox.innerHTML = `
-
-            <div
-                style="
-                    background:#f4f9ff;
-                    border-left:5px solid #0b7285;
-                    padding:18px;
-                    border-radius:12px;
-                "
-            >
-
-                <h3>
-                    📚 Mwaniki Scholars Knowledge Found
-                </h3>
-
-                <p>
-                    I found ${results.length}
-                    relevant item(s) in the
-                    Mwaniki Scholars knowledge base.
-                </p>
-
-                <details>
-
-                    <summary>
-                        View retrieved material
-                    </summary>
-
-                    <pre
-                        style="
-                            white-space:pre-wrap;
-                            margin-top:15px;
-                            font-family:inherit;
-                        "
-                    >${escapeHTML(
-                        knowledgeContext
-                    )}</pre>
-
-                </details>
-
-            </div>
-
-        `;
 
 
     }
@@ -330,23 +227,13 @@ async function askAI() {
     catch (error) {
 
         console.error(
-            "❌ Private AI Tutor error:",
+            "❌ AI Tutor error:",
             error
         );
 
 
-        answerBox.innerHTML = `
-            <div style="color:#b91c1c;">
-                ❌ Unable to search the
-                Mwaniki Scholars knowledge base.
-
-                <br><br>
-
-                ${escapeHTML(
-                    error.message
-                )}
-            </div>
-        `;
+        answerBox.innerHTML =
+            "❌ The AI Tutor encountered an error while searching the study material.";
 
     }
 
@@ -354,56 +241,125 @@ async function askAI() {
 
 
 // ============================================================
-// HTML SAFETY
+// BUILD ANSWER
 // ============================================================
 
-function escapeHTML(
-    text
+function buildAnswer(
+    question,
+    matches
 ) {
 
-    return String(text)
+    let html = "";
 
-        .replace(
-            /&/g,
-            "&amp;"
-        )
 
-        .replace(
-            /</g,
-            "&lt;"
-        )
+    html +=
+        `
+        <div class="ai-response">
 
-        .replace(
-            />/g,
-            "&gt;"
-        )
+            <h3>
+                🤖 Mwaniki Scholars Tutor
+            </h3>
 
-        .replace(
-            /"/g,
-            "&quot;"
-        )
+            <p>
+                <strong>Question:</strong>
+                ${escapeHTML(question)}
+            </p>
+        `;
 
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+
+    matches.forEach(
+        (item, index) => {
+
+            html +=
+                `
+                <div
+                    style="
+                        margin-top:15px;
+                        padding:15px;
+                        background:#f4f9ff;
+                        border-radius:12px;
+                        border-left:4px solid #0b7285;
+                    "
+                >
+
+                    <strong>
+                        📚 ${escapeHTML(
+                            item.title ||
+                            "Study Material"
+                        )}
+                    </strong>
+
+                    <p>
+                        ${formatContent(
+                            item.content || ""
+                        )}
+                    </p>
+
+                </div>
+                `;
+
+        }
+    );
+
+
+    html +=
+        `
+        <p
+            style="
+                margin-top:18px;
+                font-size:13px;
+                color:#64748b;
+            "
+        >
+            📖 Answer generated from Mwaniki Scholars
+            notes and quiz material.
+        </p>
+
+        </div>
+        `;
+
+
+    return html;
 
 }
 
 
 // ============================================================
-// GLOBAL FUNCTION
+// FORMAT CONTENT
 // ============================================================
-//
-// Your existing dashboard uses:
-// onclick="askAI()"
-//
-// Therefore expose the function globally.
+
+function formatContent(content) {
+
+    return escapeHTML(content)
+        .replace(/\n/g, "<br>");
+
+}
+
+
+// ============================================================
+// HTML SECURITY
+// ============================================================
+
+function escapeHTML(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+// ============================================================
+// MAKE ASKAI AVAILABLE TO DASHBOARD HTML
+// ============================================================
 
 window.askAI =
     askAI;
 
 
 console.log(
-    "✅ Private Mwaniki AI search ready"
+    "✅ askAI() is available globally"
 );
