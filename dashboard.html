@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -11,7 +10,7 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Mwaniki Scholars | Student Dashboard</title>
+    <title>Mwaniki Scholars Student Dashboard</title>
 
     <style>
 
@@ -20,17 +19,20 @@
             font-family: "Segoe UI", Arial, sans-serif;
         }
 
+
         body {
             margin: 0;
             background: #f4f9ff;
             color: #17324d;
         }
 
+
         /* =====================================================
            HEADER
            ===================================================== */
 
         header {
+
             background:
                 linear-gradient(
                     135deg,
@@ -40,7 +42,7 @@
 
             color: white;
 
-            padding: 20px 30px;
+            padding: 18px 25px;
 
             display: flex;
 
@@ -48,54 +50,76 @@
 
             align-items: center;
 
-            gap: 20px;
-
-            box-shadow:
-                0 5px 20px
-                rgba(0,0,0,.15);
+            gap: 15px;
 
             position: sticky;
 
             top: 0;
 
-            z-index: 100;
+            z-index: 1000;
+
+            box-shadow:
+                0 4px 15px
+                rgba(0,0,0,.12);
+
         }
+
 
         .logo {
-            font-size: 24px;
+
+            font-size: 23px;
+
             font-weight: bold;
+
         }
+
 
         .profile {
+
             background: white;
+
             color: #063970;
-            padding: 10px 20px;
+
+            padding: 9px 18px;
+
             border-radius: 30px;
+
             cursor: pointer;
+
             font-weight: 600;
-            border: none;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            min-height: 42px;
+
         }
 
-        .profile:hover {
-            background: #e9f7fa;
-        }
 
         /* =====================================================
-           MAIN CONTAINER
+           MAIN
            ===================================================== */
 
         .container {
-            width: 100%;
+
             max-width: 1250px;
+
             margin: auto;
+
             padding: 30px;
+
         }
 
+
         /* =====================================================
-           WELCOME
+           PERSONAL PROFILE
            ===================================================== */
 
-        .welcome-card {
+        #studentPersonalProfile {
+
             background:
                 linear-gradient(
                     135deg,
@@ -105,36 +129,112 @@
 
             color: white;
 
-            padding: 35px;
-
-            border-radius: 25px;
+            padding: 25px;
 
             margin-bottom: 25px;
 
+            border-radius: 20px;
+
             box-shadow:
-                0 12px 35px
-                rgba(6,57,112,.2);
+                0 10px 30px
+                rgba(0,0,0,.12);
+
         }
 
-        .welcome-card h1 {
-            margin: 0 0 10px 0;
-            font-size: 32px;
+
+        .personal-profile-inner {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 20px;
+
+            flex-wrap: wrap;
+
         }
 
-        .welcome-card p {
-            margin: 5px 0;
-            opacity: .9;
+
+        .personal-photo {
+
+            width: 85px;
+
+            height: 85px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            border: 3px solid white;
+
         }
 
-        #studentDisplayName {
+
+        .personal-photo-placeholder {
+
+            width: 85px;
+
+            height: 85px;
+
+            border-radius: 50%;
+
+            background:
+                rgba(255,255,255,.2);
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 40px;
+
+        }
+
+
+        .personal-name {
+
+            font-size: 25px;
+
             font-weight: bold;
+
         }
+
+
+        .personal-details {
+
+            margin-top: 5px;
+
+        }
+
+
+        .my-profile-button {
+
+            margin-left: auto;
+
+            background: white;
+
+            color: #063970;
+
+            border: none;
+
+            padding: 12px 18px;
+
+            border-radius: 10px;
+
+            cursor: pointer;
+
+            font-weight: bold;
+
+        }
+
 
         /* =====================================================
-           CARDS
+           GRID
            ===================================================== */
 
         .grid {
+
             display: grid;
 
             grid-template-columns:
@@ -144,9 +244,16 @@
                 );
 
             gap: 25px;
+
         }
 
+
+        /* =====================================================
+           CARDS
+           ===================================================== */
+
         .card {
+
             background: white;
 
             padding: 25px;
@@ -158,40 +265,93 @@
                 rgba(0,0,0,.08);
 
             margin-bottom: 25px;
+
         }
+
 
         .card h2 {
+
             color: #063970;
+
             margin-top: 0;
+
         }
+
 
         .card p {
+
             color: #64748b;
+
         }
+
 
         /* =====================================================
-           COURSE COUNTER
+           TOTAL COURSES
            ===================================================== */
 
-        .course-count-card {
-            text-align: center;
-        }
-
         #totalCourses {
+
             color: #063970;
 
-            margin: 5px 0 0 0;
+            margin: 5px 0 0;
 
-            font-size: 48px;
+            font-size: 36px;
 
-            font-weight: bold;
         }
+
+
+        /* =====================================================
+           INPUTS
+           ===================================================== */
+
+        input,
+        textarea {
+
+            width: 100%;
+
+            padding: 13px;
+
+            border-radius: 10px;
+
+            border:
+                1px solid #d8e1e8;
+
+            margin: 8px 0;
+
+            outline: none;
+
+            font-size: 15px;
+
+        }
+
+
+        input:focus,
+        textarea:focus {
+
+            border-color: #0b7285;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(11,114,133,.1);
+
+        }
+
+
+        textarea {
+
+            height: 130px;
+
+            resize: vertical;
+
+        }
+
 
         /* =====================================================
            BUTTONS
            ===================================================== */
 
         button {
+
             background: #0b7285;
 
             color: white;
@@ -206,72 +366,31 @@
 
             font-size: 14px;
 
-            transition:
-                transform .2s ease,
-                background .2s ease;
         }
+
 
         button:hover {
+
             background: #064747;
 
-            transform:
-                translateY(-1px);
         }
+
 
         button:disabled {
+
             opacity: .6;
-            cursor: not-allowed;
-            transform: none;
+
+            cursor: wait;
+
         }
+
 
         /* =====================================================
-           SEARCH
+           COURSES
            ===================================================== */
-
-        input,
-        textarea {
-            width: 100%;
-
-            padding: 12px;
-
-            border-radius: 10px;
-
-            border:
-                1px solid #ddd;
-
-            margin: 8px 0;
-
-            font-size: 15px;
-
-            outline: none;
-        }
-
-        input:focus,
-        textarea:focus {
-            border-color: #0b7285;
-
-            box-shadow:
-                0 0 0 3px
-                rgba(11,114,133,.1);
-        }
-
-        textarea {
-            height: 120px;
-            resize: vertical;
-        }
-
-        /* =====================================================
-           COURSE AREA
-           IMPORTANT: courses.js expects #courseArea
-           ===================================================== */
-
-        #courseArea {
-            margin-top: 20px;
-
-            min-height: 80px;
-        }
 
         .course-item {
+
             background: #eef7fb;
 
             padding: 15px;
@@ -282,43 +401,43 @@
 
             cursor: pointer;
 
-            transition:
-                transform .2s ease,
-                background .2s ease,
-                box-shadow .2s ease;
         }
+
 
         .course-item:hover {
+
             background: #d7f0f7;
 
-            transform:
-                translateY(-2px);
-
-            box-shadow:
-                0 5px 15px
-                rgba(0,0,0,.08);
         }
 
+
         .course-card {
+
             transition:
                 transform .2s ease,
                 box-shadow .2s ease;
+
         }
 
+
         .course-card:hover {
+
             transform:
                 translateY(-3px);
 
             box-shadow:
                 0 8px 20px
                 rgba(0,0,0,.10);
+
         }
+
 
         /* =====================================================
            UNITS
            ===================================================== */
 
         .unit-card {
+
             background: #fff;
 
             border-left:
@@ -329,98 +448,144 @@
             margin: 10px 0;
 
             border-radius: 10px;
+
         }
+
 
         /* =====================================================
-           QUIZ
+           NOTES
            ===================================================== */
 
-        #quizArea {
-            margin-top: 15px;
+        .note-card {
+
+            background: #f4f9ff;
+
+            padding: 16px;
+
+            margin: 12px 0;
+
+            border-radius: 12px;
+
+            border-left:
+                4px solid #0b7285;
+
         }
 
-        #quizArea button {
-            margin-top: 10px;
+
+        .note-card h3 {
+
+            margin-top: 0;
+
+            color: #063970;
+
         }
+
 
         /* =====================================================
-           AI ANSWER
+           AI TUTOR
            ===================================================== */
+
+        #aiQuestion {
+
+            min-height: 130px;
+
+            background: #fbfdff;
+
+        }
+
+
+        #askAIButton {
+
+            width: 100%;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #0b7285
+                );
+
+            font-size: 16px;
+
+            font-weight: bold;
+
+            padding: 15px;
+
+        }
+
+
+        #askAIButton:hover {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #042b55,
+                    #08606f
+                );
+
+        }
+
 
         #aiAnswer {
+
+            margin-top: 20px;
+
+        }
+
+
+        .ai-response {
+
+            background: #f8fbfd;
+
+            border:
+                1px solid #dceaf0;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+        }
+
+
+        .ai-response h3 {
+
+            color: #063970;
+
+            margin-top: 0;
+
+        }
+
+
+        .source-result {
+
             margin-top: 15px;
 
             padding: 15px;
 
-            background: #f4f9ff;
+            background: white;
 
-            border-radius: 12px;
+            border-left:
+                4px solid #0b7285;
 
-            min-height: 20px;
+            border-radius: 10px;
 
-            color: #334155;
         }
 
-        /* =====================================================
-           TUTOR MESSAGES
-           ===================================================== */
-
-        #messageStatus,
-        #profileStatus {
-            margin-top: 12px;
-
-            text-align: center;
-
-            min-height: 20px;
-        }
-
-        /* =====================================================
-           STUDENT INBOX
-           ===================================================== */
-
-        #studentInbox {
-            margin-top: 15px;
-        }
 
         /* =====================================================
            PROGRESS
            ===================================================== */
 
         #progress {
-            background: #e5eef5;
 
-            border-radius: 20px;
-
-            height: 25px;
-
-            overflow: hidden;
-
-            position: relative;
-        }
-
-        #progress p {
-            margin: 0;
-
-            padding: 3px 10px;
-
-            text-align: center;
+            font-size: 32px;
 
             font-weight: bold;
 
-            color: #063970;
+            color: #0b7285;
+
         }
 
-        /* =====================================================
-           EMPTY / LOADING
-           ===================================================== */
-
-        .loading {
-            padding: 20px;
-
-            text-align: center;
-
-            color: #64748b;
-        }
 
         /* =====================================================
            MOBILE
@@ -429,29 +594,46 @@
         @media (max-width: 700px) {
 
             header {
+
                 padding: 15px;
 
-                flex-direction: column;
-
-                align-items: stretch;
-
-                text-align: center;
             }
+
+
+            .logo {
+
+                font-size: 18px;
+
+            }
+
 
             .container {
+
                 padding: 15px;
+
             }
 
-            .welcome-card {
-                padding: 25px;
+
+            .personal-profile-inner {
+
+                align-items: flex-start;
+
             }
 
-            .welcome-card h1 {
-                font-size: 25px;
+
+            .my-profile-button {
+
+                margin-left: 0;
+
+                width: 100%;
+
             }
+
 
             .grid {
+
                 grid-template-columns: 1fr;
+
             }
 
         }
@@ -471,57 +653,131 @@
 <header>
 
     <div class="logo">
+
         🏥 Mwaniki Scholars
+
     </div>
 
-    <button
+
+    <div
         class="profile"
         id="profileButton"
-        type="button"
-        onclick="window.location.href='studentProfile.html'"
+        title="Open my profile"
     >
-        🎓 Student
-    </button>
+
+        👤 Student
+
+    </div>
 
 </header>
 
 
 <!-- =========================================================
-     MAIN
+     MAIN DASHBOARD
      ========================================================= -->
 
 <main class="container">
 
 
     <!-- =====================================================
-         PERSONAL WELCOME
+         PERSONAL PROFILE
          ===================================================== -->
 
-    <section class="welcome-card">
+    <section
+        id="studentPersonalProfile"
+    >
 
-        <h1>
-            🎓 Welcome,
-            <span id="studentDisplayName">
-                Student
-            </span>
-        </h1>
+        <div class="personal-profile-inner">
 
-        <p>
-            Your personal Mwaniki Scholars learning dashboard.
-        </p>
 
-        <p>
-            Medical courses • Notes • Quizzes • AI Tutor • Expert Consultation
-        </p>
+            <div
+                id="personalPhoto"
+            >
+
+                <div
+                    class="personal-photo-placeholder"
+                >
+                    👤
+                </div>
+
+            </div>
+
+
+            <div>
+
+                <div
+                    id="personalName"
+                    class="personal-name"
+                >
+                    Welcome, Student
+                </div>
+
+
+                <div
+                    id="personalEmail"
+                    class="personal-details"
+                >
+                    📧 Loading...
+                </div>
+
+
+                <div
+                    id="personalCourse"
+                    class="personal-details"
+                >
+                    🎓 Course not set
+                </div>
+
+
+                <div
+                    id="personalLevel"
+                    class="personal-details"
+                >
+                    📚 Level not set
+                </div>
+
+            </div>
+
+
+            <button
+                id="myProfileButton"
+                class="my-profile-button"
+                type="button"
+            >
+
+                👤 My Profile
+
+            </button>
+
+
+        </div>
 
     </section>
 
 
     <!-- =====================================================
-         COURSE COUNTER
+         WELCOME
          ===================================================== -->
 
-    <section class="card course-count-card">
+    <div class="card">
+
+        <h1>
+            🎓 Student Learning Dashboard
+        </h1>
+
+        <p>
+            Medical courses • Notes • Quizzes •
+            AI Tutor • Expert Consultation
+        </p>
+
+    </div>
+
+
+    <!-- =====================================================
+         TOTAL COURSES
+         ===================================================== -->
+
+    <div class="card">
 
         <h2>
             📚 Total Courses
@@ -531,22 +787,19 @@
             0
         </div>
 
-        <p>
-            Available medical courses
-        </p>
-
-    </section>
+    </div>
 
 
     <!-- =====================================================
-         MEDICAL COURSE LIBRARY
+         COURSE LIBRARY
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             📚 Medical Course Library
         </h2>
+
 
         <input
             id="courseSearch"
@@ -554,179 +807,197 @@
             placeholder="🔎 Search course"
         >
 
-        <!-- IMPORTANT:
-             courses.js specifically looks for this element.
-        -->
 
         <div id="courseArea">
 
-            <div class="loading">
-                ⏳ Loading courses...
-            </div>
+            ⏳ Loading courses...
 
         </div>
 
-    </section>
+    </div>
 
 
     <!-- =====================================================
-         NOTES LIBRARY
+         NOTES
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             📄 Notes Library
         </h2>
 
+
+        <input
+            id="notesSearch"
+            type="text"
+            placeholder="🔎 Search notes"
+        >
+
+
         <div id="notesArea">
 
-            <div class="loading">
-                ⏳ Loading notes...
-            </div>
+            ⏳ Loading notes...
 
         </div>
 
-    </section>
+    </div>
 
 
     <!-- =====================================================
          QUIZ CENTER
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             📝 Quiz Center
         </h2>
 
         <p>
-            Test your knowledge after studying your course notes.
+            Select a unit to start a quiz.
         </p>
 
-        <div id="quizArea">
-
-            <p>
-                Select a unit to start quiz
-            </p>
-
-        </div>
 
         <button
             id="sendQuizBtn"
-            onclick="sendQuizToTutor()"
             type="button"
         >
+
             📨 Send Quiz Results to Tutor
+
         </button>
 
-    </section>
+    </div>
 
 
     <!-- =====================================================
-         AI MEDICAL TUTOR
+         AI TUTOR
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             🤖 AI Medical Tutor
         </h2>
 
+
         <p>
-            Ask medical questions and get assistance with your studies.
+
+            Ask a medical question. Mwaniki Scholars
+            will search its private study knowledge base
+            containing notes and quiz material.
+
         </p>
+
 
         <textarea
             id="aiQuestion"
-            placeholder="Ask your medical question..."
+            placeholder="Ask your medical question here..."
         ></textarea>
 
+
         <button
-            onclick="askAI()"
+            id="askAIButton"
             type="button"
         >
+
             🤖 Ask AI Tutor
+
         </button>
+
 
         <div id="aiAnswer"></div>
 
-    </section>
+    </div>
 
 
     <!-- =====================================================
          ASK MEDICAL TUTOR
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             👨‍🏫 Ask Medical Tutor
         </h2>
 
+
         <p>
             Send your question to a qualified tutor.
         </p>
+
 
         <input
             id="studentName"
             placeholder="Your full name"
         >
 
+
         <input
             id="studentEmail"
             placeholder="Your email"
-            type="email"
         >
+
 
         <input
             id="topic"
             placeholder="Topic"
         >
 
+
         <textarea
             id="studentMessage"
             placeholder="Write your question"
         ></textarea>
 
+
         <button
-            onclick="sendTutorMessage()"
+            id="sendTutorQuestionButton"
             type="button"
         >
+
             📨 Send Question
+
         </button>
+
 
         <div id="messageStatus"></div>
 
-    </section>
+    </div>
 
 
     <!-- =====================================================
          STUDENT INBOX
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             📬 Tutor Replies
         </h2>
 
+
         <p>
-            Check answers and responses from tutors.
+            Check answers from tutors.
         </p>
+
 
         <input
             id="checkEmail"
             placeholder="Enter your email"
-            type="email"
         >
 
+
         <button
-            onclick="loadStudentAnswers()"
+            id="loadAnswersButton"
             type="button"
         >
+
             📥 Load Answers
+
         </button>
+
 
         <div id="studentInbox">
 
@@ -736,32 +1007,32 @@
 
         </div>
 
-    </section>
+    </div>
 
 
     <!-- =====================================================
          PROGRESS
          ===================================================== -->
 
-    <section class="card">
+    <div class="card">
 
         <h2>
             📊 Progress
         </h2>
 
+
         <p>
-            Track your learning progress.
+            Track your learning.
         </p>
+
 
         <div id="progress">
 
-            <p>
-                0%
-            </p>
+            0%
 
         </div>
 
-    </section>
+    </div>
 
 
 </main>
@@ -776,29 +1047,36 @@
     src="./supabase.js"
 ></script>
 
+
 <script
     type="module"
     src="./courses.js"
 ></script>
+
 
 <script
     type="module"
     src="./dashboard.js"
 ></script>
 
+
 <script
     type="module"
     src="./quiz.js"
 ></script>
 
+
 <script
+    type="module"
     src="./aiTutor.js"
 ></script>
+
 
 <script
     type="module"
     src="./studentTutor.js"
 ></script>
+
 
 <script
     type="module"
@@ -809,4 +1087,3 @@
 </body>
 
 </html>
-```
