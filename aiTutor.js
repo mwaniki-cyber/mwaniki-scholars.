@@ -1,55 +1,947 @@
-```javascript
 import { supabase } from "./supabase.js";
 
 /* ============================================================
-   MWANIKI SCHOLARS — PRIVATE AI TUTOR
-   ============================================================
-
-   Purpose:
-   - Read questions from the dashboard
-   - Search Mwaniki Scholars notes
-   - Search quiz questions/answers
-   - Search uploaded/admin learning material
-   - Return the most relevant stored knowledge
-   - No external AI API required for the knowledge search
+   MWANIKI SCHOLARS
+   PRIVATE KNOWLEDGE-BASED AI MEDICAL TUTOR
    ============================================================ */
 
 console.log("🤖 Mwaniki Scholars Private AI Tutor Loaded");
 
 
 /* ============================================================
-   ELEMENTS
+   CONFIGURATION
    ============================================================ */
 
-let questionBox = null;
-let answerBox = null;
-let askButton = null;
+const KNOWLEDGE_TABLE = "knowledge_base";
+
+const SEARCH_LIMIT = 1000;
+
+const REQUEST_TIMEOUT = 15000;
 
 
 /* ============================================================
-   INITIALIZE
+   DOM HELPERS
    ============================================================ */
 
-function initializeAITutor() {
+function getQuestionBox() {
+    return document.getElementById("aiQuestion");
+}
 
-    questionBox =
-        document.getElementById("aiQuestion");
 
-    answerBox =
-        document.getElementById("aiAnswer");
+function getAnswerBox() {
+    return document.getElementById("aiAnswer");
+}
 
-    askButton =
-        document.getElementById("askAIButton");
+
+function getAskButton() {
+    return document.getElementById("askAIButton");
+}
+
+
+/* ============================================================
+   HTML ESCAPE
+   ============================================================ */
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ============================================================
+   NORMALIZE TEXT
+   ============================================================ */
+
+function normalizeText(value) {
+
+    return String(value ?? "")
+        .toLowerCase()
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+
+/* ============================================================
+   TOKENIZE
+   ============================================================ */
+
+function tokenize(value) {
+
+    return normalizeText(value)
+        .split(/\s+/)
+        .filter(word => word.length >= 2);
+}
+
+
+/* ============================================================
+   REMOVE COMMON WORDS
+   ============================================================ */
+
+const STOP_WORDS = new Set([
+    "the",
+    "and",
+    "for",
+    "with",
+    "what",
+    "which",
+    "when",
+    "where",
+    "who",
+    "how",
+    "why",
+    "are",
+    "is",
+    "was",
+    "were",
+    "does",
+    "do",
+    "did",
+    "can",
+    "may",
+    "a",
+    "an",
+    "of",
+    "to",
+    "in",
+    "on",
+    "from",
+    "by",
+    "as",
+    "or",
+    "be",
+    "its",
+    "it",
+    "this",
+    "that",
+    "their",
+    "there",
+    "than",
+    "into",
+    "about",
+    "primary",
+    "main",
+    "function"
+]);
+
+
+function usefulTokens(text) {
+
+    return tokenize(text)
+        .filter(word => !STOP_WORDS.has(word));
+}
+
+
+/* ============================================================
+   REQUEST WITH TIMEOUT
+   ============================================================ */
+
+async function withTimeout(promise, milliseconds) {
+
+    let timer;
+
+    const timeoutPromise =
+        new Promise((_, reject) => {
+
+            timer = setTimeout(() => {
+
+                reject(
+                    new Error(
+                        "The knowledge-base request timed out."
+                    )
+                );
+
+            }, milliseconds);
+
+        });
+
+
+    try {
+
+        return await Promise.race([
+            promise,
+            timeoutPromise
+        ]);
+
+    } finally {
+
+        clearTimeout(timer);
+
+    }
+}
+
+
+/* ============================================================
+   LOAD KNOWLEDGE
+   ============================================================ */
+
+async function loadKnowledge() {
+
+    console.log(
+        "📚 Loading Mwaniki Scholars knowledge base..."
+    );
+
+
+    const query =
+        supabase
+            .from(KNOWLEDGE_TABLE)
+            .select(
+                "id, source_type, course_id, unit_id, title, content"
+            )
+            .limit(SEARCH_LIMIT);
+
+
+    const result =
+        await withTimeout(
+            query,
+            REQUEST_TIMEOUT
+        );
+
+
+    if (result.error) {
+
+        console.error(
+            "❌ Knowledge-base query failed:",
+            result.error
+        );
+
+        throw result.error;
+    }
+
+
+    const records =
+        Array.isArray(result.data)
+            ? result.data
+            : [];
 
 
     console.log(
-        "🔎 AI Tutor elements:",
-        {
-            questionBox: !!questionBox,
-            answerBox: !!answerBox,
-            askButton: !!askButton
-        }
+        `📚 Knowledge records loaded: ${records.length}`
     );
+
+
+    return records;
+}
+
+
+/* ============================================================
+   SCORE KNOWLEDGE RECORD
+   ============================================================ */
+
+function scoreRecord(question, record) {
+
+    const questionWords =
+        usefulTokens(question);
+
+
+    if (questionWords.length === 0) {
+        return 0;
+    }
+
+
+    const title =
+        normalizeText(
+            record.title
+        );
+
+
+    const content =
+        normalizeText(
+            record.content
+        );
+
+
+    const combined =
+        `${title} ${content}`;
+
+
+    let score = 0;
+
+
+    for (const word of questionWords) {
+
+        if (title.includes(word)) {
+
+            score += 12;
+
+        }
+
+
+        if (content.includes(word)) {
+
+            score += 5;
+
+        }
+
+
+        const occurrences =
+            combined
+                .split(word)
+                .length - 1;
+
+
+        score +=
+            Math.min(
+                occurrences,
+                5
+            );
+    }
+
+
+    /*
+       Strong bonus when several question words
+       appear close together.
+    */
+
+    for (
+        let i = 0;
+        i < questionWords.length - 1;
+        i++
+    ) {
+
+        const pair =
+            `${questionWords[i]} ${questionWords[i + 1]}`;
+
+
+        if (combined.includes(pair)) {
+
+            score += 15;
+
+        }
+    }
+
+
+    /*
+       Quiz records are particularly useful when
+       the user's question resembles the quiz question.
+    */
+
+    if (
+        String(record.source_type)
+            .toLowerCase() === "quiz"
+    ) {
+
+        score += 3;
+
+    }
+
+
+    return score;
+}
+
+
+/* ============================================================
+   FIND RELEVANT MATERIAL
+   ============================================================ */
+
+function findRelevantMaterial(
+    question,
+    records
+) {
+
+    const scored =
+        records
+            .map(record => ({
+
+                record,
+
+                score:
+                    scoreRecord(
+                        question,
+                        record
+                    )
+
+            }))
+            .filter(item => item.score > 0)
+            .sort(
+                (a, b) =>
+                    b.score - a.score
+            );
+
+
+    /*
+       Avoid returning a huge amount of material.
+    */
+
+    return scored
+        .slice(0, 8);
+}
+
+
+/* ============================================================
+   DETECT QUIZ QUESTION
+   ============================================================ */
+
+function looksLikeQuizQuestion(
+    question,
+    record
+) {
+
+    const source =
+        String(
+            record.source_type || ""
+        ).toLowerCase();
+
+
+    if (source !== "quiz") {
+
+        return false;
+
+    }
+
+
+    const content =
+        String(
+            record.content || ""
+        );
+
+
+    return (
+        /question\s*:/i.test(content) &&
+        /correct\s*answer\s*:/i.test(content)
+    );
+}
+
+
+/* ============================================================
+   EXTRACT QUIZ ANSWER
+   ============================================================ */
+
+function extractQuizAnswer(content) {
+
+    const match =
+        String(content || "")
+            .match(
+                /correct\s*answer\s*:\s*(.+)$/im
+            );
+
+
+    if (!match) {
+
+        return null;
+
+    }
+
+
+    return match[1]
+        .trim()
+        .replace(/\s+/g, " ");
+}
+
+
+/* ============================================================
+   EXTRACT QUIZ QUESTION
+   ============================================================ */
+
+function extractQuizQuestion(content) {
+
+    const match =
+        String(content || "")
+            .match(
+                /question\s*:\s*(.+?)(?:\n|options\s*:)/is
+            );
+
+
+    if (!match) {
+
+        return "";
+
+    }
+
+
+    return match[1]
+        .trim()
+        .replace(/\s+/g, " ");
+}
+
+
+/* ============================================================
+   DETERMINE DIRECT QUIZ MATCH
+   ============================================================ */
+
+function findDirectQuizAnswer(
+    question,
+    matches
+) {
+
+    const questionWords =
+        usefulTokens(question);
+
+
+    if (questionWords.length === 0) {
+
+        return null;
+
+    }
+
+
+    let best = null;
+
+
+    for (const item of matches) {
+
+        const record =
+            item.record;
+
+
+        if (
+            !looksLikeQuizQuestion(
+                question,
+                record
+            )
+        ) {
+
+            continue;
+
+        }
+
+
+        const quizQuestion =
+            extractQuizQuestion(
+                record.content
+            );
+
+
+        if (!quizQuestion) {
+
+            continue;
+
+        }
+
+
+        const quizWords =
+            usefulTokens(
+                quizQuestion
+            );
+
+
+        let overlap = 0;
+
+
+        for (
+            const word of questionWords
+        ) {
+
+            if (
+                quizWords.includes(word)
+            ) {
+
+                overlap++;
+
+            }
+
+        }
+
+
+        const ratio =
+            questionWords.length > 0
+                ? overlap /
+                  questionWords.length
+                : 0;
+
+
+        if (
+            ratio >= 0.45 &&
+            (
+                !best ||
+                ratio > best.ratio
+            )
+        ) {
+
+            best = {
+
+                answer:
+                    extractQuizAnswer(
+                        record.content
+                    ),
+
+                question:
+                    quizQuestion,
+
+                record,
+
+                ratio
+
+            };
+
+        }
+
+    }
+
+
+    return best;
+}
+
+
+/* ============================================================
+   SELECT BEST SOURCE
+   ============================================================ */
+
+function selectBestSource(
+    matches
+) {
+
+    if (
+        !matches ||
+        matches.length === 0
+    ) {
+
+        return null;
+
+    }
+
+
+    return matches[0];
+
+}
+
+
+/* ============================================================
+   CREATE ANSWER FROM KNOWLEDGE
+   ============================================================ */
+
+function generateKnowledgeAnswer(
+    question,
+    matches
+) {
+
+    /*
+       First try to identify whether the user
+       is asking something directly answered by
+       one of the quiz questions.
+    */
+
+    const directQuiz =
+        findDirectQuizAnswer(
+            question,
+            matches
+        );
+
+
+    if (
+        directQuiz &&
+        directQuiz.answer
+    ) {
+
+        return {
+
+            type: "quiz",
+
+            html: `
+                <div class="ai-response">
+
+                    <h3>
+                        🤖 Mwaniki Scholars Tutor
+                    </h3>
+
+                    <p>
+                        <strong>Answer:</strong>
+                        ${escapeHTML(
+                            directQuiz.answer
+                        )}
+                    </p>
+
+                    <p>
+                        📚 This answer was found
+                        directly in the Mwaniki Scholars
+                        quiz knowledge base.
+                    </p>
+
+                    <div class="source-result">
+
+                        <strong>
+                            📝 Quiz source
+                        </strong>
+
+                        <h4>
+                            ${escapeHTML(
+                                directQuiz.record.title ||
+                                "Quiz Question"
+                            )}
+                        </h4>
+
+                        <p>
+                            ${escapeHTML(
+                                directQuiz.question
+                            )}
+                        </p>
+
+                    </div>
+
+                    <div
+                        style="
+                            margin-top:18px;
+                            padding:12px;
+                            background:#eef7fb;
+                            border-radius:10px;
+                            color:#526779;
+                            font-size:13px;
+                        "
+                    >
+                        🔒 Answer sourced exclusively
+                        from Mwaniki Scholars study
+                        material.
+                    </div>
+
+                </div>
+            `
+
+        };
+
+    }
+
+
+    /*
+       Otherwise use the strongest notes/quiz
+       records and present them as a focused answer.
+    */
+
+    const best =
+        selectBestSource(matches);
+
+
+    if (!best) {
+
+        return null;
+
+    }
+
+
+    const source =
+        best.record;
+
+
+    const sourceType =
+        String(
+            source.source_type || ""
+        ).toLowerCase() === "quiz"
+            ? "📝 Quiz"
+            : "📄 Note";
+
+
+    const supporting =
+        matches
+            .slice(0, 4)
+            .map(item => item.record);
+
+
+    let html = `
+
+        <div class="ai-response">
+
+            <h3>
+                🤖 Mwaniki Scholars Tutor
+            </h3>
+
+            <p>
+                <strong>Question:</strong>
+                ${escapeHTML(question)}
+            </p>
+
+            <div
+                style="
+                    background:#eef7fb;
+                    border-left:4px solid #0b7285;
+                    padding:15px;
+                    border-radius:10px;
+                    margin:15px 0;
+                "
+            >
+
+                <strong>
+                    📚 Relevant study material
+                </strong>
+
+                <p>
+                    ${formatContent(
+                        source.content || ""
+                    )}
+                </p>
+
+            </div>
+
+            ${
+                supporting.length > 1
+                    ? `
+                        <h4>
+                            🔎 Supporting Mwaniki
+                            Scholars material
+                        </h4>
+
+                        ${supporting
+                            .slice(1)
+                            .map(
+                                record => `
+
+                                    <div
+                                        class="source-result"
+                                    >
+
+                                        <strong>
+                                            ${
+                                                String(
+                                                    record.source_type ||
+                                                    ""
+                                                ).toLowerCase() ===
+                                                "quiz"
+                                                    ? "📝 Quiz"
+                                                    : "📄 Note"
+                                            }
+                                        </strong>
+
+                                        <h4>
+                                            ${escapeHTML(
+                                                record.title ||
+                                                "Study Material"
+                                            )}
+                                        </h4>
+
+                                        <p>
+                                            ${formatContent(
+                                                record.content ||
+                                                ""
+                                            )}
+                                        </p>
+
+                                    </div>
+
+                                `
+                            )
+                            .join("")
+                        }
+                    `
+                    : ""
+            }
+
+            <div
+                style="
+                    margin-top:18px;
+                    padding:12px;
+                    background:#eef7fb;
+                    border-radius:10px;
+                    font-size:13px;
+                    color:#526779;
+                "
+            >
+
+                🔒 This response uses only
+                Mwaniki Scholars knowledge-base
+                material.
+
+                <br><br>
+
+                Source:
+                ${sourceType}
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    return {
+
+        type: "knowledge",
+
+        html
+
+    };
+}
+
+
+/* ============================================================
+   FORMAT CONTENT
+   ============================================================ */
+
+function formatContent(
+    content
+) {
+
+    return escapeHTML(
+        String(content || "")
+    )
+        .replace(
+            /\r?\n/g,
+            "<br>"
+        );
+
+}
+
+
+/* ============================================================
+   DISPLAY ERROR
+   ============================================================ */
+
+function displayError(
+    message
+) {
+
+    const answerBox =
+        getAnswerBox();
+
+
+    if (!answerBox) {
+
+        return;
+
+    }
+
+
+    answerBox.innerHTML = `
+
+        <div class="ai-response">
+
+            <h3>
+                🤖 Mwaniki Scholars Tutor
+            </h3>
+
+            <p>
+                ⚠️ ${escapeHTML(message)}
+            </p>
+
+            <p
+                style="
+                    font-size:13px;
+                    color:#64748b;
+                "
+            >
+                The tutor uses the private
+                Mwaniki Scholars knowledge base.
+            </p>
+
+        </div>
+
+    `;
+}
+
+
+/* ============================================================
+   MAIN ASK FUNCTION
+   ============================================================ */
+
+async function askAI() {
+
+    console.log(
+        "🤖 Ask AI Tutor clicked"
+    );
+
+
+    const questionBox =
+        getQuestionBox();
+
+
+    const answerBox =
+        getAnswerBox();
+
+
+    const askButton =
+        getAskButton();
 
 
     if (!questionBox) {
@@ -57,6 +949,8 @@ function initializeAITutor() {
         console.error(
             "❌ aiQuestion element not found"
         );
+
+        return;
 
     }
 
@@ -67,773 +961,30 @@ function initializeAITutor() {
             "❌ aiAnswer element not found"
         );
 
-    }
-
-
-    if (!askButton) {
-
-        console.error(
-            "❌ askAIButton element not found"
-        );
-
-        return;
-    }
-
-
-    /* Prevent duplicate listeners */
-
-    askButton.removeEventListener(
-        "click",
-        askAI
-    );
-
-
-    askButton.addEventListener(
-        "click",
-        askAI
-    );
-
-
-    console.log(
-        "✅ AI Tutor button connected"
-    );
-
-}
-
-
-/* ============================================================
-   WAIT FOR DOM
-   ============================================================ */
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeAITutor
-    );
-
-} else {
-
-    initializeAITutor();
-
-}
-
-
-/* ============================================================
-   CLEAN TEXT
-   ============================================================ */
-
-function cleanText(text) {
-
-    return String(text || "")
-        .replace(/\s+/g, " ")
-        .trim();
-
-}
-
-
-/* ============================================================
-   TOKENIZE QUESTION
-   ============================================================ */
-
-function getKeywords(question) {
-
-    const stopWords = new Set([
-
-        "what",
-        "what is",
-        "what are",
-        "who",
-        "where",
-        "when",
-        "why",
-        "how",
-        "which",
-        "the",
-        "a",
-        "an",
-        "is",
-        "are",
-        "was",
-        "were",
-        "of",
-        "in",
-        "on",
-        "to",
-        "for",
-        "and",
-        "or",
-        "with",
-        "from",
-        "does",
-        "do",
-        "can",
-        "may",
-        "explain",
-        "describe",
-        "tell",
-        "me",
-        "about",
-        "please"
-    ]);
-
-
-    return cleanText(question)
-        .toLowerCase()
-        .replace(
-            /[^a-z0-9\s]/g,
-            " "
-        )
-        .split(/\s+/)
-        .filter(
-            word =>
-                word.length >= 3 &&
-                !stopWords.has(word)
-        );
-
-}
-
-
-/* ============================================================
-   SCORE SEARCH RESULT
-   ============================================================ */
-
-function scoreResult(
-    question,
-    row
-) {
-
-    const keywords =
-        getKeywords(question);
-
-
-    const text = cleanText(
-        [
-            row.title,
-            row.content,
-            row.course,
-            row.unit,
-            row.source_type
-        ].join(" ")
-    ).toLowerCase();
-
-
-    if (!text) {
-
-        return 0;
-
-    }
-
-
-    let score = 0;
-
-
-    keywords.forEach(
-        keyword => {
-
-            if (
-                text.includes(keyword)
-            ) {
-
-                score += 1;
-
-            }
-
-        }
-    );
-
-
-    /* Exact phrase gets additional weight */
-
-    const normalizedQuestion =
-        cleanText(question)
-            .toLowerCase();
-
-
-    if (
-        normalizedQuestion.length > 5 &&
-        text.includes(normalizedQuestion)
-    ) {
-
-        score += 10;
-
-    }
-
-
-    /* Title matches are more important */
-
-    const title =
-        cleanText(row.title)
-            .toLowerCase();
-
-
-    keywords.forEach(
-        keyword => {
-
-            if (
-                title.includes(keyword)
-            ) {
-
-                score += 3;
-
-            }
-
-        }
-    );
-
-
-    return score;
-
-}
-
-
-/* ============================================================
-   SEARCH KNOWLEDGE TABLE
-   ============================================================ */
-
-async function searchKnowledgeTable(
-    question
-) {
-
-    console.log(
-        "🔍 Searching Mwaniki Scholars knowledge..."
-    );
-
-
-    const keywords =
-        getKeywords(question);
-
-
-    if (
-        keywords.length === 0
-    ) {
-
-        return [];
-
-    }
-
-
-    /*
-       Search the knowledge table.
-
-       This table should contain:
-       - notes
-       - quiz questions
-       - uploaded learning material
-       - other approved study content
-    */
-
-    const searchTerms =
-        keywords
-            .slice(0, 8)
-            .join(" ");
-
-
-    const { data, error } =
-        await supabase
-            .from("ai_knowledge")
-            .select("*")
-            .or(
-                `title.ilike.%${searchTerms}%,content.ilike.%${searchTerms}%`
-            )
-            .limit(100);
-
-
-    if (error) {
-
-        console.error(
-            "❌ ai_knowledge search error:",
-            error
-        );
-
-
-        return [];
-
-    }
-
-
-    if (!data) {
-
-        return [];
-
-    }
-
-
-    return data
-        .map(row => ({
-
-            ...row,
-
-            relevance:
-                scoreResult(
-                    question,
-                    row
-                )
-
-        }))
-        .filter(
-            row =>
-                row.relevance > 0
-        )
-        .sort(
-            (a, b) =>
-                b.relevance -
-                a.relevance
-        );
-
-}
-
-
-/* ============================================================
-   FALLBACK — SEARCH QUIZZES DIRECTLY
-   ============================================================ */
-
-async function searchQuizzes(
-    question
-) {
-
-    console.log(
-        "📝 Searching quiz database..."
-    );
-
-
-    const keywords =
-        getKeywords(question);
-
-
-    if (
-        keywords.length === 0
-    ) {
-
-        return [];
-
-    }
-
-
-    const { data, error } =
-        await supabase
-            .from("quizzes")
-            .select("*")
-            .limit(300);
-
-
-    if (error) {
-
-        console.warn(
-            "⚠️ Quiz table search unavailable:",
-            error.message
-        );
-
-        return [];
-
-    }
-
-
-    if (!data) {
-
-        return [];
-
-    }
-
-
-    return data
-        .map(row => ({
-
-            ...row,
-
-            source_type: "quiz",
-
-            title:
-                row.title ||
-                "Quiz Question",
-
-            content:
-                row.content ||
-                row.question ||
-                "",
-
-            relevance:
-                scoreResult(
-                    question,
-                    {
-                        ...row,
-                        title:
-                            row.title ||
-                            "Quiz Question",
-
-                        content:
-                            row.content ||
-                            row.question ||
-                            ""
-                    }
-                )
-
-        }))
-        .filter(
-            row =>
-                row.relevance > 0
-        )
-        .sort(
-            (a, b) =>
-                b.relevance -
-                a.relevance
-        );
-
-}
-
-
-/* ============================================================
-   SEARCH NOTES DIRECTLY
-   ============================================================ */
-
-async function searchNotes(
-    question
-) {
-
-    console.log(
-        "📚 Searching notes..."
-    );
-
-
-    const { data, error } =
-        await supabase
-            .from("notes")
-            .select("*")
-            .limit(300);
-
-
-    if (error) {
-
-        console.warn(
-            "⚠️ Notes search unavailable:",
-            error.message
-        );
-
-        return [];
-
-    }
-
-
-    if (!data) {
-
-        return [];
-
-    }
-
-
-    return data
-        .map(note => {
-
-            const row = {
-
-                ...note,
-
-                title:
-                    note.title ||
-                    note.file_name ||
-                    note.filename ||
-                    "Medical Note",
-
-                content:
-                    note.content ||
-                    note.description ||
-                    "",
-
-                source_type:
-                    "note"
-
-            };
-
-
-            return {
-
-                ...row,
-
-                relevance:
-                    scoreResult(
-                        question,
-                        row
-                    )
-
-            };
-
-        })
-        .filter(
-            row =>
-                row.relevance > 0
-        )
-        .sort(
-            (a, b) =>
-                b.relevance -
-                a.relevance
-        );
-
-}
-
-
-/* ============================================================
-   BUILD ANSWER FROM STORED KNOWLEDGE
-   ============================================================ */
-
-function buildAnswer(
-    question,
-    results
-) {
-
-    if (
-        !results ||
-        results.length === 0
-    ) {
-
-        return `
-
-            <div class="ai-response">
-
-                <h3>🤖 Mwaniki Scholars AI Tutor</h3>
-
-                <p>
-                    I could not find a sufficiently relevant
-                    answer in the Mwaniki Scholars knowledge
-                    base.
-                </p>
-
-                <p>
-                    Try asking the question using specific
-                    medical terms from your course or unit.
-                </p>
-
-            </div>
-
-        `;
-
-    }
-
-
-    /*
-       Keep only the strongest matches.
-    */
-
-    const selected =
-        results.slice(0, 5);
-
-
-    let html = `
-
-        <div
-            class="ai-response"
-            style="
-                background:#f4f9ff;
-                border-left:5px solid #0b7285;
-                padding:20px;
-                border-radius:12px;
-            "
-        >
-
-            <h3
-                style="
-                    color:#063970;
-                    margin-top:0;
-                "
-            >
-                🤖 Mwaniki Scholars AI Tutor
-            </h3>
-
-            <p>
-                Based on the Mwaniki Scholars
-                learning material:
-            </p>
-
-    `;
-
-
-    selected.forEach(
-        (item, index) => {
-
-            const title =
-                cleanText(
-                    item.title ||
-                    "Learning Material"
-                );
-
-
-            const content =
-                cleanText(
-                    item.content
-                );
-
-
-            if (!content) {
-
-                return;
-
-            }
-
-
-            html += `
-
-                <div
-                    style="
-                        margin-top:15px;
-                        padding:15px;
-                        background:white;
-                        border-radius:10px;
-                        border:1px solid #dbe7ee;
-                    "
-                >
-
-                    <strong>
-                        ${escapeHTML(title)}
-                    </strong>
-
-                    <p
-                        style="
-                            color:#334155;
-                            line-height:1.7;
-                        "
-                    >
-                        ${escapeHTML(content)}
-                    </p>
-
-                </div>
-
-            `;
-
-        }
-    );
-
-
-    html += `
-
-            <p
-                style="
-                    margin-top:20px;
-                    font-size:13px;
-                    color:#64748b;
-                "
-            >
-                📚 Source: Mwaniki Scholars
-                private knowledge base.
-            </p>
-
-        </div>
-
-    `;
-
-
-    return html;
-
-}
-
-
-/* ============================================================
-   HTML ESCAPE
-   ============================================================ */
-
-function escapeHTML(
-    text
-) {
-
-    return String(text || "")
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
-
-
-/* ============================================================
-   MAIN ASK AI FUNCTION
-   ============================================================ */
-
-async function askAI() {
-
-    console.log(
-        "🤖 askAI() triggered"
-    );
-
-
-    if (!questionBox) {
-
-        questionBox =
-            document.getElementById(
-                "aiQuestion"
-            );
-
-    }
-
-
-    if (!answerBox) {
-
-        answerBox =
-            document.getElementById(
-                "aiAnswer"
-            );
-
-    }
-
-
-    if (!questionBox) {
-
-        console.error(
-            "❌ Question box missing"
-        );
-
-        return;
-
-    }
-
-
-    if (!answerBox) {
-
-        console.error(
-            "❌ Answer box missing"
-        );
-
         return;
 
     }
 
 
     const question =
-        cleanText(
-            questionBox.value
-        );
+        questionBox.value
+            .trim();
 
 
     if (!question) {
 
         answerBox.innerHTML = `
 
-            <div
-                style="
-                    background:#fff8e6;
-                    padding:15px;
-                    border-radius:10px;
-                    color:#7a5b00;
-                "
-            >
-                ✏️ Please enter a medical
-                question first.
+            <div class="ai-response">
+
+                <h3>
+                    🤖 Mwaniki Scholars Tutor
+                </h3>
+
+                <p>
+                    ⚠️ Please enter a medical question.
+                </p>
+
             </div>
 
         `;
@@ -844,6 +995,10 @@ async function askAI() {
 
     }
 
+
+    /*
+       BUTTON LOCK
+    */
 
     if (askButton) {
 
@@ -857,16 +1012,16 @@ async function askAI() {
 
     answerBox.innerHTML = `
 
-        <div
-            style="
-                background:#eef7fb;
-                padding:18px;
-                border-radius:12px;
-            "
-        >
+        <div class="ai-response">
 
-            🔎 Searching Mwaniki Scholars
-            notes and quizzes...
+            <h3>
+                🤖 Mwaniki Scholars Tutor
+            </h3>
+
+            <p>
+                🔎 Searching your private notes
+                and quiz knowledge base...
+            </p>
 
         </div>
 
@@ -875,126 +1030,126 @@ async function askAI() {
 
     try {
 
-        let results = [];
-
-
         /*
-           PRIMARY:
-           ai_knowledge table
+           LOAD KNOWLEDGE
         */
 
-        const knowledgeResults =
-            await searchKnowledgeTable(
-                question
+        const records =
+            await loadKnowledge();
+
+
+        if (
+            !records ||
+            records.length === 0
+        ) {
+
+            displayError(
+                "The Mwaniki Scholars knowledge base is currently empty."
             );
 
+            return;
 
-        results.push(
-            ...knowledgeResults
-        );
-
-
-        /*
-           SECONDARY:
-           notes table
-        */
-
-        const noteResults =
-            await searchNotes(
-                question
-            );
-
-
-        results.push(
-            ...noteResults
-        );
+        }
 
 
         /*
-           TERTIARY:
-           quizzes table
+           SEARCH
         */
 
-        const quizResults =
-            await searchQuizzes(
-                question
-            );
-
-
-        results.push(
-            ...quizResults
-        );
-
-
-        /*
-           Re-rank everything together.
-        */
-
-        results =
-            results
-                .sort(
-                    (a, b) =>
-                        b.relevance -
-                        a.relevance
-                );
-
-
-        /*
-           Remove duplicate content.
-        */
-
-        const seen =
-            new Set();
-
-
-        results =
-            results.filter(
-                item => {
-
-                    const key =
-                        cleanText(
-                            item.content
-                        ).toLowerCase();
-
-
-                    if (!key) {
-
-                        return false;
-
-                    }
-
-
-                    if (
-                        seen.has(key)
-                    ) {
-
-                        return false;
-
-                    }
-
-
-                    seen.add(key);
-
-                    return true;
-
-                }
+        const matches =
+            findRelevantMaterial(
+                question,
+                records
             );
 
 
         console.log(
-            "📚 AI knowledge matches:",
-            results
+            "🔎 Matching records:",
+            matches
         );
 
 
-        answerBox.innerHTML =
-            buildAnswer(
+        if (
+            !matches ||
+            matches.length === 0
+        ) {
+
+            answerBox.innerHTML = `
+
+                <div class="ai-response">
+
+                    <h3>
+                        🤖 Mwaniki Scholars Tutor
+                    </h3>
+
+                    <p>
+                        📚 I could not find a sufficiently
+                        relevant answer in the current
+                        Mwaniki Scholars notes or quizzes.
+                    </p>
+
+                    <p>
+                        Try asking with the exact
+                        medical topic or terminology
+                        used in the study material.
+                    </p>
+
+                    <div
+                        style="
+                            margin-top:15px;
+                            padding:12px;
+                            background:#eef7fb;
+                            border-radius:10px;
+                            font-size:13px;
+                        "
+                    >
+                        🔒 The tutor does not invent
+                        material outside the Mwaniki
+                        Scholars knowledge base.
+                    </div>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        /*
+           GENERATE ANSWER
+        */
+
+        const response =
+            generateKnowledgeAnswer(
                 question,
-                results
+                matches
             );
 
 
-    } catch (error) {
+        if (!response) {
+
+            displayError(
+                "No usable answer could be created from the available study material."
+            );
+
+            return;
+
+        }
+
+
+        answerBox.innerHTML =
+            response.html;
+
+
+        console.log(
+            "✅ Private knowledge answer generated"
+        );
+
+    }
+
+    catch (error) {
 
         console.error(
             "❌ AI Tutor error:",
@@ -1002,36 +1157,28 @@ async function askAI() {
         );
 
 
-        answerBox.innerHTML = `
+        displayError(
+            error?.message ||
+            "The private tutor could not access the knowledge base."
+        );
 
-            <div
-                style="
-                    background:#fff1f2;
-                    color:#9f1239;
-                    padding:18px;
-                    border-radius:12px;
-                "
-            >
+    }
 
-                ❌ The private AI Tutor
-                encountered an error.
+    finally {
 
-                <br><br>
+        /*
+           ALWAYS UNLOCK BUTTON
+        */
 
-                Please check the browser console
-                for the exact database error.
+        const button =
+            getAskButton();
 
-            </div>
 
-        `;
+        if (button) {
 
-    } finally {
+            button.disabled = false;
 
-        if (askButton) {
-
-            askButton.disabled = false;
-
-            askButton.textContent =
+            button.textContent =
                 "🤖 Ask AI Tutor";
 
         }
@@ -1042,13 +1189,174 @@ async function askAI() {
 
 
 /* ============================================================
-   MAKE FUNCTION GLOBALLY AVAILABLE
+   GLOBAL FUNCTION
    ============================================================ */
 
-window.askAI = askAI;
+window.askAI =
+    askAI;
 
+
+/* ============================================================
+   ROBUST BUTTON BINDING
+   ============================================================ */
+
+function bindAIButton() {
+
+    const button =
+        getAskButton();
+
+
+    if (!button) {
+
+        console.warn(
+            "⚠️ askAIButton not found during binding."
+        );
+
+        return;
+
+    }
+
+
+    /*
+       Prevent duplicate listeners.
+    */
+
+    if (
+        button.dataset.aiTutorBound === "true"
+    ) {
+
+        return;
+
+    }
+
+
+    button.dataset.aiTutorBound =
+        "true";
+
+
+    button.addEventListener(
+        "click",
+        function(event) {
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+            askAI();
+
+        }
+    );
+
+
+    console.log(
+        "✅ AI Tutor button bound successfully"
+    );
+
+}
+
+
+/* ============================================================
+   INITIAL BIND
+   ============================================================ */
+
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        bindAIButton
+    );
+
+} else {
+
+    bindAIButton();
+
+}
+
+
+/* ============================================================
+   FALLBACK DOCUMENT LISTENER
+   ============================================================ */
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+        const target =
+            event.target;
+
+
+        if (
+            target &&
+            target.id === "askAIButton"
+        ) {
+
+            /*
+               If the direct listener already handled
+               it, this prevents accidental double execution.
+            */
+
+            if (
+                target.dataset.aiTutorRunning === "true"
+            ) {
+
+                return;
+
+            }
+
+        }
+
+    },
+    true
+);
+
+
+/* ============================================================
+   ENTER / CTRL+ENTER SUPPORT
+   ============================================================ */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        const target =
+            event.target;
+
+
+        if (
+            !target ||
+            target.id !== "aiQuestion"
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            event.key === "Enter" &&
+            (event.ctrlKey || event.metaKey)
+        ) {
+
+            event.preventDefault();
+
+            askAI();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   FINAL STATUS
+   ============================================================ */
 
 console.log(
-    "✅ askAI() is available globally"
+    "✅ askAI() available globally"
 );
-```
+
+console.log(
+    "✅ Mwaniki Scholars private AI Tutor ready"
+);
