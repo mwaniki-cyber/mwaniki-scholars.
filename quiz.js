@@ -1,7 +1,8 @@
 import { supabase } from "./supabase.js";
 
 // ============================================================
-// MWANIKI SCHOLARS — SUPABASE QUIZ ENGINE
+// MWANIKI SCHOLARS
+// SUPABASE QUIZ ENGINE
 // ============================================================
 
 console.log("📝 Mwaniki Scholars Supabase Quiz Engine Loaded");
@@ -12,12 +13,14 @@ console.log("📝 Mwaniki Scholars Supabase Quiz Engine Loaded");
 // ============================================================
 
 function escapeHTML(value) {
+
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
 
@@ -27,10 +30,15 @@ function escapeHTML(value) {
 
 function getQuizArea() {
 
-    const quizArea = document.getElementById("quizArea");
+    const quizArea =
+        document.getElementById("quizArea");
 
     if (!quizArea) {
-        console.error("❌ #quizArea was not found.");
+
+        console.error(
+            "❌ #quizArea was not found."
+        );
+
         return null;
     }
 
@@ -39,27 +47,51 @@ function getQuizArea() {
 
 
 // ============================================================
-// GET QUIZ INFORMATION
+// GET INFORMATION FROM URL
 // ============================================================
 
 function getQuizInformation() {
 
-    const params = new URLSearchParams(window.location.search);
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
 
-    const courseId = params.get("course");
-    const unitId = params.get("unit_id");
-    const unitTitle = params.get("unit");
+
+    const courseParam =
+        params.get("course");
+
+    const unitIdParam =
+        params.get("unit_id");
+
+    const unitTitleParam =
+        params.get("unit");
+
 
     return {
-        courseId: courseId ? Number(courseId) : null,
-        unitId: unitId ? Number(unitId) : null,
-        unitTitle: unitTitle || ""
+
+        courseId:
+            courseParam
+                ? Number(courseParam)
+                : null,
+
+        unitId:
+            unitIdParam
+                ? Number(unitIdParam)
+                : null,
+
+        unitTitle:
+            unitTitleParam
+                ? unitTitleParam
+                : ""
+
     };
+
 }
 
 
 // ============================================================
-// LOAD QUIZ FROM SUPABASE
+// LOAD QUIZ
 // ============================================================
 
 window.loadQuiz = async function (
@@ -68,74 +100,122 @@ window.loadQuiz = async function (
     unitTitle
 ) {
 
-    console.log("======================================");
-    console.log("📝 SUPABASE QUIZ REQUEST");
-    console.log("Course ID:", courseId);
-    console.log("Unit ID:", unitId);
-    console.log("Unit:", unitTitle);
-    console.log("======================================");
+    console.log(
+        "======================================"
+    );
 
-    const quizArea = getQuizArea();
+    console.log(
+        "📝 LOADING SUPABASE QUIZ"
+    );
 
-    if (!quizArea) return;
+    console.log(
+        "Course ID:",
+        courseId
+    );
+
+    console.log(
+        "Unit ID:",
+        unitId
+    );
+
+    console.log(
+        "Unit:",
+        unitTitle
+    );
+
+    console.log(
+        "======================================"
+    );
 
 
-    // --------------------------------------------------------
+    const quizArea =
+        getQuizArea();
+
+
+    if (!quizArea) {
+        return;
+    }
+
+
+    // ========================================================
     // VALIDATE COURSE
-    // --------------------------------------------------------
+    // ========================================================
 
     if (!courseId) {
 
         quizArea.innerHTML = `
+
             <div class="quiz-error">
-                <h2>❌ Course Not Selected</h2>
-                <p>Please return to the course page and select a unit.</p>
+
+                <h2>
+                    ❌ Course Not Selected
+                </h2>
+
+                <p>
+                    Please return to the course page
+                    and select a unit.
+                </p>
+
             </div>
+
         `;
 
         return;
     }
 
 
-    // --------------------------------------------------------
+    // ========================================================
     // VALIDATE UNIT
-    // --------------------------------------------------------
+    // ========================================================
 
     if (!unitTitle) {
 
         quizArea.innerHTML = `
+
             <div class="quiz-error">
-                <h2>❌ Unit Not Selected</h2>
-                <p>Please return to the course page and select a unit.</p>
+
+                <h2>
+                    ❌ Unit Not Selected
+                </h2>
+
+                <p>
+                    Please return to the course page
+                    and select a unit.
+                </p>
+
             </div>
+
         `;
 
         return;
     }
 
 
-    // --------------------------------------------------------
-    // LOADING
-    // --------------------------------------------------------
+    // ========================================================
+    // LOADING SCREEN
+    // ========================================================
 
     quizArea.innerHTML = `
+
         <div class="quiz-loading">
-            <h2>📝 ${escapeHTML(unitTitle)}</h2>
-            <p>⏳ Loading questions from Supabase...</p>
+
+            <h2>
+                📝 ${escapeHTML(unitTitle)}
+            </h2>
+
+            <p>
+                ⏳ Loading questions from Supabase...
+            </p>
+
         </div>
+
     `;
 
 
     try {
 
         // ====================================================
-        // IMPORTANT:
-        // QUIZZES ARE LINKED USING:
-        //
-        // course_id
-        // unit
-        //
-        // NOT unit_id
+        // LOAD QUESTIONS
         // ====================================================
 
         const {
@@ -159,13 +239,22 @@ window.loadQuiz = async function (
                 created_at
             `)
 
-            .eq("course_id", Number(courseId))
+            .eq(
+                "course_id",
+                Number(courseId)
+            )
 
-            .eq("unit", unitTitle)
+            .eq(
+                "unit",
+                unitTitle
+            )
 
-            .order("id", {
-                ascending: true
-            });
+            .order(
+                "id",
+                {
+                    ascending: true
+                }
+            );
 
 
         // ====================================================
@@ -175,20 +264,27 @@ window.loadQuiz = async function (
         if (error) {
 
             console.error(
-                "❌ SUPABASE QUIZ ERROR:",
+                "❌ QUIZ SUPABASE ERROR:",
                 error
             );
 
+
             quizArea.innerHTML = `
+
                 <div class="quiz-error">
 
-                    <h2>❌ Failed to Load Quiz</h2>
+                    <h2>
+                        ❌ Failed to Load Quiz
+                    </h2>
 
                     <p>
-                        ${escapeHTML(error.message)}
+                        ${escapeHTML(
+                            error.message
+                        )}
                     </p>
 
                 </div>
+
             `;
 
             return;
@@ -200,14 +296,15 @@ window.loadQuiz = async function (
         // ====================================================
 
         console.log(
-            "✅ Questions returned from Supabase:",
+            "✅ Quiz questions returned:",
             data
         );
 
-
         console.log(
             "📊 Number of questions:",
-            data ? data.length : 0
+            data
+                ? data.length
+                : 0
         );
 
 
@@ -215,9 +312,13 @@ window.loadQuiz = async function (
         // NO QUESTIONS
         // ====================================================
 
-        if (!data || data.length === 0) {
+        if (
+            !data ||
+            data.length === 0
+        ) {
 
             quizArea.innerHTML = `
+
                 <div class="quiz-empty">
 
                     <h2>
@@ -225,7 +326,8 @@ window.loadQuiz = async function (
                     </h2>
 
                     <p>
-                        No questions have been added yet for
+                        No questions have been added
+                        for
                         <strong>
                             ${escapeHTML(unitTitle)}
                         </strong>.
@@ -233,10 +335,13 @@ window.loadQuiz = async function (
 
                     <p>
                         Course ID:
-                        <strong>${Number(courseId)}</strong>
+                        <strong>
+                            ${Number(courseId)}
+                        </strong>
                     </p>
 
                 </div>
+
             `;
 
             return;
@@ -244,7 +349,7 @@ window.loadQuiz = async function (
 
 
         // ====================================================
-        // RENDER
+        // RENDER QUIZ
         // ====================================================
 
         renderQuiz(
@@ -254,25 +359,36 @@ window.loadQuiz = async function (
             unitTitle
         );
 
-    } catch (error) {
+    }
+
+    catch (error) {
 
         console.error(
             "❌ Unexpected quiz error:",
             error
         );
 
+
         quizArea.innerHTML = `
+
             <div class="quiz-error">
 
-                <h2>❌ Quiz Error</h2>
+                <h2>
+                    ❌ Quiz Error
+                </h2>
 
                 <p>
-                    ${escapeHTML(error.message)}
+                    ${escapeHTML(
+                        error.message
+                    )}
                 </p>
 
             </div>
+
         `;
+
     }
+
 };
 
 
@@ -287,9 +403,13 @@ function renderQuiz(
     unitTitle
 ) {
 
-    const quizArea = getQuizArea();
+    const quizArea =
+        getQuizArea();
 
-    if (!quizArea) return;
+
+    if (!quizArea) {
+        return;
+    }
 
 
     let html = `
@@ -313,109 +433,134 @@ function renderQuiz(
     `;
 
 
-    questions.forEach((q, index) => {
+    // ========================================================
+    // QUESTIONS
+    // ========================================================
 
-        html += `
+    questions.forEach(
+        (q, index) => {
 
-            <div
-                class="quiz-question"
-                style="
-                    background:#ffffff;
-                    padding:20px;
-                    margin:18px 0;
-                    border-radius:14px;
-                    border:1px solid #d9edf2;
-                "
-            >
+            html += `
 
-                <h3>
-
-                    ${index + 1}.
-                    ${escapeHTML(q.question)}
-
-                </h3>
-
-
-                <label
+                <div
+                    class="quiz-question"
                     style="
-                        display:block;
-                        margin:12px 0;
+                        background:#ffffff;
+                        padding:20px;
+                        margin:18px 0;
+                        border-radius:14px;
+                        border:1px solid #d9edf2;
                     "
                 >
 
-                    <input
-                        type="radio"
-                        name="question_${q.id}"
-                        value="A"
+                    <h3>
+
+                        ${index + 1}.
+                        ${escapeHTML(
+                            q.question
+                        )}
+
+                    </h3>
+
+
+                    <label
+                        style="
+                            display:block;
+                            margin:12px 0;
+                            cursor:pointer;
+                        "
                     >
 
-                    A.
-                    ${escapeHTML(q.option_a)}
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="A"
+                        >
 
-                </label>
+                        A.
+                        ${escapeHTML(
+                            q.option_a
+                        )}
+
+                    </label>
 
 
-                <label
-                    style="
-                        display:block;
-                        margin:12px 0;
-                    "
-                >
-
-                    <input
-                        type="radio"
-                        name="question_${q.id}"
-                        value="B"
+                    <label
+                        style="
+                            display:block;
+                            margin:12px 0;
+                            cursor:pointer;
+                        "
                     >
 
-                    B.
-                    ${escapeHTML(q.option_b)}
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="B"
+                        >
 
-                </label>
+                        B.
+                        ${escapeHTML(
+                            q.option_b
+                        )}
+
+                    </label>
 
 
-                <label
-                    style="
-                        display:block;
-                        margin:12px 0;
-                    "
-                >
-
-                    <input
-                        type="radio"
-                        name="question_${q.id}"
-                        value="C"
+                    <label
+                        style="
+                            display:block;
+                            margin:12px 0;
+                            cursor:pointer;
+                        "
                     >
 
-                    C.
-                    ${escapeHTML(q.option_c)}
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="C"
+                        >
 
-                </label>
+                        C.
+                        ${escapeHTML(
+                            q.option_c
+                        )}
+
+                    </label>
 
 
-                <label
-                    style="
-                        display:block;
-                        margin:12px 0;
-                    "
-                >
-
-                    <input
-                        type="radio"
-                        name="question_${q.id}"
-                        value="D"
+                    <label
+                        style="
+                            display:block;
+                            margin:12px 0;
+                            cursor:pointer;
+                        "
                     >
 
-                    D.
-                    ${escapeHTML(q.option_d)}
+                        <input
+                            type="radio"
+                            name="question_${q.id}"
+                            value="D"
+                        >
 
-                </label>
+                        D.
+                        ${escapeHTML(
+                            q.option_d
+                        )}
 
-            </div>
+                    </label>
 
-        `;
-    });
+                </div>
 
+            `;
+
+        }
+    );
+
+
+    // ========================================================
+    // SUBMIT
+    // ========================================================
 
     html += `
 
@@ -430,12 +575,17 @@ function renderQuiz(
                         border-radius:10px;
                         cursor:pointer;
                         font-size:16px;
+                        margin:10px 0 25px;
                     "
                 >
+
                     ✅ Submit Quiz
+
                 </button>
 
+
             </form>
+
 
             <div id="quizResult"></div>
 
@@ -444,11 +594,12 @@ function renderQuiz(
     `;
 
 
-    quizArea.innerHTML = html;
+    quizArea.innerHTML =
+        html;
 
 
     // ========================================================
-    // SUBMIT BUTTON
+    // SUBMIT EVENT
     // ========================================================
 
     const submitButton =
@@ -492,28 +643,39 @@ function calculateQuiz(
     let score = 0;
 
 
-    questions.forEach(q => {
+    // ========================================================
+    // CHECK ANSWERS
+    // ========================================================
 
-        const selected =
-            document.querySelector(
-                `input[name="question_${q.id}"]:checked`
-            );
+    questions.forEach(
+        q => {
+
+            const selected =
+                document.querySelector(
+                    `input[name="question_${q.id}"]:checked`
+                );
 
 
-        if (
-            selected &&
-            String(selected.value).toUpperCase() ===
-            String(q.correct_answer).toUpperCase()
-        ) {
+            if (
+                selected &&
+                String(
+                    selected.value
+                ).toUpperCase() ===
+                String(
+                    q.correct_answer
+                ).trim().toUpperCase()
+            ) {
 
-            score++;
+                score++;
+
+            }
 
         }
+    );
 
-    });
 
-
-    const total = questions.length;
+    const total =
+        questions.length;
 
 
     const percentage =
@@ -530,8 +692,14 @@ function calculateQuiz(
         );
 
 
-    if (!result) return;
+    if (!result) {
+        return;
+    }
 
+
+    // ========================================================
+    // RESULT MESSAGE
+    // ========================================================
 
     let message;
 
@@ -541,23 +709,33 @@ function calculateQuiz(
         message =
             "🎉 Excellent work!";
 
-    } else if (percentage >= 70) {
+    }
+
+    else if (percentage >= 70) {
 
         message =
             "👏 Good work!";
 
-    } else if (percentage >= 50) {
+    }
+
+    else if (percentage >= 50) {
 
         message =
             "📚 Keep studying and try again.";
 
-    } else {
+    }
+
+    else {
 
         message =
             "💪 Keep practicing. You can improve!";
 
     }
 
+
+    // ========================================================
+    // DISPLAY RESULT
+    // ========================================================
 
     result.innerHTML = `
 
@@ -567,6 +745,7 @@ function calculateQuiz(
                 padding:25px;
                 background:#eef7fb;
                 border-radius:15px;
+                text-align:center;
             "
         >
 
@@ -574,22 +753,76 @@ function calculateQuiz(
                 🎯 Quiz Result
             </h2>
 
+
             <h3>
                 ${score} / ${total}
             </h3>
+
 
             <h3>
                 ${percentage}%
             </h3>
 
+
             <p>
                 ${message}
             </p>
+
+
+            <button
+                type="button"
+                id="retryQuizButton"
+                style="
+                    background:#0b7285;
+                    color:white;
+                    border:none;
+                    padding:12px 20px;
+                    border-radius:8px;
+                    cursor:pointer;
+                    margin-top:10px;
+                "
+            >
+
+                🔄 Try Again
+
+            </button>
 
         </div>
 
     `;
 
+
+    // ========================================================
+    // RETRY
+    // ========================================================
+
+    const retryButton =
+        document.getElementById(
+            "retryQuizButton"
+        );
+
+
+    if (retryButton) {
+
+        retryButton.addEventListener(
+            "click",
+            function () {
+
+                window.loadQuiz(
+                    courseId,
+                    unitId,
+                    unitTitle
+                );
+
+            }
+        );
+
+    }
+
+
+    // ========================================================
+    // SAVE PROGRESS
+    // ========================================================
 
     saveQuizProgress(
         courseId,
@@ -604,7 +837,7 @@ function calculateQuiz(
 
 
 // ============================================================
-// SAVE LOCAL PROGRESS
+// SAVE QUIZ PROGRESS
 // ============================================================
 
 function saveQuizProgress(
@@ -628,7 +861,13 @@ function saveQuizProgress(
                 )
             ) || [];
 
-    } catch (error) {
+    }
+
+    catch (error) {
+
+        console.warn(
+            "⚠️ Could not read quiz progress."
+        );
 
         progress = [];
 
@@ -637,21 +876,26 @@ function saveQuizProgress(
 
     progress.push({
 
-        courseId: courseId,
+        courseId:
+            courseId,
 
-        unitId: unitId,
+        unitId:
+            unitId,
 
-        unit: unitTitle,
+        unit:
+            unitTitle,
 
-        score: score,
+        score:
+            score,
 
-        total: total,
+        total:
+            total,
 
-        percentage: percentage,
+        percentage:
+            percentage,
 
         date:
-            new Date()
-                .toISOString()
+            new Date().toISOString()
 
     });
 
@@ -663,20 +907,20 @@ function saveQuizProgress(
 
 
     console.log(
-        "📊 Quiz progress saved locally."
+        "📊 Quiz progress saved."
     );
 
 }
 
 
 // ============================================================
-// AUTOMATIC INITIALIZATION
+// INITIALIZE QUIZ PAGE
 // ============================================================
 
 async function initializeQuizPage() {
 
     console.log(
-        "🚀 Initializing Supabase Quiz Page..."
+        "🚀 Initializing quiz page..."
     );
 
 
@@ -684,7 +928,8 @@ async function initializeQuizPage() {
         courseId,
         unitId,
         unitTitle
-    } = getQuizInformation();
+    } =
+        getQuizInformation();
 
 
     console.log(
@@ -700,14 +945,14 @@ async function initializeQuizPage() {
 
 
     console.log(
-        "📚 URL Unit Title:",
+        "📚 URL Unit:",
         unitTitle
     );
 
 
-    // --------------------------------------------------------
-    // If course + unit came through URL, load automatically
-    // --------------------------------------------------------
+    // ========================================================
+    // URL DATA
+    // ========================================================
 
     if (
         courseId &&
@@ -721,13 +966,12 @@ async function initializeQuizPage() {
         );
 
         return;
-
     }
 
 
-    // --------------------------------------------------------
-    // Fallback to localStorage
-    // --------------------------------------------------------
+    // ========================================================
+    // LOCAL STORAGE FALLBACK
+    // ========================================================
 
     const storedCourse =
         localStorage.getItem(
@@ -753,24 +997,34 @@ async function initializeQuizPage() {
     ) {
 
         console.log(
-            "📦 Loading quiz from localStorage..."
+            "📦 Using saved course/unit..."
         );
 
 
         await window.loadQuiz(
-            Number(storedCourse),
+
+            Number(
+                storedCourse
+            ),
+
             storedUnit
                 ? Number(storedUnit)
                 : null,
+
             storedUnitTitle
+
         );
 
         return;
-
     }
 
 
-    const quizArea = getQuizArea();
+    // ========================================================
+    // NOTHING SELECTED
+    // ========================================================
+
+    const quizArea =
+        getQuizArea();
 
 
     if (quizArea) {
@@ -784,8 +1038,8 @@ async function initializeQuizPage() {
                 </h2>
 
                 <p>
-                    Please return to the course page
-                    and select a unit to begin the quiz.
+                    Return to the course page
+                    and select a unit to begin.
                 </p>
 
             </div>
@@ -810,7 +1064,9 @@ if (
         initializeQuizPage
     );
 
-} else {
+}
+
+else {
 
     initializeQuizPage();
 
