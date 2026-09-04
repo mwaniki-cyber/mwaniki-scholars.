@@ -3,352 +3,456 @@
 
 <head>
 
-<meta charset="UTF-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
-
-<title>Medical Courses | Mwaniki Scholars</title>
-
-<meta
-name="description"
-content="Explore 62 medical and health science courses at Mwaniki Scholars."
->
-
-<link rel="icon" type="image/svg+xml" href="favicon.svg">
-
-<style>
-
-/* =========================================================
-   MWANIKI SCHOLARS — 62 COURSE CATALOGUE
-========================================================= */
-
-*{
-    box-sizing:border-box;
-    margin:0;
-    padding:0;
-    font-family:"Segoe UI",Arial,sans-serif;
-}
-
-body{
-    background:#eef7fb;
-    color:#173642;
-}
-
-
-/* =========================================================
-   HEADER
-========================================================= */
-
-header{
-    background:
-        linear-gradient(
-            135deg,
-            #063970,
-            #087f8c,
-            #0b7285
-        );
-
-    color:white;
-    padding:22px 20px;
-    text-align:center;
-    box-shadow:0 5px 25px rgba(0,0,0,.12);
-}
-
-.logo{
-    font-size:28px;
-    font-weight:800;
-}
-
-.tagline{
-    margin-top:6px;
-    font-size:14px;
-    opacity:.9;
-}
-
-nav{
-    margin-top:17px;
-    display:flex;
-    justify-content:center;
-    flex-wrap:wrap;
-    gap:8px;
-}
-
-nav a{
-    color:white;
-    text-decoration:none;
-    padding:9px 14px;
-    border-radius:10px;
-    font-size:14px;
-    font-weight:600;
-}
-
-nav a:hover{
-    background:rgba(255,255,255,.18);
-}
-
-
-/* =========================================================
-   HERO
-========================================================= */
-
-.hero{
-    max-width:1150px;
-    margin:35px auto 20px;
-    padding:45px 25px;
-    text-align:center;
-}
-
-.hero-icon{
-    font-size:65px;
-    margin-bottom:10px;
-}
-
-.hero h1{
-    color:#063970;
-    font-size:42px;
-    margin-bottom:12px;
-}
-
-.hero p{
-    max-width:750px;
-    margin:auto;
-    color:#60757d;
-    line-height:1.7;
-    font-size:16px;
-}
-
-
-/* =========================================================
-   SEARCH
-========================================================= */
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Medical Courses | Mwaniki Scholars</title>
+
+    <meta
+        name="description"
+        content="Explore medical and health science courses at Mwaniki Scholars."
+    >
+
+    <style>
+
+        /* =====================================================
+           MWANIKI SCHOLARS — COURSES PAGE
+        ===================================================== */
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            background: #eef7fb;
+            color: #173642;
+        }
+
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        header {
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #087f8c,
+                    #0b7285
+                );
 
-.search-area{
-    max-width:900px;
-    margin:0 auto 35px;
-    padding:0 20px;
-}
-
-#courseSearch{
-    width:100%;
-    padding:16px 20px;
-    border:2px solid #d9e9ee;
-    border-radius:16px;
-    outline:none;
-    font-size:15px;
-    background:white;
-    box-shadow:0 5px 20px rgba(0,0,0,.05);
-}
-
-#courseSearch:focus{
-    border-color:#0b7285;
-}
+            color: white;
+            padding: 22px 20px;
+            text-align: center;
 
-
-/* =========================================================
-   COURSE COUNT
-========================================================= */
-
-.course-count{
-    text-align:center;
-    margin-bottom:25px;
-    color:#60757d;
-    font-weight:600;
-}
-
-
-/* =========================================================
-   COURSE GRID
-========================================================= */
-
-.courses-container{
-    max-width:1200px;
-    margin:auto;
-    padding:0 20px 50px;
-}
+            box-shadow:
+                0 5px 25px rgba(0,0,0,.12);
+        }
 
-.course-grid{
-    display:grid;
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(260px,1fr)
-        );
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+        }
 
-    gap:22px;
-}
+        .tagline {
+            margin-top: 6px;
+            font-size: 14px;
+            opacity: .9;
+        }
 
+        nav {
+            margin-top: 17px;
 
-/* =========================================================
-   COURSE CARD
-========================================================= */
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
 
-.course-card{
-    background:white;
-    border-radius:22px;
-    padding:24px;
+        nav a {
+            color: white;
+            text-decoration: none;
 
-    border:1px solid #e1edf0;
+            padding: 9px 14px;
 
-    box-shadow:
-        0 7px 25px rgba(0,0,0,.06);
+            border-radius: 10px;
 
-    transition:
-        transform .25s,
-        box-shadow .25s;
+            font-size: 14px;
+            font-weight: 600;
+        }
 
-    display:flex;
-    flex-direction:column;
-}
+        nav a:hover {
+            background: rgba(255,255,255,.18);
+        }
 
-.course-card:hover{
-    transform:translateY(-7px);
 
-    box-shadow:
-        0 15px 35px rgba(0,0,0,.12);
-}
+        /* =====================================================
+           HERO
+        ===================================================== */
 
+        .hero {
+            max-width: 1150px;
+            margin: 35px auto 20px;
+            padding: 45px 25px;
+            text-align: center;
+        }
 
-.course-icon{
-    width:72px;
-    height:72px;
+        .hero-icon {
+            font-size: 65px;
+            margin-bottom: 10px;
+        }
 
-    border-radius:22px;
+        .hero h1 {
+            color: #063970;
+            font-size: 42px;
+            margin-bottom: 12px;
+        }
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+        .hero p {
+            max-width: 750px;
+            margin: auto;
 
-    font-size:42px;
+            color: #60757d;
 
-    background:
-        linear-gradient(
-            135deg,
-            #e4f7fa,
-            #f1fbfc
-        );
+            line-height: 1.7;
+            font-size: 16px;
+        }
 
-    margin-bottom:18px;
-}
 
+        /* =====================================================
+           SEARCH
+        ===================================================== */
 
-.course-number{
-    color:#0b7285;
-    font-size:12px;
-    font-weight:800;
-    margin-bottom:6px;
-    text-transform:uppercase;
-}
+        .search-area {
+            max-width: 900px;
+            margin: 0 auto 35px;
+            padding: 0 20px;
+        }
 
+        #courseSearch {
+            width: 100%;
 
-.course-card h2{
-    color:#063970;
-    font-size:20px;
-    line-height:1.35;
-    margin-bottom:10px;
-}
+            padding: 16px 20px;
 
+            border: 2px solid #d9e9ee;
+            border-radius: 16px;
 
-.course-card p{
-    color:#687a80;
-    font-size:14px;
-    line-height:1.65;
-    flex:1;
-}
+            outline: none;
 
+            font-size: 15px;
 
-.course-button{
-    display:block;
-    margin-top:20px;
+            background: white;
 
-    text-align:center;
+            box-shadow:
+                0 5px 20px rgba(0,0,0,.05);
+        }
 
-    padding:12px;
+        #courseSearch:focus {
+            border-color: #0b7285;
+        }
 
-    border-radius:12px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #063970,
-            #0b7285
-        );
+        /* =====================================================
+           COURSE COUNT
+        ===================================================== */
 
-    color:white;
+        .course-count {
+            text-align: center;
 
-    text-decoration:none;
+            margin-bottom: 25px;
 
-    font-size:14px;
+            color: #60757d;
 
-    font-weight:700;
+            font-weight: 600;
+        }
 
-    transition:.2s;
-}
 
-.course-button:hover{
-    transform:scale(1.02);
-    background:#064747;
-}
+        /* =====================================================
+           COURSE GRID
+        ===================================================== */
 
+        .courses-container {
+            max-width: 1200px;
+            margin: auto;
 
-/* =========================================================
-   NO RESULTS
-========================================================= */
+            padding:
+                0 20px 50px;
+        }
 
-.no-results{
-    display:none;
+        .course-grid {
+            display: grid;
 
-    text-align:center;
+            grid-template-columns:
+                repeat(
+                    auto-fit,
+                    minmax(260px, 1fr)
+                );
 
-    background:white;
+            gap: 22px;
+        }
 
-    padding:40px;
 
-    border-radius:20px;
+        /* =====================================================
+           COURSE CARD
+        ===================================================== */
 
-    color:#687a80;
-}
+        .course-card {
+            background: white;
 
+            border-radius: 22px;
 
-/* =========================================================
-   FOOTER
-========================================================= */
+            padding: 24px;
 
-footer{
-    background:#063970;
-    color:white;
-    text-align:center;
-    padding:35px 20px;
-    line-height:1.8;
-    font-size:13px;
-}
+            border: 1px solid #e1edf0;
 
+            box-shadow:
+                0 7px 25px rgba(0,0,0,.06);
 
-/* =========================================================
-   MOBILE
-========================================================= */
+            transition:
+                transform .25s,
+                box-shadow .25s;
 
-@media(max-width:600px){
+            display: flex;
+            flex-direction: column;
+        }
 
-    .hero{
-        padding:30px 20px;
-    }
+        .course-card:hover {
+            transform: translateY(-7px);
 
-    .hero h1{
-        font-size:31px;
-    }
+            box-shadow:
+                0 15px 35px rgba(0,0,0,.12);
+        }
 
-    .hero-icon{
-        font-size:52px;
-    }
 
-    .course-grid{
-        grid-template-columns:1fr;
-    }
+        /* =====================================================
+           COURSE ICON
+        ===================================================== */
 
-}
+        .course-icon {
+            width: 72px;
+            height: 72px;
 
-</style>
+            border-radius: 22px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 42px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #e4f7fa,
+                    #f1fbfc
+                );
+
+            margin-bottom: 18px;
+        }
+
+
+        /* =====================================================
+           COURSE NUMBER
+        ===================================================== */
+
+        .course-number {
+            color: #0b7285;
+
+            font-size: 12px;
+            font-weight: 800;
+
+            margin-bottom: 6px;
+
+            text-transform: uppercase;
+        }
+
+
+        /* =====================================================
+           COURSE TITLE
+        ===================================================== */
+
+        .course-card h2 {
+            color: #063970;
+
+            font-size: 20px;
+
+            line-height: 1.35;
+
+            margin-bottom: 10px;
+        }
+
+
+        /* =====================================================
+           COURSE DESCRIPTION
+        ===================================================== */
+
+        .course-card p {
+            color: #687a80;
+
+            font-size: 14px;
+
+            line-height: 1.65;
+
+            flex: 1;
+        }
+
+
+        /* =====================================================
+           COURSE BUTTON
+        ===================================================== */
+
+        .course-button {
+            display: block;
+
+            margin-top: 20px;
+
+            text-align: center;
+
+            padding: 12px;
+
+            border-radius: 12px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #063970,
+                    #0b7285
+                );
+
+            color: white;
+
+            text-decoration: none;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            border: none;
+
+            cursor: pointer;
+
+            transition: .2s;
+        }
+
+        .course-button:hover {
+            transform: scale(1.02);
+
+            background: #064747;
+        }
+
+
+        /* =====================================================
+           LOADING
+        ===================================================== */
+
+        .loading {
+            grid-column: 1 / -1;
+
+            text-align: center;
+
+            background: white;
+
+            padding: 50px;
+
+            border-radius: 20px;
+
+            color: #60757d;
+
+            font-size: 17px;
+        }
+
+
+        /* =====================================================
+           ERROR
+        ===================================================== */
+
+        .error-message {
+            grid-column: 1 / -1;
+
+            text-align: center;
+
+            background: white;
+
+            padding: 45px;
+
+            border-radius: 20px;
+
+            color: #b42318;
+        }
+
+
+        /* =====================================================
+           NO RESULTS
+        ===================================================== */
+
+        .no-results {
+            display: none;
+
+            text-align: center;
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            color: #687a80;
+
+            margin-bottom: 40px;
+        }
+
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
+
+        footer {
+            background: #063970;
+
+            color: white;
+
+            text-align: center;
+
+            padding: 35px 20px;
+
+            line-height: 1.8;
+
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media(max-width:600px) {
+
+            .hero {
+                padding: 30px 20px;
+            }
+
+            .hero h1 {
+                font-size: 31px;
+            }
+
+            .hero-icon {
+                font-size: 52px;
+            }
+
+            .course-grid {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
 
 </head>
 
@@ -356,9 +460,9 @@ footer{
 <body>
 
 
-<!-- =====================================================
+<!-- =========================================================
      HEADER
-===================================================== -->
+========================================================= -->
 
 <header>
 
@@ -393,10 +497,9 @@ footer{
 </header>
 
 
-
-<!-- =====================================================
+<!-- =========================================================
      HERO
-===================================================== -->
+========================================================= -->
 
 <section class="hero">
 
@@ -417,10 +520,9 @@ footer{
 </section>
 
 
-
-<!-- =====================================================
+<!-- =========================================================
      SEARCH
-===================================================== -->
+========================================================= -->
 
 <div class="search-area">
 
@@ -434,1531 +536,69 @@ footer{
 </div>
 
 
+<!-- =========================================================
+     COURSE COUNT
+========================================================= -->
 
-<div class="course-count" id="courseCount">
-    Showing 62 courses
+<div
+    class="course-count"
+    id="courseCount"
+>
+    ⏳ Loading courses...
 </div>
 
 
-
-<!-- =====================================================
+<!-- =========================================================
      COURSES
-===================================================== -->
+========================================================= -->
 
 <main class="courses-container">
 
-<div class="course-grid" id="courseGrid">
+    <div
+        class="course-grid"
+        id="courseGrid"
+    >
 
+        <div class="loading">
 
-<!-- 01 -->
+            📚
 
-<article class="course-card">
+            <br><br>
 
-<div class="course-icon">🦴</div>
+            Loading medical courses...
 
-<div class="course-number">Course 01</div>
+        </div>
 
-<h2>Anatomy</h2>
+    </div>
 
-<p>
-Study the structure and organization of the human body,
-including organs, tissues and anatomical relationships.
-</p>
 
-<a href="course-details.html?course=anatomy"
-class="course-button">
-Explore Course →
-</a>
+    <!-- =====================================================
+         NO RESULTS
+    ====================================================== -->
 
-</article>
+    <div
+        class="no-results"
+        id="noResults"
+    >
 
+        <h2>
+            🔎 No course found
+        </h2>
 
+        <br>
 
-<!-- 02 -->
+        <p>
+            Try searching using another course name.
+        </p>
 
-<article class="course-card">
-
-<div class="course-icon">❤️</div>
-
-<div class="course-number">Course 02</div>
-
-<h2>Physiology</h2>
-
-<p>
-Understand normal human body functions and mechanisms
-that maintain homeostasis.
-</p>
-
-<a href="course-details.html?course=physiology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 03 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧪</div>
-
-<div class="course-number">Course 03</div>
-
-<h2>Biochemistry</h2>
-
-<p>
-Study the chemical processes and molecular reactions
-underlying human health and disease.
-</p>
-
-<a href="course-details.html?course=biochemistry"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 04 -->
-
-<article class="course-card">
-
-<div class="course-icon">💊</div>
-
-<div class="course-number">Course 04</div>
-
-<h2>Pharmacology</h2>
-
-<p>
-Study medicines, mechanisms of action, therapeutic uses
-and adverse effects.
-</p>
-
-<a href="course-details.html?course=pharmacology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 05 -->
-
-<article class="course-card">
-
-<div class="course-icon">🔬</div>
-
-<div class="course-number">Course 05</div>
-
-<h2>Pathology</h2>
-
-<p>
-Understand mechanisms of disease and pathological changes
-in cells, tissues and organs.
-</p>
-
-<a href="course-details.html?course=pathology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 06 -->
-
-<article class="course-card">
-
-<div class="course-icon">🦠</div>
-
-<div class="course-number">Course 06</div>
-
-<h2>Medical Microbiology</h2>
-
-<p>
-Study microorganisms responsible for human infections,
-laboratory diagnosis and prevention.
-</p>
-
-<a href="course-details.html?course=microbiology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 07 -->
-
-<article class="course-card">
-
-<div class="course-icon">🛡️</div>
-
-<div class="course-number">Course 07</div>
-
-<h2>Immunology</h2>
-
-<p>
-Explore innate and adaptive immunity, antibodies,
-complement and immune disorders.
-</p>
-
-<a href="course-details.html?course=immunology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 08 -->
-
-<article class="course-card">
-
-<div class="course-icon">🪱</div>
-
-<div class="course-number">Course 08</div>
-
-<h2>Parasitology</h2>
-
-<p>
-Study medically important parasites, life cycles,
-diagnosis and prevention.
-</p>
-
-<a href="course-details.html?course=parasitology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 09 -->
-
-<article class="course-card">
-
-<div class="course-icon">🩸</div>
-
-<div class="course-number">Course 09</div>
-
-<h2>Hematology</h2>
-
-<p>
-Study blood cells, hematopoiesis, coagulation and
-hematological disorders.
-</p>
-
-<a href="course-details.html?course=hematology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 10 -->
-
-<article class="course-card">
-
-<div class="course-icon">🔎</div>
-
-<div class="course-number">Course 10</div>
-
-<h2>Histology</h2>
-
-<p>
-Study microscopic tissue structure and organization
-of human organs.
-</p>
-
-<a href="course-details.html?course=histology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 11 -->
-
-<article class="course-card">
-
-<div class="course-icon">👶</div>
-
-<div class="course-number">Course 11</div>
-
-<h2>Embryology</h2>
-
-<p>
-Study human development from fertilization through
-embryonic and fetal development.
-</p>
-
-<a href="course-details.html?course=embryology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 12 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧬</div>
-
-<div class="course-number">Course 12</div>
-
-<h2>Genetics & Molecular Biology</h2>
-
-<p>
-Study DNA, RNA, chromosomes, inheritance, mutations
-and molecular mechanisms.
-</p>
-
-<a href="course-details.html?course=genetics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 13 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧫</div>
-
-<div class="course-number">Course 13</div>
-
-<h2>Medical Laboratory Science</h2>
-
-<p>
-Study laboratory methods used in diagnosis, monitoring
-and prevention of disease.
-</p>
-
-<a href="course-details.html?course=laboratory"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 14 -->
-
-<article class="course-card">
-
-<div class="course-icon">⚗️</div>
-
-<div class="course-number">Course 14</div>
-
-<h2>Clinical Chemistry</h2>
-
-<p>
-Study biochemical investigations used in clinical
-diagnosis and patient monitoring.
-</p>
-
-<a href="course-details.html?course=clinicalchemistry"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 15 -->
-
-<article class="course-card">
-
-<div class="course-icon">⚖️</div>
-
-<div class="course-number">Course 15</div>
-
-<h2>Medical Ethics & Law</h2>
-
-<p>
-Explore ethical, professional and legal principles
-governing healthcare practice.
-</p>
-
-<a href="course-details.html?course=ethics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 16 -->
-
-<article class="course-card">
-
-<div class="course-icon">🌍</div>
-
-<div class="course-number">Course 16</div>
-
-<h2>Community Health</h2>
-
-<p>
-Study community diagnosis, health promotion,
-disease prevention and primary healthcare.
-</p>
-
-<a href="course-details.html?course=communityhealth"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 17 -->
-
-<article class="course-card">
-
-<div class="course-icon">📊</div>
-
-<div class="course-number">Course 17</div>
-
-<h2>Epidemiology</h2>
-
-<p>
-Study disease distribution, determinants, surveillance
-and population health.
-</p>
-
-<a href="course-details.html?course=epidemiology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 18 -->
-
-<article class="course-card">
-
-<div class="course-icon">🥗</div>
-
-<div class="course-number">Course 18</div>
-
-<h2>Nutrition & Dietetics</h2>
-
-<p>
-Study nutrients, dietary requirements, nutritional
-disorders and therapeutic diets.
-</p>
-
-<a href="course-details.html?course=nutrition"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 19 -->
-
-<article class="course-card">
-
-<div class="course-icon">🚑</div>
-
-<div class="course-number">Course 19</div>
-
-<h2>First Aid & Emergency Medicine</h2>
-
-<p>
-Learn emergency assessment, first aid and principles
-of initial patient stabilization.
-</p>
-
-<a href="course-details.html?course=emergency"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 20 -->
-
-<article class="course-card">
-
-<div class="course-icon">🩺</div>
-
-<div class="course-number">Course 20</div>
-
-<h2>Internal Medicine</h2>
-
-<p>
-Study diagnosis and management of diseases affecting
-adult organ systems.
-</p>
-
-<a href="course-details.html?course=medicine"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 21 -->
-
-<article class="course-card">
-
-<div class="course-icon">🏥</div>
-
-<div class="course-number">Course 21</div>
-
-<h2>Surgery</h2>
-
-<p>
-Study surgical principles, perioperative care,
-trauma and common surgical conditions.
-</p>
-
-<a href="course-details.html?course=surgery"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 22 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧸</div>
-
-<div class="course-number">Course 22</div>
-
-<h2>Pediatrics</h2>
-
-<p>
-Study child growth, development, disease and
-principles of pediatric care.
-</p>
-
-<a href="course-details.html?course=pediatrics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 23 -->
-
-<article class="course-card">
-
-<div class="course-icon">🤰</div>
-
-<div class="course-number">Course 23</div>
-
-<h2>Obstetrics & Gynecology</h2>
-
-<p>
-Study pregnancy, childbirth, reproductive health
-and gynecological conditions.
-</p>
-
-<a href="course-details.html?course=obgyn"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 24 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧠</div>
-
-<div class="course-number">Course 24</div>
-
-<h2>Psychiatry</h2>
-
-<p>
-Study mental health, psychiatric assessment and
-common psychiatric disorders.
-</p>
-
-<a href="course-details.html?course=psychiatry"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 25 -->
-
-<article class="course-card">
-
-<div class="course-icon">🩻</div>
-
-<div class="course-number">Course 25</div>
-
-<h2>Radiology & Medical Imaging</h2>
-
-<p>
-Learn principles and clinical applications of
-diagnostic medical imaging.
-</p>
-
-<a href="course-details.html?course=radiology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 26 -->
-
-<article class="course-card">
-
-<div class="course-icon">😷</div>
-
-<div class="course-number">Course 26</div>
-
-<h2>Anesthesiology</h2>
-
-<p>
-Study anesthesia, airway management, monitoring
-and perioperative medicine.
-</p>
-
-<a href="course-details.html?course=anesthesia"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 27 -->
-
-<article class="course-card">
-
-<div class="course-icon">👁️</div>
-
-<div class="course-number">Course 27</div>
-
-<h2>Ophthalmology</h2>
-
-<p>
-Study the eye, visual system, common diseases
-and clinical examination.
-</p>
-
-<a href="course-details.html?course=ophthalmology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 28 -->
-
-<article class="course-card">
-
-<div class="course-icon">👂</div>
-
-<div class="course-number">Course 28</div>
-
-<h2>ENT</h2>
-
-<p>
-Study diseases and clinical conditions affecting
-the ear, nose and throat.
-</p>
-
-<a href="course-details.html?course=ent"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 29 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧴</div>
-
-<div class="course-number">Course 29</div>
-
-<h2>Dermatology</h2>
-
-<p>
-Study skin structure, dermatological diseases
-and clinical diagnosis.
-</p>
-
-<a href="course-details.html?course=dermatology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 30 -->
-
-<article class="course-card">
-
-<div class="course-icon">🏥</div>
-
-<div class="course-number">Course 30</div>
-
-<h2>Public Health</h2>
-
-<p>
-Study population health, prevention, health systems
-and public health interventions.
-</p>
-
-<a href="course-details.html?course=publichealth"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 31 -->
-
-<article class="course-card">
-
-<div class="course-icon">👩‍⚕️</div>
-
-<div class="course-number">Course 31</div>
-
-<h2>Nursing Sciences</h2>
-
-<p>
-Study nursing principles, patient assessment and
-clinical patient care.
-</p>
-
-<a href="course-details.html?course=nursing"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 32 -->
-
-<article class="course-card">
-
-<div class="course-icon">🩹</div>
-
-<div class="course-number">Course 32</div>
-
-<h2>Clinical Skills</h2>
-
-<p>
-Develop essential skills in clinical examination,
-assessment and patient care.
-</p>
-
-<a href="course-details.html?course=clinicalskills"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 33 -->
-
-<article class="course-card">
-
-<div class="course-icon">📚</div>
-
-<div class="course-number">Course 33</div>
-
-<h2>Research Methods</h2>
-
-<p>
-Learn research design, sampling, data collection,
-analysis and scientific writing.
-</p>
-
-<a href="course-details.html?course=research"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 34 -->
-
-<article class="course-card">
-
-<div class="course-icon">💻</div>
-
-<div class="course-number">Course 34</div>
-
-<h2>Health Informatics</h2>
-
-<p>
-Explore electronic health records, digital health,
-medical data and healthcare technology.
-</p>
-
-<a href="course-details.html?course=informatics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 35 -->
-
-<article class="course-card">
-
-<div class="course-icon">🦷</div>
-
-<div class="course-number">Course 35</div>
-
-<h2>Oral & Dental Health</h2>
-
-<p>
-Study oral anatomy, dental diseases, prevention
-and basic dental care.
-</p>
-
-<a href="course-details.html?course=dental"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 36 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧠</div>
-
-<div class="course-number">Course 36</div>
-
-<h2>Neuroscience</h2>
-
-<p>
-Study the nervous system, neural function,
-behavior and neurological disease.
-</p>
-
-<a href="course-details.html?course=neuroscience"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 37 -->
-
-<article class="course-card">
-
-<div class="course-icon">🫀</div>
-
-<div class="course-number">Course 37</div>
-
-<h2>Cardiology</h2>
-
-<p>
-Study cardiovascular anatomy, physiology,
-disease diagnosis and management.
-</p>
-
-<a href="course-details.html?course=cardiology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 38 -->
-
-<article class="course-card">
-
-<div class="course-icon">🫁</div>
-
-<div class="course-number">Course 38</div>
-
-<h2>Pulmonology</h2>
-
-<p>
-Study respiratory physiology, respiratory diseases,
-diagnosis and treatment principles.
-</p>
-
-<a href="course-details.html?course=pulmonology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 39 -->
-
-<article class="course-card">
-
-<div class="course-icon">🫘</div>
-
-<div class="course-number">Course 39</div>
-
-<h2>Nephrology</h2>
-
-<p>
-Study kidney structure, function, renal disease
-and electrolyte disorders.
-</p>
-
-<a href="course-details.html?course=nephrology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 40 -->
-
-<article class="course-card">
-
-<div class="course-icon">🫃</div>
-
-<div class="course-number">Course 40</div>
-
-<h2>Gastroenterology</h2>
-
-<p>
-Study diseases of the gastrointestinal tract,
-liver and biliary system.
-</p>
-
-<a href="course-details.html?course=gastroenterology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 41 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧠</div>
-
-<div class="course-number">Course 41</div>
-
-<h2>Neurology</h2>
-
-<p>
-Study neurological examination, disorders and
-principles of neurological care.
-</p>
-
-<a href="course-details.html?course=neurology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 42 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧬</div>
-
-<div class="course-number">Course 42</div>
-
-<h2>Endocrinology</h2>
-
-<p>
-Study hormones, endocrine organs and common
-endocrine disorders.
-</p>
-
-<a href="course-details.html?course=endocrinology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 43 -->
-
-<article class="course-card">
-
-<div class="course-icon">🦴</div>
-
-<div class="course-number">Course 43</div>
-
-<h2>Orthopedics</h2>
-
-<p>
-Study musculoskeletal disorders, fractures,
-joint disease and orthopedic care.
-</p>
-
-<a href="course-details.html?course=orthopedics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 44 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧑‍⚕️</div>
-
-<div class="course-number">Course 44</div>
-
-<h2>Urology</h2>
-
-<p>
-Study urinary tract disorders and diseases
-of the male reproductive system.
-</p>
-
-<a href="course-details.html?course=urology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 45 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧫</div>
-
-<div class="course-number">Course 45</div>
-
-<h2>Clinical Immunology</h2>
-
-<p>
-Study immune-mediated diseases, immunodeficiency,
-autoimmunity and diagnostic immunology.
-</p>
-
-<a href="course-details.html?course=clinicalimmunology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 46 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧪</div>
-
-<div class="course-number">Course 46</div>
-
-<h2>Molecular Diagnostics</h2>
-
-<p>
-Study molecular techniques used in modern
-medical laboratory diagnosis.
-</p>
-
-<a href="course-details.html?course=moleculardiagnostics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 47 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧫</div>
-
-<div class="course-number">Course 47</div>
-
-<h2>Clinical Microbiology</h2>
-
-<p>
-Study diagnostic microbiology, specimen processing,
-culture and antimicrobial susceptibility testing.
-</p>
-
-<a href="course-details.html?course=clinicalmicrobiology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 48 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧬</div>
-
-<div class="course-number">Course 48</div>
-
-<h2>Virology</h2>
-
-<p>
-Study viruses, viral diseases, laboratory diagnosis,
-prevention and control.
-</p>
-
-<a href="course-details.html?course=virology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 49 -->
-
-<article class="course-card">
-
-<div class="course-icon">🍄</div>
-
-<div class="course-number">Course 49</div>
-
-<h2>Medical Mycology</h2>
-
-<p>
-Study medically important fungi, fungal diseases,
-diagnosis and treatment principles.
-</p>
-
-<a href="course-details.html?course=mycology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 50 -->
-
-<article class="course-card">
-
-<div class="course-icon">🪱</div>
-
-<div class="course-number">Course 50</div>
-
-<h2>Medical Parasitology</h2>
-
-<p>
-Study protozoa, helminths and arthropods of
-medical importance.
-</p>
-
-<a href="course-details.html?course=medicalparasitology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 51 -->
-
-<article class="course-card">
-
-<div class="course-icon">🩸</div>
-
-<div class="course-number">Course 51</div>
-
-<h2>Transfusion Science</h2>
-
-<p>
-Study blood grouping, compatibility testing,
-blood components and transfusion practice.
-</p>
-
-<a href="course-details.html?course=transfusion"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 52 -->
-
-<article class="course-card">
-
-<div class="course-icon">🔬</div>
-
-<div class="course-number">Course 52</div>
-
-<h2>Histopathology</h2>
-
-<p>
-Study tissue processing, staining, microscopy and
-pathological tissue diagnosis.
-</p>
-
-<a href="course-details.html?course=histopathology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 53 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧪</div>
-
-<div class="course-number">Course 53</div>
-
-<h2>Cytology</h2>
-
-<p>
-Study cellular morphology and cytological methods
-used in disease diagnosis.
-</p>
-
-<a href="course-details.html?course=cytology"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 54 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧑‍⚕️</div>
-
-<div class="course-number">Course 54</div>
-
-<h2>Family Medicine</h2>
-
-<p>
-Study comprehensive primary care across individuals,
-families and communities.
-</p>
-
-<a href="course-details.html?course=familymedicine"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 55 -->
-
-<article class="course-card">
-
-<div class="course-icon">👵</div>
-
-<div class="course-number">Course 55</div>
-
-<h2>Geriatric Medicine</h2>
-
-<p>
-Study healthcare of older adults, aging and
-common geriatric conditions.
-</p>
-
-<a href="course-details.html?course=geriatrics"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 56 -->
-
-<article class="course-card">
-
-<div class="course-icon">🏃</div>
-
-<div class="course-number">Course 56</div>
-
-<h2>Sports Medicine</h2>
-
-<p>
-Study sports injuries, exercise health, rehabilitation
-and athletic performance.
-</p>
-
-<a href="course-details.html?course=sportsmedicine"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 57 -->
-
-<article class="course-card">
-
-<div class="course-icon">♿</div>
-
-<div class="course-number">Course 57</div>
-
-<h2>Rehabilitation Medicine</h2>
-
-<p>
-Study restoration of function and rehabilitation
-following illness and injury.
-</p>
-
-<a href="course-details.html?course=rehabilitation"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 58 -->
-
-<article class="course-card">
-
-<div class="course-icon">💉</div>
-
-<div class="course-number">Course 58</div>
-
-<h2>Clinical Pharmacotherapy</h2>
-
-<p>
-Study rational medication use, therapeutic monitoring
-and medication-related problems.
-</p>
-
-<a href="course-details.html?course=pharmacotherapy"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 59 -->
-
-<article class="course-card">
-
-<div class="course-icon">🧑‍🔬</div>
-
-<div class="course-number">Course 59</div>
-
-<h2>Laboratory Quality Management</h2>
-
-<p>
-Study quality assurance, quality control, accreditation
-and laboratory safety systems.
-</p>
-
-<a href="course-details.html?course=labquality"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 60 -->
-
-<article class="course-card">
-
-<div class="course-icon">🌱</div>
-
-<div class="course-number">Course 60</div>
-
-<h2>Environmental Health</h2>
-
-<p>
-Study environmental factors affecting health,
-sanitation, pollution and disease prevention.
-</p>
-
-<a href="course-details.html?course=environmentalhealth"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 61 -->
-
-<article class="course-card">
-
-<div class="course-icon">🏢</div>
-
-<div class="course-number">Course 61</div>
-
-<h2>Occupational Health</h2>
-
-<p>
-Study workplace hazards, occupational diseases,
-safety and worker health.
-</p>
-
-<a href="course-details.html?course=occupationalhealth"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-
-<!-- 62 -->
-
-<article class="course-card">
-
-<div class="course-icon">🌐</div>
-
-<div class="course-number">Course 62</div>
-
-<h2>Global Health</h2>
-
-<p>
-Study major international health challenges,
-health inequalities and global health interventions.
-</p>
-
-<a href="course-details.html?course=globalhealth"
-class="course-button">
-Explore Course →
-</a>
-
-</article>
-
-
-</div>
-
-
-<div class="no-results" id="noResults">
-
-    <h2>
-        🔎 No course found
-    </h2>
-
-    <p>
-        Try searching using another course name.
-    </p>
-
-</div>
+    </div>
 
 </main>
 
 
-
-<!-- =====================================================
+<!-- =========================================================
      FOOTER
-===================================================== -->
+========================================================= -->
 
 <footer>
 
@@ -1981,77 +621,433 @@ Explore Course →
 </footer>
 
 
+<!-- =========================================================
+     SUPABASE COURSE ENGINE
+========================================================= -->
 
-<script>
+<script type="module">
 
-/* =========================================================
-   COURSE SEARCH
-========================================================= */
-
-const searchInput =
-    document.getElementById("courseSearch");
-
-const courseCards =
-    document.querySelectorAll(".course-card");
-
-const courseCount =
-    document.getElementById("courseCount");
-
-const noResults =
-    document.getElementById("noResults");
+    import { supabase } from "./supabase.js";
 
 
-searchInput.addEventListener(
-    "input",
-    function(){
+    /* ========================================================
+       ELEMENTS
+    ======================================================== */
 
-        const search =
-            this.value
-                .toLowerCase()
-                .trim();
+    const courseGrid =
+        document.getElementById("courseGrid");
 
-        let visible = 0;
+    const courseSearch =
+        document.getElementById("courseSearch");
 
+    const courseCount =
+        document.getElementById("courseCount");
 
-        courseCards.forEach(
-            card => {
-
-                const text =
-                    card.textContent
-                        .toLowerCase();
+    const noResults =
+        document.getElementById("noResults");
 
 
-                if(
-                    text.includes(search)
-                ){
+    let allCourses = [];
 
-                    card.style.display =
-                        "flex";
 
-                    visible++;
+    /* ========================================================
+       COURSE ICONS
+    ======================================================== */
 
-                }else{
+    const icons = [
+        "🦴",
+        "❤️",
+        "🧪",
+        "💊",
+        "🔬",
+        "🦠",
+        "🛡️",
+        "🪱",
+        "🩸",
+        "🔎",
+        "👶",
+        "🧬",
+        "🧫",
+        "⚗️",
+        "⚖️",
+        "🌍",
+        "📊",
+        "🥗",
+        "🚑",
+        "🩺",
+        "🏥",
+        "🧸",
+        "🤰",
+        "🧠",
+        "🩻",
+        "😷",
+        "👁️",
+        "👂",
+        "🧴",
+        "🏥",
+        "👩‍⚕️",
+        "🩹",
+        "📚",
+        "💻",
+        "🦷",
+        "🧠",
+        "🫀",
+        "🫁",
+        "🫘",
+        "🫃",
+        "🧠",
+        "🧬",
+        "🦴",
+        "🧑‍⚕️",
+        "🧫",
+        "🧪",
+        "🧫",
+        "🧬",
+        "🍄",
+        "🪱",
+        "🩸",
+        "🔬",
+        "🧪",
+        "🧑‍⚕️",
+        "👵",
+        "🏃",
+        "♿",
+        "💉",
+        "🧑‍🔬",
+        "🌱",
+        "🏢",
+        "🌐"
+    ];
 
-                    card.style.display =
-                        "none";
 
-                }
+    /* ========================================================
+       ESCAPE HTML
+    ======================================================== */
+
+    function escapeHTML(value) {
+
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+    }
+
+
+    /* ========================================================
+       LOAD COURSES
+    ======================================================== */
+
+    async function loadCourses() {
+
+        console.log("📚 Loading courses from Supabase...");
+
+        try {
+
+            const {
+                data,
+                error
+            } = await supabase
+                .from("courses")
+                .select(`
+                    id,
+                    title,
+                    description,
+                    image,
+                    created_at
+                `)
+                .order("id", {
+                    ascending: true
+                });
+
+
+            if (error) {
+
+                console.error(
+                    "❌ Course query error:",
+                    error
+                );
+
+                throw error;
+            }
+
+
+            console.log(
+                "✅ Courses loaded:",
+                data
+            );
+
+
+            allCourses = data || [];
+
+
+            renderCourses(allCourses);
+
+
+        } catch (error) {
+
+            console.error(
+                "❌ Failed to load courses:",
+                error
+            );
+
+
+            courseGrid.innerHTML = `
+
+                <div class="error-message">
+
+                    <h2>
+                        ❌ Unable to Load Courses
+                    </h2>
+
+                    <br>
+
+                    <p>
+                        ${escapeHTML(error.message)}
+                    </p>
+
+                    <br>
+
+                    <button
+                        onclick="location.reload()"
+                        class="course-button"
+                    >
+                        🔄 Try Again
+                    </button>
+
+                </div>
+
+            `;
+
+
+            courseCount.textContent =
+                "Unable to load courses.";
+
+        }
+
+    }
+
+
+    /* ========================================================
+       RENDER COURSES
+    ======================================================== */
+
+    function renderCourses(courses) {
+
+        courseGrid.innerHTML = "";
+
+
+        if (!courses.length) {
+
+            courseCount.textContent =
+                "Showing 0 courses";
+
+            noResults.style.display =
+                "block";
+
+            return;
+        }
+
+
+        noResults.style.display =
+            "none";
+
+
+        courseCount.textContent =
+            `Showing ${courses.length} course${courses.length === 1 ? "" : "s"}`;
+
+
+        courses.forEach(
+            (course, index) => {
+
+                const card =
+                    document.createElement("article");
+
+
+                card.className =
+                    "course-card";
+
+
+                const icon =
+                    icons[index] || "📚";
+
+
+                card.innerHTML = `
+
+                    <div class="course-icon">
+
+                        ${icon}
+
+                    </div>
+
+
+                    <div class="course-number">
+
+                        Course ${String(index + 1).padStart(2, "0")}
+
+                    </div>
+
+
+                    <h2>
+
+                        ${escapeHTML(course.title)}
+
+                    </h2>
+
+
+                    <p>
+
+                        ${
+                            escapeHTML(
+                                course.description ||
+                                "Explore this medical and health science course."
+                            )
+                        }
+
+                    </p>
+
+
+                    <button
+                        type="button"
+                        class="course-button"
+                        data-course-id="${course.id}"
+                        data-course-title="${escapeHTML(course.title)}"
+                    >
+
+                        Explore Course →
+
+                    </button>
+
+                `;
+
+
+                courseGrid.appendChild(card);
 
             }
         );
 
 
-        courseCount.textContent =
-            `Showing ${visible} course${visible === 1 ? "" : "s"}`;
-
-
-        noResults.style.display =
-            visible === 0
-                ? "block"
-                : "none";
+        attachCourseButtons();
 
     }
-);
+
+
+    /* ========================================================
+       COURSE BUTTONS
+    ======================================================== */
+
+    function attachCourseButtons() {
+
+        document
+            .querySelectorAll(".course-button")
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    function() {
+
+                        const selectedId =
+                            this.dataset.courseId;
+
+                        const selectedTitle =
+                            this.dataset.courseTitle;
+
+
+                        console.log(
+                            "➡️ Opening course:",
+                            selectedId,
+                            selectedTitle
+                        );
+
+
+                        /* ========================================
+                           SAVE COURSE INFORMATION
+                        ======================================== */
+
+                        localStorage.setItem(
+                            "selectedCourse",
+                            selectedId
+                        );
+
+
+                        localStorage.setItem(
+                            "selectedCourseName",
+                            selectedTitle
+                        );
+
+
+                        /* ========================================
+                           OPEN ACTUAL COURSE PAGE
+                        ======================================== */
+
+                        window.location.href =
+                            "course.html";
+
+                    }
+                );
+
+            });
+
+    }
+
+
+    /* ========================================================
+       SEARCH
+    ======================================================== */
+
+    courseSearch.addEventListener(
+        "input",
+        function() {
+
+            const search =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+
+            const filtered =
+                allCourses.filter(
+                    course => {
+
+                        const title =
+                            String(
+                                course.title || ""
+                            ).toLowerCase();
+
+
+                        const description =
+                            String(
+                                course.description || ""
+                            ).toLowerCase();
+
+
+                        return (
+                            title.includes(search) ||
+                            description.includes(search)
+                        );
+
+                    }
+                );
+
+
+            renderCourses(filtered);
+
+        }
+    );
+
+
+    /* ========================================================
+       START
+    ======================================================== */
+
+    console.log(
+        "🚀 Mwaniki Scholars Course Catalogue Started"
+    );
+
+
+    loadCourses();
 
 </script>
 
