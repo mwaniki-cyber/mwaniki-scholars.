@@ -1,23 +1,46 @@
 // =====================================================
-// LOAD DETAILED UNIT NOTES
+// LOAD COURSE NOTES + UPLOADED STUDY MATERIAL
 // =====================================================
 
 async function loadNotes() {
 
     if (!notesArea) {
-
         console.warn("⚠️ notesArea not found");
         return;
-
     }
 
     notesArea.innerHTML = "⏳ Loading notes...";
 
     try {
 
+        const currentCourseId = Number(courseId);
+
+        if (!currentCourseId) {
+            notesArea.innerHTML = `
+                <div style="
+                    padding:20px;
+                    background:#fff0f0;
+                    color:#b00020;
+                    border-radius:12px;
+                ">
+                    ❌ Course ID is missing.
+                </div>
+            `;
+            return;
+        }
+
+        console.log(
+            "📚 Loading notes for course:",
+            currentCourseId
+        );
+
+        // =====================================================
+        // 1. LOAD UNIT NOTES FROM units.notes_content
+        // =====================================================
+
         const {
-            data,
-            error
+            data: units,
+            error: unitsError
         } = await supabase
 
             .from("units")
@@ -28,172 +51,346 @@ async function loadNotes() {
                 notes_content
             `)
 
-            .eq("course_id", courseId)
+            .eq("course_id", currentCourseId)
 
             .order("id", {
                 ascending: true
             });
 
 
-        if (error) {
+        if (unitsError) {
 
             console.error(
-                "❌ DETAILED NOTES ERROR:",
-                error
+                "❌ UNIT NOTES ERROR:",
+                unitsError
             );
+
+        }
+
+
+        // =====================================================
+        // 2. LOAD UPLOADED FILE NOTES FROM notes TABLE
+        // =====================================================
+
+        const {
+            data: uploadedNotes,
+            error: uploadedNotesError
+        } = await supabase
+
+            .from("notes")
+
+            .select(`
+                id,
+                file_name,
+                file_url,
+                course,
+                unit,
+                course_id,
+                unit_id,
+                created_at
+            `)
+
+            .eq("course_id", currentCourseId)
+
+            .order("created_at", {
+                ascending: false
+            });
+
+
+        if (uploadedNotesError) {
+
+            console.error(
+                "❌ UPLOADED NOTES ERROR:",
+                uploadedNotesError
+            );
+
+        }
+
+
+        console.log(
+            "📚 Unit notes:",
+            units
+        );
+
+        console.log(
+            "📄 Uploaded files:",
+            uploadedNotes
+        );
+
+
+        // =====================================================
+        // CHECK WHETHER ANY NOTES EXIST
+        // =====================================================
+
+        const hasUnitNotes =
+            units &&
+            units.some(
+                unit =>
+                    unit.notes_content &&
+                    unit.notes_content.trim()
+            );
+
+
+        const hasUploadedNotes =
+            uploadedNotes &&
+            uploadedNotes.length > 0;
+
+
+        if (!hasUnitNotes && !hasUploadedNotes) {
 
             notesArea.innerHTML = `
                 <div style="
-                    padding:20px;
-                    background:#fff0f0;
-                    color:#b00020;
-                    border-radius:12px;
+                    padding:25px;
+                    background:#fff8e6;
+                    border-radius:16px;
+                    text-align:center;
                 ">
 
-                    ❌ Failed to load notes.
+                    <div style="
+                        font-size:40px;
+                        margin-bottom:10px;
+                    ">
+                        📄
+                    </div>
+
+                    <h3>
+                        No notes available yet
+                    </h3>
 
                     <p>
-                        ${escapeHTML(error.message)}
+                        Detailed notes and study materials
+                        have not been added to this course yet.
                     </p>
 
                 </div>
             `;
 
             return;
-
-        }
-
-
-        console.log(
-            "📚 Detailed unit notes loaded:",
-            data
-        );
-
-
-        if (!data || data.length === 0) {
-
-            notesArea.innerHTML = `
-                <div style="
-                    padding:20px;
-                    background:#fff8e6;
-                    border-radius:12px;
-                ">
-
-                    📄 No notes available
-                    for this course yet.
-
-                </div>
-            `;
-
-            return;
-
         }
 
 
         notesArea.innerHTML = "";
 
 
-        data.forEach(unit => {
+        // =====================================================
+        // 3. DISPLAY DETAILED UNIT NOTES
+        // =====================================================
 
-            if (
-                !unit.notes_content ||
-                !unit.notes_content.trim()
-            ) {
+        if (hasUnitNotes) {
 
-                return;
+            const heading =
+                document.createElement("h2");
 
-            }
+            heading.style.color = "#063970";
+            heading.style.marginTop = "20px";
 
+            heading.innerHTML =
+                "📚 Detailed Unit Notes";
 
-            const noteCard =
-                document.createElement("div");
-
-
-            noteCard.className =
-                "note-card";
+            notesArea.appendChild(heading);
 
 
-            noteCard.dataset.unitId =
-                unit.id;
+            units.forEach(unit => {
+
+                if (
+                    !unit.notes_content ||
+                    !unit.notes_content.trim()
+                ) {
+                    return;
+                }
 
 
-            noteCard.innerHTML = `
+                const noteCard =
+                    document.createElement("div");
 
-                <div style="
-                    background:#ffffff;
-                    padding:25px;
-                    margin:20px 0;
-                    border-radius:16px;
-                    border:1px solid #d9edf2;
-                    box-shadow:
-                        0 5px 18px
-                        rgba(0,0,0,.07);
-                ">
 
-                    <h2 style="
-                        color:#063970;
-                        margin-top:0;
-                        margin-bottom:20px;
+                noteCard.className =
+                    "note-card";
+
+
+                noteCard.dataset.unitId =
+                    unit.id;
+
+
+                noteCard.innerHTML = `
+
+                    <div style="
+                        background:#ffffff;
+                        padding:25px;
+                        margin:20px 0;
+                        border-radius:16px;
+                        border:1px solid #d9edf2;
+                        box-shadow:
+                            0 5px 18px
+                            rgba(0,0,0,.07);
                     ">
 
-                        📚 ${escapeHTML(unit.title)}
+                        <h2 style="
+                            color:#063970;
+                            margin-top:0;
+                            margin-bottom:20px;
+                        ">
 
-                    </h2>
+                            📖 ${escapeHTML(unit.title)}
 
+                        </h2>
 
-                    <div
-                        style="
+                        <div style="
                             line-height:1.8;
                             color:#222;
                             font-size:16px;
-                        "
-                    >
+                        ">
 
-                        ${formatNotes(
-                            unit.notes_content
-                        )}
+                            ${formatNotes(
+                                unit.notes_content
+                            )}
+
+                        </div>
 
                     </div>
 
-                </div>
-
-            `;
+                `;
 
 
-            notesArea.appendChild(
-                noteCard
-            );
+                notesArea.appendChild(noteCard);
 
-        });
-
-
-        if (
-            notesArea.children.length === 0
-        ) {
-
-            notesArea.innerHTML = `
-                <div style="
-                    padding:20px;
-                    background:#fff8e6;
-                    border-radius:12px;
-                ">
-
-                    📄 No detailed notes have
-                    been added to this course yet.
-
-                </div>
-            `;
+            });
 
         }
+
+
+        // =====================================================
+        // 4. DISPLAY UPLOADED FILE NOTES
+        // =====================================================
+
+        if (hasUploadedNotes) {
+
+            const heading =
+                document.createElement("h2");
+
+            heading.style.color = "#063970";
+            heading.style.marginTop = "35px";
+
+            heading.innerHTML =
+                "📄 Course Notes & Study Materials";
+
+            notesArea.appendChild(heading);
+
+
+            uploadedNotes.forEach(note => {
+
+                const card =
+                    document.createElement("div");
+
+
+                card.className =
+                    "uploaded-note-card";
+
+
+                card.innerHTML = `
+
+                    <div style="
+                        background:#ffffff;
+                        padding:20px;
+                        margin:15px 0;
+                        border-radius:16px;
+                        border:1px solid #d9edf2;
+                        box-shadow:
+                            0 4px 15px
+                            rgba(0,0,0,.06);
+                    ">
+
+                        <div style="
+                            display:flex;
+                            align-items:center;
+                            gap:15px;
+                            flex-wrap:wrap;
+                        ">
+
+                            <div style="
+                                font-size:38px;
+                            ">
+                                📄
+                            </div>
+
+
+                            <div style="
+                                flex:1;
+                                min-width:200px;
+                            ">
+
+                                <h3 style="
+                                    margin:0 0 6px 0;
+                                    color:#063970;
+                                ">
+
+                                    ${escapeHTML(
+                                        note.file_name ||
+                                        "Course Notes"
+                                    )}
+
+                                </h3>
+
+
+                                <p style="
+                                    margin:0;
+                                    color:#666;
+                                ">
+
+                                    📖 ${
+                                        escapeHTML(
+                                            note.unit ||
+                                            "Course Material"
+                                        )
+                                    }
+
+                                </p>
+
+                            </div>
+
+
+                            <a
+                                href="${note.file_url}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style="
+                                    display:inline-block;
+                                    padding:12px 18px;
+                                    background:#063970;
+                                    color:white;
+                                    text-decoration:none;
+                                    border-radius:10px;
+                                    font-weight:bold;
+                                "
+                            >
+
+                                📖 View Notes
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+
+                notesArea.appendChild(card);
+
+            });
+
+        }
+
 
     }
 
     catch (error) {
 
         console.error(
-            "❌ Unexpected detailed notes error:",
+            "❌ Unexpected notes error:",
             error
         );
+
 
         notesArea.innerHTML = `
             <div style="
@@ -206,97 +403,17 @@ async function loadNotes() {
                 ❌ Something went wrong
                 while loading the notes.
 
+                <p>
+                    ${
+                        typeof escapeHTML === "function"
+                            ? escapeHTML(error.message)
+                            : error.message
+                    }
+                </p>
+
             </div>
         `;
 
     }
-
-}// =====================================================
-// FORMAT NOTES
-// =====================================================
-
-function formatNotes(text) {
-
-    if (!text) return "";
-
-    let html =
-        escapeHTML(text);
-
-
-    // Headings
-    html = html.replace(
-        /^###### (.*)$/gm,
-        "<h6>$1</h6>"
-    );
-
-    html = html.replace(
-        /^##### (.*)$/gm,
-        "<h5>$1</h5>"
-    );
-
-    html = html.replace(
-        /^#### (.*)$/gm,
-        "<h4>$1</h4>"
-    );
-
-    html = html.replace(
-        /^### (.*)$/gm,
-        "<h3>$1</h3>"
-    );
-
-    html = html.replace(
-        /^## (.*)$/gm,
-        "<h2>$1</h2>"
-    );
-
-    html = html.replace(
-        /^# (.*)$/gm,
-        "<h1>$1</h1>"
-    );
-
-
-    // Bold
-    html = html.replace(
-        /\*\*(.*?)\*\*/g,
-        "<strong>$1</strong>"
-    );
-
-
-    // Bullet points
-    html = html.replace(
-        /^[-*] (.*)$/gm,
-        "<li>$1</li>"
-    );
-
-
-    // Wrap consecutive list items
-    html = html.replace(
-        /(<li>.*<\/li>\n?)+/g,
-        match => `<ul>${match}</ul>`
-    );
-
-
-    // Horizontal rules
-    html = html.replace(
-        /^---$/gm,
-        "<hr>"
-    );
-
-
-    // Paragraph breaks
-    html = html.replace(
-        /\n{2,}/g,
-        "</p><p>"
-    );
-
-
-    // Remaining single line breaks
-    html = html.replace(
-        /\n/g,
-        "<br>"
-    );
-
-
-    return `<p>${html}</p>`;
 
 }
