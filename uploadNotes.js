@@ -1,619 +1,348 @@
 import { supabase } from "./supabase.js";
 
+console.log("📚 Mwaniki Scholars Admin Notes System Loaded");
 
-// =====================================================
-// MWANIKI SCHOLARS - ADMIN NOTES UPLOAD
-// =====================================================
+const BUCKET = "notes";
 
-console.log(
-    "📚 Mwaniki Scholars Admin Notes System Loaded"
-);
-
-
-// =====================================================
-// ELEMENTS
-// =====================================================
-
-const courseSelect =
-    document.getElementById("course");
-
-const unitSelect =
-    document.getElementById("unit");
-
-const fileInput =
-    document.getElementById("file");
-
-const statusBox =
-    document.getElementById("status");
-
-const uploadButton =
-    document.getElementById("uploadButton");
-
-
-// =====================================================
+// ============================================================
 // LOAD COURSES
-// =====================================================
+// ============================================================
 
 async function loadCourses() {
+    console.log("📚 Loading courses...");
 
-    console.log(
-        "📚 Loading courses..."
-    );
-
+    const courseSelect = document.getElementById("courseSelect");
 
     if (!courseSelect) {
-
-        console.error(
-            "❌ #course was not found"
-        );
-
+        console.error("❌ courseSelect not found");
         return;
     }
 
+    const { data, error } = await supabase
+        .from("courses")
+        .select("id, title")
+        .order("id");
 
-    courseSelect.innerHTML = `
-        <option value="">
-            ⏳ Loading courses...
-        </option>
-    `;
-
-
-    try {
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("courses")
-                .select("id,title")
-                .order("id");
-
-
-        if (error) {
-
-            console.error(
-                "❌ COURSES ERROR:",
-                error
-            );
-
-
-            courseSelect.innerHTML = `
-                <option value="">
-                    ❌ Failed to load courses
-                </option>
-            `;
-
-            return;
-        }
-
-
-        console.log(
-            "✅ Courses loaded:",
-            data
-        );
-
-
-        courseSelect.innerHTML = `
-            <option value="">
-                -- Select Course --
-            </option>
-        `;
-
-
-        data.forEach(course => {
-
-            const option =
-                document.createElement("option");
-
-
-            option.value =
-                String(course.id);
-
-
-            option.textContent =
-                course.title;
-
-
-            courseSelect.appendChild(
-                option
-            );
-
-        });
-
-
-        console.log(
-            "✅ Course dropdown populated"
-        );
-
+    if (error) {
+        console.error("❌ Failed to load courses:", error);
+        return;
     }
 
-    catch(error) {
+    courseSelect.innerHTML =
+        '<option value="">-- Select Course --</option>';
 
-        console.error(
-            "❌ COURSE EXCEPTION:",
-            error
-        );
+    data.forEach(course => {
+        const option = document.createElement("option");
 
-    }
+        option.value = course.id;
+        option.textContent = course.title;
 
+        courseSelect.appendChild(option);
+    });
+
+    console.log("✅ Courses loaded:", data.length);
 }
 
-
-// =====================================================
+// ============================================================
 // LOAD UNITS
-// =====================================================
+// ============================================================
 
 async function loadUnits(courseId) {
+    console.log("📖 loadUnits() called with course:", courseId);
 
-    console.log(
-        "📖 loadUnits() called with course:",
-        courseId
-    );
-
+    const unitSelect = document.getElementById("unitSelect");
 
     if (!unitSelect) {
-
-        console.error(
-            "❌ #unit was not found"
-        );
-
+        console.error("❌ unitSelect not found");
         return;
     }
 
-
-    unitSelect.disabled = true;
-
-
-    unitSelect.innerHTML = `
-        <option value="">
-            ⏳ Loading units...
-        </option>
-    `;
-
+    unitSelect.innerHTML =
+        '<option value="">-- Loading units... --</option>';
 
     if (!courseId) {
+        unitSelect.innerHTML =
+            '<option value="">-- Select Unit --</option>';
+        return;
+    }
 
-        unitSelect.innerHTML = `
-            <option value="">
-                Select a course first
-            </option>
-        `;
+    const { data, error } = await supabase
+        .from("units")
+        .select("id, course_id, title")
+        .eq("course_id", courseId)
+        .order("id");
+
+    if (error) {
+        console.error("❌ Failed to load units:", error);
+
+        unitSelect.innerHTML =
+            '<option value="">-- Failed to load units --</option>';
 
         return;
     }
 
+    unitSelect.innerHTML =
+        '<option value="">-- Select Unit --</option>';
 
-    try {
+    data.forEach(unit => {
+        const option = document.createElement("option");
 
-        console.log(
-            "🔎 Querying units for course_id:",
-            courseId
-        );
+        option.value = unit.id;
+        option.textContent = unit.title;
 
+        unitSelect.appendChild(option);
+    });
 
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("units")
-                .select(
-                    "id,course_id,title"
-                )
-                .eq(
-                    "course_id",
-                    Number(courseId)
-                )
-                .order(
-                    "id",
-                    {
-                        ascending:true
-                    }
-                );
-
-
-        console.log(
-            "📦 Units query returned:",
-            data
-        );
-
-
-        if (error) {
-
-            console.error(
-                "❌ UNITS SUPABASE ERROR:",
-                error
-            );
-
-
-            unitSelect.innerHTML = `
-                <option value="">
-                    ❌ Failed to load units
-                </option>
-            `;
-
-            return;
-        }
-
-
-        unitSelect.innerHTML = `
-            <option value="">
-                -- Select Unit --
-            </option>
-        `;
-
-
-        if (!data || data.length === 0) {
-
-            console.warn(
-                "⚠️ No units found for course:",
-                courseId
-            );
-
-
-            unitSelect.innerHTML = `
-                <option value="">
-                    ⚠️ No units found
-                </option>
-            `;
-
-            return;
-        }
-
-
-        data.forEach(unit => {
-
-            const option =
-                document.createElement("option");
-
-
-            option.value =
-                String(unit.id);
-
-
-            option.textContent =
-                unit.title;
-
-
-            unitSelect.appendChild(
-                option
-            );
-
-        });
-
-
-        unitSelect.disabled = false;
-
-
-        console.log(
-            `✅ ${data.length} units added to dropdown`
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "❌ UNITS EXCEPTION:",
-            error
-        );
-
-
-        unitSelect.innerHTML = `
-            <option value="">
-                ❌ Error loading units
-            </option>
-        `;
-
-    }
-
+    console.log("📦 Units query returned:", data);
+    console.log(`✅ ${data.length} units added to dropdown`);
 }
 
+// ============================================================
+// UPLOAD NOTES
+// ============================================================
 
-// =====================================================
-// COURSE CHANGE EVENT
-// =====================================================
+window.uploadNotes = async function () {
 
-if (courseSelect) {
+    console.log("📤 Upload button clicked");
 
-    courseSelect.addEventListener(
-        "change",
-        function () {
+    const courseSelect = document.getElementById("courseSelect");
+    const unitSelect = document.getElementById("unitSelect");
+    const fileInput = document.getElementById("notesFile");
+
+    if (!courseSelect || !unitSelect || !fileInput) {
+        alert("❌ Upload form elements are missing.");
+        return;
+    }
+
+    const courseId = courseSelect.value;
+    const unitId = unitSelect.value;
+    const file = fileInput.files[0];
+
+    console.log("Course:", courseId);
+    console.log("Unit:", unitId);
+    console.log("File:", file ? file.name : "None");
+
+    // --------------------------------------------------------
+    // VALIDATION
+    // --------------------------------------------------------
+
+    if (!courseId) {
+        alert("⚠️ Please select a course.");
+        return;
+    }
+
+    if (!unitId) {
+        alert("⚠️ Please select a unit.");
+        return;
+    }
+
+    if (!file) {
+        alert("⚠️ Please select a PDF file.");
+        return;
+    }
+
+    if (file.type !== "application/pdf") {
+        alert("❌ Only PDF files are allowed.");
+        return;
+    }
+
+    // 50 MB limit
+    const MAX_SIZE = 50 * 1024 * 1024;
+
+    if (file.size > MAX_SIZE) {
+        alert("❌ File is too large. Maximum size is 50 MB.");
+        return;
+    }
+
+    // --------------------------------------------------------
+    // CHECK USER
+    // --------------------------------------------------------
+
+    const {
+        data: { user },
+        error: userError
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+        console.error("❌ User authentication error:", userError);
+
+        alert("❌ You must be logged in as an admin to upload notes.");
+        return;
+    }
+
+    console.log("👤 Uploading user:", user.id);
+
+    // --------------------------------------------------------
+    // GET COURSE + UNIT NAMES
+    // --------------------------------------------------------
+
+    const { data: course, error: courseError } = await supabase
+        .from("courses")
+        .select("title")
+        .eq("id", courseId)
+        .single();
+
+    if (courseError) {
+        console.error("❌ Course lookup failed:", courseError);
+        alert("❌ Could not find the selected course.");
+        return;
+    }
+
+    const { data: unit, error: unitError } = await supabase
+        .from("units")
+        .select("title")
+        .eq("id", unitId)
+        .single();
+
+    if (unitError) {
+        console.error("❌ Unit lookup failed:", unitError);
+        alert("❌ Could not find the selected unit.");
+        return;
+    }
+
+    // --------------------------------------------------------
+    // CREATE SAFE FILE NAME
+    // --------------------------------------------------------
+
+    const safeName = file.name
+        .replace(/[^a-zA-Z0-9._-]/g, "_")
+        .replace(/_+/g, "_");
+
+    const timestamp = Date.now();
+
+    const filePath =
+        `${courseId}/${unitId}/${timestamp}_${safeName}`;
+
+    console.log("📁 Storage path:", filePath);
+
+    // --------------------------------------------------------
+    // UPLOAD DIRECTLY TO SUPABASE STORAGE
+    // --------------------------------------------------------
+
+    console.log("☁️ Uploading to Supabase Storage...");
+
+    const { data: uploadData, error: uploadError } =
+        await supabase.storage
+            .from(BUCKET)
+            .upload(filePath, file, {
+                cacheControl: "3600",
+                contentType: "application/pdf",
+                upsert: false
+            });
+
+    if (uploadError) {
+
+        console.error(
+            "❌ Supabase Storage upload failed:",
+            uploadError
+        );
+
+        alert(
+            "❌ Upload failed.\n\n" +
+            uploadError.message
+        );
+
+        return;
+    }
+
+    console.log("✅ File uploaded:", uploadData);
+
+    // --------------------------------------------------------
+    // GET PUBLIC URL
+    // --------------------------------------------------------
+
+    const { data: publicUrlData } =
+        supabase.storage
+            .from(BUCKET)
+            .getPublicUrl(filePath);
+
+    const fileUrl = publicUrlData.publicUrl;
+
+    console.log("🔗 File URL:", fileUrl);
+
+    // --------------------------------------------------------
+    // SAVE NOTE INFORMATION IN DATABASE
+    // --------------------------------------------------------
+
+    console.log("💾 Saving note information...");
+
+    const { data: noteData, error: noteError } =
+        await supabase
+            .from("notes")
+            .insert({
+                course: course.title,
+                unit: unit.title,
+                file_name: file.name,
+                file_url: fileUrl,
+                uploaded_by: user.id,
+                course_id: courseId,
+                unit_id: unitId
+            })
+            .select()
+            .single();
+
+    if (noteError) {
+
+        console.error(
+            "❌ Database insert failed:",
+            noteError
+        );
+
+        // Remove uploaded file if database insert fails
+        await supabase.storage
+            .from(BUCKET)
+            .remove([filePath]);
+
+        alert(
+            "❌ File uploaded but note information could not be saved.\n\n" +
+            noteError.message
+        );
+
+        return;
+    }
+
+    console.log("✅ Note saved:", noteData);
+
+    // --------------------------------------------------------
+    // SUCCESS
+    // --------------------------------------------------------
+
+    alert(
+        `✅ NOTES UPLOADED SUCCESSFULLY!\n\n` +
+        `Course: ${course.title}\n` +
+        `Unit: ${unit.title}\n` +
+        `File: ${file.name}`
+    );
+
+    // Clear file input
+    fileInput.value = "";
+
+    console.log("🎉 Upload completed successfully!");
+};
+
+// ============================================================
+// COURSE CHANGE
+// ============================================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    console.log("🚀 Admin notes page initialized");
+
+    const courseSelect =
+        document.getElementById("courseSelect");
+
+    if (courseSelect) {
+
+        courseSelect.addEventListener("change", function () {
 
             console.log(
                 "🔄 Course changed:",
                 this.value
             );
 
-
-            loadUnits(
-                this.value
-            );
-
-        }
-    );
-
-}
-
-
-// =====================================================
-// UPLOAD
-// =====================================================
-
-window.uploadNotes =
-    async function () {
-
-        console.log(
-            "📤 Upload button clicked"
-        );
-
-
-        const courseId =
-            courseSelect.value;
-
-        const unitId =
-            unitSelect.value;
-
-        const file =
-            fileInput.files[0];
-
-
-        console.log(
-            "Course:",
-            courseId
-        );
-
-        console.log(
-            "Unit:",
-            unitId
-        );
-
-        console.log(
-            "File:",
-            file?.name
-        );
-
-
-        if (!courseId) {
-
-            statusBox.innerHTML =
-                "❌ Select a course.";
-
-            return;
-        }
-
-
-        if (!unitId) {
-
-            statusBox.innerHTML =
-                "❌ Select a unit.";
-
-            return;
-        }
-
-
-        if (!file) {
-
-            statusBox.innerHTML =
-                "❌ Select a file.";
-
-            return;
-        }
-
-
-        statusBox.innerHTML =
-            "⏳ Uploading...";
-
-
-        try {
-
-            const {
-                data: {
-                    user
-                }
-            } =
-                await supabase.auth.getUser();
-
-
-            if (!user) {
-
-                statusBox.innerHTML =
-                    "❌ Please login first.";
-
-                return;
-            }
-
-
-            const formData =
-                new FormData();
-
-
-            formData.append(
-                "file",
-                file
-            );
-
-
-            formData.append(
-                "course",
-                courseId
-            );
-
-
-            formData.append(
-                "unit",
-                unitId
-            );
-
-
-            console.log(
-                "🌐 Sending to localhost:5000..."
-            );
-
-
-            const response =
-                await fetch(
-                    "http://localhost:5000/upload",
-                    {
-                        method:"POST",
-                        body:formData
-                    }
-                );
-
-
-            const result =
-                await response.json();
-
-
-            console.log(
-                "📦 Server result:",
-                result
-            );
-
-
-            if (
-                !response.ok ||
-                !result.success
-            ) {
-
-                statusBox.innerHTML =
-                    "❌ " +
-                    (
-                        result.error ||
-                        "Upload failed"
-                    );
-
-                return;
-            }
-
-
-            statusBox.innerHTML =
-                "⏳ Saving note record...";
-
-
-            // -----------------------------------------
-            // GET COURSE
-            // -----------------------------------------
-
-            const {
-                data: courseData
-            } =
-                await supabase
-                    .from("courses")
-                    .select("title")
-                    .eq(
-                        "id",
-                        courseId
-                    )
-                    .single();
-
-
-            // -----------------------------------------
-            // GET UNIT
-            // -----------------------------------------
-
-            const {
-                data: unitData
-            } =
-                await supabase
-                    .from("units")
-                    .select("title")
-                    .eq(
-                        "id",
-                        unitId
-                    )
-                    .single();
-
-
-            // -----------------------------------------
-            // SAVE NOTE
-            // -----------------------------------------
-
-            const {
-                error: noteError
-            } =
-                await supabase
-                    .from("notes")
-                    .insert({
-
-                        course:
-                            courseData?.title,
-
-                        unit:
-                            unitData?.title,
-
-                        file_name:
-                            result.file,
-
-                        file_url:
-                            result.file_url,
-
-                        uploaded_by:
-                            user.id
-
-                    });
-
-
-            if (noteError) {
-
-                console.error(
-                    "❌ NOTE DATABASE ERROR:",
-                    noteError
-                );
-
-
-                statusBox.innerHTML =
-                    `
-                    ❌ File uploaded,
-                    but database record failed.
-                    <br><br>
-                    ${noteError.message}
-                    `;
-
-                return;
-            }
-
-
-            statusBox.innerHTML =
-                `
-                <span style="color:green">
-                ✅ Notes uploaded successfully!
-                </span>
-                `;
-
-
-            fileInput.value = "";
-
-
-            console.log(
-                "✅ COMPLETE UPLOAD"
-            );
-
-        }
-
-        catch(error) {
-
-            console.error(
-                "❌ UPLOAD ERROR:",
-                error
-            );
-
-
-            statusBox.innerHTML =
-                `
-                ❌ Upload failed:
-                <br>
-                ${error.message}
-                `;
-
-        }
-
-    };
-
-
-// =====================================================
-// START
-// =====================================================
-
-loadCourses();
+            loadUnits(this.value);
+        });
+    }
+
+    loadCourses();
+});
