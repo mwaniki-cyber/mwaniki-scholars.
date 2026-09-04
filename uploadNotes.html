@@ -1,303 +1,184 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
+    <title>Mwaniki Scholars | Upload Notes</title>
 
-<meta name="viewport"
-      content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
 
-<title>Mwaniki Scholars | Upload Notes</title>
+        body {
+            margin: 0;
+            background: #f4f9ff;
+        }
 
-<style>
+        header {
+            background: linear-gradient(
+                135deg,
+                #063970,
+                #0b7285
+            );
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 25px;
+            font-weight: bold;
+        }
 
-*{
-    box-sizing:border-box;
-    font-family:"Segoe UI",Arial,sans-serif;
-}
+        .container {
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+        }
 
-body{
-    margin:0;
-    background:#f4f9ff;
-}
+        .card {
+            background: white;
+            padding: 30px;
+            width: 480px;
+            max-width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,.15);
+        }
 
-header{
-    background:linear-gradient(
-        135deg,
-        #063970,
-        #0b7285
-    );
-    color:white;
-    padding:20px;
-    text-align:center;
-    font-size:25px;
-    font-weight:bold;
-}
+        h2 {
+            text-align: center;
+            color: #063970;
+        }
 
-.container{
-    padding:30px;
-    display:flex;
-    justify-content:center;
-}
+        label {
+            display: block;
+            margin-top: 18px;
+            font-weight: bold;
+            color: #334155;
+        }
 
-.card{
-    background:white;
-    padding:30px;
-    width:480px;
-    max-width:100%;
-    border-radius:20px;
-    box-shadow:0 8px 25px rgba(0,0,0,.15);
-}
+        select,
+        input[type="file"] {
+            width: 100%;
+            padding: 13px;
+            margin-top: 8px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            background: white;
+            font-size: 15px;
+        }
 
-h2{
-    text-align:center;
-    color:#063970;
-}
+        select:focus,
+        input:focus {
+            outline: none;
+            border-color: #0b7285;
+        }
 
-label{
-    display:block;
-    margin-top:18px;
-    font-weight:bold;
-    color:#334155;
-}
+        button {
+            width: 100%;
+            margin-top: 22px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: #0b7285;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
 
-select,
-input[type="file"]{
+        button:hover {
+            background: #063970;
+        }
 
-    width:100%;
+        button:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+        }
 
-    padding:13px;
+        #status {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 18px;
+            line-height: 1.5;
+        }
 
-    margin-top:8px;
-
-    border-radius:10px;
-
-    border:1px solid #ccc;
-
-    background:white;
-
-    font-size:15px;
-
-}
-
-select:focus,
-input:focus{
-
-    outline:none;
-
-    border-color:#0b7285;
-
-}
-
-button{
-
-    width:100%;
-
-    margin-top:22px;
-
-    padding:14px;
-
-    border:none;
-
-    border-radius:10px;
-
-    background:#0b7285;
-
-    color:white;
-
-    font-size:16px;
-
-    cursor:pointer;
-
-}
-
-button:hover{
-
-    background:#063970;
-
-}
-
-button:disabled{
-
-    background:#94a3b8;
-
-    cursor:not-allowed;
-
-}
-
-#status{
-
-    text-align:center;
-
-    font-weight:bold;
-
-    margin-top:18px;
-
-    line-height:1.5;
-
-}
-
-.back{
-
-    display:block;
-
-    margin-top:20px;
-
-    text-align:center;
-
-    color:#063970;
-
-    text-decoration:none;
-
-    font-weight:bold;
-
-}
-
-</style>
-
+        .back {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            color: #063970;
+            text-decoration: none;
+            font-weight: bold;
+        }
+    </style>
 </head>
-
 
 <body>
 
-
 <header>
-
-📚 Mwaniki Scholars Notes Upload
-
+    📚 Mwaniki Scholars Notes Upload
 </header>
-
 
 <div class="container">
 
+    <div class="card">
 
-<div class="card">
+        <h2>📤 Upload Study Material</h2>
 
+        <label for="courseSelect">
+            📚 Course
+        </label>
 
-<h2>
-
-📤 Upload Study Material
-
-</h2>
-
-
-<!-- =============================== -->
-<!-- COURSE -->
-<!-- =============================== -->
-
-<label for="course">
-
-📚 Course
-
-</label>
+        <select id="courseSelect">
+            <option value="">⏳ Loading courses...</option>
+        </select>
 
 
-<select id="course">
+        <label for="unitSelect">
+            📖 Unit
+        </label>
 
-<option value="">
-
-⏳ Loading courses...
-
-</option>
-
-</select>
+        <select id="unitSelect" disabled>
+            <option value="">Select a course first</option>
+        </select>
 
 
-<!-- =============================== -->
-<!-- UNIT -->
-<!-- =============================== -->
+        <label for="notesFile">
+            📄 Select Notes File
+        </label>
 
-<label for="unit">
-
-📖 Unit
-
-</label>
-
-
-<select id="unit" disabled>
-
-<option value="">
-
-Select a course first
-
-</option>
-
-</select>
+        <input
+            id="notesFile"
+            type="file"
+            accept=".pdf,.doc,.docx,.ppt,.pptx"
+        >
 
 
-<!-- =============================== -->
-<!-- FILE -->
-<!-- =============================== -->
-
-<label for="file">
-
-📄 Select Notes File
-
-</label>
+        <button
+            id="uploadButton"
+            type="button"
+            onclick="uploadNotes()"
+        >
+            📤 Upload Notes
+        </button>
 
 
-<input
-
-    id="file"
-
-    type="file"
-
-    accept=".pdf,.doc,.docx,.ppt,.pptx"
+        <div id="status"></div>
 
 
->
+        <a
+            class="back"
+            href="admin.html"
+        >
+            ⬅ Back to Admin Dashboard
+        </a>
 
-
-<!-- =============================== -->
-<!-- UPLOAD -->
-<!-- =============================== -->
-
-<button
-
-    id="uploadButton"
-
-    type="button"
-
-    onclick="uploadNotes()"
-
->
-
-📤 Upload Notes
-
-</button>
-
-
-<!-- =============================== -->
-<!-- STATUS -->
-<!-- =============================== -->
-
-<div id="status">
+    </div>
 
 </div>
 
 
-<a
-    class="back"
-    href="admin.html"
->
-
-⬅ Back to Admin Dashboard
-
-</a>
-
-
-</div>
-
-</div>
-
-
-<script
-    type="module"
-    src="uploadNotes.js"
-></script>
-
+<script type="module" src="./uploadNotes.js"></script>
 
 </body>
-
 </html>
