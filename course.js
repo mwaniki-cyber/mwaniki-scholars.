@@ -409,65 +409,87 @@ function renderUnits(units) {
     });
 
 
-    // ========================================================
-    // QUIZ BUTTONS
-    // ========================================================
+   
+// ========================================================
+// QUIZ BUTTONS
+// ========================================================
 
-    document
-        .querySelectorAll(".quiz-button")
-        .forEach(button => {
+document
+    .querySelectorAll(".quiz-button")
+    .forEach(button => {
 
-            button.addEventListener("click", function () {
+        button.addEventListener(
+            "click",
+            function () {
 
-                const unitId = this.dataset.unitId;
-                const unitTitle = this.dataset.unitTitle;
+                const unitId =
+                    this.dataset.unitId;
+
+                const unitTitle =
+                    this.dataset.unitTitle;
 
                 console.log(
-                    "📝 Starting quiz:",
-                    unitId,
-                    unitTitle
+                    "📝 Opening Supabase quiz:",
+                    {
+                        courseId: courseId,
+                        unitId: unitId,
+                        unitTitle: unitTitle
+                    }
                 );
 
-                localStorage.setItem(
-                    "selectedUnit",
-                    unitId
-                );
 
-                localStorage.setItem(
-                    "selectedUnitTitle",
-                    unitTitle
-                );
+                // --------------------------------------------
+                // SAVE CURRENT SELECTION
+                // --------------------------------------------
 
                 localStorage.setItem(
                     "selectedCourse",
                     courseId
                 );
 
+
                 localStorage.setItem(
                     "selectedCourseName",
                     courseName || ""
                 );
 
-                // Existing quiz system
-                if (
-                    typeof window.startQuiz === "function"
-                ) {
-                    window.startQuiz(
-                        Number(courseId),
-                        Number(unitId),
-                        unitTitle
-                    );
 
-                    return;
-                }
+                localStorage.setItem(
+                    "selectedUnit",
+                    unitId
+                );
 
-                // Fallback
+
+                localStorage.setItem(
+                    "selectedUnitTitle",
+                    unitTitle
+                );
+
+
+                // --------------------------------------------
+                // OPEN QUIZ PAGE
+                // --------------------------------------------
+
+                const quizURL =
+                    `quiz.html?course=${encodeURIComponent(courseId)}` +
+                    `&unit_id=${encodeURIComponent(unitId)}` +
+                    `&unit=${encodeURIComponent(unitTitle)}`;
+
+
+                console.log(
+                    "➡️ Quiz URL:",
+                    quizURL
+                );
+
+
                 window.location.href =
-                    `quiz.html?course=${encodeURIComponent(courseId)}&unit=${encodeURIComponent(unitId)}`;
-            });
-        });
+                    quizURL;
 
+            }
+        );
 
+    });
+    
     // ========================================================
     // NOTES BUTTONS
     // ========================================================
