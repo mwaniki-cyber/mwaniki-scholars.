@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
@@ -56,8 +57,13 @@
             background: #eef7fb;
 
             color: #16323f;
+
         }
 
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
 
         header {
 
@@ -73,6 +79,7 @@
             padding: 25px;
 
             text-align: center;
+
         }
 
 
@@ -81,12 +88,14 @@
             font-size: 28px;
 
             font-weight: 700;
+
         }
 
 
         nav {
 
             margin-top: 15px;
+
         }
 
 
@@ -101,14 +110,20 @@
             font-size: 14px;
 
             font-weight: 600;
+
         }
 
 
         nav a:hover {
 
             text-decoration: underline;
+
         }
 
+
+        /* =====================================================
+           HERO
+        ===================================================== */
 
         .hero {
 
@@ -119,6 +134,7 @@
             padding: 20px;
 
             text-align: center;
+
         }
 
 
@@ -129,6 +145,7 @@
             font-size: 36px;
 
             margin-bottom: 12px;
+
         }
 
 
@@ -141,8 +158,13 @@
             max-width: 750px;
 
             margin: auto;
+
         }
 
+
+        /* =====================================================
+           NOTES CONTAINER
+        ===================================================== */
 
         .notes-container {
 
@@ -157,12 +179,17 @@
             grid-template-columns:
                 repeat(
                     auto-fit,
-                    minmax(250px, 1fr)
+                    minmax(280px, 1fr)
                 );
 
             gap: 20px;
+
         }
 
+
+        /* =====================================================
+           COURSE CARD
+        ===================================================== */
 
         .note-card {
 
@@ -179,6 +206,7 @@
             transition:
                 transform 0.25s ease,
                 box-shadow 0.25s ease;
+
         }
 
 
@@ -190,6 +218,7 @@
             box-shadow:
                 0 12px 30px
                 rgba(0, 0, 0, 0.13);
+
         }
 
 
@@ -198,6 +227,7 @@
             font-size: 42px;
 
             margin-bottom: 10px;
+
         }
 
 
@@ -206,6 +236,7 @@
             color: #063970;
 
             margin: 8px 0;
+
         }
 
 
@@ -216,16 +247,21 @@
             font-size: 14px;
 
             line-height: 1.6;
+
         }
 
 
-        .note-card a {
+        /* =====================================================
+           VIEW COURSE BUTTON
+        ===================================================== */
+
+        .course-button {
 
             display: inline-block;
 
-            margin-top: 10px;
+            margin-top: 15px;
 
-            padding: 10px 16px;
+            padding: 11px 17px;
 
             background: #0b7285;
 
@@ -238,14 +274,164 @@
             font-size: 14px;
 
             font-weight: 600;
+
+            border: none;
+
+            cursor: pointer;
+
         }
 
 
-        .note-card a:hover {
+        .course-button:hover {
 
             background: #064747;
+
         }
 
+
+        /* =====================================================
+           MATERIAL LIST
+        ===================================================== */
+
+        .materials {
+
+            margin-top: 18px;
+
+        }
+
+
+        .materials-title {
+
+            color: #063970;
+
+            font-weight: 700;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .material {
+
+            background: #eef7fb;
+
+            border-radius: 10px;
+
+            padding: 12px;
+
+            margin-top: 9px;
+
+        }
+
+
+        .material-name {
+
+            color: #16323f;
+
+            font-weight: 600;
+
+            word-break: break-word;
+
+        }
+
+
+        .material-unit {
+
+            color: #607681;
+
+            font-size: 13px;
+
+            margin-top: 4px;
+
+        }
+
+
+        .material a {
+
+            display: inline-block;
+
+            margin-top: 8px;
+
+            padding: 8px 12px;
+
+            background: #063970;
+
+            color: white;
+
+            text-decoration: none;
+
+            border-radius: 8px;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+        }
+
+
+        .material a:hover {
+
+            background: #0b7285;
+
+        }
+
+
+        /* =====================================================
+           NO NOTES
+        ===================================================== */
+
+        .no-notes {
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            background: #fff8e6;
+
+            color: #705b00;
+
+            border-radius: 10px;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =====================================================
+           LOADING / ERROR
+        ===================================================== */
+
+        .page-message {
+
+            grid-column: 1 / -1;
+
+            text-align: center;
+
+            padding: 40px;
+
+            background: white;
+
+            border-radius: 16px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(0, 0, 0, 0.06);
+
+        }
+
+
+        .error-message {
+
+            color: #b00020;
+
+            background: #fff0f0;
+
+        }
+
+
+        /* =====================================================
+           INFO
+        ===================================================== */
 
         .info {
 
@@ -265,6 +451,7 @@
             box-shadow:
                 0 5px 20px
                 rgba(0, 0, 0, 0.06);
+
         }
 
 
@@ -273,6 +460,7 @@
             color: #063970;
 
             margin-top: 0;
+
         }
 
 
@@ -281,8 +469,13 @@
             color: #526b75;
 
             line-height: 1.7;
+
         }
 
+
+        /* =====================================================
+           FOOTER
+        ===================================================== */
 
         footer {
 
@@ -295,14 +488,20 @@
             padding: 25px;
 
             font-size: 13px;
+
         }
 
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
 
         @media (max-width: 600px) {
 
             .hero h1 {
 
                 font-size: 28px;
+
             }
 
 
@@ -311,6 +510,14 @@
                 display: inline-block;
 
                 margin: 5px;
+
+            }
+
+
+            .notes-container {
+
+                padding: 12px;
+
             }
 
         }
@@ -323,278 +530,837 @@
 <body>
 
 
-<header>
+    <!-- =====================================================
+         HEADER
+    ===================================================== -->
 
-    <div class="logo">
-        🏥 Mwaniki Scholars
-    </div>
+    <header>
 
+        <div class="logo">
 
-    <nav>
+            🏥 Mwaniki Scholars
 
-        <a href="index.html">
-            Home
-        </a>
-
-        <a href="courses.html">
-            Courses
-        </a>
-
-        <a href="notes.html">
-            Notes
-        </a>
-
-        <a href="quizzes.html">
-            Quizzes
-        </a>
-
-        <a href="about.html">
-            About
-        </a>
-
-    </nav>
-
-</header>
-
-
-
-<section class="hero">
-
-    <h1>
-        Medical Notes & Study Materials
-    </h1>
-
-
-    <p>
-
-        Mwaniki Scholars provides structured medical
-        learning resources designed to help students
-        understand important concepts, revise
-        efficiently and prepare for examinations.
-
-    </p>
-
-</section>
-
-
-
-<section class="notes-container">
-
-
-    <!-- ANATOMY -->
-
-    <div class="note-card">
-
-        <div class="icon">
-            🫀
         </div>
 
-        <h2>
-            Anatomy Notes
-        </h2>
+
+        <nav>
+
+            <a href="index.html">
+                Home
+            </a>
+
+            <a href="courses.html">
+                Courses
+            </a>
+
+            <a href="notes.html">
+                Notes
+            </a>
+
+            <a href="quizzes.html">
+                Quizzes
+            </a>
+
+            <a href="about.html">
+                About
+            </a>
+
+        </nav>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         HERO
+    ===================================================== -->
+
+    <section class="hero">
+
+        <h1>
+
+            📚 Medical Notes & Study Materials
+
+        </h1>
+
 
         <p>
 
-            Study the structure of the human body,
-            anatomical terminology, tissues, organs,
-            body systems and clinically relevant
-            anatomy.
+            Mwaniki Scholars provides structured medical
+            learning resources designed to help students
+            understand important concepts, revise
+            efficiently and prepare for examinations.
 
         </p>
 
-        <a href="#">
-            View Anatomy Notes
-        </a>
-
-    </div>
+    </section>
 
 
 
-    <!-- PHYSIOLOGY -->
+    <!-- =====================================================
+         DYNAMIC NOTES
+    ===================================================== -->
 
-    <div class="note-card">
+    <main>
 
-        <div class="icon">
-            ❤️
+        <div
+            id="notesContainer"
+            class="notes-container"
+        >
+
+            <div class="page-message">
+
+                ⏳ Loading course notes...
+
+            </div>
+
         </div>
 
+    </main>
+
+
+
+    <!-- =====================================================
+         INFORMATION
+    ===================================================== -->
+
+    <section class="info">
+
         <h2>
-            Physiology Notes
+
+            Study Smarter with Mwaniki Scholars
+
         </h2>
+
 
         <p>
 
-            Review the normal functions of the human
-            body, including cardiovascular,
-            respiratory, renal, nervous and endocrine
-            systems.
+            Medical education requires consistent revision
+            and active learning. Mwaniki Scholars combines
+            structured courses, study materials and
+            self-testing resources to support students
+            throughout their medical education.
 
         </p>
 
-        <a href="#">
-            View Physiology Notes
-        </a>
-
-    </div>
-
-
-
-    <!-- PHARMACOLOGY -->
-
-    <div class="note-card">
-
-        <div class="icon">
-            💊
-        </div>
-
-        <h2>
-            Pharmacology Notes
-        </h2>
 
         <p>
 
-            Explore pharmacological principles,
-            drug classifications, mechanisms of
-            action, therapeutic uses and adverse
-            effects.
+            Use the notes alongside the quizzes and
+            self-testing tools available through the
+            Mwaniki Scholars learning platform.
 
         </p>
 
-        <a href="#">
-            View Pharmacology Notes
-        </a>
-
-    </div>
+    </section>
 
 
 
-    <!-- MICROBIOLOGY -->
+    <!-- =====================================================
+         FOOTER
+    ===================================================== -->
 
-    <div class="note-card">
+    <footer>
 
-        <div class="icon">
-            🦠
-        </div>
+        © 2026 Mwaniki Scholars
 
-        <h2>
-            Microbiology Notes
-        </h2>
+        <br>
 
-        <p>
+        Medical Learning & Knowledge Portal
 
-            Learn about bacteria, viruses, fungi and
-            parasites, including their characteristics,
-            transmission, diagnosis and prevention.
-
-        </p>
-
-        <a href="#">
-            View Microbiology Notes
-        </a>
-
-    </div>
+    </footer>
 
 
 
-    <!-- PATHOLOGY -->
+    <!-- =====================================================
+         SUPABASE NOTES SYSTEM
+    ===================================================== -->
 
-    <div class="note-card">
-
-        <div class="icon">
-            🔬
-        </div>
-
-        <h2>
-            Pathology Notes
-        </h2>
-
-        <p>
-
-            Study disease mechanisms including
-            cellular injury, inflammation, repair,
-            neoplasia and systemic pathology.
-
-        </p>
-
-        <a href="#">
-            View Pathology Notes
-        </a>
-
-    </div>
+    <script type="module">
 
 
+        // =====================================================
+        // IMPORT SUPABASE
+        // =====================================================
 
-    <!-- IMMUNOLOGY -->
-
-    <div class="note-card">
-
-        <div class="icon">
-            🛡️
-        </div>
-
-        <h2>
-            Immunology Notes
-        </h2>
-
-        <p>
-
-            Review immune system components,
-            antibodies, complement, hypersensitivity,
-            immune responses and immunological
-            disorders.
-
-        </p>
-
-        <a href="#">
-            View Immunology Notes
-        </a>
-
-    </div>
+        import { supabase } from "./supabase.js";
 
 
-</section>
+        // =====================================================
+        // NOTES CONTAINER
+        // =====================================================
+
+        const notesContainer =
+            document.getElementById(
+                "notesContainer"
+            );
 
 
+        // =====================================================
+        // ESCAPE HTML
+        // =====================================================
 
-<section class="info">
+        function escapeHTML(value) {
 
-    <h2>
-        Study Smarter with Mwaniki Scholars
-    </h2>
+            if (
+                value === null ||
+                value === undefined
+            ) {
 
+                return "";
 
-    <p>
-
-        Medical education requires consistent revision
-        and active learning. Mwaniki Scholars combines
-        structured courses, study materials and
-        self-testing resources to support students
-        throughout their medical education.
-
-    </p>
+            }
 
 
-    <p>
+            return String(value)
 
-        Use the notes alongside the quizzes and
-        self-testing tools available through the
-        Mwaniki Scholars learning platform.
+                .replace(
+                    /&/g,
+                    "&amp;"
+                )
 
-    </p>
+                .replace(
+                    /</g,
+                    "&lt;"
+                )
 
-</section>
+                .replace(
+                    />/g,
+                    "&gt;"
+                )
+
+                .replace(
+                    /"/g,
+                    "&quot;"
+                )
+
+                .replace(
+                    /'/g,
+                    "&#039;"
+                );
+
+        }
 
 
 
-<footer>
+        // =====================================================
+        // COURSE ICON
+        // =====================================================
 
-    © 2026 Mwaniki Scholars
+        function getCourseIcon(title) {
 
-    <br>
+            const name =
+                String(title || "")
+                    .toLowerCase();
 
-    Medical Learning & Knowledge Portal
 
-</footer>
+            if (
+                name.includes("anatom")
+            ) {
+
+                return "🫀";
+
+            }
+
+
+            if (
+                name.includes("physiolog")
+            ) {
+
+                return "❤️";
+
+            }
+
+
+            if (
+                name.includes("pharmac")
+            ) {
+
+                return "💊";
+
+            }
+
+
+            if (
+                name.includes("microbi")
+            ) {
+
+                return "🦠";
+
+            }
+
+
+            if (
+                name.includes("patholog")
+            ) {
+
+                return "🔬";
+
+            }
+
+
+            if (
+                name.includes("immunolog")
+            ) {
+
+                return "🛡️";
+
+            }
+
+
+            if (
+                name.includes("hemat")
+            ) {
+
+                return "🩸";
+
+            }
+
+
+            if (
+                name.includes("parasit")
+            ) {
+
+                return "🪱";
+
+            }
+
+
+            if (
+                name.includes("biochem")
+            ) {
+
+                return "🧪";
+
+            }
+
+
+            if (
+                name.includes("histolog")
+            ) {
+
+                return "🔬";
+
+            }
+
+
+            return "📚";
+
+        }
+
+
+
+        // =====================================================
+        // LOAD COURSES AND NOTES
+        // =====================================================
+
+        async function loadNotesCourses() {
+
+
+            if (!notesContainer) {
+
+                console.error(
+                    "❌ notesContainer not found"
+                );
+
+                return;
+
+            }
+
+
+            notesContainer.innerHTML = `
+
+                <div class="page-message">
+
+                    ⏳ Loading course notes...
+
+                </div>
+
+            `;
+
+
+            try {
+
+
+                console.log(
+                    "📚 Mwaniki Scholars Notes Page"
+                );
+
+
+                console.log(
+                    "🔄 Loading courses..."
+                );
+
+
+                // =================================================
+                // LOAD COURSES
+                // =================================================
+
+                const {
+
+                    data: courses,
+
+                    error: coursesError
+
+                } = await supabase
+
+                    .from("courses")
+
+                    .select(`
+                        id,
+                        title,
+                        description,
+                        image
+                    `)
+
+                    .order(
+                        "id",
+                        {
+                            ascending: true
+                        }
+                    );
+
+
+                if (coursesError) {
+
+                    console.error(
+                        "❌ COURSES ERROR:",
+                        coursesError
+                    );
+
+                    throw coursesError;
+
+                }
+
+
+                console.log(
+                    "✅ Courses loaded:",
+                    courses
+                );
+
+
+                // =================================================
+                // NO COURSES
+                // =================================================
+
+                if (
+                    !courses ||
+                    courses.length === 0
+                ) {
+
+                    notesContainer.innerHTML = `
+
+                        <div class="page-message">
+
+                            📚 No courses found.
+
+                        </div>
+
+                    `;
+
+                    return;
+
+                }
+
+
+
+                // =================================================
+                // LOAD ALL UPLOADED NOTES
+                // =================================================
+
+                console.log(
+                    "🔄 Loading uploaded notes..."
+                );
+
+
+                const {
+
+                    data: uploadedNotes,
+
+                    error: notesError
+
+                } = await supabase
+
+                    .from("notes")
+
+                    .select(`
+                        id,
+                        file_name,
+                        file_url,
+                        course,
+                        unit,
+                        course_id,
+                        unit_id,
+                        created_at
+                    `)
+
+                    .order(
+                        "created_at",
+                        {
+                            ascending: false
+                        }
+                    );
+
+
+                if (notesError) {
+
+                    console.error(
+                        "❌ NOTES ERROR:",
+                        notesError
+                    );
+
+                    throw notesError;
+
+                }
+
+
+                console.log(
+                    "✅ Uploaded notes loaded:",
+                    uploadedNotes
+                );
+
+
+                // =================================================
+                // CLEAR LOADING
+                // =================================================
+
+                notesContainer.innerHTML = "";
+
+
+
+                // =================================================
+                // CREATE COURSE CARDS
+                // =================================================
+
+                courses.forEach(
+                    course => {
+
+
+                        const courseId =
+                            Number(course.id);
+
+
+                        // -----------------------------------------
+                        // FIND NOTES FOR THIS COURSE
+                        // -----------------------------------------
+
+                        const courseNotes =
+                            (uploadedNotes || [])
+                                .filter(
+                                    note =>
+                                        Number(
+                                            note.course_id
+                                        ) === courseId
+                                );
+
+
+                        console.log(
+                            `📚 ${course.title}: ${courseNotes.length} notes`
+                        );
+
+
+                        // -----------------------------------------
+                        // CREATE CARD
+                        // -----------------------------------------
+
+                        const card =
+                            document.createElement(
+                                "div"
+                            );
+
+
+                        card.className =
+                            "note-card";
+
+
+                        // -----------------------------------------
+                        // COURSE IMAGE
+                        // -----------------------------------------
+
+                        let imageHTML = "";
+
+
+                        if (
+                            course.image &&
+                            String(
+                                course.image
+                            ).trim()
+                        ) {
+
+                            imageHTML = `
+
+                                <img
+                                    src="${escapeHTML(course.image)}"
+                                    alt="${escapeHTML(course.title)}"
+                                    style="
+                                        width:100%;
+                                        height:160px;
+                                        object-fit:cover;
+                                        border-radius:12px;
+                                        margin-bottom:15px;
+                                    "
+                                    onerror="
+                                        this.style.display='none';
+                                    "
+                                >
+
+                            `;
+
+                        }
+
+
+
+                        // -----------------------------------------
+                        // MATERIALS
+                        // -----------------------------------------
+
+                        let materialsHTML = "";
+
+
+                        if (
+                            courseNotes.length > 0
+                        ) {
+
+
+                            materialsHTML = `
+
+                                <div class="materials">
+
+                                    <div class="materials-title">
+
+                                        📄 Available Study Materials
+
+                                    </div>
+
+
+                                    ${courseNotes
+                                        .map(
+                                            note => `
+
+                                                <div
+                                                    class="material"
+                                                >
+
+                                                    <div
+                                                        class="material-name"
+                                                    >
+
+                                                        📄
+                                                        ${escapeHTML(
+                                                            note.file_name ||
+                                                            "Study Material"
+                                                        )}
+
+                                                    </div>
+
+
+                                                    <div
+                                                        class="material-unit"
+                                                    >
+
+                                                        📖
+                                                        ${escapeHTML(
+                                                            note.unit ||
+                                                            "Course Material"
+                                                        )}
+
+                                                    </div>
+
+
+                                                    ${
+                                                        note.file_url
+                                                            ? `
+
+                                                                <a
+                                                                    href="${escapeHTML(note.file_url)}"
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                >
+
+                                                                    📖 View Notes
+
+                                                                </a>
+
+                                                            `
+                                                            : `
+
+                                                                <span
+                                                                    style="
+                                                                        color:#b00020;
+                                                                        font-size:13px;
+                                                                    "
+                                                                >
+
+                                                                    ⚠️ File URL unavailable
+
+                                                                </span>
+
+                                                            `
+                                                    }
+
+                                                </div>
+
+                                            `
+                                        )
+                                        .join("")
+                                    }
+
+                                </div>
+
+                            `;
+
+                        }
+
+                        else {
+
+
+                            materialsHTML = `
+
+                                <div class="no-notes">
+
+                                    📄 No uploaded notes yet.
+
+                                </div>
+
+                            `;
+
+                        }
+
+
+
+                        // -----------------------------------------
+                        // COURSE CARD HTML
+                        // -----------------------------------------
+
+                        card.innerHTML = `
+
+                            ${imageHTML}
+
+
+                            <div class="icon">
+
+                                ${getCourseIcon(
+                                    course.title
+                                )}
+
+                            </div>
+
+
+                            <h2>
+
+                                ${escapeHTML(
+                                    course.title
+                                )}
+
+                            </h2>
+
+
+                            <p>
+
+                                ${escapeHTML(
+                                    course.description ||
+                                    "Medical study materials and notes."
+                                )}
+
+                            </p>
+
+
+                            ${materialsHTML}
+
+
+                            <a
+                                class="course-button"
+                                href="courses.html"
+                            >
+
+                                📚 View Course
+
+                            </a>
+
+                        `;
+
+
+                        notesContainer.appendChild(
+                            card
+                        );
+
+                    }
+                );
+
+
+                // =================================================
+                // FINISHED
+                // =================================================
+
+                console.log(
+                    "✅ Notes page rendered successfully"
+                );
+
+
+            }
+
+            catch (error) {
+
+
+                console.error(
+                    "❌ NOTES PAGE ERROR:",
+                    error
+                );
+
+
+                notesContainer.innerHTML = `
+
+                    <div
+                        class="
+                            page-message
+                            error-message
+                        "
+                    >
+
+                        <h2>
+
+                            ❌ Failed to load notes
+
+                        </h2>
+
+
+                        <p>
+
+                            ${
+                                escapeHTML(
+                                    error.message ||
+                                    "Unknown error"
+                                )
+                            }
+
+                        </p>
+
+
+                        <p>
+
+                            Please refresh the page
+                            and try again.
+
+                        </p>
+
+                    </div>
+
+                `;
+
+            }
+
+        }
+
+
+
+        // =====================================================
+        // START NOTES PAGE
+        // =====================================================
+
+        loadNotesCourses();
+
+
+    </script>
 
 
 </body>
