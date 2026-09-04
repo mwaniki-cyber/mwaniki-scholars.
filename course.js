@@ -2,12 +2,11 @@ import { supabase } from "./supabase.js";
 
 // =====================================================
 // MWANIKI SCHOLARS - COURSE PAGE ENGINE
-// SAFE VERSION
-//
+// =====================================================
 // Supports:
-// 1. Detailed notes stored directly in units.notes
-// 2. Detailed notes stored in units.notes_content
-// 3. Uploaded notes stored in notes table
+// 1. Full notes in units.notes_content
+// 2. Older notes in units.notes
+// 3. Uploaded notes in public.notes
 // 4. Existing quiz.js engine
 // =====================================================
 
@@ -16,11 +15,9 @@ import { supabase } from "./supabase.js";
 // SELECTED COURSE
 // =====================================================
 
-const courseId =
-    localStorage.getItem("selectedCourse");
+const courseId = localStorage.getItem("selectedCourse");
 
-const courseName =
-    localStorage.getItem("selectedCourseName");
+const courseName = localStorage.getItem("selectedCourseName");
 
 
 // =====================================================
@@ -46,15 +43,10 @@ const notesArea =
 
 if (!courseId) {
 
-    console.error(
-        "❌ No selected course found"
-    );
+    console.error("❌ No selected course found");
 
     if (courseTitle) {
-
-        courseTitle.textContent =
-            "❌ No course selected";
-
+        courseTitle.textContent = "❌ No course selected";
     }
 
 } else {
@@ -81,13 +73,9 @@ async function loadCourse() {
             data,
             error
         } = await supabase
-
             .from("courses")
-
             .select("*")
-
             .eq("id", courseId)
-
             .single();
 
 
@@ -99,14 +87,11 @@ async function loadCourse() {
             );
 
             if (courseTitle) {
-
                 courseTitle.textContent =
                     "❌ Failed to load course";
-
             }
 
             return;
-
         }
 
 
@@ -122,7 +107,6 @@ async function loadCourse() {
                 data.title ||
                 courseName ||
                 "Medical Course";
-
         }
 
 
@@ -131,20 +115,16 @@ async function loadCourse() {
             courseDescription.textContent =
                 data.description ||
                 "Medical learning course";
-
         }
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "❌ Unexpected course error:",
             error
         );
-
     }
-
 }
 
 
@@ -161,7 +141,6 @@ async function loadUnits() {
         );
 
         return;
-
     }
 
 
@@ -173,22 +152,25 @@ async function loadUnits() {
     try {
 
         // =================================================
-        // IMPORTANT:
-        // We select the existing notes column AND the
-        // notes_content column if available.
+        // LOAD ALL REQUIRED UNIT COLUMNS
         // =================================================
 
         const {
             data,
             error
         } = await supabase
-
             .from("units")
-
-            .select("*")
-
+            .select(`
+                id,
+                course_id,
+                title,
+                notes,
+                notes_content,
+                image,
+                video_url,
+                created_at
+            `)
             .eq("course_id", courseId)
-
             .order("id", {
                 ascending: true
             });
@@ -215,16 +197,13 @@ async function loadUnits() {
                     </h3>
 
                     <p>
-                        ${escapeHTML(
-                            error.message
-                        )}
+                        ${escapeHTML(error.message)}
                     </p>
 
                 </div>
             `;
 
             return;
-
         }
 
 
@@ -250,7 +229,6 @@ async function loadUnits() {
             `;
 
             return;
-
         }
 
 
@@ -272,9 +250,8 @@ async function loadUnits() {
                     "unit-card";
 
 
-                // Determine whether this unit has
-                // detailed notes directly attached.
-
+                // IMPORTANT:
+                // notes_content is checked FIRST.
                 const directNotes =
                     getUnitNotes(unit);
 
@@ -286,9 +263,9 @@ async function loadUnits() {
                 unitCard.innerHTML = `
 
                     <h3>
-                        📖 Unit ${index + 1}:
-                        ${escapeHTML(unit.title)}
+                        📖 ${escapeHTML(unit.title)}
                     </h3>
+
 
                     <div style="
                         margin-top:15px;
@@ -299,7 +276,7 @@ async function loadUnits() {
 
                         <button
                             class="start-quiz-button"
-                            data-unit-id="${unit.id}"
+                            data-unit-id="${escapeHTML(unit.id)}"
                             data-unit-title="${escapeHTML(unit.title)}"
                         >
                             📝 Start Quiz
@@ -308,7 +285,7 @@ async function loadUnits() {
 
                         <button
                             class="view-notes-button"
-                            data-unit-id="${unit.id}"
+                            data-unit-id="${escapeHTML(unit.id)}"
                             data-unit-title="${escapeHTML(unit.title)}"
                         >
                             📄 View Notes
@@ -316,11 +293,10 @@ async function loadUnits() {
 
                     </div>
 
+
                     ${
                         hasDirectNotes
-
                         ?
-
                         `
                         <div style="
                             margin-top:10px;
@@ -330,10 +306,16 @@ async function loadUnits() {
                             ✅ Detailed notes available
                         </div>
                         `
-
                         :
-
-                        ""
+                        `
+                        <div style="
+                            margin-top:10px;
+                            color:#777;
+                            font-size:14px;
+                        ">
+                            📄 Notes will load from the notes library
+                        </div>
+                        `
                     }
 
                 `;
@@ -352,17 +334,16 @@ async function loadUnits() {
         // =================================================
 
         document
-            .querySelectorAll(
-                ".start-quiz-button"
-            )
+            .querySelectorAll(".start-quiz-button")
             .forEach(button => {
 
                 button.addEventListener(
                     "click",
-                    function() {
+                    function () {
 
                         const unitId =
                             this.dataset.unitId;
+
 
                         const unitTitle =
                             this.dataset.unitTitle;
@@ -418,14 +399,10 @@ async function loadUnits() {
 
                                     </div>
                                 `;
-
                             }
-
                         }
-
                     }
                 );
-
             });
 
 
@@ -434,17 +411,16 @@ async function loadUnits() {
         // =================================================
 
         document
-            .querySelectorAll(
-                ".view-notes-button"
-            )
+            .querySelectorAll(".view-notes-button")
             .forEach(button => {
 
                 button.addEventListener(
                     "click",
-                    async function() {
+                    async function () {
 
                         const unitId =
                             this.dataset.unitId;
+
 
                         const unitTitle =
                             this.dataset.unitTitle;
@@ -461,16 +437,17 @@ async function loadUnits() {
                             unitId,
                             unitTitle
                         );
-
                     }
                 );
-
             });
 
 
-    }
+        console.log(
+            `✅ ${data.length} units displayed`
+        );
 
-    catch (error) {
+
+    } catch (error) {
 
         console.error(
             "❌ Unexpected units error:",
@@ -489,63 +466,55 @@ async function loadUnits() {
                 ❌ Something went wrong.
 
                 <p>
-                    ${escapeHTML(
-                        error.message
-                    )}
+                    ${escapeHTML(error.message)}
                 </p>
 
             </div>
         `;
-
     }
-
 }
 
 
 // =====================================================
 // GET DIRECT NOTES FROM UNIT
 // =====================================================
-//
-// Supports both:
-// units.notes
-//
-// AND:
-//
-// units.notes_content
-//
-// This is important because your older Anatomy data
-// already contains detailed notes.
+// IMPORTANT:
+// notes_content ALWAYS has priority over notes.
 // =====================================================
 
 function getUnitNotes(unit) {
 
-    const possibleNotes = [
+    // =================================================
+    // 1. FULL NOTES
+    // =================================================
 
-        unit.notes,
-
-        unit.notes_content
-
-    ];
-
-
-    for (
-        const value of possibleNotes
+    if (
+        typeof unit.notes_content === "string" &&
+        unit.notes_content.trim().length > 0
     ) {
 
-        if (
-            typeof value === "string" &&
-            value.trim().length > 0
-        ) {
-
-            return value;
-
-        }
-
+        return unit.notes_content.trim();
     }
 
 
-    return "";
+    // =================================================
+    // 2. FALLBACK TO OLD NOTES COLUMN
+    // =================================================
 
+    if (
+        typeof unit.notes === "string" &&
+        unit.notes.trim().length > 0
+    ) {
+
+        return unit.notes.trim();
+    }
+
+
+    // =================================================
+    // 3. NOTHING FOUND
+    // =================================================
+
+    return "";
 }
 
 
@@ -565,7 +534,6 @@ async function showUnitNotes(
         );
 
         return;
-
     }
 
 
@@ -574,10 +542,13 @@ async function showUnitNotes(
             padding:20px;
             text-align:center;
         ">
+
             ⏳ Loading notes for
+
             <strong>
                 ${escapeHTML(unitTitle)}
             </strong>...
+
         </div>
     `;
 
@@ -592,22 +563,25 @@ async function showUnitNotes(
 
         // =================================================
         // FIRST:
-        // Load the unit itself.
-        //
-        // This restores Anatomy and supports Pharmacology.
+        // LOAD THE UNIT
         // =================================================
 
         const {
             data: unit,
             error: unitError
         } = await supabase
-
             .from("units")
-
-            .select("*")
-
+            .select(`
+                id,
+                course_id,
+                title,
+                notes,
+                notes_content,
+                image,
+                video_url,
+                created_at
+            `)
             .eq("id", unitId)
-
             .single();
 
 
@@ -633,8 +607,13 @@ async function showUnitNotes(
 
             if (
                 directNotes &&
-                directNotes.trim()
+                directNotes.trim().length > 0
             ) {
+
+                console.log(
+                    "✅ Full unit notes found"
+                );
+
 
                 renderDetailedNotes(
                     unitTitle,
@@ -642,31 +621,25 @@ async function showUnitNotes(
                     directNotes
                 );
 
+
                 return;
-
             }
-
         }
 
 
         // =================================================
         // SECOND:
-        // Check uploaded notes table.
+        // CHECK UPLOADED NOTES TABLE
         // =================================================
 
         const {
             data: uploadedNotes,
             error: notesError
         } = await supabase
-
             .from("notes")
-
             .select("*")
-
             .eq("course_id", courseId)
-
             .eq("unit_id", unitId)
-
             .order("created_at", {
                 ascending: false
             });
@@ -678,7 +651,6 @@ async function showUnitNotes(
                 "❌ UPLOADED NOTES ERROR:",
                 notesError
             );
-
         }
 
 
@@ -697,30 +669,22 @@ async function showUnitNotes(
             );
 
             return;
-
         }
 
 
         // =================================================
         // LAST FALLBACK:
-        // Search notes table by course + unit name.
-        // This helps recover older records where unit_id
-        // wasn't populated correctly.
+        // SEARCH NOTES BY COURSE + UNIT NAME
         // =================================================
 
         const {
             data: fallbackNotes,
             error: fallbackError
         } = await supabase
-
             .from("notes")
-
             .select("*")
-
             .eq("course_id", courseId)
-
             .eq("unit", unitTitle)
-
             .order("created_at", {
                 ascending: false
             });
@@ -732,7 +696,6 @@ async function showUnitNotes(
                 "⚠️ Fallback notes search failed:",
                 fallbackError
             );
-
         }
 
 
@@ -747,7 +710,6 @@ async function showUnitNotes(
             );
 
             return;
-
         }
 
 
@@ -768,9 +730,11 @@ async function showUnitNotes(
                     📄 No notes found
                 </h3>
 
+
                 <p>
                     No notes are currently connected
                     to
+
                     <strong>
                         ${escapeHTML(unitTitle)}
                     </strong>.
@@ -780,9 +744,8 @@ async function showUnitNotes(
 
         `;
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
         console.error(
             "❌ Unexpected notes error:",
@@ -802,17 +765,13 @@ async function showUnitNotes(
                 ❌ Failed to load notes.
 
                 <p>
-                    ${escapeHTML(
-                        error.message
-                    )}
+                    ${escapeHTML(error.message)}
                 </p>
 
             </div>
 
         `;
-
     }
-
 }
 
 
@@ -854,11 +813,13 @@ function renderDetailedNotes(
                 rgba(0,0,0,.07);
         ">
 
+
             <div style="
                 margin-bottom:25px;
                 border-bottom:2px solid #e8f1f5;
                 padding-bottom:15px;
             ">
+
 
                 <h2 style="
                     color:#063970;
@@ -868,6 +829,7 @@ function renderDetailedNotes(
                     📚 ${escapeHTML(unitTitle)}
 
                 </h2>
+
 
             </div>
 
@@ -881,6 +843,7 @@ function renderDetailedNotes(
                 ${formatDetailedNotes(notes)}
 
             </article>
+
 
         </div>
 
@@ -896,7 +859,6 @@ function renderDetailedNotes(
         behavior: "smooth",
         block: "start"
     });
-
 }
 
 
@@ -972,6 +934,7 @@ function renderUploadedNotes(
                     rgba(0,0,0,.06);
             ">
 
+
                 <h3 style="
                     color:#063970;
                     margin-top:0;
@@ -1022,7 +985,6 @@ function renderUploadedNotes(
         notesArea.appendChild(
             noteCard
         );
-
     });
 
 
@@ -1030,21 +992,23 @@ function renderUploadedNotes(
         behavior: "smooth",
         block: "start"
     });
-
 }
 
 
 // =====================================================
 // FORMAT DETAILED NOTES
 // =====================================================
-//
-// Handles the Markdown-style notes you have been using.
+// Converts the Markdown-style notes into HTML.
 // =====================================================
 
 function formatDetailedNotes(text) {
 
     if (!text) return "";
 
+
+    // =================================================
+    // ESCAPE HTML FIRST
+    // =================================================
 
     let html =
         escapeHTML(text);
@@ -1059,25 +1023,30 @@ function formatDetailedNotes(text) {
         "<h6>$1</h6>"
     );
 
+
     html = html.replace(
         /^##### (.*)$/gm,
         "<h5>$1</h5>"
     );
+
 
     html = html.replace(
         /^#### (.*)$/gm,
         "<h4>$1</h4>"
     );
 
+
     html = html.replace(
         /^### (.*)$/gm,
         "<h3>$1</h3>"
     );
 
+
     html = html.replace(
         /^## (.*)$/gm,
         "<h2>$1</h2>"
     );
+
 
     html = html.replace(
         /^# (.*)$/gm,
@@ -1157,12 +1126,15 @@ function formatDetailedNotes(text) {
     );
 
 
+    // =================================================
+    // RETURN
+    // =================================================
+
     return `
         <p>
             ${html}
         </p>
     `;
-
 }
 
 
@@ -1198,7 +1170,6 @@ function escapeHTML(value) {
             /'/g,
             "&#039;"
         );
-
 }
 
 
@@ -1209,16 +1180,13 @@ function escapeHTML(value) {
 async function initializeCourse() {
 
     if (!courseId) {
-
         return;
-
     }
 
 
     await loadCourse();
 
     await loadUnits();
-
 }
 
 
