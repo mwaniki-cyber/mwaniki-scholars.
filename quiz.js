@@ -6,40 +6,28 @@ import { supabase } from "./supabase.js";
 
 console.log("📝 Mwaniki Scholars Supabase Quiz Engine Loaded");
 
-
 // =====================================================
 // QUIZ AREA
 // =====================================================
 
 function getQuizArea() {
-
-    const quizArea =
-        document.getElementById("quizArea");
+    const quizArea = document.getElementById("quizArea");
 
     if (!quizArea) {
-
-        console.error(
-            "❌ quizArea was not found"
-        );
-
+        console.error("❌ quizArea was not found");
         return null;
     }
 
     return quizArea;
 }
 
-
 // =====================================================
-// LOAD QUIZ
+// LOAD QUIZ FROM SUPABASE
 // =====================================================
 
-window.loadQuiz = async function(unitId, unitTitle) {
+window.loadQuiz = async function (unitId, unitTitle) {
 
-    console.log(
-        "📝 Loading quiz:",
-        unitTitle,
-        unitId
-    );
+    console.log("📝 Loading quiz:", unitTitle, "Unit ID:", unitId);
 
     const quizArea = getQuizArea();
 
@@ -55,27 +43,35 @@ window.loadQuiz = async function(unitId, unitTitle) {
         </div>
     `;
 
-
     try {
 
-        const {
-            data,
-            error
-        } = await supabase
-            .from("quiz_questions")
-            .select("*")
-            .eq("unit_id", unitId)
-            .order("id", {
-                ascending:true
-            });
+        // =================================================
+        // MYCOLOGY COURSE ID = 11
+        // QUIZZES ARE LINKED BY COURSE_ID + UNIT TITLE
+        // =================================================
 
+        const { data, error } = await supabase
+            .from("quizzes")
+            .select(`
+                id,
+                course_id,
+                unit,
+                question,
+                option_a,
+                option_b,
+                option_c,
+                option_d,
+                correct_answer
+            `)
+            .eq("course_id", 11)
+            .eq("unit", unitTitle)
+            .order("id", {
+                ascending: true
+            });
 
         if (error) {
 
-            console.error(
-                "❌ QUIZ LOAD ERROR:",
-                error
-            );
+            console.error("❌ QUIZ LOAD ERROR:", error);
 
             quizArea.innerHTML = `
                 <div style="
@@ -85,9 +81,7 @@ window.loadQuiz = async function(unitId, unitTitle) {
                     border-radius:12px;
                 ">
 
-                    <h3>
-                        ❌ Failed to load quiz
-                    </h3>
+                    <h3>❌ Failed to load quiz</h3>
 
                     <p>
                         ${escapeHTML(error.message)}
@@ -99,12 +93,14 @@ window.loadQuiz = async function(unitId, unitTitle) {
             return;
         }
 
-
         console.log(
             "📝 Quiz questions loaded:",
             data
         );
 
+        // =================================================
+        // NO QUESTIONS
+        // =================================================
 
         if (!data || data.length === 0) {
 
@@ -115,14 +111,12 @@ window.loadQuiz = async function(unitId, unitTitle) {
                     border-radius:12px;
                 ">
 
-                    <h3>
-                        📝 No quiz available yet
-                    </h3>
+                    <h3>📝 No quiz available yet</h3>
 
                     <p>
-                        No questions have been added
-                        for <strong>
-                        ${escapeHTML(unitTitle)}
+                        No questions have been added for
+                        <strong>
+                            ${escapeHTML(unitTitle)}
                         </strong>.
                     </p>
 
@@ -132,6 +126,9 @@ window.loadQuiz = async function(unitId, unitTitle) {
             return;
         }
 
+        // =================================================
+        // RENDER QUESTIONS
+        // =================================================
 
         renderQuiz(
             data,
@@ -139,9 +136,7 @@ window.loadQuiz = async function(unitId, unitTitle) {
             unitTitle
         );
 
-    }
-
-    catch(error) {
+    } catch (error) {
 
         console.error(
             "❌ Unexpected quiz error:",
@@ -156,15 +151,16 @@ window.loadQuiz = async function(unitId, unitTitle) {
                 border-radius:12px;
             ">
 
-                ❌ ${escapeHTML(error.message)}
+                <h3>❌ Quiz Error</h3>
+
+                <p>
+                    ${escapeHTML(error.message)}
+                </p>
 
             </div>
         `;
-
     }
-
 };
-
 
 // =====================================================
 // RENDER QUIZ
@@ -176,11 +172,9 @@ function renderQuiz(
     unitTitle
 ) {
 
-    const quizArea =
-        getQuizArea();
+    const quizArea = getQuizArea();
 
     if (!quizArea) return;
-
 
     let html = `
 
@@ -196,116 +190,100 @@ function renderQuiz(
             </p>
 
             <form id="quizForm">
-
     `;
 
+    questions.forEach((q, index) => {
 
-    questions.forEach(
-        (q, index) => {
+        html += `
 
-            html += `
+            <div
+                class="quiz-question"
+                style="
+                    background:#ffffff;
+                    padding:20px;
+                    margin:15px 0;
+                    border-radius:14px;
+                    border:1px solid #d9edf2;
+                "
+            >
 
-                <div
-                    class="quiz-question"
-                    style="
-                        background:#ffffff;
-                        padding:20px;
-                        margin:15px 0;
-                        border-radius:14px;
-                        border:1px solid #d9edf2;
-                    "
-                >
+                <h3>
+                    ${index + 1}.
+                    ${escapeHTML(q.question)}
+                </h3>
 
-                    <h3>
-                        ${index + 1}.
-                        ${escapeHTML(q.question)}
-                    </h3>
+                <label style="display:block;margin:10px 0;">
+                    <input
+                        type="radio"
+                        name="question_${q.id}"
+                        value="A"
+                    >
+                    A. ${escapeHTML(q.option_a)}
+                </label>
 
-                    <label>
-                        <input
-                            type="radio"
-                            name="question_${q.id}"
-                            value="A"
-                        >
-                        A. ${escapeHTML(q.option_a)}
-                    </label>
+                <label style="display:block;margin:10px 0;">
+                    <input
+                        type="radio"
+                        name="question_${q.id}"
+                        value="B"
+                    >
+                    B. ${escapeHTML(q.option_b)}
+                </label>
 
-                    <br>
+                <label style="display:block;margin:10px 0;">
+                    <input
+                        type="radio"
+                        name="question_${q.id}"
+                        value="C"
+                    >
+                    C. ${escapeHTML(q.option_c)}
+                </label>
 
-                    <label>
-                        <input
-                            type="radio"
-                            name="question_${q.id}"
-                            value="B"
-                        >
-                        B. ${escapeHTML(q.option_b)}
-                    </label>
+                <label style="display:block;margin:10px 0;">
+                    <input
+                        type="radio"
+                        name="question_${q.id}"
+                        value="D"
+                    >
+                    D. ${escapeHTML(q.option_d)}
+                </label>
 
-                    <br>
+            </div>
 
-                    <label>
-                        <input
-                            type="radio"
-                            name="question_${q.id}"
-                            value="C"
-                        >
-                        C. ${escapeHTML(q.option_c)}
-                    </label>
-
-                    <br>
-
-                    <label>
-                        <input
-                            type="radio"
-                            name="question_${q.id}"
-                            value="D"
-                        >
-                        D. ${escapeHTML(q.option_d)}
-                    </label>
-
-                </div>
-
-            `;
-
-        }
-    );
-
+        `;
+    });
 
     html += `
 
-                <button
-                    type="button"
-                    id="submitSupabaseQuiz"
-                    style="
-                        background:#0b7285;
-                        color:white;
-                        border:none;
-                        padding:14px 25px;
-                        border-radius:10px;
-                        cursor:pointer;
-                        font-size:16px;
-                    "
-                >
-                    ✅ Submit Quiz
-                </button>
+            <button
+                type="button"
+                id="submitSupabaseQuiz"
+                style="
+                    background:#0b7285;
+                    color:white;
+                    border:none;
+                    padding:14px 25px;
+                    border-radius:10px;
+                    cursor:pointer;
+                    font-size:16px;
+                "
+            >
+                ✅ Submit Quiz
+            </button>
 
             </form>
 
             <div id="quizResult"></div>
 
         </div>
-
     `;
 
-
     quizArea.innerHTML = html;
-
 
     const submitButton =
         document.getElementById(
             "submitSupabaseQuiz"
         );
-
 
     if (submitButton) {
 
@@ -321,11 +299,8 @@ function renderQuiz(
 
             }
         );
-
     }
-
 }
-
 
 // =====================================================
 // CALCULATE QUIZ
@@ -339,7 +314,6 @@ function calculateQuiz(
 
     let score = 0;
 
-
     questions.forEach(q => {
 
         const selected =
@@ -347,23 +321,15 @@ function calculateQuiz(
                 `input[name="question_${q.id}"]:checked`
             );
 
-
         if (
             selected &&
-            selected.value ===
-            q.correct_answer
+            selected.value === q.correct_answer
         ) {
-
             score++;
-
         }
-
     });
 
-
-    const total =
-        questions.length;
-
+    const total = questions.length;
 
     const percentage =
         total > 0
@@ -372,47 +338,33 @@ function calculateQuiz(
             )
             : 0;
 
-
     const result =
         document.getElementById(
             "quizResult"
         );
 
-
     if (!result) return;
-
 
     let message;
 
-
     if (percentage >= 80) {
 
-        message =
-            "🎉 Excellent work!";
+        message = "🎉 Excellent work!";
 
-    }
+    } else if (percentage >= 70) {
 
-    else if (percentage >= 70) {
+        message = "👏 Good work!";
 
-        message =
-            "👏 Good work!";
-
-    }
-
-    else if (percentage >= 50) {
+    } else if (percentage >= 50) {
 
         message =
             "📚 Keep studying and try again.";
 
-    }
-
-    else {
+    } else {
 
         message =
             "💪 Keep practicing. You can improve!";
-
     }
-
 
     result.innerHTML = `
 
@@ -443,7 +395,6 @@ function calculateQuiz(
 
     `;
 
-
     saveQuizProgress(
         unitId,
         unitTitle,
@@ -451,9 +402,7 @@ function calculateQuiz(
         total,
         percentage
     );
-
 }
-
 
 // =====================================================
 // SAVE LOCAL PROGRESS
@@ -469,7 +418,6 @@ function saveQuizProgress(
 
     let progress = [];
 
-
     try {
 
         progress =
@@ -479,46 +427,37 @@ function saveQuizProgress(
                 )
             ) || [];
 
-    }
-
-    catch(error) {
+    } catch (error) {
 
         progress = [];
-
     }
-
 
     progress.push({
 
-        unitId:unitId,
+        unitId: unitId,
 
-        unit:unitTitle,
+        unit: unitTitle,
 
-        score:score,
+        score: score,
 
-        total:total,
+        total: total,
 
-        percentage:percentage,
+        percentage: percentage,
 
         date:
             new Date()
                 .toLocaleDateString()
-
     });
-
 
     localStorage.setItem(
         "mwanikiQuizProgress",
         JSON.stringify(progress)
     );
 
-
     console.log(
         "📊 Quiz progress saved"
     );
-
 }
-
 
 // =====================================================
 // ESCAPE HTML
@@ -527,14 +466,12 @@ function saveQuizProgress(
 function escapeHTML(value) {
 
     return String(value ?? "")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
-
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
-
 
 // =====================================================
 // INITIALIZE
