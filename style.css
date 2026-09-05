@@ -204,3 +204,239 @@ padding:10px;
 border-radius:5px;
 
 }
+/* =====================================================
+   MWANIKI SCHOLARS - COURSE PAGE
+   Keeps the old left-aligned/grid-style navigation
+   ===================================================== */
+
+/* Course page should NOT inherit the auth page centering */
+.course-header {
+    text-align: left;
+    margin: 0;
+    padding: 18px 25px;
+    background: #ffffff;
+    border-bottom: 1px solid #dbe5f0;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 5;
+}
+
+.course-header button {
+    width: auto;
+    padding: 10px 18px;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.course-header h1 {
+    margin: 0;
+    font-size: 26px;
+    color: #123b63;
+    text-align: left;
+}
+
+.course-header-content {
+    flex: 1;
+    text-align: left;
+}
+
+.course-header-content p {
+    margin: 5px 0 0;
+    color: #66788a;
+    text-align: left;
+}
+
+
+/* Main course area */
+.course-area {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 25px;
+    box-sizing: border-box;
+    text-align: left;
+}
+
+
+/* =====================================================
+   UNITS GRID
+   ===================================================== */
+
+.units-area {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    align-items: stretch;
+    text-align: left;
+}
+
+
+/* Unit cards */
+.unit-card {
+    background: #ffffff;
+    border: 1px solid #dce6f0;
+    border-radius: 12px;
+    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: left;
+}
+
+.unit-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 18px rgba(0, 0, 0, 0.12);
+}
+
+
+/* Unit number/title */
+.unit-card h2,
+.unit-card h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #123b63;
+    text-align: left;
+}
+
+.unit-card p {
+    color: #566575;
+    line-height: 1.5;
+    text-align: left;
+}
+
+
+/* Unit image */
+.unit-card img {
+    width: 100%;
+    max-height: 180px;
+    object-fit: cover;
+    border-radius: 9px;
+    margin-bottom: 15px;
+}
+
+
+/* =====================================================
+   UNIT BUTTONS
+   ===================================================== */
+
+.unit-card button {
+    display: inline-block;
+    width: auto;
+    margin: 8px 6px 0 0;
+    padding: 10px 15px;
+}
+
+.unit-card .quiz-btn {
+    background: #2b7cff;
+}
+
+.unit-card .notes-btn {
+    background: #16a085;
+}
+
+.unit-card .quiz-btn:hover {
+    background: #1a5edb;
+}
+
+.unit-card .notes-btn:hover {
+    background: #117864;
+}
+
+
+/* =====================================================
+   VIDEO
+   ===================================================== */
+
+.unit-card video {
+    width: 100%;
+    max-height: 220px;
+    border-radius: 9px;
+    margin: 10px 0 15px;
+    display: block;
+}
+
+
+/* =====================================================
+   NOTES AREA
+   ===================================================== */
+
+.notes-area {
+    width: 100%;
+    margin-top: 30px;
+    padding: 25px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #dce6f0;
+    text-align: left;
+}
+
+.notes-area h2,
+.notes-area h3 {
+    color: #123b63;
+    text-align: left;
+}
+
+.notes-area p,
+.notes-area div {
+    text-align: left;
+    line-height: 1.7;
+}
+
+
+/* =====================================================
+   LOADING / ERROR
+   ===================================================== */
+
+.loading {
+    width: 100%;
+    padding: 30px;
+    box-sizing: border-box;
+    text-align: left;
+    color: #52677a;
+}
+
+.error {
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    background: #fff4f4;
+    border: 1px solid #e2bcbc;
+    border-radius: 10px;
+    color: #a12626;
+    text-align: left;
+}
+
+
+/* =====================================================
+   MOBILE
+   ===================================================== */
+
+@media (max-width: 700px) {
+
+    .course-header {
+        padding: 15px;
+        gap: 12px;
+    }
+
+    .course-header h1 {
+        font-size: 21px;
+    }
+
+    .course-area {
+        padding: 15px;
+    }
+
+    .units-area {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .unit-card {
+        padding: 16px;
+    }
+
+}
