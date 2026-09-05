@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -10,23 +9,19 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Quiz | Mwaniki Scholars
-    </title>
+    <title>Quiz | Mwaniki Scholars</title>
 
     <link
         rel="stylesheet"
-        href="style.css"
+        href="./style.css"
     >
-
 </head>
-
 
 <body>
 
     <header class="quiz-page-header">
 
-        <a href="course.html">
+        <a href="./course.html">
             ← Back to Course
         </a>
 
@@ -35,7 +30,6 @@
         </h1>
 
     </header>
-
 
     <main>
 
@@ -48,7 +42,7 @@
                 </h2>
 
                 <p>
-                    Please wait.
+                    Connecting to Supabase...
                 </p>
 
             </div>
@@ -57,9 +51,12 @@
 
     </main>
 
-
-    <!-- ONLY SUPABASE QUIZ ENGINE -->
-
+    <!--
+        IMPORTANT:
+        This is the ONLY quiz JavaScript file.
+        Quiz questions are NOT loaded from GitHub.
+        quiz.js loads them from Supabase.
+    -->
     <script
         type="module"
         src="./quiz.js"
