@@ -3,196 +3,21 @@
 
 <head>
 
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
 
-<meta name="viewport"
-content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<title>Mwaniki Scholars Course</title>
+    <title>
+        Course | Mwaniki Scholars
+    </title>
 
-<style>
-
-*{
-box-sizing:border-box;
-font-family:"Segoe UI",Arial,sans-serif;
-}
-
-body{
-margin:0;
-background:#f4f9ff;
-color:#123;
-}
-
-header{
-background:linear-gradient(
-135deg,
-#063970,
-#0b7285
-);
-color:white;
-padding:20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-flex-wrap:wrap;
-gap:10px;
-}
-
-.logo{
-font-size:24px;
-font-weight:bold;
-}
-
-.back-btn{
-background:white;
-color:#063970;
-border:none;
-padding:10px 16px;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
-}
-
-.container{
-max-width:1100px;
-margin:auto;
-padding:25px;
-}
-
-.hero{
-background:white;
-padding:30px;
-border-radius:20px;
-box-shadow:0 8px 25px rgba(0,0,0,.08);
-margin-bottom:25px;
-}
-
-.hero h1{
-color:#063970;
-margin-top:0;
-}
-
-.course-description{
-color:#555;
-font-size:16px;
-}
-
-.section{
-background:white;
-padding:25px;
-border-radius:20px;
-box-shadow:0 8px 25px rgba(0,0,0,.08);
-margin-bottom:25px;
-}
-
-.section h2{
-color:#063970;
-}
-
-.unit{
-background:#eef7fb;
-border:1px solid #d9edf2;
-padding:20px;
-border-radius:15px;
-margin:15px 0;
-}
-
-.unit h3{
-margin-top:0;
-color:#063970;
-}
-
-.unit-buttons{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-margin-top:15px;
-}
-
-button{
-background:#0b7285;
-color:white;
-border:none;
-padding:11px 17px;
-border-radius:10px;
-cursor:pointer;
-}
-
-button:hover{
-background:#064747;
-}
-
-.notes-list{
-margin-top:15px;
-}
-
-.note{
-background:white;
-padding:15px;
-border-radius:10px;
-margin:10px 0;
-border:1px solid #ddd;
-}
-
-.note small{
-color:#666;
-}
-
-.quiz-area{
-margin-top:20px;
-}
-
-.loading{
-text-align:center;
-padding:20px;
-color:#666;
-}
-
-.empty{
-padding:20px;
-background:#fff8e6;
-border-radius:12px;
-}
-
-.quiz-question{
-background:#eef7fb;
-padding:20px;
-border-radius:15px;
-margin:15px 0;
-}
-
-.quiz-question h3{
-color:#063970;
-}
-
-.quiz-option{
-display:block;
-padding:10px;
-margin:7px 0;
-background:white;
-border-radius:8px;
-border:1px solid #ddd;
-cursor:pointer;
-}
-
-.quiz-option:hover{
-background:#e7f5f7;
-}
-
-.quiz-submit{
-margin-top:15px;
-background:#063970;
-}
-
-.quiz-result{
-padding:20px;
-border-radius:15px;
-background:#e8f7ef;
-font-size:18px;
-font-weight:bold;
-}
-
-</style>
+    <link
+        rel="stylesheet"
+        href="style.css"
+    >
 
 </head>
 
@@ -200,122 +25,46 @@ font-weight:bold;
 <body>
 
 
-<header>
+    <header class="course-header">
 
-<div class="logo">
-🏥 Mwaniki Scholars
-</div>
-
-<button
-class="back-btn"
-id="backButton">
-⬅️ Back to Dashboard
-</button>
-
-</header>
+        <button
+            onclick="history.back()"
+        >
+            ← Back
+        </button>
 
 
-<div class="container">
+        <h1 id="courseTitle">
+            Loading Course...
+        </h1>
+
+    </header>
 
 
-<!-- COURSE INFORMATION -->
+    <main>
 
-<div class="hero">
+        <section
+            id="courseArea"
+            class="course-area"
+        >
 
-<h1 id="courseTitle">
-📚 Loading Course...
-</h1>
+            <div class="loading">
 
-<p
-id="courseDescription"
-class="course-description">
-Loading course information...
-</p>
+                📚 Loading course...
 
-</div>
+            </div>
 
+        </section>
 
-<!-- UNITS -->
-
-<div class="section">
-
-<h2>
-📖 Course Units
-</h2>
-
-<div id="unitsArea">
-
-<div class="loading">
-⏳ Loading units...
-</div>
-
-</div>
-
-</div>
+    </main>
 
 
-<!-- NOTES -->
+    <!-- SUPABASE COURSE ENGINE -->
 
-<div class="section">
-
-<h2>
-📄 Course Notes
-</h2>
-
-<div id="notesArea">
-
-<div class="loading">
-⏳ Loading notes...
-</div>
-
-</div>
-
-</div>
-
-
-<!-- QUIZ -->
-
-<div class="section">
-
-<h2>
-📝 Quiz Center
-</h2>
-
-<div
-id="quizArea"
-class="quiz-area">
-
-<p>
-Select a unit above to start a quiz.
-</p>
-
-</div>
-
-</div>
-
-
-</div>
-
-
-<!-- SUPABASE -->
-
-<script
-type="module"
-src="./supabase.js">
-</script>
-
-<!-- COURSE ENGINE -->
-<script
-type="module"
-src="./course.js">
-</script>
-
-<!-- QUIZ ENGINE -->
-
-<script
-type="module"
-src="./quiz.js">
-</script>
+    <script
+        type="module"
+        src="./course.js"
+    ></script>
 
 
 </body>
