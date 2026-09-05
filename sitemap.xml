@@ -1,9 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+>
+
+    <!-- HOME -->
 
     <url>
-        <loc>https://mwaniki-cyber.github.io/mwaniki-scholars./</loc>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>1.0</priority>
+    </url>
+
+
+    <!-- DASHBOARD -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./dashboard.html
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.9</priority>
+    </url>
+
+
+    <!-- COURSES -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./courses.html
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.9</priority>
+    </url>
+
+
+    <!-- ANATOMY -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./course.html?course=Anatomy
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.8</priority>
+    </url>
+
+
+    <!-- PHYSIOLOGY -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./course.html?course=Physiology
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.8</priority>
+    </url>
+
+
+    <!-- PHARMACOLOGY -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./course.html?course=Pharmacology
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.8</priority>
+    </url>
+
+
+    <!-- MICROBIOLOGY -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./course.html?course=Medical%20Microbiology
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.8</priority>
+    </url>
+
+
+    <!-- QUIZ -->
+
+    <url>
+        <loc>
+            https://mwaniki-cyber.github.io/mwaniki-scholars./quiz.html
+        </loc>
+
+        <changefreq>weekly</changefreq>
+
+        <priority>0.7</priority>
     </url>
 
 </urlset>
