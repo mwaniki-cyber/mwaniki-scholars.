@@ -1,12 +1,6 @@
 import { supabase } from "./supabase.js";
 
-// =====================================================
-// MWANIKI SCHOLARS - COURSE ENGINE
-// =====================================================
-
-console.log(
-    "📚 Mwaniki Scholars Course Engine Loaded"
-);
+console.log("📚 Mwaniki Scholars Course Engine Loaded");
 
 
 // =====================================================
@@ -15,12 +9,10 @@ console.log(
 
 let courseId = null;
 let courseName = "";
-let courseData = null;
-let unitsData = [];
 
 
 // =====================================================
-// HELPERS
+// ESCAPE HTML
 // =====================================================
 
 function escapeHTML(value) {
@@ -31,300 +23,114 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
-}
-
-
-function getCourseArea() {
-
-    return (
-        document.getElementById("courseArea") ||
-        document.getElementById("unitsArea") ||
-        document.getElementById("courseContent")
-    );
-
 }
 
 
 // =====================================================
-// GET COURSE ID
-// =====================================================
-
-function getSelectedCourseId() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-
-    const fromURL =
-        params.get("course") ||
-        params.get("course_id");
-
-
-    const fromStorage =
-        localStorage.getItem(
-            "selectedCourse"
-        );
-
-
-    return fromURL || fromStorage;
-}
-
-
-// =====================================================
-// GET COURSE NAME
-// =====================================================
-
-function getSelectedCourseName() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-
-    return (
-        params.get("courseName") ||
-        localStorage.getItem(
-            "selectedCourseName"
-        ) ||
-        ""
-    );
-}
-
-
-// =====================================================
-// SAVE COURSE
-// =====================================================
-
-function saveCourseSelection(
-    id,
-    name = ""
-) {
-
-    localStorage.setItem(
-        "selectedCourse",
-        String(id)
-    );
-
-
-    if (name) {
-
-        localStorage.setItem(
-            "selectedCourseName",
-            name
-        );
-
-    }
-
-}
-
-
-// =====================================================
-// LOAD COURSE
+// GET COURSE
 // =====================================================
 
 async function loadCourse() {
 
-    console.log(
-        "📚 Loading selected course..."
-    );
-
-
     courseId =
-        getSelectedCourseId();
-
+        Number(localStorage.getItem("selectedCourse"));
 
     courseName =
-        getSelectedCourseName();
+        localStorage.getItem("selectedCourseName") || "";
+
+
+    console.log("📚 Loading selected course:", courseId);
 
 
     if (!courseId) {
+
+        console.error("❌ No selected course");
 
         showCourseError(
             "No course was selected."
         );
 
         return;
-
     }
-
-
-    courseId =
-        Number(courseId);
-
-
-    console.log(
-        "Course ID:",
-        courseId
-    );
 
 
     try {
 
+        // -------------------------------------------------
+        // LOAD COURSE FROM SUPABASE
+        // -------------------------------------------------
+
         const {
-            data,
-            error
+            data: course,
+            error: courseError
         } = await supabase
-
             .from("courses")
-
-            .select(`
-                id,
-                title,
-                description,
-                image,
-                created_at
-            `)
-
-            .eq(
-                "id",
-                courseId
-            )
-
+            .select("*")
+            .eq("id", courseId)
             .single();
 
 
-        if (error) {
+        if (courseError) {
 
             console.error(
-                "❌ Course query error:",
-                error
+                "❌ Course loading error:",
+                courseError
             );
 
-            showCourseError(
-                error.message
-            );
-
-            return;
-
+            throw courseError;
         }
-
-
-        if (!data) {
-
-            showCourseError(
-                "Course was not found."
-            );
-
-            return;
-
-        }
-
-
-        courseData =
-            data;
-
-
-        courseName =
-            data.title ||
-            courseName ||
-            "Course";
-
-
-        saveCourseSelection(
-            courseId,
-            courseName
-        );
 
 
         console.log(
             "✅ Course loaded:",
-            courseData
+            course
         );
 
 
-        renderCourseHeader();
+        courseName =
+            course.title || courseName;
 
+
+        localStorage.setItem(
+            "selectedCourseName",
+            courseName
+        );
+
+
+        // -------------------------------------------------
+        // DISPLAY COURSE TITLE
+        // -------------------------------------------------
+
+        const titleElements =
+            document.querySelectorAll(
+                "#courseTitle, .course-title"
+            );
+
+
+        titleElements.forEach(element => {
+
+            element.textContent = courseName;
+
+        });
+
+
+        // -------------------------------------------------
+        // LOAD UNITS
+        // -------------------------------------------------
 
         await loadUnits();
 
     } catch (error) {
 
         console.error(
-            "❌ Course loading failed:",
+            "❌ Course initialization failed:",
             error
         );
 
         showCourseError(
             error.message
         );
-
     }
-
-}
-
-
-// =====================================================
-// COURSE HEADER
-// =====================================================
-
-function renderCourseHeader() {
-
-    const titleElements =
-        document.querySelectorAll(
-            "#courseTitle, .course-title"
-        );
-
-
-    titleElements.forEach(
-        element => {
-
-            element.textContent =
-                courseName;
-
-        }
-    );
-
-
-    const descriptionElements =
-        document.querySelectorAll(
-            "#courseDescription, .course-description"
-        );
-
-
-    descriptionElements.forEach(
-        element => {
-
-            element.textContent =
-                courseData?.description ||
-                "";
-
-        }
-    );
-
-
-    const courseImage =
-        document.getElementById(
-            "courseImage"
-        );
-
-
-    if (
-        courseImage &&
-        isValidImageURL(
-            courseData?.image
-        )
-    ) {
-
-        courseImage.src =
-            courseData.image;
-
-        courseImage.alt =
-            courseName;
-
-        courseImage.style.display =
-            "block";
-
-    } else if (courseImage) {
-
-        courseImage.style.display =
-            "none";
-
-    }
-
 }
 
 
@@ -335,50 +141,36 @@ function renderCourseHeader() {
 async function loadUnits() {
 
     console.log(
-        "📖 Loading course units..."
+        "📖 Loading units for course:",
+        courseId
     );
 
 
     const courseArea =
-        getCourseArea();
+        document.getElementById("courseArea");
 
 
     if (!courseArea) {
 
         console.error(
-            "❌ Course area not found."
+            "❌ #courseArea was not found"
         );
 
         return;
-
     }
 
 
     courseArea.innerHTML = `
-
-        <div class="course-loading">
-
-            <div style="font-size:45px;">
-                ⏳
-            </div>
-
-            <h2>
-                Loading Units...
-            </h2>
-
-            <p>
-                Please wait...
-            </p>
-
+        <div class="loading">
+            📚 Loading units...
         </div>
-
     `;
 
 
     try {
 
         const {
-            data,
+            data: units,
             error
         } = await supabase
 
@@ -395,17 +187,11 @@ async function loadUnits() {
                 created_at
             `)
 
-            .eq(
-                "course_id",
-                courseId
-            )
+            .eq("course_id", courseId)
 
-            .order(
-                "id",
-                {
-                    ascending: true
-                }
-            );
+            .order("id", {
+                ascending: true
+            });
 
 
         if (error) {
@@ -415,43 +201,27 @@ async function loadUnits() {
                 error
             );
 
-            showCourseError(
-                error.message
-            );
-
-            return;
-
+            throw error;
         }
 
 
-        unitsData =
-            data || [];
-
-
         console.log(
-            `✅ ${unitsData.length} units loaded`
+            "📚 Units loaded:",
+            units
         );
 
 
-        if (
-            unitsData.length === 0
-        ) {
+        if (!units || units.length === 0) {
 
             courseArea.innerHTML = `
 
-                <div class="empty-units">
+                <div class="empty-state">
 
-                    <div style="font-size:60px;">
-                        📚
-                    </div>
-
-                    <h2>
-                        No Units Available
-                    </h2>
+                    <h2>📚 No Units Yet</h2>
 
                     <p>
-                        This course does not have
-                        any units yet.
+                        No units have been added
+                        to this course yet.
                     </p>
 
                 </div>
@@ -459,11 +229,11 @@ async function loadUnits() {
             `;
 
             return;
-
         }
 
 
-        renderUnits();
+        renderUnits(units);
+
 
     } catch (error) {
 
@@ -472,68 +242,21 @@ async function loadUnits() {
             error
         );
 
-        showCourseError(
-            error.message
-        );
 
+        courseArea.innerHTML = `
+
+            <div class="error-state">
+
+                <h2>⚠️ Unable to Load Units</h2>
+
+                <p>
+                    ${escapeHTML(error.message)}
+                </p>
+
+            </div>
+
+        `;
     }
-
-}
-
-
-// =====================================================
-// VALID IMAGE URL
-// =====================================================
-
-function isValidImageURL(
-    value
-) {
-
-    if (!value) {
-        return false;
-    }
-
-
-    const url =
-        String(value).trim();
-
-
-    if (!url) {
-        return false;
-    }
-
-
-    return (
-        url.startsWith("http://") ||
-        url.startsWith("https://") ||
-        url.startsWith("data:image/")
-    );
-
-}
-
-
-// =====================================================
-// VALID VIDEO URL
-// =====================================================
-
-function isValidVideoURL(
-    value
-) {
-
-    if (!value) {
-        return false;
-    }
-
-
-    const url =
-        String(value).trim();
-
-
-    return (
-        url.startsWith("http://") ||
-        url.startsWith("https://")
-    );
-
 }
 
 
@@ -541,209 +264,145 @@ function isValidVideoURL(
 // RENDER UNITS
 // =====================================================
 
-function renderUnits() {
+function renderUnits(units) {
 
     const courseArea =
-        getCourseArea();
+        document.getElementById("courseArea");
 
 
-    if (!courseArea) {
-        return;
-    }
+    if (!courseArea) return;
 
 
     courseArea.innerHTML = "";
 
 
-    unitsData.forEach(
-        (unit, index) => {
+    units.forEach((unit, index) => {
 
-            const card =
-                document.createElement(
-                    "article"
-                );
+        const card =
+            document.createElement("div");
 
 
-            card.className =
-                "unit-card";
+        card.className = "unit-card";
 
 
-            card.dataset.unitId =
-                unit.id;
+        const image =
+            getSafeImage(unit.image);
 
 
-            const imageHTML =
-                isValidImageURL(
-                    unit.image
-                )
+        card.innerHTML = `
 
-                    ? `
-                        <div class="unit-image-container">
+            <div class="unit-image">
 
+                ${
+                    image
+                        ? `
                             <img
-                                src="${escapeHTML(
-                                    unit.image
-                                )}"
-                                alt="${escapeHTML(
-                                    unit.title
-                                )}"
-                                class="unit-image"
-                                loading="lazy"
-                                onerror="
-                                    this.style.display='none';
-                                "
+                                src="${escapeHTML(image)}"
+                                alt="${escapeHTML(unit.title)}"
+                                onerror="this.style.display='none'"
                             >
+                          `
+                        : `
+                            <div class="unit-placeholder">
+                                📖
+                            </div>
+                          `
+                }
 
-                        </div>
-                    `
-
-                    : `
-                        <div class="unit-icon">
-                            📖
-                        </div>
-                    `;
-
-
-            const videoHTML =
-                isValidVideoURL(
-                    unit.video_url
-                )
-
-                    ? `
-
-                        <div class="unit-video">
-
-                            <video
-                                controls
-                                preload="metadata"
-                                playsinline
-                            >
-
-                                <source
-                                    src="${escapeHTML(
-                                        unit.video_url
-                                    )}"
-                                >
-
-                                Your browser does not
-                                support video playback.
-
-                            </video>
-
-                        </div>
-
-                    `
-
-                    : "";
+            </div>
 
 
-            const notesAvailable =
-                Boolean(
-                    unit.notes ||
-                    unit.notes_content
-                );
-
-
-            card.innerHTML = `
+            <div class="unit-content">
 
                 <div class="unit-number">
-
                     Unit ${index + 1}
-
                 </div>
 
 
-                ${imageHTML}
+                <h2>
+                    ${escapeHTML(unit.title)}
+                </h2>
 
 
-                <div class="unit-content">
-
-                    <h2 class="unit-title">
-
-                        ${escapeHTML(
-                            unit.title
-                        )}
-
-                    </h2>
-
-
-                    ${
-                        unit.notes
-                            ? `
-                                <p class="unit-description">
-                                    ${escapeHTML(
-                                        unit.notes
-                                    )}
-                                </p>
-                              `
-                            : ""
-                    }
+                ${
+                    unit.notes_content || unit.notes
+                        ? `
+                            <p>
+                                📚 Detailed notes available
+                            </p>
+                          `
+                        : ""
+                }
 
 
-                    ${videoHTML}
+                <div class="unit-actions">
+
+                    <button
+                        class="quiz-button"
+                        onclick="
+                            startUnitQuiz(
+                                ${Number(unit.id)},
+                                '${escapeHTML(unit.title).replace(/'/g, "\\'")}'
+                            )
+                        "
+                    >
+                        📝 Start Quiz
+                    </button>
 
 
-                    <div class="unit-actions">
-
-                        <button
-                            type="button"
-                            class="quiz-button"
-                            onclick="
-                                startUnitQuiz(
-                                    ${Number(unit.id)}
-                                )
-                            "
-                        >
-                            📝 Start Quiz
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="notes-button"
-                            onclick="
-                                showUnitNotes(
-                                    ${Number(unit.id)}
-                                )
-                            "
-                        >
-                            📄 View Notes
-                        </button>
-
-                    </div>
-
-
-                    ${
-                        notesAvailable
-                            ? `
-                                <div class="notes-status">
-                                    📚 Detailed notes available
-                                </div>
-                              `
-                            : `
-                                <div class="notes-status">
-                                    ℹ️ Notes will appear here
-                                </div>
-                              `
-                    }
+                    <button
+                        class="notes-button"
+                        onclick="
+                            showUnitNotes(
+                                ${Number(unit.id)}
+                            )
+                        "
+                    >
+                        📄 View Notes
+                    </button>
 
                 </div>
 
-            `;
+            </div>
+
+        `;
 
 
-            courseArea.appendChild(
-                card
-            );
+        courseArea.appendChild(card);
 
-        }
-    );
+    });
 
 
     console.log(
-        `✅ ${unitsData.length} units displayed`
+        `✅ ${units.length} units displayed`
     );
+}
 
+
+// =====================================================
+// SAFE IMAGE
+// =====================================================
+
+function getSafeImage(image) {
+
+    if (!image) return null;
+
+    const value =
+        String(image).trim();
+
+
+    // Reject emojis / plain text
+    if (
+        !value.startsWith("http://") &&
+        !value.startsWith("https://") &&
+        !value.startsWith("/") &&
+        !value.startsWith("./")
+    ) {
+        return null;
+    }
+
+
+    return value;
 }
 
 
@@ -751,102 +410,28 @@ function renderUnits() {
 // START UNIT QUIZ
 // =====================================================
 
-window.startUnitQuiz =
-function(unitId) {
+window.startUnitQuiz = function(
+    unitId,
+    unitTitle
+) {
 
-    const unit =
-        unitsData.find(
-            item =>
-                Number(item.id) ===
-                Number(unitId)
-        );
-
-
-    if (!unit) {
-
-        alert(
-            "Unit could not be found."
-        );
-
-        return;
-
-    }
-
-
-    const unitTitle =
-        unit.title;
-
-
-    saveCourseSelection(
+    console.log(
+        "📝 Starting quiz:",
         courseId,
-        courseName
-    );
-
-
-    localStorage.setItem(
-        "selectedUnit",
-        String(unit.id)
-    );
-
-
-    localStorage.setItem(
-        "selectedUnitTitle",
+        unitId,
         unitTitle
+    );
+
+
+    localStorage.setItem(
+        "selectedCourse",
+        String(courseId)
     );
 
 
     localStorage.setItem(
         "selectedCourseName",
         courseName
-    );
-
-
-    console.log(
-        "📝 Starting quiz:",
-        {
-            courseId,
-            unitId: unit.id,
-            unitTitle
-        }
-    );
-
-
-    const quizURL =
-        `quiz.html?course=${encodeURIComponent(
-            courseId
-        )}` +
-        `&unit_id=${encodeURIComponent(
-            unit.id
-        )}` +
-        `&unit=${encodeURIComponent(
-            unitTitle
-        )}`;
-
-
-    window.location.href =
-        quizURL;
-
-};
-
-
-// Compatibility with older code
-window.startQuiz =
-function(
-    selectedCourseId,
-    unitId,
-    unitTitle
-) {
-
-    const actualCourseId =
-        Number(
-            selectedCourseId ||
-            courseId
-        );
-
-
-    localStorage.setItem(
-        "selectedCourse",
-        String(actualCourseId)
     );
 
 
@@ -858,353 +443,129 @@ function(
 
     localStorage.setItem(
         "selectedUnitTitle",
-        unitTitle || ""
+        unitTitle
     );
 
 
-    localStorage.setItem(
-        "selectedCourseName",
-        courseName
-    );
-
+    // IMPORTANT:
+    // Go to OUR quiz.html.
+    // quiz.html loads quiz.js.
+    // quiz.js loads questions from Supabase.
 
     window.location.href =
-        `quiz.html?course=${encodeURIComponent(
-            actualCourseId
-        )}` +
-        `&unit_id=${encodeURIComponent(
-            unitId
-        )}` +
-        `&unit=${encodeURIComponent(
-            unitTitle || ""
-        )}`;
-
+        `quiz.html?course=${encodeURIComponent(courseId)}&unit=${encodeURIComponent(unitId)}&title=${encodeURIComponent(unitTitle)}`;
 };
 
 
 // =====================================================
-// SHOW UNIT NOTES
+// VIEW NOTES
 // =====================================================
 
-window.showUnitNotes =
-async function(unitId) {
-
-    const unit =
-        unitsData.find(
-            item =>
-                Number(item.id) ===
-                Number(unitId)
-        );
-
-
-    if (!unit) {
-
-        alert(
-            "Unit could not be found."
-        );
-
-        return;
-
-    }
-
+window.showUnitNotes = async function(unitId) {
 
     console.log(
-        "📄 Loading notes:",
-        unit.title
+        "📄 Loading notes for unit:",
+        unitId
     );
 
-
-    // -------------------------------------------------
-    // FIRST: USE notes_content
-    // -------------------------------------------------
-
-    if (
-        unit.notes_content &&
-        String(
-            unit.notes_content
-        ).trim()
-    ) {
-
-        displayNotesModal(
-            unit.title,
-            unit.notes_content
-        );
-
-        return;
-
-    }
-
-
-    // -------------------------------------------------
-    // SECOND: CHECK notes TABLE
-    // -------------------------------------------------
 
     try {
 
         const {
-            data,
+            data: unit,
             error
         } = await supabase
 
-            .from("notes")
+            .from("units")
 
             .select(`
                 id,
-                course,
-                unit,
-                file_name,
-                file_url,
-                created_at,
-                uploaded_by,
-                course_id,
-                unit_id
+                title,
+                notes,
+                notes_content
             `)
 
-            .eq(
-                "course_id",
-                courseId
-            )
+            .eq("id", Number(unitId))
 
-            .eq(
-                "unit_id",
-                unit.id
-            )
-
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
+            .single();
 
 
-        if (
-            !error &&
-            data &&
-            data.length > 0
-        ) {
-
-            displayNotesModal(
-                unit.title,
-                "",
-                data
-            );
-
-            return;
-
-        }
+        if (error) throw error;
 
 
-        // -------------------------------------------------
-        // FALLBACK: COURSE + UNIT TITLE
-        // -------------------------------------------------
+        displayNotes(unit);
 
-        const {
-            data: fallbackData,
-            error: fallbackError
-        } = await supabase
-
-            .from("notes")
-
-            .select(`
-                id,
-                course,
-                unit,
-                file_name,
-                file_url,
-                created_at,
-                uploaded_by,
-                course_id,
-                unit_id
-            `)
-
-            .eq(
-                "course_id",
-                courseId
-            )
-
-            .eq(
-                "unit",
-                unit.title
-            )
-
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
-
-
-        if (
-            !fallbackError &&
-            fallbackData &&
-            fallbackData.length > 0
-        ) {
-
-            displayNotesModal(
-                unit.title,
-                "",
-                fallbackData
-            );
-
-            return;
-
-        }
-
-
-        displayNotesModal(
-            unit.title,
-            unit.notes ||
-            "No notes have been uploaded for this unit yet."
-        );
 
     } catch (error) {
 
         console.error(
-            "❌ Notes error:",
+            "❌ Notes loading error:",
             error
         );
 
 
-        displayNotesModal(
-            unit.title,
-            unit.notes ||
-            "Unable to load notes."
+        alert(
+            "Unable to load notes: " +
+            error.message
         );
-
     }
-
 };
 
 
 // =====================================================
-// NOTES MODAL
+// DISPLAY NOTES
 // =====================================================
 
-function displayNotesModal(
-    title,
-    content = "",
-    files = []
-) {
+function displayNotes(unit) {
 
-    const oldModal =
+    const existing =
         document.getElementById(
-            "unitNotesModal"
+            "notesModal"
         );
 
 
-    if (oldModal) {
-        oldModal.remove();
+    if (existing) {
+        existing.remove();
     }
+
+
+    const content =
+        unit.notes_content ||
+        unit.notes ||
+        "No notes available.";
 
 
     const modal =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
 
 
-    modal.id =
-        "unitNotesModal";
+    modal.id = "notesModal";
 
-
-    modal.className =
-        "notes-modal";
-
-
-    let filesHTML = "";
-
-
-    if (
-        Array.isArray(files) &&
-        files.length > 0
-    ) {
-
-        filesHTML = `
-
-            <div class="uploaded-notes">
-
-                <h3>
-                    📚 Uploaded Notes
-                </h3>
-
-                ${files.map(file => `
-
-                    <div class="note-file">
-
-                        <span>
-                            📄
-                            ${escapeHTML(
-                                file.file_name ||
-                                "Notes"
-                            )}
-                        </span>
-
-                        ${
-                            file.file_url
-                                ? `
-                                    <a
-                                        href="${escapeHTML(
-                                            file.file_url
-                                        )}"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                    >
-                                        Open
-                                    </a>
-                                  `
-                                : ""
-                        }
-
-                    </div>
-
-                `).join("")}
-
-            </div>
-
-        `;
-
-    }
+    modal.className = "notes-modal";
 
 
     modal.innerHTML = `
 
-        <div class="notes-modal-overlay"
-             onclick="closeNotesModal()">
+        <div class="notes-modal-content">
 
-            <div
-                class="notes-modal-content"
-                onclick="event.stopPropagation()"
+            <button
+                class="close-notes"
+                onclick="
+                    document.getElementById('notesModal').remove()
+                "
             >
-
-                <button
-                    class="notes-close"
-                    onclick="closeNotesModal()"
-                >
-                    ✕
-                </button>
+                ✕
+            </button>
 
 
-                <h2>
-                    📄 ${escapeHTML(title)}
-                </h2>
+            <h2>
+                📄 ${escapeHTML(unit.title)}
+            </h2>
 
 
-                ${
-                    content
-                        ? `
-                            <div class="notes-body">
-                                ${formatNotes(
-                                    content
-                                )}
-                            </div>
-                          `
-                        : ""
-                }
+            <div class="notes-body">
 
-
-                ${filesHTML}
+                ${formatNotes(content)}
 
             </div>
 
@@ -1213,10 +574,7 @@ function displayNotesModal(
     `;
 
 
-    document.body.appendChild(
-        modal
-    );
-
+    document.body.appendChild(modal);
 }
 
 
@@ -1224,104 +582,43 @@ function displayNotesModal(
 // FORMAT NOTES
 // =====================================================
 
-function formatNotes(
-    text
-) {
+function formatNotes(text) {
 
-    const safe =
-        escapeHTML(text);
+    if (!text) return "";
 
 
-    return safe
-        .replace(
-            /\n\n+/g,
-            "</p><p>"
-        )
-        .replace(
-            /\n/g,
-            "<br>"
-        )
-        .replace(
-            /^/,
-            "<p>"
-        )
-        .replace(
-            /$/,
-            "</p>"
-        );
-
+    return escapeHTML(text)
+        .replace(/\n\n/g, "</p><p>")
+        .replace(/\n/g, "<br>");
 }
 
 
 // =====================================================
-// CLOSE NOTES
+// ERROR
 // =====================================================
 
-window.closeNotesModal =
-function() {
+function showCourseError(message) {
 
-    const modal =
-        document.getElementById(
-            "unitNotesModal"
-        );
+    const courseArea =
+        document.getElementById("courseArea");
 
 
-    if (modal) {
-        modal.remove();
-    }
-
-};
+    if (!courseArea) return;
 
 
-// =====================================================
-// COURSE ERROR
-// =====================================================
+    courseArea.innerHTML = `
 
-function showCourseError(
-    message
-) {
+        <div class="error-state">
 
-    const area =
-        getCourseArea();
-
-
-    if (!area) {
-        return;
-    }
-
-
-    area.innerHTML = `
-
-        <div class="course-error">
-
-            <div style="font-size:60px;">
-                ⚠️
-            </div>
-
-            <h2>
-                Unable to Load Course
-            </h2>
+            <h2>⚠️ Course Error</h2>
 
             <p>
                 ${escapeHTML(message)}
             </p>
 
-            <button
-                onclick="location.reload()"
-            >
-                🔄 Try Again
-            </button>
-
-            <button
-                onclick="location.href='courses.html'"
-            >
-                📚 Back to Courses
-            </button>
-
         </div>
 
     `;
-
 }
 
 
@@ -1329,39 +626,16 @@ function showCourseError(
 // INITIALIZE
 // =====================================================
 
-async function initializeCourse() {
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
-    console.log(
-        "🚀 Initializing Mwaniki Scholars course page..."
-    );
-
-
-    await loadCourse();
-
-}
+        console.log(
+            "🚀 Initializing Mwaniki Scholars course page..."
+        );
 
 
-// =====================================================
-// START
-// =====================================================
+        loadCourse();
 
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeCourse
-    );
-
-} else {
-
-    initializeCourse();
-
-}
-
-
-console.log(
-    "✅ Course engine ready"
+    }
 );
