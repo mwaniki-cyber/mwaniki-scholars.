@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -10,15 +12,25 @@
 
     <title>Quiz | Mwaniki Scholars</title>
 
-    <link rel="stylesheet" href="./style.css">
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
 </head>
 
 <body>
 
     <header class="quiz-page-header">
-        <a href="./course.html">← Back to Course</a>
 
-        <h1>📝 Mwaniki Scholars Quiz</h1>
+        <a href="./course.html">
+            ← Back to Course
+        </a>
+
+        <h1>
+            📝 Mwaniki Scholars Quiz
+        </h1>
+
     </header>
 
     <main>
@@ -26,21 +38,27 @@
         <section id="quizArea">
 
             <div class="quiz-loading">
-                <h2>📝 Loading Quiz...</h2>
-                <p>Please wait while your questions are loaded.</p>
+
+                <h2>
+                    📝 Loading Quiz...
+                </h2>
+
+                <p>
+                    Please wait while your questions
+                    are loaded from Supabase.
+                </p>
+
             </div>
 
         </section>
 
     </main>
 
-    <!--
-        IMPORTANT:
-        Quiz questions are NOT stored in this HTML file.
-        quiz.js loads them from Supabase.
-    -->
-
-    <script type="module" src="./quiz.js"></script>
+    <script
+        type="module"
+        src="./quiz.js"
+    ></script>
 
 </body>
+
 </html>
