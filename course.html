@@ -21,71 +21,159 @@
 
 </head>
 
+
 <body>
 
-<header class="course-header">
+    <!-- =====================================================
+         COURSE HEADER
+         ===================================================== -->
 
-    <button
-        type="button"
-        onclick="history.back()"
-    >
-        ← Back
-    </button>
+    <header class="course-header">
 
-    <div class="course-header-content">
+        <!-- BACK TO DASHBOARD -->
 
-        <h1 id="courseTitle">
-            Loading Course...
-        </h1>
-
-        <p id="courseDescription">
-            Loading course description...
-        </p>
-
-    </div>
-
-</header>
-
-
-<main>
-
-    <section
-        id="courseArea"
-        class="course-area"
-    >
-
-        <!-- IMPORTANT:
-             course.js loads the Supabase units here
-        -->
-
-        <div
-            id="unitsArea"
-            class="units-area"
+        <button
+            type="button"
+            id="backToDashboard"
+            class="dashboard-back-button"
         >
+            ← Back to Dashboard
+        </button>
 
-            <div class="loading">
-                📚 Loading units...
-            </div>
+
+        <div class="course-header-content">
+
+            <h1 id="courseTitle">
+                Loading Course...
+            </h1>
+
+            <p id="courseDescription">
+                Please wait while the course loads.
+            </p>
 
         </div>
 
+    </header>
 
-        <!-- Notes are displayed here -->
 
-        <div
+    <!-- =====================================================
+         MAIN COURSE AREA
+         ===================================================== -->
+
+    <main class="course-area">
+
+
+        <!-- =================================================
+             UNITS
+             ================================================= -->
+
+        <section>
+
+            <h2>
+                📚 Course Units
+            </h2>
+
+
+            <div
+                id="unitsArea"
+                class="units-area"
+            >
+
+                <div class="loading">
+                    ⏳ Loading units...
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             NOTES
+             ================================================= -->
+
+        <section
             id="notesArea"
             class="notes-area"
-        ></div>
+        >
 
-    </section>
+            <div class="loading">
 
-</main>
+                📖 Select
+                <strong>View Notes</strong>
+                to study a unit.
+
+            </div>
+
+        </section>
 
 
-<script
-    type="module"
-    src="./course.js"
-></script>
+    </main>
+
+
+    <!-- =====================================================
+         BACK TO DASHBOARD SCRIPT
+         ===================================================== -->
+
+    <script>
+
+        document
+            .getElementById("backToDashboard")
+            .addEventListener("click", function () {
+
+                console.log(
+                    "🏠 Returning to student dashboard..."
+                );
+
+
+                /*
+                 * Clear only the current course/unit selection.
+                 * This prevents the previous course from being
+                 * accidentally reopened.
+                 */
+
+                localStorage.removeItem(
+                    "selectedCourse"
+                );
+
+                localStorage.removeItem(
+                    "selectedCourseName"
+                );
+
+                localStorage.removeItem(
+                    "selectedUnit"
+                );
+
+                localStorage.removeItem(
+                    "selectedUnitTitle"
+                );
+
+
+                /*
+                 * IMPORTANT:
+                 * Use the actual dashboard file here.
+                 *
+                 * If your dashboard is called dashboard.html,
+                 * this is correct.
+                 */
+
+                window.location.href =
+                    "./dashboard.html";
+
+            });
+
+    </script>
+
+
+    <!-- =====================================================
+         COURSE ENGINE
+         ===================================================== -->
+
+    <script
+        type="module"
+        src="./course.js"
+    ></script>
+
 
 </body>
 
