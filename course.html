@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -10,36 +8,57 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>
-        Course | Mwaniki Scholars
-    </title>
+    <meta
+        name="description"
+        content="Mwaniki Scholars medical e-learning course"
+    >
+
+    <title>Course | Mwaniki Scholars</title>
 
     <link
         rel="stylesheet"
-        href="style.css"
+        href="./style.css"
     >
 
+    <link
+        rel="icon"
+        href="./favicon.ico"
+    >
 </head>
-
 
 <body>
 
+    <!-- =====================================================
+         COURSE HEADER
+    ====================================================== -->
 
     <header class="course-header">
 
         <button
+            type="button"
             onclick="history.back()"
         >
             ← Back
         </button>
 
+        <div class="course-header-content">
 
-        <h1 id="courseTitle">
-            Loading Course...
-        </h1>
+            <h1 id="courseTitle">
+                Loading Course...
+            </h1>
+
+            <p id="courseDescription">
+                Loading course description...
+            </p>
+
+        </div>
 
     </header>
 
+
+    <!-- =====================================================
+         MAIN COURSE CONTENT
+    ====================================================== -->
 
     <main>
 
@@ -48,25 +67,44 @@
             class="course-area"
         >
 
-            <div class="loading">
+            <!-- =================================================
+                 UNITS
+            ================================================== -->
 
-                📚 Loading course...
+            <div
+                id="unitsArea"
+                class="units-area"
+            >
+
+                <div class="loading">
+                    📚 Loading units...
+                </div>
 
             </div>
+
+
+            <!-- =================================================
+                 NOTES
+            ================================================== -->
+
+            <div
+                id="notesArea"
+                class="notes-area"
+            ></div>
 
         </section>
 
     </main>
 
 
-    <!-- SUPABASE COURSE ENGINE -->
+    <!-- =====================================================
+         SUPABASE COURSE ENGINE
+    ====================================================== -->
 
     <script
         type="module"
         src="./course.js"
     ></script>
 
-
 </body>
-
 </html>
