@@ -27,130 +27,30 @@ let currentUser = null;
 let currentStudent = null;
 
 // ============================================================
-// DASHBOARD LOADING FAIL-SAFE
-// ============================================================
-
-function finishDashboardLoading() {
-    const loading = document.querySelector(".hero-loading");
-
-    if (loading) {
-        loading.remove();
-    }
-}
-
-// ============================================================
-// DASHBOARD ERROR DISPLAY
-// ============================================================
-
-function showDashboardError(message) {
-    const hero = document.getElementById(
-        "studentPersonalProfile"
-    );
-
-    if (!hero) {
-        return;
-    }
-
-    hero.innerHTML = `
-        <div class="hero-content">
-
-            <div class="hero-avatar">
-                ⚠️
-            </div>
-
-            <div class="hero-info">
-
-                <div class="hero-greeting">
-                    Mwaniki Scholars
-                </div>
-
-                <h1 class="hero-name">
-                    Dashboard could not load
-                </h1>
-
-                <div class="hero-meta">
-                    ${escapeHTML(
-                        message ||
-                        "Please refresh the page and try again."
-                    )}
-                </div>
-
-            </div>
-
-            <div class="hero-actions">
-
-                <button
-                    class="hero-profile-button"
-                    type="button"
-                    id="reloadDashboardButton"
-                >
-                    🔄 Refresh Dashboard
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-    const button = document.getElementById(
-        "reloadDashboardButton"
-    );
-
-    if (button) {
-        button.addEventListener(
-            "click",
-            () => {
-                window.location.reload();
-            }
-        );
-    }
-}
-
-// ============================================================
 // GET SESSION
 // ============================================================
 
 async function getCurrentUser() {
-
     try {
-
         const {
             data,
             error
         } = await supabase.auth.getSession();
 
         if (error) {
-
-            console.error(
-                "❌ Session error:",
-                error
-            );
-
+            console.error("❌ Session error:", error);
             return null;
         }
 
-        if (
-            !data ||
-            !data.session ||
-            !data.session.user
-        ) {
-
-            console.warn(
-                "⚠️ No active Supabase session."
-            );
-
+        if (!data?.session?.user) {
+            console.warn("⚠️ No active Supabase session.");
             return null;
         }
 
         return data.session.user;
 
     } catch (error) {
-
-        console.error(
-            "❌ Unexpected session error:",
-            error
-        );
-
+        console.error("❌ Failed to get current user:", error);
         return null;
     }
 }
@@ -161,13 +61,10 @@ async function getCurrentUser() {
 
 async function loadStudentProfile() {
 
-    currentUser =
-        await getCurrentUser();
+    currentUser = await getCurrentUser();
 
     if (!currentUser) {
-
         showLoggedOutState();
-
         return;
     }
 
@@ -176,58 +73,64 @@ async function loadStudentProfile() {
         currentUser.email
     );
 
-    const {
-        data: student,
-        error
-    } = await supabase
-        .from("students")
-        .select("*")
-        .eq("id", currentUser.id)
-        .maybeSingle();
+    try {
 
-    if (error) {
+        const {
+            data: student,
+            error
+        } = await supabase
+            .from("students")
+            .select("*")
+            .eq("id", currentUser.id)
+            .maybeSingle();
+
+        if (error) {
+
+            console.error(
+                "❌ Could not load student profile:",
+                error
+            );
+
+            showIncompleteProfile(currentUser);
+
+        } else {
+
+            currentStudent = student;
+
+            if (!student) {
+
+                console.warn(
+                    "⚠️ No student profile found."
+                );
+
+                showIncompleteProfile(
+                    currentUser
+                );
+
+            } else {
+
+                displayStudentIdentity(
+                    student,
+                    currentUser
+                );
+
+            }
+        }
+
+    } catch (error) {
 
         console.error(
-            "❌ Could not load student profile:",
+            "❌ Student profile failure:",
             error
         );
 
         showIncompleteProfile(
             currentUser
         );
-
-    } else {
-
-        currentStudent =
-            student;
-
-        if (!student) {
-
-            console.warn(
-                "⚠️ No student profile found."
-            );
-
-            showIncompleteProfile(
-                currentUser
-            );
-
-        } else {
-
-            displayStudentIdentity(
-                student,
-                currentUser
-            );
-        }
     }
 
-    // ========================================================
-    // DASHBOARD UI INITIALIZATION
-    // ========================================================
-
     updateDashboardAnalytics();
-
     updateLearningStreak();
-
     renderRecentActivity();
 }
 
@@ -235,10 +138,7 @@ async function loadStudentProfile() {
 // DISPLAY STUDENT IDENTITY
 // ============================================================
 
-function displayStudentIdentity(
-    student,
-    user
-) {
+function displayStudentIdentity(student, user) {
 
     const name =
         student.full_name ||
@@ -266,9 +166,7 @@ function displayStudentIdentity(
     // --------------------------------------------------------
 
     const profileButton =
-        document.querySelector(
-            ".profile"
-        );
+        document.querySelector(".profile");
 
     if (profileButton) {
 
@@ -277,15 +175,10 @@ function displayStudentIdentity(
         if (photo) {
 
             const image =
-                document.createElement(
-                    "img"
-                );
+                document.createElement("img");
 
-            image.src =
-                photo;
-
-            image.alt =
-                "Profile photo";
+            image.src = photo;
+            image.alt = "Profile photo";
 
             image.style.cssText = `
                 width:34px;
@@ -295,30 +188,22 @@ function displayStudentIdentity(
                 margin-right:8px;
             `;
 
-            profileButton.appendChild(
-                image
-            );
+            profileButton.appendChild(image);
         }
 
         const nameElement =
-            document.createElement(
-                "span"
-            );
+            document.createElement("span");
 
-        nameElement.textContent =
-            name;
+        nameElement.textContent = name;
 
         profileButton.appendChild(
             nameElement
         );
 
-        profileButton.onclick =
-            () => {
-
-                window.location.href =
-                    "studentProfile.html";
-
-            };
+        profileButton.onclick = () => {
+            window.location.href =
+                "studentProfile.html";
+        };
     }
 
     // --------------------------------------------------------
@@ -343,16 +228,16 @@ function displayStudentIdentity(
             ${
                 photo
                     ? `
-                        <img
-                            src="${escapeHTML(photo)}"
-                            class="hero-photo"
-                            alt="Student profile photo"
-                        >
+                    <img
+                        src="${escapeHTML(photo)}"
+                        class="hero-photo"
+                        alt="Student profile photo"
+                    >
                     `
                     : `
-                        <div class="hero-avatar">
-                            👤
-                        </div>
+                    <div class="hero-avatar">
+                        👤
+                    </div>
                     `
             }
 
@@ -375,9 +260,9 @@ function displayStudentIdentity(
                     ${
                         level
                             ? `
-                                <span>
-                                    📚 ${escapeHTML(level)}
-                                </span>
+                            <span>
+                                📚 ${escapeHTML(level)}
+                            </span>
                             `
                             : ""
                     }
@@ -412,13 +297,10 @@ function displayStudentIdentity(
 
     if (heroButton) {
 
-        heroButton.onclick =
-            () => {
-
-                window.location.href =
-                    "studentProfile.html";
-
-            };
+        heroButton.onclick = () => {
+            window.location.href =
+                "studentProfile.html";
+        };
     }
 }
 
@@ -426,9 +308,7 @@ function displayStudentIdentity(
 // INCOMPLETE PROFILE
 // ============================================================
 
-function showIncompleteProfile(
-    user
-) {
+function showIncompleteProfile(user) {
 
     const hero =
         document.getElementById(
@@ -440,7 +320,6 @@ function showIncompleteProfile(
     }
 
     hero.innerHTML = `
-
         <div class="hero-content">
 
             <div class="hero-avatar">
@@ -461,7 +340,7 @@ function showIncompleteProfile(
 
                     <span>
                         📧 ${escapeHTML(
-                            user.email || ""
+                            user?.email || ""
                         )}
                     </span>
 
@@ -496,13 +375,10 @@ function showIncompleteProfile(
 
     if (button) {
 
-        button.onclick =
-            () => {
-
-                window.location.href =
-                    "studentProfile.html";
-
-            };
+        button.onclick = () => {
+            window.location.href =
+                "studentProfile.html";
+        };
     }
 }
 
@@ -522,7 +398,6 @@ function showLoggedOutState() {
     }
 
     hero.innerHTML = `
-
         <div class="hero-content">
 
             <div class="hero-avatar">
@@ -547,7 +422,6 @@ function showLoggedOutState() {
             </div>
 
         </div>
-
     `;
 }
 
@@ -605,9 +479,7 @@ function getRecentActivity() {
 // SAVE ACTIVITY
 // ============================================================
 
-function saveRecentActivity(
-    activity
-) {
+function saveRecentActivity(activity) {
 
     const current =
         getRecentActivity();
@@ -617,20 +489,16 @@ function saveRecentActivity(
             item =>
                 !(
                     item.courseId ===
-                    activity.courseId
-                    &&
+                    activity.courseId &&
                     item.unitId ===
                     activity.unitId
                 )
         );
 
     filtered.unshift({
-
         ...activity,
-
         timestamp:
             new Date().toISOString()
-
     });
 
     const limited =
@@ -642,7 +510,6 @@ function saveRecentActivity(
     );
 
     renderRecentActivity();
-
     updateDashboardAnalytics();
 }
 
@@ -667,7 +534,6 @@ function renderRecentActivity() {
     if (!activities.length) {
 
         area.innerHTML = `
-
             <div class="empty-state">
 
                 <span>📚</span>
@@ -677,7 +543,6 @@ function renderRecentActivity() {
                 </p>
 
             </div>
-
         `;
 
         return;
@@ -685,66 +550,62 @@ function renderRecentActivity() {
 
     area.innerHTML =
         activities
-            .map(
-                activity => {
+            .map(activity => {
 
-                    const date =
-                        activity.timestamp
-                            ? new Date(
-                                activity.timestamp
-                            ).toLocaleDateString(
-                                undefined,
-                                {
-                                    month: "short",
-                                    day: "numeric"
+                const date =
+                    activity.timestamp
+                        ? new Date(
+                            activity.timestamp
+                        ).toLocaleDateString(
+                            undefined,
+                            {
+                                month: "short",
+                                day: "numeric"
+                            }
+                        )
+                        : "";
+
+                return `
+                    <div
+                        class="recent-item"
+                        data-course-id="${escapeHTML(
+                            activity.courseId || ""
+                        )}"
+                        data-unit-id="${escapeHTML(
+                            activity.unitId || ""
+                        )}"
+                    >
+
+                        <div class="recent-icon">
+                            📖
+                        </div>
+
+                        <div class="recent-details">
+
+                            <strong>
+                                ${escapeHTML(
+                                    activity.unitTitle ||
+                                    "Study Unit"
+                                )}
+                            </strong>
+
+                            <small>
+                                ${escapeHTML(
+                                    activity.courseName ||
+                                    "Medical Course"
+                                )}
+                                ${
+                                    date
+                                        ? ` • ${date}`
+                                        : ""
                                 }
-                            )
-                            : "";
-
-                    return `
-
-                        <div
-                            class="recent-item"
-                            data-course-id="${escapeHTML(
-                                activity.courseId || ""
-                            )}"
-                            data-unit-id="${escapeHTML(
-                                activity.unitId || ""
-                            )}"
-                        >
-
-                            <div class="recent-icon">
-                                📖
-                            </div>
-
-                            <div class="recent-details">
-
-                                <strong>
-                                    ${escapeHTML(
-                                        activity.unitTitle ||
-                                        "Study Unit"
-                                    )}
-                                </strong>
-
-                                <small>
-                                    ${escapeHTML(
-                                        activity.courseName ||
-                                        "Medical Course"
-                                    )}
-                                    ${
-                                        date
-                                            ? ` • ${date}`
-                                            : ""
-                                    }
-                                </small>
-
-                            </div>
+                            </small>
 
                         </div>
 
-                    `;
-                }
-            )
+                    </div>
+                `;
+            })
             .join("");
 }
 
@@ -787,12 +648,9 @@ function updateDashboardAnalytics() {
     // QUIZZES
     // --------------------------------------------------------
 
-    const quizCount =
-        quizHistory.length;
-
     setText(
         "quizzesAttempted",
-        quizCount
+        quizHistory.length
     );
 
     // --------------------------------------------------------
@@ -820,14 +678,10 @@ function updateDashboardAnalytics() {
             const average =
                 Math.round(
                     scores.reduce(
-                        (
-                            total,
-                            value
-                        ) =>
+                        (total, value) =>
                             total + value,
                         0
-                    )
-                    /
+                    ) /
                     scores.length
                 );
 
@@ -917,10 +771,6 @@ function updateDashboardAnalytics() {
         `${progress}%`
     );
 
-    // --------------------------------------------------------
-    // QUIZ ANALYTICS
-    // --------------------------------------------------------
-
     updateQuizAnalytics(
         quizHistory
     );
@@ -1005,9 +855,7 @@ function calculateCompletedCourses(
 // OVERALL PROGRESS
 // ============================================================
 
-function calculateOverallProgress(
-    recent
-) {
+function calculateOverallProgress(recent) {
 
     if (!recent.length) {
         return 0;
@@ -1031,8 +879,7 @@ function calculateOverallProgress(
                         recent.length,
                         1
                     )
-                )
-                * 100
+                ) * 100
             )
         );
     }
@@ -1050,20 +897,14 @@ function calculateOverallProgress(
 // CONTINUE LEARNING
 // ============================================================
 
-function updateContinueLearning(
-    recent
-) {
+function updateContinueLearning(recent) {
 
     const area =
         document.getElementById(
             "continueLearningContent"
         );
 
-    if (!area) {
-        return;
-    }
-
-    if (!recent.length) {
+    if (!area || !recent.length) {
         return;
     }
 
@@ -1071,7 +912,6 @@ function updateContinueLearning(
         recent[0];
 
     area.innerHTML = `
-
         <div class="continue-item">
 
             <div class="continue-icon">
@@ -1105,7 +945,6 @@ function updateContinueLearning(
             </button>
 
         </div>
-
     `;
 
     const button =
@@ -1115,14 +954,9 @@ function updateContinueLearning(
 
     if (button) {
 
-        button.onclick =
-            () => {
-
-                continueActivity(
-                    item
-                );
-
-            };
+        button.onclick = () => {
+            continueActivity(item);
+        };
     }
 }
 
@@ -1130,13 +964,10 @@ function updateContinueLearning(
 // CONTINUE ACTIVITY
 // ============================================================
 
-function continueActivity(
-    item
-) {
+function continueActivity(item) {
 
     if (
-        item.courseId !== undefined
-        &&
+        item.courseId !== undefined &&
         item.courseId !== null
     ) {
 
@@ -1155,8 +986,7 @@ function continueActivity(
     }
 
     if (
-        item.unitId !== undefined
-        &&
+        item.unitId !== undefined &&
         item.unitId !== null
     ) {
 
@@ -1188,20 +1018,14 @@ function continueActivity(
 // RECOMMENDED LESSON
 // ============================================================
 
-function updateRecommendation(
-    recent
-) {
+function updateRecommendation(recent) {
 
     const area =
         document.getElementById(
             "recommendedLesson"
         );
 
-    if (!area) {
-        return;
-    }
-
-    if (!recent.length) {
+    if (!area || !recent.length) {
         return;
     }
 
@@ -1209,7 +1033,6 @@ function updateRecommendation(
         recent[0];
 
     area.innerHTML = `
-
         <div class="recommendation-content">
 
             <div class="recommendation-icon">
@@ -1238,7 +1061,6 @@ function updateRecommendation(
             </div>
 
         </div>
-
     `;
 }
 
@@ -1246,15 +1068,10 @@ function updateRecommendation(
 // QUIZ ANALYTICS
 // ============================================================
 
-function updateQuizAnalytics(
-    history
-) {
+function updateQuizAnalytics(history) {
 
     const recent =
-        history.slice(
-            0,
-            5
-        );
+        history.slice(0, 5);
 
     const scores =
         history
@@ -1281,27 +1098,21 @@ function updateQuizAnalytics(
     ) {
 
         const recentScores =
-            recent
-                .map(
-                    item =>
-                        Number(
-                            item.percentage ??
-                            item.score ??
-                            0
-                        )
-                );
+            recent.map(
+                item =>
+                    Number(
+                        item.percentage ??
+                        item.score ??
+                        0
+                    )
+            );
 
         const recentAverage =
             Math.round(
                 recentScores.reduce(
-                    (
-                        a,
-                        b
-                    ) =>
-                        a + b,
+                    (a, b) => a + b,
                     0
-                )
-                /
+                ) /
                 recentScores.length
             );
 
@@ -1339,9 +1150,7 @@ function updateQuizAnalytics(
             .filter(Boolean);
 
     const uniqueWeak =
-        [
-            ...new Set(weak)
-        ];
+        [...new Set(weak)];
 
     setText(
         "weakQuizAreas",
@@ -1371,8 +1180,6 @@ function updateAchievements(
         return;
     }
 
-    // Getting Started
-
     if (progress > 0) {
 
         achievements[0]
@@ -1381,8 +1188,6 @@ function updateAchievements(
             );
     }
 
-    // Quiz Master
-
     if (quizHistory.length >= 10) {
 
         achievements[1]
@@ -1390,8 +1195,6 @@ function updateAchievements(
                 "locked"
             );
     }
-
-    // Streak
 
     const streak =
         Number(
@@ -1408,11 +1211,8 @@ function updateAchievements(
             );
     }
 
-    // Scholar
-
     if (
-        progress >= 80
-        ||
+        progress >= 80 ||
         quizHistory.length >= 25
     ) {
 
@@ -1430,9 +1230,7 @@ function updateAchievements(
 function updateLearningStreak() {
 
     const today =
-        getDateKey(
-            new Date()
-        );
+        getDateKey(new Date());
 
     const stored =
         localStorage.getItem(
@@ -1460,12 +1258,9 @@ function updateLearningStreak() {
                 )
             );
 
-        if (
-            stored === today
-        ) {
+        if (stored === today) {
 
             // Same day.
-            // Keep current streak.
 
         } else if (
             stored === yesterday
@@ -1499,21 +1294,16 @@ function updateLearningStreak() {
 // DATE KEY
 // ============================================================
 
-function getDateKey(
-    date
-) {
+function getDateKey(date) {
 
     return [
         date.getFullYear(),
-
         String(
             date.getMonth() + 1
         ).padStart(2, "0"),
-
         String(
             date.getDate()
         ).padStart(2, "0")
-
     ].join("-");
 }
 
@@ -1537,30 +1327,27 @@ function setupAIQuestions() {
         return;
     }
 
-    buttons.forEach(
-        button => {
+    buttons.forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+        button.addEventListener(
+            "click",
+            () => {
 
-                    const question =
-                        button.dataset.question ||
-                        button.textContent.trim();
+                const question =
+                    button.dataset.question ||
+                    button.textContent.trim();
 
-                    textarea.value =
-                        question;
+                textarea.value =
+                    question;
 
-                    textarea.focus();
-
-                }
-            );
-        }
-    );
+                textarea.focus();
+            }
+        );
+    });
 }
 
 // ============================================================
-// NAVIGATION
+// DASHBOARD NAVIGATION
 // ============================================================
 
 function setupDashboardNavigation() {
@@ -1570,109 +1357,98 @@ function setupDashboardNavigation() {
             ".nav-link"
         );
 
-    navLinks.forEach(
-        link => {
+    navLinks.forEach(link => {
 
-            link.addEventListener(
-                "click",
-                () => {
+        link.addEventListener(
+            "click",
+            () => {
 
-                    navLinks.forEach(
-                        item =>
-                            item.classList.remove(
-                                "active"
-                            )
-                    );
+                navLinks.forEach(
+                    item =>
+                        item.classList.remove(
+                            "active"
+                        )
+                );
 
-                    link.classList.add(
-                        "active"
-                    );
-
-                }
-            );
-        }
-    );
+                link.classList.add(
+                    "active"
+                );
+            }
+        );
+    });
 
     const mobileLinks =
         document.querySelectorAll(
             ".mobile-nav-link"
         );
 
-    mobileLinks.forEach(
-        link => {
+    mobileLinks.forEach(link => {
 
-            link.addEventListener(
-                "click",
-                () => {
+        link.addEventListener(
+            "click",
+            () => {
 
-                    mobileLinks.forEach(
-                        item =>
-                            item.classList.remove(
-                                "active"
-                            )
-                    );
+                mobileLinks.forEach(
+                    item =>
+                        item.classList.remove(
+                            "active"
+                        )
+                );
 
-                    link.classList.add(
-                        "active"
-                    );
-
-                }
-            );
-        }
-    );
-
-    const sections =
-        document.querySelectorAll(
-            ".dashboard-section, .dashboard-home"
+                link.classList.add(
+                    "active"
+                );
+            }
         );
+    });
 
     if (
         "IntersectionObserver"
         in window
     ) {
 
+        const sections =
+            document.querySelectorAll(
+                ".dashboard-section, .dashboard-home"
+            );
+
         const observer =
             new IntersectionObserver(
                 entries => {
 
-                    entries.forEach(
-                        entry => {
+                    entries.forEach(entry => {
 
-                            if (
-                                !entry.isIntersecting
-                            ) {
-                                return;
-                            }
-
-                            const id =
-                                entry.target.id;
-
-                            document
-                                .querySelectorAll(
-                                    `.nav-link[data-section="${id}"]`
-                                )
-                                .forEach(
-                                    link => {
-
-                                        document
-                                            .querySelectorAll(
-                                                ".nav-link"
-                                            )
-                                            .forEach(
-                                                item =>
-                                                    item.classList.remove(
-                                                        "active"
-                                                    )
-                                            );
-
-                                        link.classList.add(
-                                            "active"
-                                        );
-                                    }
-                                );
+                        if (
+                            !entry.isIntersecting
+                        ) {
+                            return;
                         }
-                    );
 
+                        const id =
+                            entry.target.id;
+
+                        document
+                            .querySelectorAll(
+                                `.nav-link[data-section="${id}"]`
+                            )
+                            .forEach(link => {
+
+                                document
+                                    .querySelectorAll(
+                                        ".nav-link"
+                                    )
+                                    .forEach(
+                                        item =>
+                                            item.classList.remove(
+                                                "active"
+                                            )
+                                    );
+
+                                link.classList.add(
+                                    "active"
+                                );
+                            });
+                    });
                 },
                 {
                     threshold: 0.25
@@ -1681,9 +1457,7 @@ function setupDashboardNavigation() {
 
         sections.forEach(
             section =>
-                observer.observe(
-                    section
-                )
+                observer.observe(section)
         );
     }
 }
@@ -1692,7 +1466,7 @@ function setupDashboardNavigation() {
 // CLEAR RECENT ACTIVITY
 // ============================================================
 
-function setupClearRecentActivity() {
+function setupClearActivity() {
 
     const clearButton =
         document.getElementById(
@@ -1712,15 +1486,13 @@ function setupClearRecentActivity() {
             );
 
             renderRecentActivity();
-
             updateDashboardAnalytics();
-
         }
     );
 }
 
 // ============================================================
-// NOTIFICATION SYSTEM
+// NOTIFICATIONS
 // ============================================================
 
 function updateNotifications() {
@@ -1781,7 +1553,6 @@ function setupNotificationButton() {
                 );
 
             if (badge) {
-
                 badge.style.display =
                     "none";
             }
@@ -1794,7 +1565,6 @@ function setupNotificationButton() {
             alert(
                 "Your Mwaniki Scholars notifications will appear here."
             );
-
         }
     );
 }
@@ -1803,18 +1573,12 @@ function setupNotificationButton() {
 // UTILITY
 // ============================================================
 
-function setText(
-    id,
-    value
-) {
+function setText(id, value) {
 
     const element =
-        document.getElementById(
-            id
-        );
+        document.getElementById(id);
 
     if (element) {
-
         element.textContent =
             value;
     }
@@ -1824,9 +1588,7 @@ function setText(
 // ESCAPE HTML
 // ============================================================
 
-function escapeHTML(
-    value
-) {
+function escapeHTML(value) {
 
     return String(
         value ?? ""
@@ -1863,25 +1625,14 @@ async function initializeDashboard() {
         "🚀 Initializing Mwaniki Scholars dashboard..."
     );
 
+    setupDashboardNavigation();
+    setupAIQuestions();
+    setupClearActivity();
+    setupNotificationButton();
+
+    updateNotifications();
+
     try {
-
-        // ----------------------------------------------------
-        // LOCAL UI
-        // ----------------------------------------------------
-
-        setupDashboardNavigation();
-
-        setupAIQuestions();
-
-        setupClearRecentActivity();
-
-        setupNotificationButton();
-
-        updateNotifications();
-
-        // ----------------------------------------------------
-        // STUDENT DATA
-        // ----------------------------------------------------
 
         await loadStudentProfile();
 
@@ -1896,35 +1647,36 @@ async function initializeDashboard() {
             error
         );
 
-        showDashboardError(
-            error?.message ||
-            "An unexpected error occurred while loading the dashboard."
-        );
-
-    } finally {
-
-        // ----------------------------------------------------
-        // IMPORTANT:
-        // NEVER LEAVE THE USER ON
-        // "Loading your dashboard..."
-        // ----------------------------------------------------
-
-        finishDashboardLoading();
-
-        console.log(
-            "🏁 Dashboard loading finished."
-        );
     }
+
+    console.log(
+        "🏁 Dashboard initialization finished."
+    );
 }
 
 // ============================================================
-// START DASHBOARD
+// START
 // ============================================================
 
-initializeDashboard();
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeDashboard,
+        {
+            once: true
+        }
+    );
+
+} else {
+
+    initializeDashboard();
+}
 
 // ============================================================
-// EXPOSE USEFUL FUNCTIONS
+// EXPOSE FUNCTIONS
 // ============================================================
 
 window.mwanikiDashboard = {
@@ -1933,14 +1685,11 @@ window.mwanikiDashboard = {
         updateDashboardAnalytics,
 
     reload:
-        () => {
-            window.location.reload();
-        },
+        () => window.location.reload(),
 
     trackUnit:
         window.mwanikiTrackUnit,
 
     saveActivity:
         saveRecentActivity
-
 };
