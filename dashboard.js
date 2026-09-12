@@ -1,4 +1,4 @@
-```javascript
+
 import { supabase } from "./supabase.js";
 
 
@@ -2068,4 +2068,4 @@ window.mwanikiDashboard = {
         saveRecentActivity
 
 };
-```
+
