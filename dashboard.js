@@ -1,49 +1,110 @@
-
 import { supabase } from "./supabase.js";
-
 
 // ============================================================
 // MWANIKI SCHOLARS
 // PREMIUM STUDENT DASHBOARD ENGINE
 // ============================================================
 
-console.log(
-    "🎓 Mwaniki Scholars Premium Dashboard Loaded"
-);
-
+console.log("🎓 Mwaniki Scholars Premium Dashboard Loaded");
 
 // ============================================================
 // STORAGE KEYS
 // ============================================================
 
 const STORAGE = {
-
-    recent:
-        "mwanikiRecentActivity",
-
-    quizHistory:
-        "mwanikiQuizHistory",
-
-    quizProgress:
-        "mwanikiQuizProgress",
-
-    lastActivity:
-        "mwanikiLastActivity",
-
-    streak:
-        "mwanikiLearningStreak"
-
+    recent: "mwanikiRecentActivity",
+    quizHistory: "mwanikiQuizHistory",
+    quizProgress: "mwanikiQuizProgress",
+    lastActivity: "mwanikiLastActivity",
+    streak: "mwanikiLearningStreak"
 };
-
 
 // ============================================================
 // CURRENT USER
 // ============================================================
 
 let currentUser = null;
-
 let currentStudent = null;
 
+// ============================================================
+// DASHBOARD LOADING FAIL-SAFE
+// ============================================================
+
+function finishDashboardLoading() {
+    const loading = document.querySelector(".hero-loading");
+
+    if (loading) {
+        loading.remove();
+    }
+}
+
+// ============================================================
+// DASHBOARD ERROR DISPLAY
+// ============================================================
+
+function showDashboardError(message) {
+    const hero = document.getElementById(
+        "studentPersonalProfile"
+    );
+
+    if (!hero) {
+        return;
+    }
+
+    hero.innerHTML = `
+        <div class="hero-content">
+
+            <div class="hero-avatar">
+                ⚠️
+            </div>
+
+            <div class="hero-info">
+
+                <div class="hero-greeting">
+                    Mwaniki Scholars
+                </div>
+
+                <h1 class="hero-name">
+                    Dashboard could not load
+                </h1>
+
+                <div class="hero-meta">
+                    ${escapeHTML(
+                        message ||
+                        "Please refresh the page and try again."
+                    )}
+                </div>
+
+            </div>
+
+            <div class="hero-actions">
+
+                <button
+                    class="hero-profile-button"
+                    type="button"
+                    id="reloadDashboardButton"
+                >
+                    🔄 Refresh Dashboard
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+    const button = document.getElementById(
+        "reloadDashboardButton"
+    );
+
+    if (button) {
+        button.addEventListener(
+            "click",
+            () => {
+                window.location.reload();
+            }
+        );
+    }
+}
 
 // ============================================================
 // GET SESSION
@@ -51,41 +112,48 @@ let currentStudent = null;
 
 async function getCurrentUser() {
 
-    const {
-        data,
-        error
-    } = await supabase.auth.getSession();
+    try {
 
+        const {
+            data,
+            error
+        } = await supabase.auth.getSession();
 
-    if (error) {
+        if (error) {
+
+            console.error(
+                "❌ Session error:",
+                error
+            );
+
+            return null;
+        }
+
+        if (
+            !data ||
+            !data.session ||
+            !data.session.user
+        ) {
+
+            console.warn(
+                "⚠️ No active Supabase session."
+            );
+
+            return null;
+        }
+
+        return data.session.user;
+
+    } catch (error) {
 
         console.error(
-            "❌ Session error:",
+            "❌ Unexpected session error:",
             error
         );
 
         return null;
     }
-
-
-    if (
-        !data ||
-        !data.session ||
-        !data.session.user
-    ) {
-
-        console.warn(
-            "⚠️ No active Supabase session."
-        );
-
-        return null;
-    }
-
-
-    return data.session.user;
-
 }
-
 
 // ============================================================
 // LOAD STUDENT PROFILE
@@ -96,7 +164,6 @@ async function loadStudentProfile() {
     currentUser =
         await getCurrentUser();
 
-
     if (!currentUser) {
 
         showLoggedOutState();
@@ -104,12 +171,10 @@ async function loadStudentProfile() {
         return;
     }
 
-
     console.log(
         "✅ Logged-in user:",
         currentUser.email
     );
-
 
     const {
         data: student,
@@ -119,7 +184,6 @@ async function loadStudentProfile() {
         .select("*")
         .eq("id", currentUser.id)
         .maybeSingle();
-
 
     if (error) {
 
@@ -132,46 +196,40 @@ async function loadStudentProfile() {
             currentUser
         );
 
-        return;
-    }
-
-
-    currentStudent =
-        student;
-
-
-    if (!student) {
-
-        console.warn(
-            "⚠️ No student profile found."
-        );
-
-        showIncompleteProfile(
-            currentUser
-        );
-
     } else {
 
-        displayStudentIdentity(
-            student,
-            currentUser
-        );
+        currentStudent =
+            student;
 
+        if (!student) {
+
+            console.warn(
+                "⚠️ No student profile found."
+            );
+
+            showIncompleteProfile(
+                currentUser
+            );
+
+        } else {
+
+            displayStudentIdentity(
+                student,
+                currentUser
+            );
+        }
     }
 
+    // ========================================================
+    // DASHBOARD UI INITIALIZATION
+    // ========================================================
 
     updateDashboardAnalytics();
-
-    setupDashboardNavigation();
-
-    setupAIQuestions();
 
     updateLearningStreak();
 
     renderRecentActivity();
-
 }
-
 
 // ============================================================
 // DISPLAY STUDENT IDENTITY
@@ -186,27 +244,22 @@ function displayStudentIdentity(
         student.full_name ||
         "Student";
 
-
     const email =
         student.email ||
         user.email ||
         "";
 
-
     const course =
         student.course ||
         "Medical Student";
-
 
     const level =
         student.level ||
         "";
 
-
     const photo =
         student.photo_url ||
         "";
-
 
     // --------------------------------------------------------
     // TOP PROFILE BUTTON
@@ -217,12 +270,9 @@ function displayStudentIdentity(
             ".profile"
         );
 
-
     if (profileButton) {
 
-        profileButton.innerHTML =
-            "";
-
+        profileButton.innerHTML = "";
 
         if (photo) {
 
@@ -231,14 +281,11 @@ function displayStudentIdentity(
                     "img"
                 );
 
-
             image.src =
                 photo;
 
-
             image.alt =
                 "Profile photo";
-
 
             image.style.cssText = `
                 width:34px;
@@ -248,28 +295,22 @@ function displayStudentIdentity(
                 margin-right:8px;
             `;
 
-
             profileButton.appendChild(
                 image
             );
-
         }
-
 
         const nameElement =
             document.createElement(
                 "span"
             );
 
-
         nameElement.textContent =
             name;
-
 
         profileButton.appendChild(
             nameElement
         );
-
 
         profileButton.onclick =
             () => {
@@ -278,9 +319,7 @@ function displayStudentIdentity(
                     "studentProfile.html";
 
             };
-
     }
-
 
     // --------------------------------------------------------
     // HERO
@@ -291,36 +330,30 @@ function displayStudentIdentity(
             "studentPersonalProfile"
         );
 
-
     if (!hero) {
-
         return;
     }
 
-
     const greeting =
         getGreeting();
-
 
     hero.innerHTML = `
         <div class="hero-content">
 
             ${
                 photo
-                ?
-                `
-                <img
-                    src="${escapeHTML(photo)}"
-                    class="hero-photo"
-                    alt="Student profile photo"
-                >
-                `
-                :
-                `
-                <div class="hero-avatar">
-                    👤
-                </div>
-                `
+                    ? `
+                        <img
+                            src="${escapeHTML(photo)}"
+                            class="hero-photo"
+                            alt="Student profile photo"
+                        >
+                    `
+                    : `
+                        <div class="hero-avatar">
+                            👤
+                        </div>
+                    `
             }
 
             <div class="hero-info">
@@ -341,14 +374,12 @@ function displayStudentIdentity(
 
                     ${
                         level
-                        ?
-                        `
-                        <span>
-                            📚 ${escapeHTML(level)}
-                        </span>
-                        `
-                        :
-                        ""
+                            ? `
+                                <span>
+                                    📚 ${escapeHTML(level)}
+                                </span>
+                            `
+                            : ""
                     }
 
                     <span>
@@ -374,12 +405,10 @@ function displayStudentIdentity(
         </div>
     `;
 
-
     const heroButton =
         document.getElementById(
             "heroProfileButton"
         );
-
 
     if (heroButton) {
 
@@ -390,11 +419,8 @@ function displayStudentIdentity(
                     "studentProfile.html";
 
             };
-
     }
-
 }
-
 
 // ============================================================
 // INCOMPLETE PROFILE
@@ -409,12 +435,9 @@ function showIncompleteProfile(
             "studentPersonalProfile"
         );
 
-
     if (!hero) {
-
         return;
     }
-
 
     hero.innerHTML = `
 
@@ -466,12 +489,10 @@ function showIncompleteProfile(
         </div>
     `;
 
-
     const button =
         document.getElementById(
             "completeProfileButton"
         );
-
 
     if (button) {
 
@@ -482,11 +503,8 @@ function showIncompleteProfile(
                     "studentProfile.html";
 
             };
-
     }
-
 }
-
 
 // ============================================================
 // LOGGED OUT
@@ -499,42 +517,39 @@ function showLoggedOutState() {
             "studentPersonalProfile"
         );
 
+    if (!hero) {
+        return;
+    }
 
-    if (hero) {
+    hero.innerHTML = `
 
-        hero.innerHTML = `
+        <div class="hero-content">
 
-            <div class="hero-content">
+            <div class="hero-avatar">
+                🔐
+            </div>
 
-                <div class="hero-avatar">
-                    🔐
+            <div class="hero-info">
+
+                <div class="hero-greeting">
+                    Welcome to Mwaniki Scholars
                 </div>
 
-                <div class="hero-info">
+                <h1 class="hero-name">
+                    Student Dashboard
+                </h1>
 
-                    <div class="hero-greeting">
-                        Welcome to Mwaniki Scholars
-                    </div>
-
-                    <h1 class="hero-name">
-                        Student Dashboard
-                    </h1>
-
-                    <div class="hero-meta">
-                        Please log in to view
-                        your personalized learning data.
-                    </div>
-
+                <div class="hero-meta">
+                    Please log in to view
+                    your personalized learning data.
                 </div>
 
             </div>
 
-        `;
+        </div>
 
-    }
-
+    `;
 }
-
 
 // ============================================================
 // GREETING
@@ -545,25 +560,16 @@ function getGreeting() {
     const hour =
         new Date().getHours();
 
-
     if (hour < 12) {
-
         return "Good morning,";
-
     }
-
 
     if (hour < 17) {
-
         return "Good afternoon,";
-
     }
 
-
     return "Good evening,";
-
 }
-
 
 // ============================================================
 // RECENT ACTIVITY
@@ -578,17 +584,12 @@ function getRecentActivity() {
                 STORAGE.recent
             );
 
-
         if (!raw) {
-
             return [];
-
         }
-
 
         const data =
             JSON.parse(raw);
-
 
         return Array.isArray(data)
             ? data
@@ -597,11 +598,8 @@ function getRecentActivity() {
     } catch {
 
         return [];
-
     }
-
 }
-
 
 // ============================================================
 // SAVE ACTIVITY
@@ -613,7 +611,6 @@ function saveRecentActivity(
 
     const current =
         getRecentActivity();
-
 
     const filtered =
         current.filter(
@@ -627,7 +624,6 @@ function saveRecentActivity(
                 )
         );
 
-
     filtered.unshift({
 
         ...activity,
@@ -637,23 +633,18 @@ function saveRecentActivity(
 
     });
 
-
     const limited =
         filtered.slice(0, 8);
-
 
     localStorage.setItem(
         STORAGE.recent,
         JSON.stringify(limited)
     );
 
-
     renderRecentActivity();
 
     updateDashboardAnalytics();
-
 }
-
 
 // ============================================================
 // RENDER RECENT ACTIVITY
@@ -666,16 +657,12 @@ function renderRecentActivity() {
             "recentlyStudied"
         );
 
-
     if (!area) {
-
         return;
     }
 
-
     const activities =
         getRecentActivity();
-
 
     if (!activities.length) {
 
@@ -696,7 +683,6 @@ function renderRecentActivity() {
         return;
     }
 
-
     area.innerHTML =
         activities
             .map(
@@ -704,19 +690,16 @@ function renderRecentActivity() {
 
                     const date =
                         activity.timestamp
-                        ?
-                        new Date(
-                            activity.timestamp
-                        ).toLocaleDateString(
-                            undefined,
-                            {
-                                month: "short",
-                                day: "numeric"
-                            }
-                        )
-                        :
-                        "";
-
+                            ? new Date(
+                                activity.timestamp
+                            ).toLocaleDateString(
+                                undefined,
+                                {
+                                    month: "short",
+                                    day: "numeric"
+                                }
+                            )
+                            : "";
 
                     return `
 
@@ -748,7 +731,11 @@ function renderRecentActivity() {
                                         activity.courseName ||
                                         "Medical Course"
                                     )}
-                                    ${date ? ` • ${date}` : ""}
+                                    ${
+                                        date
+                                            ? ` • ${date}`
+                                            : ""
+                                    }
                                 </small>
 
                             </div>
@@ -756,17 +743,13 @@ function renderRecentActivity() {
                         </div>
 
                     `;
-
                 }
             )
             .join("");
-
 }
-
 
 // ============================================================
 // GLOBAL ACTIVITY HELPER
-// Other scripts can call this.
 // ============================================================
 
 window.mwanikiTrackUnit =
@@ -788,7 +771,6 @@ window.mwanikiTrackUnit =
 
     };
 
-
 // ============================================================
 // DASHBOARD ANALYTICS
 // ============================================================
@@ -798,10 +780,8 @@ function updateDashboardAnalytics() {
     const recent =
         getRecentActivity();
 
-
     const quizHistory =
         getQuizHistory();
-
 
     // --------------------------------------------------------
     // QUIZZES
@@ -810,12 +790,10 @@ function updateDashboardAnalytics() {
     const quizCount =
         quizHistory.length;
 
-
     setText(
         "quizzesAttempted",
         quizCount
     );
-
 
     // --------------------------------------------------------
     // AVERAGE SCORE
@@ -837,7 +815,6 @@ function updateDashboardAnalytics() {
                     Number.isFinite
                 );
 
-
         if (scores.length) {
 
             const average =
@@ -854,16 +831,12 @@ function updateDashboardAnalytics() {
                     scores.length
                 );
 
-
             setText(
                 "averageScore",
                 `${average}%`
             );
-
         }
-
     }
-
 
     // --------------------------------------------------------
     // UNITS
@@ -883,12 +856,10 @@ function updateDashboardAnalytics() {
                 .filter(Boolean)
         );
 
-
     setText(
         "unitsCompleted",
         uniqueUnits.size
     );
-
 
     // --------------------------------------------------------
     // COURSES
@@ -908,7 +879,6 @@ function updateDashboardAnalytics() {
                 .filter(Boolean)
         );
 
-
     setText(
         "coursesCompleted",
         calculateCompletedCourses(
@@ -916,7 +886,6 @@ function updateDashboardAnalytics() {
             recent
         )
     );
-
 
     // --------------------------------------------------------
     // PROGRESS
@@ -927,34 +896,26 @@ function updateDashboardAnalytics() {
             recent
         );
 
-
     setText(
         "overallProgressText",
         `${progress}%`
     );
-
 
     const progressBar =
         document.getElementById(
             "overallProgressBar"
         );
 
-
     if (progressBar) {
 
         progressBar.style.width =
             `${progress}%`;
-
     }
-
-
-    // Legacy element
 
     setText(
         "progress",
         `${progress}%`
     );
-
 
     // --------------------------------------------------------
     // QUIZ ANALYTICS
@@ -964,24 +925,19 @@ function updateDashboardAnalytics() {
         quizHistory
     );
 
-
     updateAchievements(
         progress,
         quizHistory
     );
 
-
     updateContinueLearning(
         recent
     );
 
-
     updateRecommendation(
         recent
     );
-
 }
-
 
 // ============================================================
 // QUIZ HISTORY
@@ -996,17 +952,12 @@ function getQuizHistory() {
                 STORAGE.quizHistory
             );
 
-
         if (!raw) {
-
             return [];
-
         }
-
 
         const parsed =
             JSON.parse(raw);
-
 
         return Array.isArray(parsed)
             ? parsed
@@ -1015,11 +966,8 @@ function getQuizHistory() {
     } catch {
 
         return [];
-
     }
-
 }
-
 
 // ============================================================
 // CALCULATE COURSES
@@ -1036,7 +984,6 @@ function calculateCompletedCourses(
                 item.courseCompleted === true
         );
 
-
     const completedIds =
         new Set(
             completed
@@ -1051,16 +998,8 @@ function calculateCompletedCourses(
                 .filter(Boolean)
         );
 
-
-    return Math.max(
-        completedIds.size,
-        courseIds.size > 0
-            ? 0
-            : 0
-    );
-
+    return completedIds.size;
 }
-
 
 // ============================================================
 // OVERALL PROGRESS
@@ -1071,11 +1010,8 @@ function calculateOverallProgress(
 ) {
 
     if (!recent.length) {
-
         return 0;
-
     }
-
 
     const completed =
         recent.filter(
@@ -1083,7 +1019,6 @@ function calculateOverallProgress(
                 item.completed === true ||
                 item.unitCompleted === true
         );
-
 
     if (completed.length) {
 
@@ -1100,12 +1035,7 @@ function calculateOverallProgress(
                 * 100
             )
         );
-
     }
-
-
-    // Having studied units means
-    // the learner has started the journey.
 
     return Math.min(
         95,
@@ -1114,9 +1044,7 @@ function calculateOverallProgress(
             recent.length * 5
         )
     );
-
 }
-
 
 // ============================================================
 // CONTINUE LEARNING
@@ -1131,22 +1059,16 @@ function updateContinueLearning(
             "continueLearningContent"
         );
 
-
     if (!area) {
-
         return;
     }
-
 
     if (!recent.length) {
-
         return;
     }
-
 
     const item =
         recent[0];
-
 
     area.innerHTML = `
 
@@ -1186,12 +1108,10 @@ function updateContinueLearning(
 
     `;
 
-
     const button =
         document.getElementById(
             "continueLearningButton"
         );
-
 
     if (button) {
 
@@ -1203,11 +1123,8 @@ function updateContinueLearning(
                 );
 
             };
-
     }
-
 }
-
 
 // ============================================================
 // CONTINUE ACTIVITY
@@ -1227,9 +1144,7 @@ function continueActivity(
             "selectedCourse",
             String(item.courseId)
         );
-
     }
-
 
     if (item.courseName) {
 
@@ -1237,9 +1152,7 @@ function continueActivity(
             "selectedCourseName",
             item.courseName
         );
-
     }
-
 
     if (
         item.unitId !== undefined
@@ -1251,9 +1164,7 @@ function continueActivity(
             "selectedUnit",
             String(item.unitId)
         );
-
     }
-
 
     if (item.unitTitle) {
 
@@ -1261,19 +1172,17 @@ function continueActivity(
             "selectedUnitTitle",
             item.unitTitle
         );
-
     }
 
-
-    if (item.courseId) {
+    if (
+        item.courseId !== undefined &&
+        item.courseId !== null
+    ) {
 
         window.location.href =
             "course.html";
-
     }
-
 }
-
 
 // ============================================================
 // RECOMMENDED LESSON
@@ -1288,22 +1197,16 @@ function updateRecommendation(
             "recommendedLesson"
         );
 
-
     if (!area) {
-
         return;
     }
-
 
     if (!recent.length) {
-
         return;
     }
-
 
     const latest =
         recent[0];
-
 
     area.innerHTML = `
 
@@ -1337,9 +1240,7 @@ function updateRecommendation(
         </div>
 
     `;
-
 }
-
 
 // ============================================================
 // QUIZ ANALYTICS
@@ -1355,7 +1256,6 @@ function updateQuizAnalytics(
             5
         );
 
-
     const scores =
         history
             .map(
@@ -1370,12 +1270,10 @@ function updateQuizAnalytics(
                 Number.isFinite
             );
 
-
     const recentElement =
         document.getElementById(
             "recentQuizPerformance"
         );
-
 
     if (
         recentElement &&
@@ -1393,7 +1291,6 @@ function updateQuizAnalytics(
                         )
                 );
 
-
         const recentAverage =
             Math.round(
                 recentScores.reduce(
@@ -1408,22 +1305,14 @@ function updateQuizAnalytics(
                 recentScores.length
             );
 
-
         recentElement.textContent =
             `${recentAverage}%`;
-
     }
-
 
     const best =
         scores.length
-            ?
-            Math.max(
-                ...scores
-            )
-            :
-            null;
-
+            ? Math.max(...scores)
+            : null;
 
     setText(
         "bestQuizScore",
@@ -1431,9 +1320,6 @@ function updateQuizAnalytics(
             ? "—"
             : `${best}%`
     );
-
-
-    // Weak areas
 
     const weak =
         history
@@ -1443,8 +1329,7 @@ function updateQuizAnalytics(
                         item.percentage ??
                         item.score ??
                         100
-                    )
-                    < 60
+                    ) < 60
             )
             .map(
                 item =>
@@ -1453,28 +1338,20 @@ function updateQuizAnalytics(
             )
             .filter(Boolean);
 
-
     const uniqueWeak =
         [
-            ...new Set(
-                weak
-            )
+            ...new Set(weak)
         ];
-
 
     setText(
         "weakQuizAreas",
         uniqueWeak.length
-            ?
-            uniqueWeak
-                .slice(0,2)
+            ? uniqueWeak
+                .slice(0, 2)
                 .join(", ")
-            :
-            "None yet"
+            : "None yet"
     );
-
 }
-
 
 // ============================================================
 // ACHIEVEMENTS
@@ -1490,12 +1367,9 @@ function updateAchievements(
             ".achievement"
         );
 
-
     if (!achievements.length) {
-
         return;
     }
-
 
     // Getting Started
 
@@ -1505,9 +1379,7 @@ function updateAchievements(
             ?.classList.remove(
                 "locked"
             );
-
     }
-
 
     // Quiz Master
 
@@ -1517,9 +1389,7 @@ function updateAchievements(
             ?.classList.remove(
                 "locked"
             );
-
     }
-
 
     // Streak
 
@@ -1530,16 +1400,13 @@ function updateAchievements(
             )
         ) || 0;
 
-
     if (streak >= 7) {
 
         achievements[2]
             ?.classList.remove(
                 "locked"
             );
-
     }
-
 
     // Scholar
 
@@ -1553,11 +1420,8 @@ function updateAchievements(
             ?.classList.remove(
                 "locked"
             );
-
     }
-
 }
-
 
 // ============================================================
 // LEARNING STREAK
@@ -1570,12 +1434,10 @@ function updateLearningStreak() {
             new Date()
         );
 
-
     const stored =
         localStorage.getItem(
             STORAGE.lastActivity
         );
-
 
     let streak =
         Number(
@@ -1583,7 +1445,6 @@ function updateLearningStreak() {
                 STORAGE.streak
             )
         ) || 0;
-
 
     if (!stored) {
 
@@ -1594,12 +1455,10 @@ function updateLearningStreak() {
         const yesterday =
             getDateKey(
                 new Date(
-                    Date.now()
-                    -
+                    Date.now() -
                     86400000
                 )
             );
-
 
         if (
             stored === today
@@ -1617,31 +1476,24 @@ function updateLearningStreak() {
         } else {
 
             streak = 1;
-
         }
-
     }
-
 
     localStorage.setItem(
         STORAGE.lastActivity,
         today
     );
 
-
     localStorage.setItem(
         STORAGE.streak,
         String(streak)
     );
 
-
     setText(
         "learningStreak",
         `${streak} day${streak === 1 ? "" : "s"}`
     );
-
 }
-
 
 // ============================================================
 // DATE KEY
@@ -1653,16 +1505,17 @@ function getDateKey(
 
     return [
         date.getFullYear(),
+
         String(
             date.getMonth() + 1
-        ).padStart(2,"0"),
+        ).padStart(2, "0"),
+
         String(
             date.getDate()
-        ).padStart(2,"0")
+        ).padStart(2, "0")
+
     ].join("-");
-
 }
-
 
 // ============================================================
 // AI SUGGESTIONS
@@ -1675,18 +1528,14 @@ function setupAIQuestions() {
             ".suggestion-button"
         );
 
-
     const textarea =
         document.getElementById(
             "aiQuestion"
         );
 
-
     if (!textarea) {
-
         return;
     }
-
 
     buttons.forEach(
         button => {
@@ -1699,21 +1548,16 @@ function setupAIQuestions() {
                         button.dataset.question ||
                         button.textContent.trim();
 
-
                     textarea.value =
                         question;
-
 
                     textarea.focus();
 
                 }
             );
-
         }
     );
-
 }
-
 
 // ============================================================
 // NAVIGATION
@@ -1725,7 +1569,6 @@ function setupDashboardNavigation() {
         document.querySelectorAll(
             ".nav-link"
         );
-
 
     navLinks.forEach(
         link => {
@@ -1741,23 +1584,19 @@ function setupDashboardNavigation() {
                             )
                     );
 
-
                     link.classList.add(
                         "active"
                     );
 
                 }
             );
-
         }
     );
-
 
     const mobileLinks =
         document.querySelectorAll(
             ".mobile-nav-link"
         );
-
 
     mobileLinks.forEach(
         link => {
@@ -1773,103 +1612,96 @@ function setupDashboardNavigation() {
                             )
                     );
 
-
                     link.classList.add(
                         "active"
                     );
 
                 }
             );
-
         }
     );
-
-
-    // Update navigation while scrolling
 
     const sections =
         document.querySelectorAll(
             ".dashboard-section, .dashboard-home"
         );
 
+    if (
+        "IntersectionObserver"
+        in window
+    ) {
 
-    const observer =
-        new IntersectionObserver(
-            entries => {
+        const observer =
+            new IntersectionObserver(
+                entries => {
 
-                entries.forEach(
-                    entry => {
+                    entries.forEach(
+                        entry => {
 
-                        if (
-                            !entry.isIntersecting
-                        ) {
+                            if (
+                                !entry.isIntersecting
+                            ) {
+                                return;
+                            }
 
-                            return;
+                            const id =
+                                entry.target.id;
 
-                        }
+                            document
+                                .querySelectorAll(
+                                    `.nav-link[data-section="${id}"]`
+                                )
+                                .forEach(
+                                    link => {
 
+                                        document
+                                            .querySelectorAll(
+                                                ".nav-link"
+                                            )
+                                            .forEach(
+                                                item =>
+                                                    item.classList.remove(
+                                                        "active"
+                                                    )
+                                            );
 
-                        const id =
-                            entry.target.id;
-
-
-                        document
-                            .querySelectorAll(
-                                `.nav-link[data-section="${id}"]`
-                            )
-                            .forEach(
-                                link => {
-
-                                    document
-                                        .querySelectorAll(
-                                            ".nav-link"
-                                        )
-                                        .forEach(
-                                            item =>
-                                                item.classList.remove(
-                                                    "active"
-                                                )
+                                        link.classList.add(
+                                            "active"
                                         );
+                                    }
+                                );
+                        }
+                    );
 
+                },
+                {
+                    threshold: 0.25
+                }
+            );
 
-                                    link.classList.add(
-                                        "active"
-                                    );
-
-                                }
-                            );
-
-                    }
-                );
-
-            },
-            {
-                threshold: .25
-            }
+        sections.forEach(
+            section =>
+                observer.observe(
+                    section
+                )
         );
-
-
-    sections.forEach(
-        section =>
-            observer.observe(
-                section
-            )
-    );
-
+    }
 }
-
 
 // ============================================================
 // CLEAR RECENT ACTIVITY
 // ============================================================
 
-const clearButton =
-    document.getElementById(
-        "clearRecentActivity"
-    );
+function setupClearRecentActivity() {
 
+    const clearButton =
+        document.getElementById(
+            "clearRecentActivity"
+        );
 
-if (clearButton) {
+    if (!clearButton) {
+        return;
+    }
 
     clearButton.addEventListener(
         "click",
@@ -1885,9 +1717,7 @@ if (clearButton) {
 
         }
     );
-
 }
-
 
 // ============================================================
 // NOTIFICATION SYSTEM
@@ -1900,17 +1730,9 @@ function updateNotifications() {
             "notificationBadge"
         );
 
-
     if (!badge) {
-
         return;
     }
-
-
-    // The dashboard currently uses a
-    // lightweight local notification count.
-    // We will connect this to Supabase
-    // notifications when that table exists.
 
     const notifications =
         Number(
@@ -1918,7 +1740,6 @@ function updateNotifications() {
                 "mwanikiNotificationCount"
             )
         ) || 0;
-
 
     if (notifications > 0) {
 
@@ -1932,23 +1753,23 @@ function updateNotifications() {
 
         badge.style.display =
             "none";
-
     }
-
 }
-
 
 // ============================================================
 // NOTIFICATION BUTTON
 // ============================================================
 
-const notificationButton =
-    document.getElementById(
-        "notificationButton"
-    );
+function setupNotificationButton() {
 
+    const notificationButton =
+        document.getElementById(
+            "notificationButton"
+        );
 
-if (notificationButton) {
+    if (!notificationButton) {
+        return;
+    }
 
     notificationButton.addEventListener(
         "click",
@@ -1959,14 +1780,11 @@ if (notificationButton) {
                     "notificationBadge"
                 );
 
-
             if (badge) {
 
                 badge.style.display =
                     "none";
-
             }
-
 
             localStorage.setItem(
                 "mwanikiNotificationCount",
@@ -1979,9 +1797,7 @@ if (notificationButton) {
 
         }
     );
-
 }
-
 
 // ============================================================
 // UTILITY
@@ -1997,16 +1813,12 @@ function setText(
             id
         );
 
-
     if (element) {
 
         element.textContent =
             value;
-
     }
-
 }
-
 
 // ============================================================
 // ESCAPE HTML
@@ -2039,18 +1851,77 @@ function escapeHTML(
             /'/g,
             "&#039;"
         );
-
 }
-
 
 // ============================================================
 // INITIALIZATION
 // ============================================================
 
-updateNotifications();
+async function initializeDashboard() {
 
-loadStudentProfile();
+    console.log(
+        "🚀 Initializing Mwaniki Scholars dashboard..."
+    );
 
+    try {
+
+        // ----------------------------------------------------
+        // LOCAL UI
+        // ----------------------------------------------------
+
+        setupDashboardNavigation();
+
+        setupAIQuestions();
+
+        setupClearRecentActivity();
+
+        setupNotificationButton();
+
+        updateNotifications();
+
+        // ----------------------------------------------------
+        // STUDENT DATA
+        // ----------------------------------------------------
+
+        await loadStudentProfile();
+
+        console.log(
+            "✅ Mwaniki Scholars dashboard initialized."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Dashboard initialization failed:",
+            error
+        );
+
+        showDashboardError(
+            error?.message ||
+            "An unexpected error occurred while loading the dashboard."
+        );
+
+    } finally {
+
+        // ----------------------------------------------------
+        // IMPORTANT:
+        // NEVER LEAVE THE USER ON
+        // "Loading your dashboard..."
+        // ----------------------------------------------------
+
+        finishDashboardLoading();
+
+        console.log(
+            "🏁 Dashboard loading finished."
+        );
+    }
+}
+
+// ============================================================
+// START DASHBOARD
+// ============================================================
+
+initializeDashboard();
 
 // ============================================================
 // EXPOSE USEFUL FUNCTIONS
@@ -2061,6 +1932,11 @@ window.mwanikiDashboard = {
     refresh:
         updateDashboardAnalytics,
 
+    reload:
+        () => {
+            window.location.reload();
+        },
+
     trackUnit:
         window.mwanikiTrackUnit,
 
@@ -2068,4 +1944,3 @@ window.mwanikiDashboard = {
         saveRecentActivity
 
 };
-
