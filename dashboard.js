@@ -1,48 +1,41 @@
 import { supabase } from "./supabase.js";
 
-/* =========================================================
-   MWANIKI SCHOLARS
-   STUDENT DASHBOARD ENGINE
-========================================================= */
 
-console.log("🚀 Mwaniki Scholars Dashboard starting...");
+// =====================================================
+// MWANIKI SCHOLARS
+// STUDENT DASHBOARD ENGINE
+// =====================================================
 
-/* =========================================================
-   1. GLOBAL STATE
-========================================================= */
+console.log("🚀 Mwaniki Scholars Student Dashboard starting...");
+
+
+// =====================================================
+// STATE
+// =====================================================
 
 let currentUser = null;
 let currentStudent = null;
 
 let dashboardCourses = [];
 let dashboardNotes = [];
-let recentActivity = [];
+let dashboardQuizCount = 0;
 
-const RECENT_ACTIVITY_KEY = "mwanikiRecentActivity";
-const QUIZ_PROGRESS_KEY = "mwanikiQuizProgress";
-const QUIZ_HISTORY_KEY = "mwanikiQuizHistory";
 
-/* =========================================================
-   2. BASIC HELPERS
-========================================================= */
+// =====================================================
+// DOM HELPER
+// =====================================================
 
 function $(id) {
     return document.getElementById(id);
 }
 
-function firstElement(...ids) {
-    for (const id of ids) {
-        const element = $(id);
 
-        if (element) {
-            return element;
-        }
-    }
-
-    return null;
-}
+// =====================================================
+// SAFE TEXT
+// =====================================================
 
 function escapeHTML(value) {
+
     if (value === null || value === undefined) {
         return "";
     }
@@ -55,2429 +48,1450 @@ function escapeHTML(value) {
         .replace(/'/g, "&#039;");
 }
 
-function safeNumber(value, fallback = 0) {
-    const number = Number(value);
 
-    return Number.isFinite(number)
-        ? number
-        : fallback;
-}
+// =====================================================
+// DATE FORMATTER
+// =====================================================
 
-function formatDate(value) {
-    if (!value) {
+function formatDate(dateValue) {
+
+    if (!dateValue) {
         return "";
     }
 
-    const date = new Date(value);
+    const date = new Date(dateValue);
 
     if (Number.isNaN(date.getTime())) {
         return "";
     }
 
-    return date.toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric"
-    });
+    return date.toLocaleDateString(
+        undefined,
+        {
+            year: "numeric",
+            month: "short",
+            day: "numeric"
+        }
+    );
 }
+
+
+// =====================================================
+// SET TEXT SAFELY
+// =====================================================
 
 function setText(id, value) {
+
     const element = $(id);
 
-    if (element) {
-        element.textContent = value;
-    }
-}
-
-function showElement(id) {
-    const element = $(id);
-
-    if (element) {
-        element.style.display = "";
-    }
-}
-
-function hideElement(id) {
-    const element = $(id);
-
-    if (element) {
-        element.style.display = "none";
-    }
-}
-
-function getCoursesContainer() {
-    return firstElement(
-        "coursesContainer",
-        "courseArea"
-    );
-}
-
-function getNotesContainer() {
-    return firstElement(
-        "notesContainer",
-        "notesArea"
-    );
-}
-
-function buttonState(id, loading, loadingText) {
-    const button = $(id);
-
-    if (!button) {
+    if (!element) {
         return;
     }
 
-    if (loading) {
-        button.disabled = true;
-
-        button.dataset.originalText =
-            button.textContent;
-
-        button.textContent = loadingText;
-    } else {
-        button.disabled = false;
-
-        button.textContent =
-            button.dataset.originalText ||
-            button.textContent;
-    }
+    element.textContent = value;
 }
 
-/* =========================================================
-   3. AUTHENTICATION
-========================================================= */
 
-async function getCurrentUser() {
-    try {
-        const {
-            data,
-            error
-        } = await supabase.auth.getUser();
+// =====================================================
+// SHOW / HIDE
+// =====================================================
 
-        if (error) {
-            console.error(
-                "❌ Unable to get current user:",
-                error
-            );
+function showElement(id) {
 
-            return null;
-        }
+    const element = $(id);
 
-        return data?.user || null;
+    if (!element) {
+        return;
+    }
 
-    } catch (error) {
+    element.hidden = false;
+}
+
+
+function hideElement(id) {
+
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.hidden = true;
+}
+
+
+// =====================================================
+// AUTHENTICATED USER
+// =====================================================
+
+async function loadCurrentUser() {
+
+    console.log("🔐 Checking student authentication...");
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getUser();
+
+    if (error) {
+
         console.error(
-            "❌ Authentication error:",
+            "❌ Supabase authentication error:",
             error
         );
 
         return null;
     }
+
+    if (!data || !data.user) {
+
+        console.warn(
+            "⚠️ No authenticated user found."
+        );
+
+        return null;
+    }
+
+    currentUser = data.user;
+
+    console.log(
+        "✅ Authenticated user:",
+        currentUser.email
+    );
+
+    return currentUser;
 }
 
-/* =========================================================
-   4. LOAD STUDENT PROFILE
-========================================================= */
+
+// =====================================================
+// STUDENT PROFILE
+// =====================================================
 
 async function loadStudentProfile() {
+
     if (!currentUser) {
         return;
     }
 
-    try {
-        const {
-            data: student,
-            error
-        } = await supabase
-            .from("students")
-            .select("*")
-            .eq("id", currentUser.id)
-            .maybeSingle();
+    console.log(
+        "👤 Loading student profile..."
+    );
 
-        if (error) {
-            console.error(
-                "❌ Student profile error:",
-                error
-            );
+    const {
+        data,
+        error
+    } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", currentUser.id)
+        .maybeSingle();
 
-            return;
-        }
 
-        currentStudent = student;
+    if (error) {
 
-        const studentName =
-            student?.full_name ||
-            student?.name ||
-            student?.username ||
-            currentUser.user_metadata?.full_name ||
-            currentUser.user_metadata?.name ||
-            "Scholar";
-
-        const studentEmail =
-            student?.email ||
-            currentUser.email ||
-            "";
-
-        setText(
-            "dashboardProfileName",
-            studentName
-        );
-
-        setText(
-            "welcomeStudentName",
-            studentName
-        );
-
-        setText(
-            "studentDisplayName",
-            studentName
-        );
-
-        const nameInput = $("studentName");
-
-        if (nameInput) {
-            nameInput.value = studentName;
-        }
-
-        const emailInput = $("studentEmail");
-
-        if (emailInput) {
-            emailInput.value = studentEmail;
-        }
-
-        const inboxEmail = $("checkEmail");
-
-        if (
-            inboxEmail &&
-            !inboxEmail.value
-        ) {
-            inboxEmail.value = studentEmail;
-        }
-
-        const photoURL =
-            student?.photo_url ||
-            student?.avatar_url ||
-            currentUser.user_metadata?.avatar_url ||
-            "";
-
-        updateProfilePhotos(photoURL);
-
-        console.log(
-            "✅ Student profile loaded:",
-            studentName
-        );
-
-    } catch (error) {
-        console.error(
-            "❌ loadStudentProfile failed:",
-            error
-        );
-    }
-}
-
-/* =========================================================
-   5. PROFILE PHOTO SYSTEM
-========================================================= */
-
-function updateProfilePhotos(photoURL) {
-    const headerPhoto =
-        $("dashboardProfilePhoto");
-
-    const heroPhoto =
-        $("dashboardHeroProfilePhoto");
-
-    const heroFallback =
-        $("dashboardHeroFallback");
-
-    if (photoURL) {
-        if (headerPhoto) {
-            headerPhoto.src = photoURL;
-            headerPhoto.style.display = "block";
-
-            headerPhoto.onerror = () => {
-                headerPhoto.style.display = "none";
-            };
-        }
-
-        if (heroPhoto) {
-            heroPhoto.src = photoURL;
-            heroPhoto.classList.add("visible");
-
-            heroPhoto.onerror = () => {
-                heroPhoto.classList.remove(
-                    "visible"
-                );
-
-                if (heroFallback) {
-                    heroFallback.style.display =
-                        "flex";
-                }
-            };
-        }
-
-        if (heroFallback) {
-            heroFallback.style.display = "none";
-        }
-
-    } else {
-        if (headerPhoto) {
-            headerPhoto.style.display = "none";
-        }
-
-        if (heroPhoto) {
-            heroPhoto.classList.remove(
-                "visible"
-            );
-        }
-
-        if (heroFallback) {
-            heroFallback.style.display = "flex";
-        }
-    }
-}
-
-/* =========================================================
-   6. LOAD COURSES
-========================================================= */
-
-async function loadCourses() {
-    const courseArea =
-        getCoursesContainer();
-
-    if (!courseArea) {
         console.warn(
-            "⚠️ Courses container not found."
+            "⚠️ Student profile lookup:",
+            error
         );
+
+        applyBasicUserProfile();
 
         return;
     }
 
-    courseArea.innerHTML = `
-        <div class="loading-state">
-            Loading courses...
-        </div>
-    `;
 
-    try {
-        const {
-            data,
+    if (!data) {
+
+        console.warn(
+            "⚠️ No student profile row found."
+        );
+
+        applyBasicUserProfile();
+
+        return;
+    }
+
+
+    currentStudent = data;
+
+    const studentName =
+        data.full_name ||
+        data.name ||
+        data.student_name ||
+        data.username ||
+        currentUser.email?.split("@")[0] ||
+        "Student";
+
+
+    updateStudentIdentity(
+        studentName,
+        currentUser.email
+    );
+}
+
+
+// =====================================================
+// BASIC USER PROFILE FALLBACK
+// =====================================================
+
+function applyBasicUserProfile() {
+
+    if (!currentUser) {
+        return;
+    }
+
+    const fallbackName =
+        currentUser.user_metadata?.full_name ||
+        currentUser.user_metadata?.name ||
+        currentUser.email?.split("@")[0] ||
+        "Student";
+
+
+    updateStudentIdentity(
+        fallbackName,
+        currentUser.email
+    );
+}
+
+
+// =====================================================
+// UPDATE STUDENT IDENTITY
+// =====================================================
+
+function updateStudentIdentity(
+    name,
+    email
+) {
+
+    const cleanName =
+        name ||
+        "Student";
+
+
+    const firstLetter =
+        cleanName
+            .trim()
+            .charAt(0)
+            .toUpperCase() ||
+        "S";
+
+
+    setText(
+        "welcomeMessage",
+        `Welcome back, ${cleanName}`
+    );
+
+
+    setText(
+        "profileName",
+        cleanName
+    );
+
+
+    setText(
+        "profileInitial",
+        firstLetter
+    );
+
+
+    setText(
+        "profilePanelName",
+        cleanName
+    );
+
+
+    setText(
+        "profilePanelEmail",
+        email || "Not available"
+    );
+}
+
+
+// =====================================================
+// LOAD COURSES
+// =====================================================
+
+async function loadCourses() {
+
+    const loading = $("coursesLoading");
+    const errorBox = $("coursesError");
+    const container = $("coursesContainer");
+
+
+    if (loading) {
+        loading.hidden = false;
+    }
+
+    if (errorBox) {
+        errorBox.hidden = true;
+        errorBox.textContent = "";
+    }
+
+    if (container) {
+        container.innerHTML = "";
+    }
+
+
+    console.log(
+        "📚 Requesting courses from Supabase..."
+    );
+
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from("courses")
+        .select("*")
+        .order("id", {
+            ascending: true
+        });
+
+
+    if (error) {
+
+        console.error(
+            "❌ COURSES SUPABASE ERROR:",
             error
-        } = await supabase
-            .from("courses")
-            .select("*")
-            .order("id", {
-                ascending: true
-            });
+        );
 
-        if (error) {
-            throw error;
+
+        if (loading) {
+            loading.hidden = true;
         }
 
-        dashboardCourses =
-            Array.isArray(data)
-                ? data
-                : [];
+
+        if (errorBox) {
+
+            errorBox.hidden = false;
+
+            errorBox.textContent =
+                `Unable to load courses: ${error.message}`;
+        }
+
 
         setText(
             "totalCourses",
-            dashboardCourses.length
+            "0"
         );
 
-        renderCourses(
-            dashboardCourses
-        );
-
-        renderRecommendedLesson();
-        renderCourseProgress();
-        updateOverallProgress();
-
-        console.log(
-            `✅ Loaded ${dashboardCourses.length} courses`
-        );
-
-    } catch (error) {
-        console.error(
-            "❌ Course loading failed:",
-            error
-        );
-
-        courseArea.innerHTML = `
-            <div class="empty-state">
-                Unable to load courses.
-                Please refresh the page.
-            </div>
-        `;
+        return;
     }
+
+
+    dashboardCourses =
+        Array.isArray(data)
+            ? data
+            : [];
+
+
+    console.log(
+        `✅ Courses returned from Supabase: ${dashboardCourses.length}`
+    );
+
+
+    if (loading) {
+        loading.hidden = true;
+    }
+
+
+    setText(
+        "totalCourses",
+        dashboardCourses.length
+    );
+
+
+    renderCourses();
 }
 
-/* =========================================================
-   7. RENDER COURSES
-========================================================= */
 
-function renderCourses(courses) {
-    const courseArea =
-        getCoursesContainer();
+// =====================================================
+// RENDER COURSES
+// =====================================================
 
-    if (!courseArea) {
+function renderCourses() {
+
+    const container =
+        $("coursesContainer");
+
+
+    if (!container) {
+        console.error(
+            "❌ coursesContainer not found."
+        );
         return;
     }
 
-    if (!courses.length) {
-        courseArea.innerHTML = `
-            <div class="empty-state">
-                No courses found.
+
+    if (!dashboardCourses.length) {
+
+        container.innerHTML = `
+            <div class="empty-message">
+                No courses are currently available.
             </div>
         `;
 
         return;
     }
 
-    courseArea.innerHTML =
-        courses.map(course => {
-            const courseID =
-                course.id;
 
-            const title =
-                course.title ||
-                "Untitled Course";
+    container.innerHTML =
+        dashboardCourses
+            .map(
+                (course) => {
 
-            const description =
-                course.description ||
-                "Medical learning course";
+                    const id =
+                        course.id;
 
-            const image =
-                course.image ||
-                "";
+                    const title =
+                        course.title ||
+                        "Untitled Course";
 
-            return `
-                <article
-                    class="course-card"
-                    data-course-id="${escapeHTML(courseID)}"
-                    tabindex="0"
-                >
+                    const description =
+                        course.description ||
+                        "Medical learning course available through Mwaniki Scholars.";
 
-                    ${
-                        image
-                            ? `
-                                <img
-                                    src="${escapeHTML(image)}"
-                                    alt="${escapeHTML(title)}"
-                                    loading="lazy"
-                                    onerror="this.style.display='none'"
-                                >
-                            `
-                            : `
-                                <div class="course-card-placeholder">
-                                    🩺
-                                </div>
-                            `
-                    }
+                    const image =
+                        course.image ||
+                        "";
 
-                    <div class="course-card-content">
 
-                        <h3>
-                            ${escapeHTML(title)}
-                        </h3>
-
-                        <p>
-                            ${escapeHTML(description)}
-                        </p>
-
-                        <button
-                            type="button"
-                            class="primary-button course-open-button"
+                    return `
+                        <article
+                            class="course-card"
+                            data-course-id="${escapeHTML(id)}"
                         >
-                            Open Course
-                        </button>
 
-                    </div>
+                            ${
+                                image
+                                    ? `
+                                        <div class="course-card-image">
+                                            <img
+                                                src="${escapeHTML(image)}"
+                                                alt="${escapeHTML(title)}"
+                                                loading="lazy"
+                                                onerror="this.style.display='none';"
+                                            >
+                                        </div>
+                                      `
+                                    : `
+                                        <div
+                                            class="course-card-image course-placeholder"
+                                            aria-hidden="true"
+                                        >
+                                            📚
+                                        </div>
+                                      `
+                            }
 
-                </article>
-            `;
-        })
-        .join("");
 
-    courseArea
-        .querySelectorAll(".course-card")
-        .forEach(card => {
+                            <div class="course-card-content">
 
-            card.addEventListener(
-                "click",
-                event => {
+                                <h3>
+                                    ${escapeHTML(title)}
+                                </h3>
 
-                    if (
-                        event.target.closest(
-                            "a"
-                        )
-                    ) {
-                        return;
-                    }
+                                <p>
+                                    ${escapeHTML(description)}
+                                </p>
 
-                    openCourse(
-                        card.dataset.courseId
-                    );
+
+                                <button
+                                    type="button"
+                                    class="primary-action-button course-open-button"
+                                    data-course-id="${escapeHTML(id)}"
+                                    data-course-title="${escapeHTML(title)}"
+                                >
+                                    Open Course
+                                </button>
+
+                            </div>
+
+                        </article>
+                    `;
                 }
-            );
+            )
+            .join("");
 
-            card.addEventListener(
-                "keydown",
-                event => {
 
-                    if (
-                        event.key === "Enter" ||
-                        event.key === " "
-                    ) {
-                        event.preventDefault();
+    container
+        .querySelectorAll(".course-open-button")
+        .forEach(
+            (button) => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const courseId =
+                            button.dataset.courseId;
+
+                        const courseTitle =
+                            button.dataset.courseTitle;
+
 
                         openCourse(
-                            card.dataset.courseId
+                            courseId,
+                            courseTitle
                         );
                     }
-                }
-            );
-        });
+                );
+            }
+        );
 }
 
-/* =========================================================
-   8. OPEN COURSE
-========================================================= */
 
-function openCourse(courseID) {
-    const course =
-        dashboardCourses.find(
-            item =>
-                String(item.id) ===
-                String(courseID)
+// =====================================================
+// OPEN COURSE
+// =====================================================
+
+function openCourse(
+    courseId,
+    courseTitle
+) {
+
+    if (!courseId) {
+
+        console.error(
+            "❌ Course ID missing."
         );
 
-    if (!course) {
         return;
     }
+
+
+    console.log(
+        "📖 Opening course:",
+        courseId,
+        courseTitle
+    );
+
 
     localStorage.setItem(
         "selectedCourse",
-        String(course.id)
+        String(courseId)
     );
+
 
     localStorage.setItem(
         "selectedCourseName",
-        course.title || ""
+        courseTitle || ""
     );
 
-    addRecentActivity({
-        type: "course",
-        courseId: course.id,
-        courseName: course.title,
-        title: course.title,
-        timestamp: new Date().toISOString()
-    });
 
     window.location.href =
-        `course.html?course_id=${encodeURIComponent(course.id)}`;
+        `./course.html?course_id=${encodeURIComponent(courseId)}`;
 }
 
-/* =========================================================
-   9. COURSE SEARCH
-========================================================= */
 
-function setupCourseSearch() {
-    const input =
-        $("courseSearch");
-
-    if (!input) {
-        return;
-    }
-
-    input.addEventListener(
-        "input",
-        () => {
-
-            const search =
-                input.value
-                    .trim()
-                    .toLowerCase();
-
-            if (!search) {
-                renderCourses(
-                    dashboardCourses
-                );
-
-                return;
-            }
-
-            const filtered =
-                dashboardCourses.filter(
-                    course => {
-
-                        const title =
-                            String(
-                                course.title || ""
-                            ).toLowerCase();
-
-                        const description =
-                            String(
-                                course.description || ""
-                            ).toLowerCase();
-
-                        return (
-                            title.includes(search) ||
-                            description.includes(search)
-                        );
-                    }
-                );
-
-            renderCourses(filtered);
-        }
-    );
-}
-
-/* =========================================================
-   10. LOAD NOTES
-========================================================= */
+// =====================================================
+// LOAD NOTES
+// =====================================================
 
 async function loadNotes() {
-    const notesArea =
-        getNotesContainer();
 
-    if (!notesArea) {
-        console.warn(
-            "⚠️ Notes container not found."
-        );
+    const loading =
+        $("notesLoading");
 
-        return;
+    const errorBox =
+        $("notesError");
+
+    const emptyBox =
+        $("notesEmpty");
+
+    const container =
+        $("notesContainer");
+
+
+    if (loading) {
+        loading.hidden = false;
     }
 
-    notesArea.innerHTML = `
-        <div class="loading-state">
-            Loading notes...
-        </div>
-    `;
+    if (errorBox) {
+        errorBox.hidden = true;
+        errorBox.textContent = "";
+    }
 
-    try {
-        const {
-            data,
+    if (emptyBox) {
+        emptyBox.hidden = true;
+    }
+
+    if (container) {
+        container.innerHTML = "";
+    }
+
+
+    console.log(
+        "📝 Requesting published notes from Supabase..."
+    );
+
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from("notes")
+        .select("*")
+        .eq("published", true)
+        .order("created_at", {
+            ascending: false
+        });
+
+
+    if (error) {
+
+        console.error(
+            "❌ NOTES SUPABASE ERROR:",
             error
-        } = await supabase
-            .from("notes")
-            .select("*")
-            .eq("published", true)
-            .order("created_at", {
-                ascending: false
-            });
+        );
 
-        if (error) {
-            throw error;
+
+        if (loading) {
+            loading.hidden = true;
         }
 
-        dashboardNotes =
-            Array.isArray(data)
-                ? data
-                : [];
 
-        setText(
-            "totalNotes",
-            dashboardNotes.length
-        );
+        if (errorBox) {
 
-        renderNotes(
-            dashboardNotes
-        );
+            errorBox.hidden = false;
 
-        console.log(
-            `✅ Loaded ${dashboardNotes.length} notes`
-        );
+            errorBox.textContent =
+                `Unable to load notes: ${error.message}`;
+        }
 
-    } catch (error) {
-        console.error(
-            "❌ Notes loading failed:",
-            error
-        );
-
-        notesArea.innerHTML = `
-            <div class="empty-state">
-                Unable to load notes.
-                Please refresh the page.
-            </div>
-        `;
 
         setText(
             "totalNotes",
             "0"
         );
-    }
-}
-
-/* =========================================================
-   11. RENDER NOTES
-========================================================= */
-
-function renderNotes(notes) {
-    const notesArea =
-        getNotesContainer();
-
-    if (!notesArea) {
-        return;
-    }
-
-    if (!notes.length) {
-        notesArea.innerHTML = `
-            <div class="empty-state">
-                No published notes are available yet.
-            </div>
-        `;
 
         return;
     }
 
-    notesArea.innerHTML =
-        notes.map(note => {
 
-            const course =
-                note.course ||
-                note.course_name ||
-                "Medical Notes";
+    dashboardNotes =
+        Array.isArray(data)
+            ? data
+            : [];
 
-            const unit =
-                note.unit ||
-                note.unit_name ||
-                "Study Material";
 
-            const fileName =
-                note.file_name ||
-                note.title ||
-                "Open Notes";
-
-            const fileURL =
-                normalizeNoteURL(
-                    note.file_url
-                );
-
-            return `
-                <article class="note-card">
-
-                    <div class="note-card-icon">
-                        📄
-                    </div>
-
-                    <h3>
-                        ${escapeHTML(fileName)}
-                    </h3>
-
-                    <p>
-                        <strong>
-                            ${escapeHTML(course)}
-                        </strong>
-                        <br>
-                        ${escapeHTML(unit)}
-                    </p>
-
-                    ${
-                        fileURL
-                            ? `
-                                <a
-                                    href="${escapeHTML(fileURL)}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    class="primary-button"
-                                >
-                                    📄 Open Notes
-                                </a>
-                            `
-                            : `
-                                <span class="secondary-button">
-                                    File unavailable
-                                </span>
-                            `
-                    }
-
-                </article>
-            `;
-
-        })
-        .join("");
-}
-
-/* =========================================================
-   12. NORMALIZE NOTE URL
-========================================================= */
-
-function normalizeNoteURL(url) {
-    if (!url) {
-        return "";
-    }
-
-    const value =
-        String(url).trim();
-
-    if (
-        value.startsWith("http://") ||
-        value.startsWith("https://")
-    ) {
-        return value;
-    }
-
-    return value;
-}
-
-/* =========================================================
-   13. NOTES SEARCH
-========================================================= */
-
-function setupNotesSearch() {
-    const input =
-        $("notesSearch");
-
-    if (!input) {
-        return;
-    }
-
-    input.addEventListener(
-        "input",
-        () => {
-
-            const search =
-                input.value
-                    .trim()
-                    .toLowerCase();
-
-            if (!search) {
-                renderNotes(
-                    dashboardNotes
-                );
-
-                return;
-            }
-
-            const filtered =
-                dashboardNotes.filter(
-                    note => {
-
-                        const fileName =
-                            String(
-                                note.file_name ||
-                                note.title ||
-                                ""
-                            ).toLowerCase();
-
-                        const course =
-                            String(
-                                note.course ||
-                                note.course_name ||
-                                ""
-                            ).toLowerCase();
-
-                        const unit =
-                            String(
-                                note.unit ||
-                                note.unit_name ||
-                                ""
-                            ).toLowerCase();
-
-                        return (
-                            fileName.includes(search) ||
-                            course.includes(search) ||
-                            unit.includes(search)
-                        );
-                    }
-                );
-
-            renderNotes(filtered);
-        }
+    console.log(
+        `✅ Published notes returned: ${dashboardNotes.length}`
     );
-}
 
-/* =========================================================
-   14. RECENT ACTIVITY
-========================================================= */
 
-function loadRecentActivity() {
-    try {
-        const saved =
-            localStorage.getItem(
-                RECENT_ACTIVITY_KEY
-            );
-
-        recentActivity =
-            saved
-                ? JSON.parse(saved)
-                : [];
-
-        if (!Array.isArray(recentActivity)) {
-            recentActivity = [];
-        }
-
-    } catch (error) {
-        console.error(
-            "❌ Recent activity error:",
-            error
-        );
-
-        recentActivity = [];
+    if (loading) {
+        loading.hidden = true;
     }
 
-    renderRecentActivity();
-    renderContinueLearning();
-    renderRecommendedLesson();
+
+    setText(
+        "totalNotes",
+        dashboardNotes.length
+    );
+
+
+    renderNotes();
 }
 
-/* =========================================================
-   15. SAVE ACTIVITY
-========================================================= */
 
-function saveRecentActivity() {
-    try {
-        localStorage.setItem(
-            RECENT_ACTIVITY_KEY,
-            JSON.stringify(
-                recentActivity.slice(0, 20)
-            )
-        );
+// =====================================================
+// RENDER NOTES
+// =====================================================
 
-    } catch (error) {
-        console.error(
-            "❌ Could not save activity:",
-            error
-        );
-    }
-}
+function renderNotes() {
 
-/* =========================================================
-   16. ADD RECENT ACTIVITY
-========================================================= */
-
-function addRecentActivity(activity) {
-    if (!activity) {
-        return;
-    }
-
-    recentActivity =
-        recentActivity.filter(item => {
-            return !(
-                item.courseId === activity.courseId &&
-                item.unitId === activity.unitId &&
-                item.type === activity.type
-            );
-        });
-
-    recentActivity.unshift({
-        ...activity,
-        timestamp:
-            activity.timestamp ||
-            new Date().toISOString()
-    });
-
-    recentActivity =
-        recentActivity.slice(0, 20);
-
-    saveRecentActivity();
-
-    renderRecentActivity();
-    renderContinueLearning();
-    renderRecommendedLesson();
-
-    refreshDashboardStatistics();
-}
-
-/* =========================================================
-   17. RENDER RECENT ACTIVITY
-========================================================= */
-
-function renderRecentActivity() {
     const container =
-        $("recentlyStudied");
+        $("notesContainer");
+
+    const emptyBox =
+        $("notesEmpty");
+
 
     if (!container) {
-        return;
-    }
 
-    if (!recentActivity.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                No recent activity yet.
-            </div>
-        `;
+        console.error(
+            "❌ notesContainer not found."
+        );
 
         return;
     }
+
+
+    if (!dashboardNotes.length) {
+
+        container.innerHTML = "";
+
+
+        if (emptyBox) {
+            emptyBox.hidden = false;
+        }
+
+        return;
+    }
+
+
+    if (emptyBox) {
+        emptyBox.hidden = true;
+    }
+
 
     container.innerHTML =
-        recentActivity
-            .slice(0, 8)
-            .map(activity => {
+        dashboardNotes
+            .map(
+                (note) => {
 
-                const title =
-                    activity.title ||
-                    activity.unitTitle ||
-                    activity.courseName ||
-                    "Study Activity";
+                    const title =
+                        note.file_name ||
+                        note.title ||
+                        "Medical Study Note";
 
-                const type =
-                    activity.type === "unit"
-                        ? "Unit"
-                        : activity.type === "course"
-                            ? "Course"
-                            : "Learning";
 
-                return `
-                    <div class="inbox-message">
+                    const course =
+                        note.course ||
+                        note.course_name ||
+                        "Medical Learning";
 
-                        <h3>
-                            ${escapeHTML(title)}
-                        </h3>
 
-                        <p>
-                            ${escapeHTML(type)}
+                    const unit =
+                        note.unit ||
+                        note.unit_name ||
+                        "";
 
-                            ${
-                                activity.timestamp
-                                    ? ` • ${escapeHTML(
+
+                    const fileUrl =
+                        note.file_url ||
+                        "#";
+
+
+                    return `
+                        <article class="note-card">
+
+                            <div
+                                class="note-card-icon"
+                                aria-hidden="true"
+                            >
+                                📝
+                            </div>
+
+
+                            <div class="note-card-content">
+
+                                <h3>
+                                    ${escapeHTML(title)}
+                                </h3>
+
+
+                                <p>
+                                    ${escapeHTML(course)}
+                                    ${
+                                        unit
+                                            ? ` · ${escapeHTML(unit)}`
+                                            : ""
+                                    }
+                                </p>
+
+
+                                <p class="note-date">
+                                    ${
                                         formatDate(
-                                            activity.timestamp
+                                            note.created_at
                                         )
-                                    )}`
-                                    : ""
-                            }
-                        </p>
+                                    }
+                                </p>
 
-                    </div>
-                `;
-            })
+
+                                ${
+                                    fileUrl !== "#"
+                                        ? `
+                                            <a
+                                                href="${escapeHTML(fileUrl)}"
+                                                class="primary-action-button"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                Open Note
+                                            </a>
+                                          `
+                                        : `
+                                            <span class="empty-message">
+                                                Note file unavailable.
+                                            </span>
+                                          `
+                                }
+
+                            </div>
+
+                        </article>
+                    `;
+                }
+            )
             .join("");
 }
 
-/* =========================================================
-   18. CONTINUE LEARNING
-========================================================= */
 
-function renderContinueLearning() {
-    const container =
-        $("continueLearningContent");
+// =====================================================
+// LOAD QUIZ COUNT
+// =====================================================
 
-    if (!container) {
-        return;
-    }
+async function loadQuizCount() {
 
-    const latest =
-        recentActivity.find(
-            item =>
-                item.type === "unit" ||
-                item.type === "course"
-        );
-
-    if (!latest) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Start a course to see your
-                learning activity here.
-            </div>
-        `;
-
-        return;
-    }
-
-    const title =
-        latest.unitTitle ||
-        latest.title ||
-        latest.courseName ||
-        "Continue Learning";
-
-    container.innerHTML = `
-        <div class="course-progress-item">
-
-            <h3>
-                ${escapeHTML(title)}
-            </h3>
-
-            <div class="course-progress-meta">
-
-                <span>
-                    ${
-                        latest.courseName
-                            ? escapeHTML(
-                                latest.courseName
-                            )
-                            : "Medical Learning"
-                    }
-                </span>
-
-                <span>
-                    Continue
-                </span>
-
-            </div>
-
-        </div>
-    `;
-}
-
-/* =========================================================
-   19. RECOMMENDED LESSON
-========================================================= */
-
-function renderRecommendedLesson() {
-    const container =
-        $("recommendedLesson");
-
-    if (!container) {
-        return;
-    }
-
-    if (!dashboardCourses.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Recommendations will appear here.
-            </div>
-        `;
-
-        return;
-    }
-
-    const recentCourseIDs =
-        recentActivity
-            .filter(
-                item =>
-                    item.courseId !== undefined
-            )
-            .map(
-                item =>
-                    String(item.courseId)
-            );
-
-    const recommendation =
-        dashboardCourses.find(
-            course =>
-                !recentCourseIDs.includes(
-                    String(course.id)
-                )
-        ) ||
-        dashboardCourses[0];
-
-    container.innerHTML = `
-        <div class="course-progress-item">
-
-            <h3>
-                ${escapeHTML(
-                    recommendation.title ||
-                    "Recommended Course"
-                )}
-            </h3>
-
-            <div class="course-progress-meta">
-
-                <span>
-                    Recommended for you
-                </span>
-
-                <button
-                    type="button"
-                    class="secondary-button"
-                    data-recommended-course="${escapeHTML(
-                        recommendation.id
-                    )}"
-                >
-                    Explore
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-    const button =
-        container.querySelector(
-            "[data-recommended-course]"
-        );
-
-    if (button) {
-        button.addEventListener(
-            "click",
-            () => {
-                openCourse(
-                    button.dataset.recommendedCourse
-                );
-            }
-        );
-    }
-}
-
-/* =========================================================
-   20. CLEAR RECENT ACTIVITY
-========================================================= */
-
-function setupClearActivity() {
-    const button =
-        $("clearRecentActivity");
-
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        () => {
-
-            recentActivity = [];
-
-            localStorage.removeItem(
-                RECENT_ACTIVITY_KEY
-            );
-
-            renderRecentActivity();
-            renderContinueLearning();
-            renderRecommendedLesson();
-
-            refreshDashboardStatistics();
-        }
+    console.log(
+        "🧠 Requesting quiz count from Supabase..."
     );
-}
 
-/* =========================================================
-   21. TRACK UNIT
-========================================================= */
 
-function trackUnit(unit) {
-    if (!unit) {
-        return;
-    }
+    const {
+        count,
+        error
+    } = await supabase
+        .from("quizzes")
+        .select("id", {
+            count: "exact",
+            head: true
+        });
 
-    addRecentActivity({
-        type: "unit",
 
-        courseId:
-            unit.course_id ??
-            unit.courseId,
+    if (error) {
 
-        courseName:
-            unit.course_name ??
-            unit.courseName ??
-            localStorage.getItem(
-                "selectedCourseName"
-            ),
-
-        unitId:
-            unit.id ??
-            unit.unit_id ??
-            unit.unitId,
-
-        unitTitle:
-            unit.title ??
-            unit.unitTitle,
-
-        title:
-            unit.title ??
-            unit.unitTitle,
-
-        timestamp:
-            new Date().toISOString()
-    });
-}
-
-/* =========================================================
-   22. QUIZ HISTORY
-========================================================= */
-
-function getQuizHistory() {
-    try {
-        const saved =
-            localStorage.getItem(
-                QUIZ_HISTORY_KEY
-            );
-
-        const parsed =
-            saved
-                ? JSON.parse(saved)
-                : [];
-
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
-
-    } catch (error) {
         console.error(
-            "❌ Quiz history error:",
+            "❌ QUIZ COUNT SUPABASE ERROR:",
             error
         );
 
-        return [];
-    }
-}
 
-/* =========================================================
-   23. SAVE QUIZ RESULT
-========================================================= */
+        setText(
+            "totalQuizzes",
+            "0"
+        );
 
-function saveQuizResult(result) {
-    if (!result) {
+        dashboardQuizCount = 0;
+
         return;
     }
 
-    const history =
-        getQuizHistory();
 
-    history.unshift({
-        ...result,
-        timestamp:
-            result.timestamp ||
-            new Date().toISOString()
-    });
+    dashboardQuizCount =
+        Number(count || 0);
 
-    const trimmed =
-        history.slice(0, 100);
-
-    localStorage.setItem(
-        QUIZ_HISTORY_KEY,
-        JSON.stringify(trimmed)
-    );
-
-    updateQuizStatistics();
-    updateOverallProgress();
-}
-
-/* =========================================================
-   24. UPDATE QUIZ STATISTICS
-========================================================= */
-
-function updateQuizStatistics() {
-    const history =
-        getQuizHistory();
-
-    setText(
-        "quizzesAttempted",
-        history.length
-    );
 
     setText(
         "totalQuizzes",
-        history.length
+        dashboardQuizCount
     );
 
-    if (!history.length) {
-        setText(
-            "averageScore",
-            "0%"
-        );
 
-        setText(
-            "bestQuizScore",
-            "0%"
-        );
+    console.log(
+        `✅ Quiz count: ${dashboardQuizCount}`
+    );
+}
 
-        const recentContainer =
-            $("recentQuizPerformance");
 
-        if (recentContainer) {
-            recentContainer.innerHTML = `
-                <div class="empty-state">
-                    No quiz attempts yet.
-                </div>
-            `;
+// =====================================================
+// LEARNING PROGRESS
+// =====================================================
+
+function loadLearningProgress() {
+
+    let completed = 0;
+
+    let total =
+        dashboardCourses.length;
+
+
+    try {
+
+        const stored =
+            localStorage.getItem(
+                "mwanikiQuizProgress"
+            );
+
+
+        if (stored) {
+
+            const parsed =
+                JSON.parse(stored);
+
+
+            if (
+                parsed &&
+                typeof parsed === "object"
+            ) {
+
+                completed =
+                    Object.values(parsed)
+                        .filter(
+                            (value) =>
+                                value === true ||
+                                value === "completed" ||
+                                value?.completed === true
+                        )
+                        .length;
+            }
         }
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Could not read learning progress:",
+            error
+        );
+    }
+
+
+    if (!total) {
+
+        setText(
+            "learningProgress",
+            "0%"
+        );
 
         return;
     }
 
-    const scores =
-        history.map(item => {
 
-            if (
-                item.percentage !== undefined
-            ) {
-                return safeNumber(
-                    item.percentage
-                );
-            }
-
-            if (
-                item.score !== undefined &&
-                item.total !== undefined &&
-                safeNumber(item.total) > 0
-            ) {
-                return (
-                    safeNumber(item.score) /
-                    safeNumber(item.total)
-                ) * 100;
-            }
-
-            return 0;
-        });
-
-    const average =
-        scores.reduce(
-            (sum, value) =>
-                sum + value,
-            0
-        ) / scores.length;
-
-    const best =
-        Math.max(...scores);
-
-    setText(
-        "averageScore",
-        `${Math.round(average)}%`
-    );
-
-    setText(
-        "bestQuizScore",
-        `${Math.round(best)}%`
-    );
-
-    const recent =
-        history.slice(0, 5);
-
-    const performance =
-        recent.map(item => {
-
-            const score =
-                item.percentage !== undefined
-                    ? safeNumber(
-                        item.percentage
-                    )
-                    : (
-                        safeNumber(item.total) > 0
-                            ? (
-                                safeNumber(item.score) /
-                                safeNumber(item.total)
-                            ) * 100
-                            : 0
-                    );
-
-            const title =
-                item.unitTitle ||
-                item.courseName ||
-                item.title ||
-                "Quiz";
-
-            return `
-                <div class="quiz-performance-item">
-
-                    <strong>
-                        ${escapeHTML(title)}
-                    </strong>
-
-                    <span>
-                        ${Math.round(score)}%
-                    </span>
-
-                </div>
-            `;
-        })
-        .join("");
-
-    const recentContainer =
-        $("recentQuizPerformance");
-
-    if (recentContainer) {
-        recentContainer.innerHTML =
-            performance;
-    }
-}
-
-/* =========================================================
-   25. OVERALL PROGRESS
-========================================================= */
-
-function updateOverallProgress() {
-    const history =
-        getQuizHistory();
-
-    const quizProgress =
-        history.length > 0
-            ? Math.min(
-                100,
-                history.length * 5
+    const percentage =
+        Math.min(
+            100,
+            Math.round(
+                (completed / total) * 100
             )
-            : 0;
-
-    const progress =
-        Math.round(
-            quizProgress
         );
 
-    const bar =
-        $("overallProgressBar");
-
-    if (bar) {
-        bar.style.width =
-            `${progress}%`;
-    }
-
-    setText(
-        "overallProgressText",
-        `${progress}%`
-    );
 
     setText(
         "learningProgress",
-        `${progress}%`
-    );
-
-    renderAchievements(progress);
-}
-
-/* =========================================================
-   26. ACHIEVEMENTS
-========================================================= */
-
-function renderAchievements(progress) {
-    const container =
-        $("achievementIndicators");
-
-    if (!container) {
-        return;
-    }
-
-    const history =
-        getQuizHistory();
-
-    const achievements = [];
-
-    if (history.length >= 1) {
-        achievements.push(
-            "🎯 First Quiz"
-        );
-    }
-
-    if (history.length >= 5) {
-        achievements.push(
-            "🔥 Quiz Explorer"
-        );
-    }
-
-    if (progress >= 25) {
-        achievements.push(
-            "📚 Learning Momentum"
-        );
-    }
-
-    if (progress >= 50) {
-        achievements.push(
-            "🏆 Halfway Scholar"
-        );
-    }
-
-    if (progress >= 100) {
-        achievements.push(
-            "🥇 Master Scholar"
-        );
-    }
-
-    if (!achievements.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Complete your first quiz
-                to unlock achievements.
-            </div>
-        `;
-
-        return;
-    }
-
-    container.innerHTML =
-        achievements
-            .map(
-                item => `
-                    <span class="achievement-item">
-                        ${escapeHTML(item)}
-                    </span>
-                `
-            )
-            .join("");
-}
-
-/* =========================================================
-   27. UNITS COMPLETED
-========================================================= */
-
-function updateUnitStatistics() {
-    const units =
-        recentActivity.filter(
-            item =>
-                item.type === "unit"
-        );
-
-    setText(
-        "unitsCompleted",
-        units.length
-    );
-
-    const courseIDs =
-        new Set(
-            units
-                .map(
-                    item =>
-                        item.courseId
-                )
-                .filter(
-                    value =>
-                        value !== undefined &&
-                        value !== null
-                )
-                .map(
-                    value =>
-                        String(value)
-                )
-        );
-
-    setText(
-        "coursesCompleted",
-        courseIDs.size
+        `${percentage}%`
     );
 }
 
-/* =========================================================
-   28. LEARNING STREAK
-========================================================= */
 
-function updateLearningStreak() {
-    if (!recentActivity.length) {
-        setText(
-            "learningStreak",
-            "0 days"
-        );
+// =====================================================
+// REFRESH COURSES
+// =====================================================
 
+function setupCourseRefresh() {
+
+    const button =
+        $("refreshCoursesButton");
+
+
+    if (!button) {
         return;
     }
 
-    const dates = [
-        ...new Set(
-            recentActivity
-                .map(item => {
 
-                    if (!item.timestamp) {
-                        return null;
-                    }
+    button.addEventListener(
+        "click",
+        async () => {
 
-                    const date =
-                        new Date(
-                            item.timestamp
-                        );
+            button.disabled = true;
 
-                    if (
-                        Number.isNaN(
-                            date.getTime()
-                        )
-                    ) {
-                        return null;
-                    }
+            button.textContent =
+                "Refreshing...";
 
-                    return date
-                        .toISOString()
-                        .slice(0, 10);
-                })
-                .filter(Boolean)
-        )
-    ];
 
-    if (!dates.length) {
-        setText(
-            "learningStreak",
-            "0 days"
-        );
+            try {
 
-        return;
-    }
+                await loadCourses();
 
-    dates.sort(
-        (a, b) =>
-            new Date(b) -
-            new Date(a)
-    );
+            } finally {
 
-    let streak = 1;
+                button.disabled = false;
 
-    for (
-        let index = 1;
-        index < dates.length;
-        index++
-    ) {
-        const previous =
-            new Date(
-                dates[index - 1]
-            );
-
-        const current =
-            new Date(
-                dates[index]
-            );
-
-        const difference =
-            Math.round(
-                (
-                    previous -
-                    current
-                ) /
-                (
-                    1000 *
-                    60 *
-                    60 *
-                    24
-                )
-            );
-
-        if (difference === 1) {
-            streak++;
-        } else {
-            break;
+                button.textContent =
+                    "Refresh";
+            }
         }
-    }
-
-    setText(
-        "learningStreak",
-        `${streak} day${streak === 1 ? "" : "s"}`
     );
 }
 
-/* =========================================================
-   29. COURSE PROGRESS AREA
-========================================================= */
 
-function renderCourseProgress() {
-    const container =
-        $("courseProgressArea");
+// =====================================================
+// REFRESH NOTES
+// =====================================================
 
-    if (!container) {
+function setupNotesRefresh() {
+
+    const button =
+        $("refreshNotesButton");
+
+
+    if (!button) {
         return;
     }
 
-    if (!dashboardCourses.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Course progress will appear here.
-            </div>
-        `;
 
-        return;
-    }
+    button.addEventListener(
+        "click",
+        async () => {
 
-    const activityByCourse = {};
+            button.disabled = true;
 
-    recentActivity.forEach(item => {
-        if (
-            item.courseId === undefined ||
-            item.courseId === null
-        ) {
-            return;
+            button.textContent =
+                "Refreshing...";
+
+
+            try {
+
+                await loadNotes();
+
+            } finally {
+
+                button.disabled = false;
+
+                button.textContent =
+                    "Refresh";
+            }
         }
+    );
+}
 
-        const id =
-            String(item.courseId);
 
-        if (!activityByCourse[id]) {
-            activityByCourse[id] = 0;
-        }
+// =====================================================
+// DASHBOARD NAVIGATION
+// =====================================================
 
-        if (item.type === "unit") {
-            activityByCourse[id]++;
-        }
-    });
+function setupNavigation() {
 
-    const visibleCourses =
-        dashboardCourses
-            .filter(
-                course =>
-                    activityByCourse[
-                        String(course.id)
-                    ] > 0
-            )
-            .slice(0, 8);
+    const links =
+        document.querySelectorAll(
+            ".dashboard-nav-link"
+        );
 
-    if (!visibleCourses.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                Start studying a course to
-                see your progress here.
-            </div>
-        `;
 
-        return;
-    }
+    links.forEach(
+        (link) => {
 
-    container.innerHTML =
-        visibleCourses
-            .map(course => {
+            link.addEventListener(
+                "click",
+                () => {
 
-                const count =
-                    activityByCourse[
-                        String(course.id)
-                    ] || 0;
-
-                const progress =
-                    Math.min(
-                        100,
-                        count * 10
+                    links.forEach(
+                        (item) => {
+                            item.classList.remove(
+                                "active"
+                            );
+                        }
                     );
 
-                return `
-                    <div class="course-progress-item">
 
-                        <h3>
-                            ${escapeHTML(
-                                course.title ||
-                                "Course"
-                            )}
-                        </h3>
-
-                        <div class="course-progress-meta">
-
-                            <span>
-                                ${count} unit
-                                ${count === 1 ? "" : "s"} studied
-                            </span>
-
-                            <strong>
-                                ${progress}%
-                            </strong>
-
-                        </div>
-
-                        <div class="progress-track">
-
-                            <div
-                                class="progress-fill"
-                                style="width:${progress}%"
-                            ></div>
-
-                        </div>
-
-                    </div>
-                `;
-            })
-            .join("");
-}
-
-/* =========================================================
-   30. TUTOR MESSAGING
-========================================================= */
-
-function setupTutorMessaging() {
-    const button =
-        $("sendTutorMessageButton");
-
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        sendTutorMessage
+                    link.classList.add(
+                        "active"
+                    );
+                }
+            );
+        }
     );
 }
 
-async function sendTutorMessage() {
-    const topic =
-        $("topic")?.value.trim() || "";
 
-    const message =
-        $("studentMessage")
-            ?.value
-            .trim() || "";
-
-    const status =
-        $("messageStatus");
-
-    if (!topic) {
-        if (status) {
-            status.textContent =
-                "Please enter a topic.";
-        }
-
-        return;
-    }
-
-    if (!message) {
-        if (status) {
-            status.textContent =
-                "Please write your message.";
-        }
-
-        return;
-    }
-
-    if (!currentUser) {
-        if (status) {
-            status.textContent =
-                "Please sign in again.";
-        }
-
-        return;
-    }
-
-    buttonState(
-        "sendTutorMessageButton",
-        true,
-        "Sending..."
-    );
-
-    try {
-        const {
-            error
-        } = await supabase
-            .from("tutor_messages")
-            .insert({
-                student_id:
-                    currentUser.id,
-
-                student_name:
-                    $("studentName")?.value ||
-                    currentStudent?.full_name ||
-                    "",
-
-                student_email:
-                    $("studentEmail")?.value ||
-                    currentUser.email ||
-                    "",
-
-                topic,
-
-                message,
-
-                created_at:
-                    new Date().toISOString()
-            });
-
-        if (error) {
-            throw error;
-        }
-
-        if (status) {
-            status.textContent =
-                "Message sent successfully.";
-        }
-
-        const topicInput =
-            $("topic");
-
-        const messageInput =
-            $("studentMessage");
-
-        if (topicInput) {
-            topicInput.value = "";
-        }
-
-        if (messageInput) {
-            messageInput.value = "";
-        }
-
-    } catch (error) {
-        console.error(
-            "❌ Tutor message error:",
-            error
-        );
-
-        if (status) {
-            status.textContent =
-                "Unable to send message. Please try again.";
-        }
-
-    } finally {
-        buttonState(
-            "sendTutorMessageButton",
-            false,
-            "📨 Send Message"
-        );
-    }
-}
-
-/* =========================================================
-   31. INBOX
-========================================================= */
-
-function setupInbox() {
-    const button =
-        $("loadAnswersButton");
-
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        loadStudentInbox
-    );
-}
-
-async function loadStudentInbox() {
-    const inbox =
-        $("studentInbox");
-
-    const email =
-        $("checkEmail")
-            ?.value
-            .trim();
-
-    if (!inbox) {
-        return;
-    }
-
-    if (!email) {
-        inbox.innerHTML = `
-            <div class="empty-state">
-                Enter your email to load tutor replies.
-            </div>
-        `;
-
-        return;
-    }
-
-    inbox.innerHTML = `
-        <div class="loading-state">
-            Loading tutor replies...
-        </div>
-    `;
-
-    try {
-        const {
-            data,
-            error
-        } = await supabase
-            .from("tutor_messages")
-            .select("*")
-            .eq("student_email", email)
-            .order("created_at", {
-                ascending: false
-            });
-
-        if (error) {
-            throw error;
-        }
-
-        const messages =
-            Array.isArray(data)
-                ? data
-                : [];
-
-        if (!messages.length) {
-            inbox.innerHTML = `
-                <div class="empty-state">
-                    No tutor replies found yet.
-                </div>
-            `;
-
-            return;
-        }
-
-        inbox.innerHTML =
-            messages
-                .map(message => {
-
-                    const topic =
-                        message.topic ||
-                        "Tutor Message";
-
-                    const reply =
-                        message.reply ||
-                        message.response ||
-                        message.answer ||
-                        message.tutor_reply ||
-                        "";
-
-                    const status =
-                        message.status ||
-                        "";
-
-                    return `
-                        <div class="inbox-message">
-
-                            <h3>
-                                ${escapeHTML(topic)}
-                            </h3>
-
-                            ${
-                                reply
-                                    ? `
-                                        <p>
-                                            ${escapeHTML(
-                                                reply
-                                            )}
-                                        </p>
-                                    `
-                                    : `
-                                        <p>
-                                            Your message has been received.
-
-                                            ${
-                                                status
-                                                    ? escapeHTML(
-                                                        status
-                                                    )
-                                                    : "Waiting for tutor response."
-                                            }
-                                        </p>
-                                    `
-                            }
-
-                            ${
-                                message.created_at
-                                    ? `
-                                        <small>
-                                            ${escapeHTML(
-                                                formatDate(
-                                                    message.created_at
-                                                )
-                                            )}
-                                        </small>
-                                    `
-                                    : ""
-                            }
-
-                        </div>
-                    `;
-                })
-                .join("");
-
-    } catch (error) {
-        console.error(
-            "❌ Inbox loading failed:",
-            error
-        );
-
-        inbox.innerHTML = `
-            <div class="empty-state">
-                Unable to load tutor replies.
-            </div>
-        `;
-    }
-}
-
-/* =========================================================
-   32. NOTIFICATION BUTTON
-========================================================= */
+// =====================================================
+// NOTIFICATION PANEL
+// =====================================================
 
 function setupNotifications() {
+
     const button =
         $("notificationButton");
 
-    if (!button) {
+    const panel =
+        $("notificationPanel");
+
+    const closeButton =
+        $("closeNotificationPanel");
+
+
+    if (!button || !panel) {
         return;
     }
+
 
     button.addEventListener(
         "click",
         () => {
 
-            const inbox =
-                $("studentInboxSection");
-
-            if (inbox) {
-                inbox.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
-            }
+            panel.hidden =
+                !panel.hidden;
         }
     );
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            () => {
+
+                panel.hidden = true;
+            }
+        );
+    }
 }
 
-/* =========================================================
-   33. PROFILE BUTTON
-========================================================= */
 
-function setupProfileButton() {
+// =====================================================
+// PROFILE PANEL
+// =====================================================
+
+function setupProfilePanel() {
+
     const button =
-        $("studentProfileButton");
+        $("profileButton");
+
+    const panel =
+        $("profilePanel");
+
+    const closeButton =
+        $("closeProfilePanel");
+
+
+    if (!button || !panel) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            panel.hidden =
+                !panel.hidden;
+        }
+    );
+
+
+    if (closeButton) {
+
+        closeButton.addEventListener(
+            "click",
+            () => {
+
+                panel.hidden = true;
+            }
+        );
+    }
+}
+
+
+// =====================================================
+// LOGOUT
+// =====================================================
+
+function setupLogout() {
+
+    const button =
+        $("logoutButton");
+
 
     if (!button) {
         return;
     }
 
+
     button.addEventListener(
         "click",
-        () => {
+        async () => {
+
+            button.disabled = true;
+
+            button.textContent =
+                "Logging out...";
+
+
+            const {
+                error
+            } = await supabase.auth.signOut();
+
+
+            if (error) {
+
+                console.error(
+                    "❌ Logout error:",
+                    error
+                );
+
+
+                alert(
+                    `Unable to log out: ${error.message}`
+                );
+
+
+                button.disabled = false;
+
+                button.textContent =
+                    "Log Out";
+
+                return;
+            }
+
+
+            localStorage.removeItem(
+                "selectedCourse"
+            );
+
+            localStorage.removeItem(
+                "selectedCourseName"
+            );
+
             window.location.href =
-                "studentProfile.html";
+                "./index.html";
         }
     );
 }
 
-/* =========================================================
-   34. NAVIGATION
-========================================================= */
 
-function setupNavigation() {
-    const links =
-        document.querySelectorAll(
-            ".nav-link[data-section]"
+// =====================================================
+// STUDENT-ONLY TUTOR BOOKING
+// =====================================================
+
+function setupStudentTutorBooking() {
+
+    /*
+     * IMPORTANT SECURITY RULE:
+     *
+     * NEVER send students to:
+     *
+     * ./tutor.html
+     *
+     * tutor.html is the tutor dashboard.
+     *
+     * Students are sent to:
+     *
+     * ./studentTutor.html
+     *
+     * which is intended to be the student-facing
+     * tutor booking interface.
+     */
+
+
+    const bookingLink =
+        document.querySelector(
+            '#tutorBookingContainer a[href="./studentTutor.html"]'
         );
 
-    links.forEach(link => {
-        link.addEventListener(
-            "click",
-            () => {
 
-                links.forEach(item =>
-                    item.classList.remove(
-                        "active"
-                    )
-                );
-
-                link.classList.add(
-                    "active"
-                );
-            }
-        );
-    });
-
-    const mobileLinks =
-        document.querySelectorAll(
-            ".mobile-bottom-nav a"
-        );
-
-    mobileLinks.forEach(link => {
-        link.addEventListener(
-            "click",
-            event => {
-
-                const target =
-                    link.getAttribute(
-                        "href"
-                    );
-
-                if (!target) {
-                    return;
-                }
-
-                if (
-                    target.startsWith("#")
-                ) {
-                    event.preventDefault();
-
-                    const element =
-                        document.querySelector(
-                            target
-                        );
-
-                    if (element) {
-                        element.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start"
-                        });
-                    }
-                }
-            }
-        );
-    });
-}
-
-/* =========================================================
-   35. AI SUGGESTIONS
-========================================================= */
-
-function setupAISuggestions() {
-    const buttons =
-        document.querySelectorAll(
-            ".suggestion-button"
-        );
-
-    const input =
-        $("aiQuestion");
-
-    if (!input) {
+    if (!bookingLink) {
         return;
     }
 
-    buttons.forEach(button => {
-        button.addEventListener(
-            "click",
-            () => {
 
-                input.value =
-                    button.textContent.trim();
-
-                input.focus();
-            }
-        );
-    });
-}
-
-/* =========================================================
-   36. AI BUTTON
-========================================================= */
-
-function setupAIButton() {
-    const button =
-        $("askAIButton");
-
-    if (!button) {
-        return;
-    }
-
-    button.addEventListener(
+    bookingLink.addEventListener(
         "click",
-        () => {
+        async (event) => {
 
-            const question =
-                $("aiQuestion")
-                    ?.value
-                    .trim();
+            /*
+             * Do not allow an unauthenticated
+             * student to enter the booking area.
+             */
 
-            const answer =
-                $("aiAnswer");
+            if (!currentUser) {
 
-            if (!question) {
-                if (answer) {
-                    answer.textContent =
-                        "Please enter a medical question.";
-                }
+                event.preventDefault();
 
-                return;
-            }
 
-            if (
-                typeof window.askMwanikiAI ===
-                "function"
-            ) {
-                window.askMwanikiAI(
-                    question
+                alert(
+                    "Please log in as a student before booking a tutor."
                 );
 
-                return;
-            }
 
-            if (answer) {
-                answer.textContent =
-                    "AI Tutor is loading. Please make sure aiTutor.js is connected.";
+                window.location.href =
+                    "./index.html";
             }
         }
     );
 }
 
-/* =========================================================
-   37. REFRESH DASHBOARD STATISTICS
-========================================================= */
 
-function refreshDashboardStatistics() {
-    updateUnitStatistics();
-    updateQuizStatistics();
-    updateLearningStreak();
-    updateOverallProgress();
-    renderCourseProgress();
-}
-
-/* =========================================================
-   38. PUBLIC DASHBOARD API
-========================================================= */
+// =====================================================
+// GLOBAL COURSE TRACKING
+// =====================================================
 
 window.mwanikiTrackUnit =
-    trackUnit;
+    function (
+        courseId,
+        unitId,
+        unitTitle
+    ) {
+
+        try {
+
+            const key =
+                "mwanikiRecentActivity";
+
+
+            const existing =
+                JSON.parse(
+                    localStorage.getItem(key) ||
+                    "[]"
+                );
+
+
+            const activity = {
+
+                courseId:
+                    String(courseId || ""),
+
+                unitId:
+                    String(unitId || ""),
+
+                unitTitle:
+                    unitTitle || "",
+
+                timestamp:
+                    new Date().toISOString()
+            };
+
+
+            const filtered =
+                existing.filter(
+                    (item) =>
+                        !(
+                            String(item.courseId) ===
+                            String(courseId) &&
+                            String(item.unitId) ===
+                            String(unitId)
+                        )
+                );
+
+
+            filtered.unshift(
+                activity
+            );
+
+
+            localStorage.setItem(
+                key,
+                JSON.stringify(
+                    filtered.slice(0, 20)
+                )
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "⚠️ Unable to track unit:",
+                error
+            );
+        }
+    };
+
+
+// =====================================================
+// GLOBAL DASHBOARD API
+// =====================================================
 
 window.mwanikiDashboard = {
 
-    reloadCourses:
+    refreshCourses:
         loadCourses,
 
-    reloadNotes:
+    refreshNotes:
         loadNotes,
 
-    reloadProfile:
-        loadStudentProfile,
+    refreshQuizCount:
+        loadQuizCount,
 
-    reloadActivity:
-        loadRecentActivity,
-
-    saveQuizResult:
-        saveQuizResult,
-
-    getCourses:
-        () => dashboardCourses,
-
-    getNotes:
-        () => dashboardNotes,
-
-    getRecentActivity:
-        () => recentActivity
-
+    refreshProgress:
+        loadLearningProgress
 };
 
-/* =========================================================
-   39. INITIALIZE DASHBOARD
-========================================================= */
+
+// =====================================================
+// INITIALIZE DASHBOARD
+// =====================================================
 
 async function initializeDashboard() {
+
     console.log(
-        "🚀 Initializing Mwaniki Scholars Dashboard..."
+        "🚀 Initializing Mwaniki Scholars dashboard..."
     );
 
-    currentUser =
-        await getCurrentUser();
 
-    if (!currentUser) {
+    /*
+     * Authentication is checked first.
+     */
+
+    const user =
+        await loadCurrentUser();
+
+
+    /*
+     * If there is no authenticated student,
+     * do not continue pretending that the
+     * dashboard is loaded normally.
+     */
+
+    if (!user) {
+
         console.warn(
-            "⚠️ No authenticated student found."
+            "⚠️ Student is not authenticated."
         );
 
         setText(
-            "dashboardProfileName",
-            "Scholar"
+            "welcomeMessage",
+            "Welcome to Mwaniki Scholars"
         );
 
     } else {
+
         await loadStudentProfile();
     }
 
-    await loadCourses();
 
-    await loadNotes();
+    /*
+     * Load the actual dashboard data.
+     */
 
-    loadRecentActivity();
+    await Promise.all([
+        loadCourses(),
+        loadNotes(),
+        loadQuizCount()
+    ]);
 
-    refreshDashboardStatistics();
 
-    setupCourseSearch();
+    loadLearningProgress();
 
-    setupNotesSearch();
 
-    setupClearActivity();
+    /*
+     * Interface controls.
+     */
 
-    setupTutorMessaging();
+    setupCourseRefresh();
 
-    setupInbox();
-
-    setupNotifications();
-
-    setupProfileButton();
+    setupNotesRefresh();
 
     setupNavigation();
 
-    setupAISuggestions();
+    setupNotifications();
 
-    setupAIButton();
+    setupProfilePanel();
 
-    const refreshCoursesButton =
-        $("refreshCoursesButton");
+    setupLogout();
 
-    if (refreshCoursesButton) {
-        refreshCoursesButton.addEventListener(
-            "click",
-            loadCourses
-        );
-    }
+    setupStudentTutorBooking();
 
-    const refreshNotesButton =
-        $("refreshNotesButton");
-
-    if (refreshNotesButton) {
-        refreshNotesButton.addEventListener(
-            "click",
-            loadNotes
-        );
-    }
 
     console.log(
-        "✅ Mwaniki Scholars Dashboard ready."
+        "✅ Mwaniki Scholars dashboard ready."
     );
 }
 
-/* =========================================================
-   40. START
-========================================================= */
+
+// =====================================================
+// START
+// =====================================================
 
 if (
-    document.readyState ===
-    "loading"
+    document.readyState === "loading"
 ) {
+
     document.addEventListener(
         "DOMContentLoaded",
         initializeDashboard
     );
+
 } else {
+
     initializeDashboard();
 }
