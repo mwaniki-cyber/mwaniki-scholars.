@@ -135,11 +135,14 @@ img {
 
     text-decoration: none;
 
-    opacity: 1;
+    opacity: 1 !important;
+    visibility: visible !important;
 
-    filter: none;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 
-    transform: none;
+    transform: none !important;
 
     flex-shrink: 0;
 }
@@ -172,11 +175,11 @@ img {
     box-shadow:
         0 5px 18px rgba(0, 0, 0, 0.12);
 
-    opacity: 1;
+    opacity: 1 !important;
+    visibility: visible !important;
 
-    filter: none;
-
-    transform: none;
+    filter: none !important;
+    transform: none !important;
 }
 
 
@@ -195,13 +198,10 @@ img {
     min-width: 0;
 
     opacity: 1 !important;
-
     visibility: visible !important;
 
     filter: none !important;
-
     backdrop-filter: none !important;
-
     -webkit-backdrop-filter: none !important;
 
     transform: none !important;
@@ -226,11 +226,12 @@ img {
 
     color: #ffffff !important;
 
-    font-size: clamp(
-        1.15rem,
-        2vw,
-        1.65rem
-    );
+    font-size:
+        clamp(
+            1.15rem,
+            2vw,
+            1.65rem
+        );
 
     font-weight: 800;
 
@@ -241,11 +242,9 @@ img {
     white-space: nowrap;
 
     opacity: 1 !important;
-
     visibility: visible !important;
 
     filter: none !important;
-
     transform: none !important;
 
     text-shadow:
@@ -280,11 +279,9 @@ img {
     white-space: nowrap;
 
     opacity: 1 !important;
-
     visibility: visible !important;
 
     filter: none !important;
-
     transform: none !important;
 
     text-shadow: none !important;
@@ -375,7 +372,8 @@ img {
 
     background: #ef5350;
 
-    border: 2px solid #075d68;
+    border:
+        2px solid #075d68;
 
     border-radius: 50px;
 
@@ -396,7 +394,8 @@ img {
 
     min-height: 44px;
 
-    padding: 5px 12px 5px 6px;
+    padding:
+        5px 12px 5px 6px;
 
     color: #ffffff;
 
@@ -501,8 +500,7 @@ img {
 ========================================================= */
 
 .dashboard-nav-link {
-    flex:
-        0 0 auto;
+    flex: 0 0 auto;
 
     display: inline-flex;
 
@@ -648,9 +646,9 @@ img {
     max-width: 850px;
 }
 
-
 .welcome-label {
-    margin: 0 0 8px;
+    margin:
+        0 0 8px;
 
     color:
         rgba(255, 255, 255, 0.72);
@@ -661,7 +659,6 @@ img {
 
     letter-spacing: 0.12em;
 }
-
 
 .welcome-content h1 {
     margin:
@@ -680,7 +677,6 @@ img {
 
     letter-spacing: -0.035em;
 }
-
 
 .welcome-description {
     max-width: 720px;
@@ -815,7 +811,6 @@ img {
     gap: 2px;
 }
 
-
 .stat-label {
     color: #6b858b;
 
@@ -823,7 +818,6 @@ img {
 
     font-weight: 700;
 }
-
 
 .stat-value {
     color: #123f47;
@@ -867,7 +861,6 @@ img {
     min-width: 0;
 }
 
-
 .section-heading h2 {
     margin: 0;
 
@@ -877,7 +870,6 @@ img {
 
     line-height: 1.2;
 }
-
 
 .section-heading p {
     margin:
@@ -981,7 +973,8 @@ img {
 .error-message {
     width: 100%;
 
-    padding: 16px 18px;
+    padding:
+        16px 18px;
 
     color: #9b3535;
 
@@ -1003,7 +996,8 @@ img {
 .empty-message {
     width: 100%;
 
-    padding: 28px 20px;
+    padding:
+        28px 20px;
 
     color: #71868b;
 
@@ -1111,7 +1105,6 @@ img {
     padding: 17px;
 }
 
-
 .course-card h3 {
     margin:
         0 0 7px;
@@ -1122,7 +1115,6 @@ img {
 
     line-height: 1.3;
 }
-
 
 .course-card p {
     margin:
@@ -1238,7 +1230,6 @@ img {
         0 10px 24px rgba(13, 70, 79, 0.08);
 }
 
-
 .note-card h3 {
     margin:
         0 0 7px;
@@ -1247,7 +1238,6 @@ img {
 
     font-size: 1rem;
 }
-
 
 .note-card p {
     margin:
@@ -1375,7 +1365,6 @@ img {
     padding-bottom: 22px;
 }
 
-
 .dashboard-quick-links {
     width: 100%;
 
@@ -1466,6 +1455,8 @@ img {
 
     min-height: 45px;
 
+    margin-top: 20px;
+
     padding:
         10px 18px;
 
@@ -1517,7 +1508,6 @@ img {
     text-align: center;
 }
 
-
 .footer-main-text {
     margin: 0;
 
@@ -1527,7 +1517,6 @@ img {
 
     font-weight: 800;
 }
-
 
 .footer-subtext {
     margin:
@@ -1552,10 +1541,11 @@ img {
 
     z-index: 3000;
 
-    width: min(
-        380px,
-        calc(100vw - 30px)
-    );
+    width:
+        min(
+            380px,
+            calc(100vw - 30px)
+        );
 
     max-height: 70vh;
 
@@ -1587,10 +1577,11 @@ img {
 
     z-index: 3000;
 
-    width: min(
-        350px,
-        calc(100vw - 30px)
-    );
+    width:
+        min(
+            350px,
+            calc(100vw - 30px)
+        );
 
     padding: 0;
 
@@ -1625,7 +1616,6 @@ img {
     border-bottom:
         1px solid #e5eef0;
 }
-
 
 .panel-header h2 {
     margin: 0;
@@ -1675,9 +1665,9 @@ img {
 ========================================================= */
 
 .notification-list {
-    padding: 15px 18px;
+    padding:
+        15px 18px;
 }
-
 
 .notification-list p {
     margin: 0;
@@ -1696,7 +1686,6 @@ img {
     padding: 20px;
 }
 
-
 .profile-panel-name {
     margin-bottom: 5px;
 
@@ -1706,7 +1695,6 @@ img {
 
     font-weight: 800;
 }
-
 
 .profile-panel-email {
     margin-bottom: 20px;
@@ -1791,9 +1779,11 @@ select:focus-visible {
 
     .courses-grid {
         grid-template-columns:
-            repeat(5, minmax(0, 1fr));
+            repeat(
+                5,
+                minmax(0, 1fr)
+            );
     }
-
 }
 
 
@@ -1805,19 +1795,27 @@ select:focus-visible {
 
     .statistics-grid {
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
     }
 
     .courses-grid {
         grid-template-columns:
-            repeat(3, minmax(0, 1fr));
+            repeat(
+                3,
+                minmax(0, 1fr)
+            );
     }
 
     .notes-grid {
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
     }
-
 }
 
 
@@ -1857,9 +1855,11 @@ select:focus-visible {
 
     .courses-grid {
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
     }
-
 }
 
 
@@ -1878,11 +1878,9 @@ select:focus-visible {
             12px 14px;
     }
 
-
     .brand-area {
         gap: 9px;
     }
-
 
     .brand-icon {
         width: 42px;
@@ -1893,23 +1891,19 @@ select:focus-visible {
         font-size: 21px;
     }
 
-
     .brand-name {
         font-size: 1.05rem;
 
         letter-spacing: -0.015em;
     }
 
-
     .brand-subtitle {
         font-size: 0.66rem;
     }
 
-
     .header-actions {
         gap: 6px;
     }
-
 
     .header-action-button {
         width: 39px;
@@ -1918,7 +1912,6 @@ select:focus-visible {
         border-radius: 10px;
     }
 
-
     .profile-button {
         min-height: 39px;
 
@@ -1926,17 +1919,14 @@ select:focus-visible {
             3px 5px;
     }
 
-
     .profile-initial {
         width: 31px;
         height: 31px;
     }
 
-
     .profile-name {
         display: none;
     }
-
 
     .dashboard-navigation {
         padding:
@@ -1944,7 +1934,6 @@ select:focus-visible {
 
         gap: 6px;
     }
-
 
     .dashboard-nav-link {
         min-height: 38px;
@@ -1957,46 +1946,43 @@ select:focus-visible {
         font-size: 0.78rem;
     }
 
-
     .dashboard-main {
         padding:
             18px 14px 40px;
     }
-
 
     .welcome-section {
         min-height: auto;
 
         align-items: flex-start;
 
-        padding: 25px 22px;
+        padding:
+            25px 22px;
 
         gap: 15px;
     }
-
 
     .welcome-content h1 {
         font-size: 1.65rem;
     }
 
-
     .welcome-description {
         font-size: 0.88rem;
     }
-
 
     .welcome-illustration {
         display: none;
     }
 
-
     .statistics-grid {
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
         gap: 10px;
     }
-
 
     .stat-card {
         min-height: 100px;
@@ -2006,7 +1992,6 @@ select:focus-visible {
         padding: 13px;
     }
 
-
     .stat-icon {
         width: 40px;
         height: 40px;
@@ -2014,23 +1999,19 @@ select:focus-visible {
         font-size: 1.1rem;
     }
 
-
     .stat-label {
         font-size: 0.68rem;
     }
 
-
     .stat-value {
         font-size: 1.35rem;
     }
-
 
     .dashboard-section {
         padding: 19px;
 
         border-radius: 15px;
     }
-
 
     .section-header {
         align-items: flex-start;
@@ -2040,21 +2021,17 @@ select:focus-visible {
         gap: 13px;
     }
 
-
     .section-heading {
         align-items: flex-start;
     }
-
 
     .section-heading h2 {
         font-size: 1.1rem;
     }
 
-
     .section-heading p {
         font-size: 0.8rem;
     }
-
 
     .section-icon {
         width: 42px;
@@ -2063,37 +2040,33 @@ select:focus-visible {
         font-size: 1.2rem;
     }
 
-
     .section-action-button {
         align-self: flex-start;
     }
 
-
     .courses-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
 
         gap: 14px;
     }
-
 
     .notes-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
 
         gap: 14px;
     }
-
 
     .dashboard-quick-links {
         display: grid;
 
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
 
         gap: 8px;
     }
-
 
     .quick-link {
         width: 100%;
@@ -2104,11 +2077,9 @@ select:focus-visible {
         font-size: 0.76rem;
     }
 
-
     .whatsapp-button {
         width: 100%;
     }
-
 
     .notification-panel,
     .profile-panel {
@@ -2119,7 +2090,6 @@ select:focus-visible {
         width:
             calc(100vw - 30px);
     }
-
 }
 
 
@@ -2133,28 +2103,21 @@ select:focus-visible {
         display: none;
     }
 
-
     .brand-name {
         font-size: 0.98rem;
     }
 
-
     .statistics-grid {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
-
 
     .dashboard-quick-links {
-        grid-template-columns:
-            1fr;
+        grid-template-columns: 1fr;
     }
-
 
     .welcome-content h1 {
         font-size: 1.45rem;
     }
-
 }
 
 
@@ -2171,13 +2134,16 @@ select:focus-visible {
     *,
     *::before,
     *::after {
-        animation-duration: 0.01ms !important;
+        animation-duration:
+            0.01ms !important;
 
-        animation-iteration-count: 1 !important;
+        animation-iteration-count:
+            1 !important;
 
-        transition-duration: 0.01ms !important;
+        transition-duration:
+            0.01ms !important;
 
-        scroll-behavior: auto !important;
+        scroll-behavior:
+            auto !important;
     }
-
 }
