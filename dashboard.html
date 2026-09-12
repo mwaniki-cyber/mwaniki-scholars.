@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -13,11 +11,6 @@
     <meta
         name="description"
         content="Mwaniki Scholars Medical University student dashboard."
-    >
-
-    <meta
-        name="theme-color"
-        content="#183f45"
     >
 
     <title>Mwaniki Scholars | Student Dashboard</title>
@@ -32,159 +25,73 @@
         rel="stylesheet"
         href="./dashboard.css"
     >
-
 </head>
-
 
 <body>
 
-
 <!-- =====================================================
-     DASHBOARD HEADER
+     TOP HEADER
 ===================================================== -->
-
 <header class="dashboard-header">
 
-    <div class="dashboard-header-inner">
-
+    <div class="header-inner">
 
         <!-- BRAND -->
-
         <a
             href="./dashboard.html"
-            class="dashboard-brand"
+            class="brand-area"
             aria-label="Mwaniki Scholars Dashboard"
         >
 
             <div class="brand-icon">
-                🩺
+                <span>MS</span>
             </div>
 
             <div class="brand-text">
-
-                <strong>
-                    Mwaniki Scholars
-                </strong>
-
-                <span>
-                    Medical Learning Platform
-                </span>
-
+                <strong>Mwaniki Scholars</strong>
+                <span>Medical University</span>
             </div>
 
         </a>
 
 
-        <!-- HEADER ACTIONS -->
-
-        <div class="header-actions">
-
-
-            <!-- NOTIFICATIONS -->
-
-            <button
-                type="button"
-                id="notificationButton"
-                class="icon-button"
-                aria-label="Open notifications"
-                aria-expanded="false"
-            >
-                <span aria-hidden="true">🔔</span>
-            </button>
-
-
-            <!-- PROFILE -->
-
-            <button
-                type="button"
-                id="profileButton"
-                class="profile-button"
-                aria-label="Open student profile"
-                aria-expanded="false"
-            >
-
-                <span
-                    id="profileInitial"
-                    class="profile-initial"
-                >
-                    S
-                </span>
-
-
-                <img
-                    id="profilePhoto"
-                    class="profile-photo"
-                    src=""
-                    alt="Student profile photo"
-                    hidden
-                >
-
-
-                <span
-                    id="profileButtonName"
-                    class="profile-button-name"
-                >
-                    Student
-                </span>
-
-
-                <span
-                    class="profile-arrow"
-                    aria-hidden="true"
-                >
-                    ▾
-                </span>
-
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <!-- =================================================
-         HORIZONTAL NAVIGATION
-    ================================================== -->
-
-    <nav
-        class="dashboard-nav"
-        aria-label="Student dashboard navigation"
-    >
-
-        <div class="dashboard-nav-inner">
-
+        <!-- HORIZONTAL NAVIGATION -->
+        <nav
+            class="main-navigation"
+            aria-label="Main navigation"
+        >
 
             <a
                 href="#overview"
                 class="nav-link active"
+                id="overview"
             >
                 Overview
             </a>
 
-
             <a
                 href="#courses"
                 class="nav-link"
+                id="courses"
             >
                 Courses
             </a>
 
-
             <a
                 href="#notes"
                 class="nav-link"
+                id="notes"
             >
-                Notes Library
+                Notes
             </a>
-
 
             <a
                 href="#quizzes"
                 class="nav-link"
+                id="quizzes"
             >
                 Quizzes
             </a>
-
 
             <a
                 href="./aiTutor.html"
@@ -193,14 +100,12 @@
                 AI Tutor
             </a>
 
-
             <a
                 href="./studentTutor.html"
                 class="nav-link"
             >
                 Book a Tutor
             </a>
-
 
             <a
                 href="./studentInbox.html"
@@ -209,44 +114,93 @@
                 Inbox
             </a>
 
+        </nav>
+
+
+        <!-- HEADER ACTIONS -->
+        <div class="header-actions">
+
+            <button
+                type="button"
+                class="header-action"
+                id="notificationButton"
+                aria-label="Notifications"
+                title="Notifications"
+            >
+                <span class="header-action-icon">!</span>
+                <span
+                    class="notification-dot"
+                    id="notificationDot"
+                ></span>
+            </button>
+
+
+            <button
+                type="button"
+                class="profile-button"
+                id="profileButton"
+                aria-label="Open student profile"
+            >
+
+                <span
+                    class="profile-photo-wrap"
+                    id="headerProfilePhotoWrap"
+                >
+                    <span
+                        class="profile-initial"
+                        id="headerProfileInitial"
+                    >
+                        M
+                    </span>
+
+                    <img
+                        id="headerProfilePhoto"
+                        class="profile-photo"
+                        src=""
+                        alt="Student profile"
+                    >
+                </span>
+
+                <span
+                    class="profile-name"
+                    id="headerProfileName"
+                >
+                    Student
+                </span>
+
+                <span class="profile-chevron">
+                    ›
+                </span>
+
+            </button>
 
         </div>
 
-    </nav>
+    </div>
 
 </header>
 
 
-
 <!-- =====================================================
-     NOTIFICATION SIDE PANEL
+     NOTIFICATION PANEL
 ===================================================== -->
-
 <aside
+    class="side-panel notification-panel"
     id="notificationPanel"
-    class="side-panel"
     aria-hidden="true"
 >
 
     <div class="side-panel-header">
 
         <div>
-
-            <span class="panel-label">
-                Student Centre
-            </span>
-
-            <h2>
-                Notifications
-            </h2>
-
+            <span class="panel-kicker">Student centre</span>
+            <h2>Notifications</h2>
         </div>
-
 
         <button
             type="button"
-            id="closeNotificationPanel"
             class="panel-close"
+            id="closeNotificationPanel"
             aria-label="Close notifications"
         >
             ×
@@ -254,63 +208,45 @@
 
     </div>
 
-
     <div
-        id="notificationContent"
         class="notification-content"
+        id="notificationContent"
     >
-
         <div class="empty-state">
+            <div class="empty-state-mark">MS</div>
 
-            <div class="empty-state-icon">
-                🔔
-            </div>
-
-            <h3>
-                You're all caught up
-            </h3>
+            <h3>You are all caught up</h3>
 
             <p>
-                New learning updates will appear here.
+                New learning updates and important announcements
+                will appear here.
             </p>
-
         </div>
-
     </div>
 
 </aside>
 
 
-
 <!-- =====================================================
-     PROFILE SIDE PANEL
+     PROFILE PANEL
 ===================================================== -->
-
 <aside
-    id="profilePanel"
     class="side-panel profile-panel"
+    id="profilePanel"
     aria-hidden="true"
 >
 
     <div class="side-panel-header">
 
         <div>
-
-            <span class="panel-label">
-                Student Account
-            </span>
-
-            <h2>
-                My Profile
-            </h2>
-
+            <span class="panel-kicker">Account</span>
+            <h2>My Profile</h2>
         </div>
-
 
         <button
             type="button"
-            id="closeProfilePanel"
             class="panel-close"
+            id="closeProfilePanel"
             aria-label="Close profile"
         >
             ×
@@ -321,50 +257,39 @@
 
     <div class="profile-panel-content">
 
-
-        <div class="profile-panel-avatar">
+        <div class="profile-large-photo-wrap">
 
             <span
+                class="profile-large-initial"
                 id="profilePanelInitial"
-                class="profile-panel-initial"
             >
-                S
+                M
             </span>
-
 
             <img
                 id="profilePanelPhoto"
-                class="profile-panel-photo"
+                class="profile-large-photo"
                 src=""
                 alt="Student profile photo"
-                hidden
             >
 
         </div>
 
 
-        <h3
-            id="profilePanelName"
-            class="profile-panel-name"
-        >
+        <h3 id="profilePanelName">
             Student
         </h3>
 
-
-        <p
-            id="profilePanelEmail"
-            class="profile-panel-email"
-        >
-            student@example.com
+        <p id="profilePanelEmail">
+            —
         </p>
 
 
         <div class="profile-details">
 
-
             <div class="profile-detail">
 
-                <span>
+                <span class="profile-detail-label">
                     Course
                 </span>
 
@@ -377,7 +302,7 @@
 
             <div class="profile-detail">
 
-                <span>
+                <span class="profile-detail-label">
                     Level
                 </span>
 
@@ -387,16 +312,15 @@
 
             </div>
 
-
         </div>
 
 
         <button
             type="button"
-            id="logoutButton"
             class="logout-button"
+            id="logoutButton"
         >
-            Log Out
+            Log out
         </button>
 
     </div>
@@ -404,26 +328,22 @@
 </aside>
 
 
-
 <!-- =====================================================
-     MAIN DASHBOARD
+     PAGE
 ===================================================== -->
-
-<main class="dashboard-main">
-
+<main class="dashboard-page">
 
     <!-- =================================================
-         WELCOME
+         WELCOME / OVERVIEW
     ================================================== -->
-
     <section
-        id="overview"
         class="welcome-section"
+        id="overviewSection"
     >
 
-        <div class="welcome-content">
+        <div class="welcome-copy">
 
-            <span class="section-eyebrow">
+            <span class="section-kicker">
                 STUDENT DASHBOARD
             </span>
 
@@ -436,7 +356,7 @@
 
             <p>
                 Continue your medical learning journey,
-                review your progress, and explore your courses.
+                review your progress, and keep moving forward.
             </p>
 
         </div>
@@ -444,9 +364,7 @@
 
         <div class="welcome-date">
 
-            <span>
-                Today
-            </span>
+            <span>Today</span>
 
             <strong id="currentDate">
                 —
@@ -457,99 +375,91 @@
     </section>
 
 
-
     <!-- =================================================
          PROGRESS
     ================================================== -->
-
     <section
-        id="progress"
         class="dashboard-section"
+        id="progress"
     >
 
         <div class="section-heading">
 
             <div>
-
-                <span class="section-eyebrow">
-                    YOUR LEARNING
+                <span class="section-kicker">
+                    LEARNING OVERVIEW
                 </span>
 
                 <h2>
                     Track your progress
                 </h2>
-
             </div>
 
-            <span class="section-description">
-                Your learning activity at a glance
-            </span>
+            <p>
+                Your learning activity at a glance.
+            </p>
 
         </div>
 
 
         <div class="progress-grid">
 
-
             <article class="progress-card">
 
-                <div class="progress-card-icon">
-                    📚
-                </div>
+                <span class="progress-label">
+                    Courses
+                </span>
 
-                <div class="progress-card-content">
+                <strong
+                    class="progress-value"
+                    id="totalCourses"
+                >
+                    0
+                </strong>
 
-                    <span>
-                        Courses
-                    </span>
-
-                    <strong id="totalCourses">
-                        0
-                    </strong>
-
-                </div>
+                <span class="progress-description">
+                    Available courses
+                </span>
 
             </article>
 
 
             <article class="progress-card">
 
-                <div class="progress-card-icon">
-                    📖
-                </div>
+                <span class="progress-label">
+                    Notes
+                </span>
 
-                <div class="progress-card-content">
+                <strong
+                    class="progress-value"
+                    id="totalNotes"
+                >
+                    0
+                </strong>
 
-                    <span>
-                        Notes
-                    </span>
-
-                    <strong id="totalNotes">
-                        0
-                    </strong>
-
-                </div>
+                <span class="progress-description">
+                    Published learning notes
+                </span>
 
             </article>
 
 
             <article class="progress-card">
 
-                <div class="progress-card-icon">
-                    📝
-                </div>
+                <span class="progress-label">
+                    Quizzes
+                </span>
 
-                <div class="progress-card-content">
+                <strong
+                    class="progress-value"
+                    id="totalQuizzes"
+                >
+                    0
+                </strong>
 
-                    <span>
-                        Quizzes
-                    </span>
-
-                    <strong id="totalQuizzes">
-                        0
-                    </strong>
-
-                </div>
+                <span class="progress-description">
+                    Questions available
+                </span>
 
             </article>
 
@@ -558,17 +468,16 @@
 
                 <div class="progress-card-top">
 
-                    <div class="progress-card-icon">
-                        🎯
-                    </div>
+                    <div>
 
-                    <div class="progress-card-content">
-
-                        <span>
-                            Learning Progress
+                        <span class="progress-label">
+                            Learning activity
                         </span>
 
-                        <strong id="learningProgress">
+                        <strong
+                            class="progress-value"
+                            id="learningProgress"
+                        >
                             0%
                         </strong>
 
@@ -580,79 +489,74 @@
                 <div class="progress-track">
 
                     <div
+                        class="progress-bar"
                         id="learningProgressBar"
-                        class="progress-fill"
                         style="width: 0%;"
                     ></div>
 
                 </div>
 
-            </article>
+                <span class="progress-description">
+                    Keep completing courses and quizzes.
+                </span>
 
+            </article>
 
         </div>
 
     </section>
 
 
-
     <!-- =================================================
          RECENT COURSE
     ================================================== -->
-
     <section
-        id="recent-course"
         class="dashboard-section"
+        id="recent-course"
     >
 
         <div class="section-heading">
 
             <div>
-
-                <span class="section-eyebrow">
+                <span class="section-kicker">
                     CONTINUE LEARNING
                 </span>
 
                 <h2>
                     Recent course
                 </h2>
-
             </div>
 
         </div>
 
 
         <article
-            id="recentCourseCard"
             class="recent-course-card"
+            id="recentCourseCard"
         >
 
-            <div class="recent-course-image">
+            <div class="recent-course-visual">
+
+                <img
+                    id="recentCourseImage"
+                    src=""
+                    alt=""
+                    class="recent-course-image"
+                >
 
                 <div
                     id="recentCourseImagePlaceholder"
                     class="recent-course-image-placeholder"
                     aria-hidden="true"
-                >
-                    📚
-                </div>
-
-
-                <img
-                    id="recentCourseImage"
-                    src=""
-                    alt="Recent course"
-                    loading="lazy"
-                    hidden
-                >
+                ></div>
 
             </div>
 
 
             <div class="recent-course-content">
 
-                <span class="card-label">
-                    CONTINUE WHERE YOU LEFT OFF
+                <span class="card-kicker">
+                    CONTINUE
                 </span>
 
                 <h3 id="recentCourseTitle">
@@ -660,17 +564,15 @@
                 </h3>
 
                 <p id="recentCourseDescription">
-                    Choose a course from your course library
-                    to begin learning.
+                    Select a course from your library to begin.
                 </p>
-
 
                 <button
                     type="button"
-                    id="continueRecentCourse"
                     class="primary-button"
+                    id="recentCourseButton"
                 >
-                    Choose a Course
+                    Browse courses
                 </button>
 
             </div>
@@ -680,60 +582,43 @@
     </section>
 
 
-
     <!-- =================================================
          QUICK ACTIONS
     ================================================== -->
-
     <section
-        id="quick-actions"
         class="dashboard-section"
+        id="quick-actions"
     >
 
         <div class="section-heading">
 
             <div>
-
-                <span class="section-eyebrow">
+                <span class="section-kicker">
                     QUICK ACCESS
                 </span>
 
                 <h2>
-                    Quick actions
+                    What do you want to do?
                 </h2>
-
             </div>
 
         </div>
 
 
-        <div class="feature-grid">
-
+        <div class="quick-actions-grid">
 
             <a
                 href="#courses"
-                class="feature-card"
+                class="quick-action"
             >
 
-                <div class="feature-icon">
-                    📚
-                </div>
+                <span class="quick-action-icon">
+                    C
+                </span>
 
-                <div class="feature-content">
-
-                    <h3>
-                        Browse Courses
-                    </h3>
-
-                    <p>
-                        Explore medical courses and
-                        continue your studies.
-                    </p>
-
-                </div>
-
-                <span class="feature-arrow">
-                    →
+                <span>
+                    <strong>Browse Courses</strong>
+                    <small>Explore your medical courses</small>
                 </span>
 
             </a>
@@ -741,28 +626,16 @@
 
             <a
                 href="#notes"
-                class="feature-card"
+                class="quick-action"
             >
 
-                <div class="feature-icon">
-                    📖
-                </div>
+                <span class="quick-action-icon">
+                    N
+                </span>
 
-                <div class="feature-content">
-
-                    <h3>
-                        Notes Library
-                    </h3>
-
-                    <p>
-                        Access published learning notes
-                        and study materials.
-                    </p>
-
-                </div>
-
-                <span class="feature-arrow">
-                    →
+                <span>
+                    <strong>Study Notes</strong>
+                    <small>Read your published notes</small>
                 </span>
 
             </a>
@@ -770,28 +643,16 @@
 
             <a
                 href="#quizzes"
-                class="feature-card"
+                class="quick-action"
             >
 
-                <div class="feature-icon">
-                    📝
-                </div>
+                <span class="quick-action-icon">
+                    Q
+                </span>
 
-                <div class="feature-content">
-
-                    <h3>
-                        Take a Quiz
-                    </h3>
-
-                    <p>
-                        Test your knowledge and monitor
-                        your quiz progress.
-                    </p>
-
-                </div>
-
-                <span class="feature-arrow">
-                    →
+                <span>
+                    <strong>Take a Quiz</strong>
+                    <small>Test your knowledge</small>
                 </span>
 
             </a>
@@ -799,72 +660,89 @@
 
             <a
                 href="./aiTutor.html"
-                class="feature-card"
+                class="quick-action"
             >
 
-                <div class="feature-icon">
-                    🤖
-                </div>
+                <span class="quick-action-icon">
+                    AI
+                </span>
 
-                <div class="feature-content">
-
-                    <h3>
-                        AI Tutor
-                    </h3>
-
-                    <p>
-                        Get medical learning assistance
-                        from Mwaniki AI.
-                    </p>
-
-                </div>
-
-                <span class="feature-arrow">
-                    →
+                <span>
+                    <strong>AI Tutor</strong>
+                    <small>Get learning assistance</small>
                 </span>
 
             </a>
 
+
+            <a
+                href="./studentTutor.html"
+                class="quick-action"
+            >
+
+                <span class="quick-action-icon">
+                    T
+                </span>
+
+                <span>
+                    <strong>Book a Tutor</strong>
+                    <small>Connect with a tutor</small>
+                </span>
+
+            </a>
+
+
+            <a
+                href="./studentInbox.html"
+                class="quick-action"
+            >
+
+                <span class="quick-action-icon">
+                    I
+                </span>
+
+                <span>
+                    <strong>Student Inbox</strong>
+                    <small>View your messages</small>
+                </span>
+
+            </a>
 
         </div>
 
     </section>
 
 
-
     <!-- =================================================
          RECOMMENDATIONS
     ================================================== -->
-
     <section
-        id="recommendations"
         class="dashboard-section"
+        id="recommendations"
     >
 
         <div class="section-heading">
 
             <div>
-
-                <span class="section-eyebrow">
+                <span class="section-kicker">
                     RECOMMENDED
                 </span>
 
                 <h2>
-                    Recommended for you
+                    Courses worth exploring
                 </h2>
-
             </div>
 
-            <span class="section-description">
-                Courses selected from your learning library
-            </span>
+            <p>
+                Start with one of the available courses.
+            </p>
 
         </div>
 
 
         <div
-            id="recommendationsGrid"
             class="recommendations-grid"
+            id="recommendationsGrid"
         >
 
             <div class="loading-state">
@@ -876,31 +754,28 @@
     </section>
 
 
-
     <!-- =================================================
          COURSE LIBRARY
     ================================================== -->
-
     <section
-        id="courses"
         class="dashboard-section"
+        id="courses"
     >
 
         <div class="section-heading section-heading-with-action">
 
             <div>
 
-                <span class="section-eyebrow">
-                    MEDICAL EDUCATION
+                <span class="section-kicker">
+                    COURSE LIBRARY
                 </span>
 
                 <h2>
-                    Course library
+                    All courses
                 </h2>
 
-                <p class="section-description">
-                    Explore the courses available in
-                    Mwaniki Scholars Medical University.
+                <p>
+                    Select a course to view its units and begin learning.
                 </p>
 
             </div>
@@ -908,18 +783,18 @@
 
             <button
                 type="button"
-                id="refreshCoursesButton"
                 class="secondary-button"
+                id="refreshCoursesButton"
             >
-                ↻ Refresh
+                Refresh courses
             </button>
 
         </div>
 
 
         <div
-            id="courseGrid"
             class="course-grid"
+            id="courseGrid"
         >
 
             <div class="loading-state">
@@ -931,31 +806,28 @@
     </section>
 
 
-
     <!-- =================================================
          NOTES LIBRARY
     ================================================== -->
-
     <section
-        id="notes"
         class="dashboard-section"
+        id="notes"
     >
 
         <div class="section-heading section-heading-with-action">
 
             <div>
 
-                <span class="section-eyebrow">
-                    STUDY MATERIALS
+                <span class="section-kicker">
+                    NOTES LIBRARY
                 </span>
 
                 <h2>
-                    Notes library
+                    Latest notes
                 </h2>
 
-                <p class="section-description">
-                    Access published notes uploaded for
-                    Mwaniki Scholars students.
+                <p>
+                    Study published notes uploaded for students.
                 </p>
 
             </div>
@@ -963,18 +835,18 @@
 
             <button
                 type="button"
-                id="refreshNotesButton"
                 class="secondary-button"
+                id="refreshNotesButton"
             >
-                ↻ Refresh
+                Refresh notes
             </button>
 
         </div>
 
 
         <div
-            id="notesGrid"
             class="notes-grid"
+            id="notesGrid"
         >
 
             <div class="loading-state">
@@ -986,31 +858,28 @@
     </section>
 
 
-
     <!-- =================================================
          QUIZ CENTRE
     ================================================== -->
-
     <section
-        id="quizzes"
         class="dashboard-section"
+        id="quiz-centre"
     >
 
         <div class="section-heading">
 
             <div>
 
-                <span class="section-eyebrow">
-                    KNOWLEDGE CHECK
+                <span class="section-kicker">
+                    ASSESSMENT
                 </span>
 
                 <h2>
                     Quiz centre
                 </h2>
 
-                <p class="section-description">
-                    Test your understanding and keep track
-                    of your learning progress.
+                <p>
+                    Strengthen your knowledge by testing yourself.
                 </p>
 
             </div>
@@ -1018,17 +887,12 @@
         </div>
 
 
-        <article class="quiz-centre-card">
+        <article class="quiz-progress-card">
 
-            <div class="quiz-centre-icon">
-                📝
-            </div>
+            <div class="quiz-progress-copy">
 
-
-            <div class="quiz-centre-content">
-
-                <span class="card-label">
-                    QUIZ PROGRESS
+                <span class="card-kicker">
+                    YOUR QUIZ ACTIVITY
                 </span>
 
                 <h3>
@@ -1036,63 +900,43 @@
                 </h3>
 
                 <p>
-                    Complete quizzes from your medical
-                    courses and monitor your progress.
+                    Open any course to access its available quizzes.
                 </p>
 
-
-                <div class="quiz-progress-row">
-
-                    <div class="progress-track">
-
-                        <div
-                            id="quizProgressBar"
-                            class="progress-fill"
-                            style="width: 0%;"
-                        ></div>
-
-                    </div>
-
-
-                    <strong id="quizProgressPercent">
-                        0%
-                    </strong>
-
-                </div>
-
             </div>
+
+
+            <a
+                href="#courses"
+                class="primary-button"
+            >
+                Find a quiz
+            </a>
 
         </article>
 
     </section>
 
 
-
     <!-- =================================================
          LEARNING SUPPORT
     ================================================== -->
-
     <section
-        id="learning-support"
         class="dashboard-section"
+        id="learning-support"
     >
 
         <div class="section-heading">
 
             <div>
 
-                <span class="section-eyebrow">
-                    STUDENT SUPPORT
+                <span class="section-kicker">
+                    LEARNING SUPPORT
                 </span>
 
                 <h2>
-                    Learning support
+                    Get help when you need it
                 </h2>
-
-                <p class="section-description">
-                    Get additional support whenever you
-                    need help with your medical studies.
-                </p>
 
             </div>
 
@@ -1101,31 +945,25 @@
 
         <div class="support-grid">
 
-
             <a
                 href="./aiTutor.html"
                 class="support-card"
             >
 
-                <div class="support-icon">
-                    🤖
-                </div>
+                <span class="support-label">
+                    AI SUPPORT
+                </span>
 
-                <div>
+                <h3>
+                    AI Tutor
+                </h3>
 
-                    <h3>
-                        AI Tutor
-                    </h3>
+                <p>
+                    Ask questions and get help while studying.
+                </p>
 
-                    <p>
-                        Ask questions and get learning
-                        assistance from Mwaniki AI.
-                    </p>
-
-                </div>
-
-                <span class="support-arrow">
-                    →
+                <span class="support-link">
+                    Open AI Tutor →
                 </span>
 
             </a>
@@ -1136,25 +974,20 @@
                 class="support-card"
             >
 
-                <div class="support-icon">
-                    👨‍⚕️
-                </div>
+                <span class="support-label">
+                    HUMAN SUPPORT
+                </span>
 
-                <div>
+                <h3>
+                    Book a Tutor
+                </h3>
 
-                    <h3>
-                        Book a Tutor
-                    </h3>
+                <p>
+                    Connect with a tutor for additional academic support.
+                </p>
 
-                    <p>
-                        Connect with a human medical tutor
-                        for additional learning support.
-                    </p>
-
-                </div>
-
-                <span class="support-arrow">
-                    →
+                <span class="support-link">
+                    Book a tutor →
                 </span>
 
             </a>
@@ -1165,79 +998,62 @@
                 class="support-card"
             >
 
-                <div class="support-icon">
-                    💬
-                </div>
+                <span class="support-label">
+                    COMMUNICATION
+                </span>
 
-                <div>
+                <h3>
+                    Student Inbox
+                </h3>
 
-                    <h3>
-                        Student Inbox
-                    </h3>
+                <p>
+                    View messages and communication from your learning team.
+                </p>
 
-                    <p>
-                        View messages and responses from
-                        your learning support team.
-                    </p>
-
-                </div>
-
-                <span class="support-arrow">
-                    →
+                <span class="support-link">
+                    Open inbox →
                 </span>
 
             </a>
-
 
         </div>
 
     </section>
 
 
-
     <!-- =================================================
          WHATSAPP
     ================================================== -->
-
     <section
-        id="whatsapp"
         class="whatsapp-section"
+        id="whatsapp"
     >
+
+        <div>
+
+            <span class="section-kicker">
+                STUDENT COMMUNITY
+            </span>
+
+            <h2>
+                Stay connected with Mwaniki Scholars
+            </h2>
+
+            <p>
+                Follow the official Mwaniki Scholars WhatsApp channel
+                for announcements, learning updates, and important notices.
+            </p>
+
+        </div>
+
 
         <a
             href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
             target="_blank"
             rel="noopener noreferrer"
-            class="whatsapp-card"
+            class="whatsapp-button"
         >
-
-            <div class="whatsapp-icon">
-                💬
-            </div>
-
-
-            <div class="whatsapp-content">
-
-                <span class="card-label">
-                    MWANIKI SCHOLARS COMMUNITY
-                </span>
-
-                <h3>
-                    Join our WhatsApp Channel
-                </h3>
-
-                <p>
-                    Stay updated with important announcements,
-                    learning updates and student information.
-                </p>
-
-            </div>
-
-
-            <span class="whatsapp-arrow">
-                →
-            </span>
-
+            Join WhatsApp Channel
         </a>
 
     </section>
@@ -1245,14 +1061,12 @@
 </main>
 
 
-
 <!-- =====================================================
      FOOTER
 ===================================================== -->
-
 <footer class="dashboard-footer">
 
-    <div class="dashboard-footer-inner">
+    <div class="footer-inner">
 
         <div>
 
@@ -1261,15 +1075,14 @@
             </strong>
 
             <span>
-                Medical Learning Platform
+                Medical University
             </span>
 
         </div>
 
 
         <p>
-            © 2026 Mwaniki Scholars Medical University.
-            Learn. Practice. Advance.
+            © 2026 Mwaniki Scholars. Medical learning platform.
         </p>
 
     </div>
@@ -1277,13 +1090,10 @@
 </footer>
 
 
-
 <script
     type="module"
     src="./dashboard.js"
 ></script>
 
-
 </body>
-
 </html>
