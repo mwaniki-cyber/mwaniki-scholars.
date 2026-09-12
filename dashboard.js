@@ -1,539 +1,408 @@
 import { supabase } from "./supabase.js";
 
-// ============================================================
+// =====================================================
 // MWANIKI SCHOLARS
-// PREMIUM STUDENT DASHBOARD ENGINE
-// ============================================================
+// STUDENT DASHBOARD ENGINE
+// =====================================================
 
-console.log("🎓 Mwaniki Scholars Premium Dashboard Loaded");
+console.log("🚀 Mwaniki Scholars dashboard.js loaded");
 
-// ============================================================
+// =====================================================
 // STORAGE KEYS
-// ============================================================
+// =====================================================
 
-const STORAGE = {
-    recent: "mwanikiRecentActivity",
-    quizHistory: "mwanikiQuizHistory",
-    quizProgress: "mwanikiQuizProgress",
-    lastActivity: "mwanikiLastActivity",
-    streak: "mwanikiLearningStreak"
-};
+const RECENT_ACTIVITY_KEY = "mwanikiRecentActivity";
+const QUIZ_PROGRESS_KEY = "mwanikiQuizProgress";
+const QUIZ_HISTORY_KEY = "mwanikiQuizHistory";
 
-// ============================================================
-// CURRENT USER
-// ============================================================
+
+// =====================================================
+// GLOBAL DATA
+// =====================================================
 
 let currentUser = null;
-let currentStudent = null;
+let currentProfile = null;
 
-// ============================================================
-// GET SESSION
-// ============================================================
+let dashboardCourses = [];
+let dashboardNotes = [];
+let recentActivity = [];
+let quizHistory = [];
 
-async function getCurrentUser() {
+
+// =====================================================
+// BASIC HELPERS
+// =====================================================
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+
+function setText(id, value) {
+    const element = getElement(id);
+
+    if (element) {
+        element.textContent = value ?? "";
+    }
+}
+
+
+function escapeHTML(value) {
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function safeDate(dateValue) {
+    if (!dateValue) {
+        return "";
+    }
+
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+        return "";
+    }
+
+    return date.toLocaleDateString();
+}
+
+
+function safeNumber(value, fallback = 0) {
+    const number = Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : fallback;
+}
+
+
+// =====================================================
+// LOCAL STORAGE HELPERS
+// =====================================================
+
+function readStorage(key, fallback = []) {
     try {
+        const raw = localStorage.getItem(key);
+
+        if (!raw) {
+            return fallback;
+        }
+
+        const parsed = JSON.parse(raw);
+
+        return parsed ?? fallback;
+
+    } catch (error) {
+
+        console.warn(
+            `Could not read localStorage key: ${key}`,
+            error
+        );
+
+        return fallback;
+    }
+}
+
+
+function writeStorage(key, value) {
+    try {
+
+        localStorage.setItem(
+            key,
+            JSON.stringify(value)
+        );
+
+    } catch (error) {
+
+        console.warn(
+            `Could not write localStorage key: ${key}`,
+            error
+        );
+    }
+}
+
+
+// =====================================================
+// SESSION
+// =====================================================
+
+async function loadCurrentSession() {
+
+    try {
+
         const {
             data,
             error
         } = await supabase.auth.getSession();
 
         if (error) {
-            console.error("❌ Session error:", error);
-            return null;
-        }
-
-        if (!data?.session?.user) {
-            console.warn("⚠️ No active Supabase session.");
-            return null;
-        }
-
-        return data.session.user;
-
-    } catch (error) {
-        console.error("❌ Failed to get current user:", error);
-        return null;
-    }
-}
-
-// ============================================================
-// LOAD STUDENT PROFILE
-// ============================================================
-
-async function loadStudentProfile() {
-
-    currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-        showLoggedOutState();
-        return;
-    }
-
-    console.log(
-        "✅ Logged-in user:",
-        currentUser.email
-    );
-
-    try {
-
-        const {
-            data: student,
-            error
-        } = await supabase
-            .from("students")
-            .select("*")
-            .eq("id", currentUser.id)
-            .maybeSingle();
-
-        if (error) {
 
             console.error(
-                "❌ Could not load student profile:",
+                "❌ Could not load session:",
                 error
             );
 
-            showIncompleteProfile(currentUser);
-
-        } else {
-
-            currentStudent = student;
-
-            if (!student) {
-
-                console.warn(
-                    "⚠️ No student profile found."
-                );
-
-                showIncompleteProfile(
-                    currentUser
-                );
-
-            } else {
-
-                displayStudentIdentity(
-                    student,
-                    currentUser
-                );
-
-            }
+            return null;
         }
+
+        currentUser = data?.session?.user ?? null;
+
+        console.log(
+            "👤 Current user:",
+            currentUser
+        );
+
+        return currentUser;
 
     } catch (error) {
 
         console.error(
-            "❌ Student profile failure:",
+            "❌ Session error:",
             error
         );
 
-        showIncompleteProfile(
-            currentUser
-        );
+        return null;
     }
-
-    updateDashboardAnalytics();
-    updateLearningStreak();
-    renderRecentActivity();
 }
 
-// ============================================================
-// DISPLAY STUDENT IDENTITY
-// ============================================================
 
-function displayStudentIdentity(student, user) {
+// =====================================================
+// PROFILE
+// =====================================================
 
-    const name =
-        student.full_name ||
-        "Student";
-
-    const email =
-        student.email ||
-        user.email ||
-        "";
-
-    const course =
-        student.course ||
-        "Medical Student";
-
-    const level =
-        student.level ||
-        "";
-
-    const photo =
-        student.photo_url ||
-        "";
-
-    // --------------------------------------------------------
-    // TOP PROFILE BUTTON
-    // --------------------------------------------------------
+async function loadStudentProfile() {
 
     const profileButton =
-        document.querySelector(".profile");
+        getElement("studentProfileButton");
 
-    if (profileButton) {
+    const hero =
+        getElement("studentPersonalProfile");
 
-        profileButton.innerHTML = "";
+    if (!currentUser) {
 
-        if (photo) {
-
-            const image =
-                document.createElement("img");
-
-            image.src = photo;
-            image.alt = "Profile photo";
-
-            image.style.cssText = `
-                width:34px;
-                height:34px;
-                border-radius:50%;
-                object-fit:cover;
-                margin-right:8px;
-            `;
-
-            profileButton.appendChild(image);
+        if (profileButton) {
+            profileButton.textContent =
+                "👤 Student";
         }
 
-        const nameElement =
-            document.createElement("span");
+        if (hero) {
 
-        nameElement.textContent = name;
+            hero.innerHTML = `
+                <div class="hero-loading">
+                    <div>
+                        <strong>
+                            Welcome to Mwaniki Scholars
+                        </strong>
 
-        profileButton.appendChild(
-            nameElement
-        );
-
-        profileButton.onclick = () => {
-            window.location.href =
-                "studentProfile.html";
-        };
-    }
-
-    // --------------------------------------------------------
-    // HERO
-    // --------------------------------------------------------
-
-    const hero =
-        document.getElementById(
-            "studentPersonalProfile"
-        );
-
-    if (!hero) {
-        return;
-    }
-
-    const greeting =
-        getGreeting();
-
-    hero.innerHTML = `
-        <div class="hero-content">
-
-            ${
-                photo
-                    ? `
-                    <img
-                        src="${escapeHTML(photo)}"
-                        class="hero-photo"
-                        alt="Student profile photo"
-                    >
-                    `
-                    : `
-                    <div class="hero-avatar">
-                        👤
+                        <p>
+                            Please sign in to access your
+                            personalized learning dashboard.
+                        </p>
                     </div>
-                    `
-            }
-
-            <div class="hero-info">
-
-                <div class="hero-greeting">
-                    ${greeting}
                 </div>
+            `;
+        }
 
-                <h1 class="hero-name">
-                    ${escapeHTML(name)}
-                </h1>
-
-                <div class="hero-meta">
-
-                    <span>
-                        🎓 ${escapeHTML(course)}
-                    </span>
-
-                    ${
-                        level
-                            ? `
-                            <span>
-                                📚 ${escapeHTML(level)}
-                            </span>
-                            `
-                            : ""
-                    }
-
-                    <span>
-                        📧 ${escapeHTML(email)}
-                    </span>
-
-                </div>
-
-            </div>
-
-            <div class="hero-actions">
-
-                <button
-                    class="hero-profile-button"
-                    id="heroProfileButton"
-                    type="button"
-                >
-                    👤 My Profile
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-    const heroButton =
-        document.getElementById(
-            "heroProfileButton"
-        );
-
-    if (heroButton) {
-
-        heroButton.onclick = () => {
-            window.location.href =
-                "studentProfile.html";
-        };
-    }
-}
-
-// ============================================================
-// INCOMPLETE PROFILE
-// ============================================================
-
-function showIncompleteProfile(user) {
-
-    const hero =
-        document.getElementById(
-            "studentPersonalProfile"
-        );
-
-    if (!hero) {
-        return;
+        return null;
     }
 
-    hero.innerHTML = `
-        <div class="hero-content">
 
-            <div class="hero-avatar">
-                👤
-            </div>
+    let profile = null;
 
-            <div class="hero-info">
 
-                <div class="hero-greeting">
-                    ${getGreeting()}
-                </div>
-
-                <h1 class="hero-name">
-                    Student
-                </h1>
-
-                <div class="hero-meta">
-
-                    <span>
-                        📧 ${escapeHTML(
-                            user?.email || ""
-                        )}
-                    </span>
-
-                    <span>
-                        Complete your profile
-                        for a personalized dashboard.
-                    </span>
-
-                </div>
-
-            </div>
-
-            <div class="hero-actions">
-
-                <button
-                    class="hero-profile-button"
-                    id="completeProfileButton"
-                    type="button"
-                >
-                    👤 Complete Profile
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-    const button =
-        document.getElementById(
-            "completeProfileButton"
-        );
-
-    if (button) {
-
-        button.onclick = () => {
-            window.location.href =
-                "studentProfile.html";
-        };
-    }
-}
-
-// ============================================================
-// LOGGED OUT
-// ============================================================
-
-function showLoggedOutState() {
-
-    const hero =
-        document.getElementById(
-            "studentPersonalProfile"
-        );
-
-    if (!hero) {
-        return;
-    }
-
-    hero.innerHTML = `
-        <div class="hero-content">
-
-            <div class="hero-avatar">
-                🔐
-            </div>
-
-            <div class="hero-info">
-
-                <div class="hero-greeting">
-                    Welcome to Mwaniki Scholars
-                </div>
-
-                <h1 class="hero-name">
-                    Student Dashboard
-                </h1>
-
-                <div class="hero-meta">
-                    Please log in to view
-                    your personalized learning data.
-                </div>
-
-            </div>
-
-        </div>
-    `;
-}
-
-// ============================================================
-// GREETING
-// ============================================================
-
-function getGreeting() {
-
-    const hour =
-        new Date().getHours();
-
-    if (hour < 12) {
-        return "Good morning,";
-    }
-
-    if (hour < 17) {
-        return "Good afternoon,";
-    }
-
-    return "Good evening,";
-}
-
-// ============================================================
-// RECENT ACTIVITY
-// ============================================================
-
-function getRecentActivity() {
+    // -------------------------------------------------
+    // Try common profile table
+    // -------------------------------------------------
 
     try {
 
-        const raw =
-            localStorage.getItem(
-                STORAGE.recent
-            );
+        const {
+            data,
+            error
+        } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", currentUser.id)
+            .maybeSingle();
 
-        if (!raw) {
-            return [];
+        if (!error && data) {
+
+            profile = data;
         }
 
-        const data =
-            JSON.parse(raw);
+    } catch (error) {
 
-        return Array.isArray(data)
-            ? data
-            : [];
-
-    } catch {
-
-        return [];
+        console.warn(
+            "Profiles table could not be read:",
+            error
+        );
     }
+
+
+    currentProfile = profile;
+
+
+    const metadata =
+        currentUser.user_metadata || {};
+
+
+    const studentName =
+        profile?.full_name ||
+        profile?.name ||
+        profile?.student_name ||
+        metadata.full_name ||
+        metadata.name ||
+        metadata.student_name ||
+        currentUser.email?.split("@")[0] ||
+        "Scholar";
+
+
+    const email =
+        profile?.email ||
+        currentUser.email ||
+        "";
+
+
+    // -------------------------------------------------
+    // Header profile
+    // -------------------------------------------------
+
+    if (profileButton) {
+
+        profileButton.textContent =
+            `👤 ${studentName}`;
+
+        profileButton.onclick = () => {
+
+            window.location.href =
+                "studentProfile.html";
+        };
+    }
+
+
+    // -------------------------------------------------
+    // Hero
+    // -------------------------------------------------
+
+    if (hero) {
+
+        hero.innerHTML = `
+
+            <div class="hero-content">
+
+                <div class="hero-avatar">
+                    👨‍⚕️
+                </div>
+
+                <div class="hero-text">
+
+                    <span class="eyebrow">
+                        WELCOME BACK, SCHOLAR
+                    </span>
+
+                    <h1>
+                        ${escapeHTML(studentName)}
+                    </h1>
+
+                    <p>
+                        ${escapeHTML(email)}
+                    </p>
+
+                    <p>
+                        Continue your medical learning
+                        journey with Mwaniki Scholars.
+                    </p>
+
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    // -------------------------------------------------
+    // Tutor form auto-fill
+    // -------------------------------------------------
+
+    const studentNameInput =
+        getElement("studentName");
+
+    const studentEmailInput =
+        getElement("studentEmail");
+
+    const checkEmailInput =
+        getElement("checkEmail");
+
+
+    if (studentNameInput && !studentNameInput.value) {
+
+        studentNameInput.value =
+            studentName;
+    }
+
+
+    if (studentEmailInput && !studentEmailInput.value) {
+
+        studentEmailInput.value =
+            email;
+    }
+
+
+    if (checkEmailInput && !checkEmailInput.value) {
+
+        checkEmailInput.value =
+            email;
+    }
+
+
+    return profile;
 }
 
-// ============================================================
-// SAVE ACTIVITY
-// ============================================================
 
-function saveRecentActivity(activity) {
+// =====================================================
+// RECENT ACTIVITY
+// =====================================================
 
-    const current =
-        getRecentActivity();
+function loadRecentActivity() {
 
-    const filtered =
-        current.filter(
-            item =>
-                !(
-                    item.courseId ===
-                    activity.courseId &&
-                    item.unitId ===
-                    activity.unitId
-                )
+    recentActivity =
+        readStorage(
+            RECENT_ACTIVITY_KEY,
+            []
         );
 
-    filtered.unshift({
-        ...activity,
-        timestamp:
-            new Date().toISOString()
-    });
-
-    const limited =
-        filtered.slice(0, 8);
-
-    localStorage.setItem(
-        STORAGE.recent,
-        JSON.stringify(limited)
-    );
-
     renderRecentActivity();
-    updateDashboardAnalytics();
+
+    updateContinueLearning();
+
+    updateRecommendedLesson();
 }
 
-// ============================================================
-// RENDER RECENT ACTIVITY
-// ============================================================
 
 function renderRecentActivity() {
 
-    const area =
-        document.getElementById(
-            "recentlyStudied"
-        );
+    const container =
+        getElement("recentlyStudied");
 
-    if (!area) {
+    if (!container) {
         return;
     }
 
-    const activities =
-        getRecentActivity();
 
-    if (!activities.length) {
+    if (!Array.isArray(recentActivity) ||
+        recentActivity.length === 0) {
 
-        area.innerHTML = `
+        container.innerHTML = `
+
             <div class="empty-state">
 
                 <span>📚</span>
@@ -548,1076 +417,2253 @@ function renderRecentActivity() {
         return;
     }
 
-    area.innerHTML =
-        activities
-            .map(activity => {
 
-                const date =
-                    activity.timestamp
-                        ? new Date(
-                            activity.timestamp
-                        ).toLocaleDateString(
-                            undefined,
-                            {
-                                month: "short",
-                                day: "numeric"
-                            }
-                        )
-                        : "";
+    const limited =
+        recentActivity.slice(0, 8);
 
-                return `
-                    <div
-                        class="recent-item"
-                        data-course-id="${escapeHTML(
-                            activity.courseId || ""
-                        )}"
-                        data-unit-id="${escapeHTML(
-                            activity.unitId || ""
-                        )}"
-                    >
 
-                        <div class="recent-icon">
-                            📖
-                        </div>
+    container.innerHTML =
+        limited.map(item => {
 
-                        <div class="recent-details">
+            const courseName =
+                item.courseName ||
+                "Medical Course";
 
-                            <strong>
-                                ${escapeHTML(
-                                    activity.unitTitle ||
-                                    "Study Unit"
-                                )}
-                            </strong>
+            const unitTitle =
+                item.unitTitle ||
+                "Medical Unit";
 
-                            <small>
-                                ${escapeHTML(
-                                    activity.courseName ||
-                                    "Medical Course"
-                                )}
-                                ${
-                                    date
-                                        ? ` • ${date}`
-                                        : ""
-                                }
-                            </small>
 
-                        </div>
+            return `
+
+                <div class="recent-item">
+
+                    <div class="recent-item-icon">
+                        📖
+                    </div>
+
+                    <div class="recent-item-content">
+
+                        <strong>
+                            ${escapeHTML(unitTitle)}
+                        </strong>
+
+                        <span>
+                            ${escapeHTML(courseName)}
+                        </span>
+
+                        ${
+                            item.timestamp
+                                ? `
+                                    <small>
+                                        ${safeDate(
+                                            item.timestamp
+                                        )}
+                                    </small>
+                                  `
+                                : ""
+                        }
 
                     </div>
-                `;
-            })
-            .join("");
-}
 
-// ============================================================
-// GLOBAL ACTIVITY HELPER
-// ============================================================
+                    <button
+                        type="button"
+                        class="small-action"
+                        data-recent-course-id="${escapeHTML(
+                            item.courseId ?? ""
+                        )}"
+                        data-recent-course-name="${escapeHTML(
+                            courseName
+                        )}"
+                        data-recent-unit-id="${escapeHTML(
+                            item.unitId ?? ""
+                        )}"
+                        data-recent-unit-title="${escapeHTML(
+                            unitTitle
+                        )}"
+                    >
+                        Continue
+                    </button>
 
-window.mwanikiTrackUnit =
-    function (
-        courseId,
-        courseName,
-        unitId,
-        unitTitle
-    ) {
+                </div>
+            `;
 
-        saveRecentActivity({
+        }).join("");
 
-            courseId,
-            courseName,
-            unitId,
-            unitTitle
 
+    container
+        .querySelectorAll(
+            "[data-recent-course-id]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    openUnitFromRecent(button);
+                }
+            );
         });
-
-    };
-
-// ============================================================
-// DASHBOARD ANALYTICS
-// ============================================================
-
-function updateDashboardAnalytics() {
-
-    const recent =
-        getRecentActivity();
-
-    const quizHistory =
-        getQuizHistory();
-
-    // --------------------------------------------------------
-    // QUIZZES
-    // --------------------------------------------------------
-
-    setText(
-        "quizzesAttempted",
-        quizHistory.length
-    );
-
-    // --------------------------------------------------------
-    // AVERAGE SCORE
-    // --------------------------------------------------------
-
-    if (quizHistory.length) {
-
-        const scores =
-            quizHistory
-                .map(
-                    item =>
-                        Number(
-                            item.percentage ??
-                            item.score ??
-                            0
-                        )
-                )
-                .filter(
-                    Number.isFinite
-                );
-
-        if (scores.length) {
-
-            const average =
-                Math.round(
-                    scores.reduce(
-                        (total, value) =>
-                            total + value,
-                        0
-                    ) /
-                    scores.length
-                );
-
-            setText(
-                "averageScore",
-                `${average}%`
-            );
-        }
-    }
-
-    // --------------------------------------------------------
-    // UNITS
-    // --------------------------------------------------------
-
-    const uniqueUnits =
-        new Set(
-            recent
-                .map(
-                    item =>
-                        String(
-                            item.unitId ??
-                            item.unitTitle ??
-                            ""
-                        )
-                )
-                .filter(Boolean)
-        );
-
-    setText(
-        "unitsCompleted",
-        uniqueUnits.size
-    );
-
-    // --------------------------------------------------------
-    // COURSES
-    // --------------------------------------------------------
-
-    const courseIds =
-        new Set(
-            recent
-                .map(
-                    item =>
-                        String(
-                            item.courseId ??
-                            item.courseName ??
-                            ""
-                        )
-                )
-                .filter(Boolean)
-        );
-
-    setText(
-        "coursesCompleted",
-        calculateCompletedCourses(
-            courseIds,
-            recent
-        )
-    );
-
-    // --------------------------------------------------------
-    // PROGRESS
-    // --------------------------------------------------------
-
-    const progress =
-        calculateOverallProgress(
-            recent
-        );
-
-    setText(
-        "overallProgressText",
-        `${progress}%`
-    );
-
-    const progressBar =
-        document.getElementById(
-            "overallProgressBar"
-        );
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            `${progress}%`;
-    }
-
-    setText(
-        "progress",
-        `${progress}%`
-    );
-
-    updateQuizAnalytics(
-        quizHistory
-    );
-
-    updateAchievements(
-        progress,
-        quizHistory
-    );
-
-    updateContinueLearning(
-        recent
-    );
-
-    updateRecommendation(
-        recent
-    );
 }
 
-// ============================================================
-// QUIZ HISTORY
-// ============================================================
 
-function getQuizHistory() {
+function openUnitFromRecent(button) {
 
-    try {
+    const courseId =
+        button.dataset.recentCourseId;
 
-        const raw =
-            localStorage.getItem(
-                STORAGE.quizHistory
-            );
+    const courseName =
+        button.dataset.recentCourseName;
 
-        if (!raw) {
-            return [];
-        }
+    const unitId =
+        button.dataset.recentUnitId;
 
-        const parsed =
-            JSON.parse(raw);
+    const unitTitle =
+        button.dataset.recentUnitTitle;
 
-        return Array.isArray(parsed)
-            ? parsed
-            : [];
 
-    } catch {
+    if (courseId) {
 
-        return [];
-    }
-}
-
-// ============================================================
-// CALCULATE COURSES
-// ============================================================
-
-function calculateCompletedCourses(
-    courseIds,
-    recent
-) {
-
-    const completed =
-        recent.filter(
-            item =>
-                item.courseCompleted === true
-        );
-
-    const completedIds =
-        new Set(
-            completed
-                .map(
-                    item =>
-                        String(
-                            item.courseId ||
-                            item.courseName ||
-                            ""
-                        )
-                )
-                .filter(Boolean)
-        );
-
-    return completedIds.size;
-}
-
-// ============================================================
-// OVERALL PROGRESS
-// ============================================================
-
-function calculateOverallProgress(recent) {
-
-    if (!recent.length) {
-        return 0;
-    }
-
-    const completed =
-        recent.filter(
-            item =>
-                item.completed === true ||
-                item.unitCompleted === true
-        );
-
-    if (completed.length) {
-
-        return Math.min(
-            100,
-            Math.round(
-                (
-                    completed.length /
-                    Math.max(
-                        recent.length,
-                        1
-                    )
-                ) * 100
-            )
+        localStorage.setItem(
+            "selectedCourse",
+            courseId
         );
     }
 
-    return Math.min(
-        95,
-        Math.max(
-            5,
-            recent.length * 5
-        )
-    );
+
+    if (courseName) {
+
+        localStorage.setItem(
+            "selectedCourseName",
+            courseName
+        );
+    }
+
+
+    if (unitId) {
+
+        localStorage.setItem(
+            "selectedUnit",
+            unitId
+        );
+    }
+
+
+    if (unitTitle) {
+
+        localStorage.setItem(
+            "selectedUnitTitle",
+            unitTitle
+        );
+    }
+
+
+    window.location.href =
+        "course.html";
 }
 
-// ============================================================
+
+// =====================================================
 // CONTINUE LEARNING
-// ============================================================
+// =====================================================
 
-function updateContinueLearning(recent) {
+function updateContinueLearning() {
 
-    const area =
-        document.getElementById(
-            "continueLearningContent"
-        );
+    const container =
+        getElement("continueLearningContent");
 
-    if (!area || !recent.length) {
+    if (!container) {
         return;
     }
 
-    const item =
-        recent[0];
 
-    area.innerHTML = `
-        <div class="continue-item">
+    const latest =
+        recentActivity?.[0];
+
+
+    if (!latest) {
+
+        container.innerHTML = `
+
+            <div class="empty-learning">
+
+                <div class="empty-icon">
+                    📖
+                </div>
+
+                <div>
+
+                    <strong>
+                        Your learning journey starts here
+                    </strong>
+
+                    <p>
+                        Open a medical course to begin studying.
+                    </p>
+
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const courseName =
+        latest.courseName ||
+        "Medical Course";
+
+    const unitTitle =
+        latest.unitTitle ||
+        "Medical Unit";
+
+
+    container.innerHTML = `
+
+        <div class="continue-learning-card">
 
             <div class="continue-icon">
                 ▶
             </div>
 
-            <div class="continue-details">
+            <div class="continue-content">
+
+                <span class="eyebrow">
+                    CONTINUE STUDYING
+                </span>
 
                 <strong>
-                    ${escapeHTML(
-                        item.unitTitle ||
-                        "Continue your studies"
-                    )}
+                    ${escapeHTML(unitTitle)}
                 </strong>
 
-                <span>
-                    ${escapeHTML(
-                        item.courseName ||
-                        "Medical Course"
-                    )}
-                </span>
+                <p>
+                    ${escapeHTML(courseName)}
+                </p>
 
             </div>
 
             <button
-                class="continue-button"
                 type="button"
                 id="continueLearningButton"
+                class="primary-button"
             >
-                Continue
+                Continue →
             </button>
 
         </div>
     `;
 
+
     const button =
-        document.getElementById(
-            "continueLearningButton"
-        );
+        getElement("continueLearningButton");
+
 
     if (button) {
-
-        button.onclick = () => {
-            continueActivity(item);
-        };
-    }
-}
-
-// ============================================================
-// CONTINUE ACTIVITY
-// ============================================================
-
-function continueActivity(item) {
-
-    if (
-        item.courseId !== undefined &&
-        item.courseId !== null
-    ) {
-
-        localStorage.setItem(
-            "selectedCourse",
-            String(item.courseId)
-        );
-    }
-
-    if (item.courseName) {
-
-        localStorage.setItem(
-            "selectedCourseName",
-            item.courseName
-        );
-    }
-
-    if (
-        item.unitId !== undefined &&
-        item.unitId !== null
-    ) {
-
-        localStorage.setItem(
-            "selectedUnit",
-            String(item.unitId)
-        );
-    }
-
-    if (item.unitTitle) {
-
-        localStorage.setItem(
-            "selectedUnitTitle",
-            item.unitTitle
-        );
-    }
-
-    if (
-        item.courseId !== undefined &&
-        item.courseId !== null
-    ) {
-
-        window.location.href =
-            "course.html";
-    }
-}
-
-// ============================================================
-// RECOMMENDED LESSON
-// ============================================================
-
-function updateRecommendation(recent) {
-
-    const area =
-        document.getElementById(
-            "recommendedLesson"
-        );
-
-    if (!area || !recent.length) {
-        return;
-    }
-
-    const latest =
-        recent[0];
-
-    area.innerHTML = `
-        <div class="recommendation-content">
-
-            <div class="recommendation-icon">
-                ✨
-            </div>
-
-            <div>
-
-                <strong>
-                    Continue with
-                    ${escapeHTML(
-                        latest.courseName ||
-                        "your medical course"
-                    )}
-                </strong>
-
-                <p>
-                    Review the next available unit
-                    after
-                    ${escapeHTML(
-                        latest.unitTitle ||
-                        "your last lesson"
-                    )}.
-                </p>
-
-            </div>
-
-        </div>
-    `;
-}
-
-// ============================================================
-// QUIZ ANALYTICS
-// ============================================================
-
-function updateQuizAnalytics(history) {
-
-    const recent =
-        history.slice(0, 5);
-
-    const scores =
-        history
-            .map(
-                item =>
-                    Number(
-                        item.percentage ??
-                        item.score ??
-                        0
-                    )
-            )
-            .filter(
-                Number.isFinite
-            );
-
-    const recentElement =
-        document.getElementById(
-            "recentQuizPerformance"
-        );
-
-    if (
-        recentElement &&
-        recent.length
-    ) {
-
-        const recentScores =
-            recent.map(
-                item =>
-                    Number(
-                        item.percentage ??
-                        item.score ??
-                        0
-                    )
-            );
-
-        const recentAverage =
-            Math.round(
-                recentScores.reduce(
-                    (a, b) => a + b,
-                    0
-                ) /
-                recentScores.length
-            );
-
-        recentElement.textContent =
-            `${recentAverage}%`;
-    }
-
-    const best =
-        scores.length
-            ? Math.max(...scores)
-            : null;
-
-    setText(
-        "bestQuizScore",
-        best === null
-            ? "—"
-            : `${best}%`
-    );
-
-    const weak =
-        history
-            .filter(
-                item =>
-                    Number(
-                        item.percentage ??
-                        item.score ??
-                        100
-                    ) < 60
-            )
-            .map(
-                item =>
-                    item.unitTitle ||
-                    item.courseName
-            )
-            .filter(Boolean);
-
-    const uniqueWeak =
-        [...new Set(weak)];
-
-    setText(
-        "weakQuizAreas",
-        uniqueWeak.length
-            ? uniqueWeak
-                .slice(0, 2)
-                .join(", ")
-            : "None yet"
-    );
-}
-
-// ============================================================
-// ACHIEVEMENTS
-// ============================================================
-
-function updateAchievements(
-    progress,
-    quizHistory
-) {
-
-    const achievements =
-        document.querySelectorAll(
-            ".achievement"
-        );
-
-    if (!achievements.length) {
-        return;
-    }
-
-    if (progress > 0) {
-
-        achievements[0]
-            ?.classList.remove(
-                "locked"
-            );
-    }
-
-    if (quizHistory.length >= 10) {
-
-        achievements[1]
-            ?.classList.remove(
-                "locked"
-            );
-    }
-
-    const streak =
-        Number(
-            localStorage.getItem(
-                STORAGE.streak
-            )
-        ) || 0;
-
-    if (streak >= 7) {
-
-        achievements[2]
-            ?.classList.remove(
-                "locked"
-            );
-    }
-
-    if (
-        progress >= 80 ||
-        quizHistory.length >= 25
-    ) {
-
-        achievements[3]
-            ?.classList.remove(
-                "locked"
-            );
-    }
-}
-
-// ============================================================
-// LEARNING STREAK
-// ============================================================
-
-function updateLearningStreak() {
-
-    const today =
-        getDateKey(new Date());
-
-    const stored =
-        localStorage.getItem(
-            STORAGE.lastActivity
-        );
-
-    let streak =
-        Number(
-            localStorage.getItem(
-                STORAGE.streak
-            )
-        ) || 0;
-
-    if (!stored) {
-
-        streak = 1;
-
-    } else {
-
-        const yesterday =
-            getDateKey(
-                new Date(
-                    Date.now() -
-                    86400000
-                )
-            );
-
-        if (stored === today) {
-
-            // Same day.
-
-        } else if (
-            stored === yesterday
-        ) {
-
-            streak += 1;
-
-        } else {
-
-            streak = 1;
-        }
-    }
-
-    localStorage.setItem(
-        STORAGE.lastActivity,
-        today
-    );
-
-    localStorage.setItem(
-        STORAGE.streak,
-        String(streak)
-    );
-
-    setText(
-        "learningStreak",
-        `${streak} day${streak === 1 ? "" : "s"}`
-    );
-}
-
-// ============================================================
-// DATE KEY
-// ============================================================
-
-function getDateKey(date) {
-
-    return [
-        date.getFullYear(),
-        String(
-            date.getMonth() + 1
-        ).padStart(2, "0"),
-        String(
-            date.getDate()
-        ).padStart(2, "0")
-    ].join("-");
-}
-
-// ============================================================
-// AI SUGGESTIONS
-// ============================================================
-
-function setupAIQuestions() {
-
-    const buttons =
-        document.querySelectorAll(
-            ".suggestion-button"
-        );
-
-    const textarea =
-        document.getElementById(
-            "aiQuestion"
-        );
-
-    if (!textarea) {
-        return;
-    }
-
-    buttons.forEach(button => {
 
         button.addEventListener(
             "click",
             () => {
 
-                const question =
-                    button.dataset.question ||
-                    button.textContent.trim();
+                openUnitFromRecent({
+                    dataset: {
+                        recentCourseId:
+                            latest.courseId ?? "",
 
-                textarea.value =
-                    question;
+                        recentCourseName:
+                            courseName,
 
-                textarea.focus();
+                        recentUnitId:
+                            latest.unitId ?? "",
+
+                        recentUnitTitle:
+                            unitTitle
+                    }
+                });
+
             }
-        );
-    });
-}
-
-// ============================================================
-// DASHBOARD NAVIGATION
-// ============================================================
-
-function setupDashboardNavigation() {
-
-    const navLinks =
-        document.querySelectorAll(
-            ".nav-link"
-        );
-
-    navLinks.forEach(link => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                navLinks.forEach(
-                    item =>
-                        item.classList.remove(
-                            "active"
-                        )
-                );
-
-                link.classList.add(
-                    "active"
-                );
-            }
-        );
-    });
-
-    const mobileLinks =
-        document.querySelectorAll(
-            ".mobile-nav-link"
-        );
-
-    mobileLinks.forEach(link => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                mobileLinks.forEach(
-                    item =>
-                        item.classList.remove(
-                            "active"
-                        )
-                );
-
-                link.classList.add(
-                    "active"
-                );
-            }
-        );
-    });
-
-    if (
-        "IntersectionObserver"
-        in window
-    ) {
-
-        const sections =
-            document.querySelectorAll(
-                ".dashboard-section, .dashboard-home"
-            );
-
-        const observer =
-            new IntersectionObserver(
-                entries => {
-
-                    entries.forEach(entry => {
-
-                        if (
-                            !entry.isIntersecting
-                        ) {
-                            return;
-                        }
-
-                        const id =
-                            entry.target.id;
-
-                        document
-                            .querySelectorAll(
-                                `.nav-link[data-section="${id}"]`
-                            )
-                            .forEach(link => {
-
-                                document
-                                    .querySelectorAll(
-                                        ".nav-link"
-                                    )
-                                    .forEach(
-                                        item =>
-                                            item.classList.remove(
-                                                "active"
-                                            )
-                                    );
-
-                                link.classList.add(
-                                    "active"
-                                );
-                            });
-                    });
-                },
-                {
-                    threshold: 0.25
-                }
-            );
-
-        sections.forEach(
-            section =>
-                observer.observe(section)
         );
     }
 }
 
-// ============================================================
-// CLEAR RECENT ACTIVITY
-// ============================================================
 
-function setupClearActivity() {
+// =====================================================
+// RECOMMENDED LESSON
+// =====================================================
 
-    const clearButton =
-        document.getElementById(
-            "clearRecentActivity"
-        );
+function updateRecommendedLesson() {
 
-    if (!clearButton) {
+    const container =
+        getElement("recommendedLesson");
+
+    if (!container) {
         return;
     }
 
-    clearButton.addEventListener(
-        "click",
-        () => {
 
-            localStorage.removeItem(
-                STORAGE.recent
+    if (!dashboardCourses.length) {
+
+        container.innerHTML = `
+
+            <div class="recommendation-content">
+
+                <div class="recommendation-icon">
+                    🧠
+                </div>
+
+                <div>
+
+                    <strong>
+                        Explore your courses
+                    </strong>
+
+                    <p>
+                        Choose a medical course and start
+                        building your knowledge.
+                    </p>
+
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const course =
+        dashboardCourses[0];
+
+
+    container.innerHTML = `
+
+        <div class="recommendation-content">
+
+            <div class="recommendation-icon">
+                🧠
+            </div>
+
+            <div>
+
+                <span class="eyebrow">
+                    RECOMMENDED COURSE
+                </span>
+
+                <strong>
+                    ${escapeHTML(course.title)}
+                </strong>
+
+                <p>
+                    ${escapeHTML(
+                        course.description ||
+                        "Start learning this medical course."
+                    )}
+                </p>
+
+                <button
+                    type="button"
+                    class="primary-button"
+                    id="recommendedCourseButton"
+                >
+                    Explore Course →
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+
+    const button =
+        getElement("recommendedCourseButton");
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                openCourse(
+                    course.id,
+                    course.title
+                );
+            }
+        );
+    }
+}
+
+
+// =====================================================
+// COURSE LIBRARY
+// =====================================================
+
+async function loadCourses() {
+
+    const courseArea =
+        getElement("courseArea");
+
+
+    if (!courseArea) {
+        return [];
+    }
+
+
+    courseArea.innerHTML = `
+
+        <div class="loading-card">
+
+            <div class="loading-spinner"></div>
+
+            <p>
+                Loading courses...
+            </p>
+
+        </div>
+    `;
+
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabase
+            .from("courses")
+            .select(`
+                id,
+                title,
+                description,
+                image,
+                created_at
+            `)
+            .order(
+                "title",
+                {
+                    ascending: true
+                }
             );
 
-            renderRecentActivity();
-            updateDashboardAnalytics();
+
+        if (error) {
+
+            console.error(
+                "❌ Course loading error:",
+                error
+            );
+
+            courseArea.innerHTML = `
+
+                <div class="error-card">
+
+                    <strong>
+                        Unable to load courses
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(
+                            error.message
+                        )}
+                    </p>
+
+                </div>
+            `;
+
+            return [];
+        }
+
+
+        dashboardCourses =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        setText(
+            "totalCourses",
+            dashboardCourses.length
+        );
+
+
+        renderCourses(
+            dashboardCourses
+        );
+
+
+        updateRecommendedLesson();
+
+
+        return dashboardCourses;
+
+    } catch (error) {
+
+        console.error(
+            "❌ Unexpected course error:",
+            error
+        );
+
+
+        courseArea.innerHTML = `
+
+            <div class="error-card">
+
+                <strong>
+                    Something went wrong
+                </strong>
+
+                <p>
+                    Please refresh the page.
+                </p>
+
+            </div>
+        `;
+
+
+        return [];
+    }
+}
+
+
+function renderCourses(courses) {
+
+    const courseArea =
+        getElement("courseArea");
+
+
+    if (!courseArea) {
+        return;
+    }
+
+
+    if (!courses.length) {
+
+        courseArea.innerHTML = `
+
+            <div class="empty-state">
+
+                <div>
+                    📚
+                </div>
+
+                <strong>
+                    No courses found
+                </strong>
+
+                <p>
+                    No medical courses are currently available.
+                </p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    courseArea.innerHTML =
+        courses.map(course => {
+
+            const title =
+                course.title ||
+                "Untitled Course";
+
+            const description =
+                course.description ||
+                "Medical learning course";
+
+
+            return `
+
+                <article
+                    class="course-card"
+                >
+
+                    ${
+                        course.image
+                            ? `
+                                <img
+                                    src="${escapeHTML(
+                                        course.image
+                                    )}"
+                                    alt="${escapeHTML(
+                                        title
+                                    )}"
+                                    class="course-image"
+                                    loading="lazy"
+                                    onerror="
+                                        this.style.display='none'
+                                    "
+                                >
+                              `
+                            : `
+                                <div class="course-image-placeholder">
+                                    🩺
+                                </div>
+                              `
+                    }
+
+
+                    <div class="course-card-content">
+
+                        <span class="eyebrow">
+                            MEDICAL COURSE
+                        </span>
+
+                        <h3>
+                            ${escapeHTML(title)}
+                        </h3>
+
+                        <p>
+                            ${escapeHTML(
+                                description
+                            )}
+                        </p>
+
+                        <button
+                            type="button"
+                            class="primary-button"
+                            data-course-id="${escapeHTML(
+                                course.id
+                            )}"
+                            data-course-title="${escapeHTML(
+                                title
+                            )}"
+                        >
+                            Open Course →
+                        </button>
+
+                    </div>
+
+                </article>
+            `;
+
+        }).join("");
+
+
+    courseArea
+        .querySelectorAll(
+            "[data-course-id]"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    openCourse(
+                        button.dataset.courseId,
+                        button.dataset.courseTitle
+                    );
+                }
+            );
+        });
+}
+
+
+function openCourse(
+    courseId,
+    courseName
+) {
+
+    localStorage.setItem(
+        "selectedCourse",
+        String(courseId)
+    );
+
+
+    localStorage.setItem(
+        "selectedCourseName",
+        courseName || ""
+    );
+
+
+    localStorage.removeItem(
+        "selectedUnit"
+    );
+
+
+    localStorage.removeItem(
+        "selectedUnitTitle"
+    );
+
+
+    window.location.href =
+        "course.html";
+}
+
+
+// =====================================================
+// COURSE SEARCH
+// =====================================================
+
+function setupCourseSearch() {
+
+    const input =
+        getElement("courseSearch");
+
+
+    if (!input) {
+        return;
+    }
+
+
+    input.addEventListener(
+        "input",
+        () => {
+
+            const query =
+                input.value
+                    .trim()
+                    .toLowerCase();
+
+
+            if (!query) {
+
+                renderCourses(
+                    dashboardCourses
+                );
+
+                return;
+            }
+
+
+            const filtered =
+                dashboardCourses.filter(
+                    course => {
+
+                        const title =
+                            String(
+                                course.title || ""
+                            ).toLowerCase();
+
+                        const description =
+                            String(
+                                course.description || ""
+                            ).toLowerCase();
+
+
+                        return (
+                            title.includes(query) ||
+                            description.includes(query)
+                        );
+                    }
+                );
+
+
+            renderCourses(
+                filtered
+            );
         }
     );
 }
 
-// ============================================================
-// NOTIFICATIONS
-// ============================================================
 
-function updateNotifications() {
+// =====================================================
+// NOTES LIBRARY
+// =====================================================
 
-    const badge =
-        document.getElementById(
-            "notificationBadge"
+async function loadNotes() {
+
+    const notesArea =
+        getElement("notesArea");
+
+
+    if (!notesArea) {
+
+        console.warn(
+            "⚠️ #notesArea was not found."
         );
 
-    if (!badge) {
-        return;
+        return [];
     }
 
-    const notifications =
-        Number(
-            localStorage.getItem(
-                "mwanikiNotificationCount"
+
+    notesArea.innerHTML = `
+
+        <div class="loading-card">
+
+            <div class="loading-spinner"></div>
+
+            <p>
+                Loading notes...
+            </p>
+
+        </div>
+    `;
+
+
+    try {
+
+        console.log(
+            "📄 Loading published notes from Supabase..."
+        );
+
+
+        const {
+            data,
+            error
+        } = await supabase
+            .from("notes")
+            .select(`
+                id,
+                course,
+                unit,
+                file_name,
+                file_url,
+                created_at,
+                course_id,
+                unit_id,
+                published
+            `)
+            .eq(
+                "published",
+                true
             )
-        ) || 0;
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
 
-    if (notifications > 0) {
 
-        badge.textContent =
-            notifications;
+        if (error) {
 
-        badge.style.display =
-            "flex";
+            console.error(
+                "❌ Notes loading error:",
+                error
+            );
 
-    } else {
 
-        badge.style.display =
-            "none";
+            notesArea.innerHTML = `
+
+                <div class="error-card">
+
+                    <strong>
+                        Notes could not be loaded
+                    </strong>
+
+                    <p>
+                        ${escapeHTML(
+                            error.message
+                        )}
+                    </p>
+
+                    <small>
+                        Check the Supabase RLS policy
+                        for the public.notes table.
+                    </small>
+
+                </div>
+            `;
+
+            return [];
+        }
+
+
+        dashboardNotes =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        console.log(
+            `📄 ${dashboardNotes.length} published notes loaded.`
+        );
+
+
+        renderNotes(
+            dashboardNotes
+        );
+
+
+        return dashboardNotes;
+
+    } catch (error) {
+
+        console.error(
+            "❌ Unexpected notes error:",
+            error
+        );
+
+
+        notesArea.innerHTML = `
+
+            <div class="error-card">
+
+                <strong>
+                    Something went wrong while loading notes.
+                </strong>
+
+                <p>
+                    Please refresh the dashboard.
+                </p>
+
+            </div>
+        `;
+
+
+        return [];
     }
 }
 
-// ============================================================
-// NOTIFICATION BUTTON
-// ============================================================
 
-function setupNotificationButton() {
+// =====================================================
+// RENDER NOTES
+// =====================================================
 
-    const notificationButton =
-        document.getElementById(
-            "notificationButton"
-        );
+function renderNotes(notes) {
 
-    if (!notificationButton) {
+    const notesArea =
+        getElement("notesArea");
+
+
+    if (!notesArea) {
         return;
     }
 
-    notificationButton.addEventListener(
+
+    if (!Array.isArray(notes) ||
+        notes.length === 0) {
+
+        notesArea.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    📄
+                </div>
+
+                <div>
+
+                    <strong>
+                        No published notes yet
+                    </strong>
+
+                    <p>
+                        Published study materials will
+                        appear here.
+                    </p>
+
+                </div>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    notesArea.innerHTML =
+        notes.map(note => {
+
+            const fileName =
+                note.file_name ||
+                "Study Notes";
+
+            const course =
+                note.course ||
+                "Medical Course";
+
+            const unit =
+                note.unit ||
+                "General Study Material";
+
+
+            const fileUrl =
+                note.file_url || "";
+
+
+            return `
+
+                <article
+                    class="note-card"
+                >
+
+                    <div class="note-icon">
+                        📄
+                    </div>
+
+
+                    <div class="note-content">
+
+                        <span class="eyebrow">
+                            STUDY MATERIAL
+                        </span>
+
+                        <h3>
+                            ${escapeHTML(
+                                fileName
+                            )}
+                        </h3>
+
+                        <p>
+                            <strong>
+                                Course:
+                            </strong>
+
+                            ${escapeHTML(
+                                course
+                            )}
+                        </p>
+
+                        <p>
+                            <strong>
+                                Unit:
+                            </strong>
+
+                            ${escapeHTML(
+                                unit
+                            )}
+                        </p>
+
+
+                        ${
+                            note.created_at
+                                ? `
+                                    <small>
+                                        Uploaded:
+                                        ${safeDate(
+                                            note.created_at
+                                        )}
+                                    </small>
+                                  `
+                                : ""
+                        }
+
+
+                        ${
+                            fileUrl
+                                ? `
+                                    <a
+                                        class="primary-button note-open-button"
+                                        href="${escapeHTML(
+                                            fileUrl
+                                        )}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        📖 Open Notes
+                                    </a>
+                                  `
+                                : `
+                                    <span class="note-unavailable">
+                                        File link unavailable
+                                    </span>
+                                  `
+                        }
+
+                    </div>
+
+                </article>
+            `;
+
+        }).join("");
+}
+
+
+// =====================================================
+// NOTES SEARCH
+// =====================================================
+
+function setupNotesSearch() {
+
+    const input =
+        getElement("notesSearch");
+
+
+    if (!input) {
+        return;
+    }
+
+
+    input.addEventListener(
+        "input",
+        () => {
+
+            const query =
+                input.value
+                    .trim()
+                    .toLowerCase();
+
+
+            if (!query) {
+
+                renderNotes(
+                    dashboardNotes
+                );
+
+                return;
+            }
+
+
+            const filtered =
+                dashboardNotes.filter(
+                    note => {
+
+                        const fileName =
+                            String(
+                                note.file_name || ""
+                            ).toLowerCase();
+
+                        const course =
+                            String(
+                                note.course || ""
+                            ).toLowerCase();
+
+                        const unit =
+                            String(
+                                note.unit || ""
+                            ).toLowerCase();
+
+
+                        return (
+                            fileName.includes(query) ||
+                            course.includes(query) ||
+                            unit.includes(query)
+                        );
+                    }
+                );
+
+
+            renderNotes(
+                filtered
+            );
+        }
+    );
+}
+
+
+// =====================================================
+// QUIZ HISTORY
+// =====================================================
+
+function loadQuizHistory() {
+
+    quizHistory =
+        readStorage(
+            QUIZ_HISTORY_KEY,
+            []
+        );
+
+
+    if (!Array.isArray(quizHistory)) {
+
+        quizHistory = [];
+    }
+
+
+    updateQuizAnalytics();
+
+    updateLearningProgress();
+}
+
+
+// =====================================================
+// QUIZ ANALYTICS
+// =====================================================
+
+function updateQuizAnalytics() {
+
+    const attempts =
+        quizHistory.filter(
+            item =>
+                item &&
+                (
+                    item.score !== undefined ||
+                    item.percentage !== undefined
+                )
+        );
+
+
+    const quizCount =
+        attempts.length;
+
+
+    setText(
+        "quizzesAttempted",
+        quizCount
+    );
+
+
+    if (!quizCount) {
+
+        setText(
+            "recentQuizPerformance",
+            "—"
+        );
+
+        setText(
+            "bestQuizScore",
+            "—"
+        );
+
+        setText(
+            "averageScore",
+            "0%"
+        );
+
+        setText(
+            "weakQuizAreas",
+            "—"
+        );
+
+        return;
+    }
+
+
+    const percentages =
+        attempts.map(
+            item => {
+
+                if (
+                    item.percentage !== undefined
+                ) {
+
+                    return safeNumber(
+                        item.percentage
+                    );
+                }
+
+
+                if (
+                    item.score !== undefined &&
+                    item.total !== undefined &&
+                    safeNumber(item.total) > 0
+                ) {
+
+                    return (
+                        safeNumber(item.score) /
+                        safeNumber(item.total)
+                    ) * 100;
+                }
+
+
+                return safeNumber(
+                    item.score
+                );
+            }
+        );
+
+
+    const average =
+        percentages.reduce(
+            (sum, value) =>
+                sum + value,
+            0
+        ) / percentages.length;
+
+
+    const best =
+        Math.max(
+            ...percentages
+        );
+
+
+    const recent =
+        percentages[0] ?? 0;
+
+
+    setText(
+        "recentQuizPerformance",
+        `${Math.round(recent)}%`
+    );
+
+
+    setText(
+        "bestQuizScore",
+        `${Math.round(best)}%`
+    );
+
+
+    setText(
+        "averageScore",
+        `${Math.round(average)}%`
+    );
+
+
+    // -------------------------------------------------
+    // Weak areas
+    // -------------------------------------------------
+
+    const weakMap = {};
+
+
+    attempts.forEach(
+        (item, index) => {
+
+            const percentage =
+                percentages[index];
+
+
+            const unit =
+                item.unitTitle ||
+                item.unit ||
+                item.courseName ||
+                item.course ||
+                "General";
+
+
+            if (!weakMap[unit]) {
+
+                weakMap[unit] = [];
+            }
+
+
+            weakMap[unit].push(
+                percentage
+            );
+        }
+    );
+
+
+    const weakAreas =
+        Object.entries(weakMap)
+            .map(
+                ([name, scores]) => {
+
+                    const averageScore =
+                        scores.reduce(
+                            (sum, score) =>
+                                sum + score,
+                            0
+                        ) / scores.length;
+
+
+                    return {
+                        name,
+                        score: averageScore
+                    };
+                }
+            )
+            .sort(
+                (a, b) =>
+                    a.score - b.score
+            )
+            .slice(0, 2);
+
+
+    if (!weakAreas.length) {
+
+        setText(
+            "weakQuizAreas",
+            "—"
+        );
+
+    } else {
+
+        setText(
+            "weakQuizAreas",
+            weakAreas
+                .map(
+                    item =>
+                        `${item.name} (${Math.round(item.score)}%)`
+                )
+                .join(", ")
+        );
+    }
+}
+
+
+// =====================================================
+// LEARNING PROGRESS
+// =====================================================
+
+function updateLearningProgress() {
+
+    const total =
+        dashboardCourses.length;
+
+
+    const attempted =
+        quizHistory.length;
+
+
+    let percentage = 0;
+
+
+    if (total > 0 && attempted > 0) {
+
+        percentage =
+            Math.min(
+                100,
+                Math.round(
+                    (
+                        attempted /
+                        total
+                    ) * 100
+                )
+            );
+    }
+
+
+    setText(
+        "overallProgressText",
+        `${percentage}%`
+    );
+
+
+    const progressBar =
+        getElement(
+            "overallProgressBar"
+        );
+
+
+    if (progressBar) {
+
+        progressBar.style.width =
+            `${percentage}%`;
+    }
+
+
+    const progress =
+        getElement("progress");
+
+
+    if (progress) {
+
+        progress.textContent =
+            `${percentage}%`;
+    }
+
+
+    setText(
+        "unitsCompleted",
+        recentActivity.length
+    );
+
+
+    setText(
+        "coursesCompleted",
+        calculateCompletedCourses()
+    );
+
+
+    updateAchievements(
+        percentage
+    );
+}
+
+
+function calculateCompletedCourses() {
+
+    if (!recentActivity.length) {
+        return 0;
+    }
+
+
+    const completed =
+        new Set();
+
+
+    recentActivity.forEach(
+        item => {
+
+            if (
+                item.courseId !== undefined &&
+                item.courseId !== null
+            ) {
+
+                completed.add(
+                    String(item.courseId)
+                );
+            }
+        }
+    );
+
+
+    return completed.size;
+}
+
+
+// =====================================================
+// ACHIEVEMENTS
+// =====================================================
+
+function updateAchievements(
+    progressPercentage
+) {
+
+    const container =
+        getElement(
+            "achievementIndicators"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const achievements =
+        container.querySelectorAll(
+            ".achievement"
+        );
+
+
+    if (achievements.length >= 1) {
+
+        achievements[0]
+            .classList.remove(
+                "locked"
+            );
+    }
+
+
+    if (achievements.length >= 2) {
+
+        if (
+            quizHistory.length >= 10
+        ) {
+
+            achievements[1]
+                .classList.remove(
+                    "locked"
+                );
+
+        } else {
+
+            achievements[1]
+                .classList.add(
+                    "locked"
+                );
+        }
+    }
+
+
+    if (achievements.length >= 3) {
+
+        const streak =
+            calculateLearningStreak();
+
+
+        if (streak >= 7) {
+
+            achievements[2]
+                .classList.remove(
+                    "locked"
+                );
+
+        } else {
+
+            achievements[2]
+                .classList.add(
+                    "locked"
+                );
+        }
+    }
+
+
+    if (achievements.length >= 4) {
+
+        if (
+            progressPercentage >= 75
+        ) {
+
+            achievements[3]
+                .classList.remove(
+                    "locked"
+                );
+
+        } else {
+
+            achievements[3]
+                .classList.add(
+                    "locked"
+                );
+        }
+    }
+}
+
+
+// =====================================================
+// LEARNING STREAK
+// =====================================================
+
+function calculateLearningStreak() {
+
+    if (!recentActivity.length) {
+
+        setText(
+            "learningStreak",
+            "0 days"
+        );
+
+        return 0;
+    }
+
+
+    const dates =
+        recentActivity
+            .map(
+                item => {
+
+                    const date =
+                        new Date(
+                            item.timestamp
+                        );
+
+
+                    if (
+                        Number.isNaN(
+                            date.getTime()
+                        )
+                    ) {
+
+                        return null;
+                    }
+
+
+                    return date
+                        .toISOString()
+                        .slice(0, 10);
+                }
+            )
+            .filter(Boolean);
+
+
+    const uniqueDates =
+        [...new Set(dates)]
+            .sort()
+            .reverse();
+
+
+    if (!uniqueDates.length) {
+
+        setText(
+            "learningStreak",
+            "0 days"
+        );
+
+        return 0;
+    }
+
+
+    const today =
+        new Date();
+
+
+    today.setHours(
+        0,
+        0,
+        0,
+        0
+    );
+
+
+    const todayString =
+        today
+            .toISOString()
+            .slice(0, 10);
+
+
+    let streak = 0;
+
+
+    let expectedDate =
+        new Date(today);
+
+
+    // Allow the most recent activity to be yesterday.
+    const firstDate =
+        new Date(
+            `${uniqueDates[0]}T00:00:00`
+        );
+
+
+    const difference =
+        Math.round(
+            (
+                expectedDate -
+                firstDate
+            ) /
+            (
+                1000 *
+                60 *
+                60 *
+                24
+            )
+        );
+
+
+    if (
+        difference > 1
+    ) {
+
+        setText(
+            "learningStreak",
+            "0 days"
+        );
+
+        return 0;
+    }
+
+
+    if (
+        uniqueDates[0] !==
+        todayString
+    ) {
+
+        expectedDate.setDate(
+            expectedDate.getDate() - 1
+        );
+    }
+
+
+    for (
+        const dateString of uniqueDates
+    ) {
+
+        const expectedString =
+            expectedDate
+                .toISOString()
+                .slice(0, 10);
+
+
+        if (
+            dateString !==
+            expectedString
+        ) {
+
+            break;
+        }
+
+
+        streak++;
+
+
+        expectedDate.setDate(
+            expectedDate.getDate() - 1
+        );
+    }
+
+
+    setText(
+        "learningStreak",
+        `${streak} day${streak === 1 ? "" : "s"}`
+    );
+
+
+    return streak;
+}
+
+
+// =====================================================
+// COURSE PROGRESS
+// =====================================================
+
+async function loadCourseProgress() {
+
+    const container =
+        getElement(
+            "courseProgressArea"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!dashboardCourses.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <span>
+                    📚
+                </span>
+
+                <p>
+                    Course progress will appear here.
+                </p>
+
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML =
+        dashboardCourses
+            .slice(0, 12)
+            .map(course => {
+
+                const courseId =
+                    String(course.id);
+
+
+                const courseActivities =
+                    recentActivity.filter(
+                        item =>
+                            String(
+                                item.courseId
+                            ) === courseId
+                    );
+
+
+                const progress =
+                    courseActivities.length
+                        ? Math.min(
+                            100,
+                            courseActivities.length * 10
+                        )
+                        : 0;
+
+
+                return `
+
+                    <div
+                        class="course-progress-item"
+                    >
+
+                        <div
+                            class="course-progress-header"
+                        >
+
+                            <strong>
+                                ${escapeHTML(
+                                    course.title
+                                )}
+                            </strong>
+
+                            <span>
+                                ${progress}%
+                            </span>
+
+                        </div>
+
+                        <div
+                            class="progress-track"
+                        >
+
+                            <div
+                                class="progress-fill"
+                                style="
+                                    width:${progress}%
+                                "
+                            ></div>
+
+                        </div>
+
+                    </div>
+                `;
+
+            })
+            .join("");
+}
+
+
+// =====================================================
+// DASHBOARD NAVIGATION
+// =====================================================
+
+function setupNavigation() {
+
+    const navLinks =
+        document.querySelectorAll(
+            ".nav-link[data-section]"
+        );
+
+
+    navLinks.forEach(
+        link => {
+
+            link.addEventListener(
+                "click",
+                () => {
+
+                    navLinks.forEach(
+                        item =>
+                            item.classList.remove(
+                                "active"
+                            )
+                    );
+
+
+                    link.classList.add(
+                        "active"
+                    );
+
+
+                    const sectionId =
+                        link.dataset.section;
+
+
+                    if (sectionId) {
+
+                        const section =
+                            getElement(
+                                sectionId
+                            );
+
+
+                        if (section) {
+
+                            setTimeout(
+                                () => {
+
+                                    section.scrollIntoView({
+                                        behavior: "smooth",
+                                        block: "start"
+                                    });
+
+                                },
+                                50
+                            );
+                        }
+                    }
+                }
+            );
+        }
+    );
+}
+
+
+// =====================================================
+// CLEAR RECENT ACTIVITY
+// =====================================================
+
+function setupClearRecentActivity() {
+
+    const button =
+        getElement(
+            "clearRecentActivity"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            recentActivity = [];
+
+
+            writeStorage(
+                RECENT_ACTIVITY_KEY,
+                []
+            );
+
+
+            renderRecentActivity();
+
+            updateContinueLearning();
+
+            updateRecommendedLesson();
+
+            updateLearningProgress();
+        }
+    );
+}
+
+
+// =====================================================
+// NOTIFICATIONS
+// =====================================================
+
+function setupNotifications() {
+
+    const button =
+        getElement(
+            "notificationButton"
+        );
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
         "click",
         () => {
 
             const badge =
-                document.getElementById(
+                getElement(
                     "notificationBadge"
                 );
 
+
             if (badge) {
-                badge.style.display =
-                    "none";
+
+                badge.textContent =
+                    "0";
             }
 
-            localStorage.setItem(
-                "mwanikiNotificationCount",
-                "0"
-            );
 
             alert(
-                "Your Mwaniki Scholars notifications will appear here."
+                "You have no new notifications."
             );
         }
     );
 }
 
-// ============================================================
-// UTILITY
-// ============================================================
 
-function setText(id, value) {
+// =====================================================
+// DASHBOARD HASH NAVIGATION
+// =====================================================
 
-    const element =
-        document.getElementById(id);
+function handleHashNavigation() {
 
-    if (element) {
-        element.textContent =
-            value;
+    const hash =
+        window.location.hash;
+
+
+    if (!hash) {
+        return;
+    }
+
+
+    const sectionId =
+        hash.substring(1);
+
+
+    const section =
+        getElement(
+            sectionId
+        );
+
+
+    if (section) {
+
+        setTimeout(
+            () => {
+
+                section.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+            },
+            200
+        );
     }
 }
 
-// ============================================================
-// ESCAPE HTML
-// ============================================================
 
-function escapeHTML(value) {
+// =====================================================
+// TRACK UNIT
+// =====================================================
 
-    return String(
-        value ?? ""
-    )
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-        .replace(
-            /</g,
-            "&lt;"
-        )
-        .replace(
-            />/g,
-            "&gt;"
-        )
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-        .replace(
-            /'/g,
-            "&#039;"
+function trackUnit(
+    courseId,
+    courseName,
+    unitId,
+    unitTitle
+) {
+
+    const item = {
+
+        courseId:
+            courseId ?? "",
+
+        courseName:
+            courseName || "Medical Course",
+
+        unitId:
+            unitId ?? "",
+
+        unitTitle:
+            unitTitle || "Medical Unit",
+
+        timestamp:
+            new Date().toISOString()
+    };
+
+
+    const existing =
+        readStorage(
+            RECENT_ACTIVITY_KEY,
+            []
         );
+
+
+    const filtered =
+        Array.isArray(existing)
+            ? existing.filter(
+                oldItem => !(
+                    String(
+                        oldItem.courseId
+                    ) ===
+                    String(
+                        item.courseId
+                    ) &&
+                    String(
+                        oldItem.unitId
+                    ) ===
+                    String(
+                        item.unitId
+                    )
+                )
+            )
+            : [];
+
+
+    filtered.unshift(
+        item
+    );
+
+
+    recentActivity =
+        filtered.slice(
+            0,
+            30
+        );
+
+
+    writeStorage(
+        RECENT_ACTIVITY_KEY,
+        recentActivity
+    );
+
+
+    renderRecentActivity();
+
+    updateContinueLearning();
+
+    updateRecommendedLesson();
+
+    updateLearningProgress();
 }
 
-// ============================================================
+
+// =====================================================
+// QUIZ HISTORY TRACKER
+// =====================================================
+
+function saveQuizResult(result) {
+
+    if (!result) {
+        return;
+    }
+
+
+    const history =
+        readStorage(
+            QUIZ_HISTORY_KEY,
+            []
+        );
+
+
+    const newResult = {
+
+        ...result,
+
+        timestamp:
+            result.timestamp ||
+            new Date().toISOString()
+    };
+
+
+    history.unshift(
+        newResult
+    );
+
+
+    quizHistory =
+        history.slice(
+            0,
+            100
+        );
+
+
+    writeStorage(
+        QUIZ_HISTORY_KEY,
+        quizHistory
+    );
+
+
+    updateQuizAnalytics();
+
+    updateLearningProgress();
+}
+
+
+// =====================================================
+// FIX INLINE HTML FUNCTIONS
+// =====================================================
+
+window.sendTutorMessage =
+    window.sendTutorMessage ||
+    function () {
+
+        const button =
+            getElement(
+                "sendTutorMessageButton"
+            );
+
+
+        if (button) {
+
+            button.click();
+        }
+    };
+
+
+window.loadStudentAnswers =
+    window.loadStudentAnswers ||
+    function () {
+
+        const button =
+            getElement(
+                "loadAnswersButton"
+            );
+
+
+        if (button) {
+
+            button.click();
+        }
+    };
+
+
+// =====================================================
+// PUBLIC DASHBOARD API
+// =====================================================
+
+window.mwanikiTrackUnit =
+    trackUnit;
+
+
+window.mwanikiDashboard = {
+
+    reloadCourses:
+        loadCourses,
+
+    reloadNotes:
+        loadNotes,
+
+    reloadProfile:
+        loadStudentProfile,
+
+    reloadActivity:
+        loadRecentActivity,
+
+    saveQuizResult:
+        saveQuizResult,
+
+    getCourses:
+        () => dashboardCourses,
+
+    getNotes:
+        () => dashboardNotes,
+
+    getRecentActivity:
+        () => recentActivity
+};
+
+
+// =====================================================
 // INITIALIZATION
-// ============================================================
+// =====================================================
 
 async function initializeDashboard() {
 
@@ -1625,71 +2671,85 @@ async function initializeDashboard() {
         "🚀 Initializing Mwaniki Scholars dashboard..."
     );
 
-    setupDashboardNavigation();
-    setupAIQuestions();
-    setupClearActivity();
-    setupNotificationButton();
 
-    updateNotifications();
+    // -------------------------------------------------
+    // Local data
+    // -------------------------------------------------
 
-    try {
+    loadRecentActivity();
 
-        await loadStudentProfile();
+    loadQuizHistory();
 
-        console.log(
-            "✅ Mwaniki Scholars dashboard initialized."
-        );
 
-    } catch (error) {
+    // -------------------------------------------------
+    // UI setup
+    // -------------------------------------------------
 
-        console.error(
-            "❌ Dashboard initialization failed:",
-            error
-        );
+    setupNavigation();
 
-    }
+    setupClearRecentActivity();
+
+    setupNotifications();
+
+    setupCourseSearch();
+
+    setupNotesSearch();
+
+
+    // -------------------------------------------------
+    // Session
+    // -------------------------------------------------
+
+    await loadCurrentSession();
+
+    await loadStudentProfile();
+
+
+    // -------------------------------------------------
+    // Supabase content
+    // -------------------------------------------------
+
+    await loadCourses();
+
+    await loadNotes();
+
+    await loadCourseProgress();
+
+
+    // -------------------------------------------------
+    // Final analytics refresh
+    // -------------------------------------------------
+
+    updateQuizAnalytics();
+
+    updateLearningProgress();
+
+    calculateLearningStreak();
+
+    handleHashNavigation();
+
 
     console.log(
-        "🏁 Dashboard initialization finished."
+        "✅ Mwaniki Scholars dashboard initialized."
     );
 }
 
-// ============================================================
+
+// =====================================================
 // START
-// ============================================================
+// =====================================================
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(
         "DOMContentLoaded",
-        initializeDashboard,
-        {
-            once: true
-        }
+        initializeDashboard
     );
 
 } else {
 
     initializeDashboard();
 }
-
-// ============================================================
-// EXPOSE FUNCTIONS
-// ============================================================
-
-window.mwanikiDashboard = {
-
-    refresh:
-        updateDashboardAnalytics,
-
-    reload:
-        () => window.location.reload(),
-
-    trackUnit:
-        window.mwanikiTrackUnit,
-
-    saveActivity:
-        saveRecentActivity
-};
