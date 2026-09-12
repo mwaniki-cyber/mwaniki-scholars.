@@ -3,14 +3,13 @@ import { supabase } from "./supabase.js";
 /* =========================================================
    MWANIKI SCHOLARS
    STUDENT DASHBOARD ENGINE
-   ========================================================= */
+========================================================= */
 
 console.log("🚀 Mwaniki Scholars Dashboard starting...");
 
-
 /* =========================================================
    1. GLOBAL STATE
-   ========================================================= */
+========================================================= */
 
 let currentUser = null;
 let currentStudent = null;
@@ -23,15 +22,25 @@ const RECENT_ACTIVITY_KEY = "mwanikiRecentActivity";
 const QUIZ_PROGRESS_KEY = "mwanikiQuizProgress";
 const QUIZ_HISTORY_KEY = "mwanikiQuizHistory";
 
-
 /* =========================================================
    2. BASIC HELPERS
-   ========================================================= */
+========================================================= */
 
 function $(id) {
     return document.getElementById(id);
 }
 
+function firstElement(...ids) {
+    for (const id of ids) {
+        const element = $(id);
+
+        if (element) {
+            return element;
+        }
+    }
+
+    return null;
+}
 
 function escapeHTML(value) {
     if (value === null || value === undefined) {
@@ -46,7 +55,6 @@ function escapeHTML(value) {
         .replace(/'/g, "&#039;");
 }
 
-
 function safeNumber(value, fallback = 0) {
     const number = Number(value);
 
@@ -54,7 +62,6 @@ function safeNumber(value, fallback = 0) {
         ? number
         : fallback;
 }
-
 
 function formatDate(value) {
     if (!value) {
@@ -74,7 +81,6 @@ function formatDate(value) {
     });
 }
 
-
 function setText(id, value) {
     const element = $(id);
 
@@ -82,7 +88,6 @@ function setText(id, value) {
         element.textContent = value;
     }
 }
-
 
 function showElement(id) {
     const element = $(id);
@@ -92,7 +97,6 @@ function showElement(id) {
     }
 }
 
-
 function hideElement(id) {
     const element = $(id);
 
@@ -101,48 +105,85 @@ function hideElement(id) {
     }
 }
 
+function getCoursesContainer() {
+    return firstElement(
+        "coursesContainer",
+        "courseArea"
+    );
+}
+
+function getNotesContainer() {
+    return firstElement(
+        "notesContainer",
+        "notesArea"
+    );
+}
+
+function buttonState(id, loading, loadingText) {
+    const button = $(id);
+
+    if (!button) {
+        return;
+    }
+
+    if (loading) {
+        button.disabled = true;
+
+        button.dataset.originalText =
+            button.textContent;
+
+        button.textContent = loadingText;
+    } else {
+        button.disabled = false;
+
+        button.textContent =
+            button.dataset.originalText ||
+            button.textContent;
+    }
+}
 
 /* =========================================================
    3. AUTHENTICATION
-   ========================================================= */
+========================================================= */
 
 async function getCurrentUser() {
-
     try {
-
         const {
             data,
             error
         } = await supabase.auth.getUser();
 
         if (error) {
-            console.error("❌ Unable to get current user:", error);
+            console.error(
+                "❌ Unable to get current user:",
+                error
+            );
+
             return null;
         }
 
         return data?.user || null;
 
     } catch (error) {
-
-        console.error("❌ Authentication error:", error);
+        console.error(
+            "❌ Authentication error:",
+            error
+        );
 
         return null;
     }
 }
 
-
 /* =========================================================
    4. LOAD STUDENT PROFILE
-   ========================================================= */
+========================================================= */
 
 async function loadStudentProfile() {
-
     if (!currentUser) {
         return;
     }
 
     try {
-
         const {
             data: student,
             error
@@ -152,9 +193,7 @@ async function loadStudentProfile() {
             .eq("id", currentUser.id)
             .maybeSingle();
 
-
         if (error) {
-
             console.error(
                 "❌ Student profile error:",
                 error
@@ -163,9 +202,7 @@ async function loadStudentProfile() {
             return;
         }
 
-
         currentStudent = student;
-
 
         const studentName =
             student?.full_name ||
@@ -175,22 +212,25 @@ async function loadStudentProfile() {
             currentUser.user_metadata?.name ||
             "Scholar";
 
-
         const studentEmail =
             student?.email ||
             currentUser.email ||
             "";
-
-
-        /* Header */
 
         setText(
             "dashboardProfileName",
             studentName
         );
 
+        setText(
+            "welcomeStudentName",
+            studentName
+        );
 
-        /* Tutor form */
+        setText(
+            "studentDisplayName",
+            studentName
+        );
 
         const nameInput = $("studentName");
 
@@ -198,13 +238,11 @@ async function loadStudentProfile() {
             nameInput.value = studentName;
         }
 
-
         const emailInput = $("studentEmail");
 
         if (emailInput) {
             emailInput.value = studentEmail;
         }
-
 
         const inboxEmail = $("checkEmail");
 
@@ -215,27 +253,20 @@ async function loadStudentProfile() {
             inboxEmail.value = studentEmail;
         }
 
-
-        /* Profile photo */
-
         const photoURL =
             student?.photo_url ||
             student?.avatar_url ||
             currentUser.user_metadata?.avatar_url ||
             "";
 
-
         updateProfilePhotos(photoURL);
-
 
         console.log(
             "✅ Student profile loaded:",
             studentName
         );
 
-
     } catch (error) {
-
         console.error(
             "❌ loadStudentProfile failed:",
             error
@@ -243,13 +274,11 @@ async function loadStudentProfile() {
     }
 }
 
-
 /* =========================================================
    5. PROFILE PHOTO SYSTEM
-   ========================================================= */
+========================================================= */
 
 function updateProfilePhotos(photoURL) {
-
     const headerPhoto =
         $("dashboardProfilePhoto");
 
@@ -259,13 +288,9 @@ function updateProfilePhotos(photoURL) {
     const heroFallback =
         $("dashboardHeroFallback");
 
-
     if (photoURL) {
-
         if (headerPhoto) {
-
             headerPhoto.src = photoURL;
-
             headerPhoto.style.display = "block";
 
             headerPhoto.onerror = () => {
@@ -273,15 +298,11 @@ function updateProfilePhotos(photoURL) {
             };
         }
 
-
         if (heroPhoto) {
-
             heroPhoto.src = photoURL;
-
             heroPhoto.classList.add("visible");
 
             heroPhoto.onerror = () => {
-
                 heroPhoto.classList.remove(
                     "visible"
                 );
@@ -293,13 +314,11 @@ function updateProfilePhotos(photoURL) {
             };
         }
 
-
         if (heroFallback) {
             heroFallback.style.display = "none";
         }
 
     } else {
-
         if (headerPhoto) {
             headerPhoto.style.display = "none";
         }
@@ -316,20 +335,21 @@ function updateProfilePhotos(photoURL) {
     }
 }
 
-
 /* =========================================================
    6. LOAD COURSES
-   ========================================================= */
+========================================================= */
 
 async function loadCourses() {
-
     const courseArea =
-        $("courseArea");
+        getCoursesContainer();
 
     if (!courseArea) {
+        console.warn(
+            "⚠️ Courses container not found."
+        );
+
         return;
     }
-
 
     courseArea.innerHTML = `
         <div class="loading-state">
@@ -337,9 +357,7 @@ async function loadCourses() {
         </div>
     `;
 
-
     try {
-
         const {
             data,
             error
@@ -350,41 +368,37 @@ async function loadCourses() {
                 ascending: true
             });
 
-
         if (error) {
             throw error;
         }
-
 
         dashboardCourses =
             Array.isArray(data)
                 ? data
                 : [];
 
-
         setText(
             "totalCourses",
             dashboardCourses.length
         );
 
-
         renderCourses(
             dashboardCourses
         );
 
+        renderRecommendedLesson();
+        renderCourseProgress();
+        updateOverallProgress();
 
         console.log(
             `✅ Loaded ${dashboardCourses.length} courses`
         );
 
-
     } catch (error) {
-
         console.error(
             "❌ Course loading failed:",
             error
         );
-
 
         courseArea.innerHTML = `
             <div class="empty-state">
@@ -395,23 +409,19 @@ async function loadCourses() {
     }
 }
 
-
 /* =========================================================
    7. RENDER COURSES
-   ========================================================= */
+========================================================= */
 
 function renderCourses(courses) {
-
     const courseArea =
-        $("courseArea");
+        getCoursesContainer();
 
     if (!courseArea) {
         return;
     }
 
-
     if (!courses.length) {
-
         courseArea.innerHTML = `
             <div class="empty-state">
                 No courses found.
@@ -421,10 +431,8 @@ function renderCourses(courses) {
         return;
     }
 
-
     courseArea.innerHTML =
         courses.map(course => {
-
             const courseID =
                 course.id;
 
@@ -436,11 +444,9 @@ function renderCourses(courses) {
                 course.description ||
                 "Medical learning course";
 
-
             const image =
                 course.image ||
                 "";
-
 
             return `
                 <article
@@ -458,25 +464,37 @@ function renderCourses(courses) {
                                     loading="lazy"
                                     onerror="this.style.display='none'"
                                 >
-                              `
-                            : ""
+                            `
+                            : `
+                                <div class="course-card-placeholder">
+                                    🩺
+                                </div>
+                            `
                     }
 
+                    <div class="course-card-content">
 
-                    <h3>
-                        ${escapeHTML(title)}
-                    </h3>
+                        <h3>
+                            ${escapeHTML(title)}
+                        </h3>
 
+                        <p>
+                            ${escapeHTML(description)}
+                        </p>
 
-                    <p>
-                        ${escapeHTML(description)}
-                    </p>
+                        <button
+                            type="button"
+                            class="primary-button course-open-button"
+                        >
+                            Open Course
+                        </button>
+
+                    </div>
 
                 </article>
             `;
-
-        }).join("");
-
+        })
+        .join("");
 
     courseArea
         .querySelectorAll(".course-card")
@@ -484,14 +502,21 @@ function renderCourses(courses) {
 
             card.addEventListener(
                 "click",
-                () => {
+                event => {
+
+                    if (
+                        event.target.closest(
+                            "a"
+                        )
+                    ) {
+                        return;
+                    }
 
                     openCourse(
                         card.dataset.courseId
                     );
                 }
             );
-
 
             card.addEventListener(
                 "keydown",
@@ -501,7 +526,6 @@ function renderCourses(courses) {
                         event.key === "Enter" ||
                         event.key === " "
                     ) {
-
                         event.preventDefault();
 
                         openCourse(
@@ -510,17 +534,14 @@ function renderCourses(courses) {
                     }
                 }
             );
-
         });
 }
 
-
 /* =========================================================
    8. OPEN COURSE
-   ========================================================= */
+========================================================= */
 
 function openCourse(courseID) {
-
     const course =
         dashboardCourses.find(
             item =>
@@ -528,23 +549,19 @@ function openCourse(courseID) {
                 String(courseID)
         );
 
-
     if (!course) {
         return;
     }
-
 
     localStorage.setItem(
         "selectedCourse",
         String(course.id)
     );
 
-
     localStorage.setItem(
         "selectedCourseName",
         course.title || ""
     );
-
 
     addRecentActivity({
         type: "course",
@@ -554,25 +571,21 @@ function openCourse(courseID) {
         timestamp: new Date().toISOString()
     });
 
-
     window.location.href =
         `course.html?course_id=${encodeURIComponent(course.id)}`;
 }
 
-
 /* =========================================================
    9. COURSE SEARCH
-   ========================================================= */
+========================================================= */
 
 function setupCourseSearch() {
-
     const input =
         $("courseSearch");
 
     if (!input) {
         return;
     }
-
 
     input.addEventListener(
         "input",
@@ -583,16 +596,13 @@ function setupCourseSearch() {
                     .trim()
                     .toLowerCase();
 
-
             if (!search) {
-
                 renderCourses(
                     dashboardCourses
                 );
 
                 return;
             }
-
 
             const filtered =
                 dashboardCourses.filter(
@@ -603,12 +613,10 @@ function setupCourseSearch() {
                                 course.title || ""
                             ).toLowerCase();
 
-
                         const description =
                             String(
                                 course.description || ""
                             ).toLowerCase();
-
 
                         return (
                             title.includes(search) ||
@@ -617,26 +625,26 @@ function setupCourseSearch() {
                     }
                 );
 
-
             renderCourses(filtered);
         }
     );
 }
 
-
 /* =========================================================
    10. LOAD NOTES
-   ========================================================= */
+========================================================= */
 
 async function loadNotes() {
-
     const notesArea =
-        $("notesArea");
+        getNotesContainer();
 
     if (!notesArea) {
+        console.warn(
+            "⚠️ Notes container not found."
+        );
+
         return;
     }
-
 
     notesArea.innerHTML = `
         <div class="loading-state">
@@ -644,15 +652,7 @@ async function loadNotes() {
         </div>
     `;
 
-
     try {
-
-        /*
-         * Notes are read from the public notes table.
-         *
-         * Only published notes are shown.
-         */
-
         const {
             data,
             error
@@ -664,35 +664,33 @@ async function loadNotes() {
                 ascending: false
             });
 
-
         if (error) {
             throw error;
         }
-
 
         dashboardNotes =
             Array.isArray(data)
                 ? data
                 : [];
 
+        setText(
+            "totalNotes",
+            dashboardNotes.length
+        );
 
         renderNotes(
             dashboardNotes
         );
 
-
         console.log(
             `✅ Loaded ${dashboardNotes.length} notes`
         );
 
-
     } catch (error) {
-
         console.error(
             "❌ Notes loading failed:",
             error
         );
-
 
         notesArea.innerHTML = `
             <div class="empty-state">
@@ -700,26 +698,27 @@ async function loadNotes() {
                 Please refresh the page.
             </div>
         `;
+
+        setText(
+            "totalNotes",
+            "0"
+        );
     }
 }
 
-
 /* =========================================================
    11. RENDER NOTES
-   ========================================================= */
+========================================================= */
 
 function renderNotes(notes) {
-
     const notesArea =
-        $("notesArea");
+        getNotesContainer();
 
     if (!notesArea) {
         return;
     }
 
-
     if (!notes.length) {
-
         notesArea.innerHTML = `
             <div class="empty-state">
                 No published notes are available yet.
@@ -729,20 +728,22 @@ function renderNotes(notes) {
         return;
     }
 
-
     notesArea.innerHTML =
         notes.map(note => {
 
             const course =
                 note.course ||
+                note.course_name ||
                 "Medical Notes";
 
             const unit =
                 note.unit ||
+                note.unit_name ||
                 "Study Material";
 
             const fileName =
                 note.file_name ||
+                note.title ||
                 "Open Notes";
 
             const fileURL =
@@ -750,9 +751,12 @@ function renderNotes(notes) {
                     note.file_url
                 );
 
-
             return `
                 <article class="note-card">
+
+                    <div class="note-card-icon">
+                        📄
+                    </div>
 
                     <h3>
                         ${escapeHTML(fileName)}
@@ -766,7 +770,6 @@ function renderNotes(notes) {
                         ${escapeHTML(unit)}
                     </p>
 
-
                     ${
                         fileURL
                             ? `
@@ -778,35 +781,32 @@ function renderNotes(notes) {
                                 >
                                     📄 Open Notes
                                 </a>
-                              `
+                            `
                             : `
                                 <span class="secondary-button">
                                     File unavailable
                                 </span>
-                              `
+                            `
                     }
 
                 </article>
             `;
 
-        }).join("");
+        })
+        .join("");
 }
-
 
 /* =========================================================
    12. NORMALIZE NOTE URL
-   ========================================================= */
+========================================================= */
 
 function normalizeNoteURL(url) {
-
     if (!url) {
         return "";
     }
 
-
     const value =
         String(url).trim();
-
 
     if (
         value.startsWith("http://") ||
@@ -815,32 +815,20 @@ function normalizeNoteURL(url) {
         return value;
     }
 
-
-    /*
-     * Old relative /notes/... links do not work
-     * reliably on GitHub Pages.
-     *
-     * Keep the URL unchanged rather than guessing
-     * a storage path.
-     */
-
     return value;
 }
 
-
 /* =========================================================
    13. NOTES SEARCH
-   ========================================================= */
+========================================================= */
 
 function setupNotesSearch() {
-
     const input =
         $("notesSearch");
 
     if (!input) {
         return;
     }
-
 
     input.addEventListener(
         "input",
@@ -851,9 +839,7 @@ function setupNotesSearch() {
                     .trim()
                     .toLowerCase();
 
-
             if (!search) {
-
                 renderNotes(
                     dashboardNotes
                 );
@@ -861,26 +847,30 @@ function setupNotesSearch() {
                 return;
             }
 
-
             const filtered =
                 dashboardNotes.filter(
                     note => {
 
                         const fileName =
                             String(
-                                note.file_name || ""
+                                note.file_name ||
+                                note.title ||
+                                ""
                             ).toLowerCase();
 
                         const course =
                             String(
-                                note.course || ""
+                                note.course ||
+                                note.course_name ||
+                                ""
                             ).toLowerCase();
 
                         const unit =
                             String(
-                                note.unit || ""
+                                note.unit ||
+                                note.unit_name ||
+                                ""
                             ).toLowerCase();
-
 
                         return (
                             fileName.includes(search) ||
@@ -890,40 +880,32 @@ function setupNotesSearch() {
                     }
                 );
 
-
             renderNotes(filtered);
         }
     );
 }
 
-
 /* =========================================================
    14. RECENT ACTIVITY
-   ========================================================= */
+========================================================= */
 
 function loadRecentActivity() {
-
     try {
-
         const saved =
             localStorage.getItem(
                 RECENT_ACTIVITY_KEY
             );
-
 
         recentActivity =
             saved
                 ? JSON.parse(saved)
                 : [];
 
-
         if (!Array.isArray(recentActivity)) {
             recentActivity = [];
         }
 
-
     } catch (error) {
-
         console.error(
             "❌ Recent activity error:",
             error
@@ -932,23 +914,17 @@ function loadRecentActivity() {
         recentActivity = [];
     }
 
-
     renderRecentActivity();
-
     renderContinueLearning();
-
     renderRecommendedLesson();
 }
 
-
 /* =========================================================
    15. SAVE ACTIVITY
-   ========================================================= */
+========================================================= */
 
 function saveRecentActivity() {
-
     try {
-
         localStorage.setItem(
             RECENT_ACTIVITY_KEY,
             JSON.stringify(
@@ -957,7 +933,6 @@ function saveRecentActivity() {
         );
 
     } catch (error) {
-
         console.error(
             "❌ Could not save activity:",
             error
@@ -965,28 +940,23 @@ function saveRecentActivity() {
     }
 }
 
-
 /* =========================================================
    16. ADD RECENT ACTIVITY
-   ========================================================= */
+========================================================= */
 
 function addRecentActivity(activity) {
-
     if (!activity) {
         return;
     }
 
-
     recentActivity =
         recentActivity.filter(item => {
-
             return !(
                 item.courseId === activity.courseId &&
                 item.unitId === activity.unitId &&
                 item.type === activity.type
             );
         });
-
 
     recentActivity.unshift({
         ...activity,
@@ -995,27 +965,23 @@ function addRecentActivity(activity) {
             new Date().toISOString()
     });
 
-
     recentActivity =
         recentActivity.slice(0, 20);
-
 
     saveRecentActivity();
 
     renderRecentActivity();
-
     renderContinueLearning();
-
     renderRecommendedLesson();
-}
 
+    refreshDashboardStatistics();
+}
 
 /* =========================================================
    17. RENDER RECENT ACTIVITY
-   ========================================================= */
+========================================================= */
 
 function renderRecentActivity() {
-
     const container =
         $("recentlyStudied");
 
@@ -1023,9 +989,7 @@ function renderRecentActivity() {
         return;
     }
 
-
     if (!recentActivity.length) {
-
         container.innerHTML = `
             <div class="empty-state">
                 No recent activity yet.
@@ -1034,7 +998,6 @@ function renderRecentActivity() {
 
         return;
     }
-
 
     container.innerHTML =
         recentActivity
@@ -1047,14 +1010,12 @@ function renderRecentActivity() {
                     activity.courseName ||
                     "Study Activity";
 
-
                 const type =
                     activity.type === "unit"
                         ? "Unit"
                         : activity.type === "course"
                             ? "Course"
                             : "Learning";
-
 
                 return `
                     <div class="inbox-message">
@@ -1065,6 +1026,7 @@ function renderRecentActivity() {
 
                         <p>
                             ${escapeHTML(type)}
+
                             ${
                                 activity.timestamp
                                     ? ` • ${escapeHTML(
@@ -1078,25 +1040,21 @@ function renderRecentActivity() {
 
                     </div>
                 `;
-
             })
             .join("");
 }
 
-
 /* =========================================================
    18. CONTINUE LEARNING
-   ========================================================= */
+========================================================= */
 
 function renderContinueLearning() {
-
     const container =
         $("continueLearningContent");
 
     if (!container) {
         return;
     }
-
 
     const latest =
         recentActivity.find(
@@ -1105,9 +1063,7 @@ function renderContinueLearning() {
                 item.type === "course"
         );
 
-
     if (!latest) {
-
         container.innerHTML = `
             <div class="empty-state">
                 Start a course to see your
@@ -1118,13 +1074,11 @@ function renderContinueLearning() {
         return;
     }
 
-
     const title =
         latest.unitTitle ||
         latest.title ||
         latest.courseName ||
         "Continue Learning";
-
 
     container.innerHTML = `
         <div class="course-progress-item">
@@ -1155,13 +1109,11 @@ function renderContinueLearning() {
     `;
 }
 
-
 /* =========================================================
    19. RECOMMENDED LESSON
-   ========================================================= */
+========================================================= */
 
 function renderRecommendedLesson() {
-
     const container =
         $("recommendedLesson");
 
@@ -1169,9 +1121,7 @@ function renderRecommendedLesson() {
         return;
     }
 
-
     if (!dashboardCourses.length) {
-
         container.innerHTML = `
             <div class="empty-state">
                 Recommendations will appear here.
@@ -1180,7 +1130,6 @@ function renderRecommendedLesson() {
 
         return;
     }
-
 
     const recentCourseIDs =
         recentActivity
@@ -1193,7 +1142,6 @@ function renderRecommendedLesson() {
                     String(item.courseId)
             );
 
-
     const recommendation =
         dashboardCourses.find(
             course =>
@@ -1202,7 +1150,6 @@ function renderRecommendedLesson() {
                 )
         ) ||
         dashboardCourses[0];
-
 
     container.innerHTML = `
         <div class="course-progress-item">
@@ -1235,19 +1182,15 @@ function renderRecommendedLesson() {
         </div>
     `;
 
-
     const button =
         container.querySelector(
             "[data-recommended-course]"
         );
 
-
     if (button) {
-
         button.addEventListener(
             "click",
             () => {
-
                 openCourse(
                     button.dataset.recommendedCourse
                 );
@@ -1256,20 +1199,17 @@ function renderRecommendedLesson() {
     }
 }
 
-
 /* =========================================================
    20. CLEAR RECENT ACTIVITY
-   ========================================================= */
+========================================================= */
 
 function setupClearActivity() {
-
     const button =
         $("clearRecentActivity");
 
     if (!button) {
         return;
     }
-
 
     button.addEventListener(
         "click",
@@ -1282,28 +1222,24 @@ function setupClearActivity() {
             );
 
             renderRecentActivity();
-
             renderContinueLearning();
-
             renderRecommendedLesson();
+
+            refreshDashboardStatistics();
         }
     );
 }
 
-
 /* =========================================================
    21. TRACK UNIT
-   ========================================================= */
+========================================================= */
 
 function trackUnit(unit) {
-
     if (!unit) {
         return;
     }
 
-
     addRecentActivity({
-
         type: "unit",
 
         courseId:
@@ -1335,33 +1271,27 @@ function trackUnit(unit) {
     });
 }
 
-
 /* =========================================================
    22. QUIZ HISTORY
-   ========================================================= */
+========================================================= */
 
 function getQuizHistory() {
-
     try {
-
         const saved =
             localStorage.getItem(
                 QUIZ_HISTORY_KEY
             );
-
 
         const parsed =
             saved
                 ? JSON.parse(saved)
                 : [];
 
-
         return Array.isArray(parsed)
             ? parsed
             : [];
 
     } catch (error) {
-
         console.error(
             "❌ Quiz history error:",
             error
@@ -1371,66 +1301,56 @@ function getQuizHistory() {
     }
 }
 
-
 /* =========================================================
    23. SAVE QUIZ RESULT
-   ========================================================= */
+========================================================= */
 
 function saveQuizResult(result) {
-
     if (!result) {
         return;
     }
 
-
     const history =
         getQuizHistory();
 
-
     history.unshift({
-
         ...result,
-
         timestamp:
             result.timestamp ||
             new Date().toISOString()
     });
 
-
     const trimmed =
         history.slice(0, 100);
-
 
     localStorage.setItem(
         QUIZ_HISTORY_KEY,
         JSON.stringify(trimmed)
     );
 
-
     updateQuizStatistics();
-
     updateOverallProgress();
 }
 
-
 /* =========================================================
    24. UPDATE QUIZ STATISTICS
-   ========================================================= */
+========================================================= */
 
 function updateQuizStatistics() {
-
     const history =
         getQuizHistory();
-
 
     setText(
         "quizzesAttempted",
         history.length
     );
 
+    setText(
+        "totalQuizzes",
+        history.length
+    );
 
     if (!history.length) {
-
         setText(
             "averageScore",
             "0%"
@@ -1441,42 +1361,44 @@ function updateQuizStatistics() {
             "0%"
         );
 
-        setText(
-            "recentQuizPerformance",
-            "No quiz attempts yet."
-        );
+        const recentContainer =
+            $("recentQuizPerformance");
+
+        if (recentContainer) {
+            recentContainer.innerHTML = `
+                <div class="empty-state">
+                    No quiz attempts yet.
+                </div>
+            `;
+        }
 
         return;
     }
 
-
     const scores =
-        history
-            .map(item => {
+        history.map(item => {
 
-                if (
-                    item.percentage !== undefined
-                ) {
-                    return safeNumber(
-                        item.percentage
-                    );
-                }
+            if (
+                item.percentage !== undefined
+            ) {
+                return safeNumber(
+                    item.percentage
+                );
+            }
 
-                if (
-                    item.score !== undefined &&
-                    item.total !== undefined &&
-                    safeNumber(item.total) > 0
-                ) {
+            if (
+                item.score !== undefined &&
+                item.total !== undefined &&
+                safeNumber(item.total) > 0
+            ) {
+                return (
+                    safeNumber(item.score) /
+                    safeNumber(item.total)
+                ) * 100;
+            }
 
-                    return (
-                        safeNumber(item.score) /
-                        safeNumber(item.total)
-                    ) * 100;
-                }
-
-                return 0;
-            });
-
+            return 0;
+        });
 
     const average =
         scores.reduce(
@@ -1485,26 +1407,21 @@ function updateQuizStatistics() {
             0
         ) / scores.length;
 
-
     const best =
         Math.max(...scores);
-
 
     setText(
         "averageScore",
         `${Math.round(average)}%`
     );
 
-
     setText(
         "bestQuizScore",
         `${Math.round(best)}%`
     );
 
-
     const recent =
         history.slice(0, 5);
-
 
     const performance =
         recent.map(item => {
@@ -1523,30 +1440,30 @@ function updateQuizStatistics() {
                             : 0
                     );
 
-
             const title =
                 item.unitTitle ||
                 item.courseName ||
                 item.title ||
                 "Quiz";
 
-
             return `
-                <div style="margin-bottom:8px;">
+                <div class="quiz-performance-item">
+
                     <strong>
                         ${escapeHTML(title)}
                     </strong>
-                    —
-                    ${Math.round(score)}%
+
+                    <span>
+                        ${Math.round(score)}%
+                    </span>
+
                 </div>
             `;
-
-        }).join("");
-
+        })
+        .join("");
 
     const recentContainer =
         $("recentQuizPerformance");
-
 
     if (recentContainer) {
         recentContainer.innerHTML =
@@ -1554,20 +1471,13 @@ function updateQuizStatistics() {
     }
 }
 
-
 /* =========================================================
    25. OVERALL PROGRESS
-   ========================================================= */
+========================================================= */
 
 function updateOverallProgress() {
-
     const history =
         getQuizHistory();
-
-
-    const courseCount =
-        dashboardCourses.length;
-
 
     const quizProgress =
         history.length > 0
@@ -1577,41 +1487,37 @@ function updateOverallProgress() {
             )
             : 0;
 
-
     const progress =
-        courseCount > 0
-            ? Math.round(
-                quizProgress
-            )
-            : 0;
-
+        Math.round(
+            quizProgress
+        );
 
     const bar =
         $("overallProgressBar");
-
 
     if (bar) {
         bar.style.width =
             `${progress}%`;
     }
 
-
     setText(
         "overallProgressText",
         `${progress}%`
     );
 
+    setText(
+        "learningProgress",
+        `${progress}%`
+    );
 
     renderAchievements(progress);
 }
 
-
 /* =========================================================
    26. ACHIEVEMENTS
-   ========================================================= */
+========================================================= */
 
 function renderAchievements(progress) {
-
     const container =
         $("achievementIndicators");
 
@@ -1619,13 +1525,10 @@ function renderAchievements(progress) {
         return;
     }
 
-
     const history =
         getQuizHistory();
 
-
     const achievements = [];
-
 
     if (history.length >= 1) {
         achievements.push(
@@ -1633,13 +1536,11 @@ function renderAchievements(progress) {
         );
     }
 
-
     if (history.length >= 5) {
         achievements.push(
             "🔥 Quiz Explorer"
         );
     }
-
 
     if (progress >= 25) {
         achievements.push(
@@ -1647,13 +1548,11 @@ function renderAchievements(progress) {
         );
     }
 
-
     if (progress >= 50) {
         achievements.push(
             "🏆 Halfway Scholar"
         );
     }
-
 
     if (progress >= 100) {
         achievements.push(
@@ -1661,9 +1560,7 @@ function renderAchievements(progress) {
         );
     }
 
-
     if (!achievements.length) {
-
         container.innerHTML = `
             <div class="empty-state">
                 Complete your first quiz
@@ -1674,36 +1571,33 @@ function renderAchievements(progress) {
         return;
     }
 
-
     container.innerHTML =
-        achievements.map(
-            item => `
-                <span class="achievement-item">
-                    ${escapeHTML(item)}
-                </span>
-            `
-        ).join("");
+        achievements
+            .map(
+                item => `
+                    <span class="achievement-item">
+                        ${escapeHTML(item)}
+                    </span>
+                `
+            )
+            .join("");
 }
-
 
 /* =========================================================
    27. UNITS COMPLETED
-   ========================================================= */
+========================================================= */
 
 function updateUnitStatistics() {
-
     const units =
         recentActivity.filter(
             item =>
                 item.type === "unit"
         );
 
-
     setText(
         "unitsCompleted",
         units.length
     );
-
 
     const courseIDs =
         new Set(
@@ -1723,22 +1617,18 @@ function updateUnitStatistics() {
                 )
         );
 
-
     setText(
         "coursesCompleted",
         courseIDs.size
     );
 }
 
-
 /* =========================================================
    28. LEARNING STREAK
-   ========================================================= */
+========================================================= */
 
 function updateLearningStreak() {
-
     if (!recentActivity.length) {
-
         setText(
             "learningStreak",
             "0 days"
@@ -1746,7 +1636,6 @@ function updateLearningStreak() {
 
         return;
     }
-
 
     const dates = [
         ...new Set(
@@ -1778,9 +1667,7 @@ function updateLearningStreak() {
         )
     ];
 
-
     if (!dates.length) {
-
         setText(
             "learningStreak",
             "0 days"
@@ -1789,23 +1676,19 @@ function updateLearningStreak() {
         return;
     }
 
-
     dates.sort(
         (a, b) =>
             new Date(b) -
             new Date(a)
     );
 
-
     let streak = 1;
-
 
     for (
         let index = 1;
         index < dates.length;
         index++
     ) {
-
         const previous =
             new Date(
                 dates[index - 1]
@@ -1815,7 +1698,6 @@ function updateLearningStreak() {
             new Date(
                 dates[index]
             );
-
 
         const difference =
             Math.round(
@@ -1831,7 +1713,6 @@ function updateLearningStreak() {
                 )
             );
 
-
         if (difference === 1) {
             streak++;
         } else {
@@ -1839,20 +1720,17 @@ function updateLearningStreak() {
         }
     }
 
-
     setText(
         "learningStreak",
         `${streak} day${streak === 1 ? "" : "s"}`
     );
 }
 
-
 /* =========================================================
    29. COURSE PROGRESS AREA
-   ========================================================= */
+========================================================= */
 
 function renderCourseProgress() {
-
     const container =
         $("courseProgressArea");
 
@@ -1860,9 +1738,7 @@ function renderCourseProgress() {
         return;
     }
 
-
     if (!dashboardCourses.length) {
-
         container.innerHTML = `
             <div class="empty-state">
                 Course progress will appear here.
@@ -1872,13 +1748,9 @@ function renderCourseProgress() {
         return;
     }
 
-
-    const activityByCourse =
-        {};
-
+    const activityByCourse = {};
 
     recentActivity.forEach(item => {
-
         if (
             item.courseId === undefined ||
             item.courseId === null
@@ -1886,34 +1758,29 @@ function renderCourseProgress() {
             return;
         }
 
-
         const id =
             String(item.courseId);
-
 
         if (!activityByCourse[id]) {
             activityByCourse[id] = 0;
         }
-
 
         if (item.type === "unit") {
             activityByCourse[id]++;
         }
     });
 
-
     const visibleCourses =
         dashboardCourses
-            .filter(course =>
-                activityByCourse[
-                    String(course.id)
-                ] > 0
+            .filter(
+                course =>
+                    activityByCourse[
+                        String(course.id)
+                    ] > 0
             )
             .slice(0, 8);
 
-
     if (!visibleCourses.length) {
-
         container.innerHTML = `
             <div class="empty-state">
                 Start studying a course to
@@ -1924,70 +1791,64 @@ function renderCourseProgress() {
         return;
     }
 
-
     container.innerHTML =
-        visibleCourses.map(course => {
+        visibleCourses
+            .map(course => {
 
-            const count =
-                activityByCourse[
-                    String(course.id)
-                ] || 0;
+                const count =
+                    activityByCourse[
+                        String(course.id)
+                    ] || 0;
 
+                const progress =
+                    Math.min(
+                        100,
+                        count * 10
+                    );
 
-            const progress =
-                Math.min(
-                    100,
-                    count * 10
-                );
+                return `
+                    <div class="course-progress-item">
 
+                        <h3>
+                            ${escapeHTML(
+                                course.title ||
+                                "Course"
+                            )}
+                        </h3>
 
-            return `
-                <div class="course-progress-item">
+                        <div class="course-progress-meta">
 
-                    <h3>
-                        ${escapeHTML(
-                            course.title ||
-                            "Course"
-                        )}
-                    </h3>
+                            <span>
+                                ${count} unit
+                                ${count === 1 ? "" : "s"} studied
+                            </span>
 
+                            <strong>
+                                ${progress}%
+                            </strong>
 
-                    <div class="course-progress-meta">
+                        </div>
 
-                        <span>
-                            ${count} unit
-                            ${count === 1 ? "" : "s"} studied
-                        </span>
+                        <div class="progress-track">
 
-                        <strong>
-                            ${progress}%
-                        </strong>
+                            <div
+                                class="progress-fill"
+                                style="width:${progress}%"
+                            ></div>
+
+                        </div>
 
                     </div>
-
-
-                    <div class="progress-track">
-
-                        <div
-                            class="progress-fill"
-                            style="width:${progress}%"
-                        ></div>
-
-                    </div>
-
-                </div>
-            `;
-
-        }).join("");
+                `;
+            })
+            .join("");
 }
-
 
 /* =========================================================
    30. TUTOR MESSAGING
-   ========================================================= */
+========================================================= */
 
 function setupTutorMessaging() {
-
     const button =
         $("sendTutorMessageButton");
 
@@ -1995,16 +1856,13 @@ function setupTutorMessaging() {
         return;
     }
 
-
     button.addEventListener(
         "click",
         sendTutorMessage
     );
 }
 
-
 async function sendTutorMessage() {
-
     const topic =
         $("topic")?.value.trim() || "";
 
@@ -2016,9 +1874,7 @@ async function sendTutorMessage() {
     const status =
         $("messageStatus");
 
-
     if (!topic) {
-
         if (status) {
             status.textContent =
                 "Please enter a topic.";
@@ -2027,9 +1883,7 @@ async function sendTutorMessage() {
         return;
     }
 
-
     if (!message) {
-
         if (status) {
             status.textContent =
                 "Please write your message.";
@@ -2038,9 +1892,7 @@ async function sendTutorMessage() {
         return;
     }
 
-
     if (!currentUser) {
-
         if (status) {
             status.textContent =
                 "Please sign in again.";
@@ -2049,30 +1901,18 @@ async function sendTutorMessage() {
         return;
     }
 
-
     buttonState(
         "sendTutorMessageButton",
         true,
         "Sending..."
     );
 
-
     try {
-
-        /*
-         * Uses the tutor_messages table.
-         *
-         * If your existing table has different
-         * columns, keep the database structure
-         * already used by your project.
-         */
-
         const {
             error
         } = await supabase
             .from("tutor_messages")
             .insert({
-
                 student_id:
                     currentUser.id,
 
@@ -2092,43 +1932,43 @@ async function sendTutorMessage() {
 
                 created_at:
                     new Date().toISOString()
-
             });
-
 
         if (error) {
             throw error;
         }
 
-
         if (status) {
-
             status.textContent =
                 "Message sent successfully.";
         }
 
+        const topicInput =
+            $("topic");
 
-        $("topic").value = "";
+        const messageInput =
+            $("studentMessage");
 
-        $("studentMessage").value = "";
+        if (topicInput) {
+            topicInput.value = "";
+        }
 
+        if (messageInput) {
+            messageInput.value = "";
+        }
 
     } catch (error) {
-
         console.error(
             "❌ Tutor message error:",
             error
         );
 
-
         if (status) {
-
             status.textContent =
                 "Unable to send message. Please try again.";
         }
 
     } finally {
-
         buttonState(
             "sendTutorMessageButton",
             false,
@@ -2137,13 +1977,11 @@ async function sendTutorMessage() {
     }
 }
 
-
 /* =========================================================
    31. INBOX
-   ========================================================= */
+========================================================= */
 
 function setupInbox() {
-
     const button =
         $("loadAnswersButton");
 
@@ -2151,16 +1989,13 @@ function setupInbox() {
         return;
     }
 
-
     button.addEventListener(
         "click",
         loadStudentInbox
     );
 }
 
-
 async function loadStudentInbox() {
-
     const inbox =
         $("studentInbox");
 
@@ -2169,14 +2004,11 @@ async function loadStudentInbox() {
             ?.value
             .trim();
 
-
     if (!inbox) {
         return;
     }
 
-
     if (!email) {
-
         inbox.innerHTML = `
             <div class="empty-state">
                 Enter your email to load tutor replies.
@@ -2186,20 +2018,13 @@ async function loadStudentInbox() {
         return;
     }
 
-
     inbox.innerHTML = `
         <div class="loading-state">
             Loading tutor replies...
         </div>
     `;
 
-
     try {
-
-        /*
-         * First try the existing tutor_messages table.
-         */
-
         const {
             data,
             error
@@ -2211,20 +2036,16 @@ async function loadStudentInbox() {
                 ascending: false
             });
 
-
         if (error) {
             throw error;
         }
-
 
         const messages =
             Array.isArray(data)
                 ? data
                 : [];
 
-
         if (!messages.length) {
-
             inbox.innerHTML = `
                 <div class="empty-state">
                     No tutor replies found yet.
@@ -2234,87 +2055,80 @@ async function loadStudentInbox() {
             return;
         }
 
-
         inbox.innerHTML =
-            messages.map(message => {
+            messages
+                .map(message => {
 
-                const topic =
-                    message.topic ||
-                    "Tutor Message";
+                    const topic =
+                        message.topic ||
+                        "Tutor Message";
 
+                    const reply =
+                        message.reply ||
+                        message.response ||
+                        message.answer ||
+                        message.tutor_reply ||
+                        "";
 
-                const reply =
-                    message.reply ||
-                    message.response ||
-                    message.answer ||
-                    message.tutor_reply ||
-                    "";
+                    const status =
+                        message.status ||
+                        "";
 
+                    return `
+                        <div class="inbox-message">
 
-                const status =
-                    message.status ||
-                    "";
+                            <h3>
+                                ${escapeHTML(topic)}
+                            </h3>
 
+                            ${
+                                reply
+                                    ? `
+                                        <p>
+                                            ${escapeHTML(
+                                                reply
+                                            )}
+                                        </p>
+                                    `
+                                    : `
+                                        <p>
+                                            Your message has been received.
 
-                return `
-                    <div class="inbox-message">
+                                            ${
+                                                status
+                                                    ? escapeHTML(
+                                                        status
+                                                    )
+                                                    : "Waiting for tutor response."
+                                            }
+                                        </p>
+                                    `
+                            }
 
-                        <h3>
-                            ${escapeHTML(topic)}
-                        </h3>
-
-
-                        ${
-                            reply
-                                ? `
-                                    <p>
-                                        ${escapeHTML(
-                                            reply
-                                        )}
-                                    </p>
-                                  `
-                                : `
-                                    <p>
-                                        Your message has been received.
-                                        ${
-                                            status
-                                                ? escapeHTML(
-                                                    status
+                            ${
+                                message.created_at
+                                    ? `
+                                        <small>
+                                            ${escapeHTML(
+                                                formatDate(
+                                                    message.created_at
                                                 )
-                                                : "Waiting for tutor response."
-                                        }
-                                    </p>
-                                  `
-                        }
+                                            )}
+                                        </small>
+                                    `
+                                    : ""
+                            }
 
-
-                        ${
-                            message.created_at
-                                ? `
-                                    <small>
-                                        ${escapeHTML(
-                                            formatDate(
-                                                message.created_at
-                                            )
-                                        )}
-                                    </small>
-                                  `
-                                : ""
-                        }
-
-                    </div>
-                `;
-
-            }).join("");
-
+                        </div>
+                    `;
+                })
+                .join("");
 
     } catch (error) {
-
         console.error(
             "❌ Inbox loading failed:",
             error
         );
-
 
         inbox.innerHTML = `
             <div class="empty-state">
@@ -2324,20 +2138,17 @@ async function loadStudentInbox() {
     }
 }
 
-
 /* =========================================================
    32. NOTIFICATION BUTTON
-   ========================================================= */
+========================================================= */
 
 function setupNotifications() {
-
     const button =
         $("notificationButton");
 
     if (!button) {
         return;
     }
-
 
     button.addEventListener(
         "click",
@@ -2347,7 +2158,6 @@ function setupNotifications() {
                 $("studentInboxSection");
 
             if (inbox) {
-
                 inbox.scrollIntoView({
                     behavior: "smooth",
                     block: "start"
@@ -2357,13 +2167,11 @@ function setupNotifications() {
     );
 }
 
-
 /* =========================================================
    33. PROFILE BUTTON
-   ========================================================= */
+========================================================= */
 
 function setupProfileButton() {
-
     const button =
         $("studentProfileButton");
 
@@ -2371,43 +2179,35 @@ function setupProfileButton() {
         return;
     }
 
-
     button.addEventListener(
         "click",
         () => {
-
             window.location.href =
                 "studentProfile.html";
         }
     );
 }
 
-
 /* =========================================================
    34. NAVIGATION
-   ========================================================= */
+========================================================= */
 
 function setupNavigation() {
-
     const links =
         document.querySelectorAll(
             ".nav-link[data-section]"
         );
 
-
     links.forEach(link => {
-
         link.addEventListener(
             "click",
             () => {
 
-                links.forEach(
-                    item =>
-                        item.classList.remove(
-                            "active"
-                        )
+                links.forEach(item =>
+                    item.classList.remove(
+                        "active"
+                    )
                 );
-
 
                 link.classList.add(
                     "active"
@@ -2416,79 +2216,65 @@ function setupNavigation() {
         );
     });
 
-
     const mobileLinks =
         document.querySelectorAll(
             ".mobile-bottom-nav a"
         );
 
-
     mobileLinks.forEach(link => {
-
         link.addEventListener(
             "click",
-            () => {
+            event => {
 
                 const target =
                     link.getAttribute(
                         "href"
                     );
 
-
                 if (!target) {
                     return;
                 }
 
+                if (
+                    target.startsWith("#")
+                ) {
+                    event.preventDefault();
 
-                const element =
-                    document.querySelector(
-                        target
-                    );
+                    const element =
+                        document.querySelector(
+                            target
+                        );
 
-
-                if (element) {
-
-                    setTimeout(
-                        () => {
-
-                            element.scrollIntoView({
-                                behavior: "smooth",
-                                block: "start"
-                            });
-
-                        },
-                        20
-                    );
+                    if (element) {
+                        element.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start"
+                        });
+                    }
                 }
             }
         );
     });
 }
 
-
 /* =========================================================
    35. AI SUGGESTIONS
-   ========================================================= */
+========================================================= */
 
 function setupAISuggestions() {
-
     const buttons =
         document.querySelectorAll(
             ".suggestion-button"
         );
 
-
     const input =
         $("aiQuestion");
-
 
     if (!input) {
         return;
     }
 
-
     buttons.forEach(button => {
-
         button.addEventListener(
             "click",
             () => {
@@ -2502,20 +2288,17 @@ function setupAISuggestions() {
     });
 }
 
-
 /* =========================================================
    36. AI BUTTON
-   ========================================================= */
+========================================================= */
 
 function setupAIButton() {
-
     const button =
         $("askAIButton");
 
     if (!button) {
         return;
     }
-
 
     button.addEventListener(
         "click",
@@ -2526,13 +2309,10 @@ function setupAIButton() {
                     ?.value
                     .trim();
 
-
             const answer =
                 $("aiAnswer");
 
-
             if (!question) {
-
                 if (answer) {
                     answer.textContent =
                         "Please enter a medical question.";
@@ -2541,18 +2321,10 @@ function setupAIButton() {
                 return;
             }
 
-
-            /*
-             * Keep this connected to the existing
-             * aiTutor.js system rather than creating
-             * a second AI implementation here.
-             */
-
             if (
                 typeof window.askMwanikiAI ===
                 "function"
             ) {
-
                 window.askMwanikiAI(
                     question
                 );
@@ -2560,9 +2332,7 @@ function setupAIButton() {
                 return;
             }
 
-
             if (answer) {
-
                 answer.textContent =
                     "AI Tutor is loading. Please make sure aiTutor.js is connected.";
             }
@@ -2570,70 +2340,24 @@ function setupAIButton() {
     );
 }
 
-
 /* =========================================================
-   37. BUTTON STATE
-   ========================================================= */
-
-function buttonState(
-    id,
-    loading,
-    loadingText
-) {
-
-    const button = $(id);
-
-    if (!button) {
-        return;
-    }
-
-
-    if (loading) {
-
-        button.disabled = true;
-
-        button.dataset.originalText =
-            button.textContent;
-
-        button.textContent =
-            loadingText;
-
-    } else {
-
-        button.disabled = false;
-
-        button.textContent =
-            button.dataset.originalText ||
-            button.textContent;
-    }
-}
-
-
-/* =========================================================
-   38. REFRESH DASHBOARD STATISTICS
-   ========================================================= */
+   37. REFRESH DASHBOARD STATISTICS
+========================================================= */
 
 function refreshDashboardStatistics() {
-
     updateUnitStatistics();
-
     updateQuizStatistics();
-
     updateLearningStreak();
-
     updateOverallProgress();
-
     renderCourseProgress();
 }
 
-
 /* =========================================================
-   39. PUBLIC DASHBOARD API
-   ========================================================= */
+   38. PUBLIC DASHBOARD API
+========================================================= */
 
 window.mwanikiTrackUnit =
     trackUnit;
-
 
 window.mwanikiDashboard = {
 
@@ -2660,36 +2384,25 @@ window.mwanikiDashboard = {
 
     getRecentActivity:
         () => recentActivity
+
 };
 
-
 /* =========================================================
-   40. INITIALIZE DASHBOARD
-   ========================================================= */
+   39. INITIALIZE DASHBOARD
+========================================================= */
 
 async function initializeDashboard() {
-
     console.log(
         "🚀 Initializing Mwaniki Scholars Dashboard..."
     );
 
-
     currentUser =
         await getCurrentUser();
 
-
     if (!currentUser) {
-
         console.warn(
             "⚠️ No authenticated student found."
         );
-
-
-        /*
-         * Do not immediately redirect here.
-         * This prevents the dashboard from breaking
-         * while Supabase session restoration is occurring.
-         */
 
         setText(
             "dashboardProfileName",
@@ -2697,29 +2410,16 @@ async function initializeDashboard() {
         );
 
     } else {
-
         await loadStudentProfile();
     }
-
-
-    /* Load dashboard content */
 
     await loadCourses();
 
     await loadNotes();
 
-
-    /* Local activity */
-
     loadRecentActivity();
 
-
-    /* Statistics */
-
     refreshDashboardStatistics();
-
-
-    /* Event listeners */
 
     setupCourseSearch();
 
@@ -2741,95 +2441,43 @@ async function initializeDashboard() {
 
     setupAIButton();
 
+    const refreshCoursesButton =
+        $("refreshCoursesButton");
+
+    if (refreshCoursesButton) {
+        refreshCoursesButton.addEventListener(
+            "click",
+            loadCourses
+        );
+    }
+
+    const refreshNotesButton =
+        $("refreshNotesButton");
+
+    if (refreshNotesButton) {
+        refreshNotesButton.addEventListener(
+            "click",
+            loadNotes
+        );
+    }
 
     console.log(
         "✅ Mwaniki Scholars Dashboard ready."
     );
 }
 
-
 /* =========================================================
-   41. START
-   ========================================================= */
+   40. START
+========================================================= */
 
 if (
     document.readyState ===
     "loading"
 ) {
-
     document.addEventListener(
         "DOMContentLoaded",
         initializeDashboard
     );
-
 } else {
-
     initializeDashboard();
-}
-/* =========================================================
-   FINAL BRAND TEXT CLARITY FIX
-========================================================= */
-
-.dashboard-header .brand-area,
-.dashboard-header .brand-text,
-.dashboard-header .brand-name,
-.dashboard-header .brand-subtitle {
-    opacity: 1 !important;
-    visibility: visible !important;
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-    transform: none !important;
-    text-shadow: none !important;
-    mix-blend-mode: normal !important;
-    isolation: isolate !important;
-}
-
-.dashboard-header .brand-text {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-    gap: 4px !important;
-    min-width: 0 !important;
-}
-
-.dashboard-header .brand-name {
-    display: block !important;
-    color: #ffffff !important;
-    font-family: Arial, Helvetica, sans-serif !important;
-    font-size: 22px !important;
-    font-weight: 800 !important;
-    line-height: 1.15 !important;
-    letter-spacing: -0.2px !important;
-    white-space: nowrap !important;
-}
-
-.dashboard-header .brand-subtitle {
-    display: block !important;
-    color: #ffffff !important;
-    font-family: Arial, Helvetica, sans-serif !important;
-    font-size: 13px !important;
-    font-weight: 600 !important;
-    line-height: 1.2 !important;
-    letter-spacing: 0 !important;
-    white-space: nowrap !important;
-}
-
-.dashboard-header .brand-icon {
-    opacity: 1 !important;
-    filter: none !important;
-    transform: none !important;
-    color: #ffffff !important;
-    font-size: 30px !important;
-    line-height: 1 !important;
-}
-
-/* Prevent any transparent overlay from covering the brand */
-.dashboard-header .brand-area::before,
-.dashboard-header .brand-area::after,
-.dashboard-header .brand-text::before,
-.dashboard-header .brand-text::after {
-    content: none !important;
-    display: none !important;
 }
