@@ -2,46 +2,92 @@ import { supabase } from "./supabase.js";
 
 // =====================================================
 // MWANIKI SCHOLARS
-// STUDENT TUTOR MESSAGE SYSTEM
-// Compatible with dashboard.html
+// STUDENT → HUMAN TUTOR MESSAGE SYSTEM
 // =====================================================
 
 console.log("👨‍🏫 Student Tutor System Loaded");
 
-// -----------------------------------------------------
-// GET LOGGED-IN USER EMAIL
-// -----------------------------------------------------
 
-async function getStudentEmail() {
+// =====================================================
+// GET CURRENT USER
+// =====================================================
+
+async function getCurrentUser() {
+
     try {
+
         const {
-            data: { user },
+            data,
             error
         } = await supabase.auth.getUser();
 
+
         if (error) {
-            console.warn("Could not get logged-in user:", error.message);
-            return "";
+
+            console.warn(
+                "Could not get current user:",
+                error.message
+            );
+
+            return null;
         }
 
-        return user?.email || "";
+
+        return data?.user || null;
+
     } catch (error) {
-        console.error("User email error:", error);
-        return "";
+
+        console.error(
+            "Current user error:",
+            error
+        );
+
+        return null;
     }
 }
 
-// -----------------------------------------------------
-// SEND STUDENT QUESTION
-// -----------------------------------------------------
+
+// =====================================================
+// SEND QUESTION
+// =====================================================
 
 async function sendTutorMessage() {
-    const nameInput = document.getElementById("studentName");
-    const emailInput = document.getElementById("studentEmail");
-    const topicInput = document.getElementById("topic");
-    const messageInput = document.getElementById("studentMessage");
-    const sendButton = document.getElementById("sendTutorMessageButton");
-    const statusBox = document.getElementById("messageStatus");
+
+    console.log(
+        "📨 sendTutorMessage() started"
+    );
+
+
+    const nameInput =
+        document.getElementById(
+            "studentName"
+        );
+
+    const emailInput =
+        document.getElementById(
+            "studentEmail"
+        );
+
+    const topicInput =
+        document.getElementById(
+            "topic"
+        );
+
+    const messageInput =
+        document.getElementById(
+            "studentMessage"
+        );
+
+    const sendButton =
+        document.getElementById(
+            "sendTutorMessageButton"
+        );
+
+    const statusBox =
+        document.getElementById(
+            "messageStatus"
+        );
+
 
     if (
         !nameInput ||
@@ -50,97 +96,229 @@ async function sendTutorMessage() {
         !messageInput ||
         !statusBox
     ) {
-        console.error("Tutor form elements were not found.");
+
+        console.error(
+            "❌ Tutor form elements are missing."
+        );
+
         return;
     }
 
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const topic = topicInput.value.trim();
-    const message = messageInput.value.trim();
 
-    if (name === "") {
-        statusBox.textContent = "❌ Please enter your full name.";
+    const name =
+        nameInput.value.trim();
+
+    const enteredEmail =
+        emailInput.value.trim();
+
+    const topic =
+        topicInput.value.trim();
+
+    const message =
+        messageInput.value.trim();
+
+
+    // =====================================================
+    // VALIDATION
+    // =====================================================
+
+    if (!name) {
+
+        statusBox.textContent =
+            "❌ Please enter your full name.";
+
+        nameInput.focus();
+
         return;
     }
 
-    if (email === "") {
-        statusBox.textContent = "❌ Please enter your email.";
+
+    if (!enteredEmail) {
+
+        statusBox.textContent =
+            "❌ Please enter your email.";
+
+        emailInput.focus();
+
         return;
     }
 
-    if (!email.includes("@")) {
-        statusBox.textContent = "❌ Please enter a valid email.";
+
+    if (!enteredEmail.includes("@")) {
+
+        statusBox.textContent =
+            "❌ Please enter a valid email.";
+
+        emailInput.focus();
+
         return;
     }
 
-    if (topic === "") {
-        statusBox.textContent = "❌ Please enter the topic.";
+
+    if (!topic) {
+
+        statusBox.textContent =
+            "❌ Please enter the topic.";
+
+        topicInput.focus();
+
         return;
     }
 
-    if (message === "") {
-        statusBox.textContent = "❌ Please write your question.";
+
+    if (!message) {
+
+        statusBox.textContent =
+            "❌ Please write your question.";
+
+        messageInput.focus();
+
         return;
     }
+
+
+    // =====================================================
+    // LOADING STATE
+    // =====================================================
 
     if (sendButton) {
-        sendButton.disabled = true;
-        sendButton.textContent = "⏳ Sending...";
+
+        sendButton.disabled =
+            true;
+
+        sendButton.textContent =
+            "⏳ Sending...";
+
+        sendButton.style.cursor =
+            "wait";
     }
 
-    statusBox.textContent = "Sending your question...";
+
+    statusBox.textContent =
+        "📨 Sending your question to a Mwaniki tutor...";
+
 
     try {
-        const loggedInEmail = await getStudentEmail();
 
-        const finalEmail = loggedInEmail || email;
+        const user =
+            await getCurrentUser();
 
-        const { error } = await supabase
+
+        const finalEmail =
+            user?.email ||
+            enteredEmail;
+
+
+        // =================================================
+        // INSERT MESSAGE
+        // =================================================
+
+        const {
+            data,
+            error
+        } = await supabase
             .from("tutor_messages")
             .insert({
-                student_name: name,
-                student_email: finalEmail,
-                topic: topic,
-                message: message,
-                status: "pending"
-            });
+
+                student_name:
+                    name,
+
+                student_email:
+                    finalEmail,
+
+                topic:
+                    topic,
+
+                message:
+                    message,
+
+                status:
+                    "pending"
+
+            })
+            .select()
+            .single();
+
 
         if (error) {
-            console.error("Tutor message insert error:", error);
 
-            statusBox.textContent =
-                "❌ Message could not be sent: " + error.message;
+            console.error(
+                "❌ Tutor message error:",
+                error
+            );
 
-            return;
+            throw new Error(
+                error.message
+            );
         }
 
-        statusBox.textContent =
-            "✅ Your question has been sent successfully. A tutor will respond soon.";
 
-        messageInput.value = "";
-        topicInput.value = "";
+        console.log(
+            "✅ Tutor question saved:",
+            data
+        );
+
+
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        statusBox.textContent =
+            "✅ Question sent successfully. Your tutor can now review it from the tutor portal.";
+
+
+        messageInput.value =
+            "";
+
+        topicInput.value =
+            "";
+
 
     } catch (error) {
-        console.error("Unexpected tutor message error:", error);
+
+        console.error(
+            "❌ Tutor message failed:",
+            error
+        );
+
 
         statusBox.textContent =
-            "❌ An unexpected error occurred. Please try again.";
+            "❌ Your question could not be sent: " +
+            error.message;
+
     } finally {
+
         if (sendButton) {
-            sendButton.disabled = false;
-            sendButton.textContent = "📨 Send Question";
+
+            sendButton.disabled =
+                false;
+
+            sendButton.textContent =
+                "📨 Send Question";
+
+            sendButton.style.cursor =
+                "pointer";
         }
+
     }
+
 }
 
-// -----------------------------------------------------
-// BACKWARD COMPATIBILITY
-// -----------------------------------------------------
 
-window.sendTutorMessage = sendTutorMessage;
+// =====================================================
+// GLOBAL FUNCTION
+// =====================================================
 
-// Also support the previous function name.
-window.bookTutor = sendTutorMessage;
+window.sendTutorMessage =
+    sendTutorMessage;
 
-console.log("✅ sendTutorMessage() is available globally");
+
+// Backward compatibility
+
+window.bookTutor =
+    sendTutorMessage;
+
+
+console.log(
+    "✅ sendTutorMessage() is globally available"
+);
