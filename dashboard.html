@@ -40,111 +40,769 @@
 
 <body>
 
-    <!-- =====================================================
-         DASHBOARD HEADER
-    ====================================================== -->
 
-    <header class="dashboard-header">
+<!-- =====================================================
+     DASHBOARD HEADER
+====================================================== -->
 
-        <div class="header-top">
+<header class="dashboard-header">
 
-            <!-- BRAND -->
-            <a
-                href="./dashboard.html"
-                class="brand-area"
-                aria-label="Mwaniki Scholars Student Dashboard"
+    <div class="header-top">
+
+        <a
+            href="./dashboard.html"
+            class="brand-area"
+            aria-label="Mwaniki Scholars Student Dashboard"
+        >
+
+            <div
+                class="brand-icon"
+                aria-hidden="true"
+            >
+                🩺
+            </div>
+
+            <div class="brand-text">
+
+                <div class="brand-name">
+                    Mwaniki Scholars
+                </div>
+
+                <div class="brand-subtitle">
+                    Medical Learning Platform
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <div class="header-actions">
+
+            <button
+                type="button"
+                id="notificationButton"
+                class="header-action-button"
+                aria-label="View notifications"
+            >
+                🔔
+
+                <span
+                    id="notificationCount"
+                    class="notification-count"
+                >
+                    0
+                </span>
+
+            </button>
+
+
+            <button
+                type="button"
+                id="profileButton"
+                class="profile-button"
+                aria-label="Open student profile"
             >
 
-                <div
-                    class="brand-icon"
+                <span
+                    id="profileInitial"
+                    class="profile-initial"
+                >
+                    S
+                </span>
+
+                <span
+                    id="profileName"
+                    class="profile-name"
+                >
+                    Student
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         MAIN NAVIGATION
+    ================================================== -->
+
+    <nav
+        class="dashboard-navigation"
+        aria-label="Main dashboard navigation"
+    >
+
+        <a
+            href="#overviewSection"
+            class="dashboard-nav-link active"
+        >
+            <span aria-hidden="true">🏠</span>
+            <span>Overview</span>
+        </a>
+
+
+        <a
+            href="#coursesSection"
+            class="dashboard-nav-link"
+        >
+            <span aria-hidden="true">📚</span>
+            <span>Courses</span>
+        </a>
+
+
+        <a
+            href="#notesSection"
+            class="dashboard-nav-link"
+        >
+            <span aria-hidden="true">📝</span>
+            <span>Notes Library</span>
+        </a>
+
+
+        <a
+            href="#quizSection"
+            class="dashboard-nav-link"
+        >
+            <span aria-hidden="true">🧠</span>
+            <span>Quizzes</span>
+        </a>
+
+
+        <a
+            href="#aiTutorSection"
+            class="dashboard-nav-link"
+        >
+            <span aria-hidden="true">🤖</span>
+            <span>AI Tutor</span>
+        </a>
+
+
+        <a
+            href="#tutorSection"
+            class="dashboard-nav-link"
+        >
+            <span aria-hidden="true">👨‍⚕️</span>
+            <span>Book a Tutor</span>
+        </a>
+
+
+        <a
+            href="#studentInboxSection"
+            class="dashboard-nav-link"
+        >
+            <span aria-hidden="true">📬</span>
+            <span>Inbox</span>
+        </a>
+
+    </nav>
+
+</header>
+
+
+
+<!-- =====================================================
+     MAIN DASHBOARD CONTENT
+====================================================== -->
+
+<main class="dashboard-main">
+
+
+    <!-- =================================================
+         WELCOME
+    ================================================== -->
+
+    <section
+        id="overviewSection"
+        class="welcome-section dashboard-section"
+    >
+
+        <div class="welcome-content">
+
+            <p class="welcome-label">
+                WELCOME BACK
+            </p>
+
+            <h1 id="welcomeMessage">
+                Welcome to Mwaniki Scholars
+            </h1>
+
+            <p class="welcome-description">
+                Continue your medical learning journey,
+                explore your courses, revise your notes,
+                and test your knowledge.
+            </p>
+
+        </div>
+
+
+        <div
+            class="welcome-illustration"
+            aria-hidden="true"
+        >
+            🩺📚
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STATISTICS
+    ================================================== -->
+
+    <section
+        class="statistics-grid"
+        aria-label="Learning statistics"
+    >
+
+        <article class="stat-card">
+
+            <div
+                class="stat-icon"
+                aria-hidden="true"
+            >
+                📚
+            </div>
+
+            <div class="stat-information">
+
+                <span class="stat-label">
+                    Available Courses
+                </span>
+
+                <strong
+                    id="totalCourses"
+                    class="stat-value"
+                >
+                    0
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <div
+                class="stat-icon"
+                aria-hidden="true"
+            >
+                📝
+            </div>
+
+            <div class="stat-information">
+
+                <span class="stat-label">
+                    Available Notes
+                </span>
+
+                <strong
+                    id="totalNotes"
+                    class="stat-value"
+                >
+                    0
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <div
+                class="stat-icon"
+                aria-hidden="true"
+            >
+                🧠
+            </div>
+
+            <div class="stat-information">
+
+                <span class="stat-label">
+                    Available Quizzes
+                </span>
+
+                <strong
+                    id="totalQuizzes"
+                    class="stat-value"
+                >
+                    0
+                </strong>
+
+            </div>
+
+        </article>
+
+
+        <article class="stat-card">
+
+            <div
+                class="stat-icon"
+                aria-hidden="true"
+            >
+                🎯
+            </div>
+
+            <div class="stat-information">
+
+                <span class="stat-label">
+                    Learning Progress
+                </span>
+
+                <strong
+                    id="learningProgress"
+                    class="stat-value"
+                >
+                    0%
+                </strong>
+
+            </div>
+
+        </article>
+
+    </section>
+
+
+
+    <!-- =================================================
+         COURSES
+    ================================================== -->
+
+    <section
+        id="coursesSection"
+        class="dashboard-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
                     aria-hidden="true"
                 >
-                    🩺
+                    📚
+                </span>
+
+                <div>
+
+                    <h2>
+                        Course Library
+                    </h2>
+
+                    <p>
+                        Explore medical courses and their learning units.
+                    </p>
+
                 </div>
 
-                <div class="brand-text">
+            </div>
 
-                    <div class="brand-name">
-                        Mwaniki Scholars
-                    </div>
 
-                    <div class="brand-subtitle">
-                        Medical Learning Platform
-                    </div>
+            <button
+                type="button"
+                id="refreshCoursesButton"
+                class="section-action-button"
+            >
+                Refresh
+            </button>
+
+        </div>
+
+
+        <div
+            id="coursesLoading"
+            class="loading-message"
+        >
+            Loading courses...
+        </div>
+
+
+        <div
+            id="coursesError"
+            class="error-message"
+            hidden
+        >
+            Unable to load courses.
+        </div>
+
+
+        <div
+            id="coursesContainer"
+            class="courses-grid"
+        >
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         NOTES
+    ================================================== -->
+
+    <section
+        id="notesSection"
+        class="dashboard-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
+                    aria-hidden="true"
+                >
+                    📝
+                </span>
+
+                <div>
+
+                    <h2>
+                        Notes Library
+                    </h2>
+
+                    <p>
+                        Access published medical notes and study materials.
+                    </p>
 
                 </div>
 
-            </a>
+            </div>
 
 
-            <!-- HEADER ACTIONS -->
-            <div class="header-actions">
+            <button
+                type="button"
+                id="refreshNotesButton"
+                class="section-action-button"
+            >
+                Refresh
+            </button>
 
-                <button
-                    type="button"
-                    id="notificationButton"
-                    class="header-action-button"
-                    aria-label="View notifications"
+        </div>
+
+
+        <div
+            id="notesLoading"
+            class="loading-message"
+        >
+            Loading notes...
+        </div>
+
+
+        <div
+            id="notesError"
+            class="error-message"
+            hidden
+        >
+            Unable to load notes.
+        </div>
+
+
+        <div
+            id="notesEmpty"
+            class="empty-message"
+            hidden
+        >
+            No published notes are available yet.
+        </div>
+
+
+        <div
+            id="notesContainer"
+            class="notes-grid"
+        >
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         QUIZZES
+    ================================================== -->
+
+    <section
+        id="quizSection"
+        class="dashboard-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
+                    aria-hidden="true"
                 >
-                    🔔
-                    <span
-                        id="notificationCount"
-                        class="notification-count"
-                    >
-                        0
-                    </span>
-                </button>
+                    🧠
+                </span>
 
+                <div>
 
-                <button
-                    type="button"
-                    id="profileButton"
-                    class="profile-button"
-                    aria-label="Open student profile"
-                >
+                    <h2>
+                        Quiz Practice
+                    </h2>
 
-                    <span
-                        id="profileInitial"
-                        class="profile-initial"
-                    >
-                        S
-                    </span>
+                    <p>
+                        Test your understanding of medical topics.
+                    </p>
 
-                    <span
-                        id="profileName"
-                        class="profile-name"
-                    >
-                        Student
-                    </span>
-
-                </button>
+                </div>
 
             </div>
 
         </div>
 
 
-        <!-- =================================================
-             MAIN NAVIGATION
-        ================================================== -->
+        <div
+            id="quizContainer"
+            class="quiz-preview-container"
+        >
+
+            <div class="empty-message">
+                Select a course to begin your quiz practice.
+            </div>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         AI TUTOR
+    ================================================== -->
+
+    <section
+        id="aiTutorSection"
+        class="dashboard-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
+                    aria-hidden="true"
+                >
+                    🤖
+                </span>
+
+                <div>
+
+                    <h2>
+                        AI Tutor
+                    </h2>
+
+                    <p>
+                        Ask questions and improve your medical knowledge.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="aiTutorContainer"
+            class="section-content"
+        >
+
+            <p>
+                Use the Mwaniki Scholars AI Tutor for guided medical learning.
+            </p>
+
+
+            <a
+                href="./aiTutor.html"
+                class="primary-action-button"
+            >
+                Open AI Tutor
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STUDENT TUTOR BOOKING
+         
+         IMPORTANT:
+         This points to the STUDENT tutor-booking page.
+         It does NOT point to tutor.html.
+    ================================================== -->
+
+    <section
+        id="tutorSection"
+        class="dashboard-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
+                    aria-hidden="true"
+                >
+                    👨‍⚕️
+                </span>
+
+                <div>
+
+                    <h2>
+                        Book a Tutor
+                    </h2>
+
+                    <p>
+                        Connect with a medical tutor for guided learning.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="tutorBookingContainer"
+            class="section-content"
+        >
+
+            <p>
+                Request academic support from a medical tutor.
+            </p>
+
+
+            <a
+                href="./studentTutor.html"
+                class="primary-action-button"
+            >
+                Book a Tutor
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         STUDENT INBOX
+    ================================================== -->
+
+    <section
+        id="studentInboxSection"
+        class="dashboard-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
+                    aria-hidden="true"
+                >
+                    📬
+                </span>
+
+                <div>
+
+                    <h2>
+                        Student Inbox
+                    </h2>
+
+                    <p>
+                        View messages and updates from Mwaniki Scholars.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="studentInboxContainer"
+            class="section-content"
+        >
+
+            <p>
+                Your messages will appear here.
+            </p>
+
+
+            <a
+                href="./studentInbox.html"
+                class="primary-action-button"
+            >
+                Open Inbox
+            </a>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         QUICK ACCESS
+    ================================================== -->
+
+    <section
+        class="dashboard-section quick-links-section"
+    >
+
+        <div class="section-header">
+
+            <div class="section-heading">
+
+                <span
+                    class="section-icon"
+                    aria-hidden="true"
+                >
+                    ⚡
+                </span>
+
+                <div>
+
+                    <h2>
+                        Quick Access
+                    </h2>
+
+                    <p>
+                        Quickly access important learning tools.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
 
         <nav
-            class="dashboard-navigation"
-            aria-label="Main dashboard navigation"
+            class="dashboard-quick-links"
+            aria-label="Quick access links"
         >
 
             <a
-                href="#overviewSection"
-                class="dashboard-nav-link active"
-            >
-                <span aria-hidden="true">🏠</span>
-                <span>Overview</span>
-            </a>
-
-
-            <a
                 href="#coursesSection"
-                class="dashboard-nav-link"
+                class="quick-link"
             >
                 <span aria-hidden="true">📚</span>
                 <span>Courses</span>
@@ -153,16 +811,16 @@
 
             <a
                 href="#notesSection"
-                class="dashboard-nav-link"
+                class="quick-link"
             >
                 <span aria-hidden="true">📝</span>
-                <span>Notes Library</span>
+                <span>Notes</span>
             </a>
 
 
             <a
                 href="#quizSection"
-                class="dashboard-nav-link"
+                class="quick-link"
             >
                 <span aria-hidden="true">🧠</span>
                 <span>Quizzes</span>
@@ -171,7 +829,7 @@
 
             <a
                 href="#aiTutorSection"
-                class="dashboard-nav-link"
+                class="quick-link"
             >
                 <span aria-hidden="true">🤖</span>
                 <span>AI Tutor</span>
@@ -180,16 +838,16 @@
 
             <a
                 href="#tutorSection"
-                class="dashboard-nav-link"
+                class="quick-link"
             >
                 <span aria-hidden="true">👨‍⚕️</span>
-                <span>Book a Tutor</span>
+                <span>Book Tutor</span>
             </a>
 
 
             <a
                 href="#studentInboxSection"
-                class="dashboard-nav-link"
+                class="quick-link"
             >
                 <span aria-hidden="true">📬</span>
                 <span>Inbox</span>
@@ -197,834 +855,190 @@
 
         </nav>
 
-    </header>
+    </section>
 
 
 
-    <!-- =====================================================
-         MAIN DASHBOARD CONTENT
-    ====================================================== -->
+    <!-- =================================================
+         WHATSAPP
+    ================================================== -->
 
-    <main class="dashboard-main">
-
-
-        <!-- =================================================
-             WELCOME SECTION
-        ================================================== -->
-
-        <section
-            id="overviewSection"
-            class="welcome-section dashboard-section"
-        >
-
-            <div class="welcome-content">
-
-                <p class="welcome-label">
-                    WELCOME BACK
-                </p>
-
-                <h1 id="welcomeMessage">
-                    Welcome to Mwaniki Scholars
-                </h1>
-
-                <p class="welcome-description">
-                    Continue your medical learning journey,
-                    explore your courses, revise your notes,
-                    and test your knowledge.
-                </p>
-
-            </div>
-
-
-            <div
-                class="welcome-illustration"
-                aria-hidden="true"
-            >
-                🩺📚
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             STATISTICS
-        ================================================== -->
-
-        <section
-            class="statistics-grid"
-            aria-label="Learning statistics"
-        >
-
-            <article class="stat-card">
-
-                <div
-                    class="stat-icon"
-                    aria-hidden="true"
-                >
-                    📚
-                </div>
-
-                <div class="stat-information">
-
-                    <span class="stat-label">
-                        Available Courses
-                    </span>
-
-                    <strong
-                        id="totalCourses"
-                        class="stat-value"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
-            </article>
-
-
-            <article class="stat-card">
-
-                <div
-                    class="stat-icon"
-                    aria-hidden="true"
-                >
-                    📝
-                </div>
-
-                <div class="stat-information">
-
-                    <span class="stat-label">
-                        Available Notes
-                    </span>
-
-                    <strong
-                        id="totalNotes"
-                        class="stat-value"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
-            </article>
-
-
-            <article class="stat-card">
-
-                <div
-                    class="stat-icon"
-                    aria-hidden="true"
-                >
-                    🧠
-                </div>
-
-                <div class="stat-information">
-
-                    <span class="stat-label">
-                        Available Quizzes
-                    </span>
-
-                    <strong
-                        id="totalQuizzes"
-                        class="stat-value"
-                    >
-                        0
-                    </strong>
-
-                </div>
-
-            </article>
-
-
-            <article class="stat-card">
-
-                <div
-                    class="stat-icon"
-                    aria-hidden="true"
-                >
-                    🎯
-                </div>
-
-                <div class="stat-information">
-
-                    <span class="stat-label">
-                        Learning Progress
-                    </span>
-
-                    <strong
-                        id="learningProgress"
-                        class="stat-value"
-                    >
-                        0%
-                    </strong>
-
-                </div>
-
-            </article>
-
-        </section>
-
-
-
-        <!-- =================================================
-             COURSES SECTION
-        ================================================== -->
-
-        <section
-            id="coursesSection"
-            class="dashboard-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        📚
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            Course Library
-                        </h2>
-
-                        <p>
-                            Explore medical courses and their learning units.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="refreshCoursesButton"
-                    class="section-action-button"
-                >
-                    Refresh
-                </button>
-
-            </div>
-
-
-            <div
-                id="coursesLoading"
-                class="loading-message"
-            >
-                Loading courses...
-            </div>
-
-
-            <div
-                id="coursesError"
-                class="error-message"
-                hidden
-            >
-                Unable to load courses.
-            </div>
-
-
-            <div
-                id="coursesContainer"
-                class="courses-grid"
-            >
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             NOTES LIBRARY SECTION
-        ================================================== -->
-
-        <section
-            id="notesSection"
-            class="dashboard-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        📝
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            Notes Library
-                        </h2>
-
-                        <p>
-                            Access published medical notes and study materials.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="refreshNotesButton"
-                    class="section-action-button"
-                >
-                    Refresh
-                </button>
-
-            </div>
-
-
-            <div
-                id="notesLoading"
-                class="loading-message"
-            >
-                Loading notes...
-            </div>
-
-
-            <div
-                id="notesError"
-                class="error-message"
-                hidden
-            >
-                Unable to load notes.
-            </div>
-
-
-            <div
-                id="notesEmpty"
-                class="empty-message"
-                hidden
-            >
-                No published notes are available yet.
-            </div>
-
-
-            <div
-                id="notesContainer"
-                class="notes-grid"
-            >
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             QUIZ SECTION
-        ================================================== -->
-
-        <section
-            id="quizSection"
-            class="dashboard-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        🧠
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            Quiz Practice
-                        </h2>
-
-                        <p>
-                            Test your understanding of medical topics.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="quizContainer"
-                class="quiz-preview-container"
-            >
-
-                <div class="empty-message">
-
-                    Select a course to begin your quiz practice.
-
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             AI TUTOR SECTION
-        ================================================== -->
-
-        <section
-            id="aiTutorSection"
-            class="dashboard-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        🤖
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            AI Tutor
-                        </h2>
-
-                        <p>
-                            Ask questions and improve your medical knowledge.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="aiTutorContainer"
-                class="section-content"
-            >
-
-                <p>
-                    Your AI Tutor will appear here.
-                </p>
-
-                <a
-                    href="./aiTutor.html"
-                    class="primary-action-button"
-                >
-                    Open AI Tutor
-                </a>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             TUTOR BOOKING SECTION
-        ================================================== -->
-
-        <section
-            id="tutorSection"
-            class="dashboard-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        👨‍⚕️
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            Tutor Booking
-                        </h2>
-
-                        <p>
-                            Connect with a medical tutor for guided learning.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="tutorBookingContainer"
-                class="section-content"
-            >
-
-                <p>
-                    Book a tutor to receive additional academic support.
-                </p>
-
-                <a
-                    href="./tutor.html"
-                    class="primary-action-button"
-                >
-                    Book a Tutor
-                </a>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             STUDENT INBOX SECTION
-        ================================================== -->
-
-        <section
-            id="studentInboxSection"
-            class="dashboard-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        📬
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            Student Inbox
-                        </h2>
-
-                        <p>
-                            View messages and updates from Mwaniki Scholars.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="studentInboxContainer"
-                class="section-content"
-            >
-
-                <p>
-                    Your messages will appear here.
-                </p>
-
-                <a
-                    href="./studentInbox.html"
-                    class="primary-action-button"
-                >
-                    Open Inbox
-                </a>
-
-            </div>
-
-        </section>
-
-
-
-        <!-- =================================================
-             QUICK LINKS
-        ================================================== -->
-
-        <section
-            class="dashboard-section quick-links-section"
-        >
-
-            <div class="section-header">
-
-                <div class="section-heading">
-
-                    <span
-                        class="section-icon"
-                        aria-hidden="true"
-                    >
-                        ⚡
-                    </span>
-
-                    <div>
-
-                        <h2>
-                            Quick Access
-                        </h2>
-
-                        <p>
-                            Quickly access important learning tools.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <nav
-                class="dashboard-quick-links"
-                aria-label="Quick access links"
-            >
-
-                <a
-                    href="#coursesSection"
-                    class="quick-link"
-                >
-                    <span aria-hidden="true">📚</span>
-                    <span>Courses</span>
-                </a>
-
-
-                <a
-                    href="#notesSection"
-                    class="quick-link"
-                >
-                    <span aria-hidden="true">📝</span>
-                    <span>Notes</span>
-                </a>
-
-
-                <a
-                    href="#quizSection"
-                    class="quick-link"
-                >
-                    <span aria-hidden="true">🧠</span>
-                    <span>Quizzes</span>
-                </a>
-
-
-                <a
-                    href="#aiTutorSection"
-                    class="quick-link"
-                >
-                    <span aria-hidden="true">🤖</span>
-                    <span>AI Tutor</span>
-                </a>
-
-
-                <a
-                    href="#studentInboxSection"
-                    class="quick-link"
-                >
-                    <span aria-hidden="true">📬</span>
-                    <span>Inbox</span>
-                </a>
-
-            </nav>
-
-        </section>
-
-
-
-        <!-- =================================================
-             WHATSAPP CHANNEL
-        ================================================== -->
-
-        <section
-            class="dashboard-section contact-section"
-        >
-
-            <div class="section-heading">
-
-                <span
-                    class="section-icon"
-                    aria-hidden="true"
-                >
-                    💬
-                </span>
-
-                <div>
-
-                    <h2>
-                        Stay Connected
-                    </h2>
-
-                    <p>
-                        Join the Mwaniki Scholars WhatsApp channel for updates.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <a
-                href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
-                class="whatsapp-button"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                <span aria-hidden="true">💬</span>
-                Join WhatsApp Channel
-            </a>
-
-        </section>
-
-    </main>
-
-
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
-    <footer class="dashboard-footer">
-
-        <p class="footer-main-text">
-            © 2026 Mwaniki Scholars.
-        </p>
-
-        <p class="footer-subtext">
-            Medical Learning Platform.
-            Powered by Kenyan Medical Practitioners.
-        </p>
-
-    </footer>
-
-
-
-    <!-- =====================================================
-         NOTIFICATION PANEL
-    ====================================================== -->
-
-    <aside
-        id="notificationPanel"
-        class="notification-panel"
-        hidden
-        aria-label="Notifications"
+    <section
+        class="dashboard-section contact-section"
     >
 
-        <div class="panel-header">
+        <div class="section-heading">
 
-            <h2>
-                Notifications
-            </h2>
-
-            <button
-                type="button"
-                id="closeNotificationPanel"
-                class="close-panel-button"
-                aria-label="Close notifications"
+            <span
+                class="section-icon"
+                aria-hidden="true"
             >
-                ✕
-            </button>
+                💬
+            </span>
 
+            <div>
+
+                <h2>
+                    Stay Connected
+                </h2>
+
+                <p>
+                    Join the Mwaniki Scholars WhatsApp channel for updates.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <a
+            href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
+            class="whatsapp-button"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            <span aria-hidden="true">💬</span>
+            Join WhatsApp Channel
+        </a>
+
+    </section>
+
+</main>
+
+
+
+<!-- =====================================================
+     FOOTER
+====================================================== -->
+
+<footer class="dashboard-footer">
+
+    <p class="footer-main-text">
+        © 2026 Mwaniki Scholars.
+    </p>
+
+    <p class="footer-subtext">
+        Medical Learning Platform.
+        Powered by Kenyan Medical Practitioners.
+    </p>
+
+</footer>
+
+
+
+<!-- =====================================================
+     NOTIFICATION PANEL
+====================================================== -->
+
+<aside
+    id="notificationPanel"
+    class="notification-panel"
+    hidden
+    aria-label="Notifications"
+>
+
+    <div class="panel-header">
+
+        <h2>
+            Notifications
+        </h2>
+
+        <button
+            type="button"
+            id="closeNotificationPanel"
+            class="close-panel-button"
+            aria-label="Close notifications"
+        >
+            ✕
+        </button>
+
+    </div>
+
+
+    <div
+        id="notificationList"
+        class="notification-list"
+    >
+
+        <p>
+            No new notifications.
+        </p>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =====================================================
+     PROFILE PANEL
+====================================================== -->
+
+<aside
+    id="profilePanel"
+    class="profile-panel"
+    hidden
+    aria-label="Student profile"
+>
+
+    <div class="panel-header">
+
+        <h2>
+            Student Profile
+        </h2>
+
+        <button
+            type="button"
+            id="closeProfilePanel"
+            class="close-panel-button"
+            aria-label="Close profile"
+        >
+            ✕
+        </button>
+
+    </div>
+
+
+    <div class="profile-panel-content">
+
+        <div
+            id="profilePanelName"
+            class="profile-panel-name"
+        >
+            Student
         </div>
 
 
         <div
-            id="notificationList"
-            class="notification-list"
+            id="profilePanelEmail"
+            class="profile-panel-email"
         >
-
-            <p>
-                No new notifications.
-            </p>
-
-        </div>
-
-    </aside>
-
-
-
-    <!-- =====================================================
-         PROFILE PANEL
-    ====================================================== -->
-
-    <aside
-        id="profilePanel"
-        class="profile-panel"
-        hidden
-        aria-label="Student profile"
-    >
-
-        <div class="panel-header">
-
-            <h2>
-                Student Profile
-            </h2>
-
-            <button
-                type="button"
-                id="closeProfilePanel"
-                class="close-panel-button"
-                aria-label="Close profile"
-            >
-                ✕
-            </button>
-
+            Not available
         </div>
 
 
-        <div class="profile-panel-content">
+        <button
+            type="button"
+            id="logoutButton"
+            class="logout-button"
+        >
+            Log Out
+        </button>
 
-            <div
-                id="profilePanelName"
-                class="profile-panel-name"
-            >
-                Student
-            </div>
+    </div>
 
-
-            <div
-                id="profilePanelEmail"
-                class="profile-panel-email"
-            >
-                Not available
-            </div>
-
-
-            <button
-                type="button"
-                id="logoutButton"
-                class="logout-button"
-            >
-                Log Out
-            </button>
-
-        </div>
-
-    </aside>
+</aside>
 
 
 
-    <!-- =====================================================
-         DASHBOARD JAVASCRIPT
-    ====================================================== -->
+<!-- =====================================================
+     DASHBOARD JAVASCRIPT
+====================================================== -->
 
-    <script
-        type="module"
-        src="./dashboard.js"
-    ></script>
+<script
+    type="module"
+    src="./dashboard.js"
+></script>
 
 </body>
 
