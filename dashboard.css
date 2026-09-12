@@ -2911,4 +2911,194 @@ footer {
     }
 
 }
+/* =========================================================
+   MWANIKI SCHOLARS
+   STUDENT PROFILE PHOTO SYSTEM
+========================================================= */
 
+
+/* =========================================================
+   PROFILE BUTTON
+========================================================= */
+
+.profile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    border: 0;
+
+    cursor: pointer;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+}
+
+
+/* =========================================================
+   DASHBOARD HEADER PHOTO
+========================================================= */
+
+.dashboard-profile-photo {
+
+    width: 42px;
+    height: 42px;
+
+    min-width: 42px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    display: none;
+
+    background:
+        #e6f4f7;
+
+    border:
+        2px solid
+        rgba(255,255,255,.9);
+
+    box-shadow:
+        0 4px 14px
+        rgba(0,0,0,.18);
+
+}
+
+
+.dashboard-profile-photo.visible {
+
+    display: block;
+
+}
+
+
+/* =========================================================
+   PROFILE NAME
+========================================================= */
+
+#dashboardProfileName {
+
+    font-weight:
+        700;
+
+    white-space:
+        nowrap;
+
+}
+
+
+/* =========================================================
+   HERO AVATAR
+========================================================= */
+
+.hero-avatar {
+
+    width: 92px;
+    height: 92px;
+
+    min-width: 92px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e6f4f7,
+            #d7edf2
+        );
+
+    border:
+        4px solid
+        rgba(255,255,255,.85);
+
+    box-shadow:
+        0 12px 30px
+        rgba(0,0,0,.18);
+
+    font-size: 42px;
+
+}
+
+
+/* =========================================================
+   HERO PROFILE PHOTO
+========================================================= */
+
+#dashboardHeroProfilePhoto {
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    border-radius: 50%;
+
+    display: none;
+
+}
+
+
+#dashboardHeroProfilePhoto.visible {
+
+    display: block;
+
+}
+
+
+/* =========================================================
+   HERO FALLBACK
+========================================================= */
+
+#dashboardHeroFallback {
+
+    display: inline;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .dashboard-profile-photo {
+
+        width: 36px;
+        height: 36px;
+
+        min-width: 36px;
+
+    }
+
+
+    #dashboardProfileName {
+
+        display: none;
+
+    }
+
+
+    .hero-avatar {
+
+        width: 76px;
+        height: 76px;
+
+        min-width: 76px;
+
+        font-size: 34px;
+
+    }
+
+}
