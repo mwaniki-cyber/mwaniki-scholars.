@@ -1376,3 +1376,350 @@ border-radius:5px;
         height: 27px;
     }
 }
+/* =========================================================
+   MWANIKI SCHOLARS
+   FORCE DESKTOP NAVIGATION BACK TO HORIZONTAL
+   ========================================================= */
+
+/* Main dashboard header */
+header,
+.dashboard-header {
+    width: 100%;
+    min-height: 78px;
+
+    display: flex !important;
+    align-items: center !important;
+
+    flex-direction: row !important;
+
+    gap: 20px;
+
+    padding: 12px 28px;
+
+    position: relative !important;
+
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+
+    z-index: 1000;
+}
+
+
+/* Brand stays on the left */
+.brand-area {
+    display: flex !important;
+
+    align-items: center !important;
+
+    flex-direction: row !important;
+
+    flex-shrink: 0;
+
+    width: auto !important;
+
+    min-width: max-content;
+}
+
+
+/* Navigation container */
+nav,
+.main-navigation,
+.dashboard-nav,
+.nav-menu,
+.navigation {
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    gap: 4px !important;
+
+    width: auto !important;
+
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    flex: 1 1 auto !important;
+
+    position: static !important;
+
+    top: auto !important;
+
+    left: auto !important;
+
+    right: auto !important;
+
+    bottom: auto !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border: 0 !important;
+
+    box-shadow: none !important;
+
+    overflow-x: auto;
+
+    overflow-y: hidden;
+
+    scrollbar-width: none;
+}
+
+
+nav::-webkit-scrollbar,
+.main-navigation::-webkit-scrollbar,
+.dashboard-nav::-webkit-scrollbar,
+.nav-menu::-webkit-scrollbar,
+.navigation::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* Every navigation button/link stays horizontal */
+.nav-link {
+    display: inline-flex !important;
+
+    flex:
+        0 0 auto !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    justify-content: center !important;
+
+    gap: 7px !important;
+
+    width: auto !important;
+
+    min-width: max-content;
+
+    height: auto !important;
+
+    margin: 0 !important;
+
+    padding:
+        10px 13px !important;
+
+    position: static !important;
+
+    border: 0 !important;
+
+    border-radius: 10px !important;
+
+    background: transparent;
+
+    white-space: nowrap;
+
+    text-decoration: none;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        color .2s ease,
+        transform .2s ease;
+}
+
+
+/* Navigation icons */
+.nav-link span {
+    display: inline-flex !important;
+
+    width: auto !important;
+
+    min-width: auto !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    flex-shrink: 0;
+}
+
+
+/* Hover */
+.nav-link:hover {
+    background: #edf8f8 !important;
+
+    color: #087f8c !important;
+}
+
+
+/* Active */
+.nav-link.active {
+    background:
+        linear-gradient(
+            135deg,
+            #087f8c,
+            #0b969d
+        ) !important;
+
+    color: #ffffff !important;
+
+    box-shadow:
+        0 5px 14px
+        rgba(8, 127, 140, .18);
+}
+
+
+/* Header actions remain on the right */
+.header-actions {
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    gap: 8px;
+
+    flex-shrink: 0;
+
+    width: auto !important;
+
+    position: static !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+}
+
+
+/* Profile button */
+.profile,
+.notification-button {
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   REMOVE SIDEBAR BEHAVIOUR
+   ========================================================= */
+
+.sidebar,
+.dashboard-sidebar,
+.side-nav,
+.sidebar-nav {
+    position: static !important;
+
+    width: auto !important;
+
+    min-width: 0 !important;
+
+    height: auto !important;
+
+    min-height: 0 !important;
+
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    align-items: center !important;
+
+    padding: 0 !important;
+
+    margin: 0 !important;
+
+    background: transparent !important;
+
+    border: 0 !important;
+
+    box-shadow: none !important;
+}
+
+
+/* If the old layout had a content offset for the sidebar,
+   remove it */
+main,
+.dashboard-main,
+.dashboard-content,
+.content {
+    margin-left: 0 !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    header,
+    .dashboard-header {
+        flex-wrap: wrap;
+
+        padding:
+            11px 16px;
+    }
+
+
+    .brand-area {
+        flex: 0 0 auto;
+    }
+
+
+    nav,
+    .main-navigation,
+    .dashboard-nav,
+    .nav-menu,
+    .navigation {
+
+        order: 3;
+
+        flex-basis: 100% !important;
+
+        justify-content: flex-start !important;
+
+        width: 100% !important;
+
+        overflow-x: auto !important;
+    }
+
+
+    .header-actions {
+        margin-left: auto !important;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL SCREENS
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    header,
+    .dashboard-header {
+        min-height: auto;
+
+        padding:
+            10px 12px;
+    }
+
+
+    .nav-link {
+
+        padding:
+            9px 11px !important;
+
+        font-size: 12px;
+    }
+
+
+    .brand-subtitle {
+        display: none;
+    }
+
+}
