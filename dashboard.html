@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
@@ -11,15 +12,17 @@
 
     <meta
         name="description"
-        content="Mwaniki Scholars Medical Learning Platform for medical students and healthcare learners."
+        content="Mwaniki Scholars Medical University student dashboard."
     >
 
     <meta
-        name="author"
-        content="Mwaniki Scholars"
+        name="theme-color"
+        content="#183f45"
     >
 
-    <title>Mwaniki Scholars | Student Dashboard</title>
+    <title>
+        Mwaniki Scholars | Student Dashboard
+    </title>
 
     <link
         rel="icon"
@@ -34,29 +37,35 @@
 
 </head>
 
+
 <body>
 
-<!-- =====================================================
-     TOP HEADER
-====================================================== -->
+    <!-- =====================================================
+         DASHBOARD HEADER
+    ====================================================== -->
 
-<header class="dashboard-header">
+    <header class="dashboard-header">
 
-    <div class="header-top">
+
+        <!-- BRAND -->
 
         <a
             href="./dashboard.html"
-            class="brand-area"
-            aria-label="Mwaniki Scholars Student Dashboard"
+            class="dashboard-brand"
+            aria-label="Mwaniki Scholars Dashboard"
         >
 
-            <div class="brand-icon">
+            <div
+                class="brand-icon"
+                aria-hidden="true"
+            >
                 🩺
             </div>
 
+
             <div class="brand-text">
 
-                <div class="brand-name">
+                <div class="brand-title">
                     Mwaniki Scholars
                 </div>
 
@@ -69,32 +78,33 @@
         </a>
 
 
+
+        <!-- HEADER ACTIONS -->
+
         <div class="header-actions">
+
+
+            <!-- NOTIFICATIONS -->
 
             <button
                 type="button"
                 id="notificationButton"
-                class="header-action-button"
-                aria-label="View notifications"
+                class="header-icon-button"
+                aria-label="Notifications"
+                aria-expanded="false"
             >
-
                 🔔
-
-                <span
-                    id="notificationCount"
-                    class="notification-count"
-                >
-                    0
-                </span>
-
             </button>
 
+
+            <!-- PROFILE -->
 
             <button
                 type="button"
                 id="profileButton"
                 class="profile-button"
                 aria-label="Open student profile"
+                aria-expanded="false"
             >
 
                 <span
@@ -105,13 +115,16 @@
                 </span>
 
                 <span
-                    id="profileName"
-                    class="profile-name"
+                    id="profileButtonName"
+                    class="profile-button-name"
                 >
                     Student
                 </span>
 
-                <span class="profile-arrow">
+                <span
+                    class="profile-arrow"
+                    aria-hidden="true"
+                >
                     ▾
                 </span>
 
@@ -119,419 +132,474 @@
 
         </div>
 
-    </div>
+    </header>
 
 
-    <!-- =================================================
+
+    <!-- =====================================================
          HORIZONTAL NAVIGATION
-    ================================================== -->
+    ====================================================== -->
 
     <nav
-        class="dashboard-navigation"
-        aria-label="Main dashboard navigation"
+        class="dashboard-nav"
+        aria-label="Student dashboard navigation"
     >
 
-        <a
-            href="#overviewSection"
-            class="dashboard-nav-link active"
-        >
-            <span>🏠</span>
-            <span>Overview</span>
-        </a>
+        <div class="dashboard-nav-inner">
 
 
-        <a
-            href="#coursesSection"
-            class="dashboard-nav-link"
-        >
-            <span>📚</span>
-            <span>Courses</span>
-        </a>
+            <a
+                href="#overview"
+                class="dashboard-nav-link active"
+                data-section="overview"
+            >
+                Overview
+            </a>
 
 
-        <a
-            href="#notesSection"
-            class="dashboard-nav-link"
-        >
-            <span>📝</span>
-            <span>Notes Library</span>
-        </a>
+            <a
+                href="#courses"
+                class="dashboard-nav-link"
+                data-section="courses"
+            >
+                Courses
+            </a>
 
 
-        <a
-            href="#quizSection"
-            class="dashboard-nav-link"
-        >
-            <span>🧠</span>
-            <span>Quizzes</span>
-        </a>
+            <a
+                href="#notes"
+                class="dashboard-nav-link"
+                data-section="notes"
+            >
+                Notes Library
+            </a>
 
 
-        <a
-            href="#aiTutorSection"
-            class="dashboard-nav-link"
-        >
-            <span>🤖</span>
-            <span>AI Tutor</span>
-        </a>
+            <a
+                href="#quizzes"
+                class="dashboard-nav-link"
+                data-section="quizzes"
+            >
+                Quizzes
+            </a>
 
 
-        <a
-            href="#tutorSection"
-            class="dashboard-nav-link"
-        >
-            <span>👨‍⚕️</span>
-            <span>Book a Tutor</span>
-        </a>
+            <a
+                href="./aiTutor.html"
+                class="dashboard-nav-link"
+            >
+                AI Tutor
+            </a>
 
 
-        <a
-            href="#studentInboxSection"
-            class="dashboard-nav-link"
-        >
-            <span>📬</span>
-            <span>Inbox</span>
-        </a>
+            <a
+                href="./studentTutor.html"
+                class="dashboard-nav-link"
+            >
+                Book a Tutor
+            </a>
+
+
+            <a
+                href="./studentInbox.html"
+                class="dashboard-nav-link"
+            >
+                Inbox
+            </a>
+
+
+        </div>
 
     </nav>
 
-</header>
 
 
+    <!-- =====================================================
+         NOTIFICATION PANEL
+    ====================================================== -->
 
-<!-- =====================================================
-     NOTIFICATION PANEL
-====================================================== -->
-
-<aside
-    id="notificationPanel"
-    class="floating-panel notification-panel"
-    hidden
->
-
-    <div class="panel-header">
-
-        <h2>
-            Notifications
-        </h2>
-
-        <button
-            type="button"
-            id="closeNotificationPanel"
-            class="close-panel-button"
-        >
-            ✕
-        </button>
-
-    </div>
-
-    <div
-        id="notificationPanelContent"
-        class="panel-content"
+    <aside
+        id="notificationPanel"
+        class="dashboard-panel notification-panel"
+        hidden
     >
 
-        <div class="empty-panel">
-            No new notifications.
-        </div>
-
-    </div>
-
-</aside>
-
-
-
-<!-- =====================================================
-     PROFILE PANEL
-====================================================== -->
-
-<aside
-    id="profilePanel"
-    class="floating-panel profile-panel"
-    hidden
->
-
-    <div class="panel-header">
-
-        <h2>
-            Student Profile
-        </h2>
-
-        <button
-            type="button"
-            id="closeProfilePanel"
-            class="close-panel-button"
-            aria-label="Close profile"
-        >
-            ✕
-        </button>
-
-    </div>
-
-
-    <div class="profile-panel-content">
-
-        <div
-            id="profilePanelAvatar"
-            class="profile-panel-avatar"
-        >
-            S
-        </div>
-
-
-        <div
-            id="profilePanelName"
-            class="profile-panel-name"
-        >
-            Student
-        </div>
-
-
-        <div
-            id="profilePanelEmail"
-            class="profile-panel-email"
-        >
-            Not available
-        </div>
-
-
-        <div
-            id="profilePanelDetails"
-            class="profile-panel-details"
-        >
-
-            <div class="profile-detail-row">
-
-                <span>
-                    Course
-                </span>
-
-                <strong id="profilePanelCourse">
-                    Not available
-                </strong>
-
-            </div>
-
-
-            <div class="profile-detail-row">
-
-                <span>
-                    Level
-                </span>
-
-                <strong id="profilePanelLevel">
-                    Not available
-                </strong>
-
-            </div>
-
-        </div>
-
-
-        <button
-            type="button"
-            id="logoutButton"
-            class="logout-button"
-        >
-            Log Out
-        </button>
-
-    </div>
-
-</aside>
-
-
-
-<!-- =====================================================
-     MAIN DASHBOARD
-====================================================== -->
-
-<main class="dashboard-main">
-
-
-    <!-- =================================================
-         WELCOME SECTION
-    ================================================== -->
-
-    <section
-        id="overviewSection"
-        class="welcome-section dashboard-section"
-    >
-
-        <div class="welcome-content">
+        <div class="panel-header">
 
             <div>
 
-                <p class="eyebrow">
-                    STUDENT DASHBOARD
-                </p>
-
-                <h1 id="welcomeMessage">
-                    Welcome back, Student 👋
-                </h1>
-
-                <p class="welcome-description">
-                    Continue your medical learning journey,
-                    review your progress and discover what to
-                    study next.
-                </p>
-
-            </div>
-
-
-            <div class="welcome-date">
-
-                <span>
-                    Today
-                </span>
-
-                <strong id="currentDate">
-                    —
-                </strong>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         TRACK YOUR PROGRESS
-    ================================================== -->
-
-    <section class="dashboard-section">
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    YOUR LEARNING
+                <span class="panel-label">
+                    UPDATES
                 </span>
 
                 <h2>
-                    Track Your Progress
+                    Notifications
                 </h2>
 
             </div>
 
+
+            <button
+                type="button"
+                id="closeNotificationPanel"
+                class="close-panel-button"
+                aria-label="Close notifications"
+            >
+                ✕
+            </button>
+
         </div>
 
 
-        <div class="progress-dashboard-grid">
+        <div
+            id="notificationContent"
+            class="panel-content"
+        >
 
+            <div class="empty-panel-message">
 
-            <!-- Courses -->
-
-            <div class="progress-card">
-
-                <div class="progress-card-icon">
-                    📚
+                <div class="empty-icon">
+                    🔔
                 </div>
 
-                <div>
+                <h3>
+                    You're all caught up
+                </h3>
 
-                    <span class="progress-card-label">
-                        Courses
+                <p>
+                    New learning updates will appear here.
+                </p>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         PROFILE PANEL
+    ====================================================== -->
+
+    <aside
+        id="profilePanel"
+        class="dashboard-panel profile-panel"
+        hidden
+    >
+
+        <div class="panel-header">
+
+            <div>
+
+                <span class="panel-label">
+                    ACCOUNT
+                </span>
+
+                <h2>
+                    Student Profile
+                </h2>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="closeProfilePanel"
+                class="close-panel-button"
+                aria-label="Close profile"
+            >
+                ✕
+            </button>
+
+        </div>
+
+
+        <div class="profile-panel-content">
+
+
+            <div
+                id="profilePanelInitial"
+                class="large-profile-initial"
+            >
+                S
+            </div>
+
+
+            <div
+                id="profilePanelName"
+                class="profile-panel-name"
+            >
+                Student
+            </div>
+
+
+            <div
+                id="profilePanelEmail"
+                class="profile-panel-email"
+            >
+                Not available
+            </div>
+
+
+            <div class="profile-details">
+
+
+                <div class="profile-detail">
+
+                    <span class="profile-detail-label">
+                        Course
                     </span>
 
                     <strong
+                        id="profilePanelCourse"
+                    >
+                        Not available
+                    </strong>
+
+                </div>
+
+
+                <div class="profile-detail">
+
+                    <span class="profile-detail-label">
+                        Level
+                    </span>
+
+                    <strong
+                        id="profilePanelLevel"
+                    >
+                        Not available
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+
+            <button
+                type="button"
+                id="logoutButton"
+                class="logout-button"
+            >
+                Log Out
+            </button>
+
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =====================================================
+         MAIN DASHBOARD
+    ====================================================== -->
+
+    <main class="dashboard-main">
+
+
+        <!-- =================================================
+             WELCOME
+        ================================================== -->
+
+        <section
+            id="overview"
+            class="welcome-section"
+        >
+
+            <div class="welcome-content">
+
+                <span class="section-eyebrow">
+                    STUDENT DASHBOARD
+                </span>
+
+
+                <h1>
+                    Welcome back,
+                    <span id="welcomeName">
+                        Student
+                    </span>
+                </h1>
+
+
+                <p>
+                    Continue your medical studies, review
+                    your notes, test your knowledge and keep
+                    progressing through Mwaniki Scholars.
+                </p>
+
+            </div>
+
+
+            <div
+                class="welcome-illustration"
+                aria-hidden="true"
+            >
+
+                <div class="welcome-circle">
+                    🩺
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             TRACK YOUR PROGRESS
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="progress"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        YOUR LEARNING
+                    </span>
+
+                    <h2>
+                        Track Your Progress
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="progress-grid">
+
+
+                <!-- COURSES -->
+
+                <article class="progress-card">
+
+                    <div class="progress-card-top">
+
+                        <div class="progress-card-icon">
+                            📚
+                        </div>
+
+                        <span class="progress-card-label">
+                            COURSES
+                        </span>
+
+                    </div>
+
+
+                    <div
                         id="totalCourses"
-                        class="progress-card-value"
+                        class="progress-number"
                     >
                         0
-                    </strong>
-
-                    <span class="progress-card-note">
-                        Available to study
-                    </span>
-
-                </div>
-
-            </div>
+                    </div>
 
 
-            <!-- Notes -->
+                    <p>
+                        Available courses
+                    </p>
 
-            <div class="progress-card">
+                </article>
 
-                <div class="progress-card-icon">
-                    📝
-                </div>
 
-                <div>
 
-                    <span class="progress-card-label">
-                        Notes
-                    </span>
+                <!-- NOTES -->
 
-                    <strong
+                <article class="progress-card">
+
+                    <div class="progress-card-top">
+
+                        <div class="progress-card-icon">
+                            📝
+                        </div>
+
+                        <span class="progress-card-label">
+                            NOTES
+                        </span>
+
+                    </div>
+
+
+                    <div
                         id="totalNotes"
-                        class="progress-card-value"
+                        class="progress-number"
                     >
                         0
-                    </strong>
-
-                    <span class="progress-card-note">
-                        Published resources
-                    </span>
-
-                </div>
-
-            </div>
+                    </div>
 
 
-            <!-- Quizzes -->
+                    <p>
+                        Published study resources
+                    </p>
 
-            <div class="progress-card">
+                </article>
 
-                <div class="progress-card-icon">
-                    🧠
-                </div>
 
-                <div>
 
-                    <span class="progress-card-label">
-                        Quizzes
-                    </span>
+                <!-- QUIZZES -->
 
-                    <strong
+                <article class="progress-card">
+
+                    <div class="progress-card-top">
+
+                        <div class="progress-card-icon">
+                            🧠
+                        </div>
+
+                        <span class="progress-card-label">
+                            QUIZZES
+                        </span>
+
+                    </div>
+
+
+                    <div
                         id="totalQuizzes"
-                        class="progress-card-value"
+                        class="progress-number"
                     >
                         0
-                    </strong>
+                    </div>
 
-                    <span class="progress-card-note">
+
+                    <p>
                         Questions available
-                    </span>
+                    </p>
 
-                </div>
-
-            </div>
+                </article>
 
 
-            <!-- Learning Progress -->
 
-            <div class="progress-card progress-card-highlight">
+                <!-- LEARNING PROGRESS -->
 
-                <div class="progress-card-icon">
-                    📈
-                </div>
+                <article class="progress-card">
 
-                <div class="progress-stat-wide">
+                    <div class="progress-card-top">
 
-                    <span class="progress-card-label">
-                        Learning Progress
-                    </span>
+                        <div class="progress-card-icon">
+                            📈
+                        </div>
 
-                    <strong
-                        id="learningProgressValue"
-                        class="progress-card-value"
+                        <span class="progress-card-label">
+                            PROGRESS
+                        </span>
+
+                    </div>
+
+
+                    <div
+                        id="learningProgress"
+                        class="progress-number"
                     >
                         0%
-                    </strong>
+                    </div>
+
 
                     <div class="progress-track">
 
@@ -543,683 +611,757 @@
 
                     </div>
 
-                    <span
-                        id="learningProgressText"
-                        class="progress-card-note"
-                    >
-                        Keep learning to build your progress.
-                    </span>
 
-                </div>
+                    <p>
+                        Quiz learning progress
+                    </p>
+
+                </article>
+
 
             </div>
 
-        </div>
+        </section>
 
-    </section>
 
 
+        <!-- =================================================
+             RECENT COURSE
+        ================================================== -->
 
-    <!-- =================================================
-         RECENT COURSE + QUICK ACTIONS
-    ================================================== -->
-
-    <section class="dashboard-section">
-
-        <div class="feature-grid">
-
-
-            <!-- RECENT COURSE -->
-
-            <article class="recent-course-card">
-
-                <div class="card-top-line">
-
-                    <span class="section-kicker">
-                        RECENT COURSE
-                    </span>
-
-                    <span class="recent-badge">
-                        Recently viewed
-                    </span>
-
-                </div>
-
-
-                <div
-                    id="recentCourseContent"
-                    class="recent-course-content"
-                >
-
-                    <div class="recent-course-placeholder">
-
-                        <div class="placeholder-icon">
-                            📚
-                        </div>
-
-                        <h3>
-                            No recent course yet
-                        </h3>
-
-                        <p>
-                            Open a course from your library
-                            and it will appear here.
-                        </p>
-
-                        <a
-                            href="#coursesSection"
-                            class="primary-button"
-                        >
-                            Browse Courses
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-
-
-            <!-- QUICK ACTIONS -->
-
-            <article class="quick-actions-card">
-
-                <div class="card-top-line">
-
-                    <span class="section-kicker">
-                        QUICK ACTIONS
-                    </span>
-
-                </div>
-
-
-                <div class="quick-actions-grid">
-
-                    <a
-                        href="#coursesSection"
-                        class="quick-action"
-                    >
-
-                        <span>
-                            📚
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Browse Courses
-                            </strong>
-
-                            <small>
-                                Explore medical units
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-                    <a
-                        href="#notesSection"
-                        class="quick-action"
-                    >
-
-                        <span>
-                            📝
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Open Notes
-                            </strong>
-
-                            <small>
-                                Review study materials
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-                    <a
-                        href="#quizSection"
-                        class="quick-action"
-                    >
-
-                        <span>
-                            🧠
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Take a Quiz
-                            </strong>
-
-                            <small>
-                                Test your knowledge
-                            </small>
-
-                        </div>
-
-                    </a>
-
-
-                    <a
-                        href="#aiTutorSection"
-                        class="quick-action"
-                    >
-
-                        <span>
-                            🤖
-                        </span>
-
-                        <div>
-
-                            <strong>
-                                Ask AI Tutor
-                            </strong>
-
-                            <small>
-                                Get study assistance
-                            </small>
-
-                        </div>
-
-                    </a>
-
-                </div>
-
-            </article>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         CONTINUE LEARNING
-    ================================================== -->
-
-    <section class="dashboard-section">
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    PICK UP WHERE YOU LEFT OFF
-                </span>
-
-                <h2>
-                    Continue Learning
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <div
-            id="continueLearningArea"
-            class="continue-learning-area"
+        <section
+            class="dashboard-section"
+            id="recent-course"
         >
 
-            <div class="empty-learning-card">
-
-                <span>
-                    📖
-                </span>
+            <div class="section-heading">
 
                 <div>
 
-                    <strong>
-                        Your learning activity will appear here
-                    </strong>
+                    <span class="section-eyebrow">
+                        PICK UP WHERE YOU LEFT OFF
+                    </span>
+
+                    <h2>
+                        Recent Course
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <article
+                id="recentCourseCard"
+                class="recent-course-card"
+            >
+
+                <div class="recent-course-image">
+
+                    <img
+                        id="recentCourseImage"
+                        src="./favicon.svg"
+                        alt="Recent course"
+                        loading="lazy"
+                    >
+
+                </div>
+
+
+                <div class="recent-course-content">
+
+                    <span class="course-label">
+                        RECENTLY STUDIED
+                    </span>
+
+
+                    <h3
+                        id="recentCourseTitle"
+                    >
+                        No recent course
+                    </h3>
+
+
+                    <p
+                        id="recentCourseDescription"
+                    >
+                        Select a course from the course
+                        library to begin learning.
+                    </p>
+
+
+                    <a
+                        id="continueRecentCourse"
+                        href="#courses"
+                        class="primary-button"
+                    >
+                        Browse Courses
+                    </a>
+
+                </div>
+
+            </article>
+
+        </section>
+
+
+
+        <!-- =================================================
+             QUICK ACTIONS
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="quick-actions"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        QUICK ACCESS
+                    </span>
+
+                    <h2>
+                        Continue Learning
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="quick-actions-grid">
+
+
+                <!-- COURSES -->
+
+                <a
+                    href="#courses"
+                    class="quick-action-card"
+                >
+
+                    <div class="quick-action-icon">
+                        📚
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Course Library
+                        </h3>
+
+                        <p>
+                            Explore your medical courses.
+                        </p>
+
+                    </div>
+
+                    <span class="quick-action-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+
+                <!-- NOTES -->
+
+                <a
+                    href="#notes"
+                    class="quick-action-card"
+                >
+
+                    <div class="quick-action-icon">
+                        📖
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Notes Library
+                        </h3>
+
+                        <p>
+                            Review your study materials.
+                        </p>
+
+                    </div>
+
+                    <span class="quick-action-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+
+                <!-- QUIZZES -->
+
+                <a
+                    href="#quizzes"
+                    class="quick-action-card"
+                >
+
+                    <div class="quick-action-icon">
+                        🧠
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Quiz Centre
+                        </h3>
+
+                        <p>
+                            Test and strengthen your knowledge.
+                        </p>
+
+                    </div>
+
+                    <span class="quick-action-arrow">
+                        →
+                    </span>
+
+                </a>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             RECOMMENDED
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="recommendations"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        RECOMMENDED FOR YOU
+                    </span>
+
+                    <h2>
+                        Keep Learning
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="recommendationsGrid"
+                class="recommendations-grid"
+            >
+
+                <div class="loading-card">
+
+                    <div class="loading-spinner"></div>
 
                     <p>
-                        Start a course to begin tracking your
-                        learning journey.
+                        Loading recommendations...
                     </p>
 
                 </div>
 
             </div>
 
-        </div>
-
-    </section>
+        </section>
 
 
 
-    <!-- =================================================
-         RECOMMENDED COURSES
-    ================================================== -->
+        <!-- =================================================
+             COURSE LIBRARY
+        ================================================== -->
 
-    <section
-        id="coursesSection"
-        class="dashboard-section"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    DISCOVER
-                </span>
-
-                <h2>
-                    Recommended for You
-                </h2>
-
-                <p>
-                    Explore courses from the Mwaniki Scholars
-                    medical learning library.
-                </p>
-
-            </div>
-
-            <button
-                type="button"
-                id="refreshCoursesButton"
-                class="secondary-button"
-            >
-                ↻ Refresh
-            </button>
-
-        </div>
-
-
-        <div
-            id="recommendedCourses"
-            class="recommended-grid"
+        <section
+            class="dashboard-section"
+            id="courses"
         >
 
-            <div class="loading-card">
-                Loading courses...
-            </div>
+            <div class="section-heading">
 
-        </div>
+                <div>
 
-    </section>
+                    <span class="section-eyebrow">
+                        MEDICAL EDUCATION
+                    </span>
 
+                    <h2>
+                        Course Library
+                    </h2>
 
-
-    <!-- =================================================
-         COURSE LIBRARY
-    ================================================== -->
-
-    <section class="dashboard-section">
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    FULL LIBRARY
-                </span>
-
-                <h2>
-                    Course Library
-                </h2>
-
-            </div>
-
-        </div>
+                </div>
 
 
-        <div
-            id="courseLibrary"
-            class="course-library-grid"
-        >
-
-            <div class="loading-card">
-                Loading course library...
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         NOTES
-    ================================================== -->
-
-    <section
-        id="notesSection"
-        class="dashboard-section"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    STUDY MATERIALS
-                </span>
-
-                <h2>
-                    Latest Notes
-                </h2>
-
-                <p>
-                    Access published notes and learning resources.
-                </p>
-
-            </div>
-
-            <button
-                type="button"
-                id="refreshNotesButton"
-                class="secondary-button"
-            >
-                ↻ Refresh
-            </button>
-
-        </div>
-
-
-        <div
-            id="notesLibrary"
-            class="notes-grid"
-        >
-
-            <div class="loading-card">
-                Loading notes...
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         QUIZZES
-    ================================================== -->
-
-    <section
-        id="quizSection"
-        class="dashboard-section"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    TEST YOUR KNOWLEDGE
-                </span>
-
-                <h2>
-                    Quiz Centre
-                </h2>
-
-                <p>
-                    Challenge yourself with questions from
-                    your medical courses.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="quiz-dashboard-card">
-
-            <div class="quiz-dashboard-icon">
-                🧠
-            </div>
-
-            <div class="quiz-dashboard-content">
-
-                <span class="section-kicker">
-                    AVAILABLE QUESTIONS
-                </span>
-
-                <strong
-                    id="quizCentreCount"
-                    class="quiz-big-number"
+                <button
+                    type="button"
+                    id="refreshCoursesButton"
+                    class="secondary-button"
                 >
-                    0
-                </strong>
-
-                <p>
-                    Questions are connected to your courses
-                    and units.
-                </p>
+                    Refresh
+                </button>
 
             </div>
 
 
-            <a
-                href="#coursesSection"
-                class="primary-button"
+            <div
+                id="courseGrid"
+                class="course-grid"
             >
-                Choose a Course
+
+                <div class="loading-card">
+
+                    <div class="loading-spinner"></div>
+
+                    <p>
+                        Loading courses...
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             NOTES LIBRARY
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="notes"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        STUDY MATERIALS
+                    </span>
+
+                    <h2>
+                        Latest Notes
+                    </h2>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="refreshNotesButton"
+                    class="secondary-button"
+                >
+                    Refresh
+                </button>
+
+            </div>
+
+
+            <div
+                id="notesGrid"
+                class="notes-grid"
+            >
+
+                <div class="loading-card">
+
+                    <div class="loading-spinner"></div>
+
+                    <p>
+                        Loading notes...
+                    </p>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             QUIZ CENTRE
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="quizzes"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        TEST YOUR KNOWLEDGE
+                    </span>
+
+                    <h2>
+                        Quiz Centre
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="quiz-centre-card">
+
+
+                <div class="quiz-centre-icon">
+                    🧠
+                </div>
+
+
+                <div class="quiz-centre-content">
+
+                    <span class="course-label">
+                        ACTIVE LEARNING
+                    </span>
+
+
+                    <h3>
+                        Challenge yourself
+                    </h3>
+
+
+                    <p>
+                        Test your understanding of medical
+                        topics using quizzes available inside
+                        your courses.
+                    </p>
+
+
+                    <a
+                        href="#courses"
+                        class="primary-button"
+                    >
+                        Choose a Course
+                    </a>
+
+                </div>
+
+
+                <div class="quiz-stat">
+
+                    <strong
+                        id="quizProgressPercent"
+                    >
+                        0%
+                    </strong>
+
+                    <span>
+                        Quiz progress
+                    </span>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             LEARNING SUPPORT
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="learning-support"
+        >
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span class="section-eyebrow">
+                        STUDENT SUPPORT
+                    </span>
+
+                    <h2>
+                        Learn With More Support
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-feature-grid">
+
+
+                <!-- =========================================
+                     AI TUTOR
+                ========================================== -->
+
+                <article class="dashboard-feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        🤖
+                    </div>
+
+
+                    <div class="feature-content">
+
+                        <span class="feature-label">
+                            SMART LEARNING
+                        </span>
+
+
+                        <h2>
+                            AI Tutor
+                        </h2>
+
+
+                        <p>
+                            Ask questions, clarify difficult
+                            medical concepts and use AI-assisted
+                            learning while studying.
+                        </p>
+
+
+                        <a
+                            href="./aiTutor.html"
+                            class="feature-button"
+                        >
+                            Open AI Tutor
+                        </a>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =========================================
+                     HUMAN TUTOR
+                ========================================== -->
+
+                <article class="dashboard-feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        👨‍⚕️
+                    </div>
+
+
+                    <div class="feature-content">
+
+                        <span class="feature-label">
+                            HUMAN SUPPORT
+                        </span>
+
+
+                        <h2>
+                            Book a Tutor
+                        </h2>
+
+
+                        <p>
+                            Connect with a tutor for additional
+                            academic support and guidance.
+                        </p>
+
+
+                        <a
+                            href="./studentTutor.html"
+                            class="feature-button"
+                        >
+                            Find a Tutor
+                        </a>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- =========================================
+                     STUDENT INBOX
+                ========================================== -->
+
+                <article class="dashboard-feature-card">
+
+                    <div
+                        class="feature-icon"
+                        aria-hidden="true"
+                    >
+                        📬
+                    </div>
+
+
+                    <div class="feature-content">
+
+                        <span class="feature-label">
+                            COMMUNICATION
+                        </span>
+
+
+                        <h2>
+                            Student Inbox
+                        </h2>
+
+
+                        <p>
+                            Check messages and communication
+                            related to your learning experience.
+                        </p>
+
+
+                        <a
+                            href="./studentInbox.html"
+                            class="feature-button"
+                        >
+                            Open Inbox
+                        </a>
+
+                    </div>
+
+                </article>
+
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             WHATSAPP
+        ================================================== -->
+
+        <section
+            class="dashboard-section"
+            id="whatsapp"
+        >
+
+            <article class="whatsapp-card">
+
+
+                <div class="whatsapp-icon">
+                    💬
+                </div>
+
+
+                <div class="whatsapp-content">
+
+                    <span class="course-label">
+                        STUDENT COMMUNITY
+                    </span>
+
+
+                    <h2>
+                        Join Mwaniki Scholars on WhatsApp
+                    </h2>
+
+
+                    <p>
+                        Get announcements, learning updates
+                        and important information from Mwaniki
+                        Scholars.
+                    </p>
+
+                </div>
+
+
+                <a
+                    href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="whatsapp-button"
+                >
+                    Join Channel
+                </a>
+
+
+            </article>
+
+        </section>
+
+
+
+    </main>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="dashboard-footer">
+
+        <div class="footer-brand">
+
+            <strong>
+                Mwaniki Scholars
+            </strong>
+
+            <span>
+                Medical Learning Platform
+            </span>
+
+        </div>
+
+
+        <div class="footer-links">
+
+            <a href="#overview">
+                Dashboard
+            </a>
+
+            <a href="#courses">
+                Courses
+            </a>
+
+            <a href="#notes">
+                Notes
+            </a>
+
+            <a href="#quizzes">
+                Quizzes
             </a>
 
         </div>
 
-    </section>
 
+        <p>
+            © 2026 Mwaniki Scholars. All rights reserved.
+        </p>
 
+    </footer>
 
-    <!-- =================================================
-         AI TUTOR
-    ================================================== -->
 
-    <section
-        id="aiTutorSection"
-        class="dashboard-section"
-    >
 
-        <div class="special-feature-card ai-tutor-card">
+    <!-- =====================================================
+         DASHBOARD JAVASCRIPT
+    ====================================================== -->
 
-            <div class="special-feature-icon">
-                🤖
-            </div>
+    <script
+        type="module"
+        src="./dashboard.js"
+    ></script>
 
-            <div class="special-feature-content">
-
-                <span class="section-kicker">
-                    SMART LEARNING
-                </span>
-
-                <h2>
-                    AI Tutor
-                </h2>
-
-                <p>
-                    Ask questions, clarify difficult medical
-                    concepts and use AI-assisted learning
-                    while studying.
-                </p>
-
-            </div>
-
-            <a
-                href="./aiTutor.html"
-                class="primary-button"
-            >
-                Open AI Tutor
-            </a>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         BOOK A TUTOR
-    ================================================== -->
-
-    <section
-        id="tutorSection"
-        class="dashboard-section"
-    >
-
-        <div class="special-feature-card tutor-card">
-
-            <div class="special-feature-icon">
-                👨‍⚕️
-            </div>
-
-            <div class="special-feature-content">
-
-                <span class="section-kicker">
-                    HUMAN SUPPORT
-                </span>
-
-                <h2>
-                    Book a Tutor
-                </h2>
-
-                <p>
-                    Connect with a tutor for additional
-                    academic support and guidance.
-                </p>
-
-            </div>
-
-            <a
-                href="./studentTutor.html"
-                class="primary-button"
-            >
-                Find a Tutor
-            </a>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         INBOX
-    ================================================== -->
-
-    <section
-        id="studentInboxSection"
-        class="dashboard-section"
-    >
-
-        <div class="special-feature-card inbox-card">
-
-            <div class="special-feature-icon">
-                📬
-            </div>
-
-            <div class="special-feature-content">
-
-                <span class="section-kicker">
-                    COMMUNICATION
-                </span>
-
-                <h2>
-                    Student Inbox
-                </h2>
-
-                <p>
-                    Check messages and communication related
-                    to your learning experience.
-                </p>
-
-            </div>
-
-            <a
-                href="./studentInbox.html"
-                class="primary-button"
-            >
-                Open Inbox
-            </a>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =================================================
-         WHATSAPP
-    ================================================== -->
-
-    <section class="dashboard-section">
-
-        <div class="whatsapp-card">
-
-            <div class="whatsapp-icon">
-                💬
-            </div>
-
-            <div>
-
-                <strong>
-                    Join Mwaniki Scholars on WhatsApp
-                </strong>
-
-                <p>
-                    Stay updated with announcements,
-                    learning information and community news.
-                </p>
-
-            </div>
-
-            <a
-                href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="whatsapp-button"
-            >
-                Join Channel
-            </a>
-
-        </div>
-
-    </section>
-
-</main>
-
-
-
-<!-- =====================================================
-     FOOTER
-====================================================== -->
-
-<footer class="dashboard-footer">
-
-    <div>
-
-        <strong>
-            Mwaniki Scholars
-        </strong>
-
-        <span>
-            Medical Learning Platform
-        </span>
-
-    </div>
-
-    <p>
-        Learn • Practice • Improve
-    </p>
-
-</footer>
-
-
-
-<script
-    type="module"
-    src="./dashboard.js"
-></script>
 
 </body>
+
 </html>
