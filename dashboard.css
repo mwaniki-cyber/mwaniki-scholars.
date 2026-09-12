@@ -3280,3 +3280,1052 @@ footer {
         flex-basis: 54px;
     }
 }
+/* ============================================================
+   MWANIKI SCHOLARS
+   STUDENT PROFILE PHOTO SYSTEM
+   MATCHES THE CURRENT DASHBOARD HTML
+   ============================================================ */
+
+
+/* ============================================================
+   HEADER PROFILE BUTTON
+   ============================================================ */
+
+.header-actions .profile {
+    width: auto;
+    min-width: 0;
+    height: 43px;
+    min-height: 43px;
+
+    padding: 4px 12px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    overflow: hidden;
+    flex-shrink: 0;
+
+    border: 0;
+    border-radius: 30px;
+
+    background: #ffffff;
+    color: var(--navy);
+
+    cursor: pointer;
+
+    font-family:
+        "Segoe UI",
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    font-weight: 700;
+    font-size: 14px;
+
+    box-shadow:
+        0 5px 15px
+        rgba(0,0,0,.12);
+}
+
+
+/* ============================================================
+   HEADER PROFILE PHOTO
+   ============================================================ */
+
+#dashboardProfilePhoto {
+
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+    min-height: 34px !important;
+
+    max-width: 34px !important;
+    max-height: 34px !important;
+
+    flex: 0 0 34px;
+
+    display: none;
+
+    object-fit: cover;
+    object-position: center;
+
+    border-radius: 50%;
+
+    border:
+        2px solid
+        #dbe8ee;
+
+    background: #e7f4f7;
+
+    overflow: hidden;
+}
+
+
+/*
+   JavaScript adds .visible when the student has a photo.
+*/
+
+#dashboardProfilePhoto.visible {
+    display: block;
+}
+
+
+/* ============================================================
+   HEADER PROFILE NAME
+   ============================================================ */
+
+#dashboardProfileName {
+
+    display: block;
+
+    max-width: 150px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    line-height: 1;
+
+}
+
+
+/* ============================================================
+   HERO
+   IMPORTANT:
+   Your current HTML has the avatar BEFORE .hero-content.
+   Therefore we make the entire hero a flex layout.
+   ============================================================ */
+
+.student-hero {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 22px;
+
+}
+
+
+/* ============================================================
+   HERO AVATAR CONTAINER
+   ============================================================ */
+
+#dashboardHeroAvatar {
+
+    width: 78px !important;
+    height: 78px !important;
+
+    min-width: 78px !important;
+    min-height: 78px !important;
+
+    max-width: 78px !important;
+    max-height: 78px !important;
+
+    flex: 0 0 78px;
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,.15);
+
+    border:
+        3px solid
+        rgba(255,255,255,.75);
+
+    box-shadow:
+        0 8px 22px
+        rgba(0,0,0,.18);
+
+}
+
+
+/* ============================================================
+   HERO STUDENT PHOTO
+   ============================================================ */
+
+#dashboardHeroProfilePhoto {
+
+    width: 72px !important;
+    height: 72px !important;
+
+    min-width: 72px !important;
+    min-height: 72px !important;
+
+    max-width: 72px !important;
+    max-height: 72px !important;
+
+    flex: 0 0 72px;
+
+    display: none;
+
+    object-fit: cover;
+    object-position: center;
+
+    border-radius: 50%;
+
+}
+
+
+/*
+   JavaScript adds .visible when a photo exists.
+*/
+
+#dashboardHeroProfilePhoto.visible {
+    display: block;
+}
+
+
+/* ============================================================
+   HERO FALLBACK EMOJI
+   ============================================================ */
+
+#dashboardHeroFallback {
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 34px;
+
+    line-height: 1;
+
+    flex-shrink: 0;
+
+}
+
+
+/* ============================================================
+   HERO CONTENT
+   ============================================================ */
+
+.student-hero .hero-content {
+
+    position: relative;
+
+    z-index: 2;
+
+    flex: 1;
+
+    min-width: 0;
+
+    display: block;
+
+}
+
+
+/* ============================================================
+   HERO TEXT
+   Your HTML uses .hero-label instead of .hero-greeting.
+   ============================================================ */
+
+.hero-label {
+
+    margin: 0 0 5px;
+
+    color: rgba(255,255,255,.78);
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+
+}
+
+
+/* Hero heading */
+
+.student-hero .hero-content h1 {
+
+    margin: 0;
+
+    color: white;
+
+    font-size: 28px;
+
+    line-height: 1.25;
+
+    font-weight: 800;
+
+}
+
+
+/* Hero paragraph */
+
+.student-hero .hero-content p:not(.hero-label) {
+
+    margin: 8px 0 0;
+
+    max-width: 760px;
+
+    color:
+        rgba(255,255,255,.82);
+
+    font-size: 13px;
+
+}
+
+
+/* ============================================================
+   DASHBOARD CARDS
+   Your HTML uses .dashboard-card.
+   ============================================================ */
+
+.dashboard-card {
+
+    background:
+        rgba(255,255,255,.96);
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius:
+        var(--radius);
+
+    padding: 24px;
+
+    margin-bottom: 22px;
+
+    box-shadow:
+        var(--shadow);
+
+    backdrop-filter:
+        blur(10px);
+
+}
+
+
+/* ============================================================
+   SECTION KICKER
+   ============================================================ */
+
+.section-kicker {
+
+    display: block;
+
+    color: var(--teal);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+}
+
+
+/* ============================================================
+   SECTION HEADINGS
+   ============================================================ */
+
+.dashboard-card .section-heading {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.dashboard-card .section-heading h2 {
+
+    margin: 3px 0 0;
+
+    color: var(--navy);
+
+    font-size: 20px;
+
+}
+
+
+/* ============================================================
+   STAT ICONS
+   Current HTML uses only .stat-icon,
+   without blue/green/purple/etc classes.
+   ============================================================ */
+
+.stat-icon {
+
+    width: 45px;
+    height: 45px;
+
+    min-width: 45px;
+    min-height: 45px;
+
+    border-radius: 13px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 20px;
+
+    background:
+        var(--teal-light);
+
+}
+
+
+/* ============================================================
+   COURSE COUNT
+   ============================================================ */
+
+.course-count {
+
+    min-width: 90px;
+
+    padding:
+        8px 13px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 13px;
+
+    background: #ffffff;
+
+    color: var(--muted);
+
+    text-align: center;
+
+    font-size: 11px;
+
+}
+
+
+.course-count strong {
+
+    display: block;
+
+    color: var(--teal);
+
+    font-size: 24px;
+
+    line-height: 1.1;
+
+}
+
+
+/* ============================================================
+   SEARCH BOX
+   Current HTML contains a wrapper with span + input.
+   ============================================================ */
+
+.search-box {
+
+    width: 100%;
+
+    min-height: 48px;
+
+    margin-bottom: 20px;
+
+    padding:
+        0 15px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    background: white;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 13px;
+
+}
+
+
+.search-box span {
+
+    flex-shrink: 0;
+
+    color: var(--muted);
+
+    font-size: 16px;
+
+}
+
+
+.search-box input {
+
+    width: 100%;
+
+    height: 46px;
+
+    padding: 0;
+
+    border: 0;
+
+    outline: none;
+
+    background: transparent;
+
+    color: var(--text);
+
+    font-size: 14px;
+
+}
+
+
+/* ============================================================
+   LOADING STATE
+   ============================================================ */
+
+.loading-state {
+
+    min-height: 150px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: var(--muted);
+
+    background: white;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 16px;
+
+}
+
+
+/* ============================================================
+   QUIZ DASHBOARD
+   ============================================================ */
+
+.quiz-dashboard-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        1.4fr
+        .8fr
+        1fr;
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.large-number {
+
+    color: var(--teal);
+
+    font-size: 38px;
+
+    font-weight: 800;
+
+}
+
+
+/* ============================================================
+   AI LAYOUT
+   ============================================================ */
+
+.ai-layout {
+
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+}
+
+
+.suggestion-list {
+
+    display: flex;
+
+    gap: 8px;
+
+    padding:
+        12px 0;
+
+    overflow-x: auto;
+
+}
+
+
+.suggestion-button {
+
+    flex-shrink: 0;
+
+    white-space: nowrap;
+
+    padding:
+        8px 12px;
+
+    border:
+        1px solid
+        #e2e8f0;
+
+    border-radius: 20px;
+
+    background:
+        #f8fafc;
+
+    color:
+        #475569;
+
+    font-size: 11px;
+
+    cursor: pointer;
+
+}
+
+
+.suggestion-button:hover {
+
+    background:
+        var(--purple-light);
+
+    color:
+        var(--purple);
+
+}
+
+
+/* AI textarea */
+
+#aiQuestion {
+
+    width: 100%;
+
+    min-height: 120px;
+
+    padding: 16px;
+
+    resize: vertical;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 13px;
+
+    outline: none;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+}
+
+
+#aiQuestion:focus {
+
+    border-color:
+        var(--purple);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(124,58,237,.08);
+
+}
+
+
+/* ============================================================
+   FORM GRID
+   ============================================================ */
+
+.form-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2,1fr);
+
+    gap: 17px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.field {
+
+    min-width: 0;
+
+}
+
+
+.field.full {
+
+    grid-column: 1 / -1;
+
+}
+
+
+.field label {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: var(--navy);
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+}
+
+
+.field input,
+.field textarea {
+
+    width: 100%;
+
+    padding:
+        12px 13px;
+
+    border:
+        1px solid
+        #d8e1e8;
+
+    border-radius: 11px;
+
+    outline: none;
+
+    font-family: inherit;
+
+    font-size: 14px;
+
+}
+
+
+.field textarea {
+
+    min-height: 140px;
+
+    resize: vertical;
+
+}
+
+
+.field input:focus,
+.field textarea:focus {
+
+    border-color:
+        var(--teal);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(11,114,133,.08);
+
+}
+
+
+/* ============================================================
+   PRIMARY BUTTON
+   ============================================================ */
+
+.primary-button {
+
+    border: 0;
+
+    padding:
+        12px 18px;
+
+    border-radius: 11px;
+
+    background:
+        var(--teal);
+
+    color: white;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+}
+
+
+.primary-button:hover {
+
+    background:
+        #086170;
+
+}
+
+
+/* ============================================================
+   INBOX
+   ============================================================ */
+
+.inbox-controls {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    margin-bottom: 18px;
+
+}
+
+
+.inbox-controls input {
+
+    flex: 1;
+
+    min-width: 0;
+
+    padding:
+        12px 13px;
+
+    border:
+        1px solid
+        var(--border);
+
+    border-radius: 11px;
+
+    outline: none;
+
+    font-family: inherit;
+
+}
+
+
+/* ============================================================
+   OVERALL PROGRESS
+   ============================================================ */
+
+#overallProgressText {
+
+    color: var(--teal);
+
+    font-size: 20px;
+
+}
+
+
+#achievementIndicators {
+
+    margin-top: 20px;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4,1fr);
+
+    gap: 10px;
+
+}
+
+
+/* ============================================================
+   MOBILE PROFILE + HERO
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+    .header-actions .profile {
+
+        height: 39px;
+        min-height: 39px;
+
+        padding:
+            3px 8px;
+
+        gap: 0;
+
+    }
+
+
+    #dashboardProfilePhoto {
+
+        width: 30px !important;
+        height: 30px !important;
+
+        min-width: 30px !important;
+        min-height: 30px !important;
+
+        max-width: 30px !important;
+        max-height: 30px !important;
+
+        flex-basis: 30px;
+
+    }
+
+
+    #dashboardProfileName {
+
+        display: none;
+
+    }
+
+
+    /*
+       Keep the hero horizontal on mobile,
+       but make it compact.
+    */
+
+    .student-hero {
+
+        min-height: 150px;
+
+        padding: 20px;
+
+        gap: 14px;
+
+        align-items: flex-start;
+
+    }
+
+
+    #dashboardHeroAvatar {
+
+        width: 58px !important;
+        height: 58px !important;
+
+        min-width: 58px !important;
+        min-height: 58px !important;
+
+        max-width: 58px !important;
+        max-height: 58px !important;
+
+        flex-basis: 58px;
+
+        border-width: 2px;
+
+    }
+
+
+    #dashboardHeroProfilePhoto {
+
+        width: 54px !important;
+        height: 54px !important;
+
+        min-width: 54px !important;
+        min-height: 54px !important;
+
+        max-width: 54px !important;
+        max-height: 54px !important;
+
+        flex-basis: 54px;
+
+    }
+
+
+    #dashboardHeroFallback {
+
+        font-size: 27px;
+
+    }
+
+
+    .student-hero .hero-content h1 {
+
+        font-size: 20px;
+
+        line-height: 1.25;
+
+    }
+
+
+    .student-hero .hero-content p:not(.hero-label) {
+
+        font-size: 11px;
+
+        line-height: 1.45;
+
+    }
+
+
+    .hero-label {
+
+        font-size: 9px;
+
+        letter-spacing: .8px;
+
+    }
+
+
+    .dashboard-card {
+
+        padding: 17px;
+
+        border-radius: 17px;
+
+    }
+
+
+    .form-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .field.full {
+
+        grid-column: auto;
+
+    }
+
+
+    .quiz-dashboard-grid {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+    .inbox-controls {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
+    }
+
+
+    #achievementIndicators {
+
+        grid-template-columns:
+            repeat(2,1fr);
+
+    }
+
+}
