@@ -73,15 +73,18 @@ function getInitials(name) {
 function updateCurrentDate() {
 
     const element = $("#currentDate");
+   const element = $("#currentTime");
 
     if (!element) {
         return;
     }
 
     const now = new Date();
+   const now = new Time ();
 
     element.textContent =
         now.toLocaleDateString(
+           now.tolocalTimeString(
             undefined,
             {
                 weekday: "long",
