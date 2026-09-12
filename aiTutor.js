@@ -1,758 +1,42 @@
-```javascript
 import { supabase } from "./supabase.js";
 
 // ============================================================
-// MWANIKI SCHOLARS — PRIVATE AI TUTOR
+// MWANIKI SCHOLARS — REAL AI TUTOR
 // ============================================================
-// Searches:
-//   1. ai_knowledge
-//   2. notes
-//   3. quiz_questions
-//   4. quizzes
-//   5. courses
-//   6. units
+// The browser does NOT contain an AI API secret.
 //
-// IMPORTANT:
-// This version DOES NOT use public.knowledge_base.
-// It works with the tables that actually exist in Mwaniki Scholars.
+// Flow:
+// Student question
+//      ↓
+// Supabase Edge Function
+//      ↓
+// Mwaniki Scholars database retrieval
+//      ↓
+// AI model
+//      ↓
+// Synthesized answer
+//
+// This is different from simply displaying matching database rows.
 // ============================================================
 
-console.log("🤖 Mwaniki Scholars Private AI Tutor Loaded");
-
-// ============================================================
-// CONFIGURATION
-// ============================================================
-
-const TABLES = [
-    "ai_knowledge",
-    "notes",
-    "quiz_questions",
-    "quizzes",
-    "courses",
-    "units"
-];
-
-const MAX_RESULTS_PER_TABLE = 20;
-const MAX_CONTEXT_LENGTH = 12000;
+console.log("🤖 Mwaniki Scholars Real AI Tutor Loaded");
 
 
 // ============================================================
-// UTILITY — SAFE TEXT
+// ELEMENTS
 // ============================================================
 
-function cleanText(value) {
+function getQuestionInput() {
 
-    if (value === null || value === undefined) {
-        return "";
-    }
-
-    if (typeof value === "object") {
-
-        try {
-            return JSON.stringify(value);
-        } catch {
-            return "";
-        }
-    }
-
-    return String(value);
-}
-
-
-// ============================================================
-// GET ALL TEXT FROM A DATABASE ROW
-// ============================================================
-
-function rowToText(row) {
-
-    if (!row || typeof row !== "object") {
-        return "";
-    }
-
-    const parts = [];
-
-    Object.entries(row).forEach(([key, value]) => {
-
-        if (
-            value === null ||
-            value === undefined ||
-            key === "id" ||
-            key === "created_at" ||
-            key === "updated_at"
-        ) {
-            return;
-        }
-
-        const text = cleanText(value).trim();
-
-        if (!text) {
-            return;
-        }
-
-        parts.push(
-            `${key}: ${text}`
-        );
-
-    });
-
-    return parts.join(" | ");
-}
-
-
-// ============================================================
-// NORMALIZE SEARCH TEXT
-// ============================================================
-
-function normalize(text) {
-
-    return cleanText(text)
-        .toLowerCase()
-        .replace(/[^\w\s]/g, " ")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-
-// ============================================================
-// REMOVE COMMON WORDS
-// ============================================================
-
-function getKeywords(question) {
-
-    const stopWords = new Set([
-
-        "what",
-        "when",
-        "where",
-        "which",
-        "who",
-        "why",
-        "how",
-        "does",
-        "do",
-        "is",
-        "are",
-        "the",
-        "a",
-        "an",
-        "of",
-        "to",
-        "in",
-        "on",
-        "for",
-        "with",
-        "and",
-        "or",
-        "from",
-        "about",
-        "explain",
-        "tell",
-        "me",
-        "please",
-        "can",
-        "you",
-        "could",
-        "would",
-        "be",
-        "this",
-        "that"
-    ]);
-
-    return normalize(question)
-        .split(" ")
-        .filter(word =>
-            word.length >= 3 &&
-            !stopWords.has(word)
-        );
-
-}
-
-
-// ============================================================
-// SCORE A DATABASE ROW
-// ============================================================
-
-function scoreRow(row, question) {
-
-    const text =
-        normalize(
-            rowToText(row)
-        );
-
-    if (!text) {
-        return 0;
-    }
-
-    const keywords =
-        getKeywords(question);
-
-    if (keywords.length === 0) {
-        return 0;
-    }
-
-    let score = 0;
-
-    keywords.forEach(keyword => {
-
-        if (text.includes(keyword)) {
-            score++;
-        }
-
-    });
-
-    // Exact phrase gets a strong bonus
-    const normalizedQuestion =
-        normalize(question);
-
-    if (
-        normalizedQuestion.length > 5 &&
-        text.includes(normalizedQuestion)
-    ) {
-        score += 5;
-    }
-
-    return score;
-}
-
-
-// ============================================================
-// FETCH TABLE
-// ============================================================
-
-async function fetchTable(tableName) {
-
-    try {
-
-        const result =
-            await supabase
-                .from(tableName)
-                .select("*")
-                .limit(MAX_RESULTS_PER_TABLE);
-
-        if (result.error) {
-
-            console.warn(
-                `⚠️ Could not read ${tableName}:`,
-                result.error.message
-            );
-
-            return [];
-        }
-
-        return result.data || [];
-
-    } catch (error) {
-
-        console.warn(
-            `⚠️ Exception reading ${tableName}:`,
-            error
-        );
-
-        return [];
-    }
-}
-
-
-// ============================================================
-// SEARCH THE MWANIKI SCHOLARS DATABASE
-// ============================================================
-
-async function searchPrivateKnowledge(question) {
-
-    console.log(
-        "🔎 Searching Mwaniki Scholars knowledge..."
-    );
-
-    const allResults = [];
-
-    for (const tableName of TABLES) {
-
-        const rows =
-            await fetchTable(tableName);
-
-        console.log(
-            `📚 ${tableName}: ${rows.length} rows`
-        );
-
-        rows.forEach(row => {
-
-            const score =
-                scoreRow(
-                    row,
-                    question
-                );
-
-            if (score > 0) {
-
-                allResults.push({
-
-                    table: tableName,
-
-                    score,
-
-                    row,
-
-                    text:
-                        rowToText(row)
-
-                });
-
-            }
-
-        });
-
-    }
-
-    allResults.sort(
-        (a, b) =>
-            b.score - a.score
-    );
-
-    const results =
-        allResults.slice(
-            0,
-            10
-        );
-
-    console.log(
-        "🔎 Relevant knowledge:",
-        results
-    );
-
-    return results;
-}
-
-
-// ============================================================
-// BUILD ANSWER FROM DATABASE MATERIAL
-// ============================================================
-
-function buildPrivateAnswer(
-    question,
-    results
-) {
-
-    if (
-        !results ||
-        results.length === 0
-    ) {
-
-        return {
-            found: false,
-
-            answer:
-                `I could not find enough information about "${question}" in the Mwaniki Scholars knowledge base yet.
-
-Please try using a more specific medical term, course name, unit name, or topic that appears in the Mwaniki Scholars notes or quizzes.`
-        };
-
-    }
-
-
-    let context = "";
-
-    results.forEach(
-        (item, index) => {
-
-            const source =
-                item.table;
-
-            const text =
-                item.text;
-
-            context +=
-                `SOURCE ${index + 1} — ${source}\n` +
-                `${text}\n\n`;
-
-        }
-    );
-
-
-    if (
-        context.length >
-        MAX_CONTEXT_LENGTH
-    ) {
-
-        context =
-            context.substring(
-                0,
-                MAX_CONTEXT_LENGTH
-            );
-
-    }
-
-
-    // --------------------------------------------------------
-    // Extract useful content from matching records
-    // --------------------------------------------------------
-
-    const answerParts = [];
-
-
-    results.forEach(item => {
-
-        const row =
-            item.row;
-
-        const text =
-            rowToText(row);
-
-
-        if (!text) {
-            return;
-        }
-
-
-        // Quiz question
-        if (
-            item.table ===
-            "quiz_questions"
-        ) {
-
-            const questionText =
-                row.question ||
-                row.question_text ||
-                row.content ||
-                "";
-
-            const correctAnswer =
-                row.correct_answer ||
-                row.answer ||
-                row.correctAnswer ||
-                "";
-
-            if (
-                questionText ||
-                correctAnswer
-            ) {
-
-                answerParts.push({
-
-                    type: "quiz",
-
-                    text:
-                        `${cleanText(
-                            questionText
-                        )}` +
-                        (
-                            correctAnswer
-                                ? `\nAnswer: ${cleanText(
-                                    correctAnswer
-                                )}`
-                                : ""
-                        )
-
-                });
-
-            }
-
-            return;
-        }
-
-
-        // AI knowledge
-        if (
-            item.table ===
-            "ai_knowledge"
-        ) {
-
-            answerParts.push({
-
-                type: "knowledge",
-
-                text
-
-            });
-
-            return;
-        }
-
-
-        // Notes
-        if (
-            item.table ===
-            "notes"
-        ) {
-
-            answerParts.push({
-
-                type: "notes",
-
-                text
-
-            });
-
-            return;
-        }
-
-
-        // Courses
-        if (
-            item.table ===
-            "courses"
-        ) {
-
-            answerParts.push({
-
-                type: "course",
-
-                text
-
-            });
-
-            return;
-        }
-
-
-        // Units
-        if (
-            item.table ===
-            "units"
-        ) {
-
-            answerParts.push({
-
-                type: "unit",
-
-                text
-
-            });
-
-            return;
-        }
-
-
-        // Quizzes
-        if (
-            item.table ===
-            "quizzes"
-        ) {
-
-            answerParts.push({
-
-                type: "quiz",
-
-                text
-
-            });
-
-        }
-
-    });
-
-
-    // --------------------------------------------------------
-    // Remove duplicate content
-    // --------------------------------------------------------
-
-    const uniqueAnswers = [];
-
-    const seen = new Set();
-
-    answerParts.forEach(item => {
-
-        const key =
-            normalize(item.text);
-
-        if (
-            !key ||
-            seen.has(key)
-        ) {
-            return;
-        }
-
-        seen.add(key);
-
-        uniqueAnswers.push(item);
-
-    });
-
-
-    // --------------------------------------------------------
-    // Create readable response
-    // --------------------------------------------------------
-
-    let answer =
-        "📚 Mwaniki Scholars Knowledge Base\n\n";
-
-
-    answer +=
-        `I found ${uniqueAnswers.length} relevant source ` +
-        `${uniqueAnswers.length === 1 ? "record" : "records"} ` +
-        `for your question.\n\n`;
-
-
-    uniqueAnswers
-        .slice(0, 6)
-        .forEach((item, index) => {
-
-            let label =
-                "📖 Source";
-
-            if (
-                item.type ===
-                "quiz"
-            ) {
-                label =
-                    "📝 Quiz";
-            }
-
-            if (
-                item.type ===
-                "notes"
-            ) {
-                label =
-                    "📄 Notes";
-            }
-
-            if (
-                item.type ===
-                "knowledge"
-            ) {
-                label =
-                    "🧠 Knowledge Base";
-            }
-
-            if (
-                item.type ===
-                "course"
-            ) {
-                label =
-                    "📚 Course";
-            }
-
-            if (
-                item.type ===
-                "unit"
-            ) {
-                label =
-                    "📘 Unit";
-            }
-
-
-            answer +=
-                `${label} ${index + 1}\n`;
-
-
-            answer +=
-                item.text;
-
-
-            answer +=
-                "\n\n";
-
-        });
-
-
-    answer +=
-        "────────────────────\n";
-
-
-    answer +=
-        "🔐 This response was retrieved from " +
-        "Mwaniki Scholars' private course, note, " +
-        "unit, quiz, and knowledge-base content.";
-
-
-    return {
-
-        found: true,
-
-        answer,
-
-        context
-
-    };
-
-}
-
-
-// ============================================================
-// DISPLAY ANSWER
-// ============================================================
-
-function displayAIAnswer(
-    text
-) {
-
-    const answerBox =
-        document.getElementById(
-            "aiAnswer"
-        );
-
-
-    if (!answerBox) {
-
-        console.error(
-            "❌ aiAnswer element not found."
-        );
-
-        alert(
-            "AI Tutor display area is missing from the dashboard."
-        );
-
-        return;
-    }
-
-
-    answerBox.innerHTML = "";
-
-
-    const box =
-        document.createElement(
-            "div"
-        );
-
-
-    box.style.cssText = `
-        margin-top:15px;
-        padding:18px;
-        border-radius:14px;
-        background:#f1f8fb;
-        border-left:5px solid #0b7285;
-        color:#183b56;
-        line-height:1.7;
-        white-space:pre-wrap;
-    `;
-
-
-    box.textContent =
-        text;
-
-
-    answerBox.appendChild(
-        box
-    );
-
-}
-
-
-// ============================================================
-// FIND QUESTION INPUT
-// ============================================================
-
-function getAIQuestionInput() {
-
-    const possibleIds = [
-
+    const ids = [
         "aiQuestion",
-
         "aiInput",
-
-        "question",
-
         "studentQuestion",
-
         "tutorQuestion",
-
         "aiTutorQuestion"
-
     ];
 
-
-    for (
-        const id of possibleIds
-    ) {
+    for (const id of ids) {
 
         const element =
             document.getElementById(id);
@@ -760,58 +44,212 @@ function getAIQuestionInput() {
         if (element) {
             return element;
         }
-
     }
-
-
-    // Search textareas as fallback
-
-    const textareas =
-        document.querySelectorAll(
-            "textarea"
-        );
-
-
-    for (
-        const textarea of textareas
-    ) {
-
-        const placeholder =
-            (
-                textarea.placeholder ||
-                ""
-            ).toLowerCase();
-
-
-        if (
-            placeholder.includes(
-                "medical"
-            ) ||
-            placeholder.includes(
-                "question"
-            ) ||
-            placeholder.includes(
-                "ask"
-            ) ||
-            placeholder.includes(
-                "tutor"
-            )
-        ) {
-
-            return textarea;
-
-        }
-
-    }
-
 
     return null;
+}
 
+
+function getAskButton() {
+
+    return (
+        document.getElementById("askAIButton") ||
+        document.querySelector('[onclick="askAI()"]')
+    );
+}
+
+
+function getAnswerBox() {
+
+    return document.getElementById("aiAnswer");
 }
 
 
 // ============================================================
-// MAIN ASK AI FUNCTION
+// DISPLAY ANSWER
+// ============================================================
+
+function displayAIAnswer(answer, sources = []) {
+
+    const answerBox =
+        getAnswerBox();
+
+    if (!answerBox) {
+
+        console.error(
+            "❌ #aiAnswer was not found."
+        );
+
+        return;
+    }
+
+    answerBox.innerHTML = "";
+
+    const container =
+        document.createElement("div");
+
+    container.className =
+        "mwaniki-ai-response";
+
+
+    const answerContent =
+        document.createElement("div");
+
+    answerContent.className =
+        "mwaniki-ai-answer-content";
+
+    answerContent.textContent =
+        answer || "No answer was returned.";
+
+    answerContent.style.whiteSpace =
+        "pre-wrap";
+
+    answerContent.style.lineHeight =
+        "1.75";
+
+
+    container.appendChild(
+        answerContent
+    );
+
+
+    // --------------------------------------------------------
+    // SOURCES
+    // --------------------------------------------------------
+
+    if (
+        Array.isArray(sources) &&
+        sources.length > 0
+    ) {
+
+        const sourceSection =
+            document.createElement("div");
+
+        sourceSection.className =
+            "mwaniki-ai-sources";
+
+
+        const heading =
+            document.createElement("h4");
+
+        heading.textContent =
+            "📚 Mwaniki Scholars Sources";
+
+        sourceSection.appendChild(
+            heading
+        );
+
+
+        const list =
+            document.createElement("ul");
+
+
+        sources.forEach(source => {
+
+            const item =
+                document.createElement("li");
+
+            const table =
+                source.table ||
+                source.source ||
+                "Mwaniki Scholars";
+
+            const title =
+                source.title ||
+                source.unit ||
+                source.course ||
+                source.name ||
+                "Educational material";
+
+            item.textContent =
+                `${table} — ${title}`;
+
+            list.appendChild(item);
+
+        });
+
+
+        sourceSection.appendChild(
+            list
+        );
+
+        container.appendChild(
+            sourceSection
+        );
+
+    }
+
+
+    answerBox.appendChild(
+        container
+    );
+}
+
+
+// ============================================================
+// LOADING DISPLAY
+// ============================================================
+
+function displayAILoading() {
+
+    const answerBox =
+        getAnswerBox();
+
+    if (!answerBox) {
+        return;
+    }
+
+    answerBox.innerHTML = `
+        <div class="mwaniki-ai-loading">
+
+            <div class="loading-spinner"></div>
+
+            <strong>
+                🤖 Mwaniki AI is thinking...
+            </strong>
+
+            <p>
+                Searching Mwaniki Scholars material
+                and preparing your answer.
+            </p>
+
+        </div>
+    `;
+}
+
+
+// ============================================================
+// ERROR DISPLAY
+// ============================================================
+
+function displayAIError(message) {
+
+    const answerBox =
+        getAnswerBox();
+
+    if (!answerBox) {
+        return;
+    }
+
+    answerBox.innerHTML = "";
+
+    const error =
+        document.createElement("div");
+
+    error.className =
+        "mwaniki-ai-error";
+
+    error.textContent =
+        `⚠️ ${message}`;
+
+    answerBox.appendChild(
+        error
+    );
+}
+
+
+// ============================================================
+// ASK AI
 // ============================================================
 
 async function askAI() {
@@ -821,158 +259,205 @@ async function askAI() {
     );
 
 
+    const input =
+        getQuestionInput();
+
     const button =
-        document.querySelector(
-            '[onclick="askAI()"]'
-        );
+        getAskButton();
 
 
-    const questionInput =
-        getAIQuestionInput();
-
-
-    // --------------------------------------------------------
-    // INPUT CHECK
-    // --------------------------------------------------------
-
-    if (!questionInput) {
+    if (!input) {
 
         console.error(
             "❌ AI question input not found."
         );
 
-
-        displayAIAnswer(
-            "⚠️ The AI Tutor question box could not be found. Please check that the textarea has an ID such as aiQuestion."
+        displayAIError(
+            "The AI question box could not be found."
         );
 
         return;
-
     }
 
 
     const question =
-        questionInput.value.trim();
+        input.value.trim();
 
 
     if (!question) {
 
-        displayAIAnswer(
-            "✏️ Please type a medical question first."
+        displayAIError(
+            "Please type a medical question first."
         );
 
-        questionInput.focus();
+        input.focus();
 
         return;
-
     }
 
 
     // --------------------------------------------------------
-    // BUTTON LOADING STATE
+    // BUTTON STATE
     // --------------------------------------------------------
 
-    let originalText = "";
+    const originalText =
+        button
+            ? button.textContent
+            : "";
+
 
     if (button) {
 
-        originalText =
-            button.innerText;
-
         button.disabled =
             true;
+
+        button.textContent =
+            "🔎 Mwaniki AI is searching...";
 
         button.style.opacity =
             "0.7";
 
         button.style.cursor =
             "wait";
-
-        button.innerText =
-            "🔎 Searching Mwaniki Scholars...";
-
     }
 
 
-    displayAIAnswer(
-        "🔎 Searching Mwaniki Scholars notes, quizzes and knowledge..."
-    );
+    displayAILoading();
 
 
     try {
 
         // ----------------------------------------------------
-        // SEARCH PRIVATE DATABASE
+        // CALL SUPABASE EDGE FUNCTION
         // ----------------------------------------------------
 
-        const results =
-            await searchPrivateKnowledge(
-                question
-            );
-
-
-        // ----------------------------------------------------
-        // BUILD RESPONSE
-        // ----------------------------------------------------
-
-        const response =
-            buildPrivateAnswer(
-                question,
-                results
-            );
-
-
-        // ----------------------------------------------------
-        // DISPLAY
-        // ----------------------------------------------------
-
-        displayAIAnswer(
-            response.answer
+        const {
+            data,
+            error
+        } = await supabase.functions.invoke(
+            "mwaniki-ai",
+            {
+                body: {
+                    question
+                }
+            }
         );
+
+
+        if (error) {
+
+            console.error(
+                "❌ AI Edge Function error:",
+                error
+            );
+
+            throw new Error(
+                error.message ||
+                "The AI service could not be reached."
+            );
+        }
+
+
+        if (!data) {
+
+            throw new Error(
+                "The AI service returned no data."
+            );
+        }
 
 
         console.log(
-            "✅ AI Tutor response generated"
+            "🤖 AI response:",
+            data
         );
 
+
+        // ----------------------------------------------------
+        // DISPLAY REAL AI RESPONSE
+        // ----------------------------------------------------
+
+        displayAIAnswer(
+            data.answer ||
+            "The AI did not return an answer.",
+            data.sources ||
+            []
+        );
+
+
+        // ----------------------------------------------------
+        // SAVE RECENT AI QUESTION
+        // ----------------------------------------------------
+
+        try {
+
+            const existing =
+                JSON.parse(
+                    localStorage.getItem(
+                        "mwanikiAIQuestions"
+                    ) || "[]"
+                );
+
+
+            existing.unshift({
+
+                question,
+
+                timestamp:
+                    new Date().toISOString()
+
+            });
+
+
+            localStorage.setItem(
+                "mwanikiAIQuestions",
+                JSON.stringify(
+                    existing.slice(0, 10)
+                )
+            );
+
+        } catch (storageError) {
+
+            console.warn(
+                "Could not save AI history:",
+                storageError
+            );
+
+        }
+
+
+        console.log(
+            "✅ Real AI answer displayed"
+        );
 
     } catch (error) {
 
         console.error(
-            "❌ AI Tutor error:",
+            "❌ Mwaniki AI error:",
             error
         );
 
 
-        displayAIAnswer(
-            "⚠️ The Mwaniki Scholars AI Tutor encountered an error while searching the private knowledge base.\n\nError: " +
-            cleanText(
-                error.message
-            )
+        displayAIError(
+            error.message ||
+            "The AI Tutor could not answer the question right now."
         );
 
-
     } finally {
-
-        // ----------------------------------------------------
-        // RESTORE BUTTON
-        // ----------------------------------------------------
 
         if (button) {
 
             button.disabled =
                 false;
 
+            button.textContent =
+                originalText ||
+                "🤖 Ask Mwaniki AI ➤";
+
             button.style.opacity =
                 "1";
 
             button.style.cursor =
                 "pointer";
-
-            button.innerText =
-                originalText ||
-                "🤖 Ask AI Tutor";
-
         }
 
     }
@@ -981,7 +466,7 @@ async function askAI() {
 
 
 // ============================================================
-// MAKE askAI AVAILABLE TO HTML onclick
+// GLOBAL ACCESS
 // ============================================================
 
 window.askAI =
@@ -989,21 +474,20 @@ window.askAI =
 
 
 console.log(
-    "✅ askAI() is available globally"
+    "✅ window.askAI() is available"
 );
 
 
 // ============================================================
-// OPTIONAL ENTER / CTRL+ENTER SUPPORT
+// ENTER / CTRL+ENTER
 // ============================================================
 
 document.addEventListener(
     "DOMContentLoaded",
-    function () {
+    () => {
 
         const input =
-            getAIQuestionInput();
-
+            getQuestionInput();
 
         if (!input) {
             return;
@@ -1012,7 +496,7 @@ document.addEventListener(
 
         input.addEventListener(
             "keydown",
-            function (event) {
+            event => {
 
                 if (
                     event.key === "Enter" &&
@@ -1025,26 +509,10 @@ document.addEventListener(
                     event.preventDefault();
 
                     askAI();
-
                 }
 
             }
         );
 
-
-        console.log(
-            "✅ AI Tutor keyboard support enabled"
-        );
-
     }
 );
-
-
-// ============================================================
-// FINAL STATUS
-// ============================================================
-
-console.log(
-    "🔐 Private Mwaniki Scholars AI Tutor ready."
-);
-```
