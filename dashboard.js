@@ -2766,3 +2766,70 @@ if (
 
     initializeDashboard();
 }
+/* =========================================================
+   FINAL BRAND TEXT CLARITY FIX
+========================================================= */
+
+.dashboard-header .brand-area,
+.dashboard-header .brand-text,
+.dashboard-header .brand-name,
+.dashboard-header .brand-subtitle {
+    opacity: 1 !important;
+    visibility: visible !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transform: none !important;
+    text-shadow: none !important;
+    mix-blend-mode: normal !important;
+    isolation: isolate !important;
+}
+
+.dashboard-header .brand-text {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+    min-width: 0 !important;
+}
+
+.dashboard-header .brand-name {
+    display: block !important;
+    color: #ffffff !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 22px !important;
+    font-weight: 800 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.2px !important;
+    white-space: nowrap !important;
+}
+
+.dashboard-header .brand-subtitle {
+    display: block !important;
+    color: #ffffff !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    letter-spacing: 0 !important;
+    white-space: nowrap !important;
+}
+
+.dashboard-header .brand-icon {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    color: #ffffff !important;
+    font-size: 30px !important;
+    line-height: 1 !important;
+}
+
+/* Prevent any transparent overlay from covering the brand */
+.dashboard-header .brand-area::before,
+.dashboard-header .brand-area::after,
+.dashboard-header .brand-text::before,
+.dashboard-header .brand-text::after {
+    content: none !important;
+    display: none !important;
+}
