@@ -1,18 +1,62 @@
 /* =========================================================
    MWANIKI SCHOLARS
    STUDENT DASHBOARD
-   COMPLETE DASHBOARD STYLESHEET
-   CLEAN / PROFESSIONAL / HORIZONTAL NAVIGATION
-   ========================================================= */
-
+   COMPLETE DASHBOARD CSS
+========================================================= */
 
 /* =========================================================
-   RESET
-   ========================================================= */
+   1. ROOT
+========================================================= */
 
-*,
-*::before,
-*::after {
+:root {
+
+    --navy: #063970;
+    --navy-dark: #04284f;
+
+    --teal: #0b7285;
+    --teal-dark: #075968;
+
+    --blue: #1976d2;
+    --purple: #6f42c1;
+
+    --green: #20a464;
+    --whatsapp: #25D366;
+
+    --orange: #f59f00;
+    --red: #dc3545;
+
+    --surface: #ffffff;
+    --surface-soft: #f6f9fc;
+
+    --background: #f3f7fb;
+
+    --text: #17324d;
+    --text-dark: #0d2438;
+    --muted: #6b7c8f;
+
+    --border: #dfe7ef;
+
+    --shadow-sm:
+        0 2px 8px rgba(6, 57, 112, 0.07);
+
+    --shadow:
+        0 8px 25px rgba(6, 57, 112, 0.10);
+
+    --shadow-lg:
+        0 18px 45px rgba(6, 57, 112, 0.14);
+
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 20px;
+
+    --max-width: 1440px;
+}
+
+/* =========================================================
+   2. RESET
+========================================================= */
+
+* {
     box-sizing: border-box;
 }
 
@@ -26,26 +70,17 @@ body {
 
     font-family:
         Inter,
-        "Segoe UI",
         Arial,
         Helvetica,
         sans-serif;
 
     background:
-        radial-gradient(
-            circle at top left,
-            rgba(14, 165, 233, 0.08),
-            transparent 32%
-        ),
-        radial-gradient(
-            circle at top right,
-            rgba(99, 102, 241, 0.07),
-            transparent 30%
-        ),
-        #f4f8fc;
+        var(--background);
 
-    color: #172033;
-    line-height: 1.6;
+    color:
+        var(--text);
+
+    line-height: 1.5;
 }
 
 button,
@@ -59,349 +94,331 @@ button {
     cursor: pointer;
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
-
 img {
     max-width: 100%;
+    display: block;
 }
 
-
-/* =========================================================
-   COLOR SYSTEM
-   ========================================================= */
-
-:root {
-    --navy: #063970;
-    --navy-dark: #04284f;
-
-    --teal: #0b7285;
-    --teal-dark: #075d6d;
-
-    --blue: #2563eb;
-    --blue-light: #eff6ff;
-
-    --purple: #7c3aed;
-    --purple-light: #f5f3ff;
-
-    --green: #16a34a;
-    --green-light: #f0fdf4;
-
-    --orange: #ea580c;
-    --orange-light: #fff7ed;
-
-    --red: #dc2626;
-    --red-light: #fef2f2;
-
-    --surface: #ffffff;
-    --surface-soft: #f8fbff;
-
-    --text: #172033;
-    --text-soft: #475569;
-    --muted: #64748b;
-
-    --border: #dbe4ee;
-
-    --shadow-sm:
-        0 4px 12px rgba(15, 23, 42, 0.06);
-
-    --shadow:
-        0 10px 30px rgba(15, 23, 42, 0.08);
-
-    --shadow-lg:
-        0 18px 45px rgba(15, 23, 42, 0.12);
-
-    --radius-sm: 10px;
-    --radius: 16px;
-    --radius-lg: 22px;
+a {
+    color: inherit;
 }
 
-
 /* =========================================================
-   TOP HEADER
-   ========================================================= */
+   3. DASHBOARD HEADER
+========================================================= */
 
-.dashboard-header,
-header {
-    position: relative !important;
-    top: auto !important;
+.dashboard-header {
 
-    z-index: 10;
+    position: relative;
 
     width: 100%;
+
+    min-height: 76px;
+
+    padding:
+        12px 24px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 20px;
 
     background:
         linear-gradient(
             135deg,
-            #063970 0%,
-            #075a78 50%,
-            #0b7285 100%
+            var(--navy),
+            var(--teal)
         );
 
     color: #ffffff;
 
-    border-bottom:
-        1px solid rgba(255, 255, 255, 0.12);
-
     box-shadow:
-        0 6px 20px rgba(6, 57, 112, 0.16);
+        0 4px 18px rgba(6, 57, 112, 0.18);
+
+    z-index: 100;
 }
 
-
 /* =========================================================
-   BRAND
-   ========================================================= */
+   4. BRAND
+========================================================= */
 
 .brand-area {
+
     display: flex;
+
     align-items: center;
-    gap: 13px;
+
+    gap: 12px;
+
+    min-width: 0;
+
+    flex: 1;
 }
 
 .brand-icon {
+
     width: 46px;
     height: 46px;
 
+    flex: 0 0 46px;
+
     display: flex;
+
     align-items: center;
     justify-content: center;
 
-    flex: 0 0 46px;
-
-    border-radius: 14px;
+    border-radius: 13px;
 
     background:
-        rgba(255, 255, 255, 0.14);
+        rgba(255,255,255,0.15);
 
     border:
-        1px solid rgba(255, 255, 255, 0.18);
+        1px solid rgba(255,255,255,0.20);
 
-    font-size: 23px;
+    font-size: 25px;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.15);
 }
 
 .brand-name {
-    font-size: 21px;
+
+    margin: 0;
+
+    font-size: 18px;
+
     font-weight: 800;
+
     line-height: 1.1;
 
     color: #ffffff;
 }
 
 .brand-subtitle {
-    margin-top: 3px;
 
-    font-size: 12px;
+    margin-top: 4px;
+
+    font-size: 11px;
+
     font-weight: 500;
 
     color:
-        rgba(255, 255, 255, 0.78);
+        rgba(255,255,255,0.78);
 
-    letter-spacing: 0.2px;
+    white-space: nowrap;
 }
 
-
 /* =========================================================
-   HEADER ACTIONS
-   ========================================================= */
+   5. HEADER ACTIONS
+========================================================= */
 
 .header-actions {
+
     display: flex;
+
     align-items: center;
-    gap: 12px;
+
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    flex-shrink: 0;
 }
 
-
 /* =========================================================
-   NOTIFICATION
-   ========================================================= */
+   6. NOTIFICATION BUTTON
+========================================================= */
 
-.notification-button {
+#notificationButton {
+
     position: relative;
 
     width: 42px;
     height: 42px;
 
-    flex: 0 0 42px;
+    border: 0;
 
-    border: none;
     border-radius: 12px;
 
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
     background:
-        rgba(255, 255, 255, 0.13);
+        rgba(255,255,255,0.12);
 
     color: #ffffff;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 18px;
+    font-size: 19px;
 
     transition:
-        background 0.2s ease,
-        transform 0.2s ease;
+        0.2s ease;
 }
 
-.notification-button:hover {
+#notificationButton:hover {
+
     background:
-        rgba(255, 255, 255, 0.22);
+        rgba(255,255,255,0.22);
 
-    transform: translateY(-1px);
+    transform:
+        translateY(-1px);
 }
 
-.notification-badge {
+#notificationBadge {
+
     position: absolute;
 
-    top: -4px;
-    right: -4px;
+    top: -3px;
+    right: -3px;
 
-    min-width: 19px;
-    height: 19px;
+    min-width: 18px;
+    height: 18px;
 
-    padding: 0 5px;
+    padding: 0 4px;
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
-    border-radius: 999px;
+    border-radius: 50%;
 
-    background: #ef4444;
+    background:
+        var(--red);
+
     color: #ffffff;
 
     font-size: 10px;
+
     font-weight: 800;
 
-    border: 2px solid #063970;
+    border:
+        2px solid var(--navy);
 }
 
-
 /* =========================================================
-   STUDENT PROFILE BUTTON
-   ========================================================= */
+   7. PROFILE BUTTON
+========================================================= */
 
 #studentProfileButton {
-    display: inline-flex;
+
+    display: flex;
+
     align-items: center;
 
     gap: 9px;
 
-    min-height: 42px;
+    min-height: 44px;
 
-    padding: 5px 13px 5px 6px;
+    padding:
+        5px 11px 5px 6px;
 
-    border-radius: 999px;
+    border:
+        1px solid rgba(255,255,255,0.18);
 
-    background: #ffffff;
+    border-radius: 25px;
 
-    color: var(--navy);
+    background:
+        rgba(255,255,255,0.10);
 
-    font-size: 14px;
-    font-weight: 700;
-
-    box-shadow:
-        0 3px 10px rgba(0, 0, 0, 0.10);
-
-    cursor: pointer;
-
-    white-space: nowrap;
+    color: #ffffff;
 
     transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+        0.2s ease;
 }
 
 #studentProfileButton:hover {
-    transform: translateY(-1px);
 
-    box-shadow:
-        0 7px 18px rgba(0, 0, 0, 0.15);
+    background:
+        rgba(255,255,255,0.18);
+
+    transform:
+        translateY(-1px);
 }
 
 .dashboard-profile-photo {
-    width: 32px;
-    height: 32px;
 
-    flex: 0 0 32px;
+    width: 34px;
+    height: 34px;
 
-    border-radius: 50%;
+    flex: 0 0 34px;
 
     object-fit: cover;
 
-    background: #e2e8f0;
+    border-radius: 50%;
 
     border:
-        2px solid rgba(6, 57, 112, 0.10);
+        2px solid rgba(255,255,255,0.85);
+
+    background:
+        rgba(255,255,255,0.20);
 }
 
+#dashboardProfileName {
 
-/*
-   IMPORTANT:
-   If the profile button contains an image URL as text,
-   hide URL-like text nodes visually while keeping the
-   actual profile image visible.
-*/
+    max-width: 160px;
 
-#studentProfileButton img {
-    display: block;
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    color: #ffffff;
 }
-
 
 /* =========================================================
-   MAIN NAVIGATION
-   NEVER STICKY
-   NEVER FIXED
-   NEVER FLOATING
-   ========================================================= */
+   8. HORIZONTAL MAIN NAVIGATION
+========================================================= */
 
 .main-navigation {
-    position: relative !important;
 
-    top: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
-
-    z-index: 5 !important;
+    position: relative;
 
     width: 100%;
 
-    background: #ffffff;
+    background:
+        #ffffff;
 
     border-bottom:
         1px solid var(--border);
 
     box-shadow:
-        0 3px 10px rgba(15, 23, 42, 0.05);
+        0 2px 10px rgba(0,0,0,0.04);
 
-    overflow: visible;
+    z-index: 90;
 }
 
-
-/* =========================================================
-   NAV INNER
-   ========================================================= */
-
 .nav-inner {
-    width: 100%;
-    max-width: 1440px;
 
-    margin: 0 auto;
+    width: 100%;
+
+    max-width:
+        var(--max-width);
+
+    margin:
+        0 auto;
 
     padding:
-        8px 24px;
+        0 20px;
 
     display: flex;
+
     align-items: center;
 
     justify-content: center;
 
-    gap: 7px;
+    gap: 4px;
 
     overflow-x: auto;
-    overflow-y: hidden;
 
     scrollbar-width: none;
 }
@@ -410,257 +427,242 @@ header {
     display: none;
 }
 
+.nav-link {
 
-/* =========================================================
-   NAV LINKS
-   ========================================================= */
-
-.main-navigation .nav-link {
     position: relative;
 
     flex: 0 0 auto;
 
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
 
-    gap: 7px;
-
-    min-height: 42px;
+    min-height: 54px;
 
     padding:
-        9px 14px;
+        0 15px;
 
-    border-radius: 11px;
+    border: 0;
 
     background: transparent;
 
-    color: #475569;
+    color:
+        var(--muted);
 
-    font-size: 14px;
+    text-decoration: none;
+
+    font-size: 13px;
+
     font-weight: 700;
 
     white-space: nowrap;
 
     transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        transform 0.2s ease;
+        color 0.2s ease;
 }
 
-.main-navigation .nav-link span {
-    font-size: 16px;
-    line-height: 1;
-}
+.nav-link::after {
 
-.main-navigation .nav-link:hover {
-    background: #eef6fb;
-
-    color: var(--teal);
-
-    transform: translateY(-1px);
-}
-
-.main-navigation .nav-link.active {
-    background:
-        linear-gradient(
-            135deg,
-            #e8f7fa,
-            #edf7ff
-        );
-
-    color: var(--navy);
-}
-
-.main-navigation .nav-link.active::after {
     content: "";
 
     position: absolute;
 
-    left: 14px;
-    right: 14px;
+    left: 12px;
+    right: 12px;
 
-    bottom: -9px;
+    bottom: 0;
 
     height: 3px;
 
-    border-radius: 999px;
+    border-radius:
+        3px 3px 0 0;
 
     background:
-        linear-gradient(
-            90deg,
-            var(--navy),
-            var(--teal)
-        );
+        var(--teal);
+
+    transform:
+        scaleX(0);
+
+    transition:
+        transform 0.2s ease;
 }
 
+.nav-link:hover {
+
+    color:
+        var(--navy);
+}
+
+.nav-link.active {
+
+    color:
+        var(--navy);
+}
+
+.nav-link.active::after {
+
+    transform:
+        scaleX(1);
+}
 
 /* =========================================================
-   MAIN CONTAINER
-   ========================================================= */
+   9. MAIN
+========================================================= */
 
-.dashboard-container,
-main.dashboard-container,
-.container {
+.dashboard-container {
+
     width: 100%;
-    max-width: 1440px;
 
-    margin: 0 auto;
+    max-width:
+        var(--max-width);
+
+    margin:
+        0 auto;
 
     padding:
-        28px 24px 60px;
+        28px 24px 80px;
 }
 
-
 /* =========================================================
-   SECTIONS
-   ========================================================= */
-
-.dashboard-section {
-    scroll-margin-top: 20px;
-}
-
-
-/* =========================================================
-   HERO
-   ========================================================= */
+   10. HERO
+========================================================= */
 
 .student-hero {
+
     display: flex;
+
     align-items: center;
 
     gap: 22px;
 
-    margin-bottom: 20px;
+    padding:
+        28px;
 
-    padding: 26px 28px;
+    margin-bottom:
+        22px;
 
-    border-radius: var(--radius-lg);
+    border-radius:
+        var(--radius-lg);
 
     background:
         linear-gradient(
             135deg,
-            #063970 0%,
-            #075a78 52%,
-            #0b7285 100%
+            #ffffff,
+            #eef7fb
         );
 
-    color: #ffffff;
+    border:
+        1px solid var(--border);
 
-    box-shadow: var(--shadow-lg);
+    box-shadow:
+        var(--shadow);
 
     overflow: hidden;
-
-    position: relative;
-}
-
-.student-hero::after {
-    content: "";
-
-    position: absolute;
-
-    width: 260px;
-    height: 260px;
-
-    right: -100px;
-    top: -120px;
-
-    border-radius: 50%;
-
-    background:
-        rgba(255, 255, 255, 0.08);
-
-    pointer-events: none;
 }
 
 .hero-avatar {
-    width: 78px;
-    height: 78px;
 
-    flex: 0 0 78px;
+    width: 82px;
+    height: 82px;
+
+    flex: 0 0 82px;
 
     border-radius: 50%;
 
-    background:
-        rgba(255, 255, 255, 0.14);
+    overflow: hidden;
 
-    border:
-        3px solid rgba(255, 255, 255, 0.30);
+    background:
+        linear-gradient(
+            135deg,
+            var(--teal),
+            var(--navy)
+        );
 
     display: flex;
+
     align-items: center;
     justify-content: center;
 
-    overflow: hidden;
+    border:
+        4px solid #ffffff;
 
-    position: relative;
-
-    z-index: 1;
-}
-
-.hero-avatar img {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
+    box-shadow:
+        var(--shadow);
 }
 
 #dashboardHeroProfilePhoto {
+
     width: 100%;
     height: 100%;
 
     object-fit: cover;
+
+    display: none;
+}
+
+#dashboardHeroProfilePhoto.visible {
+    display: block;
 }
 
 #dashboardHeroFallback {
-    font-size: 30px;
-}
 
-.hero-content {
-    position: relative;
+    width: 100%;
+    height: 100%;
 
-    z-index: 1;
-}
+    display: flex;
 
-.hero-content h1 {
-    margin:
-        3px 0 8px;
+    align-items: center;
+    justify-content: center;
 
     color: #ffffff;
 
-    font-size:
-        clamp(24px, 3vw, 34px);
+    font-size: 32px;
+}
 
-    line-height: 1.15;
+.hero-content {
+    min-width: 0;
+}
+
+.hero-content .eyebrow {
+
+    margin-bottom: 7px;
+}
+
+.hero-content h1 {
+
+    margin:
+        0 0 8px;
+
+    color:
+        var(--navy-dark);
+
+    font-size:
+        clamp(24px, 3vw, 36px);
+
+    line-height:
+        1.15;
 }
 
 .hero-content p {
-    margin: 0;
 
     max-width: 760px;
 
+    margin: 0;
+
     color:
-        rgba(255, 255, 255, 0.82);
+        var(--muted);
+
+    font-size: 14px;
 }
-
-.hero-content .eyebrow,
-.student-hero .eyebrow {
-    color:
-        rgba(255, 255, 255, 0.72);
-
-    font-size: 11px;
-
-    font-weight: 800;
-
-    letter-spacing: 1.4px;
-}
-
 
 /* =========================================================
-   STATISTICS
-   ========================================================= */
+   11. STATS
+========================================================= */
 
 .stats-grid {
+
     display: grid;
 
     grid-template-columns:
@@ -668,371 +670,406 @@ main.dashboard-container,
 
     gap: 14px;
 
-    margin-bottom: 22px;
+    margin-bottom: 24px;
 }
 
 .stat-card {
-    display: flex;
-    align-items: center;
-
-    gap: 13px;
 
     min-width: 0;
 
-    padding: 16px;
-
-    background: var(--surface);
+    padding: 18px;
 
     border:
         1px solid var(--border);
 
-    border-radius: var(--radius);
+    border-radius:
+        var(--radius);
 
-    box-shadow: var(--shadow-sm);
+    background:
+        var(--surface);
 
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+    box-shadow:
+        var(--shadow-sm);
 }
 
-.stat-card:hover {
-    transform: translateY(-2px);
+.stat-card h3 {
 
-    box-shadow: var(--shadow);
-}
+    margin: 0;
 
-.stat-icon {
-    width: 44px;
-    height: 44px;
-
-    flex: 0 0 44px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 13px;
-
-    font-size: 19px;
-    font-weight: 800;
-}
-
-.stat-icon.blue {
-    background: var(--blue-light);
-    color: var(--blue);
-}
-
-.stat-icon.green {
-    background: var(--green-light);
-    color: var(--green);
-}
-
-.stat-icon.purple {
-    background: var(--purple-light);
-    color: var(--purple);
-}
-
-.stat-icon.orange {
-    background: var(--orange-light);
-    color: var(--orange);
-}
-
-.stat-icon.red {
-    background: var(--red-light);
-    color: var(--red);
-}
-
-.stat-label {
-    display: block;
-
-    margin-bottom: 2px;
-
-    color: var(--muted);
+    color:
+        var(--muted);
 
     font-size: 12px;
+
     font-weight: 700;
+
+    text-transform: uppercase;
+
+    letter-spacing:
+        0.04em;
 }
 
-.stat-value {
+.stat-card strong {
+
     display: block;
 
-    color: var(--navy);
+    margin-top: 7px;
 
-    font-size: 22px;
-    font-weight: 850;
+    color:
+        var(--navy);
 
-    line-height: 1.2;
+    font-size: 28px;
+
+    line-height: 1.1;
 }
-
 
 /* =========================================================
-   MAIN LEARNING AREA
-   ========================================================= */
+   12. GENERIC CARDS
+========================================================= */
 
-.learning-grid {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1.25fr)
-        minmax(0, 0.75fr);
-
-    gap: 18px;
-
-    margin-bottom: 18px;
-}
-
+.card,
 .premium-card {
+
     min-width: 0;
 
-    padding: 20px;
-
-    border-radius: var(--radius);
-
-    background: var(--surface);
+    padding: 22px;
 
     border:
         1px solid var(--border);
 
-    box-shadow: var(--shadow-sm);
+    border-radius:
+        var(--radius);
+
+    background:
+        var(--surface);
+
+    box-shadow:
+        var(--shadow-sm);
 }
 
 .section-heading {
+
     display: flex;
 
-    align-items: center;
+    align-items: flex-start;
+
     justify-content: space-between;
 
-    gap: 12px;
+    gap: 15px;
 
-    margin-bottom: 12px;
+    margin-bottom: 16px;
 }
 
 .section-heading h2 {
-    margin: 3px 0 0;
 
-    color: var(--navy);
+    margin: 0;
+
+    color:
+        var(--navy-dark);
 
     font-size: 20px;
+}
 
-    line-height: 1.2;
+.section-heading p {
+
+    margin: 5px 0 0;
+
+    color:
+        var(--muted);
+
+    font-size: 13px;
 }
 
 .eyebrow {
-    display: block;
 
-    color: var(--teal);
+    margin: 0;
 
-    font-size: 10px;
+    color:
+        var(--teal);
 
-    font-weight: 850;
+    font-size: 11px;
 
-    letter-spacing: 1.3px;
+    font-weight: 800;
+
+    letter-spacing:
+        0.09em;
+
+    text-transform:
+        uppercase;
 }
 
 .heading-icon {
-    width: 38px;
-    height: 38px;
 
-    display: flex;
+    display: inline-flex;
+
     align-items: center;
     justify-content: center;
 
-    flex: 0 0 38px;
+    width: 34px;
+    height: 34px;
 
-    border-radius: 11px;
-
-    background: var(--blue-light);
-
-    color: var(--blue);
-
-    font-weight: 800;
-}
-
-
-/* =========================================================
-   CONTINUE LEARNING
-   ========================================================= */
-
-#continueLearningContent {
-    min-height: 78px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 14px 16px;
-
-    border:
-        1px solid #e3ebf3;
-
-    border-radius: 14px;
+    border-radius: 10px;
 
     background:
-        linear-gradient(
-            135deg,
-            #f8fcff,
-            #f2f9fb
-        );
+        #e8f5f7;
+
+    color:
+        var(--teal);
+}
+
+/* =========================================================
+   13. IMPORTANT LOWER DASHBOARD GRID
+========================================================= */
+
+.learning-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1fr)
+        minmax(0, 1fr);
+
+    gap: 20px;
+
+    width: 100%;
+
+    margin-bottom: 20px;
+}
+
+.learning-grid > * {
+
+    min-width: 0;
+}
+
+/* =========================================================
+   14. CONTINUE LEARNING
+========================================================= */
+
+#continueLearningContent {
+
+    min-width: 0;
+
+    width: 100%;
 }
 
 #continueLearningContent .continue-item {
+
     width: 100%;
 
-    padding: 0;
+    min-width: 0;
 
-    border: none;
-}
-
-.continue-item {
     display: flex;
 
     align-items: center;
 
     justify-content: space-between;
 
-    gap: 14px;
-}
+    gap: 15px;
 
-.continue-item strong {
-    display: block;
-
-    color: var(--navy);
-
-    font-size: 15px;
-}
-
-.continue-item small {
-    display: block;
-
-    margin-top: 3px;
-
-    color: var(--muted);
-
-    font-size: 11px;
-}
-
-.continue-item button {
-    width: auto;
-
-    flex: 0 0 auto;
-
-    padding:
-        9px 13px;
-
-    font-size: 12px;
-}
-
-
-/* =========================================================
-   RECOMMENDED LESSON
-   ========================================================= */
-
-#recommendedLesson {
-    min-height: 78px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 14px 16px;
+    padding: 15px;
 
     border:
-        1px solid #e3ebf3;
+        1px solid #e5edf4;
 
-    border-radius: 14px;
+    border-radius:
+        12px;
 
     background:
-        linear-gradient(
-            135deg,
-            #fbfaff,
-            #f5f3ff
-        );
+        #f8fbfd;
 }
 
-#recommendedLesson .recommended-item {
-    width: 100%;
+.continue-item-main {
 
-    padding: 0;
+    min-width: 0;
 
-    border: none;
-}
-
-.recommended-item {
     display: flex;
 
     align-items: center;
 
-    justify-content: space-between;
-
-    gap: 14px;
+    gap: 12px;
 }
 
-.recommended-item strong {
-    display: block;
+.continue-icon {
 
-    color: var(--navy);
+    width: 40px;
+    height: 40px;
 
-    font-size: 15px;
-}
+    flex: 0 0 40px;
 
-.recommended-item small {
-    display: block;
+    display: flex;
 
-    margin-top: 3px;
+    align-items: center;
+    justify-content: center;
 
-    color: var(--muted);
+    border-radius: 11px;
 
-    font-size: 11px;
-}
+    background:
+        #e7f4f6;
 
-.recommended-item button,
-.recommended-item a {
-    flex: 0 0 auto;
+    color:
+        var(--teal);
 
-    padding:
-        9px 13px;
-
-    border-radius: 9px;
-
-    background: var(--purple-light);
-
-    color: var(--purple);
-
-    font-size: 12px;
+    font-size: 14px;
 
     font-weight: 800;
 }
 
+.continue-item h3 {
+
+    margin: 0;
+
+    color:
+        var(--navy-dark);
+
+    font-size: 15px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.continue-item p {
+
+    margin: 3px 0 0;
+
+    color:
+        var(--muted);
+
+    font-size: 12px;
+}
+
+.continue-label {
+
+    flex-shrink: 0;
+
+    padding:
+        6px 10px;
+
+    border-radius:
+        20px;
+
+    background:
+        #e8f5f7;
+
+    color:
+        var(--teal);
+
+    font-size: 11px;
+
+    font-weight: 800;
+}
 
 /* =========================================================
-   RECENT ACTIVITY
-   CLEAN HORIZONTAL AREA
-   ========================================================= */
+   15. RECOMMENDED
+========================================================= */
 
-#recentlyStudied {
-    position: relative;
+#recommendedLesson {
 
-    margin-bottom: 18px;
+    min-width: 0;
 
-    padding: 20px;
+    width: 100%;
+}
 
-    border-radius: var(--radius);
+#recommendedLesson .recommended-item {
 
-    background: #ffffff;
+    width: 100%;
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding: 15px;
 
     border:
-        1px solid var(--border);
+        1px solid #e5edf4;
 
-    box-shadow: var(--shadow-sm);
+    border-radius:
+        12px;
+
+    background:
+        #f8fbfd;
 }
 
-#recentlyStudied .section-heading {
-    margin-bottom: 12px;
+.recommended-main {
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
 }
 
-#recentlyStudied .section-heading h2 {
-    font-size: 20px;
+.recommended-icon {
+
+    width: 40px;
+    height: 40px;
+
+    flex: 0 0 40px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background:
+        #f1ecfb;
+
+    color:
+        var(--purple);
+
+    font-size: 18px;
+
+    font-weight: 800;
 }
 
-#recentlyStudied > div:not(.section-heading) {
+.recommended-item h3 {
+
+    margin: 0;
+
+    font-size: 15px;
+
+    color:
+        var(--navy-dark);
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.recommended-item p {
+
+    margin: 3px 0 0;
+
+    color:
+        var(--muted);
+
+    font-size: 12px;
+}
+
+/* =========================================================
+   16. RECENTLY STUDIED
+========================================================= */
+
+#recentlyStudied {
+
+    width: 100%;
+
+    min-width: 0;
+
     display: grid;
 
     grid-template-columns:
@@ -1041,1019 +1078,159 @@ main.dashboard-container,
     gap: 10px;
 }
 
-#recentlyStudied .recent-item {
-    display: flex;
-
-    align-items: center;
+.recent-item {
 
     min-width: 0;
 
-    padding: 12px 14px;
-
-    border:
-        1px solid #e7edf3;
-
-    border-radius: 12px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #fbfdff,
-            #f8fbfd
-        );
-
-    border-bottom: 1px solid #e7edf3;
-}
-
-#recentlyStudied .recent-item:last-child {
-    border-bottom:
-        1px solid #e7edf3;
-}
-
-.recent-item strong {
-    display: block;
-
-    color: var(--navy);
-
-    font-size: 14px;
-}
-
-.recent-item small {
-    display: block;
-
-    margin-top: 2px;
-
-    color: var(--muted);
-
-    font-size: 11px;
-}
-
-#clearRecentActivity {
-    width: auto;
-
-    margin: 0;
-
-    padding:
-        7px 11px;
-
-    border:
-        1px solid #d7e1ea;
-
-    border-radius: 8px;
-
-    background: #ffffff;
-
-    color: var(--muted);
-
-    font-size: 11px;
-
-    font-weight: 750;
-
-    box-shadow: none;
-}
-
-#clearRecentActivity:hover {
-    background: #f8fafc;
-
-    color: var(--red);
-
-    border-color:
-        rgba(220, 38, 38, 0.25);
-
-    box-shadow: none;
-}
-
-
-/* =========================================================
-   JOURNEY + COURSE PERFORMANCE
-   TWO BALANCED PANELS
-   ========================================================= */
-
-.journey-layout,
-.progress-layout {
-    display: grid;
-
-    grid-template-columns:
-        minmax(0, 1fr)
-        minmax(0, 1fr);
-
-    gap: 18px;
-
-    margin-bottom: 18px;
-}
-
-
-/*
-   These selectors cover both the newer dashboard HTML
-   and common existing wrapper names.
-*/
-
-#studentJourney,
-#overallProgress,
-#courseProgress,
-.journey-card,
-.overall-progress-card,
-.course-progress-card {
-    min-width: 0;
-}
-
-
-/* =========================================================
-   OVERALL PROGRESS
-   ========================================================= */
-
-#overallProgress {
-    position: relative;
-
-    padding: 20px;
-
-    border-radius: var(--radius);
-
-    background:
-        linear-gradient(
-            135deg,
-            #ffffff,
-            #f7fbff
-        );
-
-    border:
-        1px solid var(--border);
-
-    box-shadow: var(--shadow-sm);
-}
-
-#overallProgressText {
-    display: block;
-
-    margin:
-        4px 0 2px;
-
-    color: var(--navy);
-
-    font-size: 30px;
-
-    font-weight: 850;
-
-    line-height: 1.1;
-}
-
-#overallProgressText::after {
-    content: "";
-}
-
-#overallProgressBar {
-    width: 100%;
-
-    height: 9px;
-
-    margin:
-        12px 0 12px;
-
-    overflow: hidden;
-
-    border-radius: 999px;
-
-    background: #e7eef5;
-}
-
-#overallProgressBar .progress-fill,
-#overallProgressBar .overall-progress-fill {
-    height: 100%;
-
-    border-radius: inherit;
-
-    background:
-        linear-gradient(
-            90deg,
-            var(--navy),
-            var(--teal)
-        );
-}
-
-#achievementIndicators {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 7px;
-
-    margin-top: 10px;
-}
-
-.achievement-indicators {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 7px;
-}
-
-.achievement {
-    padding:
-        7px 10px;
-
-    border-radius: 8px;
-
-    background: #f1f6fa;
-
-    color: var(--text-soft);
-
-    font-size: 11px;
-
-    font-weight: 700;
-}
-
-.achievement.unlocked {
-    background: #ecfdf5;
-
-    color: #15803d;
-}
-
-
-/* =========================================================
-   COURSE PROGRESS
-   ========================================================= */
-
-#courseProgressArea {
-    min-height: 70px;
-
-    padding: 14px;
+    padding: 13px;
 
     border:
         1px solid #e5edf4;
 
-    border-radius: 12px;
-
-    background: #fbfdff;
-}
-
-#courseProgressArea:empty {
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-}
-
-#courseProgressArea .empty-state {
-    width: 100%;
-
-    padding: 14px;
-
-    border: none;
-
-    background: transparent;
-
-    font-size: 12px;
-}
-
-
-/* =========================================================
-   GENERAL CARDS
-   ========================================================= */
-
-.card {
-    background: var(--surface);
-
-    border:
-        1px solid var(--border);
-
-    border-radius: var(--radius);
-
-    padding: 22px;
-
-    margin-bottom: 18px;
-
-    box-shadow: var(--shadow-sm);
-}
-
-.card:hover {
-    box-shadow: var(--shadow);
-}
-
-.card h1,
-.card h2,
-.card h3 {
-    color: var(--navy);
-}
-
-.card h1 {
-    margin-top: 0;
-}
-
-.card h2 {
-    margin-top: 0;
-
-    margin-bottom: 8px;
-
-    font-size: 23px;
-}
-
-.card p {
-    color: var(--text-soft);
-}
-
-
-/* =========================================================
-   PAGE SECTION HEADINGS
-   ========================================================= */
-
-.page-section-heading {
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 20px;
-
-    margin-bottom: 18px;
-}
-
-.page-section-heading h1 {
-    margin:
-        4px 0 6px;
-
-    color: var(--navy);
-
-    font-size: 28px;
-}
-
-.page-section-heading p {
-    margin: 0;
-
-    color: var(--muted);
-}
-
-.section-icon {
-    width: 52px;
-    height: 52px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 15px;
-
-    background: #eef7fa;
-
-    color: var(--teal);
-
-    font-size: 24px;
-}
-
-
-/* =========================================================
-   COURSE HEADER
-   ========================================================= */
-
-.course-header {
-    display: flex;
-
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 20px;
-
-    margin-bottom: 10px;
-}
-
-.course-header h2 {
-    margin-bottom: 4px;
-}
-
-.course-header p {
-    margin-top: 0;
-}
-
-#totalCourses {
-    margin: 0;
-
-    color: var(--teal);
-
-    font-size: 34px;
-
-    font-weight: 850;
-
-    text-align: right;
-}
-
-
-/* =========================================================
-   SEARCH
-   ========================================================= */
-
-.search-box,
-#courseSearch,
-#notesSearch {
-    width: 100%;
-
-    padding: 13px 15px;
-
-    margin:
-        8px 0 18px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 12px;
-
-    background: #ffffff;
-
-    color: var(--text);
-
-    outline: none;
-
-    font-size: 14px;
+    border-radius:
+        11px;
+
+    background:
+        #fbfdff;
 
     transition:
-        border-color 0.2s ease,
-        box-shadow 0.2s ease;
+        0.2s ease;
 }
 
-.search-box:focus,
-#courseSearch:focus,
-#notesSearch:focus {
-    border-color: var(--teal);
-
-    box-shadow:
-        0 0 0 4px
-        rgba(11, 114, 133, 0.10);
-}
-
-
-/* =========================================================
-   COURSE GRID
-   ========================================================= */
-
-#courseArea {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 18px;
-}
-
-.course-card {
-    position: relative;
-
-    min-width: 0;
-
-    padding: 18px;
-
-    background: #ffffff;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: var(--radius);
-
-    box-shadow: var(--shadow-sm);
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        border-color 0.2s ease;
-}
-
-.course-card:hover {
-    transform: translateY(-4px);
+.recent-item:hover {
 
     border-color:
-        rgba(11, 114, 133, 0.30);
+        #cbdde9;
 
-    box-shadow: var(--shadow);
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        var(--shadow-sm);
 }
 
-.course-card h3 {
-    margin:
-        0 0 8px;
+.recent-item-content {
 
-    color: var(--navy);
+    display: flex;
 
-    font-size: 17px;
-}
+    align-items: center;
 
-.course-card p {
-    color: var(--muted);
+    gap: 11px;
 
-    font-size: 13px;
-}
-
-.course-card button {
-    width: 100%;
-
-    margin-top: 12px;
-}
-
-
-/* =========================================================
-   NOTES GRID
-   ========================================================= */
-
-#notesArea {
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: 18px;
-}
-
-.note-card {
     min-width: 0;
-
-    padding: 18px;
-
-    background: #ffffff;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: var(--radius);
-
-    box-shadow: var(--shadow-sm);
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
 }
 
-.note-card:hover {
-    transform: translateY(-3px);
+.recent-item-icon {
 
-    box-shadow: var(--shadow);
-}
+    width: 36px;
+    height: 36px;
 
-.note-card h3 {
-    margin:
-        0 0 8px;
+    flex: 0 0 36px;
 
-    color: var(--navy);
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background:
+        #edf6fa;
 
     font-size: 16px;
 }
 
-.note-card p {
-    color: var(--muted);
+.recent-item h3 {
 
-    font-size: 13px;
-}
-
-.note-card a {
-    display: inline-flex;
-
-    align-items: center;
-
-    margin-top: 10px;
-
-    padding:
-        9px 13px;
-
-    border-radius: 9px;
-
-    background: var(--blue-light);
-
-    color: var(--blue);
-
-    font-size: 13px;
-
-    font-weight: 750;
-}
-
-
-/* =========================================================
-   BUTTONS
-   ========================================================= */
-
-button,
-.button,
-.primary-button {
-    border: none;
-
-    border-radius: 11px;
-
-    padding:
-        11px 16px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--navy),
-            var(--teal)
-        );
-
-    color: #ffffff;
-
-    font-weight: 750;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        filter 0.2s ease;
-}
-
-button:hover,
-.button:hover,
-.primary-button:hover {
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 7px 18px rgba(6, 57, 112, 0.18);
-
-    filter: brightness(1.03);
-}
-
-button:active {
-    transform: translateY(0);
-}
-
-
-/*
-   Preserve special profile/notification button styling.
-*/
-
-#studentProfileButton,
-.notification-button,
-.suggestion-button,
-#clearRecentActivity {
-    box-shadow: none;
-}
-
-
-/* =========================================================
-   FORM ELEMENTS
-   ========================================================= */
-
-input,
-textarea,
-select {
-    width: 100%;
-
-    padding: 12px 14px;
-
-    margin-bottom: 12px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 11px;
-
-    background: #ffffff;
-
-    color: var(--text);
-
-    outline: none;
-
-    font-size: 14px;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-    border-color: var(--teal);
-
-    box-shadow:
-        0 0 0 4px
-        rgba(11, 114, 133, 0.10);
-}
-
-textarea {
-    min-height: 120px;
-
-    resize: vertical;
-}
-
-
-/* =========================================================
-   AI TUTOR
-   ========================================================= */
-
-#aiTutor {
-    scroll-margin-top: 20px;
-}
-
-.ai-page-header {
-    display: flex;
-
-    align-items: center;
-
-    gap: 16px;
-
-    margin-bottom: 18px;
-}
-
-.ai-avatar-large {
-    width: 58px;
-    height: 58px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    flex: 0 0 58px;
-
-    border-radius: 17px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #eef2ff,
-            #ecfeff
-        );
-
-    font-size: 28px;
-}
-
-.ai-page-header h1 {
-    margin:
-        3px 0;
-
-    color: var(--navy);
-
-    font-size: 27px;
-}
-
-.ai-page-header p {
     margin: 0;
 
-    color: var(--muted);
+    color:
+        var(--navy-dark);
+
+    font-size: 13px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
 }
 
-.ai-status {
-    margin-left: auto;
+.recent-item p {
 
-    display: inline-flex;
+    margin: 2px 0 0;
 
-    align-items: center;
+    color:
+        var(--muted);
 
-    gap: 7px;
+    font-size: 11px;
+}
+
+/* =========================================================
+   17. CLEAR ACTIVITY
+========================================================= */
+
+#clearRecentActivity {
+
+    width: auto;
+
+    min-width: 0;
 
     padding:
-        7px 11px;
-
-    border-radius: 999px;
-
-    background: var(--green-light);
-
-    color: var(--green);
-
-    font-size: 12px;
-
-    font-weight: 750;
-}
-
-.ai-status i {
-    width: 7px;
-    height: 7px;
-
-    border-radius: 50%;
-
-    background: var(--green);
-}
-
-.ai-chat-card {
-    padding: 22px;
+        6px 10px;
 
     border:
         1px solid var(--border);
 
-    border-radius: var(--radius-lg);
+    border-radius:
+        8px;
 
     background:
-        linear-gradient(
-            180deg,
-            #ffffff,
-            #fbfdff
-        );
+        #ffffff;
 
-    box-shadow: var(--shadow);
-}
+    color:
+        var(--muted);
 
-.ai-recent-questions {
-    margin-bottom: 18px;
-}
-
-.ai-chat-welcome {
-    display: flex;
-
-    align-items: flex-start;
-
-    gap: 12px;
-}
-
-.ai-avatar {
-    width: 42px;
-    height: 42px;
-
-    flex: 0 0 42px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 13px;
-
-    background: var(--purple-light);
-
-    font-size: 20px;
-}
-
-.ai-message {
-    max-width: 850px;
-
-    padding:
-        13px 16px;
-
-    border-radius: 14px;
-
-    background: #f4f7fb;
-
-    color: var(--text);
-}
-
-.ai-message strong {
-    color: var(--navy);
-}
-
-.ai-message p {
-    margin:
-        5px 0 0;
-
-    color: var(--text-soft);
-}
-
-.suggested-questions {
-    display: flex;
-
-    flex-wrap: wrap;
-
-    align-items: center;
-
-    gap: 8px;
-
-    margin-bottom: 12px;
-}
-
-.suggested-questions > span {
-    color: var(--muted);
-
-    font-size: 12px;
+    font-size: 11px;
 
     font-weight: 700;
-
-    margin-right: 3px;
 }
 
-.suggestion-button {
-    width: auto;
+#clearRecentActivity:hover {
 
-    padding:
-        8px 11px;
+    color:
+        var(--red);
 
-    border:
-        1px solid #d9e4ef;
-
-    border-radius: 999px;
-
-    background: #ffffff;
-
-    color: var(--navy);
-
-    font-size: 12px;
-
-    box-shadow: none;
-}
-
-.suggestion-button:hover {
-    background: #eef7fa;
-
-    color: var(--teal);
-
-    box-shadow: none;
-}
-
-.ai-input {
-    min-height: 125px;
-
-    margin-bottom: 10px;
-
-    background: #fbfdff;
-
-    border:
-        1px solid #cfdce8;
-
-    font-size: 15px;
-}
-
-.ai-input-actions {
-    display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 15px;
-}
-
-.ai-hint {
-    color: var(--muted);
-
-    font-size: 12px;
-}
-
-#askAIButton {
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 10px;
-
-    width: auto;
-
-    min-width: 170px;
-
-    margin: 0;
-
-    padding:
-        12px 18px;
+    border-color:
+        #f0c5ca;
 
     background:
-        linear-gradient(
-            135deg,
-            var(--navy),
-            var(--teal)
-        );
+        #fff7f7;
 }
-
-.ai-answer {
-    margin-top: 18px;
-}
-
-.ai-response {
-    padding: 18px;
-
-    border:
-        1px solid #dce8f1;
-
-    border-left:
-        4px solid var(--teal);
-
-    border-radius: 12px;
-
-    background: #f8fbfd;
-
-    line-height: 1.75;
-}
-
 
 /* =========================================================
-   QUIZ CENTER
-   ========================================================= */
+   18. OVERALL PROGRESS
+========================================================= */
 
-#quizCenter {
-    scroll-margin-top: 20px;
+#overallProgressText {
+
+    display: block;
+
+    margin-bottom: 12px;
+
+    color:
+        var(--navy);
+
+    font-size: 32px;
+
+    font-weight: 900;
+
+    line-height: 1;
 }
 
-#quizArea {
-    min-height: 50px;
-}
+.overall-progress-bar,
+.progress-track {
 
-.quiz-summary,
-.quiz-card {
-    padding: 18px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: var(--radius);
-
-    background: #ffffff;
-}
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card,
-#progress {
-    color: var(--teal);
-}
-
-#progress {
-    padding: 20px;
-
-    font-size: 42px;
-
-    font-weight: 850;
-
-    text-align: center;
-}
-
-.progress-bar,
-.overall-progress-bar {
     width: 100%;
 
     height: 10px;
@@ -2062,97 +1239,174 @@ textarea {
 
     border-radius: 999px;
 
-    background: #e7eef5;
+    background:
+        #e7eef4;
 }
 
-.progress-fill,
-.overall-progress-fill {
+#overallProgressBar,
+.progress-fill {
+
     height: 100%;
+
+    min-width: 0;
 
     border-radius: inherit;
 
     background:
         linear-gradient(
             90deg,
-            var(--navy),
-            var(--teal)
+            var(--teal),
+            var(--blue)
         );
+
+    transition:
+        width 0.5s ease;
 }
 
+#achievementIndicators {
 
-/* =========================================================
-   HUMAN TUTOR
-   ========================================================= */
+    display: flex;
 
-#humanTutor {
-    scroll-margin-top: 20px;
-}
+    flex-wrap: wrap;
 
-.form-card {
-    padding: 22px;
+    gap: 8px;
 
-    background: #ffffff;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: var(--radius-lg);
-
-    box-shadow: var(--shadow-sm);
-}
-
-#messageStatus {
-    min-height: 24px;
-
-    margin-top: 12px;
-
-    font-weight: 700;
-}
-
-
-/* =========================================================
-   INBOX
-   ========================================================= */
-
-#studentInboxSection {
-    scroll-margin-top: 20px;
-}
-
-#studentInbox {
     margin-top: 15px;
 }
 
-.empty-state {
-    padding: 24px;
+.achievement-item {
 
-    text-align: center;
+    display: inline-flex;
+
+    align-items: center;
+
+    padding:
+        7px 10px;
+
+    border-radius:
+        999px;
+
+    background:
+        #eef6fb;
+
+    color:
+        var(--navy);
 
     border:
-        1px dashed #cbd8e5;
+        1px solid #dbeaf3;
 
-    border-radius: 14px;
+    font-size: 11px;
 
-    color: var(--muted);
-
-    background: #fbfdff;
+    font-weight: 800;
 }
-
-.empty-state span {
-    display: block;
-
-    margin-bottom: 7px;
-
-    font-size: 28px;
-}
-
 
 /* =========================================================
-   GENERAL ACTIVITY ITEMS
-   ========================================================= */
+   19. COURSE PROGRESS
+========================================================= */
 
-.recent-item,
-.recommended-item,
-.continue-item {
+#courseProgressArea {
+
+    width: 100%;
+
+    min-width: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.course-progress-item {
+
+    min-width: 0;
+
+    padding: 15px;
+
+    border:
+        1px solid #e5edf4;
+
+    border-radius:
+        12px;
+
+    background:
+        #fbfdff;
+}
+
+.course-progress-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 12px;
+}
+
+.course-progress-item h3 {
+
+    margin: 0;
+
+    min-width: 0;
+
+    color:
+        var(--navy-dark);
+
+    font-size: 14px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.course-progress-header strong {
+
+    flex-shrink: 0;
+
+    color:
+        var(--teal);
+
+    font-size: 13px;
+}
+
+.course-progress-meta {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin:
+        7px 0 10px;
+
+    color:
+        var(--muted);
+
+    font-size: 11px;
+}
+
+.course-progress-meta span {
+    min-width: 0;
+}
+
+/* =========================================================
+   20. COURSE LIBRARY
+========================================================= */
+
+.course-library-section {
+
+    margin-top: 20px;
+}
+
+.course-header {
+
     display: flex;
 
     align-items: center;
@@ -2161,505 +1415,1079 @@ textarea {
 
     gap: 15px;
 
-    padding: 13px 0;
-
-    border-bottom:
-        1px solid #edf2f7;
+    margin-bottom: 18px;
 }
 
-.recent-item:last-child,
-.recommended-item:last-child,
-.continue-item:last-child {
-    border-bottom: none;
+.course-search,
+#courseSearch,
+#notesSearch {
+
+    width: 100%;
+
+    max-width: 320px;
+
+    height: 42px;
+
+    padding:
+        0 13px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        10px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--text);
+
+    outline: none;
 }
 
+#courseSearch:focus,
+#notesSearch:focus {
 
-/* =========================================================
-   WHATSAPP FLOAT
-   ========================================================= */
-
-.whatsapp-float {
-    position: fixed;
-
-    right: 22px;
-    bottom: 22px;
-
-    z-index: 100;
-
-    width: 56px;
-    height: 56px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: #25d366;
+    border-color:
+        var(--teal);
 
     box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.18);
+        0 0 0 3px rgba(11,114,133,0.10);
+}
+
+#courseArea {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 16px;
+
+    min-width: 0;
+}
+
+.course-card {
+
+    min-width: 0;
+
+    padding: 17px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    background:
+        #ffffff;
+
+    box-shadow:
+        var(--shadow-sm);
+
+    cursor: pointer;
 
     transition:
         transform 0.2s ease,
-        box-shadow 0.2s ease;
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
 }
 
-.whatsapp-float:hover {
+.course-card:hover {
+
     transform:
-        translateY(-3px) scale(1.03);
+        translateY(-3px);
+
+    border-color:
+        #bdd9e4;
 
     box-shadow:
-        0 14px 30px rgba(0, 0, 0, 0.22);
+        var(--shadow);
 }
 
+.course-card img {
 
-/* =========================================================
-   MOBILE BOTTOM NAV
-   ========================================================= */
+    width: 100%;
 
-.mobile-bottom-nav {
-    display: none;
+    aspect-ratio:
+        16 / 9;
+
+    object-fit: cover;
+
+    margin-bottom: 12px;
+
+    border-radius:
+        10px;
+
+    background:
+        #eef4f8;
 }
 
+.course-card h3 {
+
+    margin:
+        0 0 7px;
+
+    color:
+        var(--navy-dark);
+
+    font-size: 15px;
+}
+
+.course-card p {
+
+    margin: 0;
+
+    color:
+        var(--muted);
+
+    font-size: 12px;
+
+    line-height: 1.55;
+}
 
 /* =========================================================
-   FOOTER
-   ========================================================= */
+   21. NOTES LIBRARY
+========================================================= */
 
-footer {
+#notesArea {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr));
+
+    gap: 15px;
+
+    min-width: 0;
+}
+
+.note-card {
+
+    min-width: 0;
+
+    padding: 17px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        14px;
+
+    background:
+        #ffffff;
+
+    box-shadow:
+        var(--shadow-sm);
+}
+
+.note-card h3 {
+
+    margin:
+        0 0 8px;
+
+    color:
+        var(--navy-dark);
+
+    font-size: 15px;
+}
+
+.note-card p {
+
+    margin:
+        0 0 14px;
+
+    color:
+        var(--muted);
+
+    font-size: 12px;
+}
+
+/* =========================================================
+   22. BUTTONS
+========================================================= */
+
+.primary-button,
+.secondary-button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 38px;
+
+    padding:
+        0 13px;
+
+    border-radius:
+        9px;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+    transition:
+        0.2s ease;
+
+    cursor: pointer;
+}
+
+.primary-button {
+
+    border:
+        1px solid var(--teal);
+
+    background:
+        var(--teal);
+
+    color:
+        #ffffff;
+}
+
+.primary-button:hover {
+
+    background:
+        var(--teal-dark);
+
+    transform:
+        translateY(-1px);
+}
+
+.secondary-button {
+
+    border:
+        1px solid #cddce6;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--navy);
+}
+
+.secondary-button:hover {
+
+    border-color:
+        var(--teal);
+
+    color:
+        var(--teal);
+
+    background:
+        #f5fbfc;
+}
+
+button:disabled {
+
+    opacity: 0.65;
+
+    cursor:
+        not-allowed;
+
+    transform:
+        none !important;
+}
+
+/* =========================================================
+   23. AI TUTOR
+========================================================= */
+
+#aiTutor {
+
+    margin-top: 20px;
+}
+
+.ai-question-area {
+
+    display: flex;
+
+    gap: 10px;
+
+    align-items: stretch;
+}
+
+#aiQuestion {
+
+    flex: 1;
+
+    min-width: 0;
+
+    min-height: 46px;
+
+    padding:
+        11px 13px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius:
+        10px;
+
+    resize: vertical;
+
+    outline: none;
+}
+
+#aiQuestion:focus {
+
+    border-color:
+        var(--teal);
+
+    box-shadow:
+        0 0 0 3px rgba(11,114,133,0.10);
+}
+
+#aiAnswer {
+
+    margin-top: 15px;
+
+    padding: 16px;
+
+    min-height: 80px;
+
+    border:
+        1px solid #dfeaf1;
+
+    border-radius:
+        12px;
+
+    background:
+        #f8fbfd;
+
+    color:
+        var(--text);
+
+    white-space:
+        pre-wrap;
+
+    line-height:
+        1.65;
+}
+
+.ai-suggestions {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 8px;
+
+    margin-bottom: 12px;
+}
+
+.suggestion-button {
+
+    padding:
+        7px 10px;
+
+    border:
+        1px solid #d8e5ed;
+
+    border-radius:
+        999px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--teal);
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+/* =========================================================
+   24. QUIZ CENTER
+========================================================= */
+
+#quizArea {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+}
+
+.quiz-performance-item {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    padding:
+        10px 12px;
+
+    border:
+        1px solid #e6edf3;
+
+    border-radius:
+        9px;
+
+    background:
+        #fbfdff;
+
+    font-size: 12px;
+}
+
+.quiz-performance-item strong {
+
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+.quiz-performance-item span {
+
+    flex-shrink: 0;
+
+    color:
+        var(--teal);
+
+    font-weight: 800;
+}
+
+/* =========================================================
+   25. TUTOR MESSAGING
+========================================================= */
+
+.tutor-form {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.form-group {
+
+    min-width: 0;
+}
+
+.form-group.full-width {
+
+    grid-column:
+        1 / -1;
+}
+
+.form-group label {
+
+    display: block;
+
+    margin-bottom: 6px;
+
+    color:
+        var(--navy-dark);
+
+    font-size: 12px;
+
+    font-weight: 800;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+
     width: 100%;
 
     padding:
-        30px 20px 90px;
+        11px 12px;
 
-    text-align: center;
+    border:
+        1px solid var(--border);
 
-    color: var(--muted);
+    border-radius:
+        9px;
+
+    background:
+        #ffffff;
+
+    color:
+        var(--text);
+
+    outline: none;
+}
+
+.form-group textarea {
+
+    min-height: 130px;
+
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+
+    border-color:
+        var(--teal);
+
+    box-shadow:
+        0 0 0 3px rgba(11,114,133,0.09);
+}
+
+/* =========================================================
+   26. MESSAGE STATUS
+========================================================= */
+
+.message-status {
+
+    margin-top: 10px;
+
+    min-height: 20px;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+.message-status.success {
+
+    color:
+        var(--green);
+}
+
+.message-status.error {
+
+    color:
+        var(--red);
+}
+
+.message-status.sending {
+
+    color:
+        var(--teal);
+}
+
+/* =========================================================
+   27. INBOX
+========================================================= */
+
+#studentInbox {
+
+    display: grid;
+
+    gap: 10px;
+}
+
+.inbox-message {
+
+    padding:
+        14px;
+
+    border:
+        1px solid #e3ebf2;
+
+    border-radius:
+        11px;
+
+    background:
+        #fbfdff;
+}
+
+.inbox-message h3 {
+
+    margin:
+        0 0 5px;
+
+    color:
+        var(--navy-dark);
+
+    font-size: 14px;
+}
+
+.inbox-message p {
+
+    margin:
+        0 0 6px;
+
+    color:
+        var(--text);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+.inbox-message small {
+
+    color:
+        var(--muted);
+
+    font-size: 10px;
+}
+
+/* =========================================================
+   28. EMPTY / LOADING
+========================================================= */
+
+.empty-state,
+.loading-state {
+
+    width: 100%;
+
+    padding:
+        24px;
+
+    border:
+        1px dashed #ccdbe5;
+
+    border-radius:
+        12px;
+
+    background:
+        #f9fcfe;
+
+    color:
+        var(--muted);
+
+    text-align:
+        center;
 
     font-size: 13px;
 }
 
+.loading-state::before {
+
+    content:
+        "⏳ ";
+
+    color:
+        var(--teal);
+}
 
 /* =========================================================
-   LOADING
-   ========================================================= */
+   29. WHATSAPP FLOATING BUTTON
+========================================================= */
 
-.loading-card {
-    min-height: 130px;
+.whatsapp-float {
+
+    position: fixed;
+
+    right: 24px;
+
+    bottom: 24px;
+
+    width: 58px;
+    height: 58px;
 
     display: flex;
 
-    flex-direction: column;
-
     align-items: center;
-
     justify-content: center;
 
-    color: var(--muted);
-}
+    padding: 0;
 
-.loading-spinner {
-    width: 28px;
-    height: 28px;
-
-    margin-bottom: 10px;
-
-    border:
-        3px solid #dce7ef;
-
-    border-top-color: var(--teal);
+    border: 0;
 
     border-radius: 50%;
 
-    animation:
-        mwanikiSpin 0.8s linear infinite;
+    background:
+        #25D366;
+
+    color:
+        #ffffff;
+
+    text-decoration: none;
+
+    box-shadow:
+        0 8px 22px rgba(0,0,0,0.20),
+        0 3px 8px rgba(0,0,0,0.12);
+
+    z-index: 9999;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
 }
 
-@keyframes mwanikiSpin {
-    to {
-        transform: rotate(360deg);
-    }
+.whatsapp-float svg {
+
+    width: 34px;
+    height: 34px;
+
+    display: block;
+
+    fill:
+        currentColor;
 }
 
+.whatsapp-float:hover {
+
+    transform:
+        translateY(-4px) scale(1.05);
+
+    background:
+        #20bd5a;
+
+    box-shadow:
+        0 12px 28px rgba(0,0,0,0.24),
+        0 5px 12px rgba(0,0,0,0.14);
+}
+
+.whatsapp-float:active {
+
+    transform:
+        translateY(-1px) scale(0.98);
+}
 
 /* =========================================================
-   LARGE LAPTOP
-   ========================================================= */
+   30. FOOTER
+========================================================= */
+
+.dashboard-footer {
+
+    padding:
+        28px 20px;
+
+    text-align:
+        center;
+
+    color:
+        var(--muted);
+
+    font-size:
+        12px;
+}
+
+/* =========================================================
+   31. MOBILE BOTTOM NAV
+========================================================= */
+
+.mobile-bottom-nav {
+
+    display: none;
+}
+
+/* =========================================================
+   32. RESPONSIVE 1200
+========================================================= */
 
 @media (max-width: 1200px) {
 
-    .stats-grid {
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-    }
-
     #courseArea {
+
         grid-template-columns:
             repeat(3, minmax(0, 1fr));
     }
 
     #notesArea {
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+    }
+
+    .stats-grid {
+
         grid-template-columns:
             repeat(3, minmax(0, 1fr));
     }
 }
 
-
 /* =========================================================
-   TABLET
-   ========================================================= */
+   33. RESPONSIVE 900
+========================================================= */
 
 @media (max-width: 900px) {
 
-    .nav-inner {
-        justify-content: flex-start;
+    .dashboard-header {
 
-        padding-left: 14px;
-        padding-right: 14px;
+        padding:
+            11px 16px;
     }
 
-    .dashboard-container,
-    main.dashboard-container,
-    .container {
+    .dashboard-container {
+
         padding:
-            24px 16px 50px;
+            22px 16px 70px;
     }
 
     .learning-grid {
-        grid-template-columns: 1fr;
-    }
 
-    .journey-layout,
-    .progress-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns:
+            1fr;
     }
 
     #courseArea {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 
     #notesArea {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
+    }
+
+    #courseProgressArea {
+
+        grid-template-columns:
+            1fr;
     }
 
     .stats-grid {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
-    }
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 700px) {
-
-    .dashboard-header,
-    header {
-        padding: 14px 15px;
-    }
-
-    .brand-name {
-        font-size: 18px;
-    }
-
-    .brand-subtitle {
-        font-size: 11px;
-    }
-
-    .brand-icon {
-        width: 40px;
-        height: 40px;
-
-        flex-basis: 40px;
-
-        border-radius: 11px;
-
-        font-size: 19px;
-    }
-
-    .header-actions {
-        gap: 7px;
-    }
-
-    #studentProfileButton {
-        padding-right: 8px;
-
-        max-width: 150px;
-    }
-
-    .dashboard-profile-photo {
-        width: 30px;
-        height: 30px;
-
-        flex-basis: 30px;
-    }
-
-    .main-navigation {
-        position: relative !important;
-
-        top: auto !important;
-
-        z-index: 5 !important;
     }
 
     .nav-inner {
-        justify-content: flex-start;
 
-        gap: 4px;
+        justify-content:
+            flex-start;
+    }
+}
+
+/* =========================================================
+   34. RESPONSIVE 650
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .dashboard-header {
+
+        align-items:
+            flex-start;
+
+        gap:
+            10px;
+    }
+
+    .brand-area {
+
+        align-items:
+            flex-start;
+    }
+
+    .brand-icon {
+
+        width: 40px;
+        height: 40px;
+
+        flex-basis:
+            40px;
+    }
+
+    .brand-name {
+
+        font-size:
+            15px;
+    }
+
+    .brand-subtitle {
+
+        font-size:
+            9px;
+    }
+
+    .header-actions {
+
+        gap:
+            6px;
+    }
+
+    #studentProfileButton {
 
         padding:
-            7px 10px;
+            4px;
     }
 
-    .main-navigation .nav-link {
-        min-height: 39px;
+    #dashboardProfileName {
+
+        display: none;
+    }
+
+    .dashboard-container {
 
         padding:
-            8px 11px;
-
-        font-size: 12px;
-    }
-
-    .main-navigation .nav-link span {
-        font-size: 14px;
-    }
-
-    .main-navigation .nav-link.active::after {
-        left: 10px;
-
-        right: 10px;
-
-        bottom: -8px;
-    }
-
-    .dashboard-container,
-    main.dashboard-container,
-    .container {
-        padding:
-            18px 12px 70px;
+            18px 12px 80px;
     }
 
     .student-hero {
-        flex-direction: column;
 
-        align-items: flex-start;
+        align-items:
+            flex-start;
 
-        padding: 22px;
+        padding:
+            20px;
 
-        gap: 14px;
+        gap:
+            15px;
     }
 
     .hero-avatar {
-        width: 66px;
-        height: 66px;
 
-        flex-basis: 66px;
+        width: 62px;
+        height: 62px;
+
+        flex-basis:
+            62px;
+    }
+
+    #dashboardHeroFallback {
+
+        font-size:
+            24px;
     }
 
     .hero-content h1 {
-        font-size: 25px;
+
+        font-size:
+            23px;
     }
 
     .stats-grid {
-        grid-template-columns: 1fr;
 
-        gap: 10px;
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+        gap:
+            10px;
     }
 
     .stat-card {
-        padding: 14px;
+
+        padding:
+            14px;
+    }
+
+    .stat-card strong {
+
+        font-size:
+            23px;
+    }
+
+    #recentlyStudied {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    #courseArea {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    #notesArea {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    .course-header {
+
+        align-items:
+            stretch;
+
+        flex-direction:
+            column;
+    }
+
+    .course-search,
+    #courseSearch,
+    #notesSearch {
+
+        max-width:
+            none;
+    }
+
+    .tutor-form {
+
+        grid-template-columns:
+            1fr;
+    }
+
+    .form-group.full-width {
+
+        grid-column:
+            auto;
+    }
+
+    .ai-question-area {
+
+        flex-direction:
+            column;
+    }
+
+    .whatsapp-float {
+
+        width:
+            53px;
+
+        height:
+            53px;
+
+        right:
+            16px;
+
+        bottom:
+            16px;
+    }
+
+    .whatsapp-float svg {
+
+        width:
+            30px;
+
+        height:
+            30px;
+    }
+}
+
+/* =========================================================
+   35. VERY SMALL SCREENS
+========================================================= */
+
+@media (max-width: 430px) {
+
+    .stats-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+    }
+
+    .stat-card h3 {
+
+        font-size:
+            10px;
+    }
+
+    .stat-card strong {
+
+        font-size:
+            20px;
+    }
+
+    .section-heading {
+
+        align-items:
+            flex-start;
     }
 
     .card,
     .premium-card {
-        padding: 17px;
 
-        border-radius: 17px;
-    }
-
-    /*
-       Continue + Recommended remain clean stacked
-       only on small screens.
-    */
-
-    .learning-grid {
-        grid-template-columns: 1fr;
-
-        gap: 12px;
-    }
-
-    #recentlyStudied {
-        padding: 17px;
-    }
-
-    #recentlyStudied > div:not(.section-heading) {
-        grid-template-columns: 1fr;
-    }
-
-    .journey-layout,
-    .progress-layout {
-        grid-template-columns: 1fr;
-
-        gap: 12px;
-    }
-
-    .course-header {
-        align-items: flex-start;
-
-        flex-direction: column;
-    }
-
-    #totalCourses {
-        text-align: left;
-    }
-
-    #courseArea {
-        grid-template-columns: 1fr;
-
-        gap: 14px;
-    }
-
-    #notesArea {
-        grid-template-columns: 1fr;
-
-        gap: 14px;
-    }
-
-    .page-section-heading {
-        align-items: flex-start;
-    }
-
-    .page-section-heading h1 {
-        font-size: 23px;
-    }
-
-    .ai-page-header {
-        align-items: flex-start;
-
-        flex-wrap: wrap;
-    }
-
-    .ai-status {
-        margin-left: 0;
-    }
-
-    .ai-input-actions {
-        align-items: stretch;
-
-        flex-direction: column;
-    }
-
-    #askAIButton {
-        width: 100%;
-    }
-
-    .suggested-questions {
-        align-items: flex-start;
-
-        flex-direction: column;
-    }
-
-    .suggestion-button {
-        width: 100%;
-    }
-
-    .whatsapp-float {
-        right: 16px;
-
-        bottom: 75px;
-
-        width: 52px;
-        height: 52px;
-    }
-
-    footer {
-        padding-bottom: 90px;
-    }
-}
-
-
-/* =========================================================
-   VERY SMALL PHONES
-   ========================================================= */
-
-@media (max-width: 390px) {
-
-    .brand-subtitle {
-        display: none;
-    }
-
-    .brand-name {
-        font-size: 16px;
-    }
-
-    .notification-button {
-        width: 38px;
-        height: 38px;
-
-        flex-basis: 38px;
-    }
-
-    #studentProfileButton {
-        min-height: 38px;
-
-        max-width: 130px;
-    }
-
-    .main-navigation .nav-link {
         padding:
-            8px 9px;
-
-        font-size: 11px;
-    }
-
-    .student-hero {
-        padding: 18px;
-    }
-
-    .hero-content h1 {
-        font-size: 22px;
-    }
-
-    #overallProgressText {
-        font-size: 27px;
-    }
-}
-
-
-/* =========================================================
-   ACCESSIBILITY
-   ========================================================= */
-
-:focus-visible {
-    outline:
-        3px solid rgba(37, 99, 235, 0.30);
-
-    outline-offset: 2px;
-}
-
-
-/* =========================================================
-   REDUCED MOTION
-   ========================================================= */
-
-@media (prefers-reduced-motion: reduce) {
-
-    html {
-        scroll-behavior: auto;
-    }
-
-    *,
-    *::before,
-    *::after {
-        animation-duration: 0.01ms !important;
-
-        animation-iteration-count: 1 !important;
-
-        transition-duration: 0.01ms !important;
+            17px;
     }
 }
