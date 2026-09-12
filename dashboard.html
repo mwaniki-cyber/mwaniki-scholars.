@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
     <meta charset="UTF-8">
@@ -21,20 +22,21 @@
 
     <title>Mwaniki Scholars | Student Dashboard</title>
 
-    <!-- FAVICON ONLY -->
+    <!-- FAVICON -->
     <link
         rel="icon"
         type="image/svg+xml"
         href="./favicon.svg"
     >
 
-    <!-- DASHBOARD STYLES -->
+    <!-- DASHBOARD CSS -->
     <link
         rel="stylesheet"
         href="./dashboard.css"
     >
 
 </head>
+
 
 <body>
 
@@ -45,6 +47,7 @@
 <header class="dashboard-header">
 
     <div class="dashboard-header-inner">
+
 
         <!-- BRAND -->
         <a
@@ -59,13 +62,13 @@
 
             <div class="brand-text">
 
-                <div class="brand-title">
+                <strong>
                     Mwaniki Scholars
-                </div>
+                </strong>
 
-                <div class="brand-subtitle">
+                <span>
                     Medical Learning Platform
-                </div>
+                </span>
 
             </div>
 
@@ -73,14 +76,15 @@
 
 
         <!-- HEADER ACTIONS -->
-        <div class="dashboard-header-actions">
+        <div class="header-actions">
+
 
             <!-- NOTIFICATIONS -->
             <button
                 type="button"
                 id="notificationButton"
-                class="header-action-button notification-button"
-                aria-label="Notifications"
+                class="icon-button"
+                aria-label="Open notifications"
                 aria-expanded="false"
             >
                 🔔
@@ -96,6 +100,7 @@
                 aria-expanded="false"
             >
 
+                <!-- INITIAL -->
                 <span
                     id="profileInitial"
                     class="profile-initial"
@@ -103,12 +108,24 @@
                     S
                 </span>
 
+
+                <!-- REAL STUDENT PHOTO -->
+                <img
+                    id="profilePhoto"
+                    class="profile-photo"
+                    src=""
+                    alt="Student profile photo"
+                    hidden
+                >
+
+
                 <span
                     id="profileButtonName"
                     class="profile-button-name"
                 >
                     Student
                 </span>
+
 
                 <span class="profile-arrow">
                     ▾
@@ -132,67 +149,62 @@
 
         <div class="dashboard-nav-inner">
 
+
             <a
                 href="#overview"
-                class="dashboard-nav-link active"
+                class="nav-link active"
             >
-                <span class="nav-icon">⌂</span>
-                <span>Overview</span>
+                Overview
             </a>
 
 
             <a
                 href="#courses"
-                class="dashboard-nav-link"
+                class="nav-link"
             >
-                <span class="nav-icon">📚</span>
-                <span>Courses</span>
+                Courses
             </a>
 
 
             <a
                 href="#notes"
-                class="dashboard-nav-link"
+                class="nav-link"
             >
-                <span class="nav-icon">📝</span>
-                <span>Notes Library</span>
+                Notes Library
             </a>
 
 
             <a
                 href="#quizzes"
-                class="dashboard-nav-link"
+                class="nav-link"
             >
-                <span class="nav-icon">✓</span>
-                <span>Quizzes</span>
+                Quizzes
             </a>
 
 
             <a
                 href="./aiTutor.html"
-                class="dashboard-nav-link"
+                class="nav-link"
             >
-                <span class="nav-icon">🤖</span>
-                <span>AI Tutor</span>
+                AI Tutor
             </a>
 
 
             <a
                 href="./studentTutor.html"
-                class="dashboard-nav-link"
+                class="nav-link"
             >
-                <span class="nav-icon">👨‍⚕️</span>
-                <span>Book a Tutor</span>
+                Book a Tutor
             </a>
 
 
             <a
                 href="./studentInbox.html"
-                class="dashboard-nav-link"
+                class="nav-link"
             >
-                <span class="nav-icon">✉️</span>
-                <span>Inbox</span>
+                Inbox
             </a>
+
 
         </div>
 
@@ -201,32 +213,36 @@
 </header>
 
 
+
 <!-- =====================================================
      NOTIFICATION PANEL
 ====================================================== -->
 
 <aside
     id="notificationPanel"
-    class="dashboard-side-panel notification-panel"
-    hidden
+    class="side-panel"
+    aria-hidden="true"
 >
 
     <div class="side-panel-header">
 
         <div>
-            <span class="side-panel-label">
-                UPDATES
+
+            <span class="panel-label">
+                Student Centre
             </span>
 
             <h2>
                 Notifications
             </h2>
+
         </div>
+
 
         <button
             type="button"
             id="closeNotificationPanel"
-            class="side-panel-close"
+            class="panel-close"
             aria-label="Close notifications"
         >
             ×
@@ -240,9 +256,9 @@
         class="notification-content"
     >
 
-        <div class="empty-notification">
+        <div class="empty-state">
 
-            <div class="empty-notification-icon">
+            <div class="empty-state-icon">
                 🔔
             </div>
 
@@ -251,8 +267,7 @@
             </h3>
 
             <p>
-                New learning updates and important
-                announcements will appear here.
+                New learning updates will appear here.
             </p>
 
         </div>
@@ -262,32 +277,36 @@
 </aside>
 
 
+
 <!-- =====================================================
      PROFILE PANEL
 ====================================================== -->
 
 <aside
     id="profilePanel"
-    class="dashboard-side-panel profile-panel"
-    hidden
+    class="profile-panel"
+    aria-hidden="true"
 >
 
     <div class="side-panel-header">
 
         <div>
-            <span class="side-panel-label">
-                STUDENT ACCOUNT
+
+            <span class="panel-label">
+                Student Account
             </span>
 
             <h2>
                 My Profile
             </h2>
+
         </div>
+
 
         <button
             type="button"
             id="closeProfilePanel"
-            class="side-panel-close"
+            class="panel-close"
             aria-label="Close profile"
         >
             ×
@@ -298,6 +317,8 @@
 
     <div class="profile-panel-content">
 
+
+        <!-- STUDENT PHOTO -->
         <div class="profile-panel-avatar">
 
             <span
@@ -306,6 +327,15 @@
             >
                 S
             </span>
+
+
+            <img
+                id="profilePanelPhoto"
+                class="profile-panel-photo"
+                src=""
+                alt="Student profile photo"
+                hidden
+            >
 
         </div>
 
@@ -322,42 +352,38 @@
             id="profilePanelEmail"
             class="profile-panel-email"
         >
-            Not available
+            student@example.com
         </p>
 
 
         <div class="profile-details">
 
+
             <div class="profile-detail">
 
-                <span class="profile-detail-label">
+                <span>
                     Course
                 </span>
 
-                <span
-                    id="profilePanelCourse"
-                    class="profile-detail-value"
-                >
-                    Not available
-                </span>
+                <strong id="profilePanelCourse">
+                    —
+                </strong>
 
             </div>
 
 
             <div class="profile-detail">
 
-                <span class="profile-detail-label">
+                <span>
                     Level
                 </span>
 
-                <span
-                    id="profilePanelLevel"
-                    class="profile-detail-value"
-                >
-                    Not available
-                </span>
+                <strong id="profilePanelLevel">
+                    —
+                </strong>
 
             </div>
+
 
         </div>
 
@@ -375,6 +401,7 @@
 </aside>
 
 
+
 <!-- =====================================================
      MAIN DASHBOARD
 ====================================================== -->
@@ -383,12 +410,12 @@
 
 
     <!-- =================================================
-         WELCOME / OVERVIEW
+         WELCOME
     ================================================== -->
 
     <section
         id="overview"
-        class="dashboard-welcome dashboard-section"
+        class="welcome-section"
     >
 
         <div class="welcome-content">
@@ -405,20 +432,27 @@
             </h1>
 
             <p>
-                Continue your medical learning,
-                explore your courses, review your notes,
-                and test your knowledge.
+                Continue your medical learning journey,
+                review your progress, and explore your courses.
             </p>
 
-            <div
-                id="currentDate"
-                class="current-date"
-            >
-            </div>
+        </div>
+
+
+        <div class="welcome-date">
+
+            <span>
+                Today
+            </span>
+
+            <strong id="currentDate">
+                —
+            </strong>
 
         </div>
 
     </section>
+
 
 
     <!-- =================================================
@@ -439,10 +473,14 @@
                 </span>
 
                 <h2>
-                    Track Your Progress
+                    Track your progress
                 </h2>
 
             </div>
+
+            <span class="section-description">
+                Your learning activity at a glance
+            </span>
 
         </div>
 
@@ -459,20 +497,13 @@
 
                 <div class="progress-card-content">
 
-                    <span class="progress-card-label">
-                        AVAILABLE COURSES
+                    <span>
+                        Courses
                     </span>
 
-                    <strong
-                        id="totalCourses"
-                        class="progress-card-value"
-                    >
+                    <strong id="totalCourses">
                         0
                     </strong>
-
-                    <span class="progress-card-description">
-                        Medical courses
-                    </span>
 
                 </div>
 
@@ -483,25 +514,18 @@
             <article class="progress-card">
 
                 <div class="progress-card-icon">
-                    📝
+                    📖
                 </div>
 
                 <div class="progress-card-content">
 
-                    <span class="progress-card-label">
-                        STUDY NOTES
+                    <span>
+                        Notes
                     </span>
 
-                    <strong
-                        id="totalNotes"
-                        class="progress-card-value"
-                    >
+                    <strong id="totalNotes">
                         0
                     </strong>
-
-                    <span class="progress-card-description">
-                        Published resources
-                    </span>
 
                 </div>
 
@@ -512,25 +536,18 @@
             <article class="progress-card">
 
                 <div class="progress-card-icon">
-                    ✓
+                    📝
                 </div>
 
                 <div class="progress-card-content">
 
-                    <span class="progress-card-label">
-                        QUIZ QUESTIONS
+                    <span>
+                        Quizzes
                     </span>
 
-                    <strong
-                        id="totalQuizzes"
-                        class="progress-card-value"
-                    >
+                    <strong id="totalQuizzes">
                         0
                     </strong>
-
-                    <span class="progress-card-description">
-                        Questions available
-                    </span>
 
                 </div>
 
@@ -540,40 +557,44 @@
             <!-- LEARNING PROGRESS -->
             <article class="progress-card progress-card-wide">
 
-                <div class="progress-card-icon">
-                    📈
-                </div>
+                <div class="progress-card-top">
 
-                <div class="progress-card-content">
+                    <div class="progress-card-icon">
+                        🎯
+                    </div>
 
-                    <span class="progress-card-label">
-                        QUIZ PROGRESS
-                    </span>
+                    <div class="progress-card-content">
 
-                    <strong
-                        id="learningProgress"
-                        class="progress-card-value"
-                    >
-                        0%
-                    </strong>
+                        <span>
+                            Learning Progress
+                        </span>
 
-                    <div class="progress-bar">
-
-                        <div
-                            id="learningProgressBar"
-                            class="progress-bar-fill"
-                            style="width: 0%;"
-                        ></div>
+                        <strong id="learningProgress">
+                            0%
+                        </strong>
 
                     </div>
 
                 </div>
 
+
+                <div class="progress-track">
+
+                    <div
+                        id="learningProgressBar"
+                        class="progress-fill"
+                        style="width: 0%;"
+                    ></div>
+
+                </div>
+
             </article>
+
 
         </div>
 
     </section>
+
 
 
     <!-- =================================================
@@ -594,7 +615,7 @@
                 </span>
 
                 <h2>
-                    Recent Course
+                    Recent course
                 </h2>
 
             </div>
@@ -607,9 +628,10 @@
             class="recent-course-card"
         >
 
+
             <!-- IMPORTANT:
                  This is NOT the favicon.
-                 It is a course image area.
+                 The favicon remains only inside <head>.
             -->
 
             <div class="recent-course-image">
@@ -636,8 +658,8 @@
 
             <div class="recent-course-content">
 
-                <span class="course-label">
-                    RECENTLY STUDIED
+                <span class="card-label">
+                    Continue where you left off
                 </span>
 
                 <h3 id="recentCourseTitle">
@@ -645,24 +667,25 @@
                 </h3>
 
                 <p id="recentCourseDescription">
-                    Select a course from the course
-                    library to begin learning.
+                    Choose a course from your course library
+                    to begin learning.
                 </p>
 
 
-                <a
+                <button
+                    type="button"
                     id="continueRecentCourse"
-                    href="#courses"
                     class="primary-button"
                 >
-                    Browse Courses
-                </a>
+                    Continue Learning
+                </button>
 
             </div>
 
         </article>
 
     </section>
+
 
 
     <!-- =================================================
@@ -683,7 +706,7 @@
                 </span>
 
                 <h2>
-                    Quick Actions
+                    Quick actions
                 </h2>
 
             </div>
@@ -691,11 +714,14 @@
         </div>
 
 
-        <div class="dashboard-feature-grid">
+        <div class="feature-grid">
 
 
             <!-- COURSES -->
-            <article class="dashboard-feature-card">
+            <a
+                href="#courses"
+                class="feature-card"
+            >
 
                 <div class="feature-icon">
                     📚
@@ -703,33 +729,59 @@
 
                 <div class="feature-content">
 
-                    <span class="feature-label">
-                        LEARNING
-                    </span>
-
-                    <h2>
-                        Course Library
-                    </h2>
+                    <h3>
+                        Browse Courses
+                    </h3>
 
                     <p>
-                        Explore your medical courses,
-                        units and learning materials.
+                        Explore medical courses and
+                        continue your studies.
                     </p>
-
-                    <a
-                        href="#courses"
-                        class="feature-button"
-                    >
-                        Explore Courses →
-                    </a>
 
                 </div>
 
-            </article>
+                <span class="feature-arrow">
+                    →
+                </span>
+
+            </a>
 
 
             <!-- NOTES -->
-            <article class="dashboard-feature-card">
+            <a
+                href="#notes"
+                class="feature-card"
+            >
+
+                <div class="feature-icon">
+                    📖
+                </div>
+
+                <div class="feature-content">
+
+                    <h3>
+                        Notes Library
+                    </h3>
+
+                    <p>
+                        Access published learning notes
+                        and study materials.
+                    </p>
+
+                </div>
+
+                <span class="feature-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+            <!-- QUIZZES -->
+            <a
+                href="#quizzes"
+                class="feature-card"
+            >
 
                 <div class="feature-icon">
                     📝
@@ -737,67 +789,58 @@
 
                 <div class="feature-content">
 
-                    <span class="feature-label">
-                        STUDY
-                    </span>
-
-                    <h2>
-                        Notes Library
-                    </h2>
+                    <h3>
+                        Take a Quiz
+                    </h3>
 
                     <p>
-                        Access published notes and
-                        revision resources.
+                        Test your knowledge and monitor
+                        your quiz progress.
                     </p>
-
-                    <a
-                        href="#notes"
-                        class="feature-button"
-                    >
-                        View Notes →
-                    </a>
 
                 </div>
 
-            </article>
+                <span class="feature-arrow">
+                    →
+                </span>
+
+            </a>
 
 
-            <!-- QUIZZES -->
-            <article class="dashboard-feature-card">
+            <!-- AI TUTOR -->
+            <a
+                href="./aiTutor.html"
+                class="feature-card"
+            >
 
                 <div class="feature-icon">
-                    ✓
+                    🤖
                 </div>
 
                 <div class="feature-content">
 
-                    <span class="feature-label">
-                        ASSESSMENT
-                    </span>
-
-                    <h2>
-                        Quiz Centre
-                    </h2>
+                    <h3>
+                        AI Tutor
+                    </h3>
 
                     <p>
-                        Test your knowledge with
-                        medical quiz questions.
+                        Get medical learning assistance
+                        from Mwaniki AI.
                     </p>
-
-                    <a
-                        href="#quizzes"
-                        class="feature-button"
-                    >
-                        Take a Quiz →
-                    </a>
 
                 </div>
 
-            </article>
+                <span class="feature-arrow">
+                    →
+                </span>
+
+            </a>
+
 
         </div>
 
     </section>
+
 
 
     <!-- =================================================
@@ -814,14 +857,18 @@
             <div>
 
                 <span class="section-eyebrow">
-                    KEEP LEARNING
+                    RECOMMENDED
                 </span>
 
                 <h2>
-                    Recommendations
+                    Recommended for you
                 </h2>
 
             </div>
+
+            <span class="section-description">
+                Courses selected from your learning library
+            </span>
 
         </div>
 
@@ -831,19 +878,14 @@
             class="recommendations-grid"
         >
 
-            <div class="loading-card">
-
-                <div class="loading-spinner"></div>
-
-                <p>
-                    Loading recommendations...
-                </p>
-
+            <div class="loading-state">
+                Loading recommendations...
             </div>
 
         </div>
 
     </section>
+
 
 
     <!-- =================================================
@@ -855,7 +897,7 @@
         class="dashboard-section"
     >
 
-        <div class="section-heading">
+        <div class="section-heading section-heading-with-action">
 
             <div>
 
@@ -864,12 +906,12 @@
                 </span>
 
                 <h2>
-                    Course Library
+                    Course library
                 </h2>
 
-                <p>
-                    Explore the available medical
-                    courses and continue your studies.
+                <p class="section-description">
+                    Explore the courses available in
+                    Mwaniki Scholars Medical University.
                 </p>
 
             </div>
@@ -880,7 +922,7 @@
                 id="refreshCoursesButton"
                 class="secondary-button"
             >
-                Refresh
+                ↻ Refresh
             </button>
 
         </div>
@@ -891,19 +933,14 @@
             class="course-grid"
         >
 
-            <div class="loading-card">
-
-                <div class="loading-spinner"></div>
-
-                <p>
-                    Loading courses...
-                </p>
-
+            <div class="loading-state">
+                Loading courses...
             </div>
 
         </div>
 
     </section>
+
 
 
     <!-- =================================================
@@ -915,21 +952,21 @@
         class="dashboard-section"
     >
 
-        <div class="section-heading">
+        <div class="section-heading section-heading-with-action">
 
             <div>
 
                 <span class="section-eyebrow">
-                    STUDY RESOURCES
+                    STUDY MATERIALS
                 </span>
 
                 <h2>
-                    Notes Library
+                    Notes library
                 </h2>
 
-                <p>
-                    Access published notes uploaded
-                    for Mwaniki Scholars students.
+                <p class="section-description">
+                    Access published notes uploaded for
+                    Mwaniki Scholars students.
                 </p>
 
             </div>
@@ -940,7 +977,7 @@
                 id="refreshNotesButton"
                 class="secondary-button"
             >
-                Refresh
+                ↻ Refresh
             </button>
 
         </div>
@@ -951,19 +988,14 @@
             class="notes-grid"
         >
 
-            <div class="loading-card">
-
-                <div class="loading-spinner"></div>
-
-                <p>
-                    Loading notes...
-                </p>
-
+            <div class="loading-state">
+                Loading notes...
             </div>
 
         </div>
 
     </section>
+
 
 
     <!-- =================================================
@@ -984,12 +1016,12 @@
                 </span>
 
                 <h2>
-                    Quiz Centre
+                    Quiz centre
                 </h2>
 
-                <p>
-                    Challenge yourself with medical
-                    questions from your courses.
+                <p class="section-description">
+                    Test your understanding and keep track
+                    of your learning progress.
                 </p>
 
             </div>
@@ -997,17 +1029,18 @@
         </div>
 
 
-        <div class="quiz-centre-card">
+        <article class="quiz-centre-card">
+
 
             <div class="quiz-centre-icon">
-                ✓
+                📝
             </div>
 
 
             <div class="quiz-centre-content">
 
-                <span class="course-label">
-                    YOUR QUIZ PROGRESS
+                <span class="card-label">
+                    QUIZ PROGRESS
                 </span>
 
                 <h3>
@@ -1015,49 +1048,37 @@
                 </h3>
 
                 <p>
-                    Complete quizzes throughout your
+                    Complete quizzes from your medical
                     courses and monitor your progress.
                 </p>
 
 
                 <div class="quiz-progress-row">
 
-                    <span>
-                        Current progress
-                    </span>
+                    <div class="progress-track">
 
-                    <strong
-                        id="quizProgressPercent"
-                    >
+                        <div
+                            id="quizProgressBar"
+                            class="progress-fill"
+                            style="width: 0%;"
+                        ></div>
+
+                    </div>
+
+
+                    <strong id="quizProgressPercent">
                         0%
                     </strong>
 
                 </div>
 
-
-                <div class="progress-bar">
-
-                    <div
-                        class="progress-bar-fill"
-                        id="quizProgressBar"
-                        style="width: 0%;"
-                    ></div>
-
-                </div>
-
-
-                <a
-                    href="#courses"
-                    class="primary-button"
-                >
-                    Choose a Course →
-                </a>
-
             </div>
 
-        </div>
+
+        </article>
 
     </section>
+
 
 
     <!-- =================================================
@@ -1078,12 +1099,12 @@
                 </span>
 
                 <h2>
-                    Learning Support
+                    Learning support
                 </h2>
 
-                <p>
-                    Get additional help while studying
-                    at Mwaniki Scholars.
+                <p class="section-description">
+                    Get additional support whenever you
+                    need help with your medical studies.
                 </p>
 
             </div>
@@ -1091,125 +1112,120 @@
         </div>
 
 
-        <div class="dashboard-feature-grid">
+        <div class="support-grid">
 
 
             <!-- AI TUTOR -->
-            <article class="dashboard-feature-card">
+            <a
+                href="./aiTutor.html"
+                class="support-card"
+            >
 
-                <div class="feature-icon">
+                <div class="support-icon">
                     🤖
                 </div>
 
-                <div class="feature-content">
+                <div>
 
-                    <span class="feature-label">
-                        AI LEARNING
-                    </span>
-
-                    <h2>
-                        Mwaniki AI Tutor
-                    </h2>
+                    <h3>
+                        AI Tutor
+                    </h3>
 
                     <p>
-                        Ask medical learning questions
-                        and get guided explanations.
+                        Ask questions and get learning
+                        assistance from Mwaniki AI.
                     </p>
-
-                    <a
-                        href="./aiTutor.html"
-                        class="feature-button"
-                    >
-                        Open AI Tutor →
-                    </a>
 
                 </div>
 
-            </article>
+                <span class="support-arrow">
+                    →
+                </span>
+
+            </a>
 
 
             <!-- HUMAN TUTOR -->
-            <article class="dashboard-feature-card">
+            <a
+                href="./studentTutor.html"
+                class="support-card"
+            >
 
-                <div class="feature-icon">
+                <div class="support-icon">
                     👨‍⚕️
                 </div>
 
-                <div class="feature-content">
+                <div>
 
-                    <span class="feature-label">
-                        HUMAN SUPPORT
-                    </span>
-
-                    <h2>
+                    <h3>
                         Book a Tutor
-                    </h2>
+                    </h3>
 
                     <p>
-                        Connect with a medical tutor
+                        Connect with a human medical tutor
                         for additional learning support.
                     </p>
 
-                    <a
-                        href="./studentTutor.html"
-                        class="feature-button"
-                    >
-                        Book a Tutor →
-                    </a>
-
                 </div>
 
-            </article>
+                <span class="support-arrow">
+                    →
+                </span>
+
+            </a>
 
 
             <!-- INBOX -->
-            <article class="dashboard-feature-card">
+            <a
+                href="./studentInbox.html"
+                class="support-card"
+            >
 
-                <div class="feature-icon">
-                    ✉️
+                <div class="support-icon">
+                    💬
                 </div>
 
-                <div class="feature-content">
+                <div>
 
-                    <span class="feature-label">
-                        COMMUNICATION
-                    </span>
-
-                    <h2>
+                    <h3>
                         Student Inbox
-                    </h2>
+                    </h3>
 
                     <p>
-                        View tutor replies, messages
-                        and learning communication.
+                        View messages and responses from
+                        your learning support team.
                     </p>
-
-                    <a
-                        href="./studentInbox.html"
-                        class="feature-button"
-                    >
-                        Open Inbox →
-                    </a>
 
                 </div>
 
-            </article>
+                <span class="support-arrow">
+                    →
+                </span>
+
+            </a>
+
 
         </div>
 
     </section>
 
 
+
     <!-- =================================================
-         WHATSAPP COMMUNITY
+         WHATSAPP
     ================================================== -->
 
     <section
         id="whatsapp"
-        class="dashboard-section"
+        class="whatsapp-section"
     >
 
-        <article class="whatsapp-card">
+        <a
+            href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="whatsapp-card"
+        >
 
             <div class="whatsapp-icon">
                 💬
@@ -1218,37 +1234,33 @@
 
             <div class="whatsapp-content">
 
-                <span class="section-eyebrow">
+                <span class="card-label">
                     MWANIKI SCHOLARS COMMUNITY
                 </span>
 
-                <h2>
-                    Join the Student Channel
-                </h2>
+                <h3>
+                    Join our WhatsApp Channel
+                </h3>
 
                 <p>
-                    Stay updated with Mwaniki Scholars
-                    announcements, learning updates and
-                    important student information.
+                    Stay updated with important announcements,
+                    learning updates and student information.
                 </p>
 
             </div>
 
 
-            <a
-                href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="whatsapp-button"
-            >
-                Join WhatsApp Channel →
-            </a>
+            <span class="whatsapp-arrow">
+                →
+            </span>
 
-        </article>
+        </a>
 
     </section>
 
+
 </main>
+
 
 
 <!-- =====================================================
@@ -1272,15 +1284,15 @@
         </div>
 
 
-        <div>
-
-            © 2026 Mwaniki Scholars Medical University
-
-        </div>
+        <p>
+            © 2026 Mwaniki Scholars Medical University.
+            Learn. Practice. Advance.
+        </p>
 
     </div>
 
 </footer>
+
 
 
 <!-- =====================================================
@@ -1292,5 +1304,7 @@
     src="./dashboard.js"
 ></script>
 
+
 </body>
+
 </html>
