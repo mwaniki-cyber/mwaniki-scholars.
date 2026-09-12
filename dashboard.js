@@ -1,350 +1,1130 @@
+```javascript
 import { supabase } from "./supabase.js";
 
-console.log("🚀 Mwaniki Scholars Dashboard JS loaded");
+
+// ============================================================
+// MWANIKI SCHOLARS
+// PREMIUM STUDENT DASHBOARD ENGINE
+// ============================================================
+
+console.log(
+    "🎓 Mwaniki Scholars Premium Dashboard Loaded"
+);
 
 
-// =====================================================
+// ============================================================
 // STORAGE KEYS
-// =====================================================
+// ============================================================
 
-const STORAGE_KEYS = {
-    selectedCourse: "selectedCourse",
-    selectedCourseName: "selectedCourseName",
-    selectedUnit: "selectedUnit",
-    selectedUnitTitle: "selectedUnitTitle",
-    quizProgress: "mwanikiQuizProgress",
-    currentUser: "mwanikiCurrentUser"
+const STORAGE = {
+
+    recent:
+        "mwanikiRecentActivity",
+
+    quizHistory:
+        "mwanikiQuizHistory",
+
+    quizProgress:
+        "mwanikiQuizProgress",
+
+    lastActivity:
+        "mwanikiLastActivity",
+
+    streak:
+        "mwanikiLearningStreak"
+
 };
 
 
-// =====================================================
-// GLOBAL STATE
-// =====================================================
+// ============================================================
+// CURRENT USER
+// ============================================================
 
 let currentUser = null;
-let studentProfile = null;
 
-let allNotes = [];
-
-
-// =====================================================
-// SAFE HTML ESCAPING
-// =====================================================
-
-function escapeHTML(value) {
-
-    if (value === null || value === undefined) {
-        return "";
-    }
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+let currentStudent = null;
 
 
-// =====================================================
-// STORAGE
-// =====================================================
-
-function readStorage(key, fallback = null) {
-
-    try {
-
-        const value = localStorage.getItem(key);
-
-        if (value === null) {
-            return fallback;
-        }
-
-        try {
-            return JSON.parse(value);
-        } catch {
-            return value;
-        }
-
-    } catch (error) {
-
-        console.error(
-            `❌ Could not read localStorage key "${key}":`,
-            error
-        );
-
-        return fallback;
-    }
-}
-
-
-// =====================================================
-// CURRENT USER
-// =====================================================
+// ============================================================
+// GET SESSION
+// ============================================================
 
 async function getCurrentUser() {
 
-    try {
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
 
-        const {
-            data,
-            error
-        } = await supabase.auth.getUser();
 
-        if (error) {
-            console.error(
-                "❌ Failed to get Supabase user:",
-                error
-            );
-
-            return null;
-        }
-
-        return data?.user || null;
-
-    } catch (error) {
+    if (error) {
 
         console.error(
-            "❌ getCurrentUser failed:",
+            "❌ Session error:",
             error
         );
 
         return null;
     }
+
+
+    if (
+        !data ||
+        !data.session ||
+        !data.session.user
+    ) {
+
+        console.warn(
+            "⚠️ No active Supabase session."
+        );
+
+        return null;
+    }
+
+
+    return data.session.user;
+
 }
 
 
-// =====================================================
-// STUDENT PROFILE
-// =====================================================
+// ============================================================
+// LOAD STUDENT PROFILE
+// ============================================================
 
 async function loadStudentProfile() {
 
-    console.log("👤 Loading student profile...");
-
-    currentUser = await getCurrentUser();
-
-    if (!currentUser) {
-
-        console.log(
-            "ℹ️ No authenticated Supabase user found."
-        );
-
-        const storedUser =
-            readStorage(
-                STORAGE_KEYS.currentUser
-            );
-
-        if (storedUser) {
-            currentUser = storedUser;
-        }
-    }
-
-
-    const studentName =
-        document.getElementById("studentName");
+    currentUser =
+        await getCurrentUser();
 
 
     if (!currentUser) {
 
-        if (studentName) {
-            studentName.textContent = "Student";
-        }
+        showLoggedOutState();
 
         return;
     }
 
 
-    let displayName =
-        currentUser.user_metadata?.full_name ||
-        currentUser.user_metadata?.name ||
-        currentUser.email?.split("@")[0] ||
+    console.log(
+        "✅ Logged-in user:",
+        currentUser.email
+    );
+
+
+    const {
+        data: student,
+        error
+    } = await supabase
+        .from("students")
+        .select("*")
+        .eq("id", currentUser.id)
+        .maybeSingle();
+
+
+    if (error) {
+
+        console.error(
+            "❌ Could not load student profile:",
+            error
+        );
+
+        showIncompleteProfile(
+            currentUser
+        );
+
+        return;
+    }
+
+
+    currentStudent =
+        student;
+
+
+    if (!student) {
+
+        console.warn(
+            "⚠️ No student profile found."
+        );
+
+        showIncompleteProfile(
+            currentUser
+        );
+
+    } else {
+
+        displayStudentIdentity(
+            student,
+            currentUser
+        );
+
+    }
+
+
+    updateDashboardAnalytics();
+
+    setupDashboardNavigation();
+
+    setupAIQuestions();
+
+    updateLearningStreak();
+
+    renderRecentActivity();
+
+}
+
+
+// ============================================================
+// DISPLAY STUDENT IDENTITY
+// ============================================================
+
+function displayStudentIdentity(
+    student,
+    user
+) {
+
+    const name =
+        student.full_name ||
         "Student";
 
 
-    studentProfile = {
-        id: currentUser.id,
-        email: currentUser.email,
-        name: displayName
-    };
+    const email =
+        student.email ||
+        user.email ||
+        "";
 
 
-    if (studentName) {
-        studentName.textContent =
-            displayName;
-    }
+    const course =
+        student.course ||
+        "Medical Student";
 
 
-    console.log(
-        "✅ Student profile loaded:",
-        studentProfile
-    );
-}
+    const level =
+        student.level ||
+        "";
 
 
-// =====================================================
-// LOAD DASHBOARD ANALYTICS
-// =====================================================
-
-async function loadDashboardAnalytics() {
-
-    console.log(
-        "📊 Loading dashboard analytics..."
-    );
+    const photo =
+        student.photo_url ||
+        "";
 
 
-    try {
+    // --------------------------------------------------------
+    // TOP PROFILE BUTTON
+    // --------------------------------------------------------
 
-        const {
-            count: courseCount,
-            error: courseError
-        } = await supabase
-            .from("courses")
-            .select("*", {
-                count: "exact",
-                head: true
-            });
+    const profileButton =
+        document.querySelector(
+            ".profile"
+        );
 
 
-        if (!courseError) {
+    if (profileButton) {
 
-            const totalCourses =
-                document.getElementById(
-                    "totalCourses"
+        profileButton.innerHTML =
+            "";
+
+
+        if (photo) {
+
+            const image =
+                document.createElement(
+                    "img"
                 );
 
-            if (totalCourses) {
-                totalCourses.textContent =
-                    courseCount || 0;
-            }
+
+            image.src =
+                photo;
+
+
+            image.alt =
+                "Profile photo";
+
+
+            image.style.cssText = `
+                width:34px;
+                height:34px;
+                border-radius:50%;
+                object-fit:cover;
+                margin-right:8px;
+            `;
+
+
+            profileButton.appendChild(
+                image
+            );
+
         }
 
 
-        const quizProgress =
-            readStorage(
-                STORAGE_KEYS.quizProgress,
-                {}
+        const nameElement =
+            document.createElement(
+                "span"
             );
 
 
-        let completedQuizzes = 0;
-        let totalScore = 0;
+        nameElement.textContent =
+            name;
 
 
-        if (
-            quizProgress &&
-            typeof quizProgress === "object"
-        ) {
-
-            Object.values(
-                quizProgress
-            ).forEach(progress => {
-
-                if (
-                    progress &&
-                    typeof progress === "object"
-                ) {
-
-                    if (
-                        progress.completed ||
-                        progress.score !== undefined
-                    ) {
-
-                        completedQuizzes++;
-
-                        const score =
-                            Number(
-                                progress.score
-                            );
-
-                        if (
-                            Number.isFinite(score)
-                        ) {
-                            totalScore += score;
-                        }
-                    }
-                }
-            });
-        }
-
-
-        const totalQuizzes =
-            document.getElementById(
-                "totalQuizzes"
-            );
-
-        if (totalQuizzes) {
-            totalQuizzes.textContent =
-                completedQuizzes;
-        }
-
-
-        const averageScore =
-            document.getElementById(
-                "averageScore"
-            );
-
-
-        if (averageScore) {
-
-            const average =
-                completedQuizzes > 0
-                    ? Math.round(
-                        totalScore /
-                        completedQuizzes
-                    )
-                    : 0;
-
-            averageScore.textContent =
-                `${average}%`;
-        }
-
-
-        updateStudyStreak();
-
-    } catch (error) {
-
-        console.error(
-            "❌ Dashboard analytics failed:",
-            error
+        profileButton.appendChild(
+            nameElement
         );
+
+
+        profileButton.onclick =
+            () => {
+
+                window.location.href =
+                    "studentProfile.html";
+
+            };
+
     }
-}
 
 
-// =====================================================
-// STUDY STREAK
-// =====================================================
+    // --------------------------------------------------------
+    // HERO
+    // --------------------------------------------------------
 
-function updateStudyStreak() {
-
-    const streakElement =
+    const hero =
         document.getElementById(
-            "studyStreak"
+            "studentPersonalProfile"
         );
 
-    if (!streakElement) {
+
+    if (!hero) {
+
         return;
     }
 
 
-    const storedStreak =
-        readStorage(
-            "mwanikiStudyStreak",
-            0
+    const greeting =
+        getGreeting();
+
+
+    hero.innerHTML = `
+        <div class="hero-content">
+
+            ${
+                photo
+                ?
+                `
+                <img
+                    src="${escapeHTML(photo)}"
+                    class="hero-photo"
+                    alt="Student profile photo"
+                >
+                `
+                :
+                `
+                <div class="hero-avatar">
+                    👤
+                </div>
+                `
+            }
+
+            <div class="hero-info">
+
+                <div class="hero-greeting">
+                    ${greeting}
+                </div>
+
+                <h1 class="hero-name">
+                    ${escapeHTML(name)}
+                </h1>
+
+                <div class="hero-meta">
+
+                    <span>
+                        🎓 ${escapeHTML(course)}
+                    </span>
+
+                    ${
+                        level
+                        ?
+                        `
+                        <span>
+                            📚 ${escapeHTML(level)}
+                        </span>
+                        `
+                        :
+                        ""
+                    }
+
+                    <span>
+                        📧 ${escapeHTML(email)}
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="hero-actions">
+
+                <button
+                    class="hero-profile-button"
+                    id="heroProfileButton"
+                    type="button"
+                >
+                    👤 My Profile
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+
+    const heroButton =
+        document.getElementById(
+            "heroProfileButton"
         );
 
 
-    streakElement.textContent =
-        Number(storedStreak) || 0;
+    if (heroButton) {
+
+        heroButton.onclick =
+            () => {
+
+                window.location.href =
+                    "studentProfile.html";
+
+            };
+
+    }
+
 }
 
 
-// =====================================================
-// CONTINUE LEARNING
-// =====================================================
+// ============================================================
+// INCOMPLETE PROFILE
+// ============================================================
 
-function updateContinueLearning() {
+function showIncompleteProfile(
+    user
+) {
+
+    const hero =
+        document.getElementById(
+            "studentPersonalProfile"
+        );
+
+
+    if (!hero) {
+
+        return;
+    }
+
+
+    hero.innerHTML = `
+
+        <div class="hero-content">
+
+            <div class="hero-avatar">
+                👤
+            </div>
+
+            <div class="hero-info">
+
+                <div class="hero-greeting">
+                    ${getGreeting()}
+                </div>
+
+                <h1 class="hero-name">
+                    Student
+                </h1>
+
+                <div class="hero-meta">
+
+                    <span>
+                        📧 ${escapeHTML(
+                            user.email || ""
+                        )}
+                    </span>
+
+                    <span>
+                        Complete your profile
+                        for a personalized dashboard.
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="hero-actions">
+
+                <button
+                    class="hero-profile-button"
+                    id="completeProfileButton"
+                    type="button"
+                >
+                    👤 Complete Profile
+                </button>
+
+            </div>
+
+        </div>
+    `;
+
+
+    const button =
+        document.getElementById(
+            "completeProfileButton"
+        );
+
+
+    if (button) {
+
+        button.onclick =
+            () => {
+
+                window.location.href =
+                    "studentProfile.html";
+
+            };
+
+    }
+
+}
+
+
+// ============================================================
+// LOGGED OUT
+// ============================================================
+
+function showLoggedOutState() {
+
+    const hero =
+        document.getElementById(
+            "studentPersonalProfile"
+        );
+
+
+    if (hero) {
+
+        hero.innerHTML = `
+
+            <div class="hero-content">
+
+                <div class="hero-avatar">
+                    🔐
+                </div>
+
+                <div class="hero-info">
+
+                    <div class="hero-greeting">
+                        Welcome to Mwaniki Scholars
+                    </div>
+
+                    <h1 class="hero-name">
+                        Student Dashboard
+                    </h1>
+
+                    <div class="hero-meta">
+                        Please log in to view
+                        your personalized learning data.
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+// ============================================================
+// GREETING
+// ============================================================
+
+function getGreeting() {
+
+    const hour =
+        new Date().getHours();
+
+
+    if (hour < 12) {
+
+        return "Good morning,";
+
+    }
+
+
+    if (hour < 17) {
+
+        return "Good afternoon,";
+
+    }
+
+
+    return "Good evening,";
+
+}
+
+
+// ============================================================
+// RECENT ACTIVITY
+// ============================================================
+
+function getRecentActivity() {
+
+    try {
+
+        const raw =
+            localStorage.getItem(
+                STORAGE.recent
+            );
+
+
+        if (!raw) {
+
+            return [];
+
+        }
+
+
+        const data =
+            JSON.parse(raw);
+
+
+        return Array.isArray(data)
+            ? data
+            : [];
+
+    } catch {
+
+        return [];
+
+    }
+
+}
+
+
+// ============================================================
+// SAVE ACTIVITY
+// ============================================================
+
+function saveRecentActivity(
+    activity
+) {
+
+    const current =
+        getRecentActivity();
+
+
+    const filtered =
+        current.filter(
+            item =>
+                !(
+                    item.courseId ===
+                    activity.courseId
+                    &&
+                    item.unitId ===
+                    activity.unitId
+                )
+        );
+
+
+    filtered.unshift({
+
+        ...activity,
+
+        timestamp:
+            new Date().toISOString()
+
+    });
+
+
+    const limited =
+        filtered.slice(0, 8);
+
+
+    localStorage.setItem(
+        STORAGE.recent,
+        JSON.stringify(limited)
+    );
+
+
+    renderRecentActivity();
+
+    updateDashboardAnalytics();
+
+}
+
+
+// ============================================================
+// RENDER RECENT ACTIVITY
+// ============================================================
+
+function renderRecentActivity() {
+
+    const area =
+        document.getElementById(
+            "recentlyStudied"
+        );
+
+
+    if (!area) {
+
+        return;
+    }
+
+
+    const activities =
+        getRecentActivity();
+
+
+    if (!activities.length) {
+
+        area.innerHTML = `
+
+            <div class="empty-state">
+
+                <span>📚</span>
+
+                <p>
+                    No recently studied units yet.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    area.innerHTML =
+        activities
+            .map(
+                activity => {
+
+                    const date =
+                        activity.timestamp
+                        ?
+                        new Date(
+                            activity.timestamp
+                        ).toLocaleDateString(
+                            undefined,
+                            {
+                                month: "short",
+                                day: "numeric"
+                            }
+                        )
+                        :
+                        "";
+
+
+                    return `
+
+                        <div
+                            class="recent-item"
+                            data-course-id="${escapeHTML(
+                                activity.courseId || ""
+                            )}"
+                            data-unit-id="${escapeHTML(
+                                activity.unitId || ""
+                            )}"
+                        >
+
+                            <div class="recent-icon">
+                                📖
+                            </div>
+
+                            <div class="recent-details">
+
+                                <strong>
+                                    ${escapeHTML(
+                                        activity.unitTitle ||
+                                        "Study Unit"
+                                    )}
+                                </strong>
+
+                                <small>
+                                    ${escapeHTML(
+                                        activity.courseName ||
+                                        "Medical Course"
+                                    )}
+                                    ${date ? ` • ${date}` : ""}
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+// ============================================================
+// GLOBAL ACTIVITY HELPER
+// Other scripts can call this.
+// ============================================================
+
+window.mwanikiTrackUnit =
+    function (
+        courseId,
+        courseName,
+        unitId,
+        unitTitle
+    ) {
+
+        saveRecentActivity({
+
+            courseId,
+            courseName,
+            unitId,
+            unitTitle
+
+        });
+
+    };
+
+
+// ============================================================
+// DASHBOARD ANALYTICS
+// ============================================================
+
+function updateDashboardAnalytics() {
+
+    const recent =
+        getRecentActivity();
+
+
+    const quizHistory =
+        getQuizHistory();
+
+
+    // --------------------------------------------------------
+    // QUIZZES
+    // --------------------------------------------------------
+
+    const quizCount =
+        quizHistory.length;
+
+
+    setText(
+        "quizzesAttempted",
+        quizCount
+    );
+
+
+    // --------------------------------------------------------
+    // AVERAGE SCORE
+    // --------------------------------------------------------
+
+    if (quizHistory.length) {
+
+        const scores =
+            quizHistory
+                .map(
+                    item =>
+                        Number(
+                            item.percentage ??
+                            item.score ??
+                            0
+                        )
+                )
+                .filter(
+                    Number.isFinite
+                );
+
+
+        if (scores.length) {
+
+            const average =
+                Math.round(
+                    scores.reduce(
+                        (
+                            total,
+                            value
+                        ) =>
+                            total + value,
+                        0
+                    )
+                    /
+                    scores.length
+                );
+
+
+            setText(
+                "averageScore",
+                `${average}%`
+            );
+
+        }
+
+    }
+
+
+    // --------------------------------------------------------
+    // UNITS
+    // --------------------------------------------------------
+
+    const uniqueUnits =
+        new Set(
+            recent
+                .map(
+                    item =>
+                        String(
+                            item.unitId ??
+                            item.unitTitle ??
+                            ""
+                        )
+                )
+                .filter(Boolean)
+        );
+
+
+    setText(
+        "unitsCompleted",
+        uniqueUnits.size
+    );
+
+
+    // --------------------------------------------------------
+    // COURSES
+    // --------------------------------------------------------
+
+    const courseIds =
+        new Set(
+            recent
+                .map(
+                    item =>
+                        String(
+                            item.courseId ??
+                            item.courseName ??
+                            ""
+                        )
+                )
+                .filter(Boolean)
+        );
+
+
+    setText(
+        "coursesCompleted",
+        calculateCompletedCourses(
+            courseIds,
+            recent
+        )
+    );
+
+
+    // --------------------------------------------------------
+    // PROGRESS
+    // --------------------------------------------------------
+
+    const progress =
+        calculateOverallProgress(
+            recent
+        );
+
+
+    setText(
+        "overallProgressText",
+        `${progress}%`
+    );
+
+
+    const progressBar =
+        document.getElementById(
+            "overallProgressBar"
+        );
+
+
+    if (progressBar) {
+
+        progressBar.style.width =
+            `${progress}%`;
+
+    }
+
+
+    // Legacy element
+
+    setText(
+        "progress",
+        `${progress}%`
+    );
+
+
+    // --------------------------------------------------------
+    // QUIZ ANALYTICS
+    // --------------------------------------------------------
+
+    updateQuizAnalytics(
+        quizHistory
+    );
+
+
+    updateAchievements(
+        progress,
+        quizHistory
+    );
+
+
+    updateContinueLearning(
+        recent
+    );
+
+
+    updateRecommendation(
+        recent
+    );
+
+}
+
+
+// ============================================================
+// QUIZ HISTORY
+// ============================================================
+
+function getQuizHistory() {
+
+    try {
+
+        const raw =
+            localStorage.getItem(
+                STORAGE.quizHistory
+            );
+
+
+        if (!raw) {
+
+            return [];
+
+        }
+
+
+        const parsed =
+            JSON.parse(raw);
+
+
+        return Array.isArray(parsed)
+            ? parsed
+            : [];
+
+    } catch {
+
+        return [];
+
+    }
+
+}
+
+
+// ============================================================
+// CALCULATE COURSES
+// ============================================================
+
+function calculateCompletedCourses(
+    courseIds,
+    recent
+) {
+
+    const completed =
+        recent.filter(
+            item =>
+                item.courseCompleted === true
+        );
+
+
+    const completedIds =
+        new Set(
+            completed
+                .map(
+                    item =>
+                        String(
+                            item.courseId ||
+                            item.courseName ||
+                            ""
+                        )
+                )
+                .filter(Boolean)
+        );
+
+
+    return Math.max(
+        completedIds.size,
+        courseIds.size > 0
+            ? 0
+            : 0
+    );
+
+}
+
+
+// ============================================================
+// OVERALL PROGRESS
+// ============================================================
+
+function calculateOverallProgress(
+    recent
+) {
+
+    if (!recent.length) {
+
+        return 0;
+
+    }
+
+
+    const completed =
+        recent.filter(
+            item =>
+                item.completed === true ||
+                item.unitCompleted === true
+        );
+
+
+    if (completed.length) {
+
+        return Math.min(
+            100,
+            Math.round(
+                (
+                    completed.length /
+                    Math.max(
+                        recent.length,
+                        1
+                    )
+                )
+                * 100
+            )
+        );
+
+    }
+
+
+    // Having studied units means
+    // the learner has started the journey.
+
+    return Math.min(
+        95,
+        Math.max(
+            5,
+            recent.length * 5
+        )
+    );
+
+}
+
+
+// ============================================================
+// CONTINUE LEARNING
+// ============================================================
+
+function updateContinueLearning(
+    recent
+) {
 
     const area =
         document.getElementById(
@@ -353,137 +1133,155 @@ function updateContinueLearning() {
 
 
     if (!area) {
-        console.log(
-            "ℹ️ Continue Learning area not found."
-        );
+
+        return;
+    }
+
+
+    if (!recent.length) {
+
         return;
     }
 
 
-    const courseId =
-        readStorage(
-            STORAGE_KEYS.selectedCourse
-        );
-
-    const courseName =
-        readStorage(
-            STORAGE_KEYS.selectedCourseName
-        );
-
-
-    if (!courseId && !courseName) {
-
-        area.innerHTML = `
-            <div class="empty-state">
-
-                <div class="empty-icon">
-                    📖
-                </div>
-
-                <h4>
-                    Start your learning journey
-                </h4>
-
-                <p>
-                    Choose a course to begin studying.
-                </p>
-
-                <button
-                    class="primary-button"
-                    type="button"
-                    data-section="courses"
-                >
-                    Browse Courses
-                </button>
-
-            </div>
-        `;
-
-        return;
-    }
+    const item =
+        recent[0];
 
 
     area.innerHTML = `
-        <div class="continue-learning-card">
+
+        <div class="continue-item">
 
             <div class="continue-icon">
-                📚
+                ▶
             </div>
 
-            <div class="continue-content">
+            <div class="continue-details">
+
+                <strong>
+                    ${escapeHTML(
+                        item.unitTitle ||
+                        "Continue your studies"
+                    )}
+                </strong>
 
                 <span>
-                    Continue Course
-                </span>
-
-                <h4>
                     ${escapeHTML(
-                        courseName ||
-                        "Your selected course"
+                        item.courseName ||
+                        "Medical Course"
                     )}
-                </h4>
-
-                <p>
-                    Continue where you left off.
-                </p>
+                </span>
 
             </div>
 
             <button
-                class="primary-button"
+                class="continue-button"
                 type="button"
-                id="continueCourseButton"
+                id="continueLearningButton"
             >
-                Continue →
+                Continue
             </button>
 
         </div>
+
     `;
 
 
-    const continueButton =
+    const button =
         document.getElementById(
-            "continueCourseButton"
+            "continueLearningButton"
         );
 
 
-    if (continueButton) {
+    if (button) {
 
-        continueButton.addEventListener(
-            "click",
+        button.onclick =
             () => {
 
-                if (courseId) {
+                continueActivity(
+                    item
+                );
 
-                    localStorage.setItem(
-                        STORAGE_KEYS.selectedCourse,
-                        String(courseId)
-                    );
-                }
+            };
 
-
-                if (courseName) {
-
-                    localStorage.setItem(
-                        STORAGE_KEYS.selectedCourseName,
-                        String(courseName)
-                    );
-                }
-
-
-                window.location.href =
-                    "./course.html";
-            }
-        );
     }
+
 }
 
 
-// =====================================================
-// RECOMMENDED LESSON
-// =====================================================
+// ============================================================
+// CONTINUE ACTIVITY
+// ============================================================
 
-function updateRecommendedLesson() {
+function continueActivity(
+    item
+) {
+
+    if (
+        item.courseId !== undefined
+        &&
+        item.courseId !== null
+    ) {
+
+        localStorage.setItem(
+            "selectedCourse",
+            String(item.courseId)
+        );
+
+    }
+
+
+    if (item.courseName) {
+
+        localStorage.setItem(
+            "selectedCourseName",
+            item.courseName
+        );
+
+    }
+
+
+    if (
+        item.unitId !== undefined
+        &&
+        item.unitId !== null
+    ) {
+
+        localStorage.setItem(
+            "selectedUnit",
+            String(item.unitId)
+        );
+
+    }
+
+
+    if (item.unitTitle) {
+
+        localStorage.setItem(
+            "selectedUnitTitle",
+            item.unitTitle
+        );
+
+    }
+
+
+    if (item.courseId) {
+
+        window.location.href =
+            "course.html";
+
+    }
+
+}
+
+
+// ============================================================
+// RECOMMENDED LESSON
+// ============================================================
+
+function updateRecommendation(
+    recent
+) {
 
     const area =
         document.getElementById(
@@ -492,808 +1290,441 @@ function updateRecommendedLesson() {
 
 
     if (!area) {
+
         return;
     }
 
 
+    if (!recent.length) {
+
+        return;
+    }
+
+
+    const latest =
+        recent[0];
+
+
     area.innerHTML = `
-        <div class="recommendation-card">
+
+        <div class="recommendation-content">
 
             <div class="recommendation-icon">
-                🧠
+                ✨
             </div>
 
             <div>
 
-                <span>
-                    STUDY RECOMMENDATION
-                </span>
-
-                <h4>
-                    Review a topic you recently studied
-                </h4>
-
-                <p>
-                    Consistent revision is one of the best ways to strengthen long-term recall.
-                </p>
-
-            </div>
-
-        </div>
-    `;
-}
-
-
-// =====================================================
-// ACHIEVEMENTS
-// =====================================================
-
-function updateAchievements() {
-
-    const area =
-        document.getElementById(
-            "achievementsArea"
-        );
-
-
-    if (!area) {
-        return;
-    }
-
-
-    const achievements = [
-
-        {
-            icon: "🎓",
-            title: "Medical Scholar",
-            text: "Begin your Mwaniki Scholars journey."
-        },
-
-        {
-            icon: "📚",
-            title: "Knowledge Seeker",
-            text: "Explore your medical course library."
-        },
-
-        {
-            icon: "🧠",
-            title: "Active Learner",
-            text: "Complete quizzes and revise regularly."
-        }
-
-    ];
-
-
-    area.innerHTML =
-        achievements.map(
-            achievement => `
-
-                <div class="achievement-card">
-
-                    <div class="achievement-icon">
-                        ${achievement.icon}
-                    </div>
-
-                    <div>
-
-                        <h4>
-                            ${escapeHTML(
-                                achievement.title
-                            )}
-                        </h4>
-
-                        <p>
-                            ${escapeHTML(
-                                achievement.text
-                            )}
-                        </p>
-
-                    </div>
-
-                </div>
-
-            `
-        ).join("");
-}
-
-
-// =====================================================
-// NOTES LIBRARY
-// =====================================================
-
-async function loadNotesLibrary() {
-
-    const notesArea =
-        document.getElementById(
-            "notesArea"
-        );
-
-
-    if (!notesArea) {
-
-        console.log(
-            "ℹ️ Notes library skipped: notesArea not found"
-        );
-
-        return;
-    }
-
-
-    notesArea.innerHTML = `
-        <div class="loading-card">
-
-            <div class="loading-spinner"></div>
-
-            <p>
-                Loading notes...
-            </p>
-
-        </div>
-    `;
-
-
-    console.log(
-        "📚 Notes loader started"
-    );
-
-
-    try {
-
-        console.log(
-            "📚 Loading published notes from Supabase..."
-        );
-
-
-        const notesRequest =
-            supabase
-                .from("notes")
-                .select(`
-                    id,
-                    course,
-                    unit,
-                    file_name,
-                    file_url,
-                    created_at,
-                    course_id,
-                    unit_id,
-                    published
-                `)
-                .eq(
-                    "published",
-                    true
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                );
-
-
-        const timeoutRequest =
-            new Promise(
-                (_, reject) => {
-
-                    setTimeout(
-                        () => {
-
-                            reject(
-                                new Error(
-                                    "The Notes Library request timed out. Check Supabase connection and RLS policies."
-                                )
-                            );
-
-                        },
-                        15000
-                    );
-
-                }
-            );
-
-
-        const result =
-            await Promise.race([
-                notesRequest,
-                timeoutRequest
-            ]);
-
-
-        const {
-            data,
-            error
-        } = result;
-
-
-        if (error) {
-
-            console.error(
-                "❌ NOTES DATABASE ERROR:",
-                error
-            );
-
-
-            allNotes = [];
-
-
-            notesArea.innerHTML = `
-
-                <div class="error-card">
-
-                    <div class="error-icon">
-                        ⚠️
-                    </div>
-
-                    <h3>
-                        Notes could not be loaded
-                    </h3>
-
-                    <p>
-                        ${escapeHTML(
-                            error.message ||
-                            "Supabase returned an error."
-                        )}
-                    </p>
-
-                    <button
-                        id="retryNotesButton"
-                        class="primary-button"
-                        type="button"
-                    >
-                        Retry
-                    </button>
-
-                </div>
-
-            `;
-
-
-            setupNotesRetry();
-
-            return;
-        }
-
-
-        allNotes =
-            Array.isArray(data)
-                ? data
-                : [];
-
-
-        console.log(
-            "📚 Notes returned:",
-            allNotes.length
-        );
-
-
-        console.log(
-            "📚 Notes data:",
-            allNotes
-        );
-
-
-        if (allNotes.length === 0) {
-
-            notesArea.innerHTML = `
-
-                <div class="empty-state">
-
-                    <div class="empty-icon">
-                        📝
-                    </div>
-
-                    <h3>
-                        No published notes yet
-                    </h3>
-
-                    <p>
-                        Notes published by the administration will appear here.
-                    </p>
-
-                </div>
-
-            `;
-
-
-            return;
-        }
-
-
-        renderNotes(
-            allNotes
-        );
-
-
-        setupNotesSearch();
-
-
-        console.log(
-            `✅ ${allNotes.length} notes displayed`
-        );
-
-    } catch (error) {
-
-        console.error(
-            "❌ NOTES LOADING FAILED:",
-            error
-        );
-
-
-        allNotes = [];
-
-
-        notesArea.innerHTML = `
-
-            <div class="error-card">
-
-                <div class="error-icon">
-                    ⚠️
-                </div>
-
-                <h3>
-                    Notes Library could not load
-                </h3>
-
-                <p>
+                <strong>
+                    Continue with
                     ${escapeHTML(
-                        error.message ||
-                        "An unexpected error occurred."
+                        latest.courseName ||
+                        "your medical course"
                     )}
-                </p>
-
-                <button
-                    id="retryNotesButton"
-                    class="primary-button"
-                    type="button"
-                >
-                    Retry
-                </button>
-
-            </div>
-
-        `;
-
-
-        setupNotesRetry();
-    }
-}
-
-
-// =====================================================
-// NOTES RENDERER
-// =====================================================
-
-function renderNotes(notes) {
-
-    const notesArea =
-        document.getElementById(
-            "notesArea"
-        );
-
-
-    if (!notesArea) {
-        return;
-    }
-
-
-    if (
-        !Array.isArray(notes) ||
-        notes.length === 0
-    ) {
-
-        notesArea.innerHTML = `
-
-            <div class="empty-state">
-
-                <div class="empty-icon">
-                    📝
-                </div>
-
-                <h3>
-                    No notes found
-                </h3>
+                </strong>
 
                 <p>
-                    Try another search.
+                    Review the next available unit
+                    after
+                    ${escapeHTML(
+                        latest.unitTitle ||
+                        "your last lesson"
+                    )}.
                 </p>
 
             </div>
-
-        `;
-
-        return;
-    }
-
-
-    notesArea.innerHTML = `
-
-        <div class="notes-library-grid">
-
-            ${
-                notes.map(
-                    note => {
-
-                        const fileName =
-                            note.file_name ||
-                            "Medical Notes";
-
-                        const course =
-                            note.course ||
-                            "Medical Course";
-
-                        const unit =
-                            note.unit ||
-                            "General";
-
-                        const fileUrl =
-                            note.file_url ||
-                            "#";
-
-                        let dateText =
-                            "";
-
-
-                        if (
-                            note.created_at
-                        ) {
-
-                            try {
-
-                                dateText =
-                                    new Date(
-                                        note.created_at
-                                    ).toLocaleDateString(
-                                        undefined,
-                                        {
-                                            year: "numeric",
-                                            month: "short",
-                                            day: "numeric"
-                                        }
-                                    );
-
-                            } catch {
-                                dateText = "";
-                            }
-                        }
-
-
-                        return `
-
-                            <article
-                                class="note-card"
-                            >
-
-                                <div class="note-card-icon">
-                                    📄
-                                </div>
-
-
-                                <div class="note-card-content">
-
-                                    <span class="note-course">
-                                        ${escapeHTML(
-                                            course
-                                        )}
-                                    </span>
-
-                                    <h3>
-                                        ${escapeHTML(
-                                            fileName
-                                        )}
-                                    </h3>
-
-                                    <p>
-                                        ${escapeHTML(
-                                            unit
-                                        )}
-                                    </p>
-
-                                    ${
-                                        dateText
-                                            ? `
-                                                <small>
-                                                    ${escapeHTML(
-                                                        dateText
-                                                    )}
-                                                </small>
-                                            `
-                                            : ""
-                                    }
-
-                                </div>
-
-
-                                <div class="note-card-action">
-
-                                    ${
-                                        fileUrl !== "#"
-                                            ? `
-                                                <a
-                                                    href="${escapeHTML(
-                                                        fileUrl
-                                                    )}"
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    class="primary-button"
-                                                >
-                                                    Open Notes →
-                                                </a>
-                                            `
-                                            : `
-                                                <span class="disabled-button">
-                                                    File unavailable
-                                                </span>
-                                            `
-                                    }
-
-                                </div>
-
-                            </article>
-
-                        `;
-                    }
-                ).join("")
-            }
 
         </div>
 
     `;
+
 }
 
 
-// =====================================================
-// NOTES SEARCH
-// =====================================================
+// ============================================================
+// QUIZ ANALYTICS
+// ============================================================
 
-function setupNotesSearch() {
+function updateQuizAnalytics(
+    history
+) {
 
-    const search =
-        document.getElementById(
-            "notesSearch"
+    const recent =
+        history.slice(
+            0,
+            5
         );
 
 
-    if (!search) {
-        return;
-    }
+    const scores =
+        history
+            .map(
+                item =>
+                    Number(
+                        item.percentage ??
+                        item.score ??
+                        0
+                    )
+            )
+            .filter(
+                Number.isFinite
+            );
+
+
+    const recentElement =
+        document.getElementById(
+            "recentQuizPerformance"
+        );
 
 
     if (
-        search.dataset.listenerAttached ===
-        "true"
+        recentElement &&
+        recent.length
     ) {
+
+        const recentScores =
+            recent
+                .map(
+                    item =>
+                        Number(
+                            item.percentage ??
+                            item.score ??
+                            0
+                        )
+                );
+
+
+        const recentAverage =
+            Math.round(
+                recentScores.reduce(
+                    (
+                        a,
+                        b
+                    ) =>
+                        a + b,
+                    0
+                )
+                /
+                recentScores.length
+            );
+
+
+        recentElement.textContent =
+            `${recentAverage}%`;
+
+    }
+
+
+    const best =
+        scores.length
+            ?
+            Math.max(
+                ...scores
+            )
+            :
+            null;
+
+
+    setText(
+        "bestQuizScore",
+        best === null
+            ? "—"
+            : `${best}%`
+    );
+
+
+    // Weak areas
+
+    const weak =
+        history
+            .filter(
+                item =>
+                    Number(
+                        item.percentage ??
+                        item.score ??
+                        100
+                    )
+                    < 60
+            )
+            .map(
+                item =>
+                    item.unitTitle ||
+                    item.courseName
+            )
+            .filter(Boolean);
+
+
+    const uniqueWeak =
+        [
+            ...new Set(
+                weak
+            )
+        ];
+
+
+    setText(
+        "weakQuizAreas",
+        uniqueWeak.length
+            ?
+            uniqueWeak
+                .slice(0,2)
+                .join(", ")
+            :
+            "None yet"
+    );
+
+}
+
+
+// ============================================================
+// ACHIEVEMENTS
+// ============================================================
+
+function updateAchievements(
+    progress,
+    quizHistory
+) {
+
+    const achievements =
+        document.querySelectorAll(
+            ".achievement"
+        );
+
+
+    if (!achievements.length) {
+
         return;
     }
 
 
-    search.dataset.listenerAttached =
-        "true";
+    // Getting Started
+
+    if (progress > 0) {
+
+        achievements[0]
+            ?.classList.remove(
+                "locked"
+            );
+
+    }
 
 
-    search.addEventListener(
-        "input",
-        event => {
+    // Quiz Master
 
-            const query =
-                event.target.value
-                    .trim()
-                    .toLowerCase();
+    if (quizHistory.length >= 10) {
 
+        achievements[1]
+            ?.classList.remove(
+                "locked"
+            );
 
-            if (!query) {
-
-                renderNotes(
-                    allNotes
-                );
-
-                return;
-            }
+    }
 
 
-            const filtered =
-                allNotes.filter(
-                    note => {
+    // Streak
 
-                        const searchable = [
-
-                            note.file_name,
-
-                            note.course,
-
-                            note.unit
-
-                        ]
-                            .filter(Boolean)
-                            .join(" ")
-                            .toLowerCase();
+    const streak =
+        Number(
+            localStorage.getItem(
+                STORAGE.streak
+            )
+        ) || 0;
 
 
-                        return searchable.includes(
-                            query
-                        );
-                    }
-                );
+    if (streak >= 7) {
+
+        achievements[2]
+            ?.classList.remove(
+                "locked"
+            );
+
+    }
 
 
-            if (
-                filtered.length === 0
-            ) {
+    // Scholar
 
-                const notesArea =
-                    document.getElementById(
-                        "notesArea"
-                    );
+    if (
+        progress >= 80
+        ||
+        quizHistory.length >= 25
+    ) {
+
+        achievements[3]
+            ?.classList.remove(
+                "locked"
+            );
+
+    }
+
+}
 
 
-                if (notesArea) {
+// ============================================================
+// LEARNING STREAK
+// ============================================================
 
-                    notesArea.innerHTML = `
+function updateLearningStreak() {
 
-                        <div class="empty-state">
+    const today =
+        getDateKey(
+            new Date()
+        );
 
-                            <div class="empty-icon">
-                                🔎
-                            </div>
 
-                            <h3>
-                                No matching notes
-                            </h3>
+    const stored =
+        localStorage.getItem(
+            STORAGE.lastActivity
+        );
 
-                            <p>
-                                Try searching for another course, unit, or note title.
-                            </p>
 
-                        </div>
+    let streak =
+        Number(
+            localStorage.getItem(
+                STORAGE.streak
+            )
+        ) || 0;
 
-                    `;
+
+    if (!stored) {
+
+        streak = 1;
+
+    } else {
+
+        const yesterday =
+            getDateKey(
+                new Date(
+                    Date.now()
+                    -
+                    86400000
+                )
+            );
+
+
+        if (
+            stored === today
+        ) {
+
+            // Same day.
+            // Keep current streak.
+
+        } else if (
+            stored === yesterday
+        ) {
+
+            streak += 1;
+
+        } else {
+
+            streak = 1;
+
+        }
+
+    }
+
+
+    localStorage.setItem(
+        STORAGE.lastActivity,
+        today
+    );
+
+
+    localStorage.setItem(
+        STORAGE.streak,
+        String(streak)
+    );
+
+
+    setText(
+        "learningStreak",
+        `${streak} day${streak === 1 ? "" : "s"}`
+    );
+
+}
+
+
+// ============================================================
+// DATE KEY
+// ============================================================
+
+function getDateKey(
+    date
+) {
+
+    return [
+        date.getFullYear(),
+        String(
+            date.getMonth() + 1
+        ).padStart(2,"0"),
+        String(
+            date.getDate()
+        ).padStart(2,"0")
+    ].join("-");
+
+}
+
+
+// ============================================================
+// AI SUGGESTIONS
+// ============================================================
+
+function setupAIQuestions() {
+
+    const buttons =
+        document.querySelectorAll(
+            ".suggestion-button"
+        );
+
+
+    const textarea =
+        document.getElementById(
+            "aiQuestion"
+        );
+
+
+    if (!textarea) {
+
+        return;
+    }
+
+
+    buttons.forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const question =
+                        button.dataset.question ||
+                        button.textContent.trim();
+
+
+                    textarea.value =
+                        question;
+
+
+                    textarea.focus();
+
                 }
-
-                return;
-            }
-
-
-            renderNotes(
-                filtered
             );
 
         }
     );
+
 }
 
 
-// =====================================================
-// NOTES RETRY
-// =====================================================
-
-function setupNotesRetry() {
-
-    const button =
-        document.getElementById(
-            "retryNotesButton"
-        );
-
-
-    if (!button) {
-        return;
-    }
-
-
-    button.addEventListener(
-        "click",
-        () => {
-            loadNotesLibrary();
-        }
-    );
-}
-
-
-// =====================================================
-// DASHBOARD NAVIGATION
-// =====================================================
+// ============================================================
+// NAVIGATION
+// ============================================================
 
 function setupDashboardNavigation() {
 
-    const sections =
-        document.querySelectorAll(
-            ".dashboard-section"
-        );
-
-
     const navLinks =
         document.querySelectorAll(
-            ".nav-link[data-section]"
+            ".nav-link"
         );
-
-
-    const mobileLinks =
-        document.querySelectorAll(
-            ".mobile-nav-link[data-section]"
-        );
-
-
-    function showSection(
-        sectionId
-    ) {
-
-        console.log(
-            "🧭 Opening section:",
-            sectionId
-        );
-
-
-        sections.forEach(
-            section => {
-
-                section.classList.toggle(
-                    "active",
-                    section.id === sectionId
-                );
-
-            }
-        );
-
-
-        navLinks.forEach(
-            link => {
-
-                link.classList.toggle(
-                    "active",
-                    link.dataset.section === sectionId
-                );
-
-            }
-        );
-
-
-        mobileLinks.forEach(
-            link => {
-
-                link.classList.toggle(
-                    "active",
-                    link.dataset.section === sectionId
-                );
-
-            }
-        );
-
-
-        if (
-            sectionId ===
-            "notesLibrary"
-        ) {
-
-            if (
-                allNotes.length === 0
-            ) {
-
-                loadNotesLibrary();
-
-            } else {
-
-                renderNotes(
-                    allNotes
-                );
-            }
-        }
-
-
-        if (
-            sectionId ===
-            "courses"
-        ) {
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mwaniki:dashboard:courses"
-                )
-            );
-        }
-
-
-        window.scrollTo({
-            top: 0,
-            behavior: "smooth"
-        });
-    }
 
 
     navLinks.forEach(
@@ -1303,8 +1734,16 @@ function setupDashboardNavigation() {
                 "click",
                 () => {
 
-                    showSection(
-                        link.dataset.section
+                    navLinks.forEach(
+                        item =>
+                            item.classList.remove(
+                                "active"
+                            )
+                    );
+
+
+                    link.classList.add(
+                        "active"
                     );
 
                 }
@@ -1312,6 +1751,12 @@ function setupDashboardNavigation() {
 
         }
     );
+
+
+    const mobileLinks =
+        document.querySelectorAll(
+            ".mobile-nav-link"
+        );
 
 
     mobileLinks.forEach(
@@ -1321,8 +1766,16 @@ function setupDashboardNavigation() {
                 "click",
                 () => {
 
-                    showSection(
-                        link.dataset.section
+                    mobileLinks.forEach(
+                        item =>
+                            item.classList.remove(
+                                "active"
+                            )
+                    );
+
+
+                    link.classList.add(
+                        "active"
                     );
 
                 }
@@ -1332,216 +1785,287 @@ function setupDashboardNavigation() {
     );
 
 
-    document.addEventListener(
-        "click",
-        event => {
+    // Update navigation while scrolling
 
-            const sectionButton =
-                event.target.closest(
-                    "[data-section]"
+    const sections =
+        document.querySelectorAll(
+            ".dashboard-section, .dashboard-home"
+        );
+
+
+    const observer =
+        new IntersectionObserver(
+            entries => {
+
+                entries.forEach(
+                    entry => {
+
+                        if (
+                            !entry.isIntersecting
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        const id =
+                            entry.target.id;
+
+
+                        document
+                            .querySelectorAll(
+                                `.nav-link[data-section="${id}"]`
+                            )
+                            .forEach(
+                                link => {
+
+                                    document
+                                        .querySelectorAll(
+                                            ".nav-link"
+                                        )
+                                        .forEach(
+                                            item =>
+                                                item.classList.remove(
+                                                    "active"
+                                                )
+                                        );
+
+
+                                    link.classList.add(
+                                        "active"
+                                    );
+
+                                }
+                            );
+
+                    }
                 );
 
-
-            if (
-                !sectionButton ||
-                sectionButton.classList.contains(
-                    "nav-link"
-                ) ||
-                sectionButton.classList.contains(
-                    "mobile-nav-link"
-                )
-            ) {
-                return;
+            },
+            {
+                threshold: .25
             }
+        );
 
 
-            showSection(
-                sectionButton.dataset.section
-            );
-        }
+    sections.forEach(
+        section =>
+            observer.observe(
+                section
+            )
     );
+
 }
 
 
-// =====================================================
-// AI QUESTIONS
-// =====================================================
+// ============================================================
+// CLEAR RECENT ACTIVITY
+// ============================================================
 
-function setupAIQuestions() {
-
-    const suggestions =
-        document.querySelectorAll(
-            ".suggestion-button"
-        );
+const clearButton =
+    document.getElementById(
+        "clearRecentActivity"
+    );
 
 
-    const questionBox =
+if (clearButton) {
+
+    clearButton.addEventListener(
+        "click",
+        () => {
+
+            localStorage.removeItem(
+                STORAGE.recent
+            );
+
+            renderRecentActivity();
+
+            updateDashboardAnalytics();
+
+        }
+    );
+
+}
+
+
+// ============================================================
+// NOTIFICATION SYSTEM
+// ============================================================
+
+function updateNotifications() {
+
+    const badge =
         document.getElementById(
-            "aiQuestion"
+            "notificationBadge"
         );
 
 
-    if (
-        !questionBox ||
-        !suggestions.length
-    ) {
+    if (!badge) {
+
         return;
     }
 
 
-    suggestions.forEach(
-        button => {
+    // The dashboard currently uses a
+    // lightweight local notification count.
+    // We will connect this to Supabase
+    // notifications when that table exists.
 
-            button.addEventListener(
-                "click",
-                () => {
+    const notifications =
+        Number(
+            localStorage.getItem(
+                "mwanikiNotificationCount"
+            )
+        ) || 0;
 
-                    questionBox.value =
-                        button.textContent.trim();
+
+    if (notifications > 0) {
+
+        badge.textContent =
+            notifications;
+
+        badge.style.display =
+            "flex";
+
+    } else {
+
+        badge.style.display =
+            "none";
+
+    }
+
+}
 
 
-                    questionBox.focus();
+// ============================================================
+// NOTIFICATION BUTTON
+// ============================================================
 
-                }
+const notificationButton =
+    document.getElementById(
+        "notificationButton"
+    );
+
+
+if (notificationButton) {
+
+    notificationButton.addEventListener(
+        "click",
+        () => {
+
+            const badge =
+                document.getElementById(
+                    "notificationBadge"
+                );
+
+
+            if (badge) {
+
+                badge.style.display =
+                    "none";
+
+            }
+
+
+            localStorage.setItem(
+                "mwanikiNotificationCount",
+                "0"
+            );
+
+            alert(
+                "Your Mwaniki Scholars notifications will appear here."
             );
 
         }
     );
+
 }
 
 
-// =====================================================
-// HEADER BUTTONS
-// =====================================================
+// ============================================================
+// UTILITY
+// ============================================================
 
-function setupHeaderButtons() {
+function setText(
+    id,
+    value
+) {
 
-    const profileButton =
+    const element =
         document.getElementById(
-            "profileButton"
+            id
         );
 
 
-    const notificationButton =
-        document.getElementById(
-            "notificationButton"
-        );
+    if (element) {
 
+        element.textContent =
+            value;
 
-    if (profileButton) {
-
-        profileButton.addEventListener(
-            "click",
-            () => {
-
-                window.location.href =
-                    "./profile.html";
-            }
-        );
     }
 
-
-    if (notificationButton) {
-
-        notificationButton.addEventListener(
-            "click",
-            () => {
-
-                alert(
-                    "You have no new notifications."
-                );
-
-            }
-        );
-    }
 }
 
 
-// =====================================================
-// GLOBAL DASHBOARD API
-// =====================================================
+// ============================================================
+// ESCAPE HTML
+// ============================================================
+
+function escapeHTML(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+
+}
+
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
+
+updateNotifications();
+
+loadStudentProfile();
+
+
+// ============================================================
+// EXPOSE USEFUL FUNCTIONS
+// ============================================================
 
 window.mwanikiDashboard = {
 
-    loadNotesLibrary,
+    refresh:
+        updateDashboardAnalytics,
 
-    renderNotes,
+    trackUnit:
+        window.mwanikiTrackUnit,
 
-    refreshNotes: loadNotesLibrary,
-
-    showSection: sectionId => {
-
-        const button =
-            document.querySelector(
-                `.nav-link[data-section="${sectionId}"]`
-            );
-
-
-        if (button) {
-            button.click();
-        }
-    }
+    saveActivity:
+        saveRecentActivity
 
 };
-
-
-// =====================================================
-// INITIALIZATION
-// =====================================================
-
-async function initializeDashboard() {
-
-    console.log(
-        "🚀 Initializing Mwaniki Scholars dashboard..."
-    );
-
-
-    setupDashboardNavigation();
-
-    setupAIQuestions();
-
-    setupHeaderButtons();
-
-
-    updateContinueLearning();
-
-    updateRecommendedLesson();
-
-    updateAchievements();
-
-
-    // Start Notes Library immediately.
-    await loadNotesLibrary();
-
-
-    await loadStudentProfile();
-
-
-    await loadDashboardAnalytics();
-
-
-    console.log(
-        "✅ Mwaniki Scholars dashboard initialized"
-    );
-}
-
-
-// =====================================================
-// START
-// =====================================================
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initializeDashboard
-    );
-
-} else {
-
-    initializeDashboard();
-
-}
+```
