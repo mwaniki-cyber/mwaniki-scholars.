@@ -1,145 +1,146 @@
 import { supabase } from "./supabase.js";
 
+// =====================================================
+// MWANIKI SCHOLARS
+// STUDENT TUTOR MESSAGE SYSTEM
+// Compatible with dashboard.html
+// =====================================================
 
-// =====================================
-// BOOK / ASK TUTOR
-// =====================================
+console.log("👨‍🏫 Student Tutor System Loaded");
 
+// -----------------------------------------------------
+// GET LOGGED-IN USER EMAIL
+// -----------------------------------------------------
 
-window.bookTutor = async function(){
+async function getStudentEmail() {
+    try {
+        const {
+            data: { user },
+            error
+        } = await supabase.auth.getUser();
 
+        if (error) {
+            console.warn("Could not get logged-in user:", error.message);
+            return "";
+        }
 
-const name =
-
-document.getElementById("studentName").value.trim();
-
-
-
-const topic =
-
-document.getElementById("topic").value.trim();
-
-
-
-const time =
-
-document.getElementById("preferredTime").value.trim();
-
-
-
-const result =
-
-document.getElementById("bookingResult");
-
-
-
-
-
-if(
-name==="" ||
-topic==="" ||
-time===""
-
-){
-
-
-result.innerHTML="❌ Fill all details";
-
-return;
-
-
+        return user?.email || "";
+    } catch (error) {
+        console.error("User email error:", error);
+        return "";
+    }
 }
 
+// -----------------------------------------------------
+// SEND STUDENT QUESTION
+// -----------------------------------------------------
 
+async function sendTutorMessage() {
+    const nameInput = document.getElementById("studentName");
+    const emailInput = document.getElementById("studentEmail");
+    const topicInput = document.getElementById("topic");
+    const messageInput = document.getElementById("studentMessage");
+    const sendButton = document.getElementById("sendTutorMessageButton");
+    const statusBox = document.getElementById("messageStatus");
 
+    if (
+        !nameInput ||
+        !emailInput ||
+        !topicInput ||
+        !messageInput ||
+        !statusBox
+    ) {
+        console.error("Tutor form elements were not found.");
+        return;
+    }
 
+    const name = nameInput.value.trim();
+    const email = emailInput.value.trim();
+    const topic = topicInput.value.trim();
+    const message = messageInput.value.trim();
 
+    if (name === "") {
+        statusBox.textContent = "❌ Please enter your full name.";
+        return;
+    }
 
-const {data:{user}}=
+    if (email === "") {
+        statusBox.textContent = "❌ Please enter your email.";
+        return;
+    }
 
-await supabase.auth.getUser();
+    if (!email.includes("@")) {
+        statusBox.textContent = "❌ Please enter a valid email.";
+        return;
+    }
 
+    if (topic === "") {
+        statusBox.textContent = "❌ Please enter the topic.";
+        return;
+    }
 
+    if (message === "") {
+        statusBox.textContent = "❌ Please write your question.";
+        return;
+    }
 
+    if (sendButton) {
+        sendButton.disabled = true;
+        sendButton.textContent = "⏳ Sending...";
+    }
 
+    statusBox.textContent = "Sending your question...";
 
-const email = user ? user.email : "guest";
+    try {
+        const loggedInEmail = await getStudentEmail();
 
+        const finalEmail = loggedInEmail || email;
 
+        const { error } = await supabase
+            .from("tutor_messages")
+            .insert({
+                student_name: name,
+                student_email: finalEmail,
+                topic: topic,
+                message: message,
+                status: "pending"
+            });
 
+        if (error) {
+            console.error("Tutor message insert error:", error);
 
+            statusBox.textContent =
+                "❌ Message could not be sent: " + error.message;
 
+            return;
+        }
 
+        statusBox.textContent =
+            "✅ Your question has been sent successfully. A tutor will respond soon.";
 
-const {error}=await supabase
+        messageInput.value = "";
+        topicInput.value = "";
 
-.from("tutor_messages")
+    } catch (error) {
+        console.error("Unexpected tutor message error:", error);
 
-.insert({
-
-student_name:name,
-
-student_email:email,
-
-topic:topic,
-
-message:"Student requested tutor consultation at "+time,
-
-status:"pending"
-
-});
-
-
-
-
-
-
-
-
-if(error){
-
-
-console.log(error);
-
-
-result.innerHTML=
-
-"❌ Failed: "+error.message;
-
-
-return;
-
+        statusBox.textContent =
+            "❌ An unexpected error occurred. Please try again.";
+    } finally {
+        if (sendButton) {
+            sendButton.disabled = false;
+            sendButton.textContent = "📨 Send Question";
+        }
+    }
 }
 
+// -----------------------------------------------------
+// BACKWARD COMPATIBILITY
+// -----------------------------------------------------
 
+window.sendTutorMessage = sendTutorMessage;
 
+// Also support the previous function name.
+window.bookTutor = sendTutorMessage;
 
-
-
-
-result.innerHTML=
-
-"✅ Tutor request sent successfully";
-
-
-
-
-document.getElementById("studentName").value="";
-
-document.getElementById("topic").value="";
-
-document.getElementById("preferredTime").value="";
-
-
-
-};
-
-
-
-
-
-console.log(
-
-"📨 Student Tutor System Connected"
-
-);
+console.log("✅ sendTutorMessage() is available globally");
