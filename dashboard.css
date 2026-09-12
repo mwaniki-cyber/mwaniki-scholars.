@@ -1,69 +1,17 @@
-
+```css
 /* =========================================================
    MWANIKI SCHOLARS
    STUDENT DASHBOARD
-   COMPLETE DASHBOARD CSS
-   ---------------------------------------------------------
-   - Horizontal navigation
-   - Courses in rows + columns
-   - Notes in rows + columns
-   - Responsive desktop/tablet/mobile layout
-   - Profile photo support
-   - Hero section
-   - Quiz center
-   - AI tutor
-   - Human tutor
-   - Student inbox
+   COMPLETE DASHBOARD STYLESHEET
    ========================================================= */
-
 
 /* =========================================================
-   1. GLOBAL VARIABLES
+   RESET
    ========================================================= */
 
-:root {
-    --navy: #092f49;
-    --navy-dark: #061f31;
-
-    --teal: #087f8c;
-    --teal-dark: #05616b;
-
-    --blue: #1976d2;
-    --purple: #6d4aff;
-    --green: #159447;
-    --orange: #f08a24;
-    --red: #d83a3a;
-
-    --background: #f4f8fb;
-    --surface: #ffffff;
-    --surface-soft: #f8fbfd;
-
-    --text: #163042;
-    --muted: #6c7d89;
-
-    --border: #dce7ed;
-
-    --shadow-sm:
-        0 4px 14px rgba(9, 47, 73, 0.07);
-
-    --shadow-md:
-        0 10px 30px rgba(9, 47, 73, 0.11);
-
-    --shadow-lg:
-        0 18px 45px rgba(9, 47, 73, 0.14);
-
-    --radius-sm: 10px;
-    --radius-md: 15px;
-    --radius-lg: 20px;
-    --radius-xl: 26px;
-}
-
-
-/* =========================================================
-   2. RESET
-   ========================================================= */
-
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -77,26 +25,26 @@ body {
 
     font-family:
         Inter,
+        "Segoe UI",
         Arial,
         Helvetica,
         sans-serif;
 
-    color: var(--text);
-
     background:
         radial-gradient(
-            circle at top right,
-            rgba(8, 127, 140, 0.07),
-            transparent 30%
+            circle at top left,
+            rgba(14, 165, 233, 0.08),
+            transparent 32%
         ),
         radial-gradient(
-            circle at top left,
-            rgba(25, 118, 210, 0.05),
-            transparent 25%
+            circle at top right,
+            rgba(99, 102, 241, 0.07),
+            transparent 30%
         ),
-        var(--background);
+        #f4f8fc;
 
-    overflow-x: hidden;
+    color: #172033;
+    line-height: 1.6;
 }
 
 button,
@@ -110,71 +58,111 @@ button {
     cursor: pointer;
 }
 
-img {
-    max-width: 100%;
-}
-
 a {
     color: inherit;
     text-decoration: none;
 }
 
+img {
+    max-width: 100%;
+}
+
 
 /* =========================================================
-   3. TOP HEADER
+   COLOR SYSTEM
    ========================================================= */
 
-.dashboard-header {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+:root {
+    --navy: #063970;
+    --navy-dark: #04284f;
+
+    --teal: #0b7285;
+    --teal-dark: #075d6d;
+
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+
+    --orange: #ea580c;
+    --orange-light: #fff7ed;
+
+    --red: #dc2626;
+    --red-light: #fef2f2;
+
+    --surface: #ffffff;
+    --surface-soft: #f8fbff;
+
+    --text: #172033;
+    --text-soft: #475569;
+    --muted: #64748b;
+
+    --border: #dbe4ee;
+
+    --shadow-sm:
+        0 4px 12px rgba(15, 23, 42, 0.06);
+
+    --shadow:
+        0 10px 30px rgba(15, 23, 42, 0.08);
+
+    --shadow-lg:
+        0 18px 45px rgba(15, 23, 42, 0.12);
+
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 22px;
+}
+
+
+/* =========================================================
+   TOP HEADER
+   IMPORTANT:
+   HEADER IS NOT STICKY
+   ========================================================= */
+
+.dashboard-header,
+header {
+    position: relative;
+    top: auto;
+    z-index: 10;
 
     width: 100%;
 
-    background: rgba(255, 255, 255, 0.96);
+    background:
+        linear-gradient(
+            135deg,
+            #063970 0%,
+            #075a78 50%,
+            #0b7285 100%
+        );
 
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    color: #ffffff;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom:
+        1px solid rgba(255, 255, 255, 0.12);
 
     box-shadow:
-        0 2px 15px rgba(9, 47, 73, 0.06);
-}
-
-.header-inner {
-    width: min(1440px, calc(100% - 40px));
-
-    margin: 0 auto;
-
-    min-height: 76px;
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 20px;
+        0 6px 20px rgba(6, 57, 112, 0.16);
 }
 
 
 /* =========================================================
-   4. BRAND
+   BRAND
    ========================================================= */
 
 .brand-area {
     display: flex;
     align-items: center;
-
-    gap: 12px;
-
-    min-width: 0;
+    gap: 13px;
 }
 
 .brand-icon {
     width: 46px;
     height: 46px;
-
-    flex: 0 0 46px;
 
     display: flex;
     align-items: center;
@@ -182,231 +170,357 @@ a {
 
     border-radius: 14px;
 
-    color: white;
-
     background:
-        linear-gradient(
-            135deg,
-            var(--teal),
-            var(--navy)
-        );
+        rgba(255, 255, 255, 0.14);
 
-    font-size: 20px;
-    font-weight: 900;
+    border:
+        1px solid rgba(255, 255, 255, 0.18);
 
-    box-shadow:
-        0 7px 18px rgba(8, 127, 140, 0.22);
+    font-size: 23px;
+
+    flex-shrink: 0;
 }
 
 .brand-name {
-    margin: 0;
-
-    color: var(--navy);
-
-    font-size: 18px;
-    font-weight: 900;
-
+    font-size: 21px;
+    font-weight: 800;
     line-height: 1.1;
+    color: #ffffff;
 }
 
 .brand-subtitle {
-    margin-top: 4px;
+    margin-top: 3px;
 
-    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
 
-    font-size: 11px;
-    font-weight: 700;
+    color:
+        rgba(255, 255, 255, 0.78);
 
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    letter-spacing: 0.2px;
 }
 
 
 /* =========================================================
-   5. HEADER ACTIONS
+   HEADER ACTIONS
    ========================================================= */
 
 .header-actions {
     display: flex;
     align-items: center;
-
-    gap: 9px;
-
-    flex-shrink: 0;
+    gap: 12px;
 }
 
-.header-actions button,
-.header-actions a {
-    border: 1px solid var(--border);
+.notification-button {
+    position: relative;
 
-    background: white;
+    width: 42px;
+    height: 42px;
 
-    color: var(--navy);
-
+    border: none;
     border-radius: 12px;
 
-    min-height: 42px;
+    background:
+        rgba(255, 255, 255, 0.13);
+
+    color: #ffffff;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 18px;
 
     transition:
         background 0.2s ease,
-        border-color 0.2s ease,
         transform 0.2s ease;
 }
 
-.header-actions button:hover,
-.header-actions a:hover {
-    background: #f1f8fa;
-
-    border-color: #bfd9df;
+.notification-button:hover {
+    background:
+        rgba(255, 255, 255, 0.22);
 
     transform: translateY(-1px);
 }
 
+.notification-badge {
+    position: absolute;
+
+    top: -4px;
+    right: -4px;
+
+    min-width: 19px;
+    height: 19px;
+
+    padding: 0 5px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: #ef4444;
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    border: 2px solid #063970;
+}
+
 
 /* =========================================================
-   6. PROFILE PHOTO
+   PROFILE BUTTON
    ========================================================= */
 
+#studentProfileButton {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    min-height: 42px;
+
+    padding: 5px 12px 5px 6px;
+
+    border-radius: 999px;
+
+    background: #ffffff;
+    color: var(--navy);
+
+    font-size: 14px;
+    font-weight: 700;
+
+    box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.10);
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+#studentProfileButton:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 18px rgba(0, 0, 0, 0.15);
+}
+
 .dashboard-profile-photo {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
 
     border-radius: 50%;
 
     object-fit: cover;
 
-    display: block;
+    background: #e2e8f0;
 
-    border: 2px solid white;
-
-    box-shadow:
-        0 0 0 2px rgba(8, 127, 140, 0.18);
+    border:
+        2px solid rgba(6, 57, 112, 0.10);
 }
 
 
 /* =========================================================
-   7. MAIN HORIZONTAL NAVIGATION
+   MAIN NAVIGATION
+   CRITICAL FIX:
+   NEVER STICKY
+   NEVER FIXED
+   NEVER FLOATING
    ========================================================= */
 
 .main-navigation {
-    position: sticky;
-    top: 76px;
+    position: relative !important;
 
-    z-index: 900;
+    top: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+
+    z-index: 5 !important;
 
     width: 100%;
 
-    background: rgba(255, 255, 255, 0.96);
+    background: #ffffff;
 
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    border-bottom:
+        1px solid var(--border);
 
-    border-bottom: 1px solid var(--border);
+    box-shadow:
+        0 3px 10px rgba(15, 23, 42, 0.05);
+
+    overflow: visible;
 }
 
+
+/* =========================================================
+   NAV INNER
+   ========================================================= */
+
 .nav-inner {
-    width: min(1440px, calc(100% - 40px));
+    width: 100%;
+    max-width: 1440px;
 
     margin: 0 auto;
+
+    padding:
+        8px 24px;
 
     display: flex;
     align-items: center;
 
+    justify-content: center;
+
     gap: 7px;
 
-    min-height: 54px;
-
     overflow-x: auto;
+    overflow-y: hidden;
 
-    scrollbar-width: thin;
+    scrollbar-width: none;
 }
 
-.nav-inner a {
+.nav-inner::-webkit-scrollbar {
+    display: none;
+}
+
+
+/* =========================================================
+   NAV LINKS
+   ========================================================= */
+
+.main-navigation .nav-link {
+    position: relative;
+
     flex: 0 0 auto;
 
-    padding: 9px 13px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    border-radius: 10px;
+    gap: 7px;
 
-    color: #536a77;
+    min-height: 42px;
 
-    font-size: 13px;
-    font-weight: 750;
+    padding:
+        9px 14px;
+
+    border-radius: 11px;
+
+    background: transparent;
+
+    color: #475569;
+
+    font-size: 14px;
+    font-weight: 700;
 
     white-space: nowrap;
 
     transition:
         background 0.2s ease,
-        color 0.2s ease;
+        color 0.2s ease,
+        transform 0.2s ease;
 }
 
-.nav-inner a:hover {
+.main-navigation .nav-link span {
+    font-size: 16px;
+
+    line-height: 1;
+}
+
+.main-navigation .nav-link:hover {
+    background: #eef6fb;
     color: var(--teal);
 
-    background: #eef8f9;
+    transform: translateY(-1px);
 }
 
-.nav-inner a.active {
-    color: white;
-
+.main-navigation .nav-link.active {
     background:
         linear-gradient(
             135deg,
-            var(--teal),
-            var(--navy)
+            #e8f7fa,
+            #edf7ff
         );
 
-    box-shadow:
-        0 5px 15px rgba(8, 127, 140, 0.18);
+    color: var(--navy);
+}
+
+.main-navigation .nav-link.active::after {
+    content: "";
+
+    position: absolute;
+
+    left: 14px;
+    right: 14px;
+
+    bottom: -9px;
+
+    height: 3px;
+
+    border-radius: 999px;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--navy),
+            var(--teal)
+        );
 }
 
 
 /* =========================================================
-   8. MAIN DASHBOARD CONTAINER
+   DASHBOARD MAIN CONTAINER
    ========================================================= */
 
-.dashboard-container {
-    width: min(1440px, calc(100% - 40px));
+.dashboard-container,
+main.dashboard-container,
+.container {
+    width: 100%;
+    max-width: 1440px;
 
     margin: 0 auto;
 
-    padding: 28px 0 90px;
-}
-
-.dashboard-section {
-    width: 100%;
-
-    margin-bottom: 28px;
+    padding:
+        30px 24px 60px;
 }
 
 
 /* =========================================================
-   9. HERO
+   SECTIONS
+   ========================================================= */
+
+.dashboard-section {
+    scroll-margin-top: 20px;
+}
+
+
+/* =========================================================
+   HERO
    ========================================================= */
 
 .student-hero {
-    width: 100%;
-
-    min-height: 190px;
-
-    padding: 25px;
-
     display: flex;
     align-items: center;
 
     gap: 22px;
 
-    border-radius: var(--radius-xl);
+    margin-bottom: 24px;
+
+    padding: 28px;
+
+    border-radius: var(--radius-lg);
 
     background:
         linear-gradient(
             135deg,
-            #07344f 0%,
-            #087f8c 58%,
-            #1593a0 100%
+            #063970 0%,
+            #075a78 52%,
+            #0b7285 100%
         );
 
-    color: white;
+    color: #ffffff;
 
     box-shadow: var(--shadow-lg);
 
@@ -420,25 +534,33 @@ a {
 
     position: absolute;
 
-    width: 250px;
-    height: 250px;
+    width: 260px;
+    height: 260px;
 
-    right: -70px;
-    top: -100px;
+    right: -100px;
+    top: -120px;
 
     border-radius: 50%;
 
     background:
         rgba(255, 255, 255, 0.08);
+
+    pointer-events: none;
 }
 
 .hero-avatar {
-    width: 82px;
-    height: 82px;
+    width: 78px;
+    height: 78px;
 
-    flex: 0 0 82px;
+    flex: 0 0 78px;
 
     border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.14);
+
+    border:
+        3px solid rgba(255, 255, 255, 0.30);
 
     display: flex;
     align-items: center;
@@ -446,15 +568,15 @@ a {
 
     overflow: hidden;
 
-    background:
-        rgba(255, 255, 255, 0.15);
-
-    border:
-        3px solid rgba(255, 255, 255, 0.7);
-
     position: relative;
+    z-index: 1;
+}
 
-    z-index: 2;
+.hero-avatar img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
 }
 
 #dashboardHeroProfilePhoto {
@@ -462,101 +584,138 @@ a {
     height: 100%;
 
     object-fit: cover;
-
-    display: none;
 }
 
 #dashboardHeroFallback {
-    color: white;
-
-    font-size: 28px;
-    font-weight: 900;
+    font-size: 30px;
 }
 
 .hero-content {
     position: relative;
-    z-index: 2;
-
-    min-width: 0;
-}
-
-.hero-content .eyebrow,
-.hero-content small {
-    font-size: 11px;
-
-    font-weight: 800;
-
-    letter-spacing: 0.12em;
+    z-index: 1;
 }
 
 .hero-content h1 {
-    margin: 7px 0 8px;
+    margin:
+        3px 0 8px;
 
-    font-size: clamp(23px, 3vw, 34px);
+    color: #ffffff;
+
+    font-size: clamp(24px, 3vw, 34px);
 
     line-height: 1.15;
-
-    color: white;
 }
 
 .hero-content p {
     margin: 0;
 
-    max-width: 720px;
+    max-width: 760px;
 
-    color: rgba(255, 255, 255, 0.84);
+    color:
+        rgba(255, 255, 255, 0.82);
+}
 
-    line-height: 1.6;
+.hero-content .eyebrow,
+.student-hero .eyebrow {
+    color:
+        rgba(255, 255, 255, 0.72);
 
-    font-size: 14px;
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1.4px;
 }
 
 
 /* =========================================================
-   10. STAT CARDS
+   STATS
    ========================================================= */
 
-.stats-grid,
-.dashboard-stats {
-    width: 100%;
-
+.stats-grid {
     display: grid;
 
     grid-template-columns:
         repeat(5, minmax(0, 1fr));
 
-    gap: 15px;
+    gap: 16px;
 
-    margin-top: 20px;
+    margin-bottom: 24px;
 }
 
 .stat-card {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
     min-width: 0;
 
     padding: 18px;
 
     background: var(--surface);
 
-    border: 1px solid var(--border);
+    border:
+        1px solid var(--border);
 
-    border-radius: var(--radius-md);
+    border-radius: var(--radius);
 
     box-shadow: var(--shadow-sm);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.stat-card h3,
-.stat-card .stat-value {
-    margin: 0;
-
-    color: var(--navy);
-
-    font-size: 25px;
-    font-weight: 900;
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
 }
 
-.stat-card p,
-.stat-card .stat-label {
-    margin: 5px 0 0;
+.stat-icon {
+    width: 44px;
+    height: 44px;
+
+    flex: 0 0 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    font-size: 19px;
+    font-weight: 800;
+}
+
+.stat-icon.blue {
+    background: var(--blue-light);
+    color: var(--blue);
+}
+
+.stat-icon.green {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.stat-icon.purple {
+    background: var(--purple-light);
+    color: var(--purple);
+}
+
+.stat-icon.orange {
+    background: var(--orange-light);
+    color: var(--orange);
+}
+
+.stat-icon.red {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.stat-label {
+    display: block;
+
+    margin-bottom: 2px;
 
     color: var(--muted);
 
@@ -564,14 +723,100 @@ a {
     font-weight: 700;
 }
 
+.stat-value {
+    display: block;
+
+    color: var(--navy);
+
+    font-size: 23px;
+    font-weight: 850;
+
+    line-height: 1.2;
+}
+
 
 /* =========================================================
-   11. GENERAL CARDS
+   LEARNING GRID
    ========================================================= */
 
-.dashboard-card {
-    width: 100%;
+.learning-grid {
+    display: grid;
 
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 20px;
+
+    margin-bottom: 24px;
+}
+
+.premium-card {
+    min-width: 0;
+
+    padding: 22px;
+
+    border-radius: var(--radius-lg);
+
+    background: var(--surface);
+
+    border:
+        1px solid var(--border);
+
+    box-shadow: var(--shadow);
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    margin-bottom: 18px;
+}
+
+.section-heading h2 {
+    margin: 4px 0 0;
+
+    color: var(--navy);
+
+    font-size: 21px;
+}
+
+.eyebrow {
+    display: block;
+
+    color: var(--teal);
+
+    font-size: 10px;
+    font-weight: 850;
+
+    letter-spacing: 1.3px;
+}
+
+.heading-icon {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: var(--blue-light);
+
+    color: var(--blue);
+
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   GENERAL CARDS
+   ========================================================= */
+
+.card {
     background: var(--surface);
 
     border:
@@ -579,315 +824,190 @@ a {
 
     border-radius: var(--radius-lg);
 
+    padding: 24px;
+
+    margin-bottom: 22px;
+
     box-shadow: var(--shadow-sm);
-
-    padding: 20px;
 }
 
-.section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 15px;
-
-    margin-bottom: 17px;
+.card:hover {
+    box-shadow: var(--shadow);
 }
 
-.section-header h2,
-.dashboard-card h2 {
-    margin: 0;
-
+.card h1,
+.card h2,
+.card h3 {
     color: var(--navy);
-
-    font-size: 20px;
 }
 
-.section-header p {
-    margin: 5px 0 0;
+.card h1 {
+    margin-top: 0;
+}
 
-    color: var(--muted);
+.card h2 {
+    margin-top: 0;
+    margin-bottom: 8px;
 
-    font-size: 13px;
+    font-size: 23px;
+}
+
+.card p {
+    color: var(--text-soft);
 }
 
 
 /* =========================================================
-   12. SEARCH BOXES
+   PAGE SECTION HEADINGS
    ========================================================= */
 
+.page-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 20px;
+}
+
+.page-section-heading h1 {
+    margin:
+        4px 0 6px;
+
+    color: var(--navy);
+
+    font-size: 28px;
+}
+
+.page-section-heading p {
+    margin: 0;
+
+    color: var(--muted);
+}
+
+.section-icon {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 15px;
+
+    background: #eef7fa;
+
+    color: var(--teal);
+
+    font-size: 24px;
+}
+
+
+/* =========================================================
+   COURSE HEADER
+   ========================================================= */
+
+.course-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+
+    margin-bottom: 10px;
+}
+
+.course-header h2 {
+    margin-bottom: 4px;
+}
+
+.course-header p {
+    margin-top: 0;
+}
+
+#totalCourses {
+    margin: 0;
+
+    color: var(--teal);
+
+    font-size: 34px;
+    font-weight: 850;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   SEARCH BOXES
+   ========================================================= */
+
+.search-box,
 #courseSearch,
-#notesSearch,
-.dashboard-search,
-.search-input {
+#notesSearch {
     width: 100%;
 
-    min-height: 44px;
+    padding: 13px 15px;
 
-    padding: 10px 14px;
+    margin:
+        8px 0 20px;
 
-    border: 1px solid var(--border);
+    border:
+        1px solid var(--border);
 
-    border-radius: 11px;
+    border-radius: 12px;
 
-    outline: none;
+    background: #ffffff;
 
     color: var(--text);
 
-    background: white;
+    outline: none;
+
+    font-size: 14px;
 
     transition:
         border-color 0.2s ease,
         box-shadow 0.2s ease;
 }
 
+.search-box:focus,
 #courseSearch:focus,
-#notesSearch:focus,
-.dashboard-search:focus,
-.search-input:focus {
+#notesSearch:focus {
     border-color: var(--teal);
 
     box-shadow:
-        0 0 0 3px rgba(8, 127, 140, 0.1);
+        0 0 0 4px
+        rgba(11, 114, 133, 0.10);
 }
 
 
 /* =========================================================
-   13. COURSE LIBRARY
+   COURSE GRID
    ========================================================= */
 
-#courseLibrary {
-    width: 100%;
-}
-
 #courseArea {
-
-    /* THIS IS THE IMPORTANT PART */
-
-    width: 100%;
-
     display: grid;
 
-    /*
-       FOUR COURSES ACROSS ON LARGE SCREENS
-    */
     grid-template-columns:
         repeat(4, minmax(0, 1fr));
 
     gap: 20px;
-
-    margin-top: 20px;
-
-    align-items: stretch;
-
-    /*
-       Prevents any child from forcing
-       the entire grid to one side.
-    */
-    min-width: 0;
 }
 
+.course-card {
+    position: relative;
 
-/* =========================================================
-   14. COURSE CARD
-   ========================================================= */
-
-#courseArea .course-card {
-
-    width: 100%;
     min-width: 0;
 
-    display: flex;
-    flex-direction: column;
+    padding: 20px;
 
-    overflow: hidden;
-
-    background: white;
+    background: #ffffff;
 
     border:
         1px solid var(--border);
 
-    border-radius: 18px;
-
-    box-shadow: var(--shadow-sm);
-
-    transition:
-        transform 0.22s ease,
-        box-shadow 0.22s ease,
-        border-color 0.22s ease;
-}
-
-#courseArea .course-card:hover {
-    transform: translateY(-5px);
-
-    border-color:
-        rgba(8, 127, 140, 0.3);
-
-    box-shadow: var(--shadow-md);
-}
-
-
-/* Course image */
-
-#courseArea .course-card img {
-    width: 100%;
-
-    height: 145px;
-
-    display: block;
-
-    object-fit: cover;
-
-    background:
-        linear-gradient(
-            135deg,
-            #eaf4f7,
-            #dbecef
-        );
-}
-
-
-/* Course content */
-
-#courseArea .course-card-content,
-#courseArea .course-content {
-    padding: 17px;
-
-    display: flex;
-    flex-direction: column;
-
-    flex: 1;
-
-    min-width: 0;
-}
-
-
-/* Course title */
-
-#courseArea .course-card h3 {
-    margin: 0 0 8px;
-
-    color: var(--navy);
-
-    font-size: 17px;
-
-    line-height: 1.35;
-
-    word-break: break-word;
-}
-
-
-/* Course description */
-
-#courseArea .course-card p {
-    margin: 0 0 16px;
-
-    color: var(--muted);
-
-    font-size: 13px;
-
-    line-height: 1.55;
-
-    display: -webkit-box;
-
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-
-    overflow: hidden;
-}
-
-
-/* Course button */
-
-#courseArea .course-card button,
-#courseArea .course-card .course-button {
-    width: 100%;
-
-    margin-top: auto;
-
-    padding: 11px 14px;
-
-    border: none;
-
-    border-radius: 10px;
-
-    color: white;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--teal),
-            var(--teal-dark)
-        );
-
-    font-size: 13px;
-    font-weight: 800;
-
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-#courseArea .course-card button:hover,
-#courseArea .course-card .course-button:hover {
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 6px 16px rgba(8, 127, 140, 0.2);
-}
-
-
-/* =========================================================
-   15. NOTES LIBRARY
-   ========================================================= */
-
-#notesLibrary {
-    width: 100%;
-}
-
-#notesArea {
-
-    /* NOTES ALSO USE A REAL GRID */
-
-    width: 100%;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: 18px;
-
-    margin-top: 20px;
-
-    align-items: stretch;
-
-    min-width: 0;
-}
-
-
-/* =========================================================
-   16. NOTE CARD
-   ========================================================= */
-
-#notesArea .note-card {
-
-    width: 100%;
-    min-width: 0;
-
-    min-height: 210px;
-
-    display: flex;
-    flex-direction: column;
-
-    padding: 19px;
-
-    background: white;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 17px;
+    border-radius: var(--radius);
 
     box-shadow: var(--shadow-sm);
 
@@ -897,155 +1017,42 @@ a {
         border-color 0.2s ease;
 }
 
-#notesArea .note-card:hover {
+.course-card:hover {
     transform: translateY(-4px);
 
     border-color:
-        rgba(25, 118, 210, 0.25);
+        rgba(11, 114, 133, 0.30);
 
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow);
 }
 
-
-/* Note icon */
-
-#notesArea .note-icon {
-    width: 45px;
-    height: 45px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-bottom: 14px;
-
-    border-radius: 12px;
-
-    background:
-        rgba(25, 118, 210, 0.1);
-
-    color: var(--blue);
-
-    font-size: 20px;
-}
-
-
-/* Note title */
-
-#notesArea .note-card h3 {
-    margin: 0 0 7px;
+.course-card h3 {
+    margin:
+        0 0 8px;
 
     color: var(--navy);
 
-    font-size: 16px;
-
-    line-height: 1.4;
-
-    word-break: break-word;
+    font-size: 17px;
 }
 
-
-/* Note metadata */
-
-#notesArea .note-card p {
-    margin: 0 0 7px;
-
+.course-card p {
     color: var(--muted);
 
-    font-size: 12px;
-
-    line-height: 1.5;
+    font-size: 13px;
 }
 
-
-/* Note button/link */
-
-#notesArea .note-card a,
-#notesArea .note-card button {
-
+.course-card button {
     width: 100%;
 
-    margin-top: auto;
-
-    padding: 10px 13px;
-
-    border-radius: 10px;
-
-    border: 1px solid var(--blue);
-
-    background: white;
-
-    color: var(--blue);
-
-    font-weight: 800;
-
-    font-size: 12px;
-
-    text-align: center;
-
-    transition:
-        background 0.2s ease,
-        color 0.2s ease;
-}
-
-#notesArea .note-card a:hover,
-#notesArea .note-card button:hover {
-    background: var(--blue);
-
-    color: white;
+    margin-top: 12px;
 }
 
 
 /* =========================================================
-   17. EMPTY STATES
+   NOTES GRID
    ========================================================= */
 
-.empty-state,
-.no-results,
-.loading-state {
-    width: 100%;
-
-    padding: 35px 20px;
-
-    text-align: center;
-
-    color: var(--muted);
-
-    background: var(--surface-soft);
-
-    border:
-        1px dashed var(--border);
-
-    border-radius: 15px;
-
-    grid-column: 1 / -1;
-}
-
-.empty-state strong,
-.no-results strong {
-    display: block;
-
-    margin-bottom: 6px;
-
-    color: var(--navy);
-}
-
-
-/* =========================================================
-   18. CONTINUE LEARNING
-   ========================================================= */
-
-#continueLearningContent,
-#recommendedLesson,
-#recentlyStudied {
-
-    width: 100%;
-}
-
-.learning-grid {
-
-    width: 100%;
-
+#notesArea {
     display: grid;
 
     grid-template-columns:
@@ -1054,30 +1061,489 @@ a {
     gap: 18px;
 }
 
+.note-card {
+    min-width: 0;
 
-/* =========================================================
-   19. PROGRESS
-   ========================================================= */
+    padding: 18px;
 
-.progress-container {
-    width: 100%;
+    background: #ffffff;
 
-    margin-top: 12px;
+    border:
+        1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    box-shadow: var(--shadow-sm);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.progress-bar {
+.note-card:hover {
+    transform: translateY(-3px);
+
+    box-shadow: var(--shadow);
+}
+
+.note-card h3 {
+    margin:
+        0 0 8px;
+
+    color: var(--navy);
+
+    font-size: 16px;
+}
+
+.note-card p {
+    color: var(--muted);
+
+    font-size: 13px;
+}
+
+.note-card a {
+    display: inline-flex;
+    align-items: center;
+
+    margin-top: 10px;
+
+    padding:
+        9px 13px;
+
+    border-radius: 9px;
+
+    background: var(--blue-light);
+
+    color: var(--blue);
+
+    font-size: 13px;
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+button,
+.button,
+.primary-button {
+    border: none;
+
+    border-radius: 11px;
+
+    padding:
+        11px 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--navy),
+            var(--teal)
+        );
+
+    color: #ffffff;
+
+    font-weight: 750;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        filter 0.2s ease;
+}
+
+button:hover,
+.button:hover,
+.primary-button:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 18px rgba(6, 57, 112, 0.18);
+
+    filter: brightness(1.03);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
+
+input,
+textarea,
+select {
     width: 100%;
 
-    height: 9px;
+    padding: 12px 14px;
+
+    margin-bottom: 12px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: 11px;
+
+    background: #ffffff;
+
+    color: var(--text);
+
+    outline: none;
+
+    font-size: 14px;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--teal);
+
+    box-shadow:
+        0 0 0 4px
+        rgba(11, 114, 133, 0.10);
+}
+
+textarea {
+    min-height: 120px;
+
+    resize: vertical;
+}
+
+
+/* =========================================================
+   AI TUTOR
+   ========================================================= */
+
+#aiTutor {
+    scroll-margin-top: 20px;
+}
+
+.ai-page-header {
+    display: flex;
+    align-items: center;
+
+    gap: 16px;
+
+    margin-bottom: 18px;
+}
+
+.ai-avatar-large {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 58px;
+
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #ecfeff
+        );
+
+    font-size: 28px;
+}
+
+.ai-page-header h1 {
+    margin:
+        3px 0;
+
+    color: var(--navy);
+
+    font-size: 27px;
+}
+
+.ai-page-header p {
+    margin: 0;
+
+    color: var(--muted);
+}
+
+.ai-status {
+    margin-left: auto;
+
+    display: inline-flex;
+    align-items: center;
+
+    gap: 7px;
+
+    padding:
+        7px 11px;
+
+    border-radius: 999px;
+
+    background: var(--green-light);
+
+    color: var(--green);
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+.ai-status i {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: var(--green);
+}
+
+.ai-chat-card {
+    padding: 22px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: var(--radius-lg);
+
+    background:
+        linear-gradient(
+            180deg,
+            #ffffff,
+            #fbfdff
+        );
+
+    box-shadow: var(--shadow);
+}
+
+.ai-recent-questions {
+    margin-bottom: 18px;
+}
+
+.ai-chat-welcome {
+    display: flex;
+    align-items: flex-start;
+
+    gap: 12px;
+}
+
+.ai-avatar {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: var(--purple-light);
+
+    font-size: 20px;
+}
+
+.ai-message {
+    max-width: 850px;
+
+    padding:
+        13px 16px;
+
+    border-radius: 14px;
+
+    background: #f4f7fb;
+
+    color: var(--text);
+}
+
+.ai-message strong {
+    color: var(--navy);
+}
+
+.ai-message p {
+    margin:
+        5px 0 0;
+
+    color: var(--text-soft);
+}
+
+.suggested-questions {
+    display: flex;
+    flex-wrap: wrap;
+
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 12px;
+}
+
+.suggested-questions > span {
+    color: var(--muted);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    margin-right: 3px;
+}
+
+.suggestion-button {
+    width: auto;
+
+    padding:
+        8px 11px;
+
+    border:
+        1px solid #d9e4ef;
+
+    border-radius: 999px;
+
+    background: #ffffff;
+
+    color: var(--navy);
+
+    font-size: 12px;
+
+    box-shadow: none;
+}
+
+.suggestion-button:hover {
+    background: #eef7fa;
+
+    color: var(--teal);
+
+    box-shadow: none;
+}
+
+.ai-input {
+    min-height: 125px;
+
+    margin-bottom: 10px;
+
+    background: #fbfdff;
+
+    border:
+        1px solid #cfdce8;
+
+    font-size: 15px;
+}
+
+.ai-input-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+.ai-hint {
+    color: var(--muted);
+
+    font-size: 12px;
+}
+
+#askAIButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 10px;
+
+    width: auto;
+
+    min-width: 170px;
+
+    margin: 0;
+
+    padding:
+        12px 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--navy),
+            var(--teal)
+        );
+}
+
+.ai-answer {
+    margin-top: 18px;
+}
+
+.ai-response {
+    padding: 18px;
+
+    border:
+        1px solid #dce8f1;
+
+    border-left:
+        4px solid var(--teal);
+
+    border-radius: 12px;
+
+    background: #f8fbfd;
+
+    line-height: 1.75;
+}
+
+
+/* =========================================================
+   QUIZ CENTER
+   ========================================================= */
+
+#quizCenter {
+    scroll-margin-top: 20px;
+}
+
+#quizArea {
+    min-height: 50px;
+}
+
+.quiz-summary,
+.quiz-card {
+    padding: 18px;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: var(--radius);
+
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+.progress-card,
+#progress {
+    color: var(--teal);
+}
+
+#progress {
+    padding: 20px;
+
+    font-size: 42px;
+    font-weight: 850;
+
+    text-align: center;
+}
+
+.progress-bar,
+.overall-progress-bar {
+    width: 100%;
+    height: 10px;
 
     overflow: hidden;
 
-    border-radius: 99px;
+    border-radius: 999px;
 
-    background: #e7eef2;
+    background: #e7eef5;
 }
 
-.progress-fill {
+.progress-fill,
+.overall-progress-fill {
     height: 100%;
 
     border-radius: inherit;
@@ -1085,751 +1551,587 @@ a {
     background:
         linear-gradient(
             90deg,
-            var(--teal),
-            var(--blue)
+            var(--navy),
+            var(--teal)
         );
-
-    transition: width 0.4s ease;
 }
 
-#overallProgressBar {
-    width: 100%;
+
+/* =========================================================
+   TUTOR
+   ========================================================= */
+
+#humanTutor {
+    scroll-margin-top: 20px;
 }
 
-#overallProgressText {
-    color: var(--muted);
+.form-card {
+    padding: 22px;
 
-    font-size: 13px;
+    background: #ffffff;
+
+    border:
+        1px solid var(--border);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-sm);
+}
+
+#messageStatus {
+    min-height: 24px;
+
+    margin-top: 12px;
+
     font-weight: 700;
 }
 
 
 /* =========================================================
-   20. ACHIEVEMENTS
+   INBOX
    ========================================================= */
 
-#achievementIndicators {
+#studentInboxSection {
+    scroll-margin-top: 20px;
+}
 
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 12px;
-
+#studentInbox {
     margin-top: 15px;
 }
 
-.achievement {
-    padding: 14px;
-
-    border: 1px solid var(--border);
-
-    border-radius: 13px;
-
-    background: white;
+.empty-state {
+    padding: 30px;
 
     text-align: center;
-}
-
-
-/* =========================================================
-   21. COURSE PROGRESS
-   ========================================================= */
-
-#courseProgressArea {
-
-    width: 100%;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(3, minmax(0, 1fr));
-
-    gap: 16px;
-}
-
-
-/* =========================================================
-   22. QUIZ CENTER
-   ========================================================= */
-
-#quizArea {
-
-    width: 100%;
-}
-
-.quiz-grid {
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
-
-    gap: 15px;
-}
-
-.quiz-card {
-
-    padding: 18px;
 
     border:
-        1px solid var(--border);
+        1px dashed #cbd8e5;
 
-    border-radius: 15px;
-
-    background: white;
-
-    box-shadow: var(--shadow-sm);
-}
-
-.quiz-card h3 {
-    margin: 0 0 7px;
-
-    color: var(--navy);
-
-    font-size: 16px;
-}
-
-.quiz-card p {
-    margin: 0;
+    border-radius: 14px;
 
     color: var(--muted);
 
-    font-size: 13px;
+    background: #fbfdff;
+}
+
+.empty-state span {
+    display: block;
+
+    margin-bottom: 7px;
+
+    font-size: 28px;
 }
 
 
 /* =========================================================
-   23. AI TUTOR
+   RECOMMENDED / RECENT ACTIVITY
    ========================================================= */
 
-#aiTutor {
+.recent-item,
+.recommended-item,
+.continue-item {
+    display: flex;
+    align-items: center;
 
-    width: 100%;
-}
-
-.suggestion-button {
-
-    padding: 9px 13px;
-
-    border:
-        1px solid #cfe0e6;
-
-    border-radius: 999px;
-
-    background: #f5fafb;
-
-    color: var(--teal);
-
-    font-size: 12px;
-    font-weight: 750;
-
-    transition:
-        background 0.2s ease,
-        transform 0.2s ease;
-}
-
-.suggestion-button:hover {
-    background: #e7f5f7;
-
-    transform: translateY(-1px);
-}
-
-#aiQuestion {
-
-    width: 100%;
-
-    min-height: 120px;
-
-    resize: vertical;
-
-    padding: 14px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 13px;
-
-    outline: none;
-}
-
-#aiQuestion:focus {
-    border-color: var(--teal);
-
-    box-shadow:
-        0 0 0 3px rgba(8, 127, 140, 0.1);
-}
-
-#aiAnswer {
-
-    margin-top: 18px;
-
-    padding: 18px;
-
-    border-radius: 14px;
-
-    background: #f5fafb;
-
-    border:
-        1px solid #dcecef;
-
-    line-height: 1.65;
-}
-
-
-/* =========================================================
-   24. HUMAN TUTOR
-   ========================================================= */
-
-#humanTutor form {
-
-    width: 100%;
-}
-
-#humanTutor input,
-#humanTutor textarea,
-#humanTutor select {
-
-    width: 100%;
-
-    padding: 12px 14px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 11px;
-
-    outline: none;
-
-    background: white;
-}
-
-#humanTutor textarea {
-
-    min-height: 130px;
-
-    resize: vertical;
-}
-
-#humanTutor input:focus,
-#humanTutor textarea:focus,
-#humanTutor select:focus {
-
-    border-color: var(--teal);
-
-    box-shadow:
-        0 0 0 3px rgba(8, 127, 140, 0.09);
-}
-
-
-/* =========================================================
-   25. INBOX
-   ========================================================= */
-
-#studentInbox {
-
-    width: 100%;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
+    justify-content: space-between;
 
     gap: 15px;
+
+    padding: 13px 0;
+
+    border-bottom:
+        1px solid #edf2f7;
 }
 
-.inbox-message {
+.recent-item:last-child,
+.recommended-item:last-child,
+.continue-item:last-child {
+    border-bottom: none;
+}
 
-    padding: 17px;
+.recent-item strong,
+.recommended-item strong,
+.continue-item strong {
+    color: var(--navy);
+}
 
-    background: white;
+.recent-item small,
+.recommended-item small,
+.continue-item small {
+    display: block;
 
-    border:
-        1px solid var(--border);
+    color: var(--muted);
 
-    border-radius: 14px;
-
-    box-shadow: var(--shadow-sm);
+    font-size: 11px;
 }
 
 
 /* =========================================================
-   26. WHATSAPP BUTTON
+   ACHIEVEMENTS
    ========================================================= */
 
-.whatsapp-button,
-.whatsapp-float {
+.achievement-indicators {
+    display: flex;
+    flex-wrap: wrap;
 
+    gap: 10px;
+}
+
+.achievement {
+    padding:
+        9px 12px;
+
+    border-radius: 10px;
+
+    background: #f1f6fa;
+
+    color: var(--text-soft);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.achievement.unlocked {
+    background: #ecfdf5;
+    color: #15803d;
+}
+
+
+/* =========================================================
+   WHATSAPP FLOAT
+   ========================================================= */
+
+.whatsapp-float {
     position: fixed;
 
     right: 22px;
     bottom: 22px;
 
-    z-index: 1100;
+    z-index: 100;
 
-    width: 54px;
-    height: 54px;
+    width: 56px;
+    height: 56px;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
     border-radius: 50%;
 
-    background:
-        #159447;
-
-    color: white;
-
-    font-size: 23px;
+    background: #25d366;
 
     box-shadow:
-        0 10px 25px rgba(21, 148, 71, 0.28);
+        0 10px 25px rgba(0, 0, 0, 0.18);
 
     transition:
         transform 0.2s ease,
         box-shadow 0.2s ease;
 }
 
-.whatsapp-button:hover,
 .whatsapp-float:hover {
-
-    transform: translateY(-4px) scale(1.04);
+    transform: translateY(-3px) scale(1.03);
 
     box-shadow:
-        0 15px 30px rgba(21, 148, 71, 0.34);
+        0 14px 30px rgba(0, 0, 0, 0.22);
 }
 
 
 /* =========================================================
-   27. FOOTER
-   ========================================================= */
-
-.dashboard-footer {
-
-    width: 100%;
-
-    padding: 30px 20px;
-
-    text-align: center;
-
-    color: var(--muted);
-
-    border-top:
-        1px solid var(--border);
-
-    font-size: 12px;
-}
-
-
-/* =========================================================
-   28. MOBILE BOTTOM NAV
+   MOBILE BOTTOM NAV
    ========================================================= */
 
 .mobile-bottom-nav {
-
     display: none;
 }
 
 
 /* =========================================================
-   29. LARGE DESKTOP
+   FOOTER
    ========================================================= */
 
-@media (min-width: 1300px) {
+footer {
+    width: 100%;
 
-    #courseArea {
-        grid-template-columns:
-            repeat(4, minmax(0, 1fr));
-    }
+    padding:
+        30px 20px 90px;
 
-    #notesArea {
-        grid-template-columns:
-            repeat(4, minmax(0, 1fr));
-    }
+    text-align: center;
 
+    color: var(--muted);
+
+    font-size: 13px;
 }
 
 
 /* =========================================================
-   30. LAPTOP
+   LOADING
    ========================================================= */
 
-@media (max-width: 1199px) {
+.loading-card {
+    min-height: 130px;
 
-    #courseArea {
+    display: flex;
+    flex-direction: column;
 
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
+    align-items: center;
+    justify-content: center;
+
+    color: var(--muted);
+}
+
+.loading-spinner {
+    width: 28px;
+    height: 28px;
+
+    margin-bottom: 10px;
+
+    border:
+        3px solid #dce7ef;
+
+    border-top-color: var(--teal);
+
+    border-radius: 50%;
+
+    animation:
+        mwanikiSpin 0.8s linear infinite;
+}
+
+@keyframes mwanikiSpin {
+    to {
+        transform: rotate(360deg);
     }
-
-    #notesArea {
-
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-    }
-
-    .stats-grid,
-    .dashboard-stats {
-
-        grid-template-columns:
-            repeat(3, minmax(0, 1fr));
-    }
-
-    #courseProgressArea {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-    }
-
 }
 
 
 /* =========================================================
-   31. TABLET
+   RESPONSIVE — LARGE LAPTOP
    ========================================================= */
 
-@media (max-width: 850px) {
+@media (max-width: 1200px) {
 
-    .header-inner,
-    .nav-inner,
-    .dashboard-container {
-
-        width:
-            min(100% - 28px, 1440px);
-    }
-
-    .main-navigation {
-        top: 70px;
-    }
-
-    .dashboard-header .header-inner {
-        min-height: 70px;
-    }
-
-    .student-hero {
-
-        padding: 21px;
-
-        gap: 17px;
-    }
-
-    .hero-avatar {
-
-        width: 70px;
-        height: 70px;
-
-        flex-basis: 70px;
+    .stats-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
     }
 
     #courseArea {
-
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 16px;
+            repeat(3, minmax(0, 1fr));
     }
 
     #notesArea {
-
         grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+            repeat(3, minmax(0, 1fr));
+    }
+}
 
-        gap: 16px;
+
+/* =========================================================
+   RESPONSIVE — TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .nav-inner {
+        justify-content: flex-start;
+
+        padding-left: 14px;
+        padding-right: 14px;
     }
 
-    .stats-grid,
-    .dashboard-stats {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+    .dashboard-container,
+    main.dashboard-container,
+    .container {
+        padding:
+            24px 16px 50px;
     }
 
     .learning-grid {
+        grid-template-columns: 1fr;
+    }
 
+    #courseArea {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 
-    #achievementIndicators {
-
+    #notesArea {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
 
-    .quiz-grid {
-
+    .stats-grid {
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
     }
-
 }
 
 
 /* =========================================================
-   32. MOBILE
+   RESPONSIVE — MOBILE
    ========================================================= */
 
-@media (max-width: 600px) {
+@media (max-width: 700px) {
 
-    .header-inner {
-
-        min-height: 64px;
-    }
-
-    .brand-icon {
-
-        width: 40px;
-        height: 40px;
-
-        flex-basis: 40px;
-
-        border-radius: 11px;
+    .dashboard-header,
+    header {
+        padding: 14px 15px;
     }
 
     .brand-name {
-
-        font-size: 15px;
+        font-size: 18px;
     }
 
     .brand-subtitle {
-
-        display: none;
-    }
-
-    .header-actions {
-
-        gap: 5px;
-    }
-
-    .header-actions button,
-    .header-actions a {
-
-        min-height: 38px;
-    }
-
-    .main-navigation {
-
-        top: 64px;
-    }
-
-    .nav-inner {
-
-        min-height: 49px;
-
-        gap: 4px;
-    }
-
-    .nav-inner a {
-
-        padding: 8px 10px;
-
         font-size: 11px;
     }
 
-    .dashboard-container {
+    .brand-icon {
+        width: 40px;
+        height: 40px;
 
-        padding-top: 20px;
-        padding-bottom: 90px;
+        border-radius: 11px;
+
+        font-size: 19px;
+    }
+
+    .header-actions {
+        gap: 7px;
+    }
+
+    #studentProfileButton {
+        padding-right: 8px;
+    }
+
+    .dashboard-profile-photo {
+        width: 30px;
+        height: 30px;
+    }
+
+    /*
+       IMPORTANT:
+       Navigation remains a normal horizontal row.
+       It does NOT float over sections.
+    */
+
+    .main-navigation {
+        position: relative !important;
+        top: auto !important;
+        z-index: 5 !important;
+    }
+
+    .nav-inner {
+        justify-content: flex-start;
+
+        gap: 4px;
+
+        padding:
+            7px 10px;
+    }
+
+    .main-navigation .nav-link {
+        min-height: 39px;
+
+        padding:
+            8px 11px;
+
+        font-size: 12px;
+    }
+
+    .main-navigation .nav-link span {
+        font-size: 14px;
+    }
+
+    .main-navigation .nav-link.active::after {
+        left: 10px;
+        right: 10px;
+
+        bottom: -8px;
+    }
+
+    .dashboard-container,
+    main.dashboard-container,
+    .container {
+        padding:
+            18px 12px 70px;
     }
 
     .student-hero {
-
         flex-direction: column;
 
         align-items: flex-start;
 
-        padding: 21px;
+        padding: 22px;
 
-        border-radius: 20px;
+        gap: 14px;
+    }
+
+    .hero-avatar {
+        width: 66px;
+        height: 66px;
+
+        flex-basis: 66px;
     }
 
     .hero-content h1 {
-
-        font-size: 23px;
+        font-size: 25px;
     }
 
-    .hero-content p {
+    .stats-grid {
+        grid-template-columns: 1fr;
 
-        font-size: 13px;
+        gap: 12px;
     }
 
-    /*
-       ONE COURSE PER ROW ON SMALL PHONES
-    */
+    .card,
+    .premium-card {
+        padding: 18px;
 
-    #courseArea {
-
-        grid-template-columns:
-            1fr;
-
-        gap: 15px;
+        border-radius: 17px;
     }
 
-    /*
-       ONE NOTE PER ROW ON SMALL PHONES
-    */
-
-    #notesArea {
-
-        grid-template-columns:
-            1fr;
-
-        gap: 15px;
-    }
-
-    .stats-grid,
-    .dashboard-stats {
-
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
-
-        gap: 10px;
-    }
-
-    .stat-card {
-
-        padding: 14px;
-    }
-
-    .stat-card h3,
-    .stat-card .stat-value {
-
-        font-size: 21px;
-    }
-
-    .learning-grid {
-
-        grid-template-columns:
-            1fr;
-    }
-
-    #courseProgressArea {
-
-        grid-template-columns:
-            1fr;
-    }
-
-    .quiz-grid {
-
-        grid-template-columns:
-            1fr;
-    }
-
-    #studentInbox {
-
-        grid-template-columns:
-            1fr;
-    }
-
-    .dashboard-card {
-
-        padding: 16px;
-    }
-
-    .section-header {
-
+    .course-header {
         align-items: flex-start;
 
         flex-direction: column;
     }
 
-    .whatsapp-button,
-    .whatsapp-float {
-
-        width: 50px;
-        height: 50px;
-
-        right: 16px;
-        bottom: 75px;
+    #totalCourses {
+        text-align: left;
     }
 
+    #courseArea {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+    }
+
+    #notesArea {
+        grid-template-columns: 1fr;
+
+        gap: 14px;
+    }
+
+    .page-section-heading {
+        align-items: flex-start;
+    }
+
+    .page-section-heading h1 {
+        font-size: 23px;
+    }
+
+    .ai-page-header {
+        align-items: flex-start;
+
+        flex-wrap: wrap;
+    }
+
+    .ai-status {
+        margin-left: 0;
+    }
+
+    .ai-input-actions {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+    #askAIButton {
+        width: 100%;
+    }
+
+    .suggested-questions {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+    .suggestion-button {
+        width: 100%;
+    }
+
+    .whatsapp-float {
+        right: 16px;
+        bottom: 75px;
+
+        width: 52px;
+        height: 52px;
+    }
+
+    footer {
+        padding-bottom: 90px;
+    }
 }
 
 
 /* =========================================================
-   33. VERY SMALL PHONES
+   VERY SMALL PHONES
    ========================================================= */
 
 @media (max-width: 390px) {
 
-    .dashboard-container {
-
-        width:
-            calc(100% - 20px);
-    }
-
-    .header-inner,
-    .nav-inner {
-
-        width:
-            calc(100% - 20px);
+    .brand-subtitle {
+        display: none;
     }
 
     .brand-name {
-
-        font-size: 14px;
+        font-size: 16px;
     }
 
-    .stats-grid,
-    .dashboard-stats {
-
-        grid-template-columns:
-            1fr;
+    .notification-button {
+        width: 38px;
+        height: 38px;
     }
 
-    #courseArea,
-    #notesArea {
-
-        grid-template-columns:
-            1fr;
+    #studentProfileButton {
+        min-height: 38px;
     }
 
+    .main-navigation .nav-link {
+        padding:
+            8px 9px;
+
+        font-size: 11px;
+    }
+
+    .student-hero {
+        padding: 18px;
+    }
+
+    .hero-content h1 {
+        font-size: 22px;
+    }
 }
 
 
 /* =========================================================
-   34. REDUCED MOTION
+   ACCESSIBILITY
+   ========================================================= */
+
+:focus-visible {
+    outline:
+        3px solid rgba(37, 99, 235, 0.30);
+
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   REDUCED MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
+    html {
+        scroll-behavior: auto;
+    }
+
     *,
     *::before,
     *::after {
-
-        scroll-behavior: auto !important;
-
-        transition-duration:
-            0.01ms !important;
-
-        animation-duration:
-            0.01ms !important;
-
-        animation-iteration-count:
-            1 !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
-
 }
 ```
-
-### What this changes
-
-Your dashboard will now use:
-
-**Courses**
-
-* Desktop: **4 columns**
-* Laptop: **3 columns**
-* Tablet: **2 columns**
-* Phone: **1 column**
-
-**Notes**
-
-* Large desktop: **4 columns**
-* Laptop: **3 columns**
-* Tablet: **2 columns**
-* Phone: **1 column**
-
