@@ -22,14 +22,12 @@
 
     <title>Mwaniki Scholars | Student Dashboard</title>
 
-    <!-- FAVICON -->
     <link
         rel="icon"
         type="image/svg+xml"
         href="./favicon.svg"
     >
 
-    <!-- DASHBOARD CSS -->
     <link
         rel="stylesheet"
         href="./dashboard.css"
@@ -40,9 +38,10 @@
 
 <body>
 
+
 <!-- =====================================================
      DASHBOARD HEADER
-====================================================== -->
+===================================================== -->
 
 <header class="dashboard-header">
 
@@ -50,6 +49,7 @@
 
 
         <!-- BRAND -->
+
         <a
             href="./dashboard.html"
             class="dashboard-brand"
@@ -76,10 +76,12 @@
 
 
         <!-- HEADER ACTIONS -->
+
         <div class="header-actions">
 
 
             <!-- NOTIFICATIONS -->
+
             <button
                 type="button"
                 id="notificationButton"
@@ -87,11 +89,12 @@
                 aria-label="Open notifications"
                 aria-expanded="false"
             >
-                🔔
+                <span aria-hidden="true">🔔</span>
             </button>
 
 
             <!-- PROFILE -->
+
             <button
                 type="button"
                 id="profileButton"
@@ -100,7 +103,6 @@
                 aria-expanded="false"
             >
 
-                <!-- INITIAL -->
                 <span
                     id="profileInitial"
                     class="profile-initial"
@@ -109,7 +111,6 @@
                 </span>
 
 
-                <!-- REAL STUDENT PHOTO -->
                 <img
                     id="profilePhoto"
                     class="profile-photo"
@@ -127,7 +128,10 @@
                 </span>
 
 
-                <span class="profile-arrow">
+                <span
+                    class="profile-arrow"
+                    aria-hidden="true"
+                >
                     ▾
                 </span>
 
@@ -215,8 +219,8 @@
 
 
 <!-- =====================================================
-     NOTIFICATION PANEL
-====================================================== -->
+     NOTIFICATION SIDE PANEL
+===================================================== -->
 
 <aside
     id="notificationPanel"
@@ -279,12 +283,12 @@
 
 
 <!-- =====================================================
-     PROFILE PANEL
-====================================================== -->
+     PROFILE SIDE PANEL
+===================================================== -->
 
 <aside
     id="profilePanel"
-    class="profile-panel"
+    class="side-panel profile-panel"
     aria-hidden="true"
 >
 
@@ -318,7 +322,6 @@
     <div class="profile-panel-content">
 
 
-        <!-- STUDENT PHOTO -->
         <div class="profile-panel-avatar">
 
             <span
@@ -404,7 +407,7 @@
 
 <!-- =====================================================
      MAIN DASHBOARD
-====================================================== -->
+===================================================== -->
 
 <main class="dashboard-main">
 
@@ -488,7 +491,6 @@
         <div class="progress-grid">
 
 
-            <!-- COURSES -->
             <article class="progress-card">
 
                 <div class="progress-card-icon">
@@ -510,7 +512,6 @@
             </article>
 
 
-            <!-- NOTES -->
             <article class="progress-card">
 
                 <div class="progress-card-icon">
@@ -532,7 +533,6 @@
             </article>
 
 
-            <!-- QUIZZES -->
             <article class="progress-card">
 
                 <div class="progress-card-icon">
@@ -554,7 +554,6 @@
             </article>
 
 
-            <!-- LEARNING PROGRESS -->
             <article class="progress-card progress-card-wide">
 
                 <div class="progress-card-top">
@@ -628,12 +627,6 @@
             class="recent-course-card"
         >
 
-
-            <!-- IMPORTANT:
-                 This is NOT the favicon.
-                 The favicon remains only inside <head>.
-            -->
-
             <div class="recent-course-image">
 
                 <div
@@ -659,7 +652,7 @@
             <div class="recent-course-content">
 
                 <span class="card-label">
-                    Continue where you left off
+                    CONTINUE WHERE YOU LEFT OFF
                 </span>
 
                 <h3 id="recentCourseTitle">
@@ -677,7 +670,7 @@
                     id="continueRecentCourse"
                     class="primary-button"
                 >
-                    Continue Learning
+                    Choose a Course
                 </button>
 
             </div>
@@ -717,7 +710,6 @@
         <div class="feature-grid">
 
 
-            <!-- COURSES -->
             <a
                 href="#courses"
                 class="feature-card"
@@ -747,7 +739,6 @@
             </a>
 
 
-            <!-- NOTES -->
             <a
                 href="#notes"
                 class="feature-card"
@@ -777,7 +768,6 @@
             </a>
 
 
-            <!-- QUIZZES -->
             <a
                 href="#quizzes"
                 class="feature-card"
@@ -807,7 +797,6 @@
             </a>
 
 
-            <!-- AI TUTOR -->
             <a
                 href="./aiTutor.html"
                 class="feature-card"
@@ -1031,7 +1020,6 @@
 
         <article class="quiz-centre-card">
 
-
             <div class="quiz-centre-icon">
                 📝
             </div>
@@ -1074,7 +1062,6 @@
 
             </div>
 
-
         </article>
 
     </section>
@@ -1115,7 +1102,6 @@
         <div class="support-grid">
 
 
-            <!-- AI TUTOR -->
             <a
                 href="./aiTutor.html"
                 class="support-card"
@@ -1145,7 +1131,6 @@
             </a>
 
 
-            <!-- HUMAN TUTOR -->
             <a
                 href="./studentTutor.html"
                 class="support-card"
@@ -1175,7 +1160,6 @@
             </a>
 
 
-            <!-- INBOX -->
             <a
                 href="./studentInbox.html"
                 class="support-card"
@@ -1258,14 +1242,13 @@
 
     </section>
 
-
 </main>
 
 
 
 <!-- =====================================================
      FOOTER
-====================================================== -->
+===================================================== -->
 
 <footer class="dashboard-footer">
 
@@ -1294,10 +1277,6 @@
 </footer>
 
 
-
-<!-- =====================================================
-     DASHBOARD JAVASCRIPT
-====================================================== -->
 
 <script
     type="module"
