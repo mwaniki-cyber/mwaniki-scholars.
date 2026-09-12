@@ -3,24 +3,21 @@ import { supabase } from "./supabase.js";
 // ============================================================
 // MWANIKI SCHOLARS — REAL AI TUTOR
 // ============================================================
-// The browser does NOT contain an AI API secret.
-//
-// Flow:
-// Student question
-//      ↓
-// Supabase Edge Function
-//      ↓
+// Browser
+//    ↓
+// Supabase Edge Function: mwaniki-ai
+//    ↓
 // Mwaniki Scholars database retrieval
-//      ↓
+//    ↓
 // AI model
-//      ↓
+//    ↓
 // Synthesized answer
 //
-// This is different from simply displaying matching database rows.
+// IMPORTANT:
+// No AI API secret is stored in this browser file.
 // ============================================================
 
 console.log("🤖 Mwaniki Scholars Real AI Tutor Loaded");
-
 
 // ============================================================
 // ELEMENTS
@@ -50,18 +47,28 @@ function getQuestionInput() {
 }
 
 
+// ============================================================
+// GET ASK BUTTON
+// ============================================================
+
 function getAskButton() {
 
     return (
         document.getElementById("askAIButton") ||
         document.querySelector('[onclick="askAI()"]')
     );
+
 }
 
+
+// ============================================================
+// GET ANSWER BOX
+// ============================================================
 
 function getAnswerBox() {
 
     return document.getElementById("aiAnswer");
+
 }
 
 
@@ -83,7 +90,9 @@ function displayAIAnswer(answer, sources = []) {
         return;
     }
 
+
     answerBox.innerHTML = "";
+
 
     const container =
         document.createElement("div");
@@ -91,6 +100,10 @@ function displayAIAnswer(answer, sources = []) {
     container.className =
         "mwaniki-ai-response";
 
+
+    // --------------------------------------------------------
+    // ANSWER
+    // --------------------------------------------------------
 
     const answerContent =
         document.createElement("div");
@@ -135,6 +148,7 @@ function displayAIAnswer(answer, sources = []) {
         heading.textContent =
             "📚 Mwaniki Scholars Sources";
 
+
         sourceSection.appendChild(
             heading
         );
@@ -149,22 +163,28 @@ function displayAIAnswer(answer, sources = []) {
             const item =
                 document.createElement("li");
 
+
             const table =
-                source.table ||
-                source.source ||
+                source?.table ||
+                source?.source ||
                 "Mwaniki Scholars";
 
+
             const title =
-                source.title ||
-                source.unit ||
-                source.course ||
-                source.name ||
+                source?.title ||
+                source?.unit ||
+                source?.course ||
+                source?.name ||
                 "Educational material";
+
 
             item.textContent =
                 `${table} — ${title}`;
 
-            list.appendChild(item);
+
+            list.appendChild(
+                item
+            );
 
         });
 
@@ -172,6 +192,7 @@ function displayAIAnswer(answer, sources = []) {
         sourceSection.appendChild(
             list
         );
+
 
         container.appendChild(
             sourceSection
@@ -183,6 +204,7 @@ function displayAIAnswer(answer, sources = []) {
     answerBox.appendChild(
         container
     );
+
 }
 
 
@@ -198,6 +220,7 @@ function displayAILoading() {
     if (!answerBox) {
         return;
     }
+
 
     answerBox.innerHTML = `
         <div class="mwaniki-ai-loading">
@@ -215,6 +238,7 @@ function displayAILoading() {
 
         </div>
     `;
+
 }
 
 
@@ -231,7 +255,9 @@ function displayAIError(message) {
         return;
     }
 
+
     answerBox.innerHTML = "";
+
 
     const error =
         document.createElement("div");
@@ -239,12 +265,61 @@ function displayAIError(message) {
     error.className =
         "mwaniki-ai-error";
 
+
     error.textContent =
         `⚠️ ${message}`;
+
 
     answerBox.appendChild(
         error
     );
+
+}
+
+
+// ============================================================
+// SAVE AI QUESTION
+// ============================================================
+
+function saveAIQuestion(question) {
+
+    try {
+
+        const existing =
+            JSON.parse(
+                localStorage.getItem(
+                    "mwanikiAIQuestions"
+                ) || "[]"
+            );
+
+
+        existing.unshift({
+
+            question,
+
+            timestamp:
+                new Date().toISOString()
+
+        });
+
+
+        localStorage.setItem(
+            "mwanikiAIQuestions",
+            JSON.stringify(
+                existing.slice(0, 10)
+            )
+        );
+
+
+    } catch (storageError) {
+
+        console.warn(
+            "⚠️ Could not save AI history:",
+            storageError
+        );
+
+    }
+
 }
 
 
@@ -252,7 +327,7 @@ function displayAIError(message) {
 // ASK AI
 // ============================================================
 
-async function askAI() {
+async function askAI(questionFromDashboard = null) {
 
     console.log(
         "🤖 askAI() started"
@@ -262,26 +337,59 @@ async function askAI() {
     const input =
         getQuestionInput();
 
+
     const button =
         getAskButton();
 
 
-    if (!input) {
+    // --------------------------------------------------------
+    // GET QUESTION
+    // --------------------------------------------------------
 
-        console.error(
-            "❌ AI question input not found."
-        );
+    let question =
+        questionFromDashboard;
+
+
+    if (!question && input) {
+
+        question =
+            input.value.trim();
+
+    }
+
+
+    if (!question) {
+
+        if (!input) {
+
+            console.error(
+                "❌ AI question input not found."
+            );
+
+
+            displayAIError(
+                "The AI question box could not be found."
+            );
+
+
+            return;
+        }
+
 
         displayAIError(
-            "The AI question box could not be found."
+            "Please type a medical question first."
         );
+
+
+        input.focus();
+
 
         return;
     }
 
 
-    const question =
-        input.value.trim();
+    question =
+        String(question).trim();
 
 
     if (!question) {
@@ -289,8 +397,6 @@ async function askAI() {
         displayAIError(
             "Please type a medical question first."
         );
-
-        input.focus();
 
         return;
     }
@@ -302,7 +408,7 @@ async function askAI() {
 
     const originalText =
         button
-            ? button.textContent
+            ? button.innerHTML
             : "";
 
 
@@ -311,7 +417,7 @@ async function askAI() {
         button.disabled =
             true;
 
-        button.textContent =
+        button.innerHTML =
             "🔎 Mwaniki AI is searching...";
 
         button.style.opacity =
@@ -319,6 +425,7 @@ async function askAI() {
 
         button.style.cursor =
             "wait";
+
     }
 
 
@@ -330,6 +437,11 @@ async function askAI() {
         // ----------------------------------------------------
         // CALL SUPABASE EDGE FUNCTION
         // ----------------------------------------------------
+
+        console.log(
+            "📡 Calling Supabase Edge Function: mwaniki-ai"
+        );
+
 
         const {
             data,
@@ -344,6 +456,10 @@ async function askAI() {
         );
 
 
+        // ----------------------------------------------------
+        // EDGE FUNCTION ERROR
+        // ----------------------------------------------------
+
         if (error) {
 
             console.error(
@@ -351,18 +467,25 @@ async function askAI() {
                 error
             );
 
+
             throw new Error(
                 error.message ||
                 "The AI service could not be reached."
             );
+
         }
 
+
+        // ----------------------------------------------------
+        // NO RESPONSE
+        // ----------------------------------------------------
 
         if (!data) {
 
             throw new Error(
                 "The AI service returned no data."
             );
+
         }
 
 
@@ -373,61 +496,33 @@ async function askAI() {
 
 
         // ----------------------------------------------------
-        // DISPLAY REAL AI RESPONSE
+        // DISPLAY RESPONSE
         // ----------------------------------------------------
 
         displayAIAnswer(
+
             data.answer ||
             "The AI did not return an answer.",
+
             data.sources ||
             []
+
         );
 
 
         // ----------------------------------------------------
-        // SAVE RECENT AI QUESTION
+        // SAVE QUESTION
         // ----------------------------------------------------
 
-        try {
-
-            const existing =
-                JSON.parse(
-                    localStorage.getItem(
-                        "mwanikiAIQuestions"
-                    ) || "[]"
-                );
-
-
-            existing.unshift({
-
-                question,
-
-                timestamp:
-                    new Date().toISOString()
-
-            });
-
-
-            localStorage.setItem(
-                "mwanikiAIQuestions",
-                JSON.stringify(
-                    existing.slice(0, 10)
-                )
-            );
-
-        } catch (storageError) {
-
-            console.warn(
-                "Could not save AI history:",
-                storageError
-            );
-
-        }
+        saveAIQuestion(
+            question
+        );
 
 
         console.log(
             "✅ Real AI answer displayed"
         );
+
 
     } catch (error) {
 
@@ -438,26 +533,39 @@ async function askAI() {
 
 
         displayAIError(
-            error.message ||
+
+            error?.message ||
+
             "The AI Tutor could not answer the question right now."
+
         );
 
+
     } finally {
+
+        // ----------------------------------------------------
+        // RESTORE BUTTON
+        // ----------------------------------------------------
 
         if (button) {
 
             button.disabled =
                 false;
 
-            button.textContent =
+
+            button.innerHTML =
                 originalText ||
+
                 "🤖 Ask Mwaniki AI ➤";
+
 
             button.style.opacity =
                 "1";
 
+
             button.style.cursor =
                 "pointer";
+
         }
 
     }
@@ -468,13 +576,31 @@ async function askAI() {
 // ============================================================
 // GLOBAL ACCESS
 // ============================================================
+//
+// dashboard.js currently looks for:
+//     window.askMwanikiAI
+//
+// Older code may look for:
+//     window.askAI
+//
+// Therefore we expose BOTH.
+// ============================================================
 
 window.askAI =
     askAI;
 
 
+window.askMwanikiAI =
+    askAI;
+
+
 console.log(
     "✅ window.askAI() is available"
+);
+
+
+console.log(
+    "✅ window.askMwanikiAI() is available"
 );
 
 
@@ -488,6 +614,7 @@ document.addEventListener(
 
         const input =
             getQuestionInput();
+
 
         if (!input) {
             return;
@@ -509,6 +636,7 @@ document.addEventListener(
                     event.preventDefault();
 
                     askAI();
+
                 }
 
             }
