@@ -7,11 +7,13 @@ import { supabase } from "./supabase.js";
 
 console.log("📬 Student Inbox Loaded");
 
-// -----------------------------------------------------
-// ESCAPE DATABASE CONTENT BEFORE DISPLAYING IT
-// -----------------------------------------------------
+
+// =====================================================
+// ESCAPE HTML
+// =====================================================
 
 function escapeHTML(value) {
+
     return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -20,55 +22,168 @@ function escapeHTML(value) {
         .replace(/'/g, "&#039;");
 }
 
-// -----------------------------------------------------
-// LOAD TUTOR ANSWERS
-// -----------------------------------------------------
+
+// =====================================================
+// GET CURRENT USER EMAIL
+// =====================================================
+
+async function getLoggedInEmail() {
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabase.auth.getUser();
+
+
+        if (error) {
+
+            console.warn(
+                "Could not retrieve logged-in user:",
+                error.message
+            );
+
+            return "";
+        }
+
+
+        return data?.user?.email || "";
+
+    } catch (error) {
+
+        console.error(
+            "Email retrieval error:",
+            error
+        );
+
+        return "";
+    }
+}
+
+
+// =====================================================
+// LOAD ANSWERS
+// =====================================================
 
 async function loadStudentAnswers() {
-    const emailInput = document.getElementById("checkEmail");
-    const inbox = document.getElementById("studentInbox");
-    const loadButton = document.getElementById("loadAnswersButton");
+
+    console.log(
+        "📥 loadStudentAnswers() started"
+    );
+
+
+    const emailInput =
+        document.getElementById(
+            "checkEmail"
+        );
+
+    const inbox =
+        document.getElementById(
+            "studentInbox"
+        );
+
+    const loadButton =
+        document.getElementById(
+            "loadAnswersButton"
+        );
+
 
     if (!emailInput || !inbox) {
-        console.error("Inbox elements were not found.");
+
+        console.error(
+            "❌ Inbox elements were not found."
+        );
+
         return;
     }
 
-    const email = emailInput.value.trim();
 
-    if (email === "") {
+    let email =
+        emailInput.value.trim();
+
+
+    // =====================================================
+    // AUTOMATICALLY USE LOGGED-IN EMAIL
+    // =====================================================
+
+    if (!email) {
+
+        email =
+            await getLoggedInEmail();
+
+        if (email) {
+
+            emailInput.value =
+                email;
+        }
+    }
+
+
+    // =====================================================
+    // VALIDATE
+    // =====================================================
+
+    if (!email) {
+
         inbox.innerHTML = `
             <div class="empty-state">
                 <span>⚠️</span>
-                <p>Enter your email first.</p>
+                <p>
+                    Enter your email to check your tutor answers.
+                </p>
             </div>
         `;
+
         return;
     }
+
 
     if (!email.includes("@")) {
+
         inbox.innerHTML = `
             <div class="empty-state">
                 <span>⚠️</span>
-                <p>Enter a valid email address.</p>
+                <p>
+                    Please enter a valid email address.
+                </p>
             </div>
         `;
+
         return;
     }
 
+
+    // =====================================================
+    // LOADING
+    // =====================================================
+
     if (loadButton) {
-        loadButton.disabled = true;
-        loadButton.textContent = "⏳ Loading...";
+
+        loadButton.disabled =
+            true;
+
+        loadButton.textContent =
+            "⏳ Loading...";
+
+        loadButton.style.cursor =
+            "wait";
     }
+
 
     inbox.innerHTML = `
         <div class="loading-inline">
-            Loading tutor messages...
+            📥 Checking your Mwaniki tutor inbox...
         </div>
     `;
 
+
     try {
-        const { data, error } = await supabase
+
+        const {
+            data,
+            error
+        } = await supabase
             .from("tutor_messages")
             .select(`
                 id,
@@ -80,98 +195,262 @@ async function loadStudentAnswers() {
                 status,
                 created_at
             `)
-            .eq("student_email", email)
-            .order("created_at", { ascending: false });
+            .eq(
+                "student_email",
+                email
+            )
+            .order(
+                "created_at",
+                {
+                    ascending: false
+                }
+            );
+
 
         if (error) {
-            console.error("Inbox loading error:", error);
 
-            inbox.innerHTML = `
-                <div class="empty-state">
-                    <span>❌</span>
-                    <p>Could not load tutor messages.</p>
-                </div>
-            `;
-
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            inbox.innerHTML = `
-                <div class="empty-state">
-                    <span>📭</span>
-                    <p>No tutor messages found for this email.</p>
-                </div>
-            `;
-
-            return;
-        }
-
-        inbox.innerHTML = "";
-
-        data.forEach((item) => {
-            const card = document.createElement("article");
-
-            card.className = "tutor-message-card";
-
-            const topic = escapeHTML(item.topic || "Medical question");
-            const question = escapeHTML(item.message || "No question provided.");
-            const reply = escapeHTML(
-                item.reply || "Waiting for a tutor response..."
+            console.error(
+                "❌ Inbox error:",
+                error
             );
-            const status = escapeHTML(item.status || "pending");
 
-            const date = item.created_at
-                ? new Date(item.created_at).toLocaleString()
-                : "Date unavailable";
+            throw new Error(
+                error.message
+            );
+        }
 
-            card.innerHTML = `
-                <div class="tutor-message-header">
-                    <h3>📚 ${topic}</h3>
-                    <span class="message-status">
-                        ${status}
-                    </span>
-                </div>
 
-                <p class="message-date">
-                    ${escapeHTML(date)}
-                </p>
+        // =================================================
+        // NOTHING FOUND
+        // =================================================
 
-                <div class="message-block">
-                    <strong>📝 Your Question</strong>
-                    <p>${question}</p>
-                </div>
+        if (
+            !data ||
+            data.length === 0
+        ) {
 
-                <div class="message-block tutor-reply">
-                    <strong>👨‍🏫 Tutor Response</strong>
-                    <p>${reply}</p>
+            inbox.innerHTML = `
+                <div class="empty-state">
+
+                    <span>📭</span>
+
+                    <h3>
+                        No tutor conversations yet
+                    </h3>
+
+                    <p>
+                        Questions you send to Mwaniki tutors
+                        and their replies will appear here.
+                    </p>
+
                 </div>
             `;
 
-            inbox.appendChild(card);
-        });
+            return;
+        }
+
+
+        // =================================================
+        // DISPLAY MESSAGES
+        // =================================================
+
+        inbox.innerHTML =
+            "";
+
+
+        data.forEach(
+            item => {
+
+                const card =
+                    document.createElement(
+                        "article"
+                    );
+
+
+                card.className =
+                    "tutor-message-card";
+
+
+                const topic =
+                    escapeHTML(
+                        item.topic ||
+                        "Medical question"
+                    );
+
+
+                const question =
+                    escapeHTML(
+                        item.message ||
+                        "No question provided."
+                    );
+
+
+                const reply =
+                    escapeHTML(
+                        item.reply ||
+                        ""
+                    );
+
+
+                const status =
+                    escapeHTML(
+                        item.status ||
+                        "pending"
+                    );
+
+
+                const date =
+                    item.created_at
+                        ? new Date(
+                            item.created_at
+                        ).toLocaleString()
+                        : "Date unavailable";
+
+
+                let replyHTML;
+
+
+                if (reply) {
+
+                    replyHTML = `
+                        <div class="message-block tutor-reply">
+
+                            <strong>
+                                👨‍🏫 Tutor Response
+                            </strong>
+
+                            <p>
+                                ${reply}
+                            </p>
+
+                        </div>
+                    `;
+
+                } else {
+
+                    replyHTML = `
+                        <div class="message-block tutor-reply">
+
+                            <strong>
+                                ⏳ Tutor Response
+                            </strong>
+
+                            <p>
+                                Your question is waiting
+                                for a tutor response.
+                            </p>
+
+                        </div>
+                    `;
+                }
+
+
+                card.innerHTML = `
+
+                    <div class="tutor-message-header">
+
+                        <h3>
+                            📚 ${topic}
+                        </h3>
+
+                        <span class="message-status">
+                            ${status}
+                        </span>
+
+                    </div>
+
+
+                    <p class="message-date">
+                        ${escapeHTML(date)}
+                    </p>
+
+
+                    <div class="message-block">
+
+                        <strong>
+                            📝 Your Question
+                        </strong>
+
+                        <p>
+                            ${question}
+                        </p>
+
+                    </div>
+
+
+                    ${replyHTML}
+
+                `;
+
+
+                inbox.appendChild(
+                    card
+                );
+
+            }
+        );
+
+
+        console.log(
+            `✅ Loaded ${data.length} tutor messages`
+        );
+
 
     } catch (error) {
-        console.error("Unexpected inbox error:", error);
+
+        console.error(
+            "❌ Unexpected inbox error:",
+            error
+        );
+
 
         inbox.innerHTML = `
+
             <div class="empty-state">
+
                 <span>❌</span>
-                <p>An unexpected error occurred.</p>
+
+                <h3>
+                    Could not load your inbox
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </p>
+
             </div>
+
         `;
+
     } finally {
+
         if (loadButton) {
-            loadButton.disabled = false;
-            loadButton.textContent = "📥 Load Answers";
+
+            loadButton.disabled =
+                false;
+
+            loadButton.textContent =
+                "📥 Load Answers";
+
+            loadButton.style.cursor =
+                "pointer";
         }
+
     }
+
 }
 
-// -----------------------------------------------------
-// MAKE FUNCTION AVAILABLE TO INLINE HTML onclick
-// -----------------------------------------------------
 
-window.loadStudentAnswers = loadStudentAnswers;
+// =====================================================
+// GLOBAL ACCESS
+// =====================================================
 
-console.log("✅ loadStudentAnswers() is available globally");
+window.loadStudentAnswers =
+    loadStudentAnswers;
+
+
+console.log(
+    "✅ loadStudentAnswers() is globally available"
+);
