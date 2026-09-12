@@ -1,9 +1,10 @@
 import { supabase } from "./supabase.js";
 
+
 /* =====================================================
    MWANIKI SCHOLARS
    STUDENT DASHBOARD ENGINE
-   ===================================================== */
+===================================================== */
 
 console.log("🚀 Mwaniki Scholars dashboard starting...");
 
@@ -14,6 +15,7 @@ console.log("🚀 Mwaniki Scholars dashboard starting...");
 
 let currentUser = null;
 let currentStudent = null;
+
 let allCourses = [];
 let allNotes = [];
 let allQuizzes = [];
@@ -22,7 +24,7 @@ let dashboardReady = false;
 
 
 /* =====================================================
-   SHORT DOM HELPER
+   DOM HELPER
 ===================================================== */
 
 function $(id) {
@@ -31,7 +33,7 @@ function $(id) {
 
 
 /* =====================================================
-   SAFE TEXT
+   SAFE HTML
 ===================================================== */
 
 function escapeHTML(value) {
@@ -51,18 +53,22 @@ function escapeHTML(value) {
 
 function getInitials(name) {
 
-    const cleanName = String(name || "Student").trim();
+    const cleanName =
+        String(name || "Student").trim();
 
     if (!cleanName) {
         return "S";
     }
 
-    const parts = cleanName
-        .split(/\s+/)
-        .filter(Boolean);
+    const parts =
+        cleanName
+            .split(/\s+/)
+            .filter(Boolean);
 
     if (parts.length === 1) {
-        return parts[0].charAt(0).toUpperCase();
+        return parts[0]
+            .charAt(0)
+            .toUpperCase();
     }
 
     return (
@@ -73,12 +79,13 @@ function getInitials(name) {
 
 
 /* =====================================================
-   DATE
+   CURRENT DATE
 ===================================================== */
 
 function updateCurrentDate() {
 
-    const element = $("currentDate");
+    const element =
+        $("currentDate");
 
     if (!element) {
         return;
@@ -86,15 +93,16 @@ function updateCurrentDate() {
 
     const now = new Date();
 
-    element.textContent = now.toLocaleDateString(
-        undefined,
-        {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-        }
-    );
+    element.textContent =
+        now.toLocaleDateString(
+            undefined,
+            {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            }
+        );
 }
 
 
@@ -104,40 +112,66 @@ function updateCurrentDate() {
 
 function updateStudentIdentity(name, email) {
 
-    const safeName = String(name || "Student").trim() || "Student";
-    const initials = getInitials(safeName);
+    const safeName =
+        String(name || "Student").trim() ||
+        "Student";
 
-    const welcomeName = $("welcomeName");
-    const profileInitial = $("profileInitial");
-    const profileButtonName = $("profileButtonName");
+    const initials =
+        getInitials(safeName);
 
-    const profilePanelInitial = $("profilePanelInitial");
-    const profilePanelName = $("profilePanelName");
-    const profilePanelEmail = $("profilePanelEmail");
+    const welcomeName =
+        $("welcomeName");
+
+    const profileInitial =
+        $("profileInitial");
+
+    const profileButtonName =
+        $("profileButtonName");
+
+    const profilePanelInitial =
+        $("profilePanelInitial");
+
+    const profilePanelName =
+        $("profilePanelName");
+
+    const profilePanelEmail =
+        $("profilePanelEmail");
+
 
     if (welcomeName) {
-        welcomeName.textContent = safeName;
+        welcomeName.textContent =
+            safeName;
     }
+
 
     if (profileInitial) {
-        profileInitial.textContent = initials;
+        profileInitial.textContent =
+            initials;
     }
+
 
     if (profileButtonName) {
-        profileButtonName.textContent = safeName;
+        profileButtonName.textContent =
+            safeName;
     }
+
 
     if (profilePanelInitial) {
-        profilePanelInitial.textContent = initials;
+        profilePanelInitial.textContent =
+            initials;
     }
 
+
     if (profilePanelName) {
-        profilePanelName.textContent = safeName;
+        profilePanelName.textContent =
+            safeName;
     }
+
 
     if (profilePanelEmail) {
         profilePanelEmail.textContent =
-            String(email || "").trim() || "No email available";
+            String(email || "").trim() ||
+            "No email available";
     }
 }
 
@@ -148,18 +182,21 @@ function updateStudentIdentity(name, email) {
 
 function updateStudentPhoto(photoUrl, name) {
 
-    const headerPhoto = $("profilePhoto");
-    const headerInitial = $("profileInitial");
+    const headerPhoto =
+        $("profilePhoto");
 
-    const panelPhoto = $("profilePanelPhoto");
-    const panelInitial = $("profilePanelInitial");
+    const headerInitial =
+        $("profileInitial");
 
-    const url = String(photoUrl || "").trim();
+    const panelPhoto =
+        $("profilePanelPhoto");
 
-    /*
-       No photo:
-       show initials.
-    */
+    const panelInitial =
+        $("profilePanelInitial");
+
+    const url =
+        String(photoUrl || "").trim();
+
 
     if (!url) {
 
@@ -185,10 +222,6 @@ function updateStudentPhoto(photoUrl, name) {
     }
 
 
-    /*
-       Header photo.
-    */
-
     if (headerPhoto) {
 
         headerPhoto.src = url;
@@ -198,15 +231,18 @@ function updateStudentPhoto(photoUrl, name) {
 
         headerPhoto.hidden = false;
 
+
         headerPhoto.onerror = () => {
 
             headerPhoto.hidden = true;
-            headerPhoto.removeAttribute("src");
+
+            headerPhoto.removeAttribute(
+                "src"
+            );
 
             if (headerInitial) {
                 headerInitial.hidden = false;
             }
-
         };
     }
 
@@ -215,10 +251,6 @@ function updateStudentPhoto(photoUrl, name) {
         headerInitial.hidden = true;
     }
 
-
-    /*
-       Profile panel photo.
-    */
 
     if (panelPhoto) {
 
@@ -229,15 +261,18 @@ function updateStudentPhoto(photoUrl, name) {
 
         panelPhoto.hidden = false;
 
+
         panelPhoto.onerror = () => {
 
             panelPhoto.hidden = true;
-            panelPhoto.removeAttribute("src");
+
+            panelPhoto.removeAttribute(
+                "src"
+            );
 
             if (panelInitial) {
                 panelInitial.hidden = false;
             }
-
         };
     }
 
@@ -254,19 +289,30 @@ function updateStudentPhoto(photoUrl, name) {
 
 function updateProfileDetails(student) {
 
-    const courseElement = $("profilePanelCourse");
-    const levelElement = $("profilePanelLevel");
+    const courseElement =
+        $("profilePanelCourse");
+
+    const levelElement =
+        $("profilePanelLevel");
+
 
     if (courseElement) {
 
         courseElement.textContent =
-            String(student?.course || "Not specified");
+            String(
+                student?.course ||
+                "Not specified"
+            );
     }
+
 
     if (levelElement) {
 
         levelElement.textContent =
-            String(student?.level || "Not specified");
+            String(
+                student?.level ||
+                "Not specified"
+            );
     }
 }
 
@@ -284,11 +330,15 @@ async function loadStudentProfile() {
             error: authError
         } = await supabase.auth.getUser();
 
+
         if (authError) {
             throw authError;
         }
 
-        currentUser = authData?.user || null;
+
+        currentUser =
+            authData?.user || null;
+
 
         if (!currentUser) {
 
@@ -296,16 +346,12 @@ async function loadStudentProfile() {
                 "No authenticated student found. Redirecting..."
             );
 
-            window.location.href = "./index.html";
+            window.location.href =
+                "./index.html";
 
             return false;
         }
 
-
-        /*
-           IMPORTANT:
-           students.id must match auth.users.id.
-        */
 
         const {
             data,
@@ -322,7 +368,10 @@ async function loadStudentProfile() {
                 photo_url,
                 created_at
             `)
-            .eq("id", currentUser.id)
+            .eq(
+                "id",
+                currentUser.id
+            )
             .maybeSingle();
 
 
@@ -331,13 +380,9 @@ async function loadStudentProfile() {
         }
 
 
-        currentStudent = data || null;
+        currentStudent =
+            data || null;
 
-
-        /*
-           Fallback to Auth information if
-           student row is unavailable.
-        */
 
         const studentName =
             currentStudent?.full_name ||
@@ -372,6 +417,7 @@ async function loadStudentProfile() {
 
         return true;
 
+
     } catch (error) {
 
         console.error(
@@ -379,10 +425,6 @@ async function loadStudentProfile() {
             error
         );
 
-        /*
-           Still allow the dashboard to open using
-           authenticated-user information.
-        */
 
         if (currentUser) {
 
@@ -392,16 +434,19 @@ async function loadStudentProfile() {
                 currentUser.email?.split("@")[0] ||
                 "Student";
 
+
             updateStudentIdentity(
                 fallbackName,
                 currentUser.email || ""
             );
+
 
             updateStudentPhoto(
                 null,
                 fallbackName
             );
         }
+
 
         return true;
     }
@@ -414,11 +459,9 @@ async function loadStudentProfile() {
 
 function getCourseImage(course) {
 
-    const image = String(
+    return String(
         course?.image || ""
     ).trim();
-
-    return image;
 }
 
 
@@ -428,7 +471,9 @@ function getCourseImage(course) {
 
 function getCourseURL(course) {
 
-    const id = course?.id;
+    const id =
+        course?.id;
+
 
     if (
         id === null ||
@@ -437,6 +482,7 @@ function getCourseURL(course) {
     ) {
         return "./course.html";
     }
+
 
     return (
         `./course.html?course=${encodeURIComponent(id)}`
@@ -454,30 +500,35 @@ function openCourse(course) {
         return;
     }
 
-    const courseId = course.id;
-    const courseTitle = course.title || "Course";
 
-    /*
-       Preserve the existing localStorage flow.
-    */
+    const courseId =
+        course.id;
+
+    const courseTitle =
+        course.title || "Course";
+
 
     localStorage.setItem(
         "selectedCourse",
         String(courseId)
     );
 
+
     localStorage.setItem(
         "selectedCourseName",
         String(courseTitle)
     );
+
 
     localStorage.setItem(
         "mwanikiLastCourse",
         JSON.stringify({
             id: courseId,
             title: courseTitle,
-            description: course.description || "",
-            image: course.image || ""
+            description:
+                course.description || "",
+            image:
+                course.image || ""
         })
     );
 
@@ -488,19 +539,24 @@ function openCourse(course) {
 
 
 /* =====================================================
-   COURSE CARD HTML
+   COURSE CARD
 ===================================================== */
 
 function createCourseCard(course) {
 
     const title =
-        escapeHTML(course?.title || "Untitled Course");
+        escapeHTML(
+            course?.title ||
+            "Untitled Course"
+        );
+
 
     const description =
         escapeHTML(
             course?.description ||
             "Explore this medical course and begin learning."
         );
+
 
     const image =
         getCourseImage(course);
@@ -517,13 +573,12 @@ function createCourseCard(course) {
                 src="${escapeHTML(image)}"
                 alt="${title}"
                 loading="lazy"
-                onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
             >
 
             <div
                 class="course-card-placeholder"
-                style="display:none;"
                 aria-hidden="true"
+                hidden
             >
                 📚
             </div>
@@ -546,8 +601,11 @@ function createCourseCard(course) {
         <article class="course-card">
 
             <div class="course-card-visual">
+
                 ${visual}
+
             </div>
+
 
             <div class="course-card-body">
 
@@ -555,21 +613,29 @@ function createCourseCard(course) {
                     MEDICAL COURSE
                 </span>
 
+
                 <h3>
                     ${title}
                 </h3>
 
+
                 <p>
                     ${description}
                 </p>
+
 
                 <button
                     type="button"
                     class="course-card-button"
                     data-course-id="${escapeHTML(course.id)}"
                 >
-                    Open Course
-                    <span>→</span>
+                    <span>
+                        Open Course
+                    </span>
+
+                    <span>
+                        →
+                    </span>
                 </button>
 
             </div>
@@ -585,7 +651,9 @@ function createCourseCard(course) {
 
 function renderCourses() {
 
-    const container = $("courseGrid");
+    const container =
+        $("courseGrid");
+
 
     if (!container) {
         return;
@@ -636,6 +704,7 @@ function renderCourses() {
                     const id =
                         button.dataset.courseId;
 
+
                     const course =
                         allCourses.find(
                             item =>
@@ -643,13 +712,38 @@ function renderCourses() {
                                 String(id)
                         );
 
+
                     if (course) {
                         openCourse(course);
                     }
-
                 }
             );
+        });
 
+
+    container
+        .querySelectorAll(
+            ".course-card-image"
+        )
+        .forEach(image => {
+
+            image.addEventListener(
+                "error",
+                () => {
+
+                    image.hidden = true;
+
+                    const placeholder =
+                        image.nextElementSibling;
+
+                    if (placeholder) {
+                        placeholder.hidden = false;
+                    }
+                },
+                {
+                    once: true
+                }
+            );
         });
 }
 
@@ -660,7 +754,9 @@ function renderCourses() {
 
 async function loadCourses() {
 
-    const container = $("courseGrid");
+    const container =
+        $("courseGrid");
+
 
     if (container) {
 
@@ -699,11 +795,13 @@ async function loadCourses() {
         }
 
 
-        allCourses = data || [];
+        allCourses =
+            data || [];
 
 
         const totalCourses =
             $("totalCourses");
+
 
         if (totalCourses) {
 
@@ -713,8 +811,11 @@ async function loadCourses() {
 
 
         renderCourses();
+
         renderRecommendations();
+
         loadRecentCourse();
+
 
     } catch (error) {
 
@@ -758,6 +859,7 @@ function renderRecommendations() {
     const container =
         $("recommendationsGrid");
 
+
     if (!container) {
         return;
     }
@@ -788,11 +890,6 @@ function renderRecommendations() {
     }
 
 
-    /*
-       Use the first available courses rather than
-       inventing course names.
-    */
-
     const recommendations =
         allCourses.slice(0, 3);
 
@@ -807,6 +904,7 @@ function renderRecommendations() {
                         "Medical Course"
                     );
 
+
                 const description =
                     escapeHTML(
                         course.description ||
@@ -815,13 +913,12 @@ function renderRecommendations() {
 
 
                 return `
-                    <article
-                        class="recommendation-card"
-                    >
+                    <article class="recommendation-card">
 
                         <div class="recommendation-icon">
                             🎓
                         </div>
+
 
                         <div class="recommendation-content">
 
@@ -829,13 +926,16 @@ function renderRecommendations() {
                                 RECOMMENDED
                             </span>
 
+
                             <h3>
                                 ${title}
                             </h3>
 
+
                             <p>
                                 ${description}
                             </p>
+
 
                             <button
                                 type="button"
@@ -868,6 +968,7 @@ function renderRecommendations() {
                         button.dataset
                             .recommendationId;
 
+
                     const course =
                         allCourses.find(
                             item =>
@@ -875,13 +976,12 @@ function renderRecommendations() {
                                 String(id)
                         );
 
+
                     if (course) {
                         openCourse(course);
                     }
-
                 }
             );
-
         });
 }
 
@@ -916,10 +1016,6 @@ function loadRecentCourse() {
     let recentCourse = null;
 
 
-    /*
-       First use the saved recent course.
-    */
-
     try {
 
         const stored =
@@ -927,11 +1023,13 @@ function loadRecentCourse() {
                 "mwanikiLastCourse"
             );
 
+
         if (stored) {
 
             recentCourse =
                 JSON.parse(stored);
         }
+
 
     } catch (error) {
 
@@ -942,11 +1040,6 @@ function loadRecentCourse() {
     }
 
 
-    /*
-       If the saved course is stale,
-       find it in the current database list.
-    */
-
     if (recentCourse?.id) {
 
         const matchingCourse =
@@ -956,6 +1049,7 @@ function loadRecentCourse() {
                     String(recentCourse.id)
             );
 
+
         if (matchingCourse) {
 
             recentCourse =
@@ -964,14 +1058,11 @@ function loadRecentCourse() {
     }
 
 
-    /*
-       If nothing is saved, show a clean empty state.
-    */
-
     if (!recentCourse) {
 
         titleElement.textContent =
             "No recent course";
+
 
         if (descriptionElement) {
 
@@ -979,31 +1070,37 @@ function loadRecentCourse() {
                 "Choose a course from your course library to begin learning.";
         }
 
+
         if (imageElement) {
 
             imageElement.hidden = true;
-            imageElement.removeAttribute("src");
+
+            imageElement.removeAttribute(
+                "src"
+            );
         }
 
+
         if (placeholderElement) {
-            placeholderElement.hidden = false;
+
+            placeholderElement.hidden =
+                false;
         }
+
 
         if (continueButton) {
 
-            continueButton.disabled = true;
+            continueButton.disabled =
+                true;
 
             continueButton.textContent =
                 "Choose a Course";
         }
 
+
         return;
     }
 
-
-    /*
-       Display recent course.
-    */
 
     titleElement.textContent =
         recentCourse.title ||
@@ -1022,62 +1119,82 @@ function loadRecentCourse() {
         getCourseImage(recentCourse);
 
 
-    if (imageElement && image) {
+    if (
+        imageElement &&
+        image
+    ) {
 
-        imageElement.src = image;
+        imageElement.src =
+            image;
 
         imageElement.alt =
             recentCourse.title ||
             "Recent course";
 
-        imageElement.hidden = false;
+        imageElement.hidden =
+            false;
 
 
         imageElement.onerror = () => {
 
-            imageElement.hidden = true;
+            imageElement.hidden =
+                true;
 
             imageElement.removeAttribute(
                 "src"
             );
 
+
             if (placeholderElement) {
-                placeholderElement.hidden = false;
+                placeholderElement.hidden =
+                    false;
             }
         };
 
 
         if (placeholderElement) {
-            placeholderElement.hidden = true;
+
+            placeholderElement.hidden =
+                true;
         }
 
     } else {
 
         if (imageElement) {
 
-            imageElement.hidden = true;
-            imageElement.removeAttribute("src");
+            imageElement.hidden =
+                true;
+
+            imageElement.removeAttribute(
+                "src"
+            );
         }
 
+
         if (placeholderElement) {
-            placeholderElement.hidden = false;
+
+            placeholderElement.hidden =
+                false;
         }
     }
 
 
     if (continueButton) {
 
-        continueButton.disabled = false;
+        continueButton.disabled =
+            false;
 
         continueButton.textContent =
             "Continue Learning";
 
 
-        continueButton.onclick = () => {
+        continueButton.onclick =
+            () => {
 
-            openCourse(recentCourse);
-
-        };
+                openCourse(
+                    recentCourse
+                );
+            };
     }
 }
 
@@ -1094,17 +1211,20 @@ function createNoteCard(note) {
             "Medical Course"
         );
 
+
     const unit =
         escapeHTML(
             note.unit ||
             "Study Note"
         );
 
+
     const fileName =
         escapeHTML(
             note.file_name ||
             "Learning Material"
         );
+
 
     const fileURL =
         String(
@@ -1119,19 +1239,23 @@ function createNoteCard(note) {
                 📄
             </div>
 
+
             <div class="note-card-content">
 
                 <span class="note-course">
                     ${course}
                 </span>
 
+
                 <h3>
                     ${unit}
                 </h3>
 
+
                 <p>
                     ${fileName}
                 </p>
+
 
                 ${
                     fileURL
@@ -1167,6 +1291,7 @@ function renderNotes() {
 
     const container =
         $("notesGrid");
+
 
     if (!container) {
         return;
@@ -1214,6 +1339,7 @@ async function loadNotes() {
     const container =
         $("notesGrid");
 
+
     if (container) {
 
         container.innerHTML = `
@@ -1259,11 +1385,13 @@ async function loadNotes() {
         }
 
 
-        allNotes = data || [];
+        allNotes =
+            data || [];
 
 
         const totalNotes =
             $("totalNotes");
+
 
         if (totalNotes) {
 
@@ -1341,11 +1469,13 @@ async function loadQuizzes() {
         }
 
 
-        allQuizzes = data || [];
+        allQuizzes =
+            data || [];
 
 
         const totalQuizzes =
             $("totalQuizzes");
+
 
         if (totalQuizzes) {
 
@@ -1368,8 +1498,10 @@ async function loadQuizzes() {
         const totalQuizzes =
             $("totalQuizzes");
 
+
         if (totalQuizzes) {
-            totalQuizzes.textContent = "0";
+            totalQuizzes.textContent =
+                "0";
         }
 
 
@@ -1379,7 +1511,7 @@ async function loadQuizzes() {
 
 
 /* =====================================================
-   QUIZ PROGRESS
+   CALCULATE QUIZ PROGRESS
 ===================================================== */
 
 function calculateQuizProgress() {
@@ -1394,11 +1526,13 @@ function calculateQuizProgress() {
                 "mwanikiQuizProgress"
             );
 
+
         if (saved) {
 
             storedProgress =
                 JSON.parse(saved) || {};
         }
+
 
     } catch (error) {
 
@@ -1410,14 +1544,6 @@ function calculateQuizProgress() {
         storedProgress = {};
     }
 
-
-    /*
-       Count completed quiz questions.
-
-       The structure may vary depending on the
-       existing quiz system, so this function safely
-       handles the common object/array structures.
-    */
 
     let completed = 0;
 
@@ -1443,7 +1569,8 @@ function calculateQuizProgress() {
                 Array.isArray(value)
             ) {
 
-                completed += value.length;
+                completed +=
+                    value.length;
 
             } else if (
                 value &&
@@ -1475,20 +1602,15 @@ function calculateQuizProgress() {
     }
 
 
-    /*
-       Keep percentage safely between 0 and 100.
-    */
-
-    const percentage =
-        Math.round(
-            Math.min(
-                100,
-                (completed / allQuizzes.length) * 100
-            )
-        );
-
-
-    return percentage;
+    return Math.round(
+        Math.min(
+            100,
+            (
+                completed /
+                allQuizzes.length
+            ) * 100
+        )
+    );
 }
 
 
@@ -1529,12 +1651,6 @@ function updateQuizProgress() {
     }
 
 
-    /*
-       The main learning progress follows the same
-       quiz activity when no separate progress
-       tracking system is available.
-    */
-
     if (learningProgress) {
 
         learningProgress.textContent =
@@ -1551,7 +1667,7 @@ function updateQuizProgress() {
 
 
 /* =====================================================
-   NAVIGATION
+   INTERNAL SECTION NAVIGATION
 ===================================================== */
 
 function setupNavigation() {
@@ -1561,28 +1677,6 @@ function setupNavigation() {
             ".dashboard-nav .nav-link"
         );
 
-
-    navLinks.forEach(link => {
-
-        link.addEventListener(
-            "click",
-            () => {
-
-                navLinks.forEach(item => {
-                    item.classList.remove("active");
-                });
-
-                link.classList.add("active");
-
-            }
-        );
-
-    });
-
-
-    /*
-       Quick-action links should scroll normally.
-    */
 
     document
         .querySelectorAll(
@@ -1595,7 +1689,10 @@ function setupNavigation() {
                 event => {
 
                     const targetID =
-                        link.getAttribute("href");
+                        link.getAttribute(
+                            "href"
+                        );
+
 
                     if (
                         !targetID ||
@@ -1610,6 +1707,7 @@ function setupNavigation() {
                             targetID
                         );
 
+
                     if (!target) {
                         return;
                     }
@@ -1618,14 +1716,33 @@ function setupNavigation() {
                     event.preventDefault();
 
 
+                    navLinks.forEach(item => {
+
+                        item.classList.remove(
+                            "active"
+                        );
+
+                    });
+
+
+                    if (
+                        link.classList.contains(
+                            "nav-link"
+                        )
+                    ) {
+
+                        link.classList.add(
+                            "active"
+                        );
+                    }
+
+
                     target.scrollIntoView({
                         behavior: "smooth",
                         block: "start"
                     });
-
                 }
             );
-
         });
 }
 
@@ -1669,7 +1786,9 @@ function setupProfilePanel() {
 
     const closePanel = () => {
 
-        panel.classList.remove("open");
+        panel.classList.remove(
+            "open"
+        );
 
         panel.setAttribute(
             "aria-hidden",
@@ -1688,7 +1807,9 @@ function setupProfilePanel() {
         () => {
 
             if (
-                panel.classList.contains("open")
+                panel.classList.contains(
+                    "open"
+                )
             ) {
 
                 closePanel();
@@ -1697,7 +1818,6 @@ function setupProfilePanel() {
 
                 openPanel();
             }
-
         }
     );
 
@@ -1716,22 +1836,44 @@ function setupProfilePanel() {
         event => {
 
             if (
-                !panel.classList.contains("open")
+                !panel.classList.contains(
+                    "open"
+                )
             ) {
                 return;
             }
 
 
             if (
-                panel.contains(event.target) ||
-                button.contains(event.target)
+                panel.contains(
+                    event.target
+                ) ||
+                button.contains(
+                    event.target
+                )
             ) {
                 return;
             }
 
 
             closePanel();
+        }
+    );
 
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape" &&
+                panel.classList.contains(
+                    "open"
+                )
+            ) {
+
+                closePanel();
+            }
         }
     );
 }
@@ -1760,7 +1902,9 @@ function setupNotificationPanel() {
 
     const openPanel = () => {
 
-        panel.classList.add("open");
+        panel.classList.add(
+            "open"
+        );
 
         panel.setAttribute(
             "aria-hidden",
@@ -1776,7 +1920,9 @@ function setupNotificationPanel() {
 
     const closePanel = () => {
 
-        panel.classList.remove("open");
+        panel.classList.remove(
+            "open"
+        );
 
         panel.setAttribute(
             "aria-hidden",
@@ -1795,7 +1941,9 @@ function setupNotificationPanel() {
         () => {
 
             if (
-                panel.classList.contains("open")
+                panel.classList.contains(
+                    "open"
+                )
             ) {
 
                 closePanel();
@@ -1804,7 +1952,6 @@ function setupNotificationPanel() {
 
                 openPanel();
             }
-
         }
     );
 
@@ -1823,22 +1970,44 @@ function setupNotificationPanel() {
         event => {
 
             if (
-                !panel.classList.contains("open")
+                !panel.classList.contains(
+                    "open"
+                )
             ) {
                 return;
             }
 
 
             if (
-                panel.contains(event.target) ||
-                button.contains(event.target)
+                panel.contains(
+                    event.target
+                ) ||
+                button.contains(
+                    event.target
+                )
             ) {
                 return;
             }
 
 
             closePanel();
+        }
+    );
 
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape" &&
+                panel.classList.contains(
+                    "open"
+                )
+            ) {
+
+                closePanel();
+            }
         }
     );
 }
@@ -1863,7 +2032,8 @@ function setupLogout() {
         "click",
         async () => {
 
-            logoutButton.disabled = true;
+            logoutButton.disabled =
+                true;
 
             logoutButton.textContent =
                 "Logging out...";
@@ -1873,20 +2043,14 @@ function setupLogout() {
 
                 const {
                     error
-                } = await supabase.auth.signOut();
+                } =
+                    await supabase.auth.signOut();
 
 
                 if (error) {
                     throw error;
                 }
 
-
-                /*
-                   Clear only dashboard/course state.
-
-                   Do NOT remove unrelated application
-                   configuration.
-                */
 
                 localStorage.removeItem(
                     "selectedCourse"
@@ -1921,10 +2085,12 @@ function setupLogout() {
                 );
 
 
-                logoutButton.disabled = false;
+                logoutButton.disabled =
+                    false;
 
                 logoutButton.textContent =
                     "Log Out";
+
 
                 alert(
                     "Unable to log out right now. Please try again."
@@ -1955,7 +2121,8 @@ function setupRefreshButtons() {
             "click",
             async () => {
 
-                refreshCourses.disabled = true;
+                refreshCourses.disabled =
+                    true;
 
                 refreshCourses.textContent =
                     "↻ Loading...";
@@ -1964,7 +2131,8 @@ function setupRefreshButtons() {
                 await loadCourses();
 
 
-                refreshCourses.disabled = false;
+                refreshCourses.disabled =
+                    false;
 
                 refreshCourses.textContent =
                     "↻ Refresh";
@@ -1979,7 +2147,8 @@ function setupRefreshButtons() {
             "click",
             async () => {
 
-                refreshNotes.disabled = true;
+                refreshNotes.disabled =
+                    true;
 
                 refreshNotes.textContent =
                     "↻ Loading...";
@@ -1988,7 +2157,8 @@ function setupRefreshButtons() {
                 await loadNotes();
 
 
-                refreshNotes.disabled = false;
+                refreshNotes.disabled =
+                    false;
 
                 refreshNotes.textContent =
                     "↻ Refresh";
@@ -2014,7 +2184,9 @@ function handleInitialHash() {
 
 
     const target =
-        document.querySelector(hash);
+        document.querySelector(
+            hash
+        );
 
 
     if (!target) {
@@ -2059,7 +2231,10 @@ function setupScrollNavigation() {
         );
 
 
-    if (!sections.length || !links.length) {
+    if (
+        !sections.length ||
+        !links.length
+    ) {
         return;
     }
 
@@ -2084,19 +2259,16 @@ function setupScrollNavigation() {
                 activeSection =
                     section.id;
             }
-
         });
 
 
         links.forEach(link => {
 
             const href =
-                link.getAttribute("href");
+                link.getAttribute(
+                    "href"
+                );
 
-
-            /*
-               Only activate internal section links.
-            */
 
             if (
                 href &&
@@ -2105,12 +2277,12 @@ function setupScrollNavigation() {
 
                 link.classList.toggle(
                     "active",
-                    href === `#${activeSection}`
+                    href ===
+                    `#${activeSection}`
                 );
             }
 
         });
-
     };
 
 
@@ -2131,37 +2303,47 @@ function setupScrollNavigation() {
    GLOBAL UNIT TRACKING
 ===================================================== */
 
-window.mwanikiTrackUnit = function (
-    courseId,
-    unitId,
-    unitTitle
-) {
+window.mwanikiTrackUnit =
+    function (
+        courseId,
+        unitId,
+        unitTitle
+    ) {
 
-    try {
+        try {
 
-        localStorage.setItem(
-            "selectedCourse",
-            String(courseId ?? "")
-        );
+            localStorage.setItem(
+                "selectedCourse",
+                String(
+                    courseId ?? ""
+                )
+            );
 
-        localStorage.setItem(
-            "selectedUnit",
-            String(unitId ?? "")
-        );
 
-        localStorage.setItem(
-            "selectedUnitTitle",
-            String(unitTitle ?? "")
-        );
+            localStorage.setItem(
+                "selectedUnit",
+                String(
+                    unitId ?? ""
+                )
+            );
 
-    } catch (error) {
 
-        console.warn(
-            "Could not save unit progress:",
-            error
-        );
-    }
-};
+            localStorage.setItem(
+                "selectedUnitTitle",
+                String(
+                    unitTitle ?? ""
+                )
+            );
+
+
+        } catch (error) {
+
+            console.warn(
+                "Could not save unit progress:",
+                error
+            );
+        }
+    };
 
 
 /* =====================================================
@@ -2174,21 +2356,26 @@ window.mwanikiDashboard = {
         return currentUser;
     },
 
+
     getCurrentStudent() {
         return currentStudent;
     },
+
 
     getCourses() {
         return allCourses;
     },
 
+
     getNotes() {
         return allNotes;
     },
 
+
     getQuizzes() {
         return allQuizzes;
     },
+
 
     refresh() {
 
@@ -2197,7 +2384,6 @@ window.mwanikiDashboard = {
             loadNotes(),
             loadQuizzes()
         ]);
-
     }
 
 };
@@ -2257,22 +2443,24 @@ async function initializeDashboard() {
     updateCurrentDate();
 
 
-    /*
-       Set up UI first.
-    */
+    /* UI */
 
     setupNavigation();
+
     setupProfilePanel();
+
     setupNotificationPanel();
+
     setupLogout();
+
     setupRefreshButtons();
+
     setupScrollNavigation();
+
     setupAuthListener();
 
 
-    /*
-       Authentication and student profile.
-    */
+    /* AUTHENTICATED STUDENT */
 
     const authenticated =
         await loadStudentProfile();
@@ -2283,9 +2471,7 @@ async function initializeDashboard() {
     }
 
 
-    /*
-       Load dashboard data.
-    */
+    /* DASHBOARD DATA */
 
     await Promise.all([
         loadCourses(),
@@ -2294,7 +2480,8 @@ async function initializeDashboard() {
     ]);
 
 
-    dashboardReady = true;
+    dashboardReady =
+        true;
 
 
     handleInitialHash();
@@ -2311,7 +2498,8 @@ async function initializeDashboard() {
 ===================================================== */
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(
@@ -2322,4 +2510,5 @@ if (
 } else {
 
     initializeDashboard();
+
 }
