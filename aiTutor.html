@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Mwaniki Scholars AI Tutor for medical students."
+    >
+
+    <title>Mwaniki Scholars | AI Tutor</title>
+
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="./favicon.svg"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #eef8f8 0%,
+                    #f8fcfc 50%,
+                    #ffffff 100%
+                );
+
+            color: #183f45;
+        }
+
+        /* =====================================================
+           HEADER
+        ===================================================== */
+
+        .page-header {
+            min-height: 82px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 15px 28px;
+
+            background: #ffffff;
+
+            border-bottom:
+                1px solid #dcebed;
+
+            box-shadow:
+                0 4px 18px rgba(0, 0, 0, 0.06);
+
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            text-decoration: none;
+
+            color: #183f45;
+        }
+
+        .brand-icon {
+            width: 46px;
+            height: 46px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 13px;
+
+            background: #e7f6f6;
+
+            font-size: 24px;
+        }
+
+        .brand-name {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .brand-subtitle {
+            margin-top: 3px;
+
+            font-size: 12px;
+
+            color: #789095;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            min-height: 42px;
+
+            padding: 0 17px;
+
+            border-radius: 10px;
+
+            background: #183f45;
+
+            color: #ffffff;
+
+            text-decoration: none;
+
+            font-size: 14px;
+            font-weight: 700;
+
+            transition:
+                transform 0.2s ease,
+                opacity 0.2s ease;
+        }
+
+        .back-button:hover {
+            transform: translateY(-1px);
+            opacity: 0.92;
+        }
+
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .page-container {
+            width: min(
+                1120px,
+                calc(100% - 32px)
+            );
+
+            margin:
+                35px auto
+                60px;
+        }
+
+
+        /* =====================================================
+           HERO
+        ===================================================== */
+
+        .hero-card {
+            padding: 38px;
+
+            border:
+                1px solid #dcebed;
+
+            border-radius: 22px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #ffffff,
+                    #eefafa
+                );
+
+            box-shadow:
+                0 12px 35px rgba(
+                    0,
+                    0,
+                    0,
+                    0.07
+                );
+        }
+
+        .hero-icon {
+            width: 62px;
+            height: 62px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 17px;
+
+            background: #e4f5f5;
+
+            font-size: 34px;
+
+            margin-bottom: 18px;
+        }
+
+        .hero-card h1 {
+            margin: 0;
+
+            font-size:
+                clamp(
+                    30px,
+                    5vw,
+                    44px
+                );
+
+            line-height: 1.1;
+
+            color: #123b41;
+        }
+
+        .hero-card p {
+            max-width: 750px;
+
+            margin:
+                14px 0 0;
+
+            color: #687b80;
+
+            line-height: 1.75;
+
+            font-size: 15px;
+        }
+
+
+        /* =====================================================
+           AI AREA
+        ===================================================== */
+
+        .ai-card {
+            margin-top: 25px;
+
+            background: #ffffff;
+
+            border:
+                1px solid #dcebed;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 10px 30px rgba(
+                    0,
+                    0,
+                    0,
+                    0.06
+                );
+
+            overflow: hidden;
+        }
+
+        .ai-card-header {
+            padding: 22px 25px;
+
+            border-bottom:
+                1px solid #edf3f4;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 15px;
+        }
+
+        .ai-card-header h2 {
+            margin: 0;
+
+            font-size: 20px;
+
+            color: #183f45;
+        }
+
+        .status {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            padding:
+                7px 11px;
+
+            border-radius: 999px;
+
+            background: #eef9f2;
+
+            color: #36724b;
+
+            font-size: 12px;
+
+            font-weight: 700;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+
+            border-radius: 50%;
+
+            background: #49a968;
+        }
+
+        .ai-content {
+            padding: 25px;
+        }
+
+        .welcome-box {
+            padding: 22px;
+
+            border-radius: 14px;
+
+            background: #f5fafb;
+
+            border:
+                1px solid #e1eff1;
+        }
+
+        .welcome-box h3 {
+            margin:
+                0 0 9px;
+
+            color: #183f45;
+
+            font-size: 17px;
+        }
+
+        .welcome-box p {
+            margin: 0;
+
+            color: #697b80;
+
+            line-height: 1.7;
+
+            font-size: 14px;
+        }
+
+        .tutor-features {
+            display: grid;
+
+            grid-template-columns:
+                repeat(
+                    3,
+                    minmax(0, 1fr)
+                );
+
+            gap: 15px;
+
+            margin-top: 20px;
+        }
+
+        .feature {
+            padding: 19px;
+
+            border:
+                1px solid #e1ecee;
+
+            border-radius: 14px;
+
+            background: #ffffff;
+        }
+
+        .feature-icon {
+            font-size: 24px;
+
+            margin-bottom: 10px;
+        }
+
+        .feature h3 {
+            margin:
+                0 0 7px;
+
+            font-size: 15px;
+
+            color: #183f45;
+        }
+
+        .feature p {
+            margin: 0;
+
+            color: #74868a;
+
+            font-size: 13px;
+
+            line-height: 1.6;
+        }
+
+
+        /* =====================================================
+           FUTURE AI INTERFACE
+        ===================================================== */
+
+        .ai-interface {
+            margin-top: 20px;
+
+            min-height: 220px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            padding: 30px;
+
+            border:
+                2px dashed #d7e8ea;
+
+            border-radius: 16px;
+
+            background: #fbfefe;
+
+            text-align: center;
+        }
+
+        .ai-interface-inner {
+            max-width: 600px;
+        }
+
+        .ai-interface-icon {
+            font-size: 38px;
+
+            margin-bottom: 10px;
+        }
+
+        .ai-interface h3 {
+            margin:
+                0 0 8px;
+
+            font-size: 19px;
+
+            color: #183f45;
+        }
+
+        .ai-interface p {
+            margin: 0;
+
+            color: #74868a;
+
+            font-size: 14px;
+
+            line-height: 1.7;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 760px) {
+
+            .page-header {
+                padding:
+                    13px 16px;
+            }
+
+            .brand-subtitle {
+                display: none;
+            }
+
+            .page-container {
+                width:
+                    calc(100% - 20px);
+
+                margin-top: 20px;
+            }
+
+            .hero-card {
+                padding: 25px;
+            }
+
+            .ai-card-header {
+                align-items: flex-start;
+
+                flex-direction: column;
+            }
+
+            .tutor-features {
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+    <!-- =====================================================
+         HEADER
+    ===================================================== -->
+
+    <header class="page-header">
+
+        <a
+            href="./dashboard.html"
+            class="brand"
+            aria-label="Back to Mwaniki Scholars dashboard"
+        >
+
+            <div
+                class="brand-icon"
+                aria-hidden="true"
+            >
+                🩺
+            </div>
+
+            <div>
+
+                <div class="brand-name">
+                    Mwaniki Scholars
+                </div>
+
+                <div class="brand-subtitle">
+                    Medical Learning Platform
+                </div>
+
+            </div>
+
+        </a>
+
+
+        <a
+            href="./dashboard.html"
+            class="back-button"
+        >
+            ← Dashboard
+        </a>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+    ===================================================== -->
+
+    <main class="page-container">
+
+
+        <!-- HERO -->
+
+        <section class="hero-card">
+
+            <div
+                class="hero-icon"
+                aria-hidden="true"
+            >
+                🤖
+            </div>
+
+            <h1>
+                AI Tutor
+            </h1>
+
+            <p>
+                Ask questions, clarify difficult medical
+                concepts and use AI-assisted learning while
+                studying.
+            </p>
+
+        </section>
+
+
+        <!-- AI CARD -->
+
+        <section class="ai-card">
+
+            <div class="ai-card-header">
+
+                <h2>
+                    Mwaniki Scholars AI Tutor
+                </h2>
+
+                <span class="status">
+
+                    <span
+                        class="status-dot"
+                        aria-hidden="true"
+                    ></span>
+
+                    Ready
+
+                </span>
+
+            </div>
+
+
+            <div class="ai-content">
+
+
+                <div class="welcome-box">
+
+                    <h3>
+                        Learn smarter
+                    </h3>
+
+                    <p>
+                        Use the AI Tutor to review medical
+                        concepts, ask study questions and
+                        clarify difficult topics while working
+                        through your courses.
+                    </p>
+
+                </div>
+
+
+                <div class="tutor-features">
+
+
+                    <article class="feature">
+
+                        <div class="feature-icon">
+                            🧠
+                        </div>
+
+                        <h3>
+                            Understand concepts
+                        </h3>
+
+                        <p>
+                            Break difficult medical topics
+                            into easier explanations.
+                        </p>
+
+                    </article>
+
+
+                    <article class="feature">
+
+                        <div class="feature-icon">
+                            📚
+                        </div>
+
+                        <h3>
+                            Study support
+                        </h3>
+
+                        <p>
+                            Get assistance while studying
+                            your Mwaniki Scholars courses.
+                        </p>
+
+                    </article>
+
+
+                    <article class="feature">
+
+                        <div class="feature-icon">
+                            💡
+                        </div>
+
+                        <h3>
+                            Ask questions
+                        </h3>
+
+                        <p>
+                            Explore questions and concepts
+                            that need further clarification.
+                        </p>
+
+                    </article>
+
+
+                </div>
+
+
+                <div class="ai-interface">
+
+                    <div class="ai-interface-inner">
+
+                        <div class="ai-interface-icon">
+                            🤖
+                        </div>
+
+                        <h3>
+                            AI Tutor Interface
+                        </h3>
+
+                        <p>
+                            Your AI Tutor interface can be
+                            connected here without changing
+                            the rest of the Mwaniki Scholars
+                            dashboard.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+
+    <script
+        type="module"
+        src="./aiTutor.js"
+    ></script>
+
+</body>
+
+</html>
