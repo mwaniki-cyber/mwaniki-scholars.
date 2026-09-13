@@ -1,31 +1,26 @@
-
 import { supabase } from "./supabase.js";
 
-/*
-===========================================================
- MWANIKI SCHOLARS
- AI TUTOR FRONTEND
-===========================================================
+/* =========================================================
+   MWANIKI SCHOLARS AI TUTOR FRONTEND
 
- VOICE SYSTEM
- ----------------------------------------------------------
- NORMAL VOICE
- • AI answers
- • Test questions
- • Final score
- • Read Answer
+   VOICE SYSTEM
 
- CARTOON VOICE
- • Correct answer
- • Wrong answer
- • Exaggerated pitch
- • Faster delivery
- • Dedicated voice selection
+   NORMAL VOICE
+   • AI answers
+   • Test questions
+   • Final score
+   • Read Answer
 
- IMPORTANT:
- The cartoon voice is NEVER used for normal AI speech.
-===========================================================
-*/
+   CARTOON VOICE
+   • Correct answer
+   • Wrong answer
+   • Exaggerated pitch
+   • Faster delivery
+   • Dedicated voice selection
+
+   IMPORTANT:
+   The cartoon voice is NEVER used for normal AI speech.
+========================================================= */
 
 
 /* =========================================================
@@ -171,6 +166,7 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
 
@@ -188,7 +184,9 @@ function safeURL(value) {
             return url.href;
         }
 
-    } catch (_) {}
+    } catch (_) {
+        // Ignore invalid URLs.
+    }
 
     return "#";
 }
@@ -224,7 +222,7 @@ function setStatus(message = "") {
 
 
 /* =========================================================
-   DASHBOARD
+   BACK TO DASHBOARD
 ========================================================= */
 
 if (backToDashboardButton) {
@@ -264,8 +262,10 @@ suggestionButtons.forEach(
                 }
 
                 if (aiQuestion) {
+
                     aiQuestion.value =
                         question;
+
                 }
 
                 searchAI(question);
@@ -294,7 +294,9 @@ if (aiQuestion) {
 
                 event.preventDefault();
 
-                askAIButton?.click();
+                if (askAIButton) {
+                    askAIButton.click();
+                }
 
             }
 
@@ -328,7 +330,6 @@ if (askAIButton) {
                 aiQuestion?.focus();
 
                 return;
-
             }
 
             searchAI(question);
@@ -468,7 +469,6 @@ function chooseNaturalVoice() {
             null;
 
         return null;
-
     }
 
 
@@ -478,8 +478,8 @@ function chooseNaturalVoice() {
                 cleanText(
                     voice.lang
                 )
-                .toLowerCase()
-                .startsWith("en")
+                    .toLowerCase()
+                    .startsWith("en")
         );
 
 
@@ -501,27 +501,12 @@ function chooseNaturalVoice() {
 
 
     return selectedNaturalVoice;
-
 }
 
 
 /* =========================================================
    CARTOON VOICE SCORING
 ========================================================= */
-
-/*
-   We deliberately select a DIFFERENT voice from the
-   normal AI voice.
-
-   Preference is given to voices that sound suitable
-   for an animated / playful reaction.
-
-   This cannot manufacture a Disney-style character voice
-   because browser speech synthesis does not expose an
-   actual cartoon voice effect, but it does give us a
-   clearly separate playful voice when the browser has
-   multiple English voices available.
-*/
 
 function scoreCartoonVoice(
     voice
@@ -546,11 +531,6 @@ function scoreCartoonVoice(
         score += 20;
     }
 
-
-    /*
-       Prefer voices different from the normal
-       natural Microsoft voice.
-    */
 
     if (
         name.includes("google")
@@ -588,7 +568,8 @@ function scoreCartoonVoice(
 
 
     /*
-       Avoid using the exact same voice as normal AI.
+       Avoid using the exact same voice
+       as the normal AI voice.
     */
 
     if (
@@ -602,12 +583,6 @@ function scoreCartoonVoice(
     }
 
 
-    /*
-       Natural/online voices are not automatically
-       preferred here because we want separation
-       from the normal AI voice.
-    */
-
     if (
         name.includes("natural")
     ) {
@@ -616,7 +591,6 @@ function scoreCartoonVoice(
 
 
     return score;
-
 }
 
 
@@ -635,7 +609,6 @@ function chooseCartoonVoice() {
             null;
 
         return null;
-
     }
 
 
@@ -645,8 +618,8 @@ function chooseCartoonVoice() {
                 cleanText(
                     voice.lang
                 )
-                .toLowerCase()
-                .startsWith("en")
+                    .toLowerCase()
+                    .startsWith("en")
         );
 
 
@@ -668,8 +641,8 @@ function chooseCartoonVoice() {
 
 
     /*
-       If the browser only exposes one voice,
-       we have no second voice to select.
+       If the browser exposes only one voice,
+       use pitch/rate fallback.
     */
 
     if (
@@ -686,7 +659,6 @@ function chooseCartoonVoice() {
 
 
     return selectedCartoonVoice;
-
 }
 
 
@@ -769,7 +741,6 @@ function stopSpeech() {
             .cancel();
 
     }
-
 }
 
 
@@ -852,12 +823,13 @@ function splitSpeech(text) {
 
 
     if (current) {
-        chunks.push(current);
+        chunks.push(
+            current
+        );
     }
 
 
     return chunks;
-
 }
 
 
@@ -891,7 +863,6 @@ function speakNextChunk() {
         speakNextChunk();
 
         return;
-
     }
 
 
@@ -942,6 +913,7 @@ function speakNextChunk() {
 
             speechIndex++;
 
+
             setTimeout(
                 () => {
 
@@ -962,9 +934,11 @@ function speakNextChunk() {
                 error
             );
 
+
             if (speechStopped) {
                 return;
             }
+
 
             speechIndex++;
 
@@ -978,7 +952,6 @@ function speakNextChunk() {
         .speak(
             utterance
         );
-
 }
 
 
@@ -997,7 +970,6 @@ function speakText(text) {
         );
 
         return;
-
     }
 
 
@@ -1010,7 +982,6 @@ function speakText(text) {
 
 
     stopSpeech();
-
 
     loadSpeechVoices();
 
@@ -1026,23 +997,12 @@ function speakText(text) {
 
 
     speakNextChunk();
-
 }
 
 
 /* =========================================================
    CARTOON SPEECH ENGINE
 ========================================================= */
-
-/*
-   This is completely separate from speakText().
-
-   The normal AI voice is NEVER used here unless the
-   browser literally exposes only one voice.
-
-   The exaggerated pitch/rate gives the selected voice
-   an animated reaction character.
-*/
 
 function speakCartoon(
     text,
@@ -1065,7 +1025,7 @@ function speakCartoon(
 
 
     /*
-       Kill whatever was speaking.
+       Stop whatever is currently speaking.
     */
 
     window
@@ -1097,12 +1057,6 @@ function speakCartoon(
             selectedCartoonVoice.lang;
 
     } else {
-
-        /*
-           If Edge only gives us one voice,
-           the exaggerated pitch/rate remains
-           as the fallback.
-        */
 
         utterance.lang =
             "en-US";
@@ -1173,7 +1127,6 @@ function speakCartoon(
         .speak(
             utterance
         );
-
 }
 
 
@@ -1211,7 +1164,6 @@ function playCorrectReaction() {
         phrase,
         "correct"
     );
-
 }
 
 
@@ -1249,7 +1201,6 @@ function playWrongReaction() {
         phrase,
         "wrong"
     );
-
 }
 
 
@@ -1270,8 +1221,8 @@ if (readAnswerButton) {
                 );
 
                 return;
-
             }
+
 
             speakText(
                 currentAnswerText
@@ -1554,7 +1505,6 @@ async function searchAI(question) {
         }
 
     }
-
 }
 
 
@@ -1595,7 +1545,6 @@ function renderAnswer(
         `;
 
         return;
-
     }
 
 
@@ -1631,7 +1580,6 @@ function renderAnswer(
         </div>
 
     `;
-
 }
 
 
@@ -1671,7 +1619,6 @@ function renderWebResults(results) {
         `;
 
         return;
-
     }
 
 
@@ -1687,12 +1634,14 @@ function renderWebResults(results) {
                             "Medical search result"
                         );
 
+
                     const snippet =
                         cleanText(
                             result.snippet ||
                             result.description ||
                             ""
                         );
+
 
                     const url =
                         safeURL(
@@ -1776,7 +1725,6 @@ function renderWebResults(results) {
         </div>
 
     `;
-
 }
 
 
@@ -1812,6 +1760,7 @@ function renderImages(
     const seen =
         new Set();
 
+
     const uniqueImages =
         [];
 
@@ -1838,6 +1787,7 @@ function renderImages(
 
 
             seen.add(url);
+
 
             uniqueImages.push({
                 ...image,
@@ -1867,7 +1817,6 @@ function renderImages(
         `;
 
         return;
-
     }
 
 
@@ -1956,7 +1905,6 @@ function renderImages(
         </div>
 
     `;
-
 }
 
 
@@ -1973,6 +1921,7 @@ function getRecentQuestions() {
                 "mwanikiAIRecentQuestions"
             );
 
+
         if (!saved) {
             return [];
         }
@@ -1986,12 +1935,12 @@ function getRecentQuestions() {
             ? parsed
             : [];
 
+
     } catch (_) {
 
         return [];
 
     }
-
 }
 
 
@@ -2031,11 +1980,12 @@ function saveRecentQuestion(
             )
         );
 
-    } catch (_) {}
+    } catch (_) {
+        // Ignore storage errors.
+    }
 
 
     renderRecentQuestions();
-
 }
 
 
@@ -2056,7 +2006,6 @@ function renderRecentQuestions() {
             "";
 
         return;
-
     }
 
 
@@ -2109,10 +2058,19 @@ function renderRecentQuestions() {
                                 .recentQuestion ||
                             "";
 
+
+                        if (!question) {
+                            return;
+                        }
+
+
                         if (aiQuestion) {
+
                             aiQuestion.value =
                                 question;
+
                         }
+
 
                         searchAI(
                             question
@@ -2123,7 +2081,6 @@ function renderRecentQuestions() {
 
             }
         );
-
 }
 
 
@@ -2218,14 +2175,17 @@ async function startTest(
 
 
     if (testNext) {
+
         testNext.style.display =
             "none";
+
     }
 
 
     try {
 
         await loadNextTestQuestion();
+
 
     } catch (error) {
 
@@ -2244,7 +2204,6 @@ async function startTest(
         }
 
     }
-
 }
 
 
@@ -2266,7 +2225,6 @@ async function loadNextTestQuestion() {
         finishTest();
 
         return;
-
     }
 
 
@@ -2305,8 +2263,10 @@ async function loadNextTestQuestion() {
 
 
     if (testNext) {
+
         testNext.style.display =
             "none";
+
     }
 
 
@@ -2451,7 +2411,6 @@ async function loadNextTestQuestion() {
     speakText(
         currentTestQuestion.question
     );
-
 }
 
 
@@ -2488,11 +2447,14 @@ function normalizeTestQuestion(
                     ) {
 
                         return {
+
                             value: "",
+
                             label:
                                 cleanText(
                                     option
                                 )
+
                         };
 
                     }
@@ -2531,7 +2493,7 @@ function normalizeTestQuestion(
             data.correctAnswer ||
             ""
         )
-        .toUpperCase();
+            .toUpperCase();
 
 
     if (
@@ -2595,7 +2557,6 @@ function normalizeTestQuestion(
         correctKey
 
     };
-
 }
 
 
@@ -2708,7 +2669,6 @@ function renderTestQuestion(
             "Choose the best answer.";
 
     }
-
 }
 
 
@@ -2804,7 +2764,7 @@ function answerTestQuestion(
 
 
         /*
-           🎭 CARTOON VOICE
+           CARTOON VOICE
         */
 
         playCorrectReaction();
@@ -2870,7 +2830,7 @@ function answerTestQuestion(
 
 
         /*
-           🎭 CARTOON VOICE
+           CARTOON VOICE
         */
 
         playWrongReaction();
@@ -2892,7 +2852,6 @@ function answerTestQuestion(
             "inline-flex";
 
     }
-
 }
 
 
@@ -2908,13 +2867,16 @@ if (testNext) {
 
             stopSpeech();
 
+
             loadNextTestQuestion()
                 .catch(
                     error => {
 
                         console.error(
+                            "Next question error:",
                             error
                         );
+
 
                         if (testStatus) {
 
@@ -3005,7 +2967,6 @@ function exitTest() {
     if (testProgress) {
         testProgress.textContent = "";
     }
-
 }
 
 
@@ -3116,13 +3077,12 @@ function finishTest() {
 
 
     /*
-       Final score uses the NORMAL voice.
+       Final score uses NORMAL voice.
     */
 
     speakText(
         `Test complete. You scored ${currentTestScore} out of ${currentTestLength}.`
     );
-
 }
 
 
@@ -3163,11 +3123,13 @@ console.log(
     "🚀 Mwaniki AI Tutor loaded."
 );
 
+
 console.log(
     "🔊 Natural voice:",
     selectedNaturalVoice?.name ||
     "browser default"
 );
+
 
 console.log(
     "🎭 Cartoon voice:",
@@ -3175,18 +3137,20 @@ console.log(
     "pitch fallback"
 );
 
+
 console.log(
     "🧠 Smart Test:",
     Boolean(testPanel)
 );
+
 
 console.log(
     "🔎 Google Search:",
     Boolean(webResults)
 );
 
+
 console.log(
     "🖼 Google Images:",
     Boolean(aiImages)
 );
-
