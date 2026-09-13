@@ -12,7 +12,7 @@ import { supabase } from "./supabase.js";
 //    |
 //    +---- Mwaniki Scholars database
 //    |
-//    +---- Web search
+//    +---- Public web search
 //    |
 //    +---- Web image search
 //    |
@@ -83,7 +83,9 @@ function getAskButton() {
 
 function getAnswerBox() {
 
-    return document.getElementById("aiAnswer");
+    return document.getElementById(
+        "aiAnswer"
+    );
 
 }
 
@@ -160,13 +162,16 @@ function clearResults() {
     const imagesArea =
         getImagesArea();
 
+
     if (answerBox) {
         answerBox.innerHTML = "";
     }
 
+
     if (sourcesArea) {
         sourcesArea.innerHTML = "";
     }
+
 
     if (imagesArea) {
         imagesArea.innerHTML = "";
@@ -176,7 +181,7 @@ function clearResults() {
 
 
 // ============================================================
-// STATUS
+// SEARCH STATUS
 // ============================================================
 
 function setSearchStatus(
@@ -191,11 +196,14 @@ function setSearchStatus(
         return;
     }
 
+
     status.textContent =
         safeText(message);
 
+
     status.className =
         "visible";
+
 
     if (type === "error") {
 
@@ -209,7 +217,7 @@ function setSearchStatus(
 
 
 // ============================================================
-// HIDE STATUS
+// CLEAR SEARCH STATUS
 // ============================================================
 
 function clearSearchStatus() {
@@ -221,9 +229,12 @@ function clearSearchStatus() {
         return;
     }
 
-    status.textContent = "";
 
-    status.className = "";
+    status.textContent =
+        "";
+
+    status.className =
+        "";
 
 }
 
@@ -241,35 +252,50 @@ function displayAILoading() {
         return;
     }
 
-    answerBox.innerHTML = "";
+
+    answerBox.innerHTML =
+        "";
 
 
     const wrapper =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     wrapper.className =
         "mwaniki-ai-loading";
 
 
     const title =
-        document.createElement("strong");
+        document.createElement(
+            "strong"
+        );
 
     title.textContent =
         "Searching Mwaniki Scholars and the web";
 
 
     const text =
-        document.createElement("p");
+        document.createElement(
+            "p"
+        );
 
     text.textContent =
         "Checking available learning material and preparing the search results.";
 
 
-    wrapper.appendChild(title);
+    wrapper.appendChild(
+        title
+    );
 
-    wrapper.appendChild(text);
+    wrapper.appendChild(
+        text
+    );
 
-    answerBox.appendChild(wrapper);
+
+    answerBox.appendChild(
+        wrapper
+    );
 
 }
 
@@ -287,11 +313,15 @@ function displayAIError(message) {
         return;
     }
 
-    answerBox.innerHTML = "";
+
+    answerBox.innerHTML =
+        "";
 
 
     const error =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     error.className =
         "mwaniki-ai-error";
@@ -311,19 +341,6 @@ function displayAIError(message) {
 // ============================================================
 // DISPLAY ANSWER
 // ============================================================
-//
-// The Edge Function may return:
-//
-// {
-//     answer: "...",
-//     sources: [],
-//     webResults: [],
-//     images: []
-// }
-//
-// The answer is optional because this system is primarily
-// a retrieval/search system.
-// ============================================================
 
 function displayAIAnswer(answer) {
 
@@ -334,7 +351,9 @@ function displayAIAnswer(answer) {
         return;
     }
 
-    answerBox.innerHTML = "";
+
+    answerBox.innerHTML =
+        "";
 
 
     if (
@@ -343,24 +362,31 @@ function displayAIAnswer(answer) {
     ) {
 
         const empty =
-            document.createElement("div");
+            document.createElement(
+                "div"
+            );
 
         empty.className =
             "empty-search";
 
+
         empty.textContent =
             "No direct answer was returned. Review the available search results below.";
+
 
         answerBox.appendChild(
             empty
         );
 
         return;
+
     }
 
 
     const content =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     content.className =
         "mwaniki-ai-answer-content";
@@ -389,12 +415,17 @@ function displayAIAnswer(answer) {
             paragraph => {
 
                 const p =
-                    document.createElement("p");
+                    document.createElement(
+                        "p"
+                    );
 
                 p.textContent =
                     paragraph;
 
-                content.appendChild(p);
+
+                content.appendChild(
+                    p
+                );
 
             }
         );
@@ -465,157 +496,6 @@ function getSourceType(source) {
 
 
 // ============================================================
-// RENDER SOURCES
-// ============================================================
-
-function displaySources(
-    mwanikiSources = [],
-    webResults = []
-) {
-
-    const sourcesArea =
-        getSourcesArea();
-
-    if (!sourcesArea) {
-        return;
-    }
-
-    sourcesArea.innerHTML = "";
-
-
-    const hasMwaniki =
-        Array.isArray(mwanikiSources) &&
-        mwanikiSources.length > 0;
-
-
-    const hasWeb =
-        Array.isArray(webResults) &&
-        webResults.length > 0;
-
-
-    if (
-        !hasMwaniki &&
-        !hasWeb
-    ) {
-        return;
-    }
-
-
-    if (hasMwaniki) {
-
-        const section =
-            document.createElement("div");
-
-        section.className =
-            "source-group";
-
-
-        const heading =
-            document.createElement("h4");
-
-        heading.textContent =
-            "Mwaniki Scholars material";
-
-
-        section.appendChild(
-            heading
-        );
-
-
-        const list =
-            document.createElement("div");
-
-        list.className =
-            "source-list";
-
-
-        mwanikiSources.forEach(
-            source => {
-
-                const item =
-                    createSourceElement(
-                        source,
-                        true
-                    );
-
-                list.appendChild(
-                    item
-                );
-
-            }
-        );
-
-
-        section.appendChild(
-            list
-        );
-
-        sourcesArea.appendChild(
-            section
-        );
-
-    }
-
-
-    if (hasWeb) {
-
-        const section =
-            document.createElement("div");
-
-        section.className =
-            "source-group";
-
-
-        const heading =
-            document.createElement("h4");
-
-        heading.textContent =
-            "Web results";
-
-
-        section.appendChild(
-            heading
-        );
-
-
-        const list =
-            document.createElement("div");
-
-        list.className =
-            "source-list";
-
-
-        webResults.forEach(
-            source => {
-
-                const item =
-                    createSourceElement(
-                        source,
-                        false
-                    );
-
-                list.appendChild(
-                    item
-                );
-
-            }
-        );
-
-
-        section.appendChild(
-            list
-        );
-
-        sourcesArea.appendChild(
-            section
-        );
-
-    }
-
-}
-
-
-// ============================================================
 // CREATE SOURCE ELEMENT
 // ============================================================
 
@@ -627,8 +507,10 @@ function createSourceElement(
     const url =
         getSourceURL(source);
 
+
     const title =
         getSourceTitle(source);
+
 
     const type =
         isMwaniki
@@ -674,6 +556,7 @@ function createSourceElement(
     titleElement.className =
         "source-title";
 
+
     titleElement.textContent =
         title;
 
@@ -685,6 +568,7 @@ function createSourceElement(
 
     typeElement.className =
         "source-url";
+
 
     typeElement.textContent =
         type;
@@ -700,6 +584,183 @@ function createSourceElement(
 
 
     return item;
+
+}
+
+
+// ============================================================
+// DISPLAY SOURCES
+// ============================================================
+
+function displaySources(
+    mwanikiSources = [],
+    webResults = []
+) {
+
+    const sourcesArea =
+        getSourcesArea();
+
+    if (!sourcesArea) {
+        return;
+    }
+
+
+    sourcesArea.innerHTML =
+        "";
+
+
+    const hasMwaniki =
+        Array.isArray(
+            mwanikiSources
+        ) &&
+        mwanikiSources.length > 0;
+
+
+    const hasWeb =
+        Array.isArray(
+            webResults
+        ) &&
+        webResults.length > 0;
+
+
+    if (
+        !hasMwaniki &&
+        !hasWeb
+    ) {
+
+        return;
+
+    }
+
+
+    if (hasMwaniki) {
+
+        const section =
+            document.createElement(
+                "div"
+            );
+
+        section.className =
+            "source-group";
+
+
+        const heading =
+            document.createElement(
+                "h4"
+            );
+
+        heading.textContent =
+            "Mwaniki Scholars material";
+
+
+        section.appendChild(
+            heading
+        );
+
+
+        const list =
+            document.createElement(
+                "div"
+            );
+
+        list.className =
+            "source-list";
+
+
+        mwanikiSources
+            .slice(0, 20)
+            .forEach(
+                source => {
+
+                    const item =
+                        createSourceElement(
+                            source,
+                            true
+                        );
+
+                    list.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+
+        section.appendChild(
+            list
+        );
+
+
+        sourcesArea.appendChild(
+            section
+        );
+
+    }
+
+
+    if (hasWeb) {
+
+        const section =
+            document.createElement(
+                "div"
+            );
+
+        section.className =
+            "source-group";
+
+
+        const heading =
+            document.createElement(
+                "h4"
+            );
+
+        heading.textContent =
+            "Web results";
+
+
+        section.appendChild(
+            heading
+        );
+
+
+        const list =
+            document.createElement(
+                "div"
+            );
+
+        list.className =
+            "source-list";
+
+
+        webResults
+            .slice(0, 20)
+            .forEach(
+                source => {
+
+                    const item =
+                        createSourceElement(
+                            source,
+                            false
+                        );
+
+                    list.appendChild(
+                        item
+                    );
+
+                }
+            );
+
+
+        section.appendChild(
+            list
+        );
+
+
+        sourcesArea.appendChild(
+            section
+        );
+
+    }
 
 }
 
@@ -771,26 +832,34 @@ function displayImages(images = []) {
         return;
     }
 
-    imagesArea.innerHTML = "";
+
+    imagesArea.innerHTML =
+        "";
 
 
     if (
         !Array.isArray(images) ||
         images.length === 0
     ) {
+
         return;
+
     }
 
 
     const section =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     section.className =
         "source-group";
 
 
     const heading =
-        document.createElement("h4");
+        document.createElement(
+            "h4"
+        );
 
     heading.textContent =
         "Visual results";
@@ -802,7 +871,9 @@ function displayImages(images = []) {
 
 
     const grid =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
 
     grid.className =
         "image-results";
@@ -814,7 +885,10 @@ function displayImages(images = []) {
             image => {
 
                 const imageURL =
-                    getImageURL(image);
+                    getImageURL(
+                        image
+                    );
+
 
                 if (!imageURL) {
                     return;
@@ -822,7 +896,9 @@ function displayImages(images = []) {
 
 
                 const linkURL =
-                    getImageLink(image);
+                    getImageLink(
+                        image
+                    );
 
 
                 const card =
@@ -856,11 +932,16 @@ function displayImages(images = []) {
                         "img"
                     );
 
+
                 img.src =
                     imageURL;
 
+
                 img.alt =
-                    getImageTitle(image);
+                    getImageTitle(
+                        image
+                    );
+
 
                 img.loading =
                     "lazy";
@@ -881,16 +962,21 @@ function displayImages(images = []) {
                         "div"
                     );
 
+
                 title.className =
                     "image-result-title";
 
+
                 title.textContent =
-                    getImageTitle(image);
+                    getImageTitle(
+                        image
+                    );
 
 
                 card.appendChild(
                     img
                 );
+
 
                 card.appendChild(
                     title
@@ -908,7 +994,9 @@ function displayImages(images = []) {
     if (
         grid.children.length === 0
     ) {
+
         return;
+
     }
 
 
@@ -943,11 +1031,9 @@ function saveAIQuestion(question) {
         existing.unshift({
 
             question:
-
                 String(question),
 
             timestamp:
-
                 new Date()
                     .toISOString()
 
@@ -976,17 +1062,6 @@ function saveAIQuestion(question) {
 
 // ============================================================
 // NORMALIZE EDGE FUNCTION RESPONSE
-// ============================================================
-//
-// Allows the Edge Function to return several useful fields:
-//
-// answer
-// sources
-// mwanikiSources
-// webResults
-// images
-//
-// This keeps the browser flexible while we build the backend.
 // ============================================================
 
 function normalizeResponse(data) {
@@ -1022,7 +1097,13 @@ function normalizeResponse(data) {
                     response.web_sources
                 )
                     ? response.web_sources
-                    : []
+                    : (
+                        Array.isArray(
+                            response.webResults
+                        )
+                            ? response.webResults
+                            : []
+                    )
             );
 
 
@@ -1051,9 +1132,142 @@ function normalizeResponse(data) {
 
         webResults,
 
-        images
+        images,
+
+        googleSearchUrl:
+            response.googleSearchUrl ||
+            response.google_search_url ||
+            null,
+
+        searchStatus:
+            response.searchStatus ||
+            response.search_status ||
+            null
 
     };
+
+}
+
+
+// ============================================================
+// DISPLAY GOOGLE SEARCH LINK
+// ============================================================
+//
+// This is a safe fallback while the server-side web-search
+// provider is being connected.
+//
+// It does NOT pretend that a Google result was retrieved.
+// ============================================================
+
+function displayGoogleSearchFallback(
+    googleSearchUrl,
+    question
+) {
+
+    if (!googleSearchUrl) {
+        return;
+    }
+
+
+    const sourcesArea =
+        getSourcesArea();
+
+    if (!sourcesArea) {
+        return;
+    }
+
+
+    const section =
+        document.createElement(
+            "div"
+        );
+
+    section.className =
+        "source-group";
+
+
+    const heading =
+        document.createElement(
+            "h4"
+        );
+
+    heading.textContent =
+        "Public web search";
+
+
+    section.appendChild(
+        heading
+    );
+
+
+    const link =
+        document.createElement(
+            "a"
+        );
+
+
+    link.className =
+        "source-item";
+
+
+    link.href =
+        googleSearchUrl;
+
+
+    link.target =
+        "_blank";
+
+
+    link.rel =
+        "noopener noreferrer";
+
+
+    const title =
+        document.createElement(
+            "span"
+        );
+
+
+    title.className =
+        "source-title";
+
+
+    title.textContent =
+        "Search Google for this topic";
+
+
+    const description =
+        document.createElement(
+            "span"
+        );
+
+
+    description.className =
+        "source-url";
+
+
+    description.textContent =
+        question;
+
+
+    link.appendChild(
+        title
+    );
+
+
+    link.appendChild(
+        description
+    );
+
+
+    section.appendChild(
+        link
+    );
+
+
+    sourcesArea.appendChild(
+        section
+    );
 
 }
 
@@ -1073,6 +1287,7 @@ async function askAI(
 
     const input =
         getQuestionInput();
+
 
     const button =
         getAskButton();
@@ -1250,11 +1465,13 @@ async function askAI(
 
 
         const result =
-            normalizeResponse(data);
+            normalizeResponse(
+                data
+            );
 
 
         // ----------------------------------------------------
-        // DISPLAY ANSWER / SUMMARY
+        // DISPLAY ANSWER
         // ----------------------------------------------------
 
         displayAIAnswer(
@@ -1263,7 +1480,7 @@ async function askAI(
 
 
         // ----------------------------------------------------
-        // DISPLAY SOURCES
+        // DISPLAY MWANIKI + WEB SOURCES
         // ----------------------------------------------------
 
         displaySources(
@@ -1285,7 +1502,24 @@ async function askAI(
 
 
         // ----------------------------------------------------
-        // STATUS
+        // GOOGLE FALLBACK
+        // ----------------------------------------------------
+
+        if (
+            result.googleSearchUrl &&
+            result.webResults.length === 0
+        ) {
+
+            displayGoogleSearchFallback(
+                result.googleSearchUrl,
+                question
+            );
+
+        }
+
+
+        // ----------------------------------------------------
+        // COUNTS
         // ----------------------------------------------------
 
         const totalMwaniki =
@@ -1300,18 +1534,79 @@ async function askAI(
             result.images.length;
 
 
-        setSearchStatus(
+        // ----------------------------------------------------
+        // STATUS
+        // ----------------------------------------------------
 
-            `Search complete. ` +
-            `${totalMwaniki} Mwaniki result` +
-            `${totalMwaniki === 1 ? "" : "s"}, ` +
-            `${totalWeb} web result` +
-            `${totalWeb === 1 ? "" : "s"}, ` +
-            `${totalImages} image` +
-            `${totalImages === 1 ? "" : "s"} found.`
+        if (
+            result.searchStatus &&
+            typeof result.searchStatus === "object"
+        ) {
 
-        );
+            const statusParts = [];
 
+
+            if (
+                result.searchStatus.mwaniki !== undefined
+            ) {
+
+                statusParts.push(
+                    `Mwaniki: ${result.searchStatus.mwaniki}`
+                );
+
+            }
+
+
+            if (
+                result.searchStatus.web !== undefined
+            ) {
+
+                statusParts.push(
+                    `Web: ${result.searchStatus.web}`
+                );
+
+            }
+
+
+            if (
+                result.searchStatus.images !== undefined
+            ) {
+
+                statusParts.push(
+                    `Images: ${result.searchStatus.images}`
+                );
+
+            }
+
+
+            if (
+                statusParts.length > 0
+            ) {
+
+                setSearchStatus(
+                    statusParts.join(" | ")
+                );
+
+            } else {
+
+                setSearchStatus(
+                    `Search complete. ${totalMwaniki} Mwaniki result${totalMwaniki === 1 ? "" : "s"}, ${totalWeb} web result${totalWeb === 1 ? "" : "s"}, ${totalImages} image${totalImages === 1 ? "" : "s"} found.`
+                );
+
+            }
+
+        } else {
+
+            setSearchStatus(
+                `Search complete. ${totalMwaniki} Mwaniki result${totalMwaniki === 1 ? "" : "s"}, ${totalWeb} web result${totalWeb === 1 ? "" : "s"}, ${totalImages} image${totalImages === 1 ? "" : "s"} found.`
+            );
+
+        }
+
+
+        // ----------------------------------------------------
+        // SAVE SEARCH HISTORY
+        // ----------------------------------------------------
 
         saveAIQuestion(
             question
@@ -1468,29 +1763,6 @@ function setupKeyboardShortcuts() {
 
 
 // ============================================================
-// GLOBAL ACCESS
-// ============================================================
-//
-// Older dashboard code may call:
-//
-// window.askAI()
-//
-// Newer code may call:
-//
-// window.askMwanikiAI()
-//
-// Both are preserved.
-// ============================================================
-
-window.askAI =
-    askAI;
-
-
-window.askMwanikiAI =
-    askAI;
-
-
-// ============================================================
 // INITIALIZATION
 // ============================================================
 
@@ -1502,9 +1774,22 @@ document.addEventListener(
 
         setupKeyboardShortcuts();
 
+
         console.log(
             "Mwaniki AI search interface initialized."
         );
 
     }
 );
+
+
+// ============================================================
+// GLOBAL ACCESS
+// ============================================================
+
+window.askAI =
+    askAI;
+
+
+window.askMwanikiAI =
+    askAI;
