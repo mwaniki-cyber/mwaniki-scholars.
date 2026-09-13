@@ -1,4 +1,4 @@
-```javascript
+
 import { supabase } from "./supabase.js";
 
 
@@ -1851,4 +1851,4 @@ if (savedQuestion) {
 console.log(
     "🤖 Mwaniki AI frontend loaded."
 );
-```
+
