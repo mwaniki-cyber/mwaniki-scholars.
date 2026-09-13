@@ -1,19 +1,17 @@
 import { supabase } from "./supabase.js";
 
 
-// =========================================================
+// ============================================================
 // MWANIKI SCHOLARS
-// AI TUTOR / ANSWER ENGINE / TEST ENGINE
-// =========================================================
+// MWANIKI AI FRONTEND ENGINE
+// ============================================================
 
-console.log(
-    "🚀 Mwaniki AI interface loading..."
-);
+console.log("🚀 Mwaniki AI frontend loading...");
 
 
-// =========================================================
+// ============================================================
 // DOM
-// =========================================================
+// ============================================================
 
 const questionInput =
     document.getElementById("aiQuestion");
@@ -21,52 +19,81 @@ const questionInput =
 const askButton =
     document.getElementById("askAIButton");
 
+const aiAnswer =
+    document.getElementById("aiAnswer");
+
+const aiSources =
+    document.getElementById("aiSources");
+
+const webResults =
+    document.getElementById("webResults");
+
+const aiImages =
+    document.getElementById("aiImages");
+
 const aiStatus =
     document.getElementById("aiStatus");
 
-const searchStatus =
+const aiSearchStatus =
     document.getElementById("aiSearchStatus");
 
-const answerArea =
-    document.getElementById("aiAnswer");
+const resultsGrid =
+    document.getElementById("resultsGrid");
 
-const webResultsArea =
-    document.getElementById("webResults");
-
-const imageResultsArea =
-    document.getElementById("aiImages");
+const mwanikiResultCount =
+    document.getElementById("mwanikiResultCount");
 
 const webResultCount =
     document.getElementById("webResultCount");
 
-const testBody =
-    document.getElementById("testBody");
+
+// TEST ELEMENTS
+
+const testPanel =
+    document.getElementById("testPanel");
+
+const testStatus =
+    document.getElementById("testStatus");
+
+const testQuestion =
+    document.getElementById("testQuestion");
+
+const testOptions =
+    document.getElementById("testOptions");
+
+const testFeedback =
+    document.getElementById("testFeedback");
+
+const testNext =
+    document.getElementById("testNext");
+
+const testExit =
+    document.getElementById("testExit");
 
 const testProgress =
     document.getElementById("testProgress");
 
-const startTestButton =
-    document.getElementById("startTestButton");
 
-
-// =========================================================
+// ============================================================
 // STATE
-// =========================================================
+// ============================================================
 
-let lastSearchData = null;
+let currentQuestion = "";
+
+let currentSearchData = null;
 
 let currentTest = null;
 
-let testIndex = 0;
+let currentTestIndex = 0;
 
-let testScore = 0;
+let currentTestScore = 0;
 
-let testLocked = false;
+let currentTestAnswered = false;
 
 
-// =========================================================
-// HTML SAFETY
-// =========================================================
+// ============================================================
+// HELPERS
+// ============================================================
 
 function escapeHTML(value) {
 
@@ -84,305 +111,567 @@ function safeURL(value) {
     try {
 
         const url =
-            new URL(String(value || ""));
+            new URL(String(value));
 
         if (
             url.protocol === "http:" ||
             url.protocol === "https:"
         ) {
-
             return url.href;
         }
 
-    } catch (_) {}
+    } catch {
+        return "";
+    }
 
-    return "#";
+    return "";
 }
 
 
-// =========================================================
-// TEXT CLEANING
-// =========================================================
+function shorten(text, max = 420) {
 
-function cleanText(value) {
+    const value =
+        String(text ?? "")
+            .replace(/\s+/g, " ")
+            .trim();
 
-    return String(value ?? "")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-
-function shortenText(
-    value,
-    maxLength = 420
-) {
-
-    const text =
-        cleanText(value);
-
-    if (
-        text.length <= maxLength
-    ) {
-
-        return text;
+    if (value.length <= max) {
+        return value;
     }
 
     return (
-        text.slice(0, maxLength)
-        + "…"
+        value.slice(0, max)
+            .replace(/\s+\S*$/, "")
+            .trim() +
+        "…"
     );
 }
 
 
-// =========================================================
-// STATUS
-// =========================================================
+function setStatus(text, busy = false) {
 
-function setStatus(
-    message,
-    busy = false
-) {
+    if (aiStatus) {
 
-    if (!aiStatus) {
-        return;
+        aiStatus.innerHTML = busy
+            ? `<span class="status-dot"></span> ${escapeHTML(text)}`
+            : `<span class="status-dot"></span> ${escapeHTML(text)}`;
     }
-
-    aiStatus.innerHTML = `
-
-        <span
-            class="status-dot"
-            style="
-                background:
-                ${busy ? "#d99a25" : "#1aaa83"};
-            "
-        ></span>
-
-        ${escapeHTML(message)}
-
-    `;
 }
 
 
-function setSearchStatus(message) {
+function setSearchStatus(text) {
 
-    if (!searchStatus) {
-        return;
+    if (aiSearchStatus) {
+        aiSearchStatus.textContent = text || "";
     }
-
-    searchStatus.textContent =
-        message || "";
 }
 
 
-// =========================================================
-// LOADING
-// =========================================================
+function speak(text) {
 
-function showLoading() {
-
-    answerArea.innerHTML = `
-
-        <div class="loading-state">
-
-            <div class="spinner"></div>
-
-            <strong>
-                Mwaniki AI is searching...
-            </strong>
-
-            <p>
-                Checking Mwaniki Scholars learning
-                material first.
-            </p>
-
-        </div>
-
-    `;
-
-    webResultsArea.innerHTML = `
-
-        <div class="loading-state">
-
-            Checking web results...
-
-        </div>
-
-    `;
-
-    imageResultsArea.innerHTML = `
-
-        <div
-            class="loading-state"
-            style="grid-column:1/-1;"
-        >
-
-            Searching visual material...
-
-        </div>
-
-    `;
-}
-
-
-// =========================================================
-// INVOKE WITH TIMEOUT
-// =========================================================
-
-async function invokeWithTimeout(
-    promise,
-    timeoutMs
-) {
-
-    let timeoutId;
-
-    const timeoutPromise =
-        new Promise(
-            (_, reject) => {
-
-                timeoutId =
-                    setTimeout(
-                        () => {
-
-                            reject(
-                                new Error(
-                                    "The search timed out."
-                                )
-                            );
-
-                        },
-                        timeoutMs
-                    );
-
-            }
-        );
+    if (
+        !("speechSynthesis" in window)
+    ) {
+        return false;
+    }
 
     try {
 
-        return await Promise.race([
-            promise,
-            timeoutPromise
-        ]);
+        window.speechSynthesis.cancel();
 
-    } finally {
+        const utterance =
+            new SpeechSynthesisUtterance(
+                String(text || "")
+            );
 
-        clearTimeout(timeoutId);
+        utterance.rate = 0.95;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        window.speechSynthesis.speak(
+            utterance
+        );
+
+        return true;
+
+    } catch (error) {
+
+        console.warn(
+            "Speech synthesis failed:",
+            error
+        );
+
+        return false;
     }
 }
 
 
-// =========================================================
-// ANSWER RENDERING
-// =========================================================
+function stopSpeech() {
+
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+    }
+}
+
+
+// ============================================================
+// AUTH
+// ============================================================
+
+async function getAccessToken() {
+
+    const {
+        data,
+        error
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        throw error;
+    }
+
+    const session =
+        data?.session;
+
+    if (!session?.access_token) {
+
+        throw new Error(
+            "Your student session has expired. Please sign in again."
+        );
+    }
+
+    return session.access_token;
+}
+
+
+// ============================================================
+// ANSWER NORMALIZATION
+// ============================================================
+
+function getAnswerParagraphs(answer) {
+
+    if (!answer) {
+        return [];
+    }
+
+
+    if (
+        Array.isArray(answer.paragraphs)
+    ) {
+
+        return answer.paragraphs
+            .map(item =>
+                String(item || "").trim()
+            )
+            .filter(Boolean);
+    }
+
+
+    if (
+        typeof answer === "string"
+    ) {
+
+        return answer
+            .split(/\n+/)
+            .map(item =>
+                item.trim()
+            )
+            .filter(Boolean);
+    }
+
+
+    if (
+        answer.explanation
+    ) {
+
+        return [
+            String(
+                answer.explanation
+            )
+        ];
+    }
+
+
+    return [];
+}
+
+
+// ============================================================
+// RENDER ANSWER
+// ============================================================
 
 function renderMwanikiAnswer(data) {
+
+    if (!aiAnswer) {
+        return;
+    }
+
 
     const answer =
         data?.answer;
 
-    if (
-        !answer ||
-        !cleanText(
-            typeof answer === "string"
-                ? answer
-                : answer.text
+
+    const paragraphs =
+        getAnswerParagraphs(
+            answer
+        );
+
+
+    const keyPoints =
+        Array.isArray(
+            answer?.keyPoints
         )
+            ? answer.keyPoints
+            : [];
+
+
+    const title =
+        answer?.title ||
+        "Mwaniki Scholars answer";
+
+
+    const confidence =
+        answer?.confidence ||
+        "internal";
+
+
+    if (
+        !paragraphs.length &&
+        !keyPoints.length
     ) {
 
-        answerArea.innerHTML = `
-
-            <div class="empty-state">
-
-                Mwaniki Scholars does not currently
-                contain a usable answer for this question.
-
-                <br><br>
-
-                The web search has been opened on the
-                right-hand side instead.
-
+        aiAnswer.innerHTML = `
+            <div class="empty">
+                Mwaniki AI could not build a reliable
+                answer from the returned material.
+                The available web search results are
+                shown alongside this panel.
             </div>
-
         `;
 
         return;
     }
 
 
-    const answerText =
-        typeof answer === "string"
-            ? answer
-            : answer.text;
-
-
-    const title =
-        typeof answer === "object"
-            ? answer.title
-            : "Answer";
-
-
     const sourceLabel =
-        typeof answer === "object"
-            ? answer.sourceLabel
-            : "Mwaniki Scholars";
+        confidence === "web"
+            ? "Web-backed"
+            : "Mwaniki material";
 
 
-    const paragraphs =
-        String(answerText)
-            .split(/\n+/)
-            .map(
-                part => cleanText(part)
-            )
-            .filter(Boolean);
+    let html = `
 
+        <div class="answer-meta">
 
-    answerArea.innerHTML = `
+            <span class="answer-tag">
+                ${escapeHTML(sourceLabel)}
+            </span>
 
-        <span class="source-badge">
-
-            ${escapeHTML(sourceLabel)}
-
-        </span>
-
-        <h2 class="answer-title">
-
-            ${escapeHTML(
-                title || "Medical Answer"
-            )}
-
-        </h2>
-
-        <p class="answer-subtitle">
-
-            Retrieved from Mwaniki Scholars
-            learning material.
-
-        </p>
-
-        <div class="answer-content">
-
-            ${paragraphs
-                .map(
-                    paragraph =>
-                        `<p>${escapeHTML(
-                            paragraph
-                        )}</p>`
-                )
-                .join("")}
+            <span class="answer-tag">
+                Source-backed
+            </span>
 
         </div>
 
+        <h3>
+            ${escapeHTML(title)}
+        </h3>
     `;
+
+
+    paragraphs.forEach(
+        paragraph => {
+
+            html += `
+                <p>
+                    ${escapeHTML(
+                        paragraph
+                    )}
+                </p>
+            `;
+        }
+    );
+
+
+    if (keyPoints.length) {
+
+        html += `
+            <strong>
+                Key points
+            </strong>
+
+            <ul>
+        `;
+
+
+        keyPoints.forEach(
+            point => {
+
+                html += `
+                    <li>
+                        ${escapeHTML(point)}
+                    </li>
+                `;
+            }
+        );
+
+
+        html += `
+            </ul>
+        `;
+    }
+
+
+    html += `
+
+        <div class="audio-controls">
+
+            <button
+                type="button"
+                class="audio-button"
+                id="readAnswerButton"
+            >
+                🔊 Read answer aloud
+            </button>
+
+            <button
+                type="button"
+                class="audio-button"
+                id="stopAudioButton"
+            >
+                ⏹ Stop audio
+            </button>
+
+            <button
+                type="button"
+                class="test-button"
+                id="startTestButton"
+            >
+                🧠 Test me on this topic
+            </button>
+
+        </div>
+    `;
+
+
+    aiAnswer.innerHTML =
+        html;
+
+
+    const readButton =
+        document.getElementById(
+            "readAnswerButton"
+        );
+
+
+    const stopButton =
+        document.getElementById(
+            "stopAudioButton"
+        );
+
+
+    const startTestButton =
+        document.getElementById(
+            "startTestButton"
+        );
+
+
+    readButton?.addEventListener(
+        "click",
+        () => {
+
+            const text =
+                [
+                    title,
+                    ...paragraphs,
+                    ...keyPoints
+                ].join(". ");
+
+            speak(text);
+        }
+    );
+
+
+    stopButton?.addEventListener(
+        "click",
+        stopSpeech
+    );
+
+
+    startTestButton?.addEventListener(
+        "click",
+        () => {
+
+            startGeneratedTest(
+                currentQuestion
+            );
+        }
+    );
 }
 
 
-// =========================================================
-// WEB RESULTS
-// =========================================================
+// ============================================================
+// RENDER SOURCES
+// ============================================================
 
-function renderWebResults(
-    data,
-    question
-) {
+function renderMwanikiSources(data) {
+
+    if (!aiSources) {
+        return;
+    }
+
+
+    const sources =
+        Array.isArray(
+            data?.mwanikiSources
+        )
+            ? data.mwanikiSources
+            : [];
+
+
+    if (!sources.length) {
+
+        aiSources.innerHTML = `
+            <div class="empty">
+                No internal Mwaniki source cards were
+                returned for this question.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const unique =
+        sources.filter(
+            (source, index, array) => {
+
+                const key =
+                    [
+                        source?.type,
+                        source?.id,
+                        source?.title
+                    ]
+                    .join("|");
+
+                return (
+                    index ===
+                    array.findIndex(
+                        item =>
+                            [
+                                item?.type,
+                                item?.id,
+                                item?.title
+                            ]
+                            .join("|") === key
+                    )
+                );
+            }
+        );
+
+
+    let html = `
+
+        <div class="result-title">
+
+            <h3>
+                Mwaniki Sources
+            </h3>
+
+        </div>
+
+        <div class="source-list">
+    `;
+
+
+    unique.slice(0, 12).forEach(
+        source => {
+
+            const title =
+                source?.title ||
+                source?.name ||
+                "Mwaniki source";
+
+
+            const type =
+                source?.type ||
+                "Learning material";
+
+
+            const description =
+                source?.description ||
+                source?.snippet ||
+                source?.content ||
+                "";
+
+
+            const url =
+                safeURL(
+                    source?.url ||
+                    source?.file_url
+                );
+
+
+            html += `
+
+                <article class="source-item">
+
+                    <strong>
+                        ${escapeHTML(title)}
+                    </strong>
+
+                    <small>
+                        ${escapeHTML(type)}
+                        ${description
+                            ? " • " +
+                              escapeHTML(
+                                  shorten(
+                                      description,
+                                      220
+                                  )
+                              )
+                            : ""}
+                    </small>
+
+                    ${
+                        url
+                            ? `
+                                <a
+                                    href="${escapeHTML(url)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Open source →
+                                </a>
+                              `
+                            : ""
+                    }
+
+                </article>
+            `;
+        }
+    );
+
+
+    html += `
+        </div>
+    `;
+
+
+    aiSources.innerHTML =
+        html;
+}
+
+
+// ============================================================
+// WEB RESULTS
+// ============================================================
+
+function renderWebResults(data) {
+
+    if (!webResults) {
+        return;
+    }
+
 
     const results =
         Array.isArray(
@@ -392,166 +681,160 @@ function renderWebResults(
             : [];
 
 
-    const googleURL =
-        safeURL(
-            data?.googleSearchUrl
-            || (
-                "https://www.google.com/search?q="
-                + encodeURIComponent(question)
-            )
-        );
-
-
-    if (webResultCount) {
+    if (
+        webResultCount
+    ) {
 
         webResultCount.textContent =
-            results.length
-                ? `${results.length} results`
-                : "Google fallback";
+            `${results.length} result${results.length === 1 ? "" : "s"}`;
     }
 
 
     if (!results.length) {
 
-        webResultsArea.innerHTML = `
+        const googleURL =
+            safeURL(
+                data?.googleSearchUrl
+            );
 
-            <div class="empty-state">
 
-                <strong>
-                    Search results are available.
-                </strong>
+        webResults.innerHTML = `
 
-                <p>
-                    Mwaniki Scholars did not return a
-                    usable internal answer, so continue
-                    with Google search for:
-                </p>
+            <div class="empty">
 
-                <strong>
-                    ${escapeHTML(question)}
-                </strong>
+                No configured web-search provider returned
+                result cards for this question.
 
-                <div class="google-fallback">
+                ${
+                    googleURL
+                        ? `
+                            <br><br>
 
-                    <p>
-                        Open the full Google results
-                        directly for this question.
-                    </p>
-
-                    <a
-                        class="google-button"
-                        href="${googleURL}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        🔎 Search Google
-                    </a>
-
-                </div>
+                            <a
+                                class="see-more"
+                                href="${escapeHTML(googleURL)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                🔎 Search Google directly →
+                            </a>
+                          `
+                        : ""
+                }
 
             </div>
-
         `;
 
         return;
     }
 
 
-    webResultsArea.innerHTML = `
-
-        ${results
-            .map(
-                result => {
-
-                    const title =
-                        cleanText(
-                            result?.title
-                            || result?.name
-                            || "Web result"
-                        );
-
-                    const url =
-                        safeURL(
-                            result?.url
-                            || result?.link
-                            || result?.href
-                        );
-
-                    const snippet =
-                        shortenText(
-                            result?.snippet
-                            || result?.description
-                            || result?.text
-                            || "",
-                            500
-                        );
+    let html = "";
 
 
-                    return `
+    results.slice(0, 10).forEach(
+        result => {
 
-                        <article
-                            class="web-result"
-                        >
+            const title =
+                result?.title ||
+                result?.name ||
+                "Web result";
 
-                            <a
-                                href="${url}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                ${escapeHTML(title)}
-                            </a>
 
-                            <div
-                                class="web-result-url"
-                            >
-                                ${escapeHTML(
-                                    url === "#"
-                                        ? ""
-                                        : url
-                                )}
-                            </div>
+            const description =
+                result?.description ||
+                result?.snippet ||
+                result?.text ||
+                "";
 
-                            <div
-                                class="web-result-snippet"
-                            >
-                                ${escapeHTML(
-                                    snippet
-                                )}
-                            </div>
 
-                        </article>
+            const url =
+                safeURL(
+                    result?.url ||
+                    result?.link
+                );
 
-                    `;
-                }
-            )
-            .join("")}
 
-        <div class="google-fallback">
+            html += `
 
-            <p>
-                Want the complete Google search?
-            </p>
+                <article class="web-item">
+
+                    <h4>
+                        ${escapeHTML(title)}
+                    </h4>
+
+                    ${
+                        description
+                            ? `
+                                <p>
+                                    ${escapeHTML(
+                                        shorten(
+                                            description,
+                                            430
+                                        )
+                                    )}
+                                </p>
+                              `
+                            : ""
+                    }
+
+                    ${
+                        url
+                            ? `
+                                <a
+                                    href="${escapeHTML(url)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Read source →
+                                </a>
+                              `
+                            : ""
+                    }
+
+                </article>
+            `;
+        }
+    );
+
+
+    const googleURL =
+        safeURL(
+            data?.googleSearchUrl
+        );
+
+
+    if (googleURL) {
+
+        html += `
 
             <a
-                class="google-button"
-                href="${googleURL}"
+                class="see-more"
+                href="${escapeHTML(googleURL)}"
                 target="_blank"
                 rel="noopener noreferrer"
             >
-                🔎 Open Google Results
+                🔎 See more Google results →
             </a>
+        `;
+    }
 
-        </div>
 
-    `;
+    webResults.innerHTML =
+        html;
 }
 
 
-// =========================================================
+// ============================================================
 // IMAGE RESULTS
-// =========================================================
+// ============================================================
 
 function renderImages(data) {
+
+    if (!aiImages) {
+        return;
+    }
+
 
     const images =
         Array.isArray(
@@ -563,567 +846,656 @@ function renderImages(data) {
 
     if (!images.length) {
 
-        imageResultsArea.innerHTML = `
-
-            <div
-                class="empty-state"
-                style="grid-column:1/-1;"
-            >
-
-                No visual results were returned yet.
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    imageResultsArea.innerHTML =
-        images
-            .slice(0, 12)
-            .map(
-                image => {
-
-                    const imageURL =
-                        safeURL(
-                            image?.url
-                            || image?.image
-                            || image?.thumbnail
-                        );
-
-                    const title =
-                        cleanText(
-                            image?.title
-                            || "Medical visual"
-                        );
-
-
-                    if (
-                        imageURL === "#"
-                    ) {
-
-                        return "";
-                    }
-
-
-                    return `
-
-                        <a
-                            class="image-result"
-                            href="${imageURL}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-
-                            <img
-                                src="${imageURL}"
-                                alt="${escapeHTML(title)}"
-                                loading="lazy"
-                                onerror="
-                                    this.parentElement
-                                        .remove();
-                                "
-                            >
-
-                            <span>
-                                ${escapeHTML(title)}
-                            </span>
-
-                        </a>
-
-                    `;
-                }
-            )
-            .join("");
-}
-
-
-// =========================================================
-// QUIZ DATA
-// =========================================================
-
-function getQuizQuestions(data) {
-
-    const quizzes =
-        Array.isArray(
-            data?.quizQuestions
-        )
-            ? data.quizQuestions
-            : [];
-
-
-    return quizzes
-        .map(
-            quiz => {
-
-                const options = {
-
-                    A:
-                        cleanText(
-                            quiz?.option_a
-                        ),
-
-                    B:
-                        cleanText(
-                            quiz?.option_b
-                        ),
-
-                    C:
-                        cleanText(
-                            quiz?.option_c
-                        ),
-
-                    D:
-                        cleanText(
-                            quiz?.option_d
-                        )
-
-                };
-
-
-                let correct =
-                    cleanText(
-                        quiz?.correct_answer
-                    );
-
-
-                correct =
-                    correct
-                        .toUpperCase()
-                        .replace(
-                            /OPTION\s+/,
-                            ""
-                        )
-                        .trim();
-
-
-                if (
-                    !["A","B","C","D"]
-                        .includes(correct)
-                ) {
-
-                    const matching =
-                        Object.entries(options)
-                            .find(
-                                ([, value]) =>
-                                    value &&
-                                    value.toLowerCase()
-                                        ===
-                                    correct.toLowerCase()
-                            );
-
-                    if (matching) {
-
-                        correct =
-                            matching[0];
-                    }
-                }
-
-
-                if (
-                    !quiz?.question ||
-                    !options.A ||
-                    !options.B ||
-                    !options.C ||
-                    !options.D ||
-                    !["A","B","C","D"]
-                        .includes(correct)
-                ) {
-
-                    return null;
-                }
-
-
-                return {
-
-                    question:
-                        cleanText(
-                            quiz.question
-                        ),
-
-                    options,
-
-                    correct,
-
-                    explanation:
-                        cleanText(
-                            quiz.explanation
-                            || quiz.answer_explanation
-                            || ""
-                        )
-
-                };
-            }
-        )
-        .filter(Boolean);
-}
-
-
-// =========================================================
-// TEST ENGINE
-// =========================================================
-
-function startTest() {
-
-    if (!lastSearchData) {
-
-        testBody.innerHTML = `
-
-            <div class="empty-state">
-
-                Ask Mwaniki AI a question first.
-                Then I can build a test from the
-                relevant material.
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    const questions =
-        getQuizQuestions(
-            lastSearchData
-        );
-
-
-    if (!questions.length) {
-
-        testBody.innerHTML = `
-
-            <div class="empty-state">
-
-                I found the study material, but there
-                are no compatible quiz questions for
-                this topic yet.
-
-                <br><br>
-
-                Add questions to the Supabase
-                <strong>quizzes</strong> table and
-                Mwaniki AI will use them here.
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    currentTest =
-        questions
-            .sort(
-                () => Math.random() - 0.5
+        const googleImageURL =
+            safeURL(
+                data?.googleImageSearchUrl
             );
 
 
-    testIndex = 0;
+        aiImages.innerHTML = `
 
-    testScore = 0;
+            <div class="empty">
 
-    testLocked = false;
+                No configured image-search provider
+                returned an image card yet.
 
-    renderCurrentQuestion();
-}
+                ${
+                    googleImageURL
+                        ? `
+                            <br><br>
 
+                            <a
+                                class="see-more"
+                                href="${escapeHTML(googleImageURL)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                🖼 See more images on Google →
+                            </a>
+                          `
+                        : ""
+                }
 
-function renderCurrentQuestion() {
-
-    if (
-        !currentTest ||
-        testIndex >= currentTest.length
-    ) {
-
-        finishTest();
+            </div>
+        `;
 
         return;
     }
 
 
-    const question =
-        currentTest[testIndex];
+    let html = `
 
-
-    testLocked = false;
-
-
-    if (testProgress) {
-
-        testProgress.textContent =
-            `Question ${
-                testIndex + 1
-            } of ${
-                currentTest.length
-            }`;
-    }
-
-
-    testBody.innerHTML = `
-
-        <div class="quiz-question">
-
-            ${escapeHTML(
-                question.question
-            )}
-
-        </div>
-
-
-        <div class="quiz-options">
-
-            ${["A","B","C","D"]
-                .map(
-                    letter => `
-
-                        <button
-                            type="button"
-                            class="quiz-option"
-                            data-answer="${letter}"
-                        >
-
-                            <span
-                                class="option-letter"
-                            >
-                                ${letter}
-                            </span>
-
-                            <span>
-                                ${escapeHTML(
-                                    question.options[
-                                        letter
-                                    ]
-                                )}
-                            </span>
-
-                        </button>
-
-                    `
-                )
-                .join("")}
-
-        </div>
-
+        <div class="image-gallery">
     `;
 
 
-    testBody
-        .querySelectorAll(
-            ".quiz-option"
+    images
+        .filter(
+            image =>
+                safeURL(
+                    image?.image_url ||
+                    image?.url ||
+                    image?.thumbnail
+                )
         )
+        .slice(0, 4)
         .forEach(
-            button => {
+            image => {
 
-                button.addEventListener(
-                    "click",
-                    () => {
+                const imageURL =
+                    safeURL(
+                        image?.image_url ||
+                        image?.url ||
+                        image?.thumbnail
+                    );
 
-                        checkAnswer(
-                            button.dataset.answer
-                        );
 
-                    }
-                );
+                const pageURL =
+                    safeURL(
+                        image?.source_url ||
+                        image?.page_url ||
+                        image?.link
+                    );
 
+
+                const title =
+                    image?.title ||
+                    image?.name ||
+                    "Medical visual";
+
+
+                html += `
+
+                    <article class="image-card">
+
+                        <img
+                            src="${escapeHTML(imageURL)}"
+                            alt="${escapeHTML(title)}"
+                            loading="lazy"
+                            onerror="this.closest('.image-card').remove();"
+                        >
+
+                        <div class="image-card-body">
+
+                            ${
+                                pageURL
+                                    ? `
+                                        <a
+                                            href="${escapeHTML(pageURL)}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            ${escapeHTML(
+                                                shorten(
+                                                    title,
+                                                    90
+                                                )
+                                            )}
+                                        </a>
+                                      `
+                                    : `
+                                        <span>
+                                            ${escapeHTML(
+                                                shorten(
+                                                    title,
+                                                    90
+                                                )
+                                            )}
+                                        </span>
+                                      `
+                            }
+
+                        </div>
+
+                    </article>
+                `;
             }
         );
+
+
+    html += `
+        </div>
+    `;
+
+
+    const googleImageURL =
+        safeURL(
+            data?.googleImageSearchUrl
+        );
+
+
+    if (googleImageURL) {
+
+        html += `
+
+            <a
+                class="see-more"
+                href="${escapeHTML(googleImageURL)}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                🖼 See more images →
+            </a>
+        `;
+    }
+
+
+    aiImages.innerHTML =
+        html;
 }
 
 
-// =========================================================
-// CHECK ANSWER
-// =========================================================
+// ============================================================
+// TEST GENERATION
+// ============================================================
 
-function checkAnswer(selected) {
+async function requestGeneratedTest(
+    topic
+) {
 
-    if (testLocked) {
+    const token =
+        await getAccessToken();
+
+
+    const controller =
+        new AbortController();
+
+
+    const timeout =
+        setTimeout(
+            () => controller.abort(),
+            25000
+        );
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.functions.invoke(
+                "mwaniki-ai",
+                {
+                    body: {
+                        question: topic,
+                        mode: "test",
+                        testTopic: topic,
+                        searchMwaniki: true,
+                        searchWeb: true,
+                        searchImages: false
+                    },
+                    headers: {
+                        Authorization:
+                            `Bearer ${token}`
+                    }
+                }
+            );
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        return data;
+
+    } finally {
+
+        clearTimeout(timeout);
+    }
+}
+
+
+// ============================================================
+// START TEST
+// ============================================================
+
+async function startGeneratedTest(
+    topic
+) {
+
+    if (!topic) {
         return;
     }
 
 
-    testLocked = true;
+    stopSpeech();
 
 
-    const question =
-        currentTest[testIndex];
+    testPanel.style.display =
+        "block";
 
 
-    const isCorrect =
-        selected === question.correct;
+    testQuestion.textContent =
+        "Building your test from the study material...";
+
+
+    testOptions.innerHTML =
+        "";
+
+
+    testFeedback.style.display =
+        "none";
+
+
+    testNext.style.display =
+        "none";
+
+
+    testStatus.textContent =
+        "Generating questions from the retrieved material...";
+
+
+    try {
+
+        const data =
+            await requestGeneratedTest(
+                topic
+            );
+
+
+        const questions =
+            Array.isArray(
+                data?.test?.questions
+            )
+                ? data.test.questions
+                : [];
+
+
+        if (!questions.length) {
+
+            testQuestion.textContent =
+                "I could not generate a reliable test from the retrieved material.";
+
+
+            testStatus.textContent =
+                "Try a more specific medical topic.";
+
+
+            return;
+        }
+
+
+        currentTest = questions;
+
+        currentTestIndex = 0;
+
+        currentTestScore = 0;
+
+        renderCurrentTestQuestion();
+
+        testPanel.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    } catch (error) {
+
+        console.error(
+            "Test generation failed:",
+            error
+        );
+
+
+        testQuestion.textContent =
+            "The test could not be generated right now.";
+
+
+        testStatus.textContent =
+            error?.message ||
+            "Please try again.";
+    }
+}
+
+
+// ============================================================
+// RENDER TEST QUESTION
+// ============================================================
+
+function renderCurrentTestQuestion() {
+
+    if (
+        !currentTest ||
+        !currentTest.length
+    ) {
+        return;
+    }
+
+
+    const item =
+        currentTest[
+            currentTestIndex
+        ];
+
+
+    currentTestAnswered =
+        false;
+
+
+    testProgress.textContent =
+        `Question ${currentTestIndex + 1} of ${currentTest.length}`;
+
+
+    testQuestion.textContent =
+        item.question ||
+        "Question unavailable.";
+
+
+    testOptions.innerHTML =
+        "";
+
+
+    testFeedback.style.display =
+        "none";
+
+
+    testNext.style.display =
+        "none";
+
+
+    testStatus.textContent =
+        "";
+
+
+    const options =
+        Array.isArray(
+            item.options
+        )
+            ? item.options
+            : [];
+
+
+    options.forEach(
+        option => {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "test-option";
+
+
+            button.textContent =
+                `${option.key || ""}. ${option.text || ""}`;
+
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    handleTestAnswer(
+                        item,
+                        option,
+                        button
+                    );
+                }
+            );
+
+
+            testOptions.appendChild(
+                button
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// ANSWER TEST QUESTION
+// ============================================================
+
+function handleTestAnswer(
+    item,
+    selectedOption,
+    selectedButton
+) {
+
+    if (currentTestAnswered) {
+        return;
+    }
+
+
+    currentTestAnswered =
+        true;
 
 
     const buttons =
-        testBody.querySelectorAll(
-            ".quiz-option"
+        testOptions.querySelectorAll(
+            ".test-option"
         );
 
 
     buttons.forEach(
         button => {
-
             button.disabled = true;
+        }
+    );
 
 
-            if (
-                button.dataset.answer
-                ===
-                question.correct
-            ) {
+    const correctKey =
+        String(
+            item.correctKey || ""
+        )
+            .trim()
+            .toUpperCase();
+
+
+    const selectedKey =
+        String(
+            selectedOption.key || ""
+        )
+            .trim()
+            .toUpperCase();
+
+
+    const correct =
+        selectedKey === correctKey;
+
+
+    buttons.forEach(
+        button => {
+
+            const key =
+                button.textContent
+                    .split(".")[0]
+                    .trim()
+                    .toUpperCase();
+
+
+            if (key === correctKey) {
 
                 button.classList.add(
                     "correct"
                 );
             }
-
-
-            if (
-                button.dataset.answer
-                ===
-                selected &&
-                !isCorrect
-            ) {
-
-                button.classList.add(
-                    "wrong"
-                );
-            }
-
         }
     );
 
 
-    if (isCorrect) {
+    if (!correct) {
 
-        testScore++;
-
-
-        testBody.insertAdjacentHTML(
-            "beforeend",
-            `
-
-                <div class="quiz-feedback correct">
-
-                    🎉 <strong>Correct!</strong>
-
-                    Nice work, Scholar.
-
-                </div>
-
-                <button
-                    type="button"
-                    class="next-question-button"
-                    id="nextQuestionButton"
-                >
-                    Next Question →
-                </button>
-
-            `
+        selectedButton.classList.add(
+            "wrong"
         );
 
+
+        currentTestScore =
+            currentTestScore;
+
+
+        const correctAnswer =
+            item.correctAnswer ||
+            "the correct answer";
+
+
+        const explanation =
+            item.explanation ||
+            "Review the explanation in the study material.";
+
+
+        testFeedback.innerHTML = `
+
+            <div class="test-feedback-wrong">
+
+                <strong>
+                    😂 What the heck did you just say?
+                </strong>
+
+                <p>
+                    Your answer was not the best choice.
+                </p>
+
+                <p>
+                    <strong>
+                        Correct answer:
+                    </strong>
+
+                    ${escapeHTML(
+                        correctAnswer
+                    )}
+                </p>
+
+                <p>
+                    ${escapeHTML(
+                        explanation
+                    )}
+                </p>
+
+            </div>
+        `;
+
+
         speak(
-            "Correct! Nice work, Scholar."
+            `What the heck did you just say? The correct answer is ${correctAnswer}. ${explanation}`
         );
 
     } else {
 
-        const correctText =
-            question.options[
-                question.correct
-            ];
+        currentTestScore++;
 
 
-        const joke =
-            "What the heck did you just say? 😄";
+        const explanation =
+            item.explanation ||
+            "That matches the retrieved study material.";
 
 
-        testBody.insertAdjacentHTML(
-            "beforeend",
-            `
+        testFeedback.innerHTML = `
 
-                <div class="quiz-feedback wrong">
+            <div class="test-feedback-correct">
 
-                    😄 <strong>
-                        ${escapeHTML(joke)}
-                    </strong>
+                <strong>
+                    ✅ Correct. Well done!
+                </strong>
 
-                    <div class="quiz-answer">
+                <p>
+                    ${escapeHTML(
+                        explanation
+                    )}
+                </p>
 
-                        <strong>
-                            Correct answer:
-                        </strong>
-
-                        ${question.correct} —
-                        ${escapeHTML(
-                            correctText
-                        )}
-
-                        ${
-                            question.explanation
-                                ? `
-                                    <br><br>
-                                    <strong>
-                                        Explanation:
-                                    </strong>
-                                    ${escapeHTML(
-                                        question.explanation
-                                    )}
-                                  `
-                                : ""
-                        }
-
-                    </div>
-
-                </div>
-
-                <button
-                    type="button"
-                    class="next-question-button"
-                    id="nextQuestionButton"
-                >
-                    Show Next Question →
-                </button>
-
-            `
-        );
+            </div>
+        `;
 
 
         speak(
-            joke
+            `Correct. Well done. ${explanation}`
         );
     }
 
 
-    const nextButton =
-        document.getElementById(
-            "nextQuestionButton"
-        );
+    testFeedback.style.display =
+        "block";
 
 
-    if (nextButton) {
+    if (
+        currentTestIndex <
+        currentTest.length - 1
+    ) {
 
-        nextButton.addEventListener(
-            "click",
-            () => {
+        testNext.style.display =
+            "inline-block";
 
-                testIndex++;
+    } else {
 
-                renderCurrentQuestion();
+        testNext.style.display =
+            "inline-block";
 
-            }
-        );
+        testNext.textContent =
+            "Finish Test →";
     }
 }
 
 
-// =========================================================
+// ============================================================
+// NEXT TEST QUESTION
+// ============================================================
+
+testNext?.addEventListener(
+    "click",
+    () => {
+
+        if (
+            !currentTest ||
+            !currentTest.length
+        ) {
+            return;
+        }
+
+
+        if (
+            currentTestIndex >=
+            currentTest.length - 1
+        ) {
+
+            finishTest();
+
+            return;
+        }
+
+
+        currentTestIndex++;
+
+        renderCurrentTestQuestion();
+    }
+);
+
+
+// ============================================================
 // FINISH TEST
-// =========================================================
+// ============================================================
 
 function finishTest() {
+
+    stopSpeech();
+
 
     const total =
         currentTest?.length || 0;
@@ -1132,137 +1504,112 @@ function finishTest() {
     const percentage =
         total
             ? Math.round(
-                (testScore / total) * 100
+                (
+                    currentTestScore /
+                    total
+                ) * 100
             )
             : 0;
 
 
-    if (testProgress) {
-
-        testProgress.textContent =
-            "Finished";
-    }
+    testProgress.textContent =
+        "Complete";
 
 
-    testBody.innerHTML = `
+    testQuestion.innerHTML = `
 
-        <div class="empty-state">
+        <strong>
+            Test complete.
+        </strong>
 
-            <h3>
-                Test complete 🎓
-            </h3>
+        <br><br>
 
-            <p>
-
-                You scored
-
-                <strong>
-                    ${testScore}/${total}
-                </strong>
-
-                (${percentage}%).
-
-            </p>
-
-
-            <button
-                type="button"
-                class="start-test-button"
-                id="restartTestButton"
-            >
-                Try Again
-            </button>
-
-        </div>
+        You scored
+        ${currentTestScore}
+        out of
+        ${total}
+        (${percentage}%).
 
     `;
 
 
-    speak(
-        `Test complete. You scored ${testScore} out of ${total}.`
-    );
+    testOptions.innerHTML =
+        "";
 
 
-    const restart =
-        document.getElementById(
-            "restartTestButton"
-        );
+    testFeedback.style.display =
+        "block";
 
 
-    if (restart) {
+    testFeedback.innerHTML = `
 
-        restart.addEventListener(
-            "click",
-            startTest
-        );
-    }
+        <div class="test-feedback-correct">
+
+            <strong>
+                🧠 Mwaniki AI assessment
+            </strong>
+
+            <p>
+                ${percentage >= 70
+                    ? "Good work. Keep strengthening the topic."
+                    : "Keep studying the topic and try another test."}
+            </p>
+
+        </div>
+    `;
+
+
+    testNext.style.display =
+        "none";
+
+
+    testStatus.textContent =
+        "You can close this test and ask Mwaniki AI another question.";
 }
 
 
-// =========================================================
-// TEXT TO SPEECH
-// =========================================================
+// ============================================================
+// EXIT TEST
+// ============================================================
 
-function speak(text) {
+testExit?.addEventListener(
+    "click",
+    () => {
 
-    try {
+        stopSpeech();
 
-        if (
-            !("speechSynthesis" in window)
-        ) {
+        testPanel.style.display =
+            "none";
 
-            return;
-        }
+        currentTest =
+            null;
 
+        currentTestIndex =
+            0;
 
-        window.speechSynthesis.cancel();
-
-
-        const utterance =
-            new SpeechSynthesisUtterance(
-                text
-            );
-
-
-        utterance.rate = 0.95;
-
-        utterance.pitch = 1.05;
-
-        utterance.volume = 1;
-
-
-        window.speechSynthesis.speak(
-            utterance
-        );
-
-    } catch (error) {
-
-        console.warn(
-            "Speech synthesis unavailable:",
-            error
-        );
+        currentTestScore =
+            0;
     }
-}
+);
 
 
-// =========================================================
-// MAIN SEARCH
-// =========================================================
+// ============================================================
+// SEARCH
+// ============================================================
 
-async function performSearch() {
+async function searchMwanikiAI(
+    question
+) {
 
-    const question =
-        cleanText(
-            questionInput?.value
-        );
+    const cleanQuestion =
+        String(question || "")
+            .trim();
 
 
-    if (
-        question.length < 2
-    ) {
+    if (!cleanQuestion) {
 
         setSearchStatus(
-            "Please enter a medical question."
+            "Type a medical question first."
         );
 
         return;
@@ -1270,7 +1617,8 @@ async function performSearch() {
 
 
     if (
-        question.length > 2000
+        cleanQuestion.length >
+        2000
     ) {
 
         setSearchStatus(
@@ -1281,30 +1629,86 @@ async function performSearch() {
     }
 
 
-    askButton.disabled = true;
+    currentQuestion =
+        cleanQuestion;
+
+
+    stopSpeech();
+
+
+    askButton.disabled =
+        true;
+
 
     setStatus(
-        "Searching",
+        "Searching...",
         true
     );
+
 
     setSearchStatus(
         "Searching Mwaniki Scholars learning material..."
     );
 
-    showLoading();
+
+    resultsGrid.style.display =
+        "grid";
+
+
+    aiAnswer.innerHTML = `
+
+        <div class="loading">
+
+            <span class="spinner"></span>
+
+            Building the answer from the retrieved
+            medical material...
+
+        </div>
+    `;
+
+
+    aiSources.innerHTML =
+        "";
+
+
+    webResults.innerHTML =
+        "";
+
+
+    aiImages.innerHTML =
+        "";
 
 
     try {
 
-        const result =
-            await invokeWithTimeout(
-                supabase.functions.invoke(
+        const token =
+            await getAccessToken();
+
+
+        const controller =
+            new AbortController();
+
+
+        const timeout =
+            setTimeout(
+                () => controller.abort(),
+                30000
+            );
+
+
+        let data;
+
+
+        try {
+
+            const response =
+                await supabase.functions.invoke(
                     "mwaniki-ai",
                     {
                         body: {
-
-                            question,
+                            question:
+                                cleanQuestion,
 
                             searchMwaniki:
                                 true,
@@ -1314,26 +1718,53 @@ async function performSearch() {
 
                             searchImages:
                                 true
+                        },
 
+                        headers: {
+                            Authorization:
+                                `Bearer ${token}`
                         }
                     }
-                ),
-                25000
-            );
+                );
 
 
-        if (result.error) {
+            if (response.error) {
+                throw response.error;
+            }
 
-            throw result.error;
+
+            data =
+                response.data;
+
+        } finally {
+
+            clearTimeout(timeout);
         }
 
 
-        const data =
-            result.data;
+        if (!data) {
+
+            throw new Error(
+                "Mwaniki AI returned no data."
+            );
+        }
 
 
-        lastSearchData =
+        currentSearchData =
             data;
+
+
+        mwanikiResultCount.textContent =
+            `${
+                data?.mwanikiSources?.length || 0
+            } source${
+                (
+                    data?.mwanikiSources?.length ||
+                    0
+                ) === 1
+                    ? ""
+                    : "s"
+            }`;
 
 
         renderMwanikiAnswer(
@@ -1341,9 +1772,13 @@ async function performSearch() {
         );
 
 
+        renderMwanikiSources(
+            data
+        );
+
+
         renderWebResults(
-            data,
-            question
+            data
         );
 
 
@@ -1352,212 +1787,135 @@ async function performSearch() {
         );
 
 
-        const internalCount =
-            data?.counts?.mwaniki
-            ?? data?.mwanikiSources?.length
-            ?? 0;
-
-
-        if (internalCount > 0) {
-
-            setSearchStatus(
-                "Answer found in Mwaniki Scholars material."
-            );
-
-            setStatus(
-                "Answer ready"
-            );
-
-        } else {
-
-            setSearchStatus(
-                "No internal answer was available. Web results are shown."
-            );
-
-            setStatus(
-                "Web search ready"
-            );
-        }
-
-
-        const quizQuestions =
-            getQuizQuestions(data);
+        setStatus(
+            "Ready"
+        );
 
 
         if (
-            quizQuestions.length
+            data?.answer?.confidence ===
+            "web"
         ) {
 
-            testBody.innerHTML = `
-
-                <div class="empty-state">
-
-                    I found
-                    <strong>
-                        ${quizQuestions.length}
-                    </strong>
-                    test question(s) related to this topic.
-
-                    <br><br>
-
-                    <button
-                        type="button"
-                        id="startTestButton"
-                        class="start-test-button"
-                    >
-                        🧠 Test Me
-                    </button>
-
-                </div>
-
-            `;
-
-
-            document
-                .getElementById(
-                    "startTestButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    startTest
-                );
+            setSearchStatus(
+                "The internal material did not provide a sufficient answer, so Mwaniki AI used the available web results."
+            );
 
         } else {
 
-            testBody.innerHTML = `
-
-                <div class="empty-state">
-
-                    No quiz questions are currently
-                    linked to this topic.
-
-                    <br><br>
-
-                    <button
-                        type="button"
-                        id="startTestButton"
-                        class="start-test-button"
-                    >
-                        Try Test Mode
-                    </button>
-
-                </div>
-
-            `;
-
-
-            document
-                .getElementById(
-                    "startTestButton"
-                )
-                ?.addEventListener(
-                    "click",
-                    startTest
-                );
+            setSearchStatus(
+                "Answer built from Mwaniki Scholars learning material."
+            );
         }
 
+
+        /*
+         * Do not automatically force speech after every search.
+         * Browsers can block speech after asynchronous operations.
+         * The visible Read answer aloud button gives a reliable
+         * user interaction.
+         */
 
     } catch (error) {
 
         console.error(
-            "Mwaniki AI error:",
+            "Mwaniki AI search failed:",
             error
         );
 
 
-        setStatus(
-            "Search error"
-        );
+        const message =
+            error?.name ===
+            "AbortError"
+
+                ? "The AI search took too long. Please try again."
+
+                : (
+                    error?.message ||
+                    "Mwaniki AI could not complete the search."
+                );
+
+
+        aiAnswer.innerHTML = `
+
+            <div class="error-box">
+
+                <strong>
+                    Mwaniki AI could not complete this search.
+                </strong>
+
+                <br><br>
+
+                ${escapeHTML(message)}
+
+            </div>
+        `;
 
 
         setSearchStatus(
-            error?.message
-            || "The AI search could not be completed."
+            "Search failed. Check the browser console and Edge Function deployment if this continues."
         );
 
 
-        answerArea.innerHTML = `
-
-            <div class="empty-state">
-
-                <strong>
-                    Mwaniki AI could not complete
-                    the internal search.
-                </strong>
-
-                <p>
-                    The web search area can still be
-                    used to continue the search.
-                </p>
-
-            </div>
-
-        `;
-
-
-        const fallbackURL =
-            "https://www.google.com/search?q="
-            + encodeURIComponent(question);
-
-
-        webResultsArea.innerHTML = `
-
-            <div class="empty-state">
-
-                <strong>
-                    Continue with Google
-                </strong>
-
-                <p>
-                    Mwaniki AI could not retrieve its
-                    internal material for this request.
-                </p>
-
-                <div class="google-fallback">
-
-                    <a
-                        class="google-button"
-                        href="${fallbackURL}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        🔎 Search Google
-                    </a>
-
-                </div>
-
-            </div>
-
-        `;
+        setStatus(
+            "Error"
+        );
 
     } finally {
 
-        askButton.disabled = false;
+        /*
+         * Critical:
+         * ALWAYS unlock the button.
+         */
 
-        setTimeout(
-            () => {
-
-                if (
-                    aiStatus &&
-                    aiStatus.textContent
-                        .includes("Searching")
-                ) {
-
-                    setStatus(
-                        "Ready"
-                    );
-                }
-
-            },
-            1000
-        );
+        askButton.disabled =
+            false;
     }
 }
 
 
-// =========================================================
+// ============================================================
+// SEARCH BUTTON
+// ============================================================
+
+askButton?.addEventListener(
+    "click",
+    () => {
+
+        searchMwanikiAI(
+            questionInput.value
+        );
+    }
+);
+
+
+// ============================================================
+// CTRL/CMD + ENTER
+// ============================================================
+
+questionInput?.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.key === "Enter" &&
+            (event.ctrlKey ||
+             event.metaKey)
+        ) {
+
+            event.preventDefault();
+
+            searchMwanikiAI(
+                questionInput.value
+            );
+        }
+    }
+);
+
+
+// ============================================================
 // SUGGESTIONS
-// =========================================================
+// ============================================================
 
 document
     .querySelectorAll(
@@ -1571,85 +1929,37 @@ document
                 () => {
 
                     const question =
-                        button.dataset.question
-                        || "";
+                        button.dataset.question ||
+                        button.textContent.trim();
+
 
                     questionInput.value =
                         question;
 
-                    performSearch();
 
+                    searchMwanikiAI(
+                        question
+                    );
                 }
             );
-
         }
     );
 
 
-// =========================================================
-// SEARCH BUTTON
-// =========================================================
-
-if (askButton) {
-
-    askButton.addEventListener(
-        "click",
-        performSearch
-    );
-}
-
-
-// =========================================================
-// CTRL/CMD + ENTER
-// =========================================================
-
-if (questionInput) {
-
-    questionInput.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Enter"
-                &&
-                (event.ctrlKey || event.metaKey)
-            ) {
-
-                event.preventDefault();
-
-                performSearch();
-            }
-
-        }
-    );
-}
-
-
-// =========================================================
-// START TEST BUTTON
-// =========================================================
-
-if (startTestButton) {
-
-    startTestButton.addEventListener(
-        "click",
-        startTest
-    );
-}
-
-
-// =========================================================
-// GLOBAL FUNCTIONS
-// =========================================================
+// ============================================================
+// GLOBAL HELPERS
+// ============================================================
 
 window.askMwanikiAI =
-    performSearch;
+    searchMwanikiAI;
+
 
 window.askAI =
-    performSearch;
+    searchMwanikiAI;
 
-window.startMwanikiTest =
-    startTest;
+
+window.stopMwanikiAudio =
+    stopSpeech;
 
 
 console.log(
