@@ -1,4 +1,4 @@
-````javascript
+
 import { supabase } from "./supabase.js";
 
 console.log("🚀 Mwaniki AI Tutor loaded");
@@ -2068,4 +2068,4 @@ window.mwanikiAI = {
 console.log(
     "✅ Mwaniki AI Tutor ready"
 );
-````
+
