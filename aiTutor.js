@@ -1,4 +1,3 @@
-
 import { supabase } from "./supabase.js";
 
 console.log("🚀 Mwaniki AI Tutor loaded");
@@ -7,57 +6,26 @@ console.log("🚀 Mwaniki AI Tutor loaded");
 // ELEMENTS
 // =====================================================
 
-const aiQuestion =
-    document.getElementById("aiQuestion");
+const aiQuestion = document.getElementById("aiQuestion");
+const askAIButton = document.getElementById("askAIButton");
+const aiAnswer = document.getElementById("aiAnswer");
+const aiSearchStatus = document.getElementById("aiSearchStatus");
+const aiStatus = document.getElementById("aiStatus");
+const aiImages = document.getElementById("aiImages");
+const mwanikiSources = document.getElementById("mwanikiSources");
+const webResults = document.getElementById("webResults");
 
-const askAIButton =
-    document.getElementById("askAIButton");
-
-const aiAnswer =
-    document.getElementById("aiAnswer");
-
-const aiSearchStatus =
-    document.getElementById("aiSearchStatus");
-
-const aiStatus =
-    document.getElementById("aiStatus");
-
-const aiImages =
-    document.getElementById("aiImages");
-
-const mwanikiSources =
-    document.getElementById("mwanikiSources");
-
-const webResults =
-    document.getElementById("webResults");
-
-const testPanel =
-    document.getElementById("testPanel");
-
-const testProgress =
-    document.getElementById("testProgress");
-
-const testStatus =
-    document.getElementById("testStatus");
-
-const testQuestion =
-    document.getElementById("testQuestion");
-
-const testOptions =
-    document.getElementById("testOptions");
-
-const testFeedback =
-    document.getElementById("testFeedback");
-
-const testNext =
-    document.getElementById("testNext");
-
-const testExit =
-    document.getElementById("testExit");
+const testPanel = document.getElementById("testPanel");
+const testProgress = document.getElementById("testProgress");
+const testStatus = document.getElementById("testStatus");
+const testQuestion = document.getElementById("testQuestion");
+const testOptions = document.getElementById("testOptions");
+const testFeedback = document.getElementById("testFeedback");
+const testNext = document.getElementById("testNext");
+const testExit = document.getElementById("testExit");
 
 const backToDashboardButton =
     document.getElementById("backToDashboardButton");
-
 
 // =====================================================
 // STATE
@@ -66,32 +34,21 @@ const backToDashboardButton =
 let currentAnswerText = "";
 
 let currentTestTopic = "";
-
 let currentTestQuestion = null;
-
 let currentTestNumber = 0;
-
 let currentTestLength = 10;
-
 let currentTestScore = 0;
-
 let currentTestUsedIds = [];
-
 let testAnswered = false;
 
 let currentSpeech = null;
-
 
 // =====================================================
 // HTML ESCAPING
 // =====================================================
 
 function escapeHTML(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
+    if (value === null || value === undefined) {
         return "";
     }
 
@@ -103,20 +60,16 @@ function escapeHTML(value) {
         .replace(/'/g, "&#039;");
 }
 
-
 // =====================================================
 // URL SAFETY
 // =====================================================
 
 function safeURL(value) {
-
     try {
-
-        const url =
-            new URL(
-                String(value || ""),
-                window.location.href
-            );
+        const url = new URL(
+            String(value || ""),
+            window.location.href
+        );
 
         if (
             url.protocol === "http:" ||
@@ -124,7 +77,6 @@ function safeURL(value) {
         ) {
             return url.href;
         }
-
     } catch (_) {
         return "";
     }
@@ -132,92 +84,58 @@ function safeURL(value) {
     return "";
 }
 
-
 // =====================================================
-// CLEAN AI TEXT
+// TEXT CLEANING
 // =====================================================
 
 function cleanText(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
+    if (value === null || value === undefined) {
         return "";
     }
 
-    let text =
-        String(value);
+    let text = String(value);
 
-    text =
-        text.replace(
-            /```(?:markdown|md|text)?/gi,
-            ""
-        );
+    text = text.replace(
+        /```(?:markdown|md|text|html)?/gi,
+        ""
+    );
 
-    text =
-        text.replace(
-            /```/g,
-            ""
-        );
+    text = text.replace(/```/g, "");
 
-    text =
-        text.replace(
-            /^#{1,6}\s*/gm,
-            ""
-        );
+    text = text.replace(/^#{1,6}\s*/gm, "");
 
-    text =
-        text.replace(
-            /\*\*(.*?)\*\*/g,
-            "$1"
-        );
+    text = text.replace(/\*\*(.*?)\*\*/g, "$1");
 
-    text =
-        text.replace(
-            /__(.*?)__/g,
-            "$1"
-        );
+    text = text.replace(/__(.*?)__/g, "$1");
 
-    text =
-        text.replace(
-            /\s+\n/g,
-            "\n"
-        );
+    text = text.replace(/^\s*[-*]\s+/gm, "");
 
-    text =
-        text.replace(
-            /\n{3,}/g,
-            "\n\n"
-        );
+    text = text.replace(/\r/g, "");
+
+    text = text.replace(/\n{3,}/g, "\n\n");
 
     return text.trim();
 }
 
-
 // =====================================================
-// TEXT → SAFE HTML
+// TEXT → HTML
 // =====================================================
 
 function textToHTML(value) {
-
-    const text =
-        cleanText(value);
+    const text = cleanText(value);
 
     if (!text) {
         return "";
     }
 
-    const paragraphs =
-        text
-            .split(/\n{2,}/)
-            .map(
-                item =>
-                    item
-                        .trim()
-                        .replace(/\n/g, " ")
-            )
-            .filter(Boolean);
+    const paragraphs = text
+        .split(/\n{2,}/)
+        .map(item =>
+            item
+                .trim()
+                .replace(/\n/g, " ")
+        )
+        .filter(Boolean);
 
     return paragraphs
         .map(
@@ -227,31 +145,22 @@ function textToHTML(value) {
         .join("");
 }
 
-
 // =====================================================
 // STATUS
 // =====================================================
 
 function setSearchStatus(message) {
-
     if (!aiSearchStatus) {
         return;
     }
 
     if (!message) {
-
-        aiSearchStatus.classList.add(
-            "hidden"
-        );
-
+        aiSearchStatus.classList.add("hidden");
         aiSearchStatus.innerHTML = "";
-
         return;
     }
 
-    aiSearchStatus.classList.remove(
-        "hidden"
-    );
+    aiSearchStatus.classList.remove("hidden");
 
     aiSearchStatus.innerHTML = `
         <div class="status-line">
@@ -260,27 +169,18 @@ function setSearchStatus(message) {
     `;
 }
 
-
 function setStatus(message) {
-
     if (!aiStatus) {
         return;
     }
 
     if (!message) {
-
-        aiStatus.classList.add(
-            "hidden"
-        );
-
+        aiStatus.classList.add("hidden");
         aiStatus.innerHTML = "";
-
         return;
     }
 
-    aiStatus.classList.remove(
-        "hidden"
-    );
+    aiStatus.classList.remove("hidden");
 
     aiStatus.innerHTML = `
         <div class="status-line">
@@ -289,59 +189,46 @@ function setStatus(message) {
     `;
 }
 
-
 // =====================================================
 // BUTTON STATE
 // =====================================================
 
 function setBusy(busy) {
-
     if (!askAIButton) {
         return;
     }
 
-    askAIButton.disabled =
-        busy;
+    askAIButton.disabled = busy;
 
-    askAIButton.innerHTML =
-        busy
-            ? `
-                <span>Researching...</span>
-                <span>⌛</span>
-              `
-            : `
-                <span>Ask Mwaniki AI</span>
-                <span>➤</span>
-              `;
+    askAIButton.innerHTML = busy
+        ? `
+            <span>Researching...</span>
+            <span>⌛</span>
+          `
+        : `
+            <span>Ask Mwaniki AI</span>
+            <span>➤</span>
+          `;
 }
-
 
 // =====================================================
 // SPEECH
 // =====================================================
 
 function stopSpeech() {
-
-    if (
-        "speechSynthesis" in window
-    ) {
+    if ("speechSynthesis" in window) {
         window.speechSynthesis.cancel();
     }
 
     currentSpeech = null;
 }
 
-
 function speak(text) {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
+    if (!("speechSynthesis" in window)) {
         return;
     }
 
-    const clean =
-        cleanText(text);
+    const clean = cleanText(text);
 
     if (!clean) {
         return;
@@ -350,121 +237,74 @@ function speak(text) {
     stopSpeech();
 
     currentSpeech =
-        new SpeechSynthesisUtterance(
-            clean
-        );
+        new SpeechSynthesisUtterance(clean);
 
-    currentSpeech.lang =
-        "en-US";
-
-    currentSpeech.rate =
-        0.95;
-
-    currentSpeech.pitch =
-        1.0;
-
-    currentSpeech.volume =
-        1.0;
+    currentSpeech.lang = "en-US";
+    currentSpeech.rate = 0.95;
+    currentSpeech.pitch = 1.0;
+    currentSpeech.volume = 1.0;
 
     window.speechSynthesis.speak(
         currentSpeech
     );
 }
 
-
 // =====================================================
-// VERY LARGE CARTOON LAUGH
+// CARTOON LAUGH
 // =====================================================
 
 const hugeLaughChunks = [
-
     "HEE HEE HEE HEE!",
-
     "AHAHAHAHAHAHAHAHA!",
-
     "HAHAHAHAHAHAHAHAHAHAHAHA!",
-
     "HEEEEEHEHEHEHEHEHEHEHE!",
-
     "AHAHAHAHAHAHAHAHAHAHAHAHAHAHA!",
-
     "HEE HEE HEE HEE HEE HEE!",
-
     "AHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA!"
 ];
 
-
 const funnyWrongAnswerReactions = [
-
     "Oops! That answer took a wrong turn.",
-
     "Oof! That one missed the mark.",
-
     "Whoops! The neurons disagreed with that one.",
-
     "Aha! Nice attempt, but not quite.",
-
     "Plot twist! That wasn't the answer.",
-
     "The brain says: try again!",
-
     "That answer wandered off the syllabus.",
-
     "Close! But the textbook isn't celebrating yet.",
-
     "Oops! That one needs a little resuscitation.",
-
     "Not quite! Let's correct that one.",
-
     "The neurons have filed an objection.",
-
     "Almost! Your answer took the scenic route.",
-
     "That one needs another trip through the lecture notes.",
-
     "Interesting choice! Let's fix that one.",
-
     "Nearly there! Let's see what happened."
-
 ];
 
-
-let funnyReactionPool =
-    [
-        ...funnyWrongAnswerReactions
-    ];
-
+let funnyReactionPool = [
+    ...funnyWrongAnswerReactions
+];
 
 function getRandomFunnyReaction() {
-
-    if (
-        funnyReactionPool.length === 0
-    ) {
-
-        funnyReactionPool =
-            [
-                ...funnyWrongAnswerReactions
-            ];
+    if (funnyReactionPool.length === 0) {
+        funnyReactionPool = [
+            ...funnyWrongAnswerReactions
+        ];
     }
 
-    const index =
-        Math.floor(
-            Math.random() *
-            funnyReactionPool.length
-        );
+    const index = Math.floor(
+        Math.random() *
+        funnyReactionPool.length
+    );
 
-    return funnyReactionPool
-        .splice(index, 1)[0];
+    return funnyReactionPool.splice(
+        index,
+        1
+    )[0];
 }
 
-
-function speakHugeSqueakyLaugh(
-    reaction
-) {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
+function speakHugeSqueakyLaugh(reaction) {
+    if (!("speechSynthesis" in window)) {
         return;
     }
 
@@ -472,93 +312,68 @@ function speakHugeSqueakyLaugh(
 
     let index = 0;
 
-    const speakNextLaugh =
-        () => {
-
-            if (
-                index >=
-                hugeLaughChunks.length
-            ) {
-
-                const reactionUtterance =
-                    new SpeechSynthesisUtterance(
-                        reaction
-                    );
-
-                reactionUtterance.lang =
-                    "en-US";
-
-                reactionUtterance.rate =
-                    1.18;
-
-                reactionUtterance.pitch =
-                    1.65;
-
-                reactionUtterance.volume =
-                    1.0;
-
-                window.speechSynthesis.speak(
-                    reactionUtterance
-                );
-
-                return;
-            }
-
-            const laugh =
-                hugeLaughChunks[index++];
-
-            const utterance =
+    const speakNextLaugh = () => {
+        if (index >= hugeLaughChunks.length) {
+            const reactionUtterance =
                 new SpeechSynthesisUtterance(
-                    laugh
+                    reaction
                 );
 
-            utterance.lang =
-                "en-US";
-
-            utterance.rate =
-                index % 2 === 0
-                    ? 1.48
-                    : 1.38;
-
-            utterance.pitch =
-                2.0;
-
-            utterance.volume =
-                1.0;
-
-            utterance.onend =
-                speakNextLaugh;
+            reactionUtterance.lang = "en-US";
+            reactionUtterance.rate = 1.18;
+            reactionUtterance.pitch = 1.65;
+            reactionUtterance.volume = 1.0;
 
             window.speechSynthesis.speak(
-                utterance
+                reactionUtterance
             );
-        };
+
+            return;
+        }
+
+        const laugh =
+            hugeLaughChunks[index++];
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                laugh
+            );
+
+        utterance.lang = "en-US";
+
+        utterance.rate =
+            index % 2 === 0
+                ? 1.48
+                : 1.38;
+
+        utterance.pitch = 2.0;
+        utterance.volume = 1.0;
+
+        utterance.onend =
+            speakNextLaugh;
+
+        window.speechSynthesis.speak(
+            utterance
+        );
+    };
 
     speakNextLaugh();
 }
 
-
 // =====================================================
-// RENDER WEB IMAGE DIRECTLY
+// DIRECT IMAGE
 // =====================================================
 
-function renderDirectImage(
-    image
-) {
-
-    if (
-        !aiImages ||
-        !image
-    ) {
+function renderDirectImage(image) {
+    if (!aiImages || !image) {
         return;
     }
 
-    const imageURL =
-        safeURL(
-            image.url ||
-            image.imageUrl ||
-            image.src
-        );
+    const imageURL = safeURL(
+        image.url ||
+        image.imageUrl ||
+        image.src
+    );
 
     if (!imageURL) {
         return;
@@ -573,19 +388,15 @@ function renderDirectImage(
         image.provider ||
         "Web image source";
 
-    const sourceURL =
-        safeURL(
-            image.sourceUrl ||
-            image.pageUrl ||
-            image.link
-        );
-
-    aiImages.classList.remove(
-        "hidden"
+    const sourceURL = safeURL(
+        image.sourceUrl ||
+        image.pageUrl ||
+        image.link
     );
 
-    aiImages.innerHTML = `
+    aiImages.classList.remove("hidden");
 
+    aiImages.innerHTML = `
         <div class="ai-image-card">
 
             <img
@@ -628,18 +439,12 @@ function renderDirectImage(
     `;
 }
 
-
 // =====================================================
-// RENDER WEB EVIDENCE
+// WEB RESULTS
 // =====================================================
 
-function renderWebResults(
-    results
-) {
-
-    if (
-        !webResults
-    ) {
+function renderWebResults(results) {
+    if (!webResults) {
         return;
     }
 
@@ -647,99 +452,84 @@ function renderWebResults(
         !Array.isArray(results) ||
         results.length === 0
     ) {
-
-        webResults.classList.add(
-            "hidden"
-        );
-
+        webResults.classList.add("hidden");
         webResults.innerHTML = "";
-
         return;
     }
 
-    const items =
-        results
-            .slice(0, 8)
-            .map(
-                result => {
+    const items = results
+        .slice(0, 8)
+        .map(result => {
+            const title =
+                result.title ||
+                "Web source";
 
-                    const title =
-                        result.title ||
-                        "Web source";
+            const url = safeURL(
+                result.url ||
+                result.link
+            );
 
-                    const url =
-                        safeURL(
-                            result.url ||
-                            result.link
-                        );
+            const displayURL =
+                result.displayUrl ||
+                result.url ||
+                "";
 
-                    const displayURL =
-                        result.displayUrl ||
-                        result.url ||
-                        "";
+            const snippet = cleanText(
+                result.snippet ||
+                result.description ||
+                ""
+            );
 
-                    const snippet =
-                        cleanText(
-                            result.snippet ||
-                            result.description ||
-                            ""
-                        );
+            return `
+                <div class="web-result">
 
-                    return `
+                    ${
+                        url
+                            ? `
+                                <a
+                                    class="web-result-title"
+                                    href="${escapeHTML(url)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    ${escapeHTML(title)}
+                                </a>
+                              `
+                            : `
+                                <div class="web-result-title">
+                                    ${escapeHTML(title)}
+                                </div>
+                              `
+                    }
 
-                        <div class="web-result">
+                    ${
+                        displayURL
+                            ? `
+                                <span class="web-result-url">
+                                    ${escapeHTML(displayURL)}
+                                </span>
+                              `
+                            : ""
+                    }
 
-                            ${
-                                url
-                                    ? `
-                                        <a
-                                            class="web-result-title"
-                                            href="${escapeHTML(url)}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            ${escapeHTML(title)}
-                                        </a>
-                                      `
-                                    : `
-                                        <div class="web-result-title">
-                                            ${escapeHTML(title)}
-                                        </div>
-                                      `
-                            }
+                    ${
+                        snippet
+                            ? `
+                                <div class="web-result-snippet">
+                                    ${escapeHTML(snippet)}
+                                </div>
+                              `
+                            : ""
+                    }
 
-                            ${
-                                displayURL
-                                    ? `
-                                        <span class="web-result-url">
-                                            ${escapeHTML(displayURL)}
-                                        </span>
-                                      `
-                                    : ""
-                            }
+                </div>
+            `;
+        })
+        .join("");
 
-                            ${
-                                snippet
-                                    ? `
-                                        <div class="web-result-snippet">
-                                            ${escapeHTML(snippet)}
-                                        </div>
-                                      `
-                                    : ""
-                            }
-
-                        </div>
-                    `;
-                }
-            )
-            .join("");
-
-    webResults.classList.remove(
-        "hidden"
-    );
+    webResults.classList.remove("hidden");
 
     webResults.innerHTML = `
-
         <div class="evidence-card">
 
             <h3>
@@ -752,18 +542,12 @@ function renderWebResults(
     `;
 }
 
-
 // =====================================================
-// RENDER MWANIKI SOURCES
+// MWANIKI SOURCES
 // =====================================================
 
-function renderMwanikiSources(
-    sources
-) {
-
-    if (
-        !mwanikiSources
-    ) {
+function renderMwanikiSources(sources) {
+    if (!mwanikiSources) {
         return;
     }
 
@@ -771,75 +555,62 @@ function renderMwanikiSources(
         !Array.isArray(sources) ||
         sources.length === 0
     ) {
-
-        mwanikiSources.classList.add(
-            "hidden"
-        );
-
+        mwanikiSources.classList.add("hidden");
         mwanikiSources.innerHTML = "";
-
         return;
     }
 
-    const items =
-        sources
-            .slice(0, 10)
-            .map(
-                source => {
+    const items = sources
+        .slice(0, 10)
+        .map(source => {
+            const title =
+                source.title ||
+                source.unit ||
+                source.course ||
+                "Mwaniki Scholars";
 
-                    const title =
-                        source.title ||
-                        source.unit ||
-                        source.course ||
-                        "Mwaniki Scholars";
+            const detail =
+                source.detail ||
+                source.description ||
+                source.unit ||
+                "";
 
-                    const detail =
-                        source.detail ||
-                        source.description ||
-                        source.unit ||
-                        "";
+            return `
+                <div
+                    style="
+                        padding:10px 0;
+                        border-bottom:1px solid #e4edf1;
+                    "
+                >
 
-                    return `
+                    <strong>
+                        ${escapeHTML(title)}
+                    </strong>
 
-                        <div
-                            style="
-                                padding:10px 0;
-                                border-bottom:1px solid #e4edf1;
-                            "
-                        >
+                    ${
+                        detail
+                            ? `
+                                <div
+                                    style="
+                                        margin-top:4px;
+                                        color:#6a7c89;
+                                        font-size:13px;
+                                    "
+                                >
+                                    ${escapeHTML(detail)}
+                                </div>
+                              `
+                            : ""
+                    }
 
-                            <strong>
-                                ${escapeHTML(title)}
-                            </strong>
+                </div>
+            `;
+        })
+        .join("");
 
-                            ${
-                                detail
-                                    ? `
-                                        <div
-                                            style="
-                                                margin-top:4px;
-                                                color:#6a7c89;
-                                                font-size:13px;
-                                            "
-                                        >
-                                            ${escapeHTML(detail)}
-                                        </div>
-                                      `
-                                    : ""
-                            }
-
-                        </div>
-                    `;
-                }
-            )
-            .join("");
-
-    mwanikiSources.classList.remove(
-        "hidden"
-    );
+    mwanikiSources.classList.remove("hidden");
 
     mwanikiSources.innerHTML = `
-
         <div class="evidence-card">
 
             <h3>
@@ -852,75 +623,48 @@ function renderMwanikiSources(
     `;
 }
 
-
 // =====================================================
-// RENDER MAIN ANSWER
+// MAIN ANSWER
 // =====================================================
 
-function renderAnswer(
-    response
-) {
-
+function renderAnswer(response) {
     if (!aiAnswer) {
         return;
     }
 
     const answer =
         response.answer ||
-        response.mwanikiAnswer ||
         response.finalAnswer ||
+        response.mwanikiAnswer ||
         response.webAnswer ||
         "";
 
-    const cleaned =
-        cleanText(
-            typeof answer === "string"
-                ? answer
-                : JSON.stringify(answer)
-        );
+    const cleaned = cleanText(
+        typeof answer === "string"
+            ? answer
+            : JSON.stringify(answer)
+    );
 
-    currentAnswerText =
-        cleaned;
+    currentAnswerText = cleaned;
 
     const title =
         response.answerTitle ||
         "Mwaniki AI Answer";
 
-    const sourceCount =
+    const webCount =
         Number(
-            response.webResultCount ||
-            0
+            response.webResultCount || 0
         );
 
     const mwanikiCount =
         Number(
-            response.mwanikiSourceCount ||
-            (
-                Array.isArray(
-                    response.mwanikiSources
-                )
-                    ? response.mwanikiSources.length
-                    : 0
-            )
+            response.mwanikiSourceCount || 0
         );
 
     const paragraphs =
-        textToHTML(
-            cleaned
-        );
-
-    const webLabel =
-        sourceCount > 0
-            ? `${sourceCount} web sources`
-            : "Web research";
-
-    const mwanikiLabel =
-        mwanikiCount > 0
-            ? `${mwanikiCount} Mwaniki sources`
-            : "Mwaniki content";
+        textToHTML(cleaned);
 
     aiAnswer.innerHTML = `
-
         <div class="answer-card">
 
             <div class="answer-header">
@@ -935,13 +679,9 @@ function renderAnswer(
 
             </div>
 
-
             <div class="answer-body">
-
                 ${paragraphs}
-
             </div>
-
 
             <div class="answer-actions">
 
@@ -953,7 +693,6 @@ function renderAnswer(
                     🔊 Read Answer
                 </button>
 
-
                 <button
                     type="button"
                     class="small-button"
@@ -963,7 +702,6 @@ function renderAnswer(
                 </button>
 
             </div>
-
 
             <div
                 class="evidence-grid"
@@ -977,11 +715,14 @@ function renderAnswer(
                     </h3>
 
                     <p>
-                        ${escapeHTML(webLabel)}
+                        ${
+                            webCount > 0
+                                ? `${webCount} relevant web sources`
+                                : "No relevant web sources"
+                        }
                     </p>
 
                 </div>
-
 
                 <div class="evidence-card">
 
@@ -990,7 +731,11 @@ function renderAnswer(
                     </h3>
 
                     <p>
-                        ${escapeHTML(mwanikiLabel)}
+                        ${
+                            mwanikiCount > 0
+                                ? `${mwanikiCount} relevant Mwaniki sources`
+                                : "No relevant Mwaniki sources"
+                        }
                     </p>
 
                 </div>
@@ -999,7 +744,6 @@ function renderAnswer(
 
         </div>
     `;
-
 
     const readButton =
         document.getElementById(
@@ -1011,24 +755,14 @@ function renderAnswer(
             "stopMainAudioButton"
         );
 
-
     if (readButton) {
-
         readButton.addEventListener(
             "click",
-            () => {
-
-                speak(
-                    currentAnswerText
-                );
-
-            }
+            () => speak(currentAnswerText)
         );
     }
 
-
     if (stopButton) {
-
         stopButton.addEventListener(
             "click",
             stopSpeech
@@ -1036,28 +770,23 @@ function renderAnswer(
     }
 }
 
-
 // =====================================================
 // AUTH
 // =====================================================
 
 async function getAccessToken() {
-
     const {
         data,
         error
-    } =
-        await supabase.auth.getSession();
+    } = await supabase.auth.getSession();
 
     if (error) {
         throw error;
     }
 
-    const session =
-        data?.session;
+    const session = data?.session;
 
     if (!session?.access_token) {
-
         throw new Error(
             "Your student session has expired. Please log in again."
         );
@@ -1066,15 +795,11 @@ async function getAccessToken() {
     return session.access_token;
 }
 
-
 // =====================================================
-// CALL EDGE FUNCTION
+// EDGE FUNCTION
 // =====================================================
 
-async function callMwanikiAI(
-    payload
-) {
-
+async function callMwanikiAI(payload) {
     const token =
         await getAccessToken();
 
@@ -1098,31 +823,23 @@ async function callMwanikiAI(
     }
 
     if (!data) {
-
         throw new Error(
             "The AI service returned no response."
         );
     }
 
     if (data.error) {
-
-        throw new Error(
-            data.error
-        );
+        throw new Error(data.error);
     }
 
     return data;
 }
 
-
 // =====================================================
 // SEARCH
 // =====================================================
 
-async function searchAI(
-    query
-) {
-
+async function searchAI(query) {
     setBusy(true);
 
     setSearchStatus(
@@ -1136,99 +853,66 @@ async function searchAI(
     }
 
     if (aiImages) {
-
-        aiImages.classList.add(
-            "hidden"
-        );
-
+        aiImages.classList.add("hidden");
         aiImages.innerHTML = "";
     }
 
     if (mwanikiSources) {
-
-        mwanikiSources.classList.add(
-            "hidden"
-        );
-
+        mwanikiSources.classList.add("hidden");
         mwanikiSources.innerHTML = "";
     }
 
     if (webResults) {
-
-        webResults.classList.add(
-            "hidden"
-        );
-
+        webResults.classList.add("hidden");
         webResults.innerHTML = "";
     }
 
-
     try {
-
         const response =
             await callMwanikiAI({
-
                 mode: "search",
-
                 question: query,
-
                 searchWeb: true,
-
                 searchMwaniki: true,
-
                 searchImages: true
-
             });
 
-
-        renderAnswer(
-            response
-        );
-
+        renderAnswer(response);
 
         renderDirectImage(
             response.primaryImage ||
             (
-                Array.isArray(
-                    response.images
-                )
+                Array.isArray(response.images)
                     ? response.images[0]
                     : null
             )
         );
 
-
         renderMwanikiSources(
             response.mwanikiSources
         );
-
 
         renderWebResults(
             response.webResults
         );
 
-
         setSearchStatus(
             "Research complete."
         );
 
-
         setStatus(
-            "Mwaniki AI combined web evidence with Mwaniki Scholars material."
+            response.status ||
+            "Web evidence was checked first, then compared with relevant Mwaniki Scholars material."
         );
 
-
     } catch (error) {
-
         console.error(
             "Mwaniki AI search error:",
             error
         );
 
         if (aiAnswer) {
-
             aiAnswer.innerHTML = `
-
                 <div class="answer-card">
 
                     <div class="answer-header">
@@ -1256,9 +940,7 @@ async function searchAI(
             `;
         }
 
-        setSearchStatus(
-            ""
-        );
+        setSearchStatus("");
 
         setStatus(
             error.message ||
@@ -1266,20 +948,15 @@ async function searchAI(
         );
 
     } finally {
-
         setBusy(false);
     }
 }
 
-
 // =====================================================
-// WRONG ANSWER LAUGH
+// WRONG ANSWER
 // =====================================================
 
-function handleWrongAnswer(
-    question
-) {
-
+function handleWrongAnswer(question) {
     const reaction =
         getRandomFunnyReaction();
 
@@ -1291,9 +968,7 @@ function handleWrongAnswer(
         testFeedback &&
         question
     ) {
-
         testFeedback.innerHTML = `
-
             <strong>
                 ${escapeHTML(reaction)}
             </strong>
@@ -1301,10 +976,10 @@ function handleWrongAnswer(
             <br><br>
 
             The correct answer is:
+
             <strong>
                 ${escapeHTML(
-                    question.correctAnswer ||
-                    ""
+                    question.correctAnswer || ""
                 )}
             </strong>
 
@@ -1324,27 +999,19 @@ function handleWrongAnswer(
     }
 }
 
-
 // =====================================================
 // TEST QUESTION
 // =====================================================
 
-function renderTestQuestion(
-    question
-) {
-
+function renderTestQuestion(question) {
     if (!question) {
         return;
     }
 
-    currentTestQuestion =
-        question;
-
-    testAnswered =
-        false;
+    currentTestQuestion = question;
+    testAnswered = false;
 
     if (testProgress) {
-
         testProgress.textContent =
             `Question ${currentTestNumber} of ${currentTestLength}`;
     }
@@ -1358,9 +1025,7 @@ function renderTestQuestion(
     }
 
     if (testQuestion) {
-
         testQuestion.innerHTML = `
-
             <div
                 style="
                     margin-top:16px;
@@ -1381,9 +1046,7 @@ function renderTestQuestion(
     }
 
     const options =
-        Array.isArray(
-            question.options
-        )
+        Array.isArray(question.options)
             ? question.options
             : [];
 
@@ -1391,7 +1054,6 @@ function renderTestQuestion(
         options
             .map(
                 option => `
-
                     <button
                         type="button"
                         class="test-option"
@@ -1417,156 +1079,120 @@ function renderTestQuestion(
             )
             .join("");
 
-
     testOptions
-        .querySelectorAll(
-            ".test-option"
-        )
-        .forEach(
-            button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        if (
-                            testAnswered
-                        ) {
-                            return;
-                        }
-
-                        testAnswered =
-                            true;
-
-                        const selected =
-                            button.dataset.key;
-
-                        const correct =
-                            String(
-                                question.correctKey ||
-                                ""
-                            ).toUpperCase();
-
-                        if (
-                            selected ===
-                            correct
-                        ) {
-
-                            currentTestScore++;
-
-                            testFeedback.innerHTML = `
-
-                                <strong>
-                                    ✅ Correct!
-                                </strong>
-
-                                <br><br>
-
-                                ${
-                                    question.explanation
-                                        ? escapeHTML(
-                                            cleanText(
-                                                question.explanation
-                                            )
-                                          )
-                                        : "Good work."
-                                }
-                            `;
-
-                            speak(
-                                "Correct. " +
-                                cleanText(
-                                    question.explanation ||
-                                    "Good work."
-                                )
-                            );
-
-                        } else {
-
-                            handleWrongAnswer(
-                                question
-                            );
-                        }
-
-                        testOptions
-                            .querySelectorAll(
-                                ".test-option"
-                            )
-                            .forEach(
-                                optionButton => {
-
-                                    optionButton.disabled =
-                                        true;
-
-                                    if (
-                                        optionButton
-                                            .dataset
-                                            .key ===
-                                        correct
-                                    ) {
-
-                                        optionButton.style.background =
-                                            "rgba(56,190,120,.28)";
-                                    }
-
-                                }
-                            );
+        .querySelectorAll(".test-option")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    if (testAnswered) {
+                        return;
                     }
-                );
-            }
-        );
+
+                    testAnswered = true;
+
+                    const selected =
+                        String(
+                            button.dataset.key || ""
+                        ).toUpperCase();
+
+                    const correct =
+                        String(
+                            question.correctKey || ""
+                        ).toUpperCase();
+
+                    if (selected === correct) {
+                        currentTestScore++;
+
+                        testFeedback.innerHTML = `
+                            <strong>
+                                ✅ Correct!
+                            </strong>
+
+                            <br><br>
+
+                            ${
+                                question.explanation
+                                    ? escapeHTML(
+                                        cleanText(
+                                            question.explanation
+                                        )
+                                      )
+                                    : "Good work."
+                            }
+                        `;
+
+                        speak(
+                            "Correct. " +
+                            cleanText(
+                                question.explanation ||
+                                "Good work."
+                            )
+                        );
+
+                    } else {
+                        handleWrongAnswer(
+                            question
+                        );
+                    }
+
+                    testOptions
+                        .querySelectorAll(
+                            ".test-option"
+                        )
+                        .forEach(
+                            optionButton => {
+                                optionButton.disabled =
+                                    true;
+
+                                if (
+                                    optionButton.dataset.key ===
+                                    correct
+                                ) {
+                                    optionButton.style.background =
+                                        "rgba(56,190,120,.28)";
+                                }
+                            }
+                        );
+                }
+            );
+        });
 }
 
-
 // =====================================================
-// LOAD NEXT TEST QUESTION
+// NEXT TEST QUESTION
 // =====================================================
 
 async function loadNextTestQuestion() {
-
     if (
         currentTestNumber >
         currentTestLength
     ) {
-
         finishTest();
-
         return;
     }
 
     if (testStatus) {
-
         testStatus.textContent =
             "Researching the next question...";
     }
 
     try {
-
         const response =
             await callMwanikiAI({
-
                 mode: "test",
-
                 testTopic:
                     currentTestTopic,
-
                 usedQuestionIds:
                     currentTestUsedIds,
-
                 questionNumber:
                     currentTestNumber,
-
                 testLength:
                     currentTestLength,
-
                 searchMwaniki: true,
-
                 searchWeb: true,
-
                 searchImages: false
-
             });
-
 
         const question =
             response.testQuestion;
@@ -1577,48 +1203,39 @@ async function loadNextTestQuestion() {
             );
         }
 
-
         if (
             question.id !== undefined &&
             question.id !== null
         ) {
-
             currentTestUsedIds.push(
                 String(question.id)
             );
         }
-
 
         renderTestQuestion(
             question
         );
 
     } catch (error) {
-
         console.error(
             "Test question error:",
             error
         );
 
         if (testStatus) {
-
             testStatus.textContent =
                 "The next question could not be loaded. Please try again.";
         }
     }
 }
 
-
 // =====================================================
 // FINISH TEST
 // =====================================================
 
 function finishTest() {
-
     if (testQuestion) {
-
         testQuestion.innerHTML = `
-
             <div
                 style="
                     font-size:24px;
@@ -1635,24 +1252,25 @@ function finishTest() {
         testOptions.innerHTML = "";
     }
 
+    const percentage =
+        currentTestLength > 0
+            ? Math.round(
+                (
+                    currentTestScore /
+                    currentTestLength
+                ) * 100
+            )
+            : 0;
+
     if (testFeedback) {
-
         testFeedback.innerHTML = `
-
             <strong>
                 Score: ${currentTestScore}/${currentTestLength}
             </strong>
 
             <br><br>
 
-            ${
-                Math.round(
-                    (
-                        currentTestScore /
-                        currentTestLength
-                    ) * 100
-                )
-            }%
+            ${percentage}%
         `;
     }
 
@@ -1671,18 +1289,12 @@ function finishTest() {
     }
 }
 
-
 // =====================================================
 // START TEST
 // =====================================================
 
-async function startTest(
-    topic,
-    length = 10
-) {
-
-    currentTestTopic =
-        topic;
+async function startTest(topic, length = 10) {
+    currentTestTopic = cleanText(topic);
 
     currentTestLength =
         Math.max(
@@ -1693,23 +1305,13 @@ async function startTest(
             )
         );
 
-    currentTestNumber =
-        1;
-
-    currentTestScore =
-        0;
-
-    currentTestUsedIds =
-        [];
-
-    testAnswered =
-        false;
+    currentTestNumber = 1;
+    currentTestScore = 0;
+    currentTestUsedIds = [];
+    testAnswered = false;
 
     if (testPanel) {
-
-        testPanel.classList.remove(
-            "hidden"
-        );
+        testPanel.classList.remove("hidden");
     }
 
     if (testNext) {
@@ -1719,108 +1321,79 @@ async function startTest(
     await loadNextTestQuestion();
 }
 
-
 // =====================================================
 // EVENTS
 // =====================================================
 
 if (askAIButton) {
-
     askAIButton.addEventListener(
         "click",
         async () => {
-
             const query =
-                aiQuestion
-                    ?.value
-                    ?.trim();
+                aiQuestion?.value?.trim();
 
             if (!query) {
-
                 setStatus(
                     "Please enter a medical question."
                 );
-
                 return;
             }
 
-            await searchAI(
-                query
-            );
+            await searchAI(query);
         }
     );
 }
 
-
 if (aiQuestion) {
-
     aiQuestion.addEventListener(
         "keydown",
         event => {
-
             if (
                 event.key === "Enter" &&
                 !event.shiftKey
             ) {
-
                 event.preventDefault();
-
                 askAIButton?.click();
             }
         }
     );
 }
 
-
 document
-    .querySelectorAll(
-        ".suggestion-button"
-    )
-    .forEach(
-        button => {
+    .querySelectorAll(".suggestion-button")
+    .forEach(button => {
+        button.addEventListener(
+            "click",
+            () => {
+                const question =
+                    button.dataset.question ||
+                    button.textContent.trim();
 
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const question =
-                        button.dataset.question ||
-                        button.textContent.trim();
-
-                    if (aiQuestion) {
-                        aiQuestion.value =
-                            question;
-                    }
-
-                    askAIButton?.click();
+                if (aiQuestion) {
+                    aiQuestion.value =
+                        question;
                 }
-            );
-        }
-    );
 
+                askAIButton?.click();
+            }
+        );
+    });
 
 if (backToDashboardButton) {
-
     backToDashboardButton.addEventListener(
         "click",
         () => {
-
             window.location.href =
                 "./dashboard.html";
         }
     );
 }
 
-
 if (testNext) {
-
     testNext.addEventListener(
         "click",
         async () => {
-
-            if (
-                !testAnswered
-            ) {
+            if (!testAnswered) {
                 return;
             }
 
@@ -1830,9 +1403,7 @@ if (testNext) {
                 currentTestNumber >
                 currentTestLength
             ) {
-
                 finishTest();
-
                 return;
             }
 
@@ -1841,13 +1412,10 @@ if (testNext) {
     );
 }
 
-
 if (testExit) {
-
     testExit.addEventListener(
         "click",
         () => {
-
             stopSpeech();
 
             testPanel?.classList.add(
@@ -1856,7 +1424,6 @@ if (testExit) {
         }
     );
 }
-
 
 // =====================================================
 // GLOBAL ACCESS
@@ -1868,4 +1435,3 @@ window.mwanikiAI = {
     speak,
     stopSpeech
 };
-
