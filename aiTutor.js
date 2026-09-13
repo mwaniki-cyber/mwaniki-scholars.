@@ -1,4 +1,4 @@
-````javascript
+
 import { supabase } from "./supabase.js";
 
 console.log("🚀 Mwaniki AI Tutor loaded");
@@ -1868,4 +1868,4 @@ window.mwanikiAI = {
     speak,
     stopSpeech
 };
-````
+
