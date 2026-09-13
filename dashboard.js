@@ -1,14 +1,17 @@
 import { supabase } from "./supabase.js";
 
-/* =========================================================
-   MWANIKI SCHOLARS
-   STUDENT DASHBOARD ENGINE
-========================================================= */
+/*
+===========================================================
+MWANIKI SCHOLARS
+STUDENT DASHBOARD ENGINE
+===========================================================
+*/
 
-console.log("Mwaniki Scholars dashboard loaded");
+console.log("🚀 Mwaniki Scholars dashboard loaded");
+
 
 /* =========================================================
-   STATE
+STATE
 ========================================================= */
 
 let currentUser = null;
@@ -20,14 +23,20 @@ let allQuizzes = [];
 
 let dashboardReady = false;
 
+
 /* =========================================================
-   HELPERS
+HELPERS
 ========================================================= */
 
 const $ = (id) => document.getElementById(id);
 
+
 function escapeHTML(value) {
-    if (value === null || value === undefined) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -39,19 +48,25 @@ function escapeHTML(value) {
         .replace(/'/g, "&#039;");
 }
 
+
 function getInitials(name) {
-    const cleanName = String(name || "Student")
-        .trim()
-        .replace(/\s+/g, " ");
+
+    const cleanName =
+        String(name || "Student")
+            .trim()
+            .replace(/\s+/g, " ");
 
     if (!cleanName) {
         return "S";
     }
 
-    const parts = cleanName.split(" ");
+    const parts =
+        cleanName.split(" ");
 
     if (parts.length === 1) {
-        return parts[0].slice(0, 2).toUpperCase();
+        return parts[0]
+            .slice(0, 2)
+            .toUpperCase();
     }
 
     return (
@@ -60,258 +75,339 @@ function getInitials(name) {
     ).toUpperCase();
 }
 
+
+function showMessage(
+    message,
+    type = "info"
+) {
+
+    let box =
+        $("dashboardMessage");
+
+    if (!box) {
+
+        box =
+            document.createElement("div");
+
+        box.id =
+            "dashboardMessage";
+
+        box.style.position =
+            "fixed";
+
+        box.style.right =
+            "20px";
+
+        box.style.bottom =
+            "20px";
+
+        box.style.zIndex =
+            "99999";
+
+        box.style.maxWidth =
+            "420px";
+
+        box.style.padding =
+            "14px 18px";
+
+        box.style.borderRadius =
+            "12px";
+
+        box.style.background =
+            "#062b49";
+
+        box.style.color =
+            "#ffffff";
+
+        box.style.boxShadow =
+            "0 10px 30px rgba(0,0,0,.2)";
+
+        box.style.fontSize =
+            "14px";
+
+        box.style.lineHeight =
+            "1.5";
+
+        document.body.appendChild(box);
+    }
+
+    box.textContent =
+        message;
+
+    box.dataset.type =
+        type;
+
+    clearTimeout(
+        showMessage.timer
+    );
+
+    showMessage.timer =
+        setTimeout(() => {
+
+            box.remove();
+
+        }, 4000);
+}
+
+
+/* =========================================================
+CURRENT DATE
+========================================================= */
+
 function updateCurrentDate() {
-    const element = $("currentDate");
+
+    const element =
+        $("currentDate");
 
     if (!element) {
         return;
     }
 
-    const now = new Date();
+    element.textContent =
+        new Date().toLocaleDateString(
+            "en-KE",
+            {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            }
+        );
+}
 
-    element.textContent = now.toLocaleDateString(
-        "en-KE",
-        {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-            year: "numeric"
-        }
+
+/* =========================================================
+STUDENT IDENTITY
+========================================================= */
+
+function getStudentName() {
+
+    return (
+        currentStudent?.full_name ||
+        currentUser?.user_metadata?.full_name ||
+        currentUser?.user_metadata?.name ||
+        currentUser?.email ||
+        "Student"
     );
 }
 
-/* =========================================================
-   STUDENT IDENTITY
-========================================================= */
 
 function updateStudentIdentity() {
+
     const studentName =
-        currentStudent?.full_name ||
-        currentUser?.user_metadata?.full_name ||
-        currentUser?.email ||
-        "Student";
+        getStudentName();
 
-    const initials = getInitials(studentName);
-
-    const welcomeName = $("welcomeName");
-    const headerName = $("headerProfileName");
-
-    if (welcomeName) {
-        welcomeName.textContent = studentName;
-    }
+    const headerName =
+        $("dashboardProfileName");
 
     if (headerName) {
-        headerName.textContent = studentName;
+
+        headerName.textContent =
+            studentName;
     }
 
-    const profileNameInput = $("profileName");
+    const heroName =
+        $("welcomeName");
 
-    if (profileNameInput) {
-        if ("value" in profileNameInput) {
-            profileNameInput.value = studentName;
-        } else {
-            profileNameInput.textContent = studentName;
-        }
+    if (heroName) {
+
+        heroName.textContent =
+            studentName;
     }
 
-    const headerAvatar = $("headerProfileAvatar");
-    const profileAvatar = $("profileLargeAvatar");
+    const studentNameInput =
+        $("studentName");
 
-    if (headerAvatar && !currentStudent?.photo_url) {
-        headerAvatar.replaceChildren();
-        headerAvatar.textContent = initials;
+    if (studentNameInput) {
+
+        studentNameInput.value =
+            studentName;
     }
 
-    if (profileAvatar && !currentStudent?.photo_url) {
-        profileAvatar.replaceChildren();
-        profileAvatar.textContent = initials;
+    const studentEmailInput =
+        $("studentEmail");
+
+    if (studentEmailInput) {
+
+        studentEmailInput.value =
+            currentStudent?.email ||
+            currentUser?.email ||
+            "";
     }
 }
 
+
 /* =========================================================
-   STUDENT PHOTO
+STUDENT PHOTO
 ========================================================= */
 
-function renderAvatar(element, photoURL, studentName) {
-    if (!element) {
+function renderProfileImage(
+    imageElement,
+    fallbackElement,
+    photoURL,
+    studentName
+) {
+
+    if (!imageElement) {
         return;
     }
-
-    element.replaceChildren();
 
     if (!photoURL) {
-        element.textContent = getInitials(studentName);
+
+        imageElement.style.display =
+            "none";
+
+        if (fallbackElement) {
+
+            fallbackElement.style.display =
+                "flex";
+
+            fallbackElement.textContent =
+                getInitials(studentName);
+        }
+
         return;
     }
 
-    const image = document.createElement("img");
+    imageElement.src =
+        photoURL;
 
-    image.src = photoURL;
-    image.alt = "Student profile photo";
+    imageElement.alt =
+        `${studentName} profile photo`;
 
-    image.style.width = "100%";
-    image.style.height = "100%";
-    image.style.objectFit = "cover";
-    image.style.display = "block";
+    imageElement.style.display =
+        "block";
 
-    image.addEventListener(
-        "error",
+    if (fallbackElement) {
+
+        fallbackElement.style.display =
+            "none";
+    }
+
+    imageElement.onerror =
         () => {
-            element.replaceChildren();
-            element.textContent = getInitials(studentName);
-        },
-        { once: true }
-    );
 
-    element.appendChild(image);
+            imageElement.style.display =
+                "none";
+
+            if (fallbackElement) {
+
+                fallbackElement.style.display =
+                    "flex";
+
+                fallbackElement.textContent =
+                    getInitials(studentName);
+            }
+        };
 }
+
 
 function updateStudentPhoto() {
+
+    const studentName =
+        getStudentName();
+
     const photoURL =
-        currentStudent?.photo_url || "";
+        currentStudent?.photo_url ||
+        "";
 
-    const studentName =
-        currentStudent?.full_name ||
-        currentUser?.email ||
-        "Student";
-
-    renderAvatar(
-        $("headerProfileAvatar"),
+    renderProfileImage(
+        $("dashboardProfilePhoto"),
+        null,
         photoURL,
         studentName
     );
 
-    renderAvatar(
-        $("profileLargeAvatar"),
+    renderProfileImage(
+        $("dashboardHeroProfilePhoto"),
+        $("dashboardHeroFallback"),
         photoURL,
         studentName
     );
 }
 
-/* =========================================================
-   PROFILE DETAILS
-========================================================= */
-
-function updateProfileDetails() {
-    const studentName =
-        currentStudent?.full_name ||
-        currentUser?.user_metadata?.full_name ||
-        currentUser?.email ||
-        "Student";
-
-    const email =
-        currentStudent?.email ||
-        currentUser?.email ||
-        "";
-
-    const phone =
-        currentStudent?.phone ||
-        "";
-
-    const course =
-        currentStudent?.course ||
-        "";
-
-    const level =
-        currentStudent?.level ||
-        "";
-
-    const profileName = $("profileName");
-    const profileEmail = $("profileEmail");
-    const profilePhone = $("profilePhone");
-    const profileCourse = $("profileCourse");
-    const profileLevel = $("profileLevel");
-
-    if (profileName) {
-        if ("value" in profileName) {
-            profileName.value = studentName;
-        } else {
-            profileName.textContent = studentName;
-        }
-    }
-
-    if (profileEmail) {
-        if ("value" in profileEmail) {
-            profileEmail.value = email;
-        } else {
-            profileEmail.textContent = email;
-        }
-    }
-
-    if (profilePhone) {
-        profilePhone.value = phone;
-    }
-
-    if (profileCourse) {
-        profileCourse.value = course;
-    }
-
-    if (profileLevel) {
-        profileLevel.value = level;
-    }
-}
 
 /* =========================================================
-   LOAD STUDENT PROFILE
+LOAD STUDENT PROFILE
 ========================================================= */
 
 async function loadStudentProfile() {
+
     try {
+
         const {
             data: authData,
             error: authError
-        } = await supabase.auth.getUser();
+        } =
+            await supabase.auth.getUser();
 
         if (authError) {
+
             console.error(
                 "Authentication error:",
                 authError
             );
         }
 
-        currentUser = authData?.user || null;
+        currentUser =
+            authData?.user || null;
 
         if (!currentUser) {
-            window.location.href = "./index.html";
+
+            window.location.href =
+                "./index.html";
+
             return false;
         }
+
 
         const {
             data,
             error
-        } = await supabase
-            .from("students")
-            .select(`
-                id,
-                full_name,
-                email,
-                phone,
-                course,
-                level,
-                photo_url,
-                created_at
-            `)
-            .eq("id", currentUser.id)
-            .maybeSingle();
+        } =
+            await supabase
+                .from("students")
+                .select(`
+                    id,
+                    full_name,
+                    email,
+                    phone,
+                    course,
+                    level,
+                    photo_url,
+                    created_at
+                `)
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .maybeSingle();
+
 
         if (error) {
+
             console.error(
                 "Student profile error:",
                 error
             );
 
-            currentStudent = null;
+            currentStudent =
+                null;
+
         } else {
-            currentStudent = data || null;
+
+            currentStudent =
+                data || null;
         }
+
 
         updateStudentIdentity();
         updateStudentPhoto();
-        updateProfileDetails();
 
         return true;
 
     } catch (error) {
+
         console.error(
             "loadStudentProfile failed:",
             error
@@ -321,337 +417,15 @@ async function loadStudentProfile() {
     }
 }
 
-/* =========================================================
-   PROFILE EDITOR
-========================================================= */
-
-function setProfileStatus(message, type = "") {
-    const status = $("profileSaveStatus");
-
-    if (!status) {
-        return;
-    }
-
-    status.textContent = message;
-
-    status.classList.remove(
-        "success",
-        "error"
-    );
-
-    if (type) {
-        status.classList.add(type);
-    }
-}
-
-function setupProfileEditor() {
-    const saveButton = $("saveProfileButton");
-    const photoInput = $("profilePhotoInput");
-    const changePasswordButton = $("changePasswordButton");
-
-    if (photoInput) {
-        photoInput.addEventListener(
-            "change",
-            handleProfilePhotoSelection
-        );
-    }
-
-    saveButton?.addEventListener(
-        "click",
-        saveStudentProfile
-    );
-
-    changePasswordButton?.addEventListener(
-        "click",
-        () => {
-            window.location.href =
-                "./resetPassword.html";
-        }
-    );
-}
-
-async function handleProfilePhotoSelection(event) {
-    const input = event.target;
-    const file = input.files?.[0];
-
-    if (!file) {
-        return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-        setProfileStatus(
-            "Please select a valid image file.",
-            "error"
-        );
-
-        input.value = "";
-        return;
-    }
-
-    const maxSize =
-        5 * 1024 * 1024;
-
-    if (file.size > maxSize) {
-        setProfileStatus(
-            "Profile photo must be smaller than 5 MB.",
-            "error"
-        );
-
-        input.value = "";
-        return;
-    }
-
-    const studentName =
-        currentStudent?.full_name ||
-        currentUser?.email ||
-        "Student";
-
-    const previewURL =
-        URL.createObjectURL(file);
-
-    renderAvatar(
-        $("profileLargeAvatar"),
-        previewURL,
-        studentName
-    );
-
-    setProfileStatus(
-        "New photo selected. Save your profile to upload it.",
-        ""
-    );
-}
-
-async function uploadProfilePhoto(file) {
-    if (!currentUser || !file) {
-        return null;
-    }
-
-    const extension =
-        file.name.includes(".")
-            ? file.name
-                .split(".")
-                .pop()
-                .toLowerCase()
-            : "jpg";
-
-    const filePath =
-        `${currentUser.id}/${Date.now()}.${extension}`;
-
-    const {
-        error: uploadError
-    } = await supabase.storage
-        .from("student-profiles")
-        .upload(
-            filePath,
-            file,
-            {
-                upsert: true,
-                contentType: file.type
-            }
-        );
-
-    if (uploadError) {
-        console.error(
-            "Profile photo upload error:",
-            uploadError
-        );
-
-        throw new Error(
-            "Profile photo could not be uploaded. Check the student-profiles storage bucket and its policies."
-        );
-    }
-
-    const {
-        data
-    } = supabase.storage
-        .from("student-profiles")
-        .getPublicUrl(filePath);
-
-    if (!data?.publicUrl) {
-        throw new Error(
-            "Profile photo URL could not be generated."
-        );
-    }
-
-    return data.publicUrl;
-}
-
-async function saveStudentProfile() {
-    if (!currentUser) {
-        setProfileStatus(
-            "Your session has expired. Please sign in again.",
-            "error"
-        );
-
-        return;
-    }
-
-    const saveButton =
-        $("saveProfileButton");
-
-    const phoneInput =
-        $("profilePhone");
-
-    const courseInput =
-        $("profileCourse");
-
-    const levelInput =
-        $("profileLevel");
-
-    const photoInput =
-        $("profilePhotoInput");
-
-    const phone =
-        phoneInput?.value.trim() || "";
-
-    const course =
-        courseInput?.value.trim() || "";
-
-    const level =
-        levelInput?.value.trim() || "";
-
-    if (!phone) {
-        setProfileStatus(
-            "Please enter your phone number.",
-            "error"
-        );
-
-        phoneInput?.focus();
-        return;
-    }
-
-    if (!course) {
-        setProfileStatus(
-            "Please enter your course.",
-            "error"
-        );
-
-        courseInput?.focus();
-        return;
-    }
-
-    if (!level) {
-        setProfileStatus(
-            "Please enter your level or year.",
-            "error"
-        );
-
-        levelInput?.focus();
-        return;
-    }
-
-    if (saveButton) {
-        saveButton.disabled = true;
-        saveButton.textContent = "Saving...";
-    }
-
-    setProfileStatus(
-        "Saving profile.",
-        ""
-    );
-
-    try {
-        let photoURL =
-            currentStudent?.photo_url || null;
-
-        const selectedFile =
-            photoInput?.files?.[0] || null;
-
-        if (selectedFile) {
-            photoURL =
-                await uploadProfilePhoto(
-                    selectedFile
-                );
-        }
-
-        const updates = {
-            phone,
-            course,
-            level
-        };
-
-        if (photoURL) {
-            updates.photo_url = photoURL;
-        }
-
-        const {
-            data,
-            error
-        } = await supabase
-            .from("students")
-            .update(updates)
-            .eq("id", currentUser.id)
-            .select(`
-                id,
-                full_name,
-                email,
-                phone,
-                course,
-                level,
-                photo_url,
-                created_at
-            `)
-            .maybeSingle();
-
-        if (error) {
-            console.error(
-                "Profile update error:",
-                error
-            );
-
-            throw new Error(
-                error.message ||
-                "Profile could not be updated."
-            );
-        }
-
-        currentStudent =
-            data || {
-                ...currentStudent,
-                ...updates
-            };
-
-        updateStudentIdentity();
-        updateStudentPhoto();
-        updateProfileDetails();
-
-        if (photoInput) {
-            photoInput.value = "";
-        }
-
-        setProfileStatus(
-            "Profile updated successfully.",
-            "success"
-        );
-
-    } catch (error) {
-        console.error(
-            "saveStudentProfile failed:",
-            error
-        );
-
-        setProfileStatus(
-            error.message ||
-            "Profile could not be updated.",
-            "error"
-        );
-
-    } finally {
-        if (saveButton) {
-            saveButton.disabled = false;
-            saveButton.textContent = "Save Profile";
-        }
-    }
-}
 
 /* =========================================================
-   COURSE IMAGE
+COURSE IMAGE
 ========================================================= */
 
 function getCourseImage(course) {
+
     const image =
-        course?.image ||
-        "";
+        course?.image || "";
 
     if (
         typeof image !== "string" ||
@@ -663,31 +437,34 @@ function getCourseImage(course) {
     return image.trim();
 }
 
+
 /* =========================================================
-   COURSE URL
+COURSE URL
 ========================================================= */
 
 function getCourseURL(course) {
-    const courseID =
-        course?.id;
 
     if (
-        courseID === null ||
-        courseID === undefined
+        !course ||
+        course.id === null ||
+        course.id === undefined
     ) {
         return "./course.html";
     }
 
-    return `./course.html?course_id=${encodeURIComponent(
-        courseID
-    )}`;
+    return (
+        `./course.html?course_id=` +
+        encodeURIComponent(course.id)
+    );
 }
 
+
 /* =========================================================
-   OPEN COURSE
+OPEN COURSE
 ========================================================= */
 
 function openCourse(course) {
+
     if (!course) {
         return;
     }
@@ -707,8 +484,10 @@ function openCourse(course) {
         JSON.stringify({
             id: course.id,
             title: course.title || "",
-            description: course.description || "",
-            image: course.image || ""
+            description:
+                course.description || "",
+            image:
+                course.image || ""
         })
     );
 
@@ -716,11 +495,13 @@ function openCourse(course) {
         getCourseURL(course);
 }
 
+
 /* =========================================================
-   COURSE CARD
+COURSE CARD
 ========================================================= */
 
 function createCourseCard(course) {
+
     const title =
         course?.title ||
         "Untitled Course";
@@ -732,41 +513,32 @@ function createCourseCard(course) {
     const image =
         getCourseImage(course);
 
-    let visual = "";
+    const visual =
+        image
+            ? `
+                <div class="course-card-visual">
 
-    if (image) {
-        visual = `
-            <div class="course-card-visual">
-                <img
-                    class="course-card-image"
-                    src="${escapeHTML(image)}"
-                    alt="${escapeHTML(title)}"
-                    loading="lazy"
-                    onerror="
-                        this.style.display='none';
-                        this.parentElement
-                            .querySelector('.course-card-placeholder')
-                            .style.display='block';
-                    "
-                >
+                    <img
+                        class="course-card-image"
+                        src="${escapeHTML(image)}"
+                        alt="${escapeHTML(title)}"
+                        loading="lazy"
+                    >
 
-                <div
-                    class="course-card-placeholder"
-                    style="display:none;"
-                    aria-hidden="true"
-                ></div>
-            </div>
-        `;
-    } else {
-        visual = `
-            <div class="course-card-visual">
-                <div
-                    class="course-card-placeholder"
-                    aria-hidden="true"
-                ></div>
-            </div>
-        `;
-    }
+                </div>
+            `
+            : `
+                <div class="course-card-visual">
+
+                    <div
+                        class="course-card-placeholder"
+                        aria-hidden="true"
+                    >
+                        📚
+                    </div>
+
+                </div>
+            `;
 
     return `
         <article class="course-card">
@@ -797,44 +569,60 @@ function createCourseCard(course) {
     `;
 }
 
+
 /* =========================================================
-   RENDER COURSES
+RENDER COURSES
 ========================================================= */
 
 function renderCourses() {
-    const grid =
-        $("courseGrid");
 
-    if (!grid) {
+    const area =
+        $("courseArea");
+
+    if (!area) {
         return;
     }
 
     if (!allCourses.length) {
-        grid.innerHTML = `
+
+        area.innerHTML = `
             <div class="empty-state">
-                <strong>No courses available.</strong>
+
+                <strong>
+                    No courses available.
+                </strong>
+
                 <span>
-                    Courses will appear here when they are
-                    available in the course library.
+                    Courses will appear here when
+                    they are available.
                 </span>
+
             </div>
         `;
 
         return;
     }
 
-    grid.innerHTML =
-        allCourses
-            .map(createCourseCard)
-            .join("");
+    area.innerHTML = `
+        <div class="course-grid">
+            ${allCourses
+                .map(createCourseCard)
+                .join("")}
+        </div>
+    `;
 
-    grid
-        .querySelectorAll("[data-course-id]")
+
+    area
+        .querySelectorAll(
+            "[data-course-id]"
+        )
         .forEach(button => {
+
             button.addEventListener(
                 "click",
                 () => {
-                    const courseID =
+
+                    const id =
                         Number(
                             button.dataset.courseId
                         );
@@ -843,10 +631,11 @@ function renderCourses() {
                         allCourses.find(
                             item =>
                                 Number(item.id) ===
-                                courseID
+                                id
                         );
 
                     if (course) {
+
                         openCourse(course);
                     }
                 }
@@ -854,16 +643,19 @@ function renderCourses() {
         });
 }
 
+
 /* =========================================================
-   LOAD COURSES
+LOAD COURSES
 ========================================================= */
 
 async function loadCourses() {
-    const grid =
-        $("courseGrid");
 
-    if (grid) {
-        grid.innerHTML = `
+    const area =
+        $("courseArea");
+
+    if (area) {
+
+        area.innerHTML = `
             <div class="loading-state">
                 Loading courses...
             </div>
@@ -871,26 +663,30 @@ async function loadCourses() {
     }
 
     try {
+
         const {
             data,
             error
-        } = await supabase
-            .from("courses")
-            .select(`
-                id,
-                title,
-                description,
-                image,
-                created_at
-            `)
-            .order(
-                "id",
-                {
-                    ascending: true
-                }
-            );
+        } =
+            await supabase
+                .from("courses")
+                .select(`
+                    id,
+                    title,
+                    description,
+                    image,
+                    created_at
+                `)
+                .order(
+                    "id",
+                    {
+                        ascending: true
+                    }
+                );
+
 
         if (error) {
+
             console.error(
                 "Courses loading error:",
                 error
@@ -898,8 +694,9 @@ async function loadCourses() {
 
             allCourses = [];
 
-            if (grid) {
-                grid.innerHTML = `
+            if (area) {
+
+                area.innerHTML = `
                     <div class="empty-state">
                         Unable to load courses.
                         Please refresh and try again.
@@ -910,323 +707,362 @@ async function loadCourses() {
             return;
         }
 
+
         allCourses =
             Array.isArray(data)
                 ? data
                 : [];
 
+
         const totalCourses =
             $("totalCourses");
 
         if (totalCourses) {
+
             totalCourses.textContent =
                 allCourses.length;
         }
 
+
         renderCourses();
-        renderRecommendations();
-        loadRecentCourse();
+
+        renderRecommendedLesson();
+
+        renderContinueLearning();
+
+        renderCourseProgress();
 
     } catch (error) {
+
         console.error(
             "loadCourses failed:",
             error
         );
 
         allCourses = [];
+
+        if (area) {
+
+            area.innerHTML = `
+                <div class="empty-state">
+                    Unable to load courses.
+                </div>
+            `;
+        }
     }
 }
 
+
 /* =========================================================
-   RECOMMENDATIONS
+CONTINUE LEARNING
 ========================================================= */
 
-function renderRecommendations() {
-    const grid =
-        $("recommendationsGrid");
+function renderContinueLearning() {
 
-    if (!grid) {
+    const area =
+        $("continueLearningContent");
+
+    if (!area) {
         return;
     }
 
-    if (!allCourses.length) {
-        grid.innerHTML = `
+    let savedCourse =
+        null;
+
+    try {
+
+        const raw =
+            localStorage.getItem(
+                "mwanikiLastCourse"
+            );
+
+        if (raw) {
+
+            savedCourse =
+                JSON.parse(raw);
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Could not read recent course:",
+            error
+        );
+    }
+
+
+    if (!savedCourse) {
+
+        area.innerHTML = `
             <div class="empty-state">
-                No recommendations available.
+                Choose a course from the library
+                to begin learning.
             </div>
         `;
 
         return;
     }
 
-    const recommendations =
-        allCourses.slice(0, 3);
 
-    grid.innerHTML =
-        recommendations
-            .map(course => {
-                const image =
-                    getCourseImage(course);
+    const course =
+        allCourses.find(
+            item =>
+                Number(item.id) ===
+                Number(savedCourse.id)
+        ) ||
+        savedCourse;
 
-                const imageHTML =
-                    image
-                        ? `
-                            <div class="course-card-visual">
 
-                                <img
-                                    class="course-card-image"
-                                    src="${escapeHTML(image)}"
-                                    alt="${escapeHTML(course.title)}"
-                                    loading="lazy"
-                                >
+    area.innerHTML = `
+        <div class="continue-learning-card">
 
-                            </div>
-                        `
-                        : `
-                            <div class="course-card-visual">
-                                <div
-                                    class="course-card-placeholder"
-                                    aria-hidden="true"
-                                ></div>
-                            </div>
-                        `;
+            <div>
 
-                return `
-                    <article class="course-card">
+                <span class="section-kicker">
+                    RECENT COURSE
+                </span>
 
-                        ${imageHTML}
+                <h3>
+                    ${escapeHTML(
+                        course.title ||
+                        "Continue Learning"
+                    )}
+                </h3>
 
-                        <div class="course-card-body">
+                <p>
+                    ${escapeHTML(
+                        course.description ||
+                        "Continue your medical learning journey."
+                    )}
+                </p>
 
-                            <span class="course-label">
-                                Recommended
-                            </span>
+            </div>
 
-                            <h3>
-                                ${escapeHTML(
-                                    course.title
-                                )}
-                            </h3>
+            <button
+                type="button"
+                class="primary-button"
+                id="continueLearningButton"
+            >
+                Continue Course
+            </button>
 
-                            <p>
-                                ${escapeHTML(
-                                    course.description ||
-                                    "Explore this medical course."
-                                )}
-                            </p>
+        </div>
+    `;
 
-                            <button
-                                type="button"
-                                class="course-card-button"
-                                data-recommendation-id="${escapeHTML(
-                                    course.id
-                                )}"
-                            >
-                                View Course
-                            </button>
 
-                        </div>
-
-                    </article>
-                `;
-            })
-            .join("");
-
-    grid
-        .querySelectorAll(
-            "[data-recommendation-id]"
-        )
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    const id =
-                        Number(
-                            button.dataset
-                                .recommendationId
-                        );
-
-                    const course =
-                        allCourses.find(
-                            item =>
-                                Number(item.id) === id
-                        );
-
-                    if (course) {
-                        openCourse(course);
-                    }
-                }
-            );
-        });
+    $("continueLearningButton")
+        ?.addEventListener(
+            "click",
+            () => openCourse(course)
+        );
 }
 
+
 /* =========================================================
-   RECENT COURSE
+RECOMMENDED LESSON
 ========================================================= */
 
-function loadRecentCourse() {
-    const card =
-        $("recentCourseCard");
+function renderRecommendedLesson() {
 
-    const titleElement =
-        $("recentCourseTitle");
+    const area =
+        $("recommendedLesson");
 
-    const descriptionElement =
-        $("recentCourseDescription");
-
-    const button =
-        $("recentCourseButton");
-
-    const imageElement =
-        $("recentCourseImage");
-
-    const placeholderElement =
-        $("recentCourseImagePlaceholder");
-
-    if (
-        !card ||
-        !titleElement ||
-        !descriptionElement ||
-        !button
-    ) {
+    if (!area) {
         return;
     }
 
-    let savedCourse = null;
+    if (!allCourses.length) {
+
+        area.innerHTML = `
+            <div class="empty-state">
+                Recommendations will appear here.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    const course =
+        allCourses[0];
+
+
+    area.innerHTML = `
+        <div class="recommended-card">
+
+            <div>
+
+                <span class="section-kicker">
+                    RECOMMENDED
+                </span>
+
+                <h3>
+                    ${escapeHTML(
+                        course.title
+                    )}
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        course.description ||
+                        "Explore this medical course."
+                    )}
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="primary-button"
+                id="recommendedLessonButton"
+            >
+                Start Learning
+            </button>
+
+        </div>
+    `;
+
+
+    $("recommendedLessonButton")
+        ?.addEventListener(
+            "click",
+            () => openCourse(course)
+        );
+}
+
+
+/* =========================================================
+RECENTLY STUDIED
+========================================================= */
+
+function renderRecentlyStudied() {
+
+    const area =
+        $("recentlyStudied");
+
+    if (!area) {
+        return;
+    }
+
+    let savedCourse =
+        null;
 
     try {
-        const stored =
+
+        const raw =
             localStorage.getItem(
                 "mwanikiLastCourse"
             );
 
-        if (stored) {
+        if (raw) {
+
             savedCourse =
-                JSON.parse(stored);
+                JSON.parse(raw);
         }
 
-    } catch (error) {
-        console.warn(
-            "Recent course data could not be read:",
-            error
-        );
+    } catch {
+        savedCourse = null;
     }
 
-    let course = null;
 
-    if (savedCourse?.id) {
-        course =
-            allCourses.find(
-                item =>
-                    Number(item.id) ===
-                    Number(savedCourse.id)
-            );
-    }
+    if (!savedCourse) {
 
-    if (!course && savedCourse) {
-        course = savedCourse;
-    }
-
-    if (!course) {
-        titleElement.textContent =
-            "No recent course";
-
-        descriptionElement.textContent =
-            "Choose a course from the library to begin learning.";
-
-        button.textContent =
-            "Explore Courses";
-
-        button.onclick = () => {
-            document
-                .getElementById("courses")
-                ?.scrollIntoView({
-                    behavior: "smooth"
-                });
-        };
-
-        if (imageElement) {
-            imageElement.hidden = true;
-            imageElement.removeAttribute("src");
-        }
-
-        if (placeholderElement) {
-            placeholderElement.style.display =
-                "block";
-        }
+        area.innerHTML = `
+            <div class="empty-state">
+                No recent activity yet.
+            </div>
+        `;
 
         return;
     }
 
-    titleElement.textContent =
-        course.title ||
-        "Recent Course";
 
-    descriptionElement.textContent =
-        course.description ||
-        "Continue your medical learning.";
+    area.innerHTML = `
+        <div class="activity-item">
 
-    button.textContent =
-        "Continue Course";
+            <div>
 
-    button.onclick = () => {
-        openCourse(course);
-    };
+                <strong>
+                    ${escapeHTML(
+                        savedCourse.title ||
+                        "Recent Course"
+                    )}
+                </strong>
 
-    const image =
-        getCourseImage(course);
+                <span>
+                    Recently studied
+                </span>
 
-    if (
-        image &&
-        imageElement
-    ) {
-        imageElement.src = image;
+            </div>
 
-        imageElement.alt =
-            course.title ||
-            "Course image";
+            <button
+                type="button"
+                class="secondary-button"
+                id="recentCourseOpenButton"
+            >
+                Continue
+            </button>
 
-        imageElement.hidden =
-            false;
+        </div>
+    `;
 
-        imageElement.onerror =
+
+    $("recentCourseOpenButton")
+        ?.addEventListener(
+            "click",
             () => {
-                imageElement.hidden =
-                    true;
 
-                if (placeholderElement) {
-                    placeholderElement.style.display =
-                        "block";
-                }
-            };
+                const course =
+                    allCourses.find(
+                        item =>
+                            Number(item.id) ===
+                            Number(savedCourse.id)
+                    ) ||
+                    savedCourse;
 
-        if (placeholderElement) {
-            placeholderElement.style.display =
-                "none";
-        }
-
-    } else {
-        if (imageElement) {
-            imageElement.hidden =
-                true;
-
-            imageElement.removeAttribute(
-                "src"
-            );
-        }
-
-        if (placeholderElement) {
-            placeholderElement.style.display =
-                "block";
-        }
-    }
+                openCourse(course);
+            }
+        );
 }
 
+
 /* =========================================================
-   NOTES
+CLEAR RECENT ACTIVITY
+========================================================= */
+
+function setupRecentActivity() {
+
+    const button =
+        $("clearRecentActivity");
+
+    if (!button) {
+        return;
+    }
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            localStorage.removeItem(
+                "mwanikiLastCourse"
+            );
+
+            renderRecentlyStudied();
+
+            showMessage(
+                "Recent activity cleared."
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+NOTES
 ========================================================= */
 
 function createNoteCard(note) {
+
     const title =
         note?.file_name ||
         note?.unit ||
@@ -1252,6 +1088,7 @@ function createNoteCard(note) {
     const fileURL =
         note?.file_url ||
         "";
+
 
     return `
         <article class="note-card">
@@ -1291,7 +1128,6 @@ function createNoteCard(note) {
                     : `
                         <span
                             class="note-card-button"
-                            aria-disabled="true"
                         >
                             Note Unavailable
                         </span>
@@ -1302,20 +1138,23 @@ function createNoteCard(note) {
     `;
 }
 
+
 /* =========================================================
-   RENDER NOTES
+RENDER NOTES
 ========================================================= */
 
 function renderNotes() {
-    const grid =
-        $("notesGrid");
 
-    if (!grid) {
+    const area =
+        $("notesArea");
+
+    if (!area) {
         return;
     }
 
     if (!allNotes.length) {
-        grid.innerHTML = `
+
+        area.innerHTML = `
             <div class="empty-state">
 
                 <strong>
@@ -1323,8 +1162,8 @@ function renderNotes() {
                 </strong>
 
                 <span>
-                    Notes published by Mwaniki Scholars
-                    will appear here.
+                    Published Mwaniki Scholars
+                    study materials will appear here.
                 </span>
 
             </div>
@@ -1333,57 +1172,69 @@ function renderNotes() {
         return;
     }
 
-    grid.innerHTML =
-        allNotes
-            .map(createNoteCard)
-            .join("");
+
+    area.innerHTML = `
+        <div class="notes-grid">
+            ${allNotes
+                .map(createNoteCard)
+                .join("")}
+        </div>
+    `;
 }
 
+
 /* =========================================================
-   LOAD NOTES
+LOAD NOTES
 ========================================================= */
 
 async function loadNotes() {
-    const grid =
-        $("notesGrid");
 
-    if (grid) {
-        grid.innerHTML = `
+    const area =
+        $("notesArea");
+
+    if (area) {
+
+        area.innerHTML = `
             <div class="loading-state">
                 Loading notes...
             </div>
         `;
     }
 
+
     try {
+
         const {
             data,
             error
-        } = await supabase
-            .from("notes")
-            .select(`
-                id,
-                course,
-                unit,
-                file_name,
-                file_url,
-                created_at,
-                course_id,
-                unit_id,
-                published
-            `)
-            .eq(
-                "published",
-                true
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            );
+        } =
+            await supabase
+                .from("notes")
+                .select(`
+                    id,
+                    course,
+                    unit,
+                    file_name,
+                    file_url,
+                    created_at,
+                    course_id,
+                    unit_id,
+                    published
+                `)
+                .eq(
+                    "published",
+                    true
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                );
+
 
         if (error) {
+
             console.error(
                 "Notes loading error:",
                 error
@@ -1391,11 +1242,11 @@ async function loadNotes() {
 
             allNotes = [];
 
-            if (grid) {
-                grid.innerHTML = `
+            if (area) {
+
+                area.innerHTML = `
                     <div class="empty-state">
                         Unable to load notes.
-                        Please refresh and try again.
                     </div>
                 `;
             }
@@ -1403,63 +1254,73 @@ async function loadNotes() {
             return;
         }
 
+
         allNotes =
             Array.isArray(data)
                 ? data
                 : [];
 
-        const totalNotes =
-            $("totalNotes");
-
-        if (totalNotes) {
-            totalNotes.textContent =
-                allNotes.length;
-        }
 
         renderNotes();
 
     } catch (error) {
+
         console.error(
             "loadNotes failed:",
             error
         );
 
         allNotes = [];
+
+        if (area) {
+
+            area.innerHTML = `
+                <div class="empty-state">
+                    Unable to load notes.
+                </div>
+            `;
+        }
     }
 }
 
+
 /* =========================================================
-   QUIZZES
+QUIZZES
 ========================================================= */
 
 async function loadQuizzes() {
+
     try {
+
         const {
             data,
             error
-        } = await supabase
-            .from("quizzes")
-            .select(`
-                id,
-                course_id,
-                question,
-                option_a,
-                option_b,
-                option_c,
-                option_d,
-                correct_answer,
-                created_at,
-                course,
-                unit
-            `)
-            .order(
-                "id",
-                {
-                    ascending: true
-                }
-            );
+        } =
+            await supabase
+                .from("quizzes")
+                .select(`
+                    id,
+                    course_id,
+                    question,
+                    option_a,
+                    option_b,
+                    option_c,
+                    option_d,
+                    correct_answer,
+                    created_at,
+                    course,
+                    unit
+                `)
+                .order(
+                    "id",
+                    {
+                        ascending: true
+                    }
+                );
+
 
         if (error) {
+
             console.error(
                 "Quiz loading error:",
                 error
@@ -1470,22 +1331,32 @@ async function loadQuizzes() {
             return;
         }
 
+
         allQuizzes =
             Array.isArray(data)
                 ? data
                 : [];
 
-        const totalQuizzes =
-            $("totalQuizzes");
 
-        if (totalQuizzes) {
+        const totalQuizzes =
+            $("quizzesAttempted");
+
+        if (
+            totalQuizzes &&
+            !totalQuizzes.textContent
+        ) {
+
             totalQuizzes.textContent =
-                allQuizzes.length;
+                "0";
         }
+
 
         updateQuizProgress();
 
+        renderQuizSummary();
+
     } catch (error) {
+
         console.error(
             "loadQuizzes failed:",
             error
@@ -1495,12 +1366,68 @@ async function loadQuizzes() {
     }
 }
 
+
 /* =========================================================
-   QUIZ PROGRESS
+QUIZ SUMMARY
+========================================================= */
+
+function renderQuizSummary() {
+
+    const recent =
+        $("recentQuizPerformance");
+
+    const best =
+        $("bestQuizScore");
+
+    const weak =
+        $("weakQuizAreas");
+
+
+    let progress =
+        calculateQuizProgress();
+
+
+    if (recent) {
+
+        recent.innerHTML = `
+            <div class="quiz-summary-number">
+                ${escapeHTML(
+                    String(allQuizzes.length)
+                )}
+            </div>
+
+            <span>
+                Quiz questions available
+            </span>
+        `;
+    }
+
+
+    if (best) {
+
+        best.textContent =
+            `${progress}%`;
+    }
+
+
+    if (weak) {
+
+        weak.textContent =
+            progress < 60
+                ? "Keep reviewing your recent topics and practise more quizzes."
+                : "Keep practising to strengthen your knowledge.";
+    }
+}
+
+
+/* =========================================================
+QUIZ PROGRESS
 ========================================================= */
 
 function calculateQuizProgress() {
+
     try {
+
         const raw =
             localStorage.getItem(
                 "mwanikiQuizProgress"
@@ -1510,13 +1437,16 @@ function calculateQuizProgress() {
             return 0;
         }
 
+
         const progress =
             JSON.parse(raw);
+
 
         if (
             typeof progress === "number" &&
             Number.isFinite(progress)
         ) {
+
             return Math.max(
                 0,
                 Math.min(
@@ -1526,10 +1456,12 @@ function calculateQuizProgress() {
             );
         }
 
+
         if (
             progress &&
             typeof progress === "object"
         ) {
+
             const values =
                 Object.values(progress);
 
@@ -1537,13 +1469,17 @@ function calculateQuizProgress() {
                 return 0;
             }
 
-            let completed = 0;
+
+            let total = 0;
+
 
             values.forEach(value => {
+
                 if (
                     typeof value === "number"
                 ) {
-                    completed += Math.max(
+
+                    total += Math.max(
                         0,
                         Math.min(
                             100,
@@ -1555,6 +1491,7 @@ function calculateQuizProgress() {
                     value &&
                     typeof value === "object"
                 ) {
+
                     const score =
                         Number(
                             value.score ??
@@ -1562,7 +1499,7 @@ function calculateQuizProgress() {
                             0
                         );
 
-                    completed += Math.max(
+                    total += Math.max(
                         0,
                         Math.min(
                             100,
@@ -1572,14 +1509,17 @@ function calculateQuizProgress() {
                 }
             });
 
+
             return Math.round(
-                completed / values.length
+                total /
+                values.length
             );
         }
 
     } catch (error) {
+
         console.warn(
-            "Quiz progress could not be calculated:",
+            "Quiz progress error:",
             error
         );
     }
@@ -1587,41 +1527,177 @@ function calculateQuizProgress() {
     return 0;
 }
 
+
 function updateQuizProgress() {
+
     const progress =
         calculateQuizProgress();
 
+
     const progressText =
-        $("learningProgress");
+        $("overallProgressText");
 
     const progressBar =
-        $("learningProgressBar");
+        $("overallProgressBar");
+
 
     if (progressText) {
+
         progressText.textContent =
             `${progress}%`;
     }
 
+
     if (progressBar) {
+
         progressBar.style.width =
             `${progress}%`;
     }
+
+
+    const score =
+        $("averageScore");
+
+    if (score) {
+
+        score.textContent =
+            `${progress}%`;
+    }
+
+
+    const streak =
+        $("learningStreak");
+
+    if (streak) {
+
+        const saved =
+            localStorage.getItem(
+                "mwanikiLearningStreak"
+            );
+
+        streak.textContent =
+            saved
+                ? `${saved} days`
+                : "0 days";
+    }
 }
 
+
 /* =========================================================
-   NAVIGATION
+COURSE PROGRESS
+========================================================= */
+
+function renderCourseProgress() {
+
+    const area =
+        $("courseProgressArea");
+
+    if (!area) {
+        return;
+    }
+
+    if (!allCourses.length) {
+
+        area.innerHTML = `
+            <div class="empty-state">
+                Course progress will appear here.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    area.innerHTML =
+        allCourses
+            .slice(0, 6)
+            .map(course => {
+
+                return `
+                    <div class="course-progress-item">
+
+                        <div class="course-progress-header">
+
+                            <strong>
+                                ${escapeHTML(
+                                    course.title
+                                )}
+                            </strong>
+
+                            <span>
+                                0%
+                            </span>
+
+                        </div>
+
+                        <div class="progress-track">
+
+                            <div
+                                class="progress-fill"
+                                style="width:0%;"
+                            ></div>
+
+                        </div>
+
+                    </div>
+                `;
+            })
+            .join("");
+}
+
+
+/* =========================================================
+ACHIEVEMENT INDICATORS
+========================================================= */
+
+function renderAchievements() {
+
+    const area =
+        $("achievementIndicators");
+
+    if (!area) {
+        return;
+    }
+
+
+    area.innerHTML = `
+        <div class="achievement-indicators">
+
+            <span>
+                📚 ${allCourses.length} courses available
+            </span>
+
+            <span>
+                📄 ${allNotes.length} notes available
+            </span>
+
+            <span>
+                📝 ${allQuizzes.length} quiz questions
+            </span>
+
+        </div>
+    `;
+}
+
+
+/* =========================================================
+NAVIGATION
 ========================================================= */
 
 function setupNavigation() {
+
     const links =
         document.querySelectorAll(
             ".nav-link[data-section]"
         );
 
+
     links.forEach(link => {
+
         link.addEventListener(
             "click",
             event => {
+
                 const targetID =
                     link.dataset.section;
 
@@ -1636,52 +1712,124 @@ function setupNavigation() {
 
                 event.preventDefault();
 
+
                 target.scrollIntoView({
-                    behavior: "smooth"
+                    behavior: "smooth",
+                    block: "start"
                 });
 
+
                 links.forEach(item => {
+
                     item.classList.remove(
                         "active"
                     );
                 });
 
+
                 link.classList.add(
                     "active"
                 );
+
+
+                if (
+                    history.replaceState
+                ) {
+
+                    history.replaceState(
+                        null,
+                        "",
+                        `#${targetID}`
+                    );
+                }
+            }
+        );
+    });
+
+
+    const mobileLinks =
+        document.querySelectorAll(
+            ".mobile-bottom-nav a"
+        );
+
+
+    mobileLinks.forEach(link => {
+
+        link.addEventListener(
+            "click",
+            event => {
+
+                const href =
+                    link.getAttribute("href");
+
+                if (
+                    !href ||
+                    !href.startsWith("#")
+                ) {
+                    return;
+                }
+
+                const target =
+                    document.getElementById(
+                        href.slice(1)
+                    );
+
+                if (!target) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                target.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
             }
         );
     });
 }
 
+
 /* =========================================================
-   SCROLL NAVIGATION
+SCROLL NAVIGATION
 ========================================================= */
 
 function setupScrollNavigation() {
-    const sections = [
-        "overview",
-        "courses",
-        "notes",
-        "quizzes"
-    ]
-        .map(id =>
-            document.getElementById(id)
-        )
-        .filter(Boolean);
+
+    const sections =
+        [
+            "dashboardHome",
+            "courseLibrary",
+            "notesLibrary",
+            "quizCenter",
+            "aiTutor",
+            "humanTutor",
+            "studentInboxSection"
+        ]
+            .map(id =>
+                document.getElementById(id)
+            )
+            .filter(Boolean);
+
 
     const links =
         document.querySelectorAll(
             ".nav-link[data-section]"
         );
 
-    if (!sections.length) {
+
+    if (
+        !sections.length ||
+        !("IntersectionObserver" in window)
+    ) {
         return;
     }
+
 
     const observer =
         new IntersectionObserver(
             entries => {
+
                 const visible =
                     entries
                         .filter(
@@ -1694,11 +1842,14 @@ function setupScrollNavigation() {
                                 a.intersectionRatio
                         )[0];
 
+
                 if (!visible) {
                     return;
                 }
 
+
                 links.forEach(link => {
+
                     link.classList.toggle(
                         "active",
                         link.dataset.section ===
@@ -1708,10 +1859,9 @@ function setupScrollNavigation() {
             },
             {
                 rootMargin:
-                    "-110px 0px -55% 0px",
+                    "-120px 0px -55% 0px",
 
                 threshold: [
-                    0,
                     0.1,
                     0.25,
                     0.5
@@ -1719,228 +1869,794 @@ function setupScrollNavigation() {
             }
         );
 
-    sections.forEach(section =>
-        observer.observe(section)
+
+    sections.forEach(
+        section =>
+            observer.observe(section)
     );
 }
 
-/* =========================================================
-   PROFILE PANEL
-========================================================= */
-
-function setupProfilePanel() {
-    const button =
-        $("profileButton");
-
-    const panel =
-        $("profilePanel");
-
-    const close =
-        $("closeProfilePanel");
-
-    if (!button || !panel) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        () => {
-            panel.classList.add(
-                "open"
-            );
-
-            panel.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-        }
-    );
-
-    close?.addEventListener(
-        "click",
-        () => {
-            panel.classList.remove(
-                "open"
-            );
-
-            panel.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-        }
-    );
-}
 
 /* =========================================================
-   NOTIFICATION PANEL
+PROFILE BUTTON
 ========================================================= */
 
-function setupNotificationPanel() {
+function setupStudentProfileButton() {
+
     const button =
-        $("notificationButton");
-
-    const panel =
-        $("notificationPanel");
-
-    const close =
-        $("closeNotificationPanel");
-
-    if (!button || !panel) {
-        return;
-    }
-
-    button.addEventListener(
-        "click",
-        () => {
-            panel.classList.add(
-                "open"
-            );
-
-            panel.setAttribute(
-                "aria-hidden",
-                "false"
-            );
-        }
-    );
-
-    close?.addEventListener(
-        "click",
-        () => {
-            panel.classList.remove(
-                "open"
-            );
-
-            panel.setAttribute(
-                "aria-hidden",
-                "true"
-            );
-        }
-    );
-}
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-function setupLogout() {
-    const button =
-        $("logoutButton");
+        $("studentProfileButton");
 
     if (!button) {
         return;
     }
 
+
     button.addEventListener(
         "click",
-        async () => {
-            button.disabled = true;
+        () => {
 
-            button.textContent =
-                "Signing out...";
+            window.location.href =
+                "./studentProfile.html";
+        }
+    );
+}
+
+
+/* =========================================================
+NOTIFICATION BUTTON
+========================================================= */
+
+function setupNotificationButton() {
+
+    const button =
+        $("notificationButton");
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        () => {
+
+            showMessage(
+                "Your latest notifications will appear here.",
+                "info"
+            );
+        }
+    );
+}
+
+
+/* =========================================================
+AI TUTOR
+========================================================= */
+
+function setupAITutor() {
+
+    const textarea =
+        $("aiQuestion");
+
+    const askButton =
+        $("askAIButton");
+
+    const answerBox =
+        $("aiAnswer");
+
+
+    if (
+        !textarea ||
+        !askButton
+    ) {
+        return;
+    }
+
+
+    document
+        .querySelectorAll(
+            ".suggestion-button"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    textarea.value =
+                        button.textContent.trim();
+
+                    textarea.focus();
+                }
+            );
+        });
+
+
+    askButton.addEventListener(
+        "click",
+        async () => {
+
+            const question =
+                textarea.value.trim();
+
+
+            if (!question) {
+
+                showMessage(
+                    "Please enter a medical question first."
+                );
+
+                textarea.focus();
+
+                return;
+            }
+
+
+            askButton.disabled =
+                true;
+
+            askButton.textContent =
+                "Thinking...";
+
+
+            if (answerBox) {
+
+                answerBox.textContent =
+                    "Mwaniki AI is preparing your answer...";
+            }
+
 
             try {
+
                 const {
+                    data: sessionData
+                } =
+                    await supabase.auth.getSession();
+
+
+                const token =
+                    sessionData?.session?.access_token;
+
+
+                if (!token) {
+
+                    throw new Error(
+                        "Your session has expired. Please sign in again."
+                    );
+                }
+
+
+                /*
+                IMPORTANT:
+                Keep your existing deployed
+                Edge Function name here.
+                */
+
+                const {
+                    data,
                     error
-                } = await supabase.auth.signOut();
+                } =
+                    await supabase.functions.invoke(
+                        "mwaniki-ai",
+                        {
+                            body: {
+                                question,
+                                searchMwaniki: true,
+                                searchWeb: true,
+                                searchImages: true
+                            }
+                        }
+                    );
+
 
                 if (error) {
                     throw error;
                 }
 
-                localStorage.removeItem(
-                    "selectedCourse"
-                );
 
-                localStorage.removeItem(
-                    "selectedCourseName"
-                );
+                const answer =
+                    data?.finalAnswer ||
+                    data?.answer ||
+                    data?.webAnswer ||
+                    "No answer was returned.";
 
-                localStorage.removeItem(
-                    "selectedUnit"
-                );
 
-                localStorage.removeItem(
-                    "selectedUnitTitle"
-                );
+                if (answerBox) {
 
-                window.location.href =
-                    "./index.html";
+                    answerBox.textContent =
+                        answer;
+                }
+
+
+                const recent =
+                    $("aiRecentQuestions");
+
+                if (recent) {
+
+                    const item =
+                        document.createElement("div");
+
+                    item.className =
+                        "ai-recent-question";
+
+                    item.textContent =
+                        question;
+
+                    recent.prepend(item);
+                }
+
 
             } catch (error) {
+
                 console.error(
-                    "Logout error:",
+                    "AI Tutor error:",
                     error
                 );
 
-                button.disabled = false;
 
-                button.textContent =
-                    "Sign Out";
+                if (answerBox) {
 
-                setProfileStatus(
-                    "Unable to sign out. Please try again.",
+                    answerBox.textContent =
+                        "The AI Tutor could not respond right now. Please try again.";
+                }
+
+
+                showMessage(
+                    error.message ||
+                    "AI Tutor request failed.",
                     "error"
                 );
+
+            } finally {
+
+                askButton.disabled =
+                    false;
+
+                askButton.textContent =
+                    "🤖 Ask AI Tutor";
             }
         }
     );
 }
 
+
 /* =========================================================
-   REFRESH BUTTONS
+HUMAN TUTOR
 ========================================================= */
 
-function setupRefreshButtons() {
-    const coursesButton =
-        $("refreshCoursesButton");
+function setupTutorMessaging() {
 
-    const notesButton =
-        $("refreshNotesButton");
+    const button =
+        $("sendTutorMessageButton");
 
-    coursesButton?.addEventListener(
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
         "click",
         async () => {
-            coursesButton.disabled =
+
+            const studentName =
+                $("studentName")?.value.trim() ||
+                getStudentName();
+
+            const studentEmail =
+                $("studentEmail")?.value.trim() ||
+                currentUser?.email ||
+                "";
+
+            const topic =
+                $("topic")?.value.trim() ||
+                "";
+
+            const message =
+                $("studentMessage")?.value.trim() ||
+                "";
+
+            const status =
+                $("messageStatus");
+
+
+            if (!topic) {
+
+                showTutorStatus(
+                    "Please enter the topic.",
+                    "error"
+                );
+
+                $("topic")?.focus();
+
+                return;
+            }
+
+
+            if (!message) {
+
+                showTutorStatus(
+                    "Please write your question.",
+                    "error"
+                );
+
+                $("studentMessage")?.focus();
+
+                return;
+            }
+
+
+            button.disabled =
                 true;
 
-            coursesButton.textContent =
-                "Refreshing...";
+            button.textContent =
+                "Sending...";
 
-            await loadCourses();
 
-            coursesButton.disabled =
-                false;
+            try {
 
-            coursesButton.textContent =
-                "Refresh";
-        }
-    );
+                /*
+                Try the existing tutor_messages
+                table used by the platform.
+                */
 
-    notesButton?.addEventListener(
-        "click",
-        async () => {
-            notesButton.disabled =
-                true;
+                const {
+                    error
+                } =
+                    await supabase
+                        .from("tutor_messages")
+                        .insert({
+                            student_id:
+                                currentUser?.id ||
+                                null,
 
-            notesButton.textContent =
-                "Refreshing...";
+                            student_name:
+                                studentName,
 
-            await loadNotes();
+                            student_email:
+                                studentEmail,
 
-            notesButton.disabled =
-                false;
+                            topic,
 
-            notesButton.textContent =
-                "Refresh";
+                            message
+                        });
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                showTutorStatus(
+                    "Message sent successfully. A tutor can now respond from the tutor portal.",
+                    "success"
+                );
+
+
+                const topicInput =
+                    $("topic");
+
+                const messageInput =
+                    $("studentMessage");
+
+
+                if (topicInput) {
+                    topicInput.value = "";
+                }
+
+                if (messageInput) {
+                    messageInput.value = "";
+                }
+
+
+            } catch (error) {
+
+                console.error(
+                    "Tutor message error:",
+                    error
+                );
+
+
+                showTutorStatus(
+                    error.message ||
+                    "Unable to send your message.",
+                    "error"
+                );
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "📨 Send Message";
+            }
         }
     );
 }
 
+
+function showTutorStatus(
+    message,
+    type = ""
+) {
+
+    const status =
+        $("messageStatus");
+
+    if (!status) {
+
+        showMessage(
+            message,
+            type
+        );
+
+        return;
+    }
+
+
+    status.textContent =
+        message;
+
+
+    status.classList.remove(
+        "success",
+        "error"
+    );
+
+
+    if (type) {
+
+        status.classList.add(
+            type
+        );
+    }
+}
+
+
 /* =========================================================
-   HASH NAVIGATION
+STUDENT INBOX
+========================================================= */
+
+function setupStudentInbox() {
+
+    const button =
+        $("loadAnswersButton");
+
+    const emailInput =
+        $("checkEmail");
+
+
+    if (!button) {
+        return;
+    }
+
+
+    button.addEventListener(
+        "click",
+        async () => {
+
+            const email =
+                emailInput?.value.trim() ||
+                currentUser?.email ||
+                "";
+
+
+            if (!email) {
+
+                showMessage(
+                    "Please enter your email address."
+                );
+
+                emailInput?.focus();
+
+                return;
+            }
+
+
+            button.disabled =
+                true;
+
+            button.textContent =
+                "Loading...";
+
+
+            try {
+
+                const {
+                    data,
+                    error
+                } =
+                    await supabase
+                        .from("tutor_answers")
+                        .select("*")
+                        .eq(
+                            "student_email",
+                            email
+                        )
+                        .order(
+                            "created_at",
+                            {
+                                ascending: false
+                            }
+                        );
+
+
+                if (error) {
+                    throw error;
+                }
+
+
+                renderStudentInbox(
+                    Array.isArray(data)
+                        ? data
+                        : []
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Inbox error:",
+                    error
+                );
+
+
+                const inbox =
+                    $("studentInbox");
+
+
+                if (inbox) {
+
+                    inbox.innerHTML = `
+                        <div class="empty-state">
+                            Unable to load tutor replies.
+                            Please try again.
+                        </div>
+                    `;
+                }
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.textContent =
+                    "📬 Load Answers";
+            }
+        }
+    );
+}
+
+
+function renderStudentInbox(answers) {
+
+    const inbox =
+        $("studentInbox");
+
+    if (!inbox) {
+        return;
+    }
+
+
+    if (!answers.length) {
+
+        inbox.innerHTML = `
+            <div class="empty-state">
+                No tutor replies found yet.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    inbox.innerHTML =
+        answers
+            .map(answer => {
+
+                return `
+                    <article class="inbox-message">
+
+                        <h3>
+                            ${escapeHTML(
+                                answer.topic ||
+                                "Tutor Reply"
+                            )}
+                        </h3>
+
+                        <p>
+                            ${escapeHTML(
+                                answer.answer ||
+                                answer.message ||
+                                answer.reply ||
+                                ""
+                            )}
+                        </p>
+
+                        <small>
+                            ${
+                                answer.created_at
+                                    ? escapeHTML(
+                                        new Date(
+                                            answer.created_at
+                                        ).toLocaleString(
+                                            "en-KE"
+                                        )
+                                    )
+                                    : ""
+                            }
+                        </small>
+
+                    </article>
+                `;
+            })
+            .join("");
+}
+
+
+/* =========================================================
+CLEAR / SEARCH COURSES
+========================================================= */
+
+function setupCourseSearch() {
+
+    const input =
+        $("courseSearch");
+
+    if (!input) {
+        return;
+    }
+
+
+    input.addEventListener(
+        "input",
+        () => {
+
+            const query =
+                input.value
+                    .trim()
+                    .toLowerCase();
+
+
+            if (!query) {
+
+                renderCourses();
+
+                return;
+            }
+
+
+            const filtered =
+                allCourses.filter(
+                    course => {
+
+                        const title =
+                            String(
+                                course.title ||
+                                ""
+                            ).toLowerCase();
+
+                        const description =
+                            String(
+                                course.description ||
+                                ""
+                            ).toLowerCase();
+
+
+                        return (
+                            title.includes(query) ||
+                            description.includes(query)
+                        );
+                    }
+                );
+
+
+            const original =
+                allCourses;
+
+            allCourses =
+                filtered;
+
+            renderCourses();
+
+            allCourses =
+                original;
+        }
+    );
+}
+
+
+/* =========================================================
+NOTES SEARCH
+========================================================= */
+
+function setupNotesSearch() {
+
+    const input =
+        $("notesSearch");
+
+    if (!input) {
+        return;
+    }
+
+
+    input.addEventListener(
+        "input",
+        () => {
+
+            const query =
+                input.value
+                    .trim()
+                    .toLowerCase();
+
+
+            const area =
+                $("notesArea");
+
+            if (!area) {
+                return;
+            }
+
+
+            if (!query) {
+
+                renderNotes();
+
+                return;
+            }
+
+
+            const filtered =
+                allNotes.filter(
+                    note => {
+
+                        const text =
+                            [
+                                note.file_name,
+                                note.course,
+                                note.unit
+                            ]
+                                .filter(Boolean)
+                                .join(" ")
+                                .toLowerCase();
+
+                        return text.includes(
+                            query
+                        );
+                    }
+                );
+
+
+            if (!filtered.length) {
+
+                area.innerHTML = `
+                    <div class="empty-state">
+                        No notes match your search.
+                    </div>
+                `;
+
+                return;
+            }
+
+
+            area.innerHTML = `
+                <div class="notes-grid">
+                    ${filtered
+                        .map(createNoteCard)
+                        .join("")}
+                </div>
+            `;
+        }
+    );
+}
+
+
+/* =========================================================
+HASH NAVIGATION
 ========================================================= */
 
 function handleInitialHash() {
+
     const hash =
         window.location.hash;
 
@@ -1948,31 +2664,66 @@ function handleInitialHash() {
         return;
     }
 
+
     const id =
         hash.replace(
             "#",
             ""
         );
 
+
     const element =
         document.getElementById(id);
+
 
     if (!element) {
         return;
     }
 
+
     setTimeout(
         () => {
+
             element.scrollIntoView({
-                behavior: "smooth"
+                behavior: "smooth",
+                block: "start"
             });
+
         },
-        250
+        300
     );
 }
 
+
 /* =========================================================
-   TRACK COURSE / UNIT
+WHATSAPP
+========================================================= */
+
+function setupWhatsAppButton() {
+
+    const links =
+        document.querySelectorAll(
+            ".whatsapp-float"
+        );
+
+
+    links.forEach(link => {
+
+        link.addEventListener(
+            "click",
+            () => {
+
+                console.log(
+                    "Opening Mwaniki Scholars WhatsApp Channel"
+                );
+            }
+        );
+    });
+}
+
+
+/* =========================================================
+TRACK COURSE / UNIT
 ========================================================= */
 
 window.mwanikiTrackUnit =
@@ -1981,27 +2732,33 @@ function (
     unitId,
     unitTitle
 ) {
+
     if (
         courseId !== undefined &&
         courseId !== null
     ) {
+
         localStorage.setItem(
             "selectedCourse",
             String(courseId)
         );
     }
 
+
     if (
         unitId !== undefined &&
         unitId !== null
     ) {
+
         localStorage.setItem(
             "selectedUnit",
             String(unitId)
         );
     }
 
+
     if (unitTitle) {
+
         localStorage.setItem(
             "selectedUnitTitle",
             String(unitTitle)
@@ -2009,98 +2766,157 @@ function (
     }
 };
 
+
 /* =========================================================
-   PUBLIC DASHBOARD API
+PUBLIC DASHBOARD API
 ========================================================= */
 
 window.mwanikiDashboard = {
+
     getCurrentUser() {
+
         return currentUser;
     },
 
+
     getCurrentStudent() {
+
         return currentStudent;
     },
 
+
     getCourses() {
+
         return allCourses;
     },
 
+
     getNotes() {
+
         return allNotes;
     },
 
+
     getQuizzes() {
+
         return allQuizzes;
     },
 
+
     async refresh() {
+
         await Promise.all([
             loadCourses(),
             loadNotes(),
             loadQuizzes()
         ]);
+
+        renderRecentlyStudied();
+        renderAchievements();
     }
 };
 
+
 /* =========================================================
-   AUTH LISTENER
+AUTH LISTENER
 ========================================================= */
 
 function setupAuthListener() {
+
     supabase.auth.onAuthStateChange(
         (event, session) => {
+
             if (
-                event ===
-                "SIGNED_OUT"
+                event === "SIGNED_OUT"
             ) {
+
                 window.location.href =
                     "./index.html";
 
                 return;
             }
 
+
             if (
-                event ===
-                "SIGNED_IN" &&
+                (
+                    event === "SIGNED_IN" ||
+                    event === "TOKEN_REFRESHED"
+                ) &&
                 session?.user
             ) {
+
                 currentUser =
                     session.user;
+
+                updateStudentIdentity();
+                updateStudentPhoto();
             }
         }
     );
 }
 
+
 /* =========================================================
-   INITIALIZE DASHBOARD
+INITIALIZE DASHBOARD
 ========================================================= */
 
 async function initializeDashboard() {
+
+    console.log(
+        "Initializing Mwaniki Scholars dashboard..."
+    );
+
+
     updateCurrentDate();
+
+
+    /*
+    IMPORTANT:
+    Attach ALL click handlers BEFORE
+    waiting for Supabase requests.
+    */
 
     setupNavigation();
 
     setupScrollNavigation();
 
-    setupProfilePanel();
+    setupStudentProfileButton();
 
-    setupProfileEditor();
+    setupNotificationButton();
 
-    setupNotificationPanel();
+    setupAITutor();
 
-    setupLogout();
+    setupTutorMessaging();
 
-    setupRefreshButtons();
+    setupStudentInbox();
+
+    setupCourseSearch();
+
+    setupNotesSearch();
+
+    setupRecentActivity();
+
+    setupWhatsAppButton();
 
     setupAuthListener();
+
+
+    /*
+    Load authenticated student.
+    */
 
     const authenticated =
         await loadStudentProfile();
 
+
     if (!authenticated) {
         return;
     }
+
+
+    /*
+    Load dashboard data.
+    */
 
     await Promise.all([
         loadCourses(),
@@ -2108,22 +2924,43 @@ async function initializeDashboard() {
         loadQuizzes()
     ]);
 
+
     updateQuizProgress();
+
+    renderRecentlyStudied();
+
+    renderAchievements();
 
     handleInitialHash();
 
-    dashboardReady = true;
+
+    dashboardReady =
+        true;
+
 
     console.log(
-        "Mwaniki Scholars dashboard ready"
+        "✅ Mwaniki Scholars dashboard ready"
     );
 }
 
+
 /* =========================================================
-   START
+START
 ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    initializeDashboard
-);
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeDashboard,
+        {
+            once: true
+        }
+    );
+
+} else {
+
+    initializeDashboard();
+}
