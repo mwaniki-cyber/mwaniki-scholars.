@@ -2,11 +2,12 @@
    MWANIKI SCHOLARS
    STUDENT DASHBOARD
    COMPLETE DASHBOARD.CSS
-   ========================================================= */
+========================================================= */
+
 
 /* =========================================================
    1. DESIGN TOKENS
-   ========================================================= */
+========================================================= */
 
 :root {
     --primary: #0b7285;
@@ -45,14 +46,13 @@
     --radius-lg: 16px;
 
     --container: 1440px;
-
     --header-height: 76px;
 }
 
 
 /* =========================================================
    2. GLOBAL RESET
-   ========================================================= */
+========================================================= */
 
 * {
     box-sizing: border-box;
@@ -113,10 +113,6 @@ a {
     text-decoration: none;
 }
 
-img {
-    max-width: 100%;
-}
-
 .hidden {
     display: none !important;
 }
@@ -124,7 +120,7 @@ img {
 
 /* =========================================================
    3. ACCESSIBILITY
-   ========================================================= */
+========================================================= */
 
 :focus-visible {
     outline: 3px solid rgba(20, 184, 166, 0.35);
@@ -134,10 +130,11 @@ img {
 
 /* =========================================================
    4. PAGE WRAPPER
-   ========================================================= */
+========================================================= */
 
 .dashboard-page {
     min-height: 100vh;
+
     background:
         linear-gradient(
             180deg,
@@ -149,7 +146,7 @@ img {
 
 /* =========================================================
    5. TOP HEADER
-   ========================================================= */
+========================================================= */
 
 .dashboard-header {
     position: sticky;
@@ -157,7 +154,6 @@ img {
     z-index: 1000;
 
     width: 100%;
-
     min-height: var(--header-height);
 
     background: rgba(255, 255, 255, 0.97);
@@ -187,7 +183,7 @@ img {
 
 /* =========================================================
    6. BRAND
-   ========================================================= */
+========================================================= */
 
 .brand-area {
     display: flex;
@@ -196,7 +192,6 @@ img {
     gap: 11px;
 
     flex-shrink: 0;
-
     min-width: max-content;
 }
 
@@ -211,7 +206,6 @@ img {
     justify-content: center;
 
     background: var(--primary-soft);
-
     color: var(--primary);
 
     font-size: 20px;
@@ -250,11 +244,10 @@ img {
 
 /* =========================================================
    7. HORIZONTAL NAVIGATION
-   ========================================================= */
+========================================================= */
 
 .dashboard-nav {
     flex: 1;
-
     min-width: 0;
 
     display: flex;
@@ -277,7 +270,6 @@ img {
     border-radius: 8px;
 
     background: transparent;
-
     color: #52686c;
 
     font-size: 13px;
@@ -307,7 +299,7 @@ img {
 
 /* =========================================================
    8. HEADER ACTIONS
-   ========================================================= */
+========================================================= */
 
 .header-actions {
     display: flex;
@@ -329,7 +321,6 @@ img {
     justify-content: center;
 
     background: var(--surface-muted);
-
     color: var(--text);
 
     cursor: pointer;
@@ -350,7 +341,7 @@ img {
 
 /* =========================================================
    9. HEADER PROFILE
-   ========================================================= */
+========================================================= */
 
 .header-profile {
     display: flex;
@@ -359,15 +350,22 @@ img {
     gap: 9px;
 
     min-width: 0;
+    flex-shrink: 0;
 }
 
-.header-profile-button {
-    display: flex;
+.header-profile-button,
+#studentProfileButton {
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
 
     gap: 9px;
 
-    padding: 4px 7px 4px 4px;
+    width: auto;
+    max-width: 260px;
+    min-height: 50px;
+
+    padding: 4px 8px 4px 4px;
 
     border-radius: 10px;
 
@@ -375,30 +373,49 @@ img {
 
     cursor: pointer;
 
+    overflow: visible;
+    flex-shrink: 0;
+
     transition:
         background 0.18s ease;
 }
 
-.header-profile-button:hover {
+.header-profile-button:hover,
+#studentProfileButton:hover {
     background: var(--surface-muted);
 }
 
-.header-profile-photo,
-#headerProfilePhoto,
-.profile-photo {
+
+/* =========================================================
+   10. HEADER PROFILE PHOTO
+========================================================= */
+
+/*
+   Only images inside the actual student profile button
+   receive profile-photo sizing.
+
+   Do not use a generic .profile-photo selector.
+*/
+
+#studentProfileButton img {
+    display: block;
+
     width: 42px;
     height: 42px;
 
+    min-width: 42px;
+    min-height: 42px;
+
+    max-width: 42px;
+    max-height: 42px;
+
     flex: 0 0 42px;
 
-    display: block;
+    margin: 0;
+    padding: 0;
 
     border-radius: 50%;
 
-    /*
-     * CONTAIN keeps the entire uploaded photo visible.
-     * COVER would crop the edges.
-     */
     object-fit: contain;
     object-position: center;
 
@@ -414,6 +431,12 @@ img {
     width: 42px;
     height: 42px;
 
+    min-width: 42px;
+    min-height: 42px;
+
+    max-width: 42px;
+    max-height: 42px;
+
     flex: 0 0 42px;
 
     border-radius: 50%;
@@ -423,7 +446,6 @@ img {
     justify-content: center;
 
     background: var(--primary);
-
     color: #ffffff;
 
     font-size: 13px;
@@ -446,8 +468,8 @@ img {
 
 
 /* =========================================================
-   10. MAIN CONTAINER
-   ========================================================= */
+   11. MAIN CONTAINER
+========================================================= */
 
 .dashboard-main {
     width: min(
@@ -462,8 +484,8 @@ img {
 
 
 /* =========================================================
-   11. SECTION
-   ========================================================= */
+   12. SECTIONS
+========================================================= */
 
 .dashboard-section {
     margin-bottom: 34px;
@@ -508,8 +530,8 @@ img {
 
 
 /* =========================================================
-   12. WELCOME SECTION
-   ========================================================= */
+   13. WELCOME SECTION
+========================================================= */
 
 .welcome-section {
     padding: 26px 28px;
@@ -519,7 +541,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-lg);
 
     box-shadow: var(--shadow-sm);
@@ -557,7 +578,6 @@ img {
     font-size: clamp(24px, 3vw, 34px);
 
     line-height: 1.15;
-
     letter-spacing: -0.035em;
 }
 
@@ -577,11 +597,9 @@ img {
     padding: 9px 13px;
 
     border: 1px solid var(--border);
-
     border-radius: 8px;
 
     background: var(--surface-soft);
-
     color: var(--muted);
 
     font-size: 12px;
@@ -590,8 +608,8 @@ img {
 
 
 /* =========================================================
-   13. PROGRESS CARDS
-   ========================================================= */
+   14. PROGRESS CARDS
+========================================================= */
 
 .progress-grid {
     display: grid;
@@ -610,7 +628,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     box-shadow: var(--shadow-sm);
@@ -659,8 +676,8 @@ img {
 
 
 /* =========================================================
-   14. OVERALL LEARNING PROGRESS
-   ========================================================= */
+   15. OVERALL LEARNING PROGRESS
+========================================================= */
 
 .learning-progress-card {
     grid-column: span 4;
@@ -670,7 +687,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     box-shadow: var(--shadow-sm);
@@ -724,8 +740,8 @@ img {
 
 
 /* =========================================================
-   15. RECENT COURSE
-   ========================================================= */
+   16. RECENT COURSE
+========================================================= */
 
 .recent-course-card {
     display: grid;
@@ -739,7 +755,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-lg);
 
     box-shadow: var(--shadow-sm);
@@ -805,7 +820,6 @@ img {
     font-weight: 850;
 
     line-height: 1.2;
-
     letter-spacing: -0.025em;
 }
 
@@ -821,8 +835,8 @@ img {
 
 
 /* =========================================================
-   16. BUTTONS
-   ========================================================= */
+   17. BUTTONS
+========================================================= */
 
 .btn {
     min-height: 40px;
@@ -855,7 +869,6 @@ img {
 
 .btn-primary {
     background: var(--primary);
-
     color: #ffffff;
 }
 
@@ -865,7 +878,6 @@ img {
 
 .btn-secondary {
     background: var(--surface);
-
     color: var(--primary-dark);
 
     border: 1px solid var(--border);
@@ -873,13 +885,11 @@ img {
 
 .btn-secondary:hover {
     background: var(--primary-soft);
-
     border-color: #c9e3e6;
 }
 
 .btn-ghost {
     background: transparent;
-
     color: var(--primary);
 }
 
@@ -889,8 +899,8 @@ img {
 
 
 /* =========================================================
-   17. QUICK ACTIONS
-   ========================================================= */
+   18. QUICK ACTIONS
+========================================================= */
 
 .quick-actions-grid {
     display: grid;
@@ -914,7 +924,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     color: var(--text);
@@ -948,7 +957,6 @@ img {
     border-radius: 9px;
 
     background: var(--primary-soft);
-
     color: var(--primary);
 
     font-size: 17px;
@@ -978,8 +986,8 @@ img {
 
 
 /* =========================================================
-   18. RECOMMENDATIONS
-   ========================================================= */
+   19. RECOMMENDATIONS
+========================================================= */
 
 .recommendations-grid {
     display: grid;
@@ -992,8 +1000,8 @@ img {
 
 
 /* =========================================================
-   19. COURSE LIBRARY
-   ========================================================= */
+   20. COURSE LIBRARY
+========================================================= */
 
 .course-grid {
     display: grid;
@@ -1006,8 +1014,8 @@ img {
 
 
 /* =========================================================
-   20. COURSE CARD
-   ========================================================= */
+   21. COURSE CARD
+========================================================= */
 
 .course-card {
     min-width: 0;
@@ -1020,7 +1028,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     box-shadow: var(--shadow-sm);
@@ -1038,14 +1045,6 @@ img {
 
     box-shadow: var(--shadow-md);
 }
-
-
-/*
-   IMPORTANT:
-   No gradient.
-   No giant colored block.
-   No 📚 icon.
-*/
 
 .course-card-visual {
     width: 100%;
@@ -1121,14 +1120,13 @@ img {
 
 .course-card-button {
     width: 100%;
-
     margin-top: auto;
 }
 
 
 /* =========================================================
-   21. NOTES LIBRARY
-   ========================================================= */
+   22. NOTES LIBRARY
+========================================================= */
 
 .notes-grid {
     display: grid;
@@ -1147,7 +1145,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     box-shadow: var(--shadow-sm);
@@ -1188,7 +1185,6 @@ img {
     border-radius: 8px;
 
     background: var(--primary-soft);
-
     color: var(--primary);
 
     font-size: 14px;
@@ -1247,8 +1243,8 @@ img {
 
 
 /* =========================================================
-   22. QUIZ CENTRE
-   ========================================================= */
+   23. QUIZ CENTRE
+========================================================= */
 
 .quiz-progress-card {
     padding: 21px;
@@ -1256,7 +1252,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     box-shadow: var(--shadow-sm);
@@ -1310,8 +1305,8 @@ img {
 
 
 /* =========================================================
-   23. LEARNING SUPPORT
-   ========================================================= */
+   24. LEARNING SUPPORT
+========================================================= */
 
 .support-grid {
     display: grid;
@@ -1328,7 +1323,6 @@ img {
     background: var(--surface);
 
     border: 1px solid var(--border);
-
     border-radius: var(--radius-md);
 
     box-shadow: var(--shadow-sm);
@@ -1360,7 +1354,6 @@ img {
     border-radius: 9px;
 
     background: var(--primary-soft);
-
     color: var(--primary);
 
     font-size: 17px;
@@ -1385,8 +1378,8 @@ img {
 
 
 /* =========================================================
-   24. WHATSAPP / COMMUNITY SECTION
-   ========================================================= */
+   25. WHATSAPP / COMMUNITY SECTION
+========================================================= */
 
 .whatsapp-section {
     padding: 24px;
@@ -1394,7 +1387,6 @@ img {
     background: #f0f7f5;
 
     border: 1px solid #d5e6e2;
-
     border-radius: var(--radius-lg);
 }
 
@@ -1428,7 +1420,6 @@ img {
     border-radius: 10px;
 
     background: #dceee9;
-
     color: #146b59;
 
     font-size: 18px;
@@ -1454,8 +1445,8 @@ img {
 
 
 /* =========================================================
-   25. PROFILE SIDE PANEL
-   ========================================================= */
+   26. PROFILE SIDE PANEL
+========================================================= */
 
 .side-panel-overlay {
     position: fixed;
@@ -1541,7 +1532,6 @@ img {
     border-radius: 8px;
 
     background: var(--surface-muted);
-
     color: var(--text);
 
     cursor: pointer;
@@ -1551,35 +1541,43 @@ img {
 
 .side-panel-close:hover {
     background: var(--primary-soft);
-
     color: var(--primary-dark);
 }
 
 
 /* =========================================================
-   26. PROFILE PANEL PHOTO
-   ========================================================= */
+   27. PROFILE PANEL PHOTO
+========================================================= */
 
 .profile-panel {
+    width: 100%;
     text-align: center;
+    overflow: visible;
 }
 
-.profile-panel-photo,
-#profilePhoto,
-.profile-photo-large {
-    width: 96px;
-    height: 96px;
+/*
+   The selector is scoped to the profile panel only.
+   It cannot resize course images or other dashboard images.
+*/
+
+#studentPersonalProfile img {
+    display: block;
+
+    width: 110px;
+    height: 110px;
+
+    min-width: 110px;
+    min-height: 110px;
+
+    max-width: 110px;
+    max-height: 110px;
 
     margin: 24px auto 13px;
 
-    display: block;
+    padding: 0;
 
     border-radius: 50%;
 
-    /*
-     * Show the complete uploaded student photo.
-     * Do NOT use object-fit: cover here.
-     */
     object-fit: contain;
     object-position: center;
 
@@ -1587,13 +1585,21 @@ img {
 
     border: 1px solid var(--border);
 
-    overflow: hidden;
+    position: static;
+    float: none;
+    transform: none;
 }
 
 .profile-panel-initial,
 #profileInitial {
     width: 96px;
     height: 96px;
+
+    min-width: 96px;
+    min-height: 96px;
+
+    max-width: 96px;
+    max-height: 96px;
 
     margin: 24px auto 13px;
 
@@ -1604,7 +1610,6 @@ img {
     border-radius: 50%;
 
     background: var(--primary);
-
     color: #ffffff;
 
     font-size: 27px;
@@ -1630,8 +1635,8 @@ img {
 
 
 /* =========================================================
-   27. PROFILE DETAILS
-   ========================================================= */
+   28. PROFILE DETAILS
+========================================================= */
 
 .profile-details {
     margin-top: 24px;
@@ -1672,8 +1677,8 @@ img {
 
 
 /* =========================================================
-   28. LOGOUT
-   ========================================================= */
+   29. LOGOUT
+========================================================= */
 
 .logout-button {
     width: 100%;
@@ -1685,7 +1690,6 @@ img {
     border-radius: 8px;
 
     background: #fff4f2;
-
     color: var(--danger);
 
     border: 1px solid #f2d7d2;
@@ -1702,14 +1706,13 @@ img {
 
 .logout-button:hover {
     background: #fde9e5;
-
     border-color: #ecc4bd;
 }
 
 
 /* =========================================================
-   29. NOTIFICATION PANEL
-   ========================================================= */
+   30. NOTIFICATION PANEL
+========================================================= */
 
 .notification-content {
     padding-top: 18px;
@@ -1744,8 +1747,8 @@ img {
 
 
 /* =========================================================
-   30. EMPTY STATES
-   ========================================================= */
+   31. EMPTY STATES
+========================================================= */
 
 .empty-state {
     padding: 35px 20px;
@@ -1755,7 +1758,6 @@ img {
     background: var(--surface);
 
     border: 1px dashed var(--border);
-
     border-radius: var(--radius-md);
 }
 
@@ -1780,8 +1782,8 @@ img {
 
 
 /* =========================================================
-   31. LOADING STATES
-   ========================================================= */
+   32. LOADING STATES
+========================================================= */
 
 .loading-state {
     padding: 30px 20px;
@@ -1800,7 +1802,6 @@ img {
     margin: 0 auto 10px;
 
     border: 3px solid #dce9e7;
-
     border-top-color: var(--primary);
 
     border-radius: 50%;
@@ -1817,8 +1818,8 @@ img {
 
 
 /* =========================================================
-   32. ERROR STATES
-   ========================================================= */
+   33. ERROR STATES
+========================================================= */
 
 .error-state {
     padding: 20px;
@@ -1836,8 +1837,8 @@ img {
 
 
 /* =========================================================
-   33. FOOTER
-   ========================================================= */
+   34. FOOTER
+========================================================= */
 
 .dashboard-footer {
     width: min(
@@ -1860,8 +1861,8 @@ img {
 
 
 /* =========================================================
-   34. TABLET
-   ========================================================= */
+   35. TABLET
+========================================================= */
 
 @media (max-width: 1150px) {
 
@@ -1908,8 +1909,8 @@ img {
 
 
 /* =========================================================
-   35. SMALL TABLET
-   ========================================================= */
+   36. SMALL TABLET
+========================================================= */
 
 @media (max-width: 900px) {
 
@@ -1973,7 +1974,6 @@ img {
         min-height: 200px;
 
         border-right: 0;
-
         border-bottom: 1px solid var(--border);
     }
 
@@ -1997,8 +1997,8 @@ img {
 
 
 /* =========================================================
-   36. MOBILE
-   ========================================================= */
+   37. MOBILE
+========================================================= */
 
 @media (max-width: 620px) {
 
@@ -2043,7 +2043,6 @@ img {
 
     .progress-grid {
         grid-template-columns: 1fr;
-
         gap: 10px;
     }
 
@@ -2101,8 +2100,8 @@ img {
 
 
 /* =========================================================
-   37. VERY SMALL PHONES
-   ========================================================= */
+   38. VERY SMALL PHONES
+========================================================= */
 
 @media (max-width: 390px) {
 
@@ -2120,11 +2119,15 @@ img {
         height: 36px;
     }
 
-    .header-profile-photo,
-    #headerProfilePhoto,
-    .profile-photo {
+    #studentProfileButton img {
         width: 38px;
         height: 38px;
+
+        min-width: 38px;
+        min-height: 38px;
+
+        max-width: 38px;
+        max-height: 38px;
 
         flex-basis: 38px;
     }
@@ -2133,6 +2136,12 @@ img {
     #headerProfileInitial {
         width: 38px;
         height: 38px;
+
+        min-width: 38px;
+        min-height: 38px;
+
+        max-width: 38px;
+        max-height: 38px;
 
         flex-basis: 38px;
     }
@@ -2156,8 +2165,8 @@ img {
 
 
 /* =========================================================
-   38. REDUCED MOTION
-   ========================================================= */
+   39. REDUCED MOTION
+========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -2172,66 +2181,4 @@ img {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
-}
-/* =========================================================
-   FIX STUDENT PROFILE PHOTO SIZE
-   ========================================================= */
-
-/* Header photo only */
-#headerProfilePhoto,
-.header-profile-photo {
-    width: 42px !important;
-    height: 42px !important;
-
-    max-width: 42px !important;
-    max-height: 42px !important;
-
-    min-width: 42px !important;
-    min-height: 42px !important;
-
-    display: block;
-
-    object-fit: contain;
-    object-position: center;
-
-    border-radius: 50%;
-
-    background: #eef4f3;
-
-    border: 1px solid #dce7e5;
-}
-
-/* Profile side-panel photo only */
-#profilePhoto,
-.profile-panel-photo,
-.profile-photo-large {
-    width: 96px !important;
-    height: 96px !important;
-
-    max-width: 96px !important;
-    max-height: 96px !important;
-
-    min-width: 96px !important;
-    min-height: 96px !important;
-
-    display: block;
-
-    margin: 24px auto 13px;
-
-    object-fit: contain;
-    object-position: center;
-
-    border-radius: 50%;
-
-    background: #eef4f3;
-
-    border: 1px solid #dce7e5;
-}
-
-/* Prevent all other images from inheriting profile-photo sizing */
-.course-card-image,
-.recent-course-image,
-.note-card img,
-img:not(#headerProfilePhoto):not(#profilePhoto) {
-    max-width: 100%;
 }
