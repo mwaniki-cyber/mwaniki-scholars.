@@ -12,7 +12,7 @@
 
     <meta
         name="description"
-        content="Mwaniki Scholars AI Tutor and medical learning search engine."
+        content="Mwaniki Scholars AI medical tutor, study search engine and interactive testing platform."
     >
 
     <meta
@@ -21,7 +21,7 @@
     >
 
     <title>
-        Mwaniki Scholars | AI Tutor
+        Mwaniki Scholars | Mwaniki AI
     </title>
 
     <link
@@ -30,61 +30,47 @@
         href="./favicon.svg"
     >
 
-
     <style>
-
-        /* =====================================================
-           GLOBAL
-        ===================================================== */
 
         * {
             box-sizing: border-box;
         }
 
-
         html {
             scroll-behavior: smooth;
         }
 
-
         body {
             margin: 0;
             min-height: 100vh;
-
             font-family:
-                Inter,
                 Arial,
                 Helvetica,
                 sans-serif;
-
-            color: #17343a;
-
+            color: #17313a;
             background:
                 linear-gradient(
-                    135deg,
-                    #f3fbfc 0%,
-                    #eef7f8 45%,
+                    180deg,
+                    #f4fafb 0%,
+                    #eef6f7 45%,
                     #f8fbfc 100%
                 );
         }
 
-
         button,
-        textarea {
+        textarea,
+        input {
             font: inherit;
         }
-
 
         button {
             cursor: pointer;
         }
 
-
         a {
             color: inherit;
             text-decoration: none;
         }
-
 
 
         /* =====================================================
@@ -95,31 +81,32 @@
 
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 100;
+
+            min-height: 74px;
 
             display: flex;
             align-items: center;
             justify-content: space-between;
 
-            min-height: 74px;
+            gap: 20px;
 
             padding:
                 12px
                 clamp(18px, 4vw, 55px);
 
             background:
-                rgba(255, 255, 255, 0.96);
+                rgba(255,255,255,.96);
 
             border-bottom:
-                1px solid #dcebed;
+                1px solid #dce9ec;
 
             box-shadow:
-                0 5px 20px rgba(17, 56, 62, 0.07);
+                0 8px 25px rgba(17,55,65,.07);
 
             backdrop-filter:
                 blur(12px);
         }
-
 
         .brand {
 
@@ -127,115 +114,93 @@
             align-items: center;
 
             gap: 12px;
-
-            min-width: 0;
         }
-
 
         .brand-icon {
 
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
 
             display: grid;
             place-items: center;
 
-            border-radius: 13px;
+            border-radius: 14px;
+
+            color: white;
+
+            font-weight: 800;
 
             background:
                 linear-gradient(
                     135deg,
-                    #0e6872,
-                    #183f45
+                    #123f48,
+                    #087f8c
                 );
-
-            color: white;
-
-            font-weight: 900;
-            letter-spacing: 0.5px;
 
             box-shadow:
                 0 8px 20px
-                rgba(24, 63, 69, 0.22);
+                rgba(8,127,140,.2);
         }
-
 
         .brand-name {
 
-            font-size: 18px;
-            font-weight: 900;
-
-            color: #173f45;
+            font-size: 19px;
+            font-weight: 800;
         }
-
 
         .brand-subtitle {
 
             margin-top: 2px;
 
-            font-size: 12px;
-            color: #6c8589;
-        }
+            color: #71858b;
 
+            font-size: 12px;
+        }
 
         .back-button {
 
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-
-            min-height: 40px;
-
             padding:
-                0
+                10px
                 18px;
 
-            border-radius: 10px;
+            border-radius: 12px;
 
-            background: #edf7f8;
+            color: #17414a;
 
-            color: #155c65;
+            background: #edf6f7;
 
-            border:
-                1px solid #d4e9eb;
+            border: 1px solid #d5e8ea;
 
-            font-size: 14px;
-            font-weight: 800;
+            font-weight: 700;
 
             transition:
-                0.2s ease;
+                .2s ease;
         }
-
 
         .back-button:hover {
 
-            background: #dff0f2;
+            background: #dceff1;
 
             transform:
                 translateY(-1px);
         }
 
 
-
         /* =====================================================
-           MAIN
+           PAGE
         ===================================================== */
 
-        .page-container {
+        .page {
 
-            width:
-                min(
-                    1500px,
-                    calc(100% - 32px)
-                );
+            width: min(
+                1450px,
+                calc(100% - 32px)
+            );
 
             margin:
-                0 auto;
-
-            padding:
-                34px 0 70px;
+                28px auto
+                60px;
         }
-
 
 
         /* =====================================================
@@ -244,12 +209,8 @@
 
         .hero-card {
 
-            position: relative;
-
-            overflow: hidden;
-
             padding:
-                clamp(28px, 5vw, 55px);
+                clamp(25px, 5vw, 48px);
 
             border-radius: 26px;
 
@@ -258,18 +219,19 @@
             background:
                 linear-gradient(
                     135deg,
-                    #123f47 0%,
-                    #1b626a 52%,
-                    #24808a 100%
+                    #103d47 0%,
+                    #126875 48%,
+                    #0b8793 100%
                 );
 
             box-shadow:
                 0 18px 45px
-                rgba(17, 66, 73, 0.20);
+                rgba(14,70,79,.18);
 
-            margin-bottom: 25px;
+            overflow: hidden;
+
+            position: relative;
         }
-
 
         .hero-card::after {
 
@@ -277,18 +239,17 @@
 
             position: absolute;
 
-            width: 300px;
-            height: 300px;
+            width: 260px;
+            height: 260px;
 
-            right: -90px;
-            top: -130px;
+            right: -80px;
+            top: -100px;
 
             border-radius: 50%;
 
             background:
-                rgba(255,255,255,0.08);
+                rgba(255,255,255,.08);
         }
-
 
         .hero-icon {
 
@@ -298,66 +259,66 @@
             display: grid;
             place-items: center;
 
-            margin-bottom: 18px;
-
-            border-radius: 18px;
+            border-radius: 17px;
 
             background:
-                rgba(255,255,255,0.15);
+                rgba(255,255,255,.15);
 
             border:
                 1px solid
-                rgba(255,255,255,0.22);
+                rgba(255,255,255,.2);
 
-            font-size: 18px;
             font-weight: 900;
+
+            margin-bottom: 20px;
         }
 
-
         .hero-card h1 {
-
-            position: relative;
-            z-index: 2;
 
             margin:
                 0 0 10px;
 
             font-size:
-                clamp(
-                    32px,
-                    5vw,
-                    55px
-                );
+                clamp(30px, 5vw, 52px);
 
             line-height: 1.05;
         }
 
-
         .hero-card p {
 
-            position: relative;
-            z-index: 2;
-
-            max-width: 850px;
+            max-width: 780px;
 
             margin: 0;
 
             color:
-                rgba(255,255,255,0.84);
+                rgba(255,255,255,.86);
+
+            line-height: 1.7;
 
             font-size: 16px;
-            line-height: 1.7;
         }
 
 
-
         /* =====================================================
-           SEARCH CARD
+           MAIN AI LAYOUT
         ===================================================== */
 
-        .search-card {
+        .ai-workspace {
 
-            padding: 24px;
+            display: grid;
+
+            grid-template-columns:
+                minmax(0, 1.25fr)
+                minmax(360px, .75fr);
+
+            gap: 22px;
+
+            margin-top: 22px;
+
+            align-items: start;
+        }
+
+        .panel {
 
             background: white;
 
@@ -368,36 +329,39 @@
 
             box-shadow:
                 0 12px 35px
-                rgba(20, 67, 74, 0.07);
+                rgba(20,60,68,.07);
 
-            margin-bottom: 25px;
+            overflow: hidden;
         }
 
-
-        .search-card-header {
+        .panel-header {
 
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             gap: 15px;
 
-            margin-bottom: 18px;
+            padding:
+                20px 22px;
+
+            border-bottom:
+                1px solid #e5eff1;
         }
 
-
-        .search-card-header h2 {
+        .panel-header h2 {
 
             margin: 0;
 
-            font-size: 21px;
-            color: #173f45;
+            font-size: 18px;
         }
-
 
         .status {
 
             display: inline-flex;
+
             align-items: center;
 
             gap: 7px;
@@ -409,12 +373,12 @@
 
             background: #edf8f5;
 
-            color: #23705e;
+            color: #14705e;
 
             font-size: 12px;
+
             font-weight: 800;
         }
-
 
         .status-dot {
 
@@ -423,66 +387,82 @@
 
             border-radius: 50%;
 
-            background: #2aa77d;
+            background: #1aaa83;
         }
 
+
+        /* =====================================================
+           SEARCH
+        ===================================================== */
+
+        .search-panel {
+
+            padding: 22px;
+        }
+
+        .search-label {
+
+            display: block;
+
+            margin-bottom: 9px;
+
+            color: #304e56;
+
+            font-size: 14px;
+
+            font-weight: 800;
+        }
 
         .search-row {
 
             display: grid;
 
             grid-template-columns:
-                minmax(0, 1fr)
+                1fr
                 auto;
 
             gap: 12px;
         }
 
-
         #aiQuestion {
 
             width: 100%;
 
-            min-height: 66px;
+            min-height: 90px;
+
+            padding: 15px 16px;
 
             resize: vertical;
 
-            padding: 17px;
-
             border:
-                1px solid #cfe2e5;
+                1px solid #cddfe2;
 
             border-radius: 14px;
 
             outline: none;
 
-            color: #17343a;
+            color: #18343c;
 
-            background: #fbfdfd;
-
-            line-height: 1.5;
-
-            transition:
-                0.2s ease;
+            background: #fbfdfe;
         }
-
 
         #aiQuestion:focus {
 
-            border-color: #31808a;
+            border-color: #168391;
 
             box-shadow:
                 0 0 0 4px
-                rgba(49,128,138,0.10);
+                rgba(22,131,145,.10);
         }
-
 
         #askAIButton {
 
-            min-width: 190px;
+            align-self: stretch;
+
+            min-width: 175px;
 
             padding:
-                0 22px;
+                0 20px;
 
             border: 0;
 
@@ -493,20 +473,15 @@
             background:
                 linear-gradient(
                     135deg,
-                    #155e67,
-                    #227f89
+                    #124650,
+                    #087f8c
                 );
 
-            font-weight: 900;
-
-            box-shadow:
-                0 9px 22px
-                rgba(26, 104, 114, 0.22);
+            font-weight: 800;
 
             transition:
-                0.2s ease;
+                .2s ease;
         }
-
 
         #askAIButton:hover {
 
@@ -514,31 +489,29 @@
                 translateY(-1px);
 
             box-shadow:
-                0 12px 25px
-                rgba(26, 104, 114, 0.27);
+                0 9px 22px
+                rgba(8,127,140,.22);
         }
-
 
         #askAIButton:disabled {
 
-            opacity: 0.6;
+            opacity: .65;
 
-            cursor: not-allowed;
+            cursor: wait;
 
             transform: none;
         }
 
-
         .search-help {
 
-            margin-top: 10px;
+            margin-top: 11px;
 
-            color: #748b8f;
+            color: #758a90;
 
-            font-size: 13px;
-            line-height: 1.5;
+            font-size: 12px;
+
+            line-height: 1.6;
         }
-
 
         .suggestions {
 
@@ -551,36 +524,33 @@
             margin-top: 15px;
         }
 
-
         .suggestion-button {
 
             padding:
-                8px 12px;
+                8px 11px;
+
+            border:
+                1px solid #d8e8ea;
 
             border-radius: 999px;
 
-            border:
-                1px solid #d5e8ea;
+            color: #24545d;
 
-            background: #f4fafb;
-
-            color: #28626a;
+            background: #f4f9fa;
 
             font-size: 12px;
+
             font-weight: 700;
 
-            transition:
-                0.2s ease;
+            transition: .2s ease;
         }
-
 
         .suggestion-button:hover {
 
-            background: #e6f4f6;
+            background: #e6f3f5;
 
-            border-color: #bcdcdf;
+            border-color: #bddcdf;
         }
-
 
         #aiSearchStatus {
 
@@ -588,400 +558,506 @@
 
             margin-top: 13px;
 
-            font-size: 13px;
-            color: #577378;
-        }
+            color: #547178;
 
+            font-size: 13px;
+        }
 
 
         /* =====================================================
-           TWO COLUMN RESULTS
+           ANSWER
         ===================================================== */
 
-        .results-layout {
+        .answer-box {
 
-            display: grid;
+            padding: 24px;
+        }
 
-            grid-template-columns:
-                minmax(0, 1.55fr)
-                minmax(330px, 0.85fr);
+        .answer-title {
 
-            gap: 25px;
+            margin:
+                0 0 7px;
 
-            align-items: start;
+            font-size: 24px;
+
+            color: #163b44;
+        }
+
+        .answer-subtitle {
+
+            margin:
+                0 0 20px;
+
+            color: #6d8389;
+
+            font-size: 13px;
+        }
+
+        .answer-content {
+
+            color: #28454c;
+
+            line-height: 1.8;
+
+            font-size: 15px;
+        }
+
+        .answer-content p {
+
+            margin:
+                0 0 15px;
+        }
+
+        .answer-content ul {
+
+            margin:
+                8px 0 18px;
+
+            padding-left: 22px;
+        }
+
+        .answer-content li {
+
+            margin-bottom: 8px;
+        }
+
+        .source-badge {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            padding:
+                6px 9px;
+
+            margin-bottom: 15px;
+
+            border-radius: 8px;
+
+            background: #edf7f8;
+
+            color: #126a75;
+
+            font-size: 11px;
+
+            font-weight: 800;
         }
 
 
-        .result-column {
+        /* =====================================================
+           TEST ME
+        ===================================================== */
 
-            min-width: 0;
-        }
+        .test-panel {
 
-
-        .result-card {
-
-            background: white;
+            margin-top: 22px;
 
             border:
                 1px solid #dcebed;
 
-            border-radius: 22px;
-
-            box-shadow:
-                0 12px 35px
-                rgba(20, 67, 74, 0.07);
+            border-radius: 18px;
 
             overflow: hidden;
 
-            margin-bottom: 25px;
+            background: #f9fcfc;
         }
 
-
-        .result-card-header {
+        .test-header {
 
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
 
             gap: 12px;
 
             padding:
-                19px 21px;
-
-            border-bottom:
-                1px solid #e4eff0;
+                15px 18px;
 
             background:
                 linear-gradient(
-                    180deg,
-                    #ffffff,
-                    #fafdfe
+                    135deg,
+                    #eef8f8,
+                    #f8fbfb
                 );
+
+            border-bottom:
+                1px solid #dcebed;
         }
 
-
-        .result-card-header h2,
-        .result-card-header h3 {
+        .test-header h3 {
 
             margin: 0;
 
-            color: #173f45;
-
-            font-size: 18px;
+            font-size: 16px;
         }
 
+        .test-header span {
 
-        .result-count {
-
-            display: inline-flex;
-            align-items: center;
-
-            min-width: 30px;
-            height: 28px;
-
-            padding:
-                0 9px;
-
-            justify-content: center;
-
-            border-radius: 999px;
-
-            background: #e9f5f6;
-
-            color: #24656d;
-
-            font-size: 12px;
-            font-weight: 900;
-        }
-
-
-        .result-card-body {
-
-            padding: 22px;
-        }
-
-
-
-        /* =====================================================
-           REAL ANSWER
-        ===================================================== */
-
-        .answer-intro {
-
-            margin: 0 0 20px;
-
-            color: #294a50;
-
-            font-size: 15px;
-
-            line-height: 1.75;
-        }
-
-
-        .answer-heading {
-
-            margin:
-                0 0 10px;
-
-            color: #155e67;
-
-            font-size: 18px;
-            font-weight: 900;
-        }
-
-
-        .answer-paragraph {
-
-            margin:
-                0 0 15px;
-
-            color: #304e53;
-
-            font-size: 15px;
-
-            line-height: 1.8;
-        }
-
-
-        .answer-bullet-list {
-
-            margin:
-                10px 0 20px;
-
-            padding-left: 22px;
-
-            color: #304e53;
-
-            line-height: 1.8;
-        }
-
-
-        .answer-bullet-list li {
-
-            margin-bottom: 7px;
-        }
-
-
-        .answer-source-note {
-
-            margin-top: 20px;
-
-            padding: 13px 15px;
-
-            border-radius: 12px;
-
-            background: #f1f8f9;
-
-            border:
-                1px solid #dcebed;
-
-            color: #58757a;
+            color: #698188;
 
             font-size: 12px;
 
-            line-height: 1.6;
+            font-weight: 700;
         }
 
+        .test-body {
 
+            padding: 18px;
+        }
 
-        /* =====================================================
-           SOURCE CARDS
-        ===================================================== */
+        .quiz-question {
 
-        .source-list {
+            margin:
+                0 0 16px;
+
+            color: #183c45;
+
+            font-size: 17px;
+
+            line-height: 1.5;
+
+            font-weight: 800;
+        }
+
+        .quiz-options {
 
             display: grid;
 
-            gap: 11px;
+            gap: 10px;
         }
 
+        .quiz-option {
 
-        .source-item {
+            width: 100%;
 
-            display: block;
+            display: flex;
 
-            padding: 14px;
+            align-items: center;
+
+            gap: 12px;
+
+            padding:
+                13px 15px;
+
+            text-align: left;
 
             border:
-                1px solid #deebed;
+                1px solid #d7e7e9;
 
-            border-radius: 14px;
+            border-radius: 12px;
 
-            background: #fbfdfd;
+            color: #28464e;
 
-            transition:
-                0.2s ease;
+            background: white;
+
+            transition: .2s ease;
         }
 
+        .quiz-option:hover:not(:disabled) {
 
-        .source-item:hover {
+            border-color: #58aeb8;
 
-            border-color: #bad9dc;
-
-            background: #f5fbfc;
-
-            transform:
-                translateY(-1px);
+            background: #f2fafb;
         }
 
+        .quiz-option:disabled {
 
-        .source-type {
+            cursor: default;
+        }
 
-            margin-bottom: 5px;
+        .option-letter {
 
-            color: #2a7780;
+            width: 31px;
+            height: 31px;
 
-            font-size: 10px;
+            flex: 0 0 31px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 9px;
+
+            background: #edf5f6;
+
+            color: #27606a;
+
             font-weight: 900;
-
-            text-transform: uppercase;
-
-            letter-spacing: 0.7px;
         }
 
+        .quiz-option.correct {
 
-        .source-title {
+            border-color: #34a981;
 
-            color: #214a50;
-
-            font-size: 14px;
-            font-weight: 850;
-
-            line-height: 1.4;
+            background: #edf9f4;
         }
 
+        .quiz-option.correct .option-letter {
 
-        .source-description {
+            background: #34a981;
 
-            margin-top: 5px;
-
-            color: #6d8589;
-
-            font-size: 12px;
-
-            line-height: 1.5;
+            color: white;
         }
 
+        .quiz-option.wrong {
+
+            border-color: #d87373;
+
+            background: #fff1f1;
+        }
+
+        .quiz-option.wrong .option-letter {
+
+            background: #d87373;
+
+            color: white;
+        }
+
+        .quiz-feedback {
+
+            margin-top: 16px;
+
+            padding: 15px;
+
+            border-radius: 13px;
+
+            line-height: 1.65;
+        }
+
+        .quiz-feedback.correct {
+
+            background: #edf9f4;
+
+            border:
+                1px solid #b9e6d4;
+
+            color: #17674e;
+        }
+
+        .quiz-feedback.wrong {
+
+            background: #fff5f5;
+
+            border:
+                1px solid #f0c8c8;
+
+            color: #733f3f;
+        }
+
+        .quiz-answer {
+
+            margin-top: 10px;
+
+            padding:
+                12px 13px;
+
+            border-radius: 10px;
+
+            background: white;
+
+            border:
+                1px solid #e5dada;
+
+            color: #29464d;
+        }
+
+        .next-question-button,
+        .start-test-button {
+
+            margin-top: 15px;
+
+            padding:
+                11px 16px;
+
+            border: 0;
+
+            border-radius: 11px;
+
+            color: white;
+
+            background: #126b75;
+
+            font-weight: 800;
+        }
+
+        .next-question-button:hover,
+        .start-test-button:hover {
+
+            background: #0e5961;
+        }
 
 
         /* =====================================================
-           WEB RESULTS
+           RIGHT COLUMN
         ===================================================== */
 
-        .web-result {
+        .web-results {
 
-            display: block;
+            min-height: 200px;
+
+            padding: 18px;
+        }
+
+        .web-result {
 
             padding:
                 15px 0;
 
             border-bottom:
-                1px solid #e4edef;
+                1px solid #e7eff0;
         }
-
-
-        .web-result:first-child {
-            padding-top: 0;
-        }
-
 
         .web-result:last-child {
 
             border-bottom: 0;
-
-            padding-bottom: 0;
         }
 
+        .web-result a {
 
-        .web-result-title {
+            display: block;
 
-            color: #17636c;
+            color: #116b79;
 
             font-size: 15px;
-            font-weight: 850;
 
-            line-height: 1.4;
+            font-weight: 800;
+
+            line-height: 1.45;
         }
 
+        .web-result a:hover {
+
+            text-decoration: underline;
+        }
 
         .web-result-url {
 
-            margin-top: 4px;
+            margin-top: 5px;
 
-            color: #799196;
+            color: #7c9095;
 
             font-size: 11px;
 
             overflow-wrap: anywhere;
         }
 
-
         .web-result-snippet {
 
-            margin-top: 7px;
+            margin-top: 8px;
 
-            color: #536e73;
+            color: #526d74;
 
             font-size: 13px;
 
-            line-height: 1.65;
+            line-height: 1.6;
+        }
+
+        .google-fallback {
+
+            margin-top: 15px;
+
+            padding: 15px;
+
+            border-radius: 13px;
+
+            background: #f4f9fa;
+
+            border:
+                1px solid #dbeaec;
+        }
+
+        .google-fallback p {
+
+            margin:
+                0 0 10px;
+
+            color: #657b81;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+        }
+
+        .google-button {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding:
+                10px 13px;
+
+            border-radius: 10px;
+
+            color: white;
+
+            background: #1769aa;
+
+            font-size: 12px;
+
+            font-weight: 800;
+        }
+
+        .google-button:hover {
+
+            background: #125486;
         }
 
 
-
         /* =====================================================
-           IMAGE RESULTS
+           IMAGES
         ===================================================== */
 
-        .image-grid {
+        .image-results {
 
             display: grid;
 
             grid-template-columns:
-                repeat(2, minmax(0, 1fr));
+                repeat(2, minmax(0,1fr));
 
             gap: 10px;
-        }
 
+            padding: 18px;
+        }
 
         .image-result {
 
-            display: block;
-
             overflow: hidden;
 
-            border-radius: 13px;
+            border-radius: 12px;
+
+            background: #eef5f6;
 
             border:
-                1px solid #dcebed;
-
-            background: #f6fafb;
+                1px solid #dce9eb;
         }
 
-
         .image-result img {
-
-            display: block;
 
             width: 100%;
 
             aspect-ratio: 4 / 3;
 
             object-fit: cover;
+
+            display: block;
         }
 
+        .image-result span {
 
-        .image-caption {
+            display: block;
 
             padding: 8px;
 
-            color: #506d72;
+            color: #4d676e;
 
             font-size: 11px;
 
             line-height: 1.4;
         }
-
 
 
         /* =====================================================
@@ -990,49 +1066,42 @@
 
         .empty-state {
 
-            padding:
-                30px 15px;
+            padding: 35px 20px;
 
             text-align: center;
 
-            color: #71898d;
-
-            font-size: 14px;
+            color: #75898f;
 
             line-height: 1.6;
         }
 
-
         .loading-state {
 
-            display: flex;
-            align-items: center;
+            padding: 30px;
 
-            gap: 10px;
+            text-align: center;
 
-            color: #58767b;
-
-            font-size: 14px;
+            color: #678087;
         }
 
+        .spinner {
 
-        .loading-spinner {
+            width: 28px;
+            height: 28px;
 
-            width: 18px;
-            height: 18px;
+            margin:
+                0 auto 12px;
+
+            border:
+                3px solid #dcebed;
+
+            border-top-color: #168391;
 
             border-radius: 50%;
 
-            border:
-                2px solid #d7e9eb;
-
-            border-top-color:
-                #24727b;
-
             animation:
-                spin 0.8s linear infinite;
+                spin .8s linear infinite;
         }
-
 
         @keyframes spin {
 
@@ -1042,31 +1111,30 @@
         }
 
 
-
         /* =====================================================
            NOTICE
         ===================================================== */
 
         .medical-notice {
 
-            margin-top: 25px;
+            margin-top: 20px;
 
-            padding: 16px 18px;
+            padding:
+                13px 15px;
 
-            border-radius: 15px;
+            border-radius: 12px;
+
+            color: #60767d;
+
+            background: #f5f8f9;
 
             border:
-                1px solid #dcebed;
-
-            background: #f3f9fa;
-
-            color: #637c80;
+                1px solid #e0eaec;
 
             font-size: 12px;
 
-            line-height: 1.7;
+            line-height: 1.6;
         }
-
 
 
         /* =====================================================
@@ -1076,136 +1144,64 @@
         footer {
 
             padding:
-                25px;
+                35px 20px;
 
             text-align: center;
 
-            color: #799094;
+            color: #71858b;
 
             font-size: 12px;
         }
 
 
-
         /* =====================================================
-           RESPONSIVE
+           MOBILE
         ===================================================== */
 
-        @media (max-width: 1000px) {
+        @media (max-width: 980px) {
 
-            .results-layout {
+            .ai-workspace {
 
-                grid-template-columns:
-                    1fr;
+                grid-template-columns: 1fr;
             }
 
         }
-
 
         @media (max-width: 700px) {
 
             .top-header {
 
                 padding:
-                    11px 15px;
+                    10px 15px;
             }
-
 
             .brand-subtitle {
 
                 display: none;
             }
 
-
-            .page-container {
+            .page {
 
                 width:
-                    min(
-                        calc(100% - 20px),
-                        1500px
-                    );
+                    calc(100% - 20px);
 
-                padding-top: 20px;
+                margin-top: 15px;
             }
-
-
-            .hero-card {
-
-                border-radius: 20px;
-
-                padding: 28px 22px;
-            }
-
-
-            .search-card {
-
-                padding: 17px;
-
-                border-radius: 18px;
-            }
-
 
             .search-row {
 
                 grid-template-columns: 1fr;
             }
 
-
             #askAIButton {
 
                 min-height: 52px;
             }
 
+            .image-results {
 
-            .result-card {
-
-                border-radius: 18px;
+                grid-template-columns: 1fr 1fr;
             }
-
-
-            .image-grid {
-
-                grid-template-columns:
-                    repeat(2, minmax(0, 1fr));
-            }
-
-        }
-
-
-        @media (max-width: 450px) {
-
-            .brand-name {
-                font-size: 16px;
-            }
-
-
-            .brand-icon {
-
-                width: 40px;
-                height: 40px;
-            }
-
-
-            .back-button {
-
-                padding:
-                    0 12px;
-            }
-
-
-            .suggestions {
-
-                display: grid;
-
-                grid-template-columns: 1fr;
-            }
-
-
-            .suggestion-button {
-
-                text-align: left;
-            }
-
         }
 
     </style>
@@ -1216,10 +1212,6 @@
 <body>
 
 
-<!-- =========================================================
-     HEADER
-========================================================= -->
-
 <header class="top-header">
 
     <a
@@ -1228,10 +1220,7 @@
         aria-label="Back to Mwaniki Scholars dashboard"
     >
 
-        <div
-            class="brand-icon"
-            aria-hidden="true"
-        >
+        <div class="brand-icon">
             MS
         </div>
 
@@ -1261,23 +1250,12 @@
 
 
 
-<!-- =========================================================
-     MAIN
-========================================================= -->
+<main class="page">
 
-<main class="page-container">
-
-
-    <!-- =====================================================
-         HERO
-    ====================================================== -->
 
     <section class="hero-card">
 
-        <div
-            class="hero-icon"
-            aria-hidden="true"
-        >
+        <div class="hero-icon">
             AI
         </div>
 
@@ -1286,186 +1264,210 @@
         </h1>
 
         <p>
-            Search Mwaniki Scholars learning materials
-            first, receive a source-backed medical answer,
-            then explore relevant information from the
-            wider web.
+            Ask a medical question, get a real answer from
+            Mwaniki Scholars material, search the wider web,
+            or let Mwaniki AI test your knowledge one question
+            at a time.
         </p>
 
     </section>
 
 
 
-    <!-- =====================================================
-         SEARCH
-    ====================================================== -->
-
-    <section class="search-card">
-
-        <div class="search-card-header">
-
-            <h2>
-                Ask Mwaniki AI
-            </h2>
-
-            <span
-                class="status"
-                id="aiStatus"
-            >
-
-                <span
-                    class="status-dot"
-                    aria-hidden="true"
-                ></span>
-
-                Ready
-
-            </span>
-
-        </div>
-
-
-        <div class="search-row">
-
-            <textarea
-                id="aiQuestion"
-                rows="2"
-                placeholder="Ask a medical question, search a topic, or find a concept..."
-                autocomplete="off"
-            ></textarea>
-
-
-            <button
-                id="askAIButton"
-                type="button"
-            >
-                Search Mwaniki AI
-            </button>
-
-        </div>
-
-
-        <div class="search-help">
-
-            Mwaniki AI searches your Mwaniki Scholars
-            course material first. When matching material
-            is available, the answer is built from that
-            material rather than simply listing the courses.
-
-        </div>
-
-
-        <div
-            class="suggestions"
-            aria-label="Suggested searches"
-        >
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="What are the causes, clinical features and laboratory diagnosis of iron deficiency anemia?"
-            >
-                Iron deficiency anemia
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="Explain the mechanism of action of beta blockers."
-            >
-                Beta blockers
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="Explain the life cycle and medical importance of Plasmodium falciparum."
-            >
-                Plasmodium falciparum
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="Explain the structure and classification of fungi."
-            >
-                Medical mycology
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="Explain the major parts of the human heart and their functions."
-            >
-                Human heart
-            </button>
-
-        </div>
-
-
-        <div
-            id="aiSearchStatus"
-            aria-live="polite"
-        ></div>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         TWO COLUMN RESULTS
-    ====================================================== -->
-
-    <section class="results-layout">
+    <div class="ai-workspace">
 
 
         <!-- =================================================
              LEFT COLUMN
         ================================================== -->
 
-        <div class="result-column">
+        <section class="panel">
 
 
-            <!-- =============================================
-                 REAL ANSWER
-            ============================================== -->
+            <div class="panel-header">
 
-            <section class="result-card">
+                <h2>
+                    Mwaniki Medical Answer
+                </h2>
 
-                <div class="result-card-header">
-
-                    <h2>
-                        Mwaniki Answer
-                    </h2>
+                <span
+                    class="status"
+                    id="aiStatus"
+                >
 
                     <span
-                        class="result-count"
-                        id="mwanikiResultCount"
+                        class="status-dot"
+                        aria-hidden="true"
+                    ></span>
+
+                    Ready
+
+                </span>
+
+            </div>
+
+
+
+            <div class="search-panel">
+
+
+                <label
+                    class="search-label"
+                    for="aiQuestion"
+                >
+                    What would you like to study?
+                </label>
+
+
+                <div class="search-row">
+
+                    <textarea
+                        id="aiQuestion"
+                        rows="3"
+                        placeholder="Ask a medical question..."
+                        autocomplete="off"
+                    ></textarea>
+
+
+                    <button
+                        id="askAIButton"
+                        type="button"
                     >
-                        0
+                        Search Mwaniki AI
+                    </button>
+
+                </div>
+
+
+                <div class="search-help">
+
+                    Mwaniki AI searches your Mwaniki Scholars
+                    learning materials first. If the answer is
+                    not available there, web results are shown
+                    automatically on the right.
+
+                </div>
+
+
+                <div
+                    class="suggestions"
+                    aria-label="Suggested searches"
+                >
+
+                    <button
+                        type="button"
+                        class="suggestion-button"
+                        data-question="What are the causes, clinical features and laboratory diagnosis of iron deficiency anemia?"
+                    >
+                        Iron deficiency anemia
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="suggestion-button"
+                        data-question="Explain the mechanism of action of beta blockers."
+                    >
+                        Beta blockers
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="suggestion-button"
+                        data-question="Explain the life cycle and medical importance of Plasmodium falciparum."
+                    >
+                        Plasmodium falciparum
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="suggestion-button"
+                        data-question="Explain the structure and classification of fungi."
+                    >
+                        Medical mycology
+                    </button>
+
+
+                    <button
+                        type="button"
+                        class="suggestion-button"
+                        data-question="Explain the major parts of the human heart and their functions."
+                    >
+                        Human heart
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="aiSearchStatus"
+                    aria-live="polite"
+                ></div>
+
+            </div>
+
+
+
+            <!-- ANSWER -->
+
+            <div
+                id="aiAnswer"
+                class="answer-box"
+            >
+
+                <div class="empty-state">
+
+                    Ask a question and Mwaniki AI will
+                    retrieve the actual study answer.
+
+                </div>
+
+            </div>
+
+
+
+            <!-- TEST ME -->
+
+            <section
+                class="test-panel"
+                id="testPanel"
+            >
+
+                <div class="test-header">
+
+                    <h3>
+                        🧠 Test Me
+                    </h3>
+
+                    <span id="testProgress">
+                        Ready
                     </span>
 
                 </div>
 
 
                 <div
-                    class="result-card-body"
-                    id="aiAnswer"
+                    id="testBody"
+                    class="test-body"
                 >
 
                     <div class="empty-state">
 
-                        Ask a medical question above.
+                        After asking a question, you can
+                        challenge yourself with one question
+                        at a time.
 
-                        <br>
+                        <br><br>
 
-                        Mwaniki AI will search your
-                        learning material and display
-                        the relevant answer here.
+                        <button
+                            type="button"
+                            id="startTestButton"
+                            class="start-test-button"
+                        >
+                            Start Test
+                        </button>
 
                     </div>
 
@@ -1475,35 +1477,18 @@
 
 
 
-            <!-- =============================================
-                 MWANIKI SOURCES
-            ============================================== -->
+            <div class="medical-notice">
 
-            <section class="result-card">
+                Mwaniki AI is a medical study and information
+                retrieval system. Always compare important
+                medical information with your course material,
+                lecturers, tutors and appropriate clinical
+                guidance.
 
-                <div class="result-card-header">
-
-                    <h3>
-                        Mwaniki Sources
-                    </h3>
-
-                </div>
+            </div>
 
 
-                <div
-                    class="result-card-body"
-                    id="mwanikiSources"
-                >
-
-                    <div class="empty-state">
-                        Matching Mwaniki sources will appear here.
-                    </div>
-
-                </div>
-
-            </section>
-
-        </div>
+        </section>
 
 
 
@@ -1511,38 +1496,38 @@
              RIGHT COLUMN
         ================================================== -->
 
-        <aside class="result-column">
+        <aside>
 
 
-            <!-- =============================================
-                 WEB RESULTS
-            ============================================== -->
+            <section class="panel">
 
-            <section class="result-card">
-
-                <div class="result-card-header">
+                <div class="panel-header">
 
                     <h2>
-                        Web Results
+                        🌐 Web Search
                     </h2>
 
                     <span
-                        class="result-count"
                         id="webResultCount"
+                        class="status"
                     >
-                        0
+                        Waiting
                     </span>
 
                 </div>
 
 
                 <div
-                    class="result-card-body"
                     id="webResults"
+                    class="web-results"
                 >
 
                     <div class="empty-state">
-                        Web results will appear here after a search.
+
+                        When Mwaniki Scholars does not have
+                        the answer, relevant web results will
+                        appear here automatically.
+
                     </div>
 
                 </div>
@@ -1551,52 +1536,45 @@
 
 
 
-            <!-- =============================================
-                 IMAGES
-            ============================================== -->
+            <section
+                class="panel"
+                style="margin-top:22px;"
+            >
 
-            <section class="result-card">
+                <div class="panel-header">
 
-                <div class="result-card-header">
+                    <h2>
+                        🖼️ Visual Results
+                    </h2>
 
-                    <h3>
-                        Visual Results
-                    </h3>
+                    <span class="status">
+                        Images
+                    </span>
 
                 </div>
 
 
                 <div
-                    class="result-card-body"
                     id="aiImages"
+                    class="image-results"
                 >
 
-                    <div class="empty-state">
-                        Relevant visual results will appear here.
+                    <div
+                        class="empty-state"
+                        style="grid-column:1/-1;"
+                    >
+
+                        Relevant visual results will appear
+                        when available.
+
                     </div>
 
                 </div>
 
             </section>
 
+
         </aside>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         MEDICAL NOTICE
-    ====================================================== -->
-
-    <div class="medical-notice">
-
-        Mwaniki AI is a study and information-retrieval
-        system. Answers shown from Mwaniki Scholars are
-        based on available learning material in the
-        platform. Medical information should be interpreted
-        alongside your course materials, lecturers, tutors
-        and appropriate clinical guidance.
 
     </div>
 
@@ -1606,7 +1584,9 @@
 
 <footer>
 
-    © 2026 Mwaniki Scholars · Medical Learning Platform
+    © 2026 Mwaniki Scholars
+    <br>
+    Medical Learning • Knowledge • Excellence
 
 </footer>
 
