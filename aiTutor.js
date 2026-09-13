@@ -1,4 +1,4 @@
-````javascript
+
 import { supabase } from "./supabase.js";
 
 // ============================================================
@@ -2190,4 +2190,4 @@ if (testPanel) {
 setSearchStatus(
     "Search the web first, then compare the evidence with Mwaniki Scholars material."
 );
-````
+
