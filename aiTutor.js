@@ -1,4 +1,3 @@
-```javascript
 import { supabase } from "./supabase.js";
 
 
@@ -7,24 +6,18 @@ import { supabase } from "./supabase.js";
 // MWANIKI AI FRONTEND ENGINE
 // ============================================================
 
-console.log("🚀 Mwaniki AI interface starting...");
+console.log("🚀 Mwaniki AI interface loading...");
 
 
 // ============================================================
 // DOM
 // ============================================================
 
-const aiQuestion =
+const questionInput =
     document.getElementById("aiQuestion");
 
-const askAIButton =
+const askButton =
     document.getElementById("askAIButton");
-
-const aiStatus =
-    document.getElementById("aiStatus");
-
-const aiSearchStatus =
-    document.getElementById("aiSearchStatus");
 
 const aiAnswer =
     document.getElementById("aiAnswer");
@@ -38,23 +31,17 @@ const webResults =
 const aiImages =
     document.getElementById("aiImages");
 
+const aiSearchStatus =
+    document.getElementById("aiSearchStatus");
+
+const aiStatus =
+    document.getElementById("aiStatus");
+
 const mwanikiResultCount =
     document.getElementById("mwanikiResultCount");
 
 const webResultCount =
     document.getElementById("webResultCount");
-
-const answerActions =
-    document.getElementById("answerActions");
-
-const readAnswerButton =
-    document.getElementById("readAnswerButton");
-
-const stopAudioButton =
-    document.getElementById("stopAudioButton");
-
-const startTestButton =
-    document.getElementById("startTestButton");
 
 const testPanel =
     document.getElementById("testPanel");
@@ -71,113 +58,77 @@ const testOptions =
 const testFeedback =
     document.getElementById("testFeedback");
 
+const testProgress =
+    document.getElementById("testProgress");
+
 const testNext =
     document.getElementById("testNext");
 
 const testExit =
     document.getElementById("testExit");
 
-const testProgress =
-    document.getElementById("testProgress");
+const testTopic =
+    document.getElementById("testTopic");
+
+const startTestButton =
+    document.getElementById("startTestButton");
+
+const readAnswerButton =
+    document.getElementById("readAnswerButton");
+
+const stopAudioButton =
+    document.getElementById("stopAudioButton");
+
+const readMainAnswerButton =
+    document.getElementById("readMainAnswerButton");
+
+const stopMainAudioButton =
+    document.getElementById("stopMainAudioButton");
 
 
 // ============================================================
 // STATE
 // ============================================================
 
-let latestSearchData = null;
+let currentAnswerText = "";
 
-let currentTest = null;
+let currentSearchQuestion = "";
 
-let testQuestionNumber = 0;
+let currentTestTopic = "";
 
-let testScore = 0;
+let currentTestNumber = 0;
 
-let testAnswered = false;
+let currentTestScore = 0;
 
-let testTopic = "";
+let currentTestFinished = false;
+
+let currentTestQuestion = null;
 
 
 // ============================================================
-// BASIC HELPERS
+// SAFE HTML
 // ============================================================
 
 function escapeHTML(value) {
 
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
-}
-
-
-function cleanText(value) {
-
-    return String(value ?? "")
-        .replace(/\s+/g, " ")
-        .trim();
-}
-
-
-function setStatus(text, busy = false) {
-
-    if (aiStatus) {
-
-        aiStatus.innerHTML = `
-            <span class="status-dot"></span>
-            ${escapeHTML(text)}
-        `;
-
-        aiStatus.style.color =
-            busy
-                ? "#0b6fa4"
-                : "";
-    }
-}
-
-
-function setSearchStatus(text) {
-
-    if (aiSearchStatus) {
-
-        aiSearchStatus.textContent =
-            text || "";
-    }
-}
-
-
-function setButtonBusy(busy) {
-
-    if (!askAIButton) {
-        return;
+    if (value === null || value === undefined) {
+        return "";
     }
 
-    askAIButton.disabled = busy;
-
-    askAIButton.textContent =
-        busy
-            ? "Searching..."
-            : "Search Mwaniki AI";
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
 
-function showEmpty(element, text) {
+// ============================================================
+// SAFE URL
+// ============================================================
 
-    if (!element) {
-        return;
-    }
-
-    element.innerHTML = `
-        <div class="empty-result">
-            ${escapeHTML(text)}
-        </div>
-    `;
-}
-
-
-function safeUrl(value) {
+function safeURL(value) {
 
     try {
 
@@ -191,57 +142,933 @@ function safeUrl(value) {
             return url.href;
         }
 
-    } catch (_) {}
+        return "#";
 
-    return "";
-}
+    } catch {
 
-
-// ============================================================
-// AUDIO
-// ============================================================
-
-function stopAudio() {
-
-    if (
-        "speechSynthesis" in window
-    ) {
-
-        window.speechSynthesis.cancel();
+        return "#";
     }
 }
 
 
-function speak(text) {
+// ============================================================
+// STATUS
+// ============================================================
+
+function setStatus(text, busy = false) {
+
+    if (aiSearchStatus) {
+        aiSearchStatus.textContent = text || "";
+    }
+
+    if (aiStatus) {
+
+        aiStatus.innerHTML = busy
+            ? '<span class="status-dot"></span> Searching...'
+            : '<span class="status-dot"></span> Ready';
+    }
+}
+
+
+// ============================================================
+// LOADING
+// ============================================================
+
+function loadingHTML(message) {
+
+    return `
+        <div class="loading">
+            <div class="spinner"></div>
+            ${escapeHTML(message)}
+        </div>
+    `;
+}
+
+
+// ============================================================
+// TEXT EXTRACTION
+// ============================================================
+
+function answerToText(answer) {
+
+    if (!answer) {
+        return "";
+    }
+
+    const pieces = [];
+
+    if (answer.title) {
+        pieces.push(answer.title);
+    }
+
+    if (Array.isArray(answer.paragraphs)) {
+
+        pieces.push(
+            ...answer.paragraphs
+        );
+    }
+
+    if (Array.isArray(answer.keyPoints)) {
+
+        pieces.push(
+            ...answer.keyPoints
+        );
+    }
+
+    if (answer.explanation) {
+        pieces.push(answer.explanation);
+    }
+
+    return pieces
+        .filter(Boolean)
+        .join(". ");
+}
+
+
+// ============================================================
+// RENDER ANSWER
+// ============================================================
+
+function renderAnswer(data) {
+
+    if (!aiAnswer) {
+        return;
+    }
+
+    const answer =
+        data?.answer;
+
+    if (!answer) {
+
+        aiAnswer.innerHTML = `
+            <div class="empty-state">
+                No answer was returned.
+                Try another medical question.
+            </div>
+        `;
+
+        currentAnswerText = "";
+
+        return;
+    }
+
+
+    const confidence =
+        answer.confidence || "retrieved";
+
+
+    const confidenceLabel =
+        confidence === "internal"
+            ? "Mwaniki Scholars material"
+            : confidence === "web"
+                ? "Web sources"
+                : "Retrieved medical information";
+
+
+    let html = `
+        <span class="answer-confidence">
+            ${escapeHTML(confidenceLabel)}
+        </span>
+    `;
+
+
+    if (answer.title) {
+
+        html += `
+            <h3>
+                ${escapeHTML(answer.title)}
+            </h3>
+        `;
+    }
+
 
     if (
-        !("speechSynthesis" in window)
+        Array.isArray(answer.paragraphs) &&
+        answer.paragraphs.length
     ) {
 
-        setSearchStatus(
+        answer.paragraphs.forEach(
+            paragraph => {
+
+                html += `
+                    <p>
+                        ${escapeHTML(paragraph)}
+                    </p>
+                `;
+            }
+        );
+    }
+
+
+    if (
+        Array.isArray(answer.keyPoints) &&
+        answer.keyPoints.length
+    ) {
+
+        html += `
+            <h4>
+                Key points
+            </h4>
+
+            <ul>
+        `;
+
+
+        answer.keyPoints.forEach(
+            point => {
+
+                html += `
+                    <li>
+                        ${escapeHTML(point)}
+                    </li>
+                `;
+            }
+        );
+
+
+        html += `
+            </ul>
+        `;
+    }
+
+
+    if (answer.explanation) {
+
+        html += `
+            <p>
+                ${escapeHTML(answer.explanation)}
+            </p>
+        `;
+    }
+
+
+    html += `
+        <div style="margin-top:18px;">
+
+            <button
+                type="button"
+                class="primary-button"
+                id="inlineStartTest"
+            >
+                🧠 Test Me On This Topic
+            </button>
+
+        </div>
+    `;
+
+
+    aiAnswer.innerHTML = html;
+
+
+    currentAnswerText =
+        answerToText(answer);
+
+
+    const inlineTestButton =
+        document.getElementById("inlineStartTest");
+
+
+    if (inlineTestButton) {
+
+        inlineTestButton.addEventListener(
+            "click",
+            () => {
+
+                const topic =
+                    currentSearchQuestion ||
+                    testTopic?.value ||
+                    "";
+
+                if (testTopic) {
+                    testTopic.value = topic;
+                }
+
+                startTest(topic);
+            }
+        );
+    }
+}
+
+
+// ============================================================
+// RENDER MWANIKI SOURCES
+// ============================================================
+
+function renderMwanikiSources(sources) {
+
+    if (!mwanikiSources) {
+        return;
+    }
+
+
+    if (
+        !Array.isArray(sources) ||
+        sources.length === 0
+    ) {
+
+        mwanikiSources.innerHTML = `
+            <div class="empty-state">
+                No directly matching Mwaniki
+                Scholars sources were found.
+            </div>
+        `;
+
+        if (mwanikiResultCount) {
+            mwanikiResultCount.textContent =
+                "0 sources";
+        }
+
+        return;
+    }
+
+
+    if (mwanikiResultCount) {
+
+        mwanikiResultCount.textContent =
+            sources.length +
+            (
+                sources.length === 1
+                    ? " source"
+                    : " sources"
+            );
+    }
+
+
+    mwanikiSources.innerHTML =
+        sources
+            .map(source => {
+
+                const url =
+                    safeURL(source.url);
+
+
+                const clickable =
+                    url !== "#";
+
+
+                const title =
+                    escapeHTML(
+                        source.title ||
+                        "Mwaniki Scholars source"
+                    );
+
+
+                const description =
+                    escapeHTML(
+                        source.description ||
+                        ""
+                    );
+
+
+                const type =
+                    escapeHTML(
+                        source.type ||
+                        "Mwaniki material"
+                    );
+
+
+                if (clickable) {
+
+                    return `
+                        <a
+                            class="source-item"
+                            href="${url}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+
+                            <div class="source-type">
+                                ${type}
+                            </div>
+
+                            <div class="source-title">
+                                ${title}
+                            </div>
+
+                            <div class="source-description">
+                                ${description}
+                            </div>
+
+                        </a>
+                    `;
+                }
+
+
+                return `
+                    <div class="source-item">
+
+                        <div class="source-type">
+                            ${type}
+                        </div>
+
+                        <div class="source-title">
+                            ${title}
+                        </div>
+
+                        <div class="source-description">
+                            ${description}
+                        </div>
+
+                    </div>
+                `;
+
+            })
+            .join("");
+}
+
+
+// ============================================================
+// RENDER WEB RESULTS
+// ============================================================
+
+function renderWebResults(results, googleURL) {
+
+    if (!webResults) {
+        return;
+    }
+
+
+    if (webResultCount) {
+
+        webResultCount.textContent =
+            (
+                Array.isArray(results)
+                    ? results.length
+                    : 0
+            ) +
+            " results";
+    }
+
+
+    let html = "";
+
+
+    if (
+        Array.isArray(results) &&
+        results.length
+    ) {
+
+        html += `
+            <div class="web-list">
+        `;
+
+
+        results.forEach(result => {
+
+            const title =
+                result.title ||
+                result.name ||
+                "Medical web result";
+
+
+            const description =
+                result.description ||
+                result.snippet ||
+                result.text ||
+                "";
+
+
+            const url =
+                safeURL(
+                    result.url ||
+                    result.link ||
+                    result.href
+                );
+
+
+            html += `
+                <article class="web-item">
+
+                    <h3>
+
+                        <a
+                            href="${url}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            ${escapeHTML(title)}
+                        </a>
+
+                    </h3>
+
+                    <p>
+                        ${escapeHTML(description)}
+                    </p>
+
+                    ${
+                        url !== "#"
+                            ? `
+                                <span class="web-url">
+                                    ${escapeHTML(url)}
+                                </span>
+                            `
+                            : ""
+                    }
+
+                </article>
+            `;
+        });
+
+
+        html += `
+            </div>
+        `;
+
+    } else {
+
+        html += `
+            <div class="empty-state">
+
+                No configured web-search provider
+                returned results for this query.
+
+            </div>
+        `;
+    }
+
+
+    if (googleURL) {
+
+        const googleSafe =
+            safeURL(googleURL);
+
+
+        if (googleSafe !== "#") {
+
+            html += `
+                <a
+                    class="see-more"
+                    href="${googleSafe}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    🔎 Search Google for more
+                </a>
+            `;
+        }
+    }
+
+
+    webResults.innerHTML =
+        html;
+}
+
+
+// ============================================================
+// RENDER IMAGES
+// ============================================================
+
+function renderImages(images, googleImageURL) {
+
+    if (!aiImages) {
+        return;
+    }
+
+
+    let validImages =
+        Array.isArray(images)
+            ? images
+                .map(image => ({
+                    url:
+                        image.url ||
+                        image.image ||
+                        image.thumbnail ||
+                        image.imageUrl,
+
+                    title:
+                        image.title ||
+                        image.name ||
+                        "Medical visual"
+                }))
+                .filter(image => image.url)
+            : [];
+
+
+    if (!validImages.length) {
+
+        aiImages.innerHTML = `
+            <div class="empty-state">
+
+                No configured image-search provider
+                returned images.
+
+            </div>
+        `;
+
+    } else {
+
+        let html = `
+            <div class="image-grid">
+        `;
+
+
+        validImages
+            .slice(0, 6)
+            .forEach(image => {
+
+                const url =
+                    safeURL(image.url);
+
+
+                if (url === "#") {
+                    return;
+                }
+
+
+                html += `
+                    <a
+                        class="image-card"
+                        href="${url}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+
+                        <img
+                            src="${url}"
+                            alt="${escapeHTML(image.title)}"
+                            loading="lazy"
+                            onerror="this.parentElement.style.display='none';"
+                        >
+
+                        <div class="image-caption">
+                            ${escapeHTML(image.title)}
+                        </div>
+
+                    </a>
+                `;
+            });
+
+
+        html += `
+            </div>
+        `;
+
+
+        if (googleImageURL) {
+
+            const safeGoogle =
+                safeURL(googleImageURL);
+
+
+            if (safeGoogle !== "#") {
+
+                html += `
+                    <a
+                        class="see-more"
+                        href="${safeGoogle}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        🖼️ See more images
+                    </a>
+                `;
+            }
+        }
+
+
+        aiImages.innerHTML =
+            html;
+    }
+
+
+    if (
+        !validImages.length &&
+        googleImageURL
+    ) {
+
+        const safeGoogle =
+            safeURL(googleImageURL);
+
+
+        if (safeGoogle !== "#") {
+
+            aiImages.innerHTML += `
+                <a
+                    class="see-more"
+                    href="${safeGoogle}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    🖼️ See more images
+                </a>
+            `;
+        }
+    }
+}
+
+
+// ============================================================
+// SEARCH FUNCTION
+// ============================================================
+
+async function performSearch() {
+
+    const question =
+        questionInput?.value?.trim();
+
+
+    if (!question) {
+
+        setStatus(
+            "Enter a medical question first."
+        );
+
+        if (questionInput) {
+            questionInput.focus();
+        }
+
+        return;
+    }
+
+
+    currentSearchQuestion =
+        question;
+
+
+    if (testTopic) {
+        testTopic.value = question;
+    }
+
+
+    if (testPanel) {
+        testPanel.style.display = "none";
+    }
+
+
+    askButton.disabled = true;
+
+    askButton.textContent =
+        "Searching...";
+
+
+    setStatus(
+        "Searching Mwaniki Scholars and available web sources...",
+        true
+    );
+
+
+    if (aiAnswer) {
+        aiAnswer.innerHTML =
+            loadingHTML(
+                "Searching Mwaniki Scholars learning materials..."
+            );
+    }
+
+
+    if (mwanikiSources) {
+        mwanikiSources.innerHTML =
+            loadingHTML(
+                "Finding relevant Mwaniki sources..."
+            );
+    }
+
+
+    if (webResults) {
+        webResults.innerHTML =
+            loadingHTML(
+                "Checking available web sources..."
+            );
+    }
+
+
+    if (aiImages) {
+        aiImages.innerHTML =
+            loadingHTML(
+                "Finding relevant visual material..."
+            );
+    }
+
+
+    try {
+
+        const result =
+            await Promise.race([
+
+                supabase.functions.invoke(
+                    "mwaniki-ai",
+                    {
+                        body: {
+                            question,
+                            searchMwaniki: true,
+                            searchWeb: true,
+                            searchImages: true
+                        }
+                    }
+                ),
+
+                new Promise(
+                    (_, reject) => {
+
+                        setTimeout(
+                            () => {
+
+                                reject(
+                                    new Error(
+                                        "Mwaniki AI request timed out."
+                                    )
+                                );
+
+                            },
+                            30000
+                        );
+                    }
+                )
+
+            ]);
+
+
+        const {
+            data,
+            error
+        } = result;
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        if (!data) {
+            throw new Error(
+                "No response was returned by Mwaniki AI."
+            );
+        }
+
+
+        if (!data.success) {
+
+            throw new Error(
+                data.error ||
+                "Mwaniki AI returned an error."
+            );
+        }
+
+
+        renderAnswer(data);
+
+        renderMwanikiSources(
+            data.mwanikiSources || []
+        );
+
+        renderWebResults(
+            data.webResults || [],
+            data.googleSearchUrl
+        );
+
+        renderImages(
+            data.images || [],
+            data.googleImageSearchUrl
+        );
+
+
+        const internalCount =
+            data.counts?.mwaniki || 0;
+
+        const webCount =
+            data.counts?.web || 0;
+
+
+        setStatus(
+            "Search completed."
+        );
+
+
+        if (aiSearchStatus) {
+
+            aiSearchStatus.textContent =
+                "Mwaniki sources: " +
+                internalCount +
+                " • Web results: " +
+                webCount;
+        }
+
+
+        console.log(
+            "Mwaniki AI result:",
+            data
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Mwaniki AI search error:",
+            error
+        );
+
+
+        if (aiAnswer) {
+
+            aiAnswer.innerHTML = `
+                <div class="empty-state">
+
+                    <strong>
+                        Mwaniki AI could not complete the search.
+                    </strong>
+
+                    <br><br>
+
+                    ${escapeHTML(
+                        error?.message ||
+                        "Unknown error"
+                    )}
+
+                    <br><br>
+
+                    Please try the search again.
+
+                </div>
+            `;
+        }
+
+
+        setStatus(
+            "Search failed."
+        );
+
+    } finally {
+
+        askButton.disabled = false;
+
+        askButton.textContent =
+            "Search Mwaniki AI";
+    }
+}
+
+
+// ============================================================
+// SPEECH
+// ============================================================
+
+function speak(text) {
+
+    if (!("speechSynthesis" in window)) {
+
+        alert(
             "Speech synthesis is not supported by this browser."
         );
 
         return;
     }
 
-    const clean =
-        cleanText(text);
 
-    if (!clean) {
+    if (!text) {
         return;
     }
 
-    stopAudio();
+
+    window.speechSynthesis.cancel();
+
 
     const utterance =
-        new SpeechSynthesisUtterance(clean);
+        new SpeechSynthesisUtterance(text);
 
-    utterance.rate = 0.95;
+
+    utterance.rate = 0.92;
 
     utterance.pitch = 1;
 
     utterance.volume = 1;
+
 
     window.speechSynthesis.speak(
         utterance
@@ -249,886 +1076,55 @@ function speak(text) {
 }
 
 
-// ============================================================
-// SEARCH
-// ============================================================
-
-async function performSearch(question) {
-
-    const query =
-        cleanText(question);
-
-    if (!query) {
-
-        setSearchStatus(
-            "Enter a medical question or topic first."
-        );
-
-        aiQuestion?.focus();
-
-        return;
-    }
-
-
-    if (query.length > 2000) {
-
-        setSearchStatus(
-            "Your question is too long. Please shorten it."
-        );
-
-        return;
-    }
-
-
-    stopAudio();
-
-    setButtonBusy(true);
-
-    setStatus(
-        "Searching Mwaniki Scholars...",
-        true
-    );
-
-    setSearchStatus(
-        "Searching Mwaniki Scholars materials first..."
-    );
-
-
-    answerActions.style.display =
-        "none";
-
-
-    showEmpty(
-        aiAnswer,
-        "Searching..."
-    );
-
-    showEmpty(
-        mwanikiSources,
-        "Searching Mwaniki Scholars sources..."
-    );
-
-    showEmpty(
-        webResults,
-        "Searching the wider web..."
-    );
-
-    showEmpty(
-        aiImages,
-        "Searching visual resources..."
-    );
-
-
-    try {
-
-        const result =
-            await supabase.functions.invoke(
-                "mwaniki-ai",
-                {
-                    body: {
-                        question: query,
-
-                        searchMwaniki: true,
-
-                        searchWeb: true,
-
-                        searchImages: true
-                    }
-                }
-            );
-
-
-        if (result.error) {
-
-            console.error(
-                "Mwaniki AI function error:",
-                result.error
-            );
-
-            throw new Error(
-                result.error.message ||
-                "Mwaniki AI request failed."
-            );
-        }
-
-
-        const data =
-            result.data;
-
-
-        if (
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data?.error ||
-                "The AI service returned an invalid response."
-            );
-        }
-
-
-        latestSearchData =
-            data;
-
-
-        renderAnswer(data);
-
-        renderSources(data);
-
-        renderWebResults(data);
-
-        renderImages(data);
-
-
-        const internalCount =
-            Number(
-                data.counts?.mwaniki ||
-                data.mwanikiSources?.length ||
-                0
-            );
-
-
-        const webCount =
-            Number(
-                data.counts?.web ||
-                data.webResults?.length ||
-                0
-            );
-
-
-        mwanikiResultCount.textContent =
-            `${internalCount} source${internalCount === 1 ? "" : "s"}`;
-
-
-        webResultCount.textContent =
-            `${webCount} result${webCount === 1 ? "" : "s"}`;
-
-
-        answerActions.style.display =
-            "flex";
-
-
-        setStatus(
-            "Ready"
-        );
-
-
-        setSearchStatus(
-            data.searchStatus?.message ||
-            "Search complete."
-        );
-
-
-        localStorage.setItem(
-            "mwanikiLastAIQuestion",
-            query
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Mwaniki AI error:",
-            error
-        );
-
-
-        setStatus(
-            "Search error"
-        );
-
-
-        setSearchStatus(
-            error.message ||
-            "Unable to complete the search."
-        );
-
-
-        aiAnswer.innerHTML = `
-
-            <div class="empty-result">
-
-                <strong>
-                    Mwaniki AI could not complete this search.
-                </strong>
-
-                <br><br>
-
-                ${escapeHTML(
-                    error.message ||
-                    "Please try again."
-                )}
-
-            </div>
-        `;
-
-
-        showEmpty(
-            mwanikiSources,
-            "No Mwaniki sources could be displayed."
-        );
-
-
-        showEmpty(
-            webResults,
-            "No web results could be displayed."
-        );
-
-
-        showEmpty(
-            aiImages,
-            "No visual resources could be displayed."
-        );
-
-
-    } finally {
-
-        setButtonBusy(false);
-    }
-}
-
-
-// ============================================================
-// ANSWER RENDERING
-// ============================================================
-
-function renderAnswer(data) {
-
-    const answer =
-        data.answer;
-
-
-    if (!answer) {
-
-        showEmpty(
-            aiAnswer,
-            "No answer was returned."
-        );
-
-        return;
-    }
-
-
-    const title =
-        cleanText(
-            answer.title ||
-            "Mwaniki Scholars answer"
-        );
-
-
-    const paragraphs =
-        Array.isArray(
-            answer.paragraphs
-        )
-            ? answer.paragraphs
-            : [];
-
-
-    const keyPoints =
-        Array.isArray(
-            answer.keyPoints
-        )
-            ? answer.keyPoints
-            : [];
-
-
-    let html = `
-
-        <h2 class="answer-title">
-            ${escapeHTML(title)}
-        </h2>
-    `;
-
-
-    if (paragraphs.length) {
-
-        html +=
-            paragraphs
-                .filter(Boolean)
-                .map(
-                    paragraph => `
-                        <p class="answer-paragraph">
-                            ${escapeHTML(paragraph)}
-                        </p>
-                    `
-                )
-                .join("");
-    }
-
-
-    if (answer.explanation) {
-
-        html += `
-
-            <p class="answer-paragraph">
-
-                ${escapeHTML(
-                    answer.explanation
-                )}
-
-            </p>
-        `;
-    }
-
-
-    if (keyPoints.length) {
-
-        html += `
-
-            <div class="key-points">
-
-                <h3>
-                    Key points
-                </h3>
-
-                <ul>
-
-                    ${keyPoints
-                        .filter(Boolean)
-                        .map(
-                            point => `
-                                <li>
-                                    ${escapeHTML(point)}
-                                </li>
-                            `
-                        )
-                        .join("")
-                    }
-
-                </ul>
-
-            </div>
-        `;
-    }
-
+function stopSpeech() {
 
     if (
-        !paragraphs.length &&
-        !keyPoints.length &&
-        !answer.explanation
+        "speechSynthesis" in window
     ) {
-
-        html += `
-
-            <p class="answer-paragraph">
-
-                Mwaniki AI found related material,
-                but there was not enough extracted text
-                to build a complete answer.
-
-            </p>
-        `;
+        window.speechSynthesis.cancel();
     }
-
-
-    aiAnswer.innerHTML =
-        html;
 }
 
 
 // ============================================================
-// INTERNAL SOURCES
+// START TEST
 // ============================================================
 
-function renderSources(data) {
+async function startTest(topic) {
 
-    const sources =
-        Array.isArray(
-            data.mwanikiSources
-        )
-            ? data.mwanikiSources
-            : [];
+    const cleanTopic =
+        String(topic || "").trim();
 
 
-    if (!sources.length) {
+    if (!cleanTopic) {
 
-        showEmpty(
-            mwanikiSources,
-            "No matching Mwaniki Scholars material was found."
+        setStatus(
+            "Enter a test topic first."
         );
 
         return;
     }
 
 
-    const html =
-        sources
-            .slice(0, 20)
-            .map(source => {
+    currentTestTopic =
+        cleanTopic;
 
-                const title =
-                    cleanText(
-                        source.title ||
-                        source.name ||
-                        "Mwaniki source"
-                    );
+    currentTestNumber = 0;
 
+    currentTestScore = 0;
 
-                const type =
-                    cleanText(
-                        source.type ||
-                        "Source"
-                    );
+    currentTestFinished = false;
+
+    currentTestQuestion = null;
 
 
-                const description =
-                    cleanText(
-                        source.description ||
-                        source.excerpt ||
-                        ""
-                    );
-
-
-                const url =
-                    safeUrl(
-                        source.url
-                    );
-
-
-                const inner = `
-
-                    <span class="source-type">
-                        ${escapeHTML(type)}
-                    </span>
-
-                    <h3 class="source-title">
-                        ${escapeHTML(title)}
-                    </h3>
-
-                    ${
-                        description
-                            ? `
-                                <p class="source-description">
-                                    ${escapeHTML(description)}
-                                </p>
-                            `
-                            : ""
-                    }
-
-                `;
-
-
-                if (url) {
-
-                    return `
-
-                        <a
-                            class="source-item"
-                            href="${escapeHTML(url)}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            ${inner}
-                        </a>
-
-                    `;
-                }
-
-
-                return `
-
-                    <div class="source-item">
-                        ${inner}
-                    </div>
-
-                `;
-
-            })
-            .join("");
-
-
-    mwanikiSources.innerHTML = `
-
-        <div class="source-list">
-            ${html}
-        </div>
-    `;
-}
-
-
-// ============================================================
-// WEB RESULTS
-// ============================================================
-
-function renderWebResults(data) {
-
-    const results =
-        Array.isArray(
-            data.webResults
-        )
-            ? data.webResults
-            : [];
-
-
-    if (!results.length) {
-
-        const googleUrl =
-            safeUrl(
-                data.googleSearchUrl
-            );
-
-
-        if (googleUrl) {
-
-            webResults.innerHTML = `
-
-                <div class="empty-result">
-
-                    No configured web-search provider
-                    returned results.
-
-                    <br><br>
-
-                    <a
-                        class="see-more"
-                        href="${escapeHTML(googleUrl)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        Search Google for this topic →
-                    </a>
-
-                </div>
-            `;
-
-            return;
-        }
-
-
-        showEmpty(
-            webResults,
-            "No web results were returned."
-        );
-
-        return;
+    if (testPanel) {
+        testPanel.style.display = "block";
     }
-
-
-    webResults.innerHTML = `
-
-        <div class="web-list">
-
-            ${results
-                .slice(0, 10)
-                .map(result => {
-
-                    const title =
-                        cleanText(
-                            result.title ||
-                            result.name ||
-                            "Web result"
-                        );
-
-
-                    const description =
-                        cleanText(
-                            result.description ||
-                            result.snippet ||
-                            result.content ||
-                            ""
-                        );
-
-
-                    const url =
-                        safeUrl(
-                            result.url ||
-                            result.link
-                        );
-
-
-                    return `
-
-                        <article class="web-item">
-
-                            <h3>
-                                ${escapeHTML(title)}
-                            </h3>
-
-                            ${
-                                description
-                                    ? `
-                                        <p>
-                                            ${escapeHTML(
-                                                description
-                                            )}
-                                        </p>
-                                    `
-                                    : ""
-                            }
-
-
-                            ${
-                                url
-                                    ? `
-                                        <a
-                                            href="${escapeHTML(url)}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            Open source →
-                                        </a>
-                                    `
-                                    : ""
-                            }
-
-                        </article>
-
-                    `;
-
-                })
-                .join("")
-            }
-
-        </div>
-    `;
-}
-
-
-// ============================================================
-// IMAGE RESULTS
-// ============================================================
-
-function renderImages(data) {
-
-    const images =
-        Array.isArray(
-            data.images
-        )
-            ? data.images
-            : [];
-
-
-    const validImages =
-        images
-            .map(image => {
-
-                return {
-
-                    url:
-                        safeUrl(
-                            image.url ||
-                            image.image ||
-                            image.thumbnail
-                        ),
-
-                    title:
-                        cleanText(
-                            image.title ||
-                            image.name ||
-                            "Medical visual"
-                        ),
-
-                    source:
-                        safeUrl(
-                            image.source ||
-                            image.pageUrl ||
-                            image.link
-                        )
-
-                };
-
-            })
-            .filter(
-                image => image.url
-            );
-
-
-    if (!validImages.length) {
-
-        const googleImageUrl =
-            safeUrl(
-                data.googleImageSearchUrl
-            );
-
-
-        if (googleImageUrl) {
-
-            aiImages.innerHTML = `
-
-                <div class="empty-result">
-
-                    No configured image provider
-                    returned a visual.
-
-                    <br><br>
-
-                    <a
-                        class="see-more"
-                        href="${escapeHTML(googleImageUrl)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        See more images on Google →
-                    </a>
-
-                </div>
-            `;
-
-            return;
-        }
-
-
-        showEmpty(
-            aiImages,
-            "No visual resources were returned."
-        );
-
-        return;
-    }
-
-
-    const firstImages =
-        validImages.slice(0, 8);
-
-
-    aiImages.innerHTML = `
-
-        <div class="image-grid">
-
-            ${firstImages
-                .map(image => {
-
-                    const imageUrl =
-                        escapeHTML(
-                            image.url
-                        );
-
-
-                    const title =
-                        escapeHTML(
-                            image.title
-                        );
-
-
-                    const imageHTML = `
-
-                        <img
-                            src="${imageUrl}"
-                            alt="${title}"
-                            loading="lazy"
-                            referrerpolicy="no-referrer"
-                            onerror="this.closest('.image-card').remove()"
-                        >
-                    `;
-
-
-                    if (image.source) {
-
-                        return `
-
-                            <a
-                                class="image-card"
-                                href="${escapeHTML(image.source)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-
-                                ${imageHTML}
-
-                                <div class="image-caption">
-                                    ${title}
-                                </div>
-
-                            </a>
-                        `;
-                    }
-
-
-                    return `
-
-                        <div class="image-card">
-
-                            ${imageHTML}
-
-                            <div class="image-caption">
-                                ${title}
-                            </div>
-
-                        </div>
-                    `;
-
-                })
-                .join("")
-            }
-
-        </div>
-
-
-        ${
-            data.googleImageSearchUrl
-                ? `
-                    <a
-                        class="see-more"
-                        href="${escapeHTML(
-                            data.googleImageSearchUrl
-                        )}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        See more images →
-                    </a>
-                `
-                : ""
-        }
-
-    `;
-}
-
-
-// ============================================================
-// TEST START
-// ============================================================
-
-async function startTest() {
-
-    const topic =
-        cleanText(
-            latestSearchData?.question ||
-            aiQuestion?.value ||
-            ""
-        );
-
-
-    if (!topic) {
-
-        setSearchStatus(
-            "Search a topic before starting a test."
-        );
-
-        return;
-    }
-
-
-    testTopic =
-        topic;
-
-
-    testPanel.style.display =
-        "block";
-
-
-    testPanel.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
-
-
-    testQuestionNumber = 1;
-
-    testScore = 0;
-
-    testAnswered = false;
-
-    currentTest = null;
-
-
-    testProgress.textContent =
-        "Question 1";
 
 
     testStatus.textContent =
-        "Generating a question from the retrieved material...";
+        "Preparing your test...";
 
 
     testQuestion.textContent =
@@ -1136,7 +1132,9 @@ async function startTest() {
 
 
     testOptions.innerHTML =
-        "";
+        loadingHTML(
+            "Generating a source-based question..."
+        );
 
 
     testFeedback.style.display =
@@ -1147,74 +1145,137 @@ async function startTest() {
         "none";
 
 
+    readAnswerButton.style.display =
+        "none";
+
+
     try {
 
-        const result =
-            await supabase.functions.invoke(
-                "mwaniki-ai",
-                {
-                    body: {
+        await loadTestQuestion();
 
-                        mode: "test",
-
-                        testTopic: topic,
-
-                        question: topic,
-
-                        searchMwaniki: true,
-
-                        searchWeb: true
-                    }
-                }
-            );
-
-
-        if (result.error) {
-
-            throw new Error(
-                result.error.message ||
-                "Could not generate the test."
-            );
-        }
-
-
-        const data =
-            result.data;
-
-
-        if (
-            !data ||
-            data.success !== true ||
-            !data.testQuestion
-        ) {
-
-            throw new Error(
-                data?.error ||
-                "There was not enough material to generate a test."
-            );
-        }
-
-
-        currentTest =
-            data.testQuestion;
-
-
-        renderTestQuestion();
-
+        testPanel.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
 
     } catch (error) {
 
         console.error(
-            "Test generation error:",
+            "Test error:",
             error
         );
 
 
         testStatus.textContent =
-            error.message ||
-            "Unable to generate a test question.";
+            error?.message ||
+            "Could not generate the test.";
 
+
+        testOptions.innerHTML =
+            `<div class="empty-state">
+                Not enough material was available
+                to generate this test.
+            </div>`;
     }
+}
+
+
+// ============================================================
+// LOAD TEST QUESTION
+// ============================================================
+
+async function loadTestQuestion() {
+
+    currentTestNumber++;
+
+
+    testProgress.textContent =
+        "Question " +
+        currentTestNumber;
+
+
+    testStatus.textContent =
+        "Generating question " +
+        currentTestNumber +
+        "...";
+
+
+    testQuestion.textContent =
+        "";
+
+
+    testOptions.innerHTML =
+        loadingHTML(
+            "Preparing your question..."
+        );
+
+
+    testFeedback.style.display =
+        "none";
+
+
+    testNext.style.display =
+        "none";
+
+
+    readAnswerButton.style.display =
+        "none";
+
+
+    const result =
+        await supabase.functions.invoke(
+            "mwaniki-ai",
+            {
+                body: {
+                    mode: "test",
+                    testTopic:
+                        currentTestTopic,
+                    searchMwaniki: true,
+                    searchWeb: false,
+                    searchImages: false
+                }
+            }
+        );
+
+
+    const {
+        data,
+        error
+    } = result;
+
+
+    if (error) {
+        throw error;
+    }
+
+
+    if (
+        !data ||
+        !data.success
+    ) {
+
+        throw new Error(
+            data?.error ||
+            "The test question could not be generated."
+        );
+    }
+
+
+    if (!data.testQuestion) {
+
+        throw new Error(
+            "No test question was returned."
+        );
+    }
+
+
+    currentTestQuestion =
+        data.testQuestion;
+
+
+    renderTestQuestion(
+        currentTestQuestion
+    );
 }
 
 
@@ -1222,107 +1283,75 @@ async function startTest() {
 // RENDER TEST QUESTION
 // ============================================================
 
-function renderTestQuestion() {
+function renderTestQuestion(question) {
 
-    if (!currentTest) {
-        return;
-    }
+    testStatus.textContent =
+        "Choose the best answer.";
 
 
-    testAnswered =
-        false;
+    testQuestion.textContent =
+        question.question;
+
+
+    testOptions.innerHTML = "";
+
+
+    const options =
+        Array.isArray(question.options)
+            ? question.options
+            : [];
+
+
+    options.forEach(option => {
+
+        const button =
+            document.createElement("button");
+
+
+        button.type = "button";
+
+        button.className =
+            "test-option";
+
+
+        button.dataset.key =
+            option.key;
+
+
+        button.textContent =
+            option.key +
+            ". " +
+            option.text;
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                answerTestQuestion(
+                    option.key,
+                    button
+                );
+            }
+        );
+
+
+        testOptions.appendChild(
+            button
+        );
+    });
 
 
     testFeedback.style.display =
         "none";
 
 
-    testFeedback.innerHTML =
-        "";
-
-
     testNext.style.display =
         "none";
 
 
-    testProgress.textContent =
-        `Question ${testQuestionNumber}`;
-
-
-    testStatus.textContent =
-        currentTest.sourceType ===
-        "generated_from_mwaniki_material"
-            ? "Generated from your retrieved Mwaniki Scholars material."
-            : "Question from your learning material.";
-
-
-    testQuestion.textContent =
-        currentTest.question ||
-        "";
-
-
-    const options =
-        Array.isArray(
-            currentTest.options
-        )
-            ? currentTest.options
-            : [];
-
-
-    testOptions.innerHTML =
-        options
-            .map(option => {
-
-                const key =
-                    cleanText(
-                        option.key ||
-                        option.value
-                    );
-
-
-                const text =
-                    cleanText(
-                        option.text ||
-                        option.label
-                    );
-
-
-                return `
-
-                    <button
-                        type="button"
-                        class="test-option"
-                        data-key="${escapeHTML(key)}"
-                    >
-                        <strong>
-                            ${escapeHTML(key)}.
-                        </strong>
-
-                        ${escapeHTML(text)}
-
-                    </button>
-                `;
-
-            })
-            .join("");
-
-
-    testOptions
-        .querySelectorAll(".test-option")
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    answerTestQuestion(
-                        button.dataset.key
-                    );
-
-                }
-            );
-
-        });
+    readAnswerButton.style.display =
+        "none";
 }
 
 
@@ -1330,104 +1359,62 @@ function renderTestQuestion() {
 // ANSWER TEST QUESTION
 // ============================================================
 
-function answerTestQuestion(selectedKey) {
+function answerTestQuestion(
+    selectedKey,
+    selectedButton
+) {
 
-    if (
-        testAnswered ||
-        !currentTest
-    ) {
+    if (!currentTestQuestion) {
         return;
     }
 
 
-    testAnswered =
-        true;
-
-
     const correctKey =
-        cleanText(
-            currentTest.correctKey
+        currentTestQuestion.correctKey;
+
+
+    const buttons =
+        Array.from(
+            testOptions.querySelectorAll(
+                ".test-option"
+            )
         );
 
 
-    const selected =
-        cleanText(
-            selectedKey
-        );
+    buttons.forEach(
+        button => {
+            button.disabled = true;
+        }
+    );
 
 
     const isCorrect =
-        selected.toUpperCase() ===
-        correctKey.toUpperCase();
+        selectedKey === correctKey;
 
 
-    if (isCorrect) {
-
-        testScore++;
-
-    }
-
-
-    testOptions
-        .querySelectorAll(".test-option")
-        .forEach(button => {
-
-            button.disabled = true;
-
-
-            const key =
-                cleanText(
-                    button.dataset.key
-                );
-
-
-            if (
-                key.toUpperCase() ===
-                correctKey.toUpperCase()
-            ) {
-
-                button.classList.add(
-                    "correct"
-                );
-            }
-
-
-            if (
-                key.toUpperCase() ===
-                selected.toUpperCase() &&
-                !isCorrect
-            ) {
-
-                button.classList.add(
-                    "wrong"
-                );
-            }
-
-        });
-
-
-    const correctAnswer =
-        cleanText(
-            currentTest.correctAnswer ||
-            ""
-        );
-
-
-    const explanation =
-        cleanText(
-            currentTest.explanation ||
-            ""
+    const correctButton =
+        buttons.find(
+            button =>
+                button.dataset.key ===
+                correctKey
         );
 
 
     if (isCorrect) {
+
+        currentTestScore++;
+
+
+        selectedButton.classList.add(
+            "correct"
+        );
+
 
         testFeedback.className =
-            "test-feedback correct";
+            "test-feedback correct-feedback";
 
 
         testFeedback.innerHTML = `
-
             <strong>
                 🎉 Correct!
             </strong>
@@ -1435,24 +1422,47 @@ function answerTestQuestion(selectedKey) {
             <br><br>
 
             ${escapeHTML(
-                explanation
+                currentTestQuestion.correctAnswer ||
+                ""
             )}
 
+            <br><br>
+
+            ${escapeHTML(
+                currentTestQuestion.explanation ||
+                ""
+            )}
         `;
 
 
         speak(
-            `Correct. Well done. ${correctAnswer}. ${explanation}`
+            "Correct. Well done. " +
+            (
+                currentTestQuestion.explanation ||
+                ""
+            )
         );
 
     } else {
 
+        selectedButton.classList.add(
+            "wrong"
+        );
+
+
+        if (correctButton) {
+
+            correctButton.classList.add(
+                "correct"
+            );
+        }
+
+
         testFeedback.className =
-            "test-feedback wrong";
+            "test-feedback wrong-feedback";
 
 
         testFeedback.innerHTML = `
-
             <strong>
                 😂 What the heck did you just say?
                 Let's fix that one.
@@ -1465,20 +1475,32 @@ function answerTestQuestion(selectedKey) {
             </strong>
 
             ${escapeHTML(
-                correctAnswer
+                currentTestQuestion.correctAnswer ||
+                ""
             )}
 
             <br><br>
 
             ${escapeHTML(
-                explanation
+                currentTestQuestion.explanation ||
+                ""
             )}
-
         `;
 
 
         speak(
-            `What the heck did you just say? Let's fix that one. The correct answer is ${correctAnswer}. ${explanation}`
+            "What the heck did you just say? " +
+            "Let's fix that one. " +
+            "The correct answer is " +
+            (
+                currentTestQuestion.correctAnswer ||
+                ""
+            ) +
+            ". " +
+            (
+                currentTestQuestion.explanation ||
+                ""
+            )
         );
     }
 
@@ -1487,14 +1509,18 @@ function answerTestQuestion(selectedKey) {
         "block";
 
 
+    readAnswerButton.style.display =
+        "inline-flex";
+
+
     testNext.style.display =
         "inline-flex";
 
 
-    testFeedback.scrollIntoView({
-        behavior: "smooth",
-        block: "nearest"
-    });
+    testStatus.textContent =
+        isCorrect
+            ? "Correct answer."
+            : "Review the explanation above.";
 }
 
 
@@ -1504,106 +1530,31 @@ function answerTestQuestion(selectedKey) {
 
 async function nextTestQuestion() {
 
-    if (!testAnswered) {
+    if (currentTestFinished) {
         return;
     }
 
 
-    testQuestionNumber++;
-
-
-    testStatus.textContent =
-        "Generating the next question...";
-
-
-    testQuestion.textContent =
-        "";
-
-
-    testOptions.innerHTML =
-        "";
-
-
-    testFeedback.style.display =
-        "none";
-
-
-    testNext.style.display =
-        "none";
+    testNext.disabled = true;
 
 
     try {
 
-        const result =
-            await supabase.functions.invoke(
-                "mwaniki-ai",
-                {
-                    body: {
-
-                        mode: "test",
-
-                        testTopic: testTopic,
-
-                        question: testTopic,
-
-                        questionNumber:
-                            testQuestionNumber,
-
-                        excludeQuestion:
-                            currentTest?.question ||
-                            "",
-
-                        searchMwaniki: true,
-
-                        searchWeb: true
-                    }
-                }
-            );
-
-
-        if (result.error) {
-
-            throw new Error(
-                result.error.message ||
-                "Could not generate the next question."
-            );
-        }
-
-
-        const data =
-            result.data;
-
-
-        if (
-            !data ||
-            data.success !== true ||
-            !data.testQuestion
-        ) {
-
-            finishTest();
-
-            return;
-        }
-
-
-        currentTest =
-            data.testQuestion;
-
-
-        renderTestQuestion();
-
+        await loadTestQuestion();
 
     } catch (error) {
 
         console.error(
-            "Next question error:",
+            "Next test question error:",
             error
         );
 
 
-        finishTest(
-            error.message
-        );
+        finishTest();
+
+    } finally {
+
+        testNext.disabled = false;
     }
 }
 
@@ -1612,88 +1563,65 @@ async function nextTestQuestion() {
 // FINISH TEST
 // ============================================================
 
-function finishTest(errorMessage = "") {
+function finishTest() {
 
-    stopAudio();
+    currentTestFinished =
+        true;
 
 
     const total =
-        Math.max(
-            testQuestionNumber - 1,
-            1
-        );
+        currentTestNumber;
 
 
     const percentage =
-        Math.round(
-            (testScore / total) * 100
-        );
+        total > 0
+            ? Math.round(
+                (currentTestScore / total) * 100
+            )
+            : 0;
 
 
-    testStatus.textContent =
-        "Test complete";
+    testProgress.textContent =
+        "Finished";
 
 
     testQuestion.textContent =
-        "";
+        "Test completed";
 
 
-    testOptions.innerHTML =
-        "";
+    testOptions.innerHTML = `
+        <div class="empty-state">
+
+            <strong>
+                Score: ${currentTestScore}/${total}
+            </strong>
+
+            <br><br>
+
+            ${percentage}%
+
+        </div>
+    `;
 
 
     testFeedback.style.display =
-        "block";
-
-
-    testFeedback.className =
-        "test-feedback correct";
-
-
-    testFeedback.innerHTML = `
-
-        <strong>
-            Test complete.
-        </strong>
-
-        <br><br>
-
-        Score:
-        ${escapeHTML(
-            String(testScore)
-        )}
-        /
-        ${escapeHTML(
-            String(total)
-        )}
-
-        (${escapeHTML(
-            String(percentage)
-        )}%)
-
-        ${
-            errorMessage
-                ? `
-                    <br><br>
-                    ${escapeHTML(errorMessage)}
-                `
-                : ""
-        }
-
-    `;
+        "none";
 
 
     testNext.style.display =
         "none";
 
 
-    testProgress.textContent =
-        "Complete";
+    readAnswerButton.style.display =
+        "none";
 
 
-    speak(
-        `Test complete. Your score is ${testScore} out of ${total}, which is ${percentage} percent.`
-    );
+    testStatus.textContent =
+        percentage >= 80
+            ? "Excellent work."
+            : percentage >= 50
+                ? "Good attempt. Keep revising."
+                : "Keep studying this topic and try again.";
 }
 
 
@@ -1703,161 +1631,226 @@ function finishTest(errorMessage = "") {
 
 function exitTest() {
 
-    stopAudio();
+    stopSpeech();
 
-    testPanel.style.display =
-        "none";
 
-    currentTest =
+    if (testPanel) {
+        testPanel.style.display =
+            "none";
+    }
+
+
+    currentTestQuestion =
         null;
 
-    testQuestionNumber =
-        0;
-
-    testScore =
-        0;
-
-    testAnswered =
+    currentTestFinished =
         false;
+
+    currentTestNumber =
+        0;
+
+    currentTestScore =
+        0;
 }
 
 
 // ============================================================
-// EVENTS
+// SUGGESTIONS
 // ============================================================
 
-askAIButton?.addEventListener(
-    "click",
-    () => {
-
-        performSearch(
-            aiQuestion.value
-        );
-
-    }
-);
-
-
-aiQuestion?.addEventListener(
-    "keydown",
-    event => {
-
-        if (
-            event.key === "Enter" &&
-            !event.shiftKey
-        ) {
-
-            event.preventDefault();
-
-            performSearch(
-                aiQuestion.value
-            );
-        }
-
-    }
-);
-
-
 document
-    .querySelectorAll(".suggestion-button")
+    .querySelectorAll(
+        ".suggestion-button"
+    )
     .forEach(button => {
 
         button.addEventListener(
             "click",
             () => {
 
-                const question =
+                const value =
                     button.dataset.question ||
                     "";
 
-                aiQuestion.value =
-                    question;
+                if (questionInput) {
+                    questionInput.value =
+                        value;
+                }
 
-                performSearch(
-                    question
-                );
-
+                performSearch();
             }
         );
-
     });
 
 
-readAnswerButton?.addEventListener(
-    "click",
-    () => {
-
-        if (!latestSearchData) {
-            return;
-        }
-
-
-        const answer =
-            latestSearchData.answer;
-
-
-        const text = [
-
-            answer?.title,
-
-            ...(answer?.paragraphs || []),
-
-            answer?.explanation,
-
-            ...(answer?.keyPoints || [])
-
-        ]
-            .filter(Boolean)
-            .join(". ");
-
-
-        speak(text);
-    }
-);
-
-
-stopAudioButton?.addEventListener(
-    "click",
-    stopAudio
-);
-
-
-startTestButton?.addEventListener(
-    "click",
-    startTest
-);
-
-
-testNext?.addEventListener(
-    "click",
-    nextTestQuestion
-);
-
-
-testExit?.addEventListener(
-    "click",
-    exitTest
-);
-
-
 // ============================================================
-// INITIAL STATE
+// SEARCH BUTTON
 // ============================================================
 
-const previousQuestion =
-    localStorage.getItem(
-        "mwanikiLastAIQuestion"
+if (askButton) {
+
+    askButton.addEventListener(
+        "click",
+        performSearch
     );
-
-
-if (previousQuestion) {
-
-    aiQuestion.value =
-        previousQuestion;
 }
 
+
+// ============================================================
+// ENTER KEY
+// ============================================================
+
+if (questionInput) {
+
+    questionInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                performSearch();
+            }
+        }
+    );
+}
+
+
+// ============================================================
+// TEST BUTTON
+// ============================================================
+
+if (startTestButton) {
+
+    startTestButton.addEventListener(
+        "click",
+        () => {
+
+            startTest(
+                testTopic?.value ||
+                currentSearchQuestion
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// NEXT
+// ============================================================
+
+if (testNext) {
+
+    testNext.addEventListener(
+        "click",
+        nextTestQuestion
+    );
+}
+
+
+// ============================================================
+// EXIT
+// ============================================================
+
+if (testExit) {
+
+    testExit.addEventListener(
+        "click",
+        exitTest
+    );
+}
+
+
+// ============================================================
+// TEST READ ALOUD
+// ============================================================
+
+if (readAnswerButton) {
+
+    readAnswerButton.addEventListener(
+        "click",
+        () => {
+
+            if (!currentTestQuestion) {
+                return;
+            }
+
+
+            speak(
+                "The correct answer is " +
+                (
+                    currentTestQuestion.correctAnswer ||
+                    ""
+                ) +
+                ". " +
+                (
+                    currentTestQuestion.explanation ||
+                    ""
+                )
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// MAIN ANSWER READ ALOUD
+// ============================================================
+
+if (readMainAnswerButton) {
+
+    readMainAnswerButton.addEventListener(
+        "click",
+        () => {
+
+            if (!currentAnswerText) {
+
+                speak(
+                    "There is no answer to read yet."
+                );
+
+                return;
+            }
+
+
+            speak(
+                currentAnswerText
+            );
+        }
+    );
+}
+
+
+// ============================================================
+// STOP AUDIO
+// ============================================================
+
+if (stopAudioButton) {
+
+    stopAudioButton.addEventListener(
+        "click",
+        stopSpeech
+    );
+}
+
+
+if (stopMainAudioButton) {
+
+    stopMainAudioButton.addEventListener(
+        "click",
+        stopSpeech
+    );
+}
+
+
+// ============================================================
+// INITIALIZATION
+// ============================================================
 
 console.log(
     "✅ Mwaniki AI search interface initialized."
 );
-```
