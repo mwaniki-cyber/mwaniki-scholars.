@@ -1,4 +1,4 @@
-```javascript
+
 import { supabase } from "./supabase.js";
 
 /*
@@ -3189,4 +3189,4 @@ console.log(
     "🖼 Google Images:",
     Boolean(aiImages)
 );
-```
+
