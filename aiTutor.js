@@ -1,35 +1,73 @@
-
+```javascript
 import { supabase } from "./supabase.js";
 
-console.log("🚀 Mwaniki AI Tutor loaded");
+/*
+============================================================
+ MWANIKI SCHOLARS
+ MWANIKI AI — STUDENT INTERFACE
+============================================================
 
-// =====================================================
-// ELEMENTS
-// =====================================================
+ PAGE ARCHITECTURE
 
-const aiQuestion =
+ LEFT
+ ├── Google Search
+ └── Google Images
+
+ RIGHT
+ └── Mwaniki AI synthesized answer
+
+ BELOW
+ ├── Read Answer
+ ├── Stop Audio
+ └── Test Me
+
+ SMART TEST
+ ├── Question
+ ├── Four options
+ ├── Cartoon feedback
+ ├── Voice reaction
+ ├── Next Question
+ └── Exit Test
+
+ INTERNAL MWANIKI SOURCES
+ └── NEVER DISPLAYED TO STUDENT
+============================================================
+*/
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const questionInput =
     document.getElementById("aiQuestion");
 
-const askAIButton =
+const askButton =
     document.getElementById("askAIButton");
 
-const aiAnswer =
+const answerArea =
     document.getElementById("aiAnswer");
 
-const aiSearchStatus =
+const webResults =
+    document.getElementById("webResults");
+
+const imageArea =
+    document.getElementById("aiImages");
+
+const searchStatus =
     document.getElementById("aiSearchStatus");
 
 const aiStatus =
     document.getElementById("aiStatus");
 
-const aiImages =
-    document.getElementById("aiImages");
+const liveStatusText =
+    document.getElementById("aiLiveStatusText");
 
-const mwanikiSources =
-    document.getElementById("mwanikiSources");
+const googleSearchLink =
+    document.getElementById("googleSearchLink");
 
-const webResults =
-    document.getElementById("webResults");
+const googleImagesLink =
+    document.getElementById("googleImagesLink");
 
 const testPanel =
     document.getElementById("testPanel");
@@ -49,27 +87,56 @@ const testOptions =
 const testFeedback =
     document.getElementById("testFeedback");
 
+const testFeedbackCharacter =
+    document.getElementById(
+        "testFeedbackCharacter"
+    );
+
+const testFeedbackTitle =
+    document.getElementById(
+        "testFeedbackTitle"
+    );
+
+const testFeedbackText =
+    document.getElementById(
+        "testFeedbackText"
+    );
+
 const testNext =
     document.getElementById("testNext");
 
 const testExit =
     document.getElementById("testExit");
 
-const backToDashboardButton =
+const readAnswerButton =
+    document.getElementById(
+        "readAnswerButton"
+    );
+
+const stopAudioButton =
+    document.getElementById(
+        "stopAudioButton"
+    );
+
+const startTestButton =
+    document.getElementById(
+        "startTestButton"
+    );
+
+const backButton =
     document.getElementById(
         "backToDashboardButton"
     );
 
 
-// =====================================================
-// STATE
-// =====================================================
 
-let currentAnswerText = "";
+/* =========================================================
+   STATE
+========================================================= */
+
+let latestAnswerText = "";
 
 let currentTestTopic = "";
-
-let currentTestQuestion = null;
 
 let currentTestNumber = 0;
 
@@ -79,46 +146,46 @@ let currentTestScore = 0;
 
 let currentTestUsedIds = [];
 
-let testAnswered = false;
+let currentTestQuestion = null;
 
-let currentSpeech = null;
+let testWaitingForAnswer = false;
+
+let speechQueue = [];
 
 
-// =====================================================
-// HTML ESCAPING
-// =====================================================
+
+/* =========================================================
+   BASIC HELPERS
+========================================================= */
 
 function escapeHTML(value) {
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
-
-    return String(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
 
-// =====================================================
-// URL SAFETY
-// =====================================================
+function cleanText(value) {
+
+    return String(value ?? "")
+        .replace(/\r/g, "")
+        .replace(/\u0000/g, "")
+        .trim();
+
+}
+
 
 function safeURL(value) {
 
     try {
 
         const url =
-            new URL(
-                String(value || ""),
-                window.location.href
-            );
+            new URL(String(value));
 
         if (
             url.protocol === "http:" ||
@@ -127,1333 +194,1053 @@ function safeURL(value) {
             return url.href;
         }
 
-    } catch (_) {
+    } catch (_) {}
 
-        return "";
-    }
+    return "#";
 
-    return "";
 }
 
 
-// =====================================================
-// TEXT CLEANING
-// =====================================================
+function showElement(element) {
 
-function cleanText(value) {
+    if (!element) return;
 
-    if (
-        value === null ||
-        value === undefined
-    ) {
-        return "";
-    }
+    element.classList.remove("hidden");
 
-    let text =
-        String(value);
-
-    text = text.replace(
-        /```(?:markdown|md|text|html)?/gi,
-        ""
-    );
-
-    text =
-        text.replace(
-            /```/g,
-            ""
-        );
-
-    text =
-        text.replace(
-            /^#{1,6}\s*/gm,
-            ""
-        );
-
-    text =
-        text.replace(
-            /\*\*(.*?)\*\*/g,
-            "$1"
-        );
-
-    text =
-        text.replace(
-            /__(.*?)__/g,
-            "$1"
-        );
-
-    text =
-        text.replace(
-            /^\s*[-*]\s+/gm,
-            ""
-        );
-
-    text =
-        text.replace(
-            /\r/g,
-            ""
-        );
-
-    text =
-        text.replace(
-            /\n{3,}/g,
-            "\n\n"
-        );
-
-    return text.trim();
 }
 
 
-// =====================================================
-// TEXT → HTML
-// =====================================================
+function hideElement(element) {
 
-function textToHTML(value) {
+    if (!element) return;
 
-    const text =
-        cleanText(value);
+    element.classList.add("hidden");
 
-    if (!text) {
-        return "";
-    }
-
-    const paragraphs =
-        text
-            .split(/\n{2,}/)
-            .map(
-                item =>
-                    item
-                        .trim()
-                        .replace(
-                            /\n/g,
-                            " "
-                        )
-            )
-            .filter(Boolean);
-
-    return paragraphs
-        .map(
-            paragraph =>
-                `<p>${escapeHTML(
-                    paragraph
-                )}</p>`
-        )
-        .join("");
 }
 
 
-// =====================================================
-// STATUS
-// =====================================================
+function setLiveStatus(text) {
 
-function setSearchStatus(message) {
-
-    if (!aiSearchStatus) {
-        return;
+    if (liveStatusText) {
+        liveStatusText.textContent = text;
     }
+
+}
+
+
+function setStatus(
+    element,
+    message,
+    visible = true
+) {
+
+    if (!element) return;
 
     if (!message) {
 
-        aiSearchStatus
-            .classList
-            .add("hidden");
+        element.innerHTML = "";
 
-        aiSearchStatus.innerHTML = "";
+        hideElement(element);
 
         return;
     }
 
-    aiSearchStatus
-        .classList
-        .remove("hidden");
+    element.innerHTML =
+        `<div class="status-line">${escapeHTML(message)}</div>`;
 
-    aiSearchStatus.innerHTML = `
-        <div class="status-line">
-            ${escapeHTML(message)}
-        </div>
-    `;
+    if (visible) {
+        showElement(element);
+    }
+
 }
 
 
-function setStatus(message) {
 
-    if (!aiStatus) {
-        return;
-    }
+/* =========================================================
+   TEXT → SAFE HTML
+========================================================= */
 
-    if (!message) {
+function textToHTML(text) {
 
-        aiStatus
-            .classList
-            .add("hidden");
-
-        aiStatus.innerHTML = "";
-
-        return;
-    }
-
-    aiStatus
-        .classList
-        .remove("hidden");
-
-    aiStatus.innerHTML = `
-        <div class="status-line">
-            ${escapeHTML(message)}
-        </div>
-    `;
-}
-
-
-// =====================================================
-// BUTTON STATE
-// =====================================================
-
-function setBusy(busy) {
-
-    if (!askAIButton) {
-        return;
-    }
-
-    askAIButton.disabled =
-        busy;
-
-    askAIButton.innerHTML =
-        busy
-            ? `
-                <span>Researching...</span>
-                <span>⌛</span>
-              `
-            : `
-                <span>Ask Mwaniki AI</span>
-                <span>➤</span>
-              `;
-}
-
-
-// =====================================================
-// SPEECH
-// =====================================================
-
-function stopSpeech() {
-
-    if (
-        "speechSynthesis" in
-        window
-    ) {
-
-        window
-            .speechSynthesis
-            .cancel();
-    }
-
-    currentSpeech = null;
-}
-
-
-function speak(text) {
-
-    if (
-        !(
-            "speechSynthesis"
-            in window
-        )
-    ) {
-        return;
-    }
-
-    const clean =
+    const cleaned =
         cleanText(text);
 
-    if (!clean) {
-        return;
+    if (!cleaned) {
+        return "";
     }
 
-    stopSpeech();
+    let html =
+        escapeHTML(cleaned);
 
-    currentSpeech =
-        new SpeechSynthesisUtterance(
-            clean
-        );
+    /*
+    Headings
+    */
 
-    currentSpeech.lang =
-        "en-US";
+    html = html.replace(
+        /^###\s+(.+)$/gm,
+        "<h4>$1</h4>"
+    );
 
-    currentSpeech.rate =
-        0.95;
+    html = html.replace(
+        /^##\s+(.+)$/gm,
+        "<h3>$1</h3>"
+    );
 
-    currentSpeech.pitch =
-        1.0;
+    html = html.replace(
+        /^#\s+(.+)$/gm,
+        "<h2>$1</h2>"
+    );
 
-    currentSpeech.volume =
-        1.0;
+    /*
+    Bold
+    */
 
-    window
-        .speechSynthesis
-        .speak(
-            currentSpeech
-        );
+    html = html.replace(
+        /\*\*(.+?)\*\*/g,
+        "<strong>$1</strong>"
+    );
+
+    /*
+    Bullet lines
+    */
+
+    html = html.replace(
+        /^[•*-]\s+(.+)$/gm,
+        "<li>$1</li>"
+    );
+
+    html = html.replace(
+        /(<li>.*?<\/li>)(?:\s*<li>)/gs,
+        "$1<li>"
+    );
+
+    /*
+    Paragraphs
+    */
+
+    const blocks =
+        html
+            .split(/\n{2,}/)
+            .map(block => block.trim())
+            .filter(Boolean);
+
+    return blocks
+        .map(block => {
+
+            if (
+                block.startsWith("<h2>") ||
+                block.startsWith("<h3>") ||
+                block.startsWith("<h4>")
+            ) {
+                return block;
+            }
+
+            if (block.startsWith("<li>")) {
+                return `<ul>${block}</ul>`;
+            }
+
+            return `<p>${block.replace(/\n/g, "<br>")}</p>`;
+
+        })
+        .join("");
+
 }
 
 
-// =====================================================
-// CARTOON LAUGH
-// =====================================================
 
-const hugeLaughChunks = [
+/* =========================================================
+   RENDER AI ANSWER
+========================================================= */
 
-    "HEE HEE HEE HEE!",
+function renderAnswer(data) {
 
-    "AHAHAHAHAHAHAHAHA!",
+    if (!answerArea) return;
 
-    "HAHAHAHAHAHAHAHAHAHAHAHA!",
-
-    "HEEEEEHEHEHEHEHEHEHEHE!",
-
-    "AHAHAHAHAHAHAHAHAHAHAHAHAHAHA!",
-
-    "HEE HEE HEE HEE HEE HEE!",
-
-    "AHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA!"
-];
-
-
-const funnyWrongAnswerReactions = [
-
-    "Oops! That answer took a wrong turn.",
-
-    "Oof! That one missed the mark.",
-
-    "Whoops! The neurons disagreed with that one.",
-
-    "Aha! Nice attempt, but not quite.",
-
-    "Plot twist! That wasn't the answer.",
-
-    "The brain says: try again!",
-
-    "That answer wandered off the syllabus.",
-
-    "Close! But the textbook isn't celebrating yet.",
-
-    "Oops! That one needs a little resuscitation.",
-
-    "Not quite! Let's correct that one.",
-
-    "The neurons have filed an objection.",
-
-    "Almost! Your answer took the scenic route.",
-
-    "That one needs another trip through the lecture notes.",
-
-    "Interesting choice! Let's fix that one.",
-
-    "Nearly there! Let's see what happened."
-];
-
-
-let funnyReactionPool = [
-    ...funnyWrongAnswerReactions
-];
-
-
-function getRandomFunnyReaction() {
-
-    if (
-        funnyReactionPool.length === 0
-    ) {
-
-        funnyReactionPool = [
-            ...funnyWrongAnswerReactions
-        ];
-    }
-
-    const index =
-        Math.floor(
-            Math.random() *
-            funnyReactionPool.length
+    const answer =
+        cleanText(
+            data?.answer ||
+            data?.finalAnswer ||
+            data?.mwanikiAnswer ||
+            data?.webAnswer ||
+            ""
         );
 
-    return funnyReactionPool.splice(
-        index,
-        1
-    )[0];
-}
+    latestAnswerText =
+        answer;
 
+    if (!answer) {
 
-function speakHugeSqueakyLaugh(
-    reaction
-) {
+        answerArea.innerHTML = `
+            <div class="answer-welcome">
+                <div class="answer-avatar">
+                    🤖
+                </div>
 
-    if (
-        !(
-            "speechSynthesis"
-            in window
-        )
-    ) {
-        return;
-    }
+                <div>
+                    <h3>
+                        I could not generate an answer yet.
+                    </h3>
 
-    stopSpeech();
-
-    let index = 0;
-
-    const speakNextLaugh = () => {
-
-        if (
-            index >=
-            hugeLaughChunks.length
-        ) {
-
-            const reactionUtterance =
-                new SpeechSynthesisUtterance(
-                    reaction
-                );
-
-            reactionUtterance.lang =
-                "en-US";
-
-            reactionUtterance.rate =
-                1.18;
-
-            reactionUtterance.pitch =
-                1.65;
-
-            reactionUtterance.volume =
-                1.0;
-
-            window
-                .speechSynthesis
-                .speak(
-                    reactionUtterance
-                );
-
-            return;
-        }
-
-        const laugh =
-            hugeLaughChunks[
-                index++
-            ];
-
-        const utterance =
-            new SpeechSynthesisUtterance(
-                laugh
-            );
-
-        utterance.lang =
-            "en-US";
-
-        utterance.rate =
-            index % 2 === 0
-                ? 1.48
-                : 1.38;
-
-        utterance.pitch =
-            2.0;
-
-        utterance.volume =
-            1.0;
-
-        utterance.onend =
-            speakNextLaugh;
-
-        window
-            .speechSynthesis
-            .speak(
-                utterance
-            );
-    };
-
-    speakNextLaugh();
-}
-
-
-// =====================================================
-// DIRECT IMAGE
-// =====================================================
-
-function renderDirectImage(
-    image
-) {
-
-    if (
-        !aiImages ||
-        !image
-    ) {
-        return;
-    }
-
-    const imageURL =
-        safeURL(
-            image.url ||
-            image.imageUrl ||
-            image.src
-        );
-
-    if (!imageURL) {
-        return;
-    }
-
-    const title =
-        image.title ||
-        "Medical visual";
-
-    const source =
-        image.source ||
-        image.provider ||
-        "Web image source";
-
-    const sourceURL =
-        safeURL(
-            image.sourceUrl ||
-            image.pageUrl ||
-            image.link
-        );
-
-    aiImages
-        .classList
-        .remove("hidden");
-
-    aiImages.innerHTML = `
-
-        <div class="ai-image-card">
-
-            <img
-                src="${escapeHTML(
-                    imageURL
-                )}"
-                alt="${escapeHTML(
-                    title
-                )}"
-                loading="lazy"
-                referrerpolicy="no-referrer"
-                onerror="
-                    this.closest(
-                        '.ai-image-card'
-                    ).remove();
-                "
-            >
-
-            <div class="ai-image-caption">
-
-                <strong>
-                    ${escapeHTML(
-                        title
-                    )}
-                </strong>
-
-                ${
-                    sourceURL
-                        ? `
-                            <div>
-                                Source:
-                                <a
-                                    href="${escapeHTML(
-                                        sourceURL
-                                    )}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    ${escapeHTML(
-                                        source
-                                    )}
-                                </a>
-                            </div>
-                          `
-                        : `
-                            <div>
-                                Source:
-                                ${escapeHTML(
-                                    source
-                                )}
-                            </div>
-                          `
-                }
-
+                    <p>
+                        Try asking the question in another way.
+                    </p>
+                </div>
             </div>
+        `;
 
+        return;
+    }
+
+
+    answerArea.innerHTML = `
+
+        <div class="ai-answer-label">
+            🤖 Mwaniki AI Answer
         </div>
+
+        <div class="ai-response-content">
+            ${textToHTML(answer)}
+        </div>
+
     `;
+
 }
 
 
-// =====================================================
-// GOOGLE / WEB RESULTS
-// =====================================================
 
-function renderWebResults(
-    results
-) {
+/* =========================================================
+   GOOGLE SEARCH RESULTS
+========================================================= */
 
-    if (!webResults) {
+function renderWebResults(results) {
+
+    if (!webResults) return;
+
+    const list =
+        Array.isArray(results)
+            ? results
+            : [];
+
+    if (!list.length) {
+
+        webResults.innerHTML = `
+            <div class="research-empty">
+                <span>🔎</span>
+                <p>
+                    No relevant web results were found.
+                </p>
+            </div>
+        `;
+
         return;
     }
 
-    if (
-        !Array.isArray(results) ||
-        results.length === 0
-    ) {
 
-        webResults
-            .classList
-            .add("hidden");
-
-        webResults.innerHTML = "";
-
-        return;
-    }
-
-    const items =
-        results
+    webResults.innerHTML =
+        list
             .slice(0, 8)
-            .map(
-                result => {
+            .map(result => {
 
-                    const title =
-                        result.title ||
-                        "Web result";
+                const title =
+                    cleanText(
+                        result?.title ||
+                        "Medical result"
+                    );
 
-                    const url =
-                        safeURL(
-                            result.url ||
-                            result.link ||
-                            result.displayUrl
-                        );
+                const snippet =
+                    cleanText(
+                        result?.snippet ||
+                        result?.description ||
+                        ""
+                    );
 
-                    const displayURL =
-                        result.displayUrl ||
-                        result.url ||
-                        "";
+                const url =
+                    safeURL(
+                        result?.url ||
+                        result?.link ||
+                        result?.displayUrl ||
+                        ""
+                    );
 
-                    const snippet =
-                        cleanText(
-                            result.snippet ||
-                            result.description ||
-                            ""
-                        );
+                return `
 
-                    return `
+                    <article class="web-result">
 
-                        <article
-                            class="web-result"
+                        <a
+                            href="${url}"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
 
-                            ${
-                                url
-                                    ? `
-                                        <a
-                                            class="web-result-title"
-                                            href="${escapeHTML(
-                                                url
-                                            )}"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                        >
-                                            ${escapeHTML(
-                                                title
-                                            )}
-                                        </a>
-                                      `
-                                    : `
-                                        <div
-                                            class="web-result-title"
-                                        >
-                                            ${escapeHTML(
-                                                title
-                                            )}
-                                        </div>
-                                      `
-                            }
+                            <div class="web-result-title">
+                                ${escapeHTML(title)}
+                            </div>
 
                             ${
-                                displayURL
-                                    ? `
-                                        <span
-                                            class="web-result-url"
-                                        >
-                                            ${escapeHTML(
-                                                displayURL
-                                            )}
-                                        </span>
-                                      `
-                                    : ""
+                                url !== "#"
+                                ?
+                                `
+                                <span class="web-result-url">
+                                    ${escapeHTML(url)}
+                                </span>
+                                `
+                                :
+                                ""
                             }
 
                             ${
                                 snippet
-                                    ? `
-                                        <div
-                                            class="web-result-snippet"
-                                        >
-                                            ${escapeHTML(
-                                                snippet
-                                            )}
-                                        </div>
-                                      `
-                                    : ""
+                                ?
+                                `
+                                <div class="web-result-snippet">
+                                    ${escapeHTML(snippet)}
+                                </div>
+                                `
+                                :
+                                ""
                             }
 
-                        </article>
-                    `;
-                }
-            )
+                        </a>
+
+                    </article>
+                `;
+
+            })
             .join("");
 
-    webResults
-        .classList
-        .remove("hidden");
+}
 
-    webResults.innerHTML = `
 
-        <div class="evidence-card">
 
-            <div class="research-heading">
+/* =========================================================
+   GOOGLE IMAGES
+========================================================= */
 
-                <span>
-                    🔎
-                </span>
+function renderImages(images) {
 
-                <h3>
-                    Google Search
-                </h3>
+    if (!imageArea) return;
 
+    const list =
+        Array.isArray(images)
+            ? images
+            : [];
+
+    if (!list.length) {
+
+        imageArea.innerHTML = `
+            <div class="research-empty">
+                <span>🖼️</span>
+                <p>
+                    No relevant images were found.
+                </p>
             </div>
+        `;
 
-            ${items}
+        return;
+    }
 
+
+    const cards =
+        list
+            .slice(0, 8)
+            .map(image => {
+
+                const imageURL =
+                    safeURL(
+                        image?.imageUrl ||
+                        image?.url ||
+                        image?.thumbnail ||
+                        image?.src ||
+                        ""
+                    );
+
+                const pageURL =
+                    safeURL(
+                        image?.pageUrl ||
+                        image?.sourceUrl ||
+                        image?.contextLink ||
+                        image?.link ||
+                        imageURL
+                    );
+
+                const title =
+                    cleanText(
+                        image?.title ||
+                        image?.caption ||
+                        "Medical image"
+                    );
+
+                if (imageURL === "#") {
+                    return "";
+                }
+
+                return `
+
+                    <article class="ai-image-card">
+
+                        <a
+                            href="${pageURL}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+
+                            <img
+                                src="${imageURL}"
+                                alt="${escapeHTML(title)}"
+                                loading="lazy"
+                                referrerpolicy="no-referrer"
+                                onerror="this.closest('.ai-image-card').remove();"
+                            >
+
+                            <div class="ai-image-caption">
+                                ${escapeHTML(title)}
+                            </div>
+
+                        </a>
+
+                    </article>
+
+                `;
+
+            })
+            .filter(Boolean)
+            .join("");
+
+
+    if (!cards) {
+
+        imageArea.innerHTML = `
+            <div class="research-empty">
+                <span>🖼️</span>
+                <p>
+                    Images could not be displayed.
+                </p>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    imageArea.innerHTML = `
+
+        <div class="image-results-grid">
+            ${cards}
         </div>
+
     `;
+
 }
 
 
-// =====================================================
-// IMPORTANT:
-//
-// INTERNAL MWANIKI SOURCES ARE INTENTIONALLY HIDDEN.
-//
-// The backend may return mwanikiSources so that the
-// retrieval pipeline can use them internally.
-//
-// WE DO NOT DISPLAY THEM TO THE STUDENT.
-//
-// This prevents:
-//
-// - source dumps
-// - course-name lists
-// - filenames
-// - source counts
-// - irrelevant material cards
-// =====================================================
 
-function hideInternalSources() {
+/* =========================================================
+   GOOGLE LINKS
+========================================================= */
 
-    if (!mwanikiSources) {
-        return;
-    }
+function updateGoogleLinks(data, question) {
 
-    mwanikiSources
-        .classList
-        .add("hidden");
-
-    mwanikiSources.innerHTML = "";
-}
-
-
-// =====================================================
-// MAIN AI ANSWER
-// =====================================================
-
-function renderAnswer(
-    response
-) {
-
-    if (!aiAnswer) {
-        return;
-    }
-
-    const answer =
-        response.answer ||
-        response.finalAnswer ||
-        response.mwanikiAnswer ||
-        response.webAnswer ||
+    const searchURL =
+        data?.googleSearchUrl ||
+        data?.googleSearchURL ||
+        data?.searchUrl ||
         "";
 
-    const cleaned =
-        cleanText(
-            typeof answer === "string"
-                ? answer
-                : JSON.stringify(
-                    answer
-                )
-        );
+    const imagesURL =
+        data?.googleImagesUrl ||
+        data?.googleImagesURL ||
+        data?.imagesUrl ||
+        "";
 
-    currentAnswerText =
-        cleaned;
-
-    const title =
-        response.answerTitle ||
-        "Mwaniki AI";
-
-    const paragraphs =
-        textToHTML(
-            cleaned
-        );
-
-    aiAnswer.innerHTML = `
-
-        <div class="answer-card">
-
-            <div class="answer-header">
-
-                <div>
-
-                    <span
-                        class="answer-kicker"
-                    >
-                        MWANIKI AI
-                    </span>
-
-                    <h2>
-                        ${escapeHTML(
-                            title
-                        )}
-                    </h2>
-
-                </div>
-
-                <span
-                    class="answer-badge"
-                >
-                    AI Study Partner
-                </span>
-
-            </div>
-
-
-            <div class="answer-body">
-
-                ${
-                    paragraphs ||
-                    `
-                        <p>
-                            No answer was returned.
-                            Please try the question again.
-                        </p>
-                    `
-                }
-
-            </div>
-
-
-            <div class="answer-actions">
-
-                <button
-                    type="button"
-                    class="small-button"
-                    id="readMainAnswerButton"
-                >
-                    🔊 Read Answer
-                </button>
-
-
-                <button
-                    type="button"
-                    class="small-button"
-                    id="stopMainAudioButton"
-                >
-                    ⏹ Stop
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-
-    const readButton =
-        document.getElementById(
-            "readMainAnswerButton"
-        );
-
-
-    const stopButton =
-        document.getElementById(
-            "stopMainAudioButton"
-        );
-
-
-    if (readButton) {
-
-        readButton.addEventListener(
-            "click",
-            () =>
-                speak(
-                    currentAnswerText
-                )
-        );
-    }
-
-
-    if (stopButton) {
-
-        stopButton.addEventListener(
-            "click",
-            stopSpeech
-        );
-    }
-
-
-    // ALWAYS HIDE INTERNAL MATERIALS
-
-    hideInternalSources();
-}
-
-
-// =====================================================
-// AUTH
-// =====================================================
-
-async function getAccessToken() {
-
-    const {
-        data,
-        error
-    } =
-        await supabase.auth.getSession();
-
-    if (error) {
-        throw error;
-    }
-
-    const session =
-        data?.session;
 
     if (
-        !session?.access_token
+        googleSearchLink &&
+        searchURL
     ) {
 
-        throw new Error(
-            "Your student session has expired. Please log in again."
+        googleSearchLink.href =
+            safeURL(searchURL);
+
+        showElement(
+            googleSearchLink
         );
+
+    } else if (googleSearchLink) {
+
+        const query =
+            encodeURIComponent(
+                question
+            );
+
+        googleSearchLink.href =
+            `https://www.google.com/search?q=${query}`;
+
+        showElement(
+            googleSearchLink
+        );
+
     }
 
-    return session.access_token;
+
+    if (
+        googleImagesLink &&
+        imagesURL
+    ) {
+
+        googleImagesLink.href =
+            safeURL(imagesURL);
+
+        showElement(
+            googleImagesLink
+        );
+
+    } else if (googleImagesLink) {
+
+        const query =
+            encodeURIComponent(
+                question
+            );
+
+        googleImagesLink.href =
+            `https://www.google.com/search?tbm=isch&q=${query}`;
+
+        showElement(
+            googleImagesLink
+        );
+
+    }
+
 }
 
 
-// =====================================================
-// EDGE FUNCTION
-// =====================================================
 
-async function callMwanikiAI(
-    payload
-) {
+/* =========================================================
+   INVOKE EDGE FUNCTION
+========================================================= */
 
-    const token =
-        await getAccessToken();
+async function invokeAI(body) {
 
     const {
         data,
         error
-    } =
-        await supabase.functions.invoke(
-            "mwaniki-ai",
-            {
-                body: payload,
+    } = await supabase.functions.invoke(
+        "mwaniki-ai",
+        {
+            body
+        }
+    );
 
-                headers: {
-                    Authorization:
-                        `Bearer ${token}`
-                }
-            }
-        );
 
     if (error) {
+
+        console.error(
+            "Mwaniki AI error:",
+            error
+        );
+
         throw error;
     }
 
-    if (!data) {
-
-        throw new Error(
-            "The AI service returned no response."
-        );
-    }
-
-    if (data.error) {
-        throw new Error(
-            data.error
-        );
-    }
 
     return data;
 }
 
 
-// =====================================================
-// CLEAR RESEARCH AREA
-// =====================================================
 
-function clearResearchArea() {
+/* =========================================================
+   SEARCH
+========================================================= */
 
-    if (aiImages) {
+async function searchAI() {
 
-        aiImages
-            .classList
-            .add("hidden");
+    if (!questionInput) return;
 
-        aiImages.innerHTML = "";
-    }
-
-
-    if (webResults) {
-
-        webResults
-            .classList
-            .add("hidden");
-
-        webResults.innerHTML = "";
-    }
-
-
-    // Internal sources must NEVER appear.
-
-    hideInternalSources();
-}
-
-
-// =====================================================
-// SEARCH
-// =====================================================
-
-async function searchAI(
-    query
-) {
-
-    const cleanQuery =
-        cleanText(query);
-
-    if (!cleanQuery) {
-
-        setStatus(
-            "Please enter a medical question."
+    const question =
+        cleanText(
+            questionInput.value
         );
+
+    if (!question) {
+
+        questionInput.focus();
 
         return;
     }
 
 
-    setBusy(true);
+    askButton.disabled =
+        true;
 
-
-    setSearchStatus(
-        "Researching your question..."
+    setLiveStatus(
+        "Researching..."
     );
 
 
-    setStatus("");
+    setStatus(
+        searchStatus,
+        "Researching your medical question...",
+        true
+    );
 
 
-    if (aiAnswer) {
+    setStatus(
+        aiStatus,
+        "",
+        false
+    );
 
-        aiAnswer.innerHTML = `
-            <div class="answer-card">
 
-                <div class="answer-body">
+    answerArea.innerHTML = `
 
-                    <div class="ai-loading">
+        <div class="answer-welcome">
 
-                        <span>
-                            🧠
-                        </span>
+            <div class="answer-avatar">
+                🔬
+            </div>
 
-                        <div>
+            <div>
 
-                            <strong>
-                                Mwaniki AI is thinking...
-                            </strong>
+                <h3>
+                    Researching...
+                </h3>
 
-                            <p>
-                                Checking relevant medical information.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-                </div>
+                <p>
+                    Mwaniki AI is preparing your answer.
+                </p>
 
             </div>
-        `;
-    }
+
+        </div>
+
+    `;
 
 
-    clearResearchArea();
+    webResults.innerHTML = `
+        <div class="research-empty">
+            <span>🔎</span>
+            <p>
+                Searching the web...
+            </p>
+        </div>
+    `;
+
+
+    imageArea.innerHTML = `
+        <div class="research-empty">
+            <span>🖼️</span>
+            <p>
+                Searching medical images...
+            </p>
+        </div>
+    `;
 
 
     try {
 
-        const response =
-            await callMwanikiAI(
-                {
-                    mode: "search",
+        const data =
+            await invokeAI({
 
-                    question:
-                        cleanQuery,
+                mode:
+                    "search",
 
-                    searchWeb:
-                        true,
+                question,
 
-                    searchMwaniki:
-                        true,
+                searchWeb:
+                    true,
 
-                    searchImages:
-                        true
-                }
-            );
+                searchMwaniki:
+                    true,
+
+                searchImages:
+                    true
+
+            });
 
 
-        // -----------------------------
-        // MAIN AI ANSWER
-        // -----------------------------
+        console.log(
+            "Mwaniki AI response:",
+            data
+        );
+
 
         renderAnswer(
-            response
+            data
         );
 
-
-        // -----------------------------
-        // GOOGLE IMAGE
-        // -----------------------------
-
-        renderDirectImage(
-            response.primaryImage ||
-            (
-                Array.isArray(
-                    response.images
-                )
-                    ? response.images[0]
-                    : null
-            )
-        );
-
-
-        // -----------------------------
-        // GOOGLE SEARCH
-        // -----------------------------
 
         renderWebResults(
-            response.webResults
+            data?.webResults
         );
 
 
-        // -----------------------------
-        // NEVER DISPLAY INTERNAL DATA
-        // -----------------------------
-
-        hideInternalSources();
+        renderImages(
+            data?.images
+        );
 
 
-        setSearchStatus(
-            "Research complete."
+        updateGoogleLinks(
+            data,
+            question
         );
 
 
         setStatus(
-            response.status ||
-            "Your answer was synthesized from the available relevant medical information."
+            searchStatus,
+            "",
+            false
+        );
+
+
+        setLiveStatus(
+            "Ready"
         );
 
 
     } catch (error) {
 
         console.error(
-            "Mwaniki AI search error:",
             error
         );
 
 
-        if (aiAnswer) {
+        answerArea.innerHTML = `
 
-            aiAnswer.innerHTML = `
+            <div class="answer-welcome">
 
-                <div class="answer-card">
+                <div class="answer-avatar">
+                    ⚠️
+                </div>
 
-                    <div class="answer-header">
+                <div>
 
-                        <div>
+                    <h3>
+                        Mwaniki AI could not complete the request.
+                    </h3>
 
-                            <span
-                                class="answer-kicker"
-                            >
-                                MWANIKI AI
-                            </span>
-
-                            <h2>
-                                Research unavailable
-                            </h2>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="answer-body">
-
-                        <p>
-                            Mwaniki AI could not complete
-                            the research request right now.
-                        </p>
-
-                        <p>
-                            Please try the question again.
-                        </p>
-
-                    </div>
+                    <p>
+                        Please check your connection and try again.
+                    </p>
 
                 </div>
-            `;
-        }
 
+            </div>
 
-        setSearchStatus("");
+        `;
 
 
         setStatus(
+            searchStatus,
             error?.message ||
-            "AI research failed."
+            "Unable to contact Mwaniki AI.",
+            true
         );
 
 
+        setLiveStatus(
+            "Connection problem"
+        );
+
     } finally {
 
-        setBusy(false);
+        askButton.disabled =
+            false;
+
     }
+
 }
 
 
-// =====================================================
-// WRONG ANSWER
-// =====================================================
 
-function handleWrongAnswer(
-    question
-) {
+/* =========================================================
+   SPEECH
+========================================================= */
 
-    const reaction =
-        getRandomFunnyReaction();
+function stopSpeech() {
 
+    if (
+        "speechSynthesis"
+        in window
+    ) {
 
-    speakHugeSqueakyLaugh(
-        reaction
+        window.speechSynthesis.cancel();
+
+    }
+
+    speechQueue = [];
+
+    setLiveStatus(
+        "Ready"
     );
+
+}
+
+
+function speak(text) {
+
+    stopSpeech();
+
+    const cleaned =
+        cleanText(text);
+
+    if (!cleaned) {
+        return;
+    }
 
 
     if (
-        testFeedback &&
-        question
+        !("speechSynthesis" in window)
     ) {
 
-        testFeedback.innerHTML = `
+        setStatus(
+            aiStatus,
+            "Voice playback is not supported by this browser.",
+            true
+        );
 
-            <div class="wrong-answer-reaction">
-
-                <strong>
-                    ${escapeHTML(
-                        reaction
-                    )}
-                </strong>
-
-
-                <br><br>
-
-
-                The correct answer is:
-
-                <strong>
-                    ${escapeHTML(
-                        question.correctAnswer ||
-                        ""
-                    )}
-                </strong>
-
-
-                ${
-                    question.explanation
-                        ? `
-                            <br><br>
-
-                            ${escapeHTML(
-                                cleanText(
-                                    question.explanation
-                                )
-                            )}
-                          `
-                        : ""
-                }
-
-            </div>
-        `;
+        return;
     }
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            cleaned
+        );
+
+
+    utterance.rate =
+        0.94;
+
+    utterance.pitch =
+        1.0;
+
+    utterance.volume =
+        1.0;
+
+
+    utterance.onstart =
+        () => {
+
+            setLiveStatus(
+                "Reading..."
+            );
+
+        };
+
+
+    utterance.onend =
+        () => {
+
+            setLiveStatus(
+                "Ready"
+            );
+
+        };
+
+
+    utterance.onerror =
+        () => {
+
+            setLiveStatus(
+                "Ready"
+            );
+
+        };
+
+
+    window.speechSynthesis.speak(
+        utterance
+    );
+
 }
 
 
-// =====================================================
-// TEST QUESTION
-// =====================================================
 
-function renderTestQuestion(
+/* =========================================================
+   CARTOON VOICES
+========================================================= */
+
+function cartoonWrongAnswer() {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+        return;
+    }
+
+
+    const phrases = [
+
+        "Oops! Not quite! Try again, Scholar!",
+
+        "Almost! That one needs another look!",
+
+        "Not this time! Think carefully, Scholar!",
+
+        "Oops! Your medical detective work needs another clue!",
+
+        "Close one! Let's sharpen that knowledge!"
+
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    const voice =
+        new SpeechSynthesisUtterance(
+            phrase
+        );
+
+
+    voice.rate =
+        1.25;
+
+    voice.pitch =
+        1.65;
+
+    voice.volume =
+        1;
+
+
+    window.speechSynthesis.cancel();
+
+    window.speechSynthesis.speak(
+        voice
+    );
+
+}
+
+
+function cartoonCorrectAnswer() {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+        return;
+    }
+
+
+    const phrases = [
+
+        "Excellent! That is correct!",
+
+        "Brilliant work, Scholar!",
+
+        "Correct! Mwaniki Scholar power!",
+
+        "Well done! You got it!",
+
+        "Outstanding! Keep going!"
+
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    const voice =
+        new SpeechSynthesisUtterance(
+            phrase
+        );
+
+
+    voice.rate =
+        1.18;
+
+    voice.pitch =
+        1.55;
+
+    voice.volume =
+        1;
+
+
+    window.speechSynthesis.cancel();
+
+    window.speechSynthesis.speak(
+        voice
+    );
+
+}
+
+
+
+/* =========================================================
+   TEST HELPERS
+========================================================= */
+
+function normalizeCorrectKey(
+    question
+) {
+
+    const raw =
+        cleanText(
+            question?.correctKey ||
+            question?.correct_answer ||
+            question?.correctAnswer ||
+            ""
+        );
+
+
+    if (
+        /^[ABCD]$/i.test(raw)
+    ) {
+
+        return raw.toUpperCase();
+
+    }
+
+
+    const options =
+        Array.isArray(
+            question?.options
+        )
+            ? question.options
+            : [];
+
+
+    const index =
+        options.findIndex(
+            option =>
+                cleanText(
+                    option
+                ).toLowerCase() ===
+                raw.toLowerCase()
+        );
+
+
+    if (index >= 0) {
+
+        return String.fromCharCode(
+            65 + index
+        );
+
+    }
+
+
+    return null;
+
+}
+
+
+
+function normalizeTestQuestion(
     question
 ) {
 
     if (!question) {
-        return;
-    }
-
-
-    currentTestQuestion =
-        question;
-
-    testAnswered =
-        false;
-
-
-    if (testProgress) {
-
-        testProgress.textContent =
-            `Question ${currentTestNumber} of ${currentTestLength}`;
-    }
-
-
-    if (testStatus) {
-
-        testStatus.textContent =
-            "";
-    }
-
-
-    if (testFeedback) {
-
-        testFeedback.innerHTML =
-            "";
-    }
-
-
-    if (testQuestion) {
-
-        testQuestion.innerHTML = `
-
-            <div
-                class="test-question-text"
-            >
-                ${escapeHTML(
-                    question.question
-                )}
-            </div>
-        `;
-    }
-
-
-    if (!testOptions) {
-        return;
+        return null;
     }
 
 
@@ -1462,38 +1249,191 @@ function renderTestQuestion(
             question.options
         )
             ? question.options
+                .map(
+                    option =>
+                        cleanText(option)
+                )
+                .filter(Boolean)
             : [];
 
 
+    if (
+        options.length !== 4
+    ) {
+
+        return null;
+
+    }
+
+
+    const correctKey =
+        normalizeCorrectKey(
+            question
+        );
+
+
+    if (
+        !correctKey
+    ) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        id:
+            String(
+                question.id ||
+                question.questionId ||
+                Date.now()
+            ),
+
+        question:
+            cleanText(
+                question.question
+            ),
+
+        options,
+
+        correctKey,
+
+        correctAnswer:
+            cleanText(
+                question.correctAnswer ||
+                options[
+                    correctKey.charCodeAt(0) - 65
+                ]
+            ),
+
+        explanation:
+            cleanText(
+                question.explanation ||
+                ""
+            )
+
+    };
+
+}
+
+
+
+/* =========================================================
+   TEST FEEDBACK
+========================================================= */
+
+function showTestFeedback(
+    correct,
+    question
+) {
+
+    showElement(
+        testFeedback
+    );
+
+
+    if (correct) {
+
+        testFeedbackCharacter.textContent =
+            "🎉";
+
+        testFeedbackTitle.textContent =
+            "Excellent work!";
+
+        testFeedbackText.textContent =
+            question.explanation ||
+            "Your answer is correct.";
+
+        testFeedback.style.background =
+            "rgba(60,190,130,.18)";
+
+
+        cartoonCorrectAnswer();
+
+    } else {
+
+        testFeedbackCharacter.textContent =
+            "🤖";
+
+        testFeedbackTitle.textContent =
+            "Not quite!";
+
+        testFeedbackText.textContent =
+            question.explanation ||
+            `The correct answer is ${question.correctAnswer}.`;
+
+        testFeedback.style.background =
+            "rgba(220,80,80,.18)";
+
+
+        cartoonWrongAnswer();
+
+    }
+
+}
+
+
+
+/* =========================================================
+   RENDER TEST QUESTION
+========================================================= */
+
+function renderTestQuestion(
+    question
+) {
+
+    currentTestQuestion =
+        question;
+
+    testWaitingForAnswer =
+        true;
+
+
+    hideElement(
+        testFeedback
+    );
+
+
+    testQuestion.innerHTML =
+        `<div>${textToHTML(question.question)}</div>`;
+
+
     testOptions.innerHTML =
-        options
+        question.options
             .map(
-                option => `
+                (option, index) => {
 
-                    <button
-                        type="button"
-                        class="test-option"
-                        data-key="${escapeHTML(
-                            option.key
-                        )}"
-                    >
+                    const key =
+                        String.fromCharCode(
+                            65 + index
+                        );
 
-                        <strong>
-                            ${escapeHTML(
-                                option.key
-                            )}
-                        </strong>
+                    return `
 
-                        <span>
-                            ${escapeHTML(
-                                option.text
-                            )}
-                        </span>
+                        <button
+                            type="button"
+                            class="test-option"
+                            data-key="${key}"
+                        >
 
-                    </button>
-                `
+                            <strong>
+                                ${key}.
+                            </strong>
+
+                            ${escapeHTML(option)}
+
+                        </button>
+
+                    `;
+
+                }
             )
             .join("");
+
+
+    testProgress.textContent =
+        `Question ${currentTestNumber} of ${currentTestLength}`;
 
 
     testOptions
@@ -1507,222 +1447,234 @@ function renderTestQuestion(
                     "click",
                     () => {
 
-                        if (
-                            testAnswered
-                        ) {
-                            return;
-                        }
-
-
-                        testAnswered =
-                            true;
-
-
-                        const selected =
-                            String(
-                                button.dataset.key ||
-                                ""
-                            )
-                                .toUpperCase();
-
-
-                        const correct =
-                            String(
-                                question.correctKey ||
-                                ""
-                            )
-                                .toUpperCase();
-
-
-                        if (
-                            selected ===
-                            correct
-                        ) {
-
-                            currentTestScore++;
-
-
-                            testFeedback.innerHTML = `
-
-                                <div
-                                    class="correct-answer-reaction"
-                                >
-
-                                    <strong>
-                                        ✅ Correct!
-                                    </strong>
-
-                                    <br><br>
-
-                                    ${
-                                        question.explanation
-                                            ? escapeHTML(
-                                                cleanText(
-                                                    question.explanation
-                                                )
-                                              )
-                                            : "Good work."
-                                    }
-
-                                </div>
-                            `;
-
-
-                            speak(
-                                "Correct. " +
-                                cleanText(
-                                    question.explanation ||
-                                    "Good work."
-                                )
-                            );
-
-
-                        } else {
-
-                            handleWrongAnswer(
-                                question
-                            );
-                        }
-
-
-                        testOptions
-                            .querySelectorAll(
-                                ".test-option"
-                            )
-                            .forEach(
-                                optionButton => {
-
-                                    optionButton.disabled =
-                                        true;
-
-
-                                    if (
-                                        String(
-                                            optionButton.dataset.key ||
-                                            ""
-                                        )
-                                            .toUpperCase() ===
-                                        correct
-                                    ) {
-
-                                        optionButton.classList.add(
-                                            "correct-option"
-                                        );
-                                    }
-
-
-                                    if (
-                                        String(
-                                            optionButton.dataset.key ||
-                                            ""
-                                        )
-                                            .toUpperCase() ===
-                                        selected &&
-                                        selected !==
-                                        correct
-                                    ) {
-
-                                        optionButton.classList.add(
-                                            "wrong-option"
-                                        );
-                                    }
-
-                                }
-                            );
+                        answerTestQuestion(
+                            button.dataset.key
+                        );
 
                     }
                 );
 
             }
         );
+
 }
 
 
-// =====================================================
-// NEXT TEST QUESTION
-// =====================================================
 
-async function loadNextTestQuestion() {
+/* =========================================================
+   ANSWER TEST QUESTION
+========================================================= */
+
+function answerTestQuestion(
+    selectedKey
+) {
 
     if (
-        currentTestNumber >
-        currentTestLength
+        !currentTestQuestion ||
+        !testWaitingForAnswer
     ) {
-
-        finishTest();
-
         return;
     }
 
 
-    if (testStatus) {
+    testWaitingForAnswer =
+        false;
+
+
+    const correctKey =
+        currentTestQuestion.correctKey;
+
+
+    const correct =
+        selectedKey ===
+        correctKey;
+
+
+    if (correct) {
+
+        currentTestScore++;
+
+    }
+
+
+    currentTestUsedIds.push(
+        currentTestQuestion.id
+    );
+
+
+    testOptions
+        .querySelectorAll(
+            ".test-option"
+        )
+        .forEach(
+            button => {
+
+                button.disabled =
+                    true;
+
+
+                if (
+                    button.dataset.key ===
+                    correctKey
+                ) {
+
+                    button.classList.add(
+                        "correct"
+                    );
+
+                }
+
+
+                if (
+                    button.dataset.key ===
+                    selectedKey &&
+                    selectedKey !==
+                    correctKey
+                ) {
+
+                    button.classList.add(
+                        "wrong"
+                    );
+
+                }
+
+            }
+        );
+
+
+    showTestFeedback(
+        correct,
+        currentTestQuestion
+    );
+
+
+    if (
+        currentTestNumber >=
+        currentTestLength
+    ) {
 
         testStatus.textContent =
-            "Preparing the next medical question...";
+            `Test complete — score: ${currentTestScore}/${currentTestLength}`;
+
+        testNext.textContent =
+            "Finish Test";
+
+    } else {
+
+        testStatus.textContent =
+            correct
+                ? "Correct answer."
+                : "Review the explanation and continue.";
+
     }
+
+}
+
+
+
+/* =========================================================
+   LOAD TEST QUESTION
+========================================================= */
+
+async function loadNextTestQuestion() {
+
+    testWaitingForAnswer =
+        false;
+
+
+    testQuestion.innerHTML = `
+        <div class="research-empty">
+            <span>🧠</span>
+            <p>
+                Preparing your question...
+            </p>
+        </div>
+    `;
+
+
+    testOptions.innerHTML =
+        "";
+
+
+    hideElement(
+        testFeedback
+    );
+
+
+    testNext.disabled =
+        true;
 
 
     try {
 
-        const response =
-            await callMwanikiAI(
-                {
-                    mode: "test",
+        const data =
+            await invokeAI({
 
-                    testTopic:
-                        currentTestTopic,
+                mode:
+                    "test",
 
-                    usedQuestionIds:
-                        currentTestUsedIds,
+                testTopic:
+                    currentTestTopic,
 
-                    questionNumber:
-                        currentTestNumber,
+                usedQuestionIds:
+                    currentTestUsedIds,
 
-                    testLength:
-                        currentTestLength,
+                questionNumber:
+                    currentTestNumber,
 
-                    searchMwaniki:
-                        true,
+                testLength:
+                    currentTestLength,
 
-                    searchWeb:
-                        true,
+                searchMwaniki:
+                    true,
 
-                    searchImages:
-                        false
-                }
-            );
+                searchWeb:
+                    true,
+
+                searchImages:
+                    false
+
+            });
 
 
         const question =
-            response.testQuestion;
+            normalizeTestQuestion(
+                data?.testQuestion
+            );
 
 
         if (!question) {
 
-            throw new Error(
-                "No test question was returned."
-            );
+            testQuestion.innerHTML = `
+                <div class="test-question">
+                    I could not create a reliable question
+                    for this topic yet.
+                </div>
+            `;
+
+            testStatus.textContent =
+                "Try another topic or ask Mwaniki AI first.";
+
+            testNext.disabled =
+                false;
+
+            testNext.textContent =
+                "Try Again";
+
+            return;
+
         }
 
 
-        if (
-            question.id !==
-                undefined &&
-            question.id !==
-                null
-        ) {
-
-            currentTestUsedIds.push(
-                String(
-                    question.id
-                )
-            );
-        }
-
+        currentTestNumber++;
 
         renderTestQuestion(
             question
         );
+
+
+        testStatus.textContent =
+            "Choose the best answer.";
 
 
     } catch (error) {
@@ -1733,221 +1685,213 @@ async function loadNextTestQuestion() {
         );
 
 
-        if (testStatus) {
-
-            testStatus.textContent =
-                "The next question could not be loaded. Please try again.";
-        }
-    }
-}
-
-
-// =====================================================
-// FINISH TEST
-// =====================================================
-
-function finishTest() {
-
-    if (testQuestion) {
-
         testQuestion.innerHTML = `
-
-            <div
-                class="test-complete"
-            >
-                Test completed
+            <div class="test-question">
+                The test question could not be loaded.
             </div>
         `;
-    }
 
-
-    if (testOptions) {
-
-        testOptions.innerHTML =
-            "";
-    }
-
-
-    const percentage =
-        currentTestLength >
-            0
-
-            ? Math.round(
-                (
-                    currentTestScore /
-                    currentTestLength
-                ) *
-                100
-            )
-
-            : 0;
-
-
-    if (testFeedback) {
-
-        testFeedback.innerHTML = `
-
-            <div
-                class="test-final-score"
-            >
-
-                <strong>
-                    Score:
-                    ${currentTestScore}/${currentTestLength}
-                </strong>
-
-                <span>
-                    ${percentage}%
-                </span>
-
-            </div>
-        `;
-    }
-
-
-    if (testProgress) {
-
-        testProgress.textContent =
-            "Completed";
-    }
-
-
-    if (testStatus) {
 
         testStatus.textContent =
-            "Well done. Start another test whenever you're ready.";
-    }
+            error?.message ||
+            "Unable to load the next question.";
 
-
-    if (testNext) {
+    } finally {
 
         testNext.disabled =
-            true;
+            false;
+
     }
+
 }
 
 
-// =====================================================
-// START TEST
-// =====================================================
 
-async function startTest(
-    topic,
-    length = 10
-) {
+/* =========================================================
+   START TEST
+========================================================= */
 
-    currentTestTopic =
-        cleanText(topic);
+async function startTest() {
 
-
-    if (!currentTestTopic) {
-
-        setStatus(
-            "Enter a medical topic before starting the test."
+    const topic =
+        cleanText(
+            questionInput.value ||
+            latestAnswerText
         );
 
+
+    if (!topic) {
+
+        questionInput.focus();
+
         return;
+
     }
 
 
-    currentTestLength =
-        Math.max(
-            1,
-            Math.min(
-                Number(length) ||
-                10,
-                20
-            )
-        );
-
+    currentTestTopic =
+        topic;
 
     currentTestNumber =
-        1;
-
+        0;
 
     currentTestScore =
         0;
 
-
     currentTestUsedIds =
         [];
 
+    currentTestQuestion =
+        null;
 
-    testAnswered =
-        false;
 
-
-    if (testPanel) {
-
+    showElement(
         testPanel
-            .classList
-            .remove("hidden");
+    );
+
+
+    testStatus.textContent =
+        "Preparing your medical test...";
+
+
+    testProgress.textContent =
+        `Question 0 of ${currentTestLength}`;
+
+
+    testQuestion.innerHTML =
+        "";
+
+
+    testOptions.innerHTML =
+        "";
+
+
+    hideElement(
+        testFeedback
+    );
+
+
+    testNext.textContent =
+        "Next Question →";
+
+
+    testPanel.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+
+    await loadNextTestQuestion();
+
+}
+
+
+
+/* =========================================================
+   NEXT QUESTION
+========================================================= */
+
+async function nextTestQuestion() {
+
+    if (
+        currentTestNumber >=
+        currentTestLength &&
+        !testWaitingForAnswer
+    ) {
+
+        testStatus.textContent =
+            `Final score: ${currentTestScore}/${currentTestLength}`;
+
+        testNext.textContent =
+            "Restart Test";
+
+        testNext.onclick =
+            () => {
+
+                testNext.onclick =
+                    null;
+
+                startTest();
+
+            };
+
+        return;
+
     }
 
 
-    if (testNext) {
+    if (
+        testWaitingForAnswer
+    ) {
 
-        testNext.disabled =
-            false;
+        testStatus.textContent =
+            "Choose an answer before continuing.";
+
+        return;
+
     }
 
 
     await loadNextTestQuestion();
+
 }
 
 
-// =====================================================
-// EVENTS
-// =====================================================
 
-if (askAIButton) {
+/* =========================================================
+   EXIT TEST
+========================================================= */
 
-    askAIButton.addEventListener(
-        "click",
-        async () => {
+function exitTest() {
 
-            const query =
-                aiQuestion?.value?.trim();
+    stopSpeech();
 
 
-            if (!query) {
-
-                setStatus(
-                    "Please enter a medical question."
-                );
-
-                return;
-            }
-
-
-            await searchAI(
-                query
-            );
-        }
+    hideElement(
+        testPanel
     );
-}
 
 
-if (aiQuestion) {
+    currentTestTopic =
+        "";
 
-    aiQuestion.addEventListener(
-        "keydown",
-        event => {
+    currentTestNumber =
+        0;
 
-            if (
-                event.key ===
-                    "Enter" &&
-                !event.shiftKey
-            ) {
+    currentTestScore =
+        0;
 
-                event.preventDefault();
+    currentTestUsedIds =
+        [];
 
-                askAIButton?.click();
-            }
-        }
+    currentTestQuestion =
+        null;
+
+    testQuestion.innerHTML =
+        "";
+
+    testOptions.innerHTML =
+        "";
+
+    testStatus.textContent =
+        "";
+
+    hideElement(
+        testFeedback
     );
+
+
+    setLiveStatus(
+        "Ready"
+    );
+
 }
 
+
+
+/* =========================================================
+   SUGGESTION BUTTONS
+========================================================= */
 
 document
     .querySelectorAll(
@@ -1962,17 +1906,13 @@ document
 
                     const question =
                         button.dataset.question ||
-                        button.textContent.trim();
+                        "";
 
+                    questionInput.value =
+                        question;
 
-                    if (aiQuestion) {
+                    questionInput.focus();
 
-                        aiQuestion.value =
-                            question;
-                    }
-
-
-                    askAIButton?.click();
                 }
             );
 
@@ -1980,18 +1920,77 @@ document
     );
 
 
-if (
-    backToDashboardButton
-) {
 
-    backToDashboardButton.addEventListener(
+/* =========================================================
+   EVENT LISTENERS
+========================================================= */
+
+if (askButton) {
+
+    askButton.addEventListener(
+        "click",
+        searchAI
+    );
+
+}
+
+
+if (questionInput) {
+
+    questionInput.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Enter" &&
+                (event.ctrlKey || event.metaKey)
+            ) {
+
+                event.preventDefault();
+
+                searchAI();
+
+            }
+
+        }
+    );
+
+}
+
+
+if (readAnswerButton) {
+
+    readAnswerButton.addEventListener(
         "click",
         () => {
 
-            window.location.href =
-                "./dashboard.html";
+            speak(
+                latestAnswerText
+            );
+
         }
     );
+
+}
+
+
+if (stopAudioButton) {
+
+    stopAudioButton.addEventListener(
+        "click",
+        stopSpeech
+    );
+
+}
+
+
+if (startTestButton) {
+
+    startTestButton.addEventListener(
+        "click",
+        startTest
+    );
+
 }
 
 
@@ -1999,32 +1998,9 @@ if (testNext) {
 
     testNext.addEventListener(
         "click",
-        async () => {
-
-            if (
-                !testAnswered
-            ) {
-                return;
-            }
-
-
-            currentTestNumber++;
-
-
-            if (
-                currentTestNumber >
-                currentTestLength
-            ) {
-
-                finishTest();
-
-                return;
-            }
-
-
-            await loadNextTestQuestion();
-        }
+        nextTestQuestion
     );
+
 }
 
 
@@ -2032,22 +2008,31 @@ if (testExit) {
 
     testExit.addEventListener(
         "click",
-        () => {
-
-            stopSpeech();
-
-
-            testPanel?.classList.add(
-                "hidden"
-            );
-        }
+        exitTest
     );
+
 }
 
 
-// =====================================================
-// GLOBAL ACCESS
-// =====================================================
+if (backButton) {
+
+    backButton.addEventListener(
+        "click",
+        () => {
+
+            window.location.href =
+                "./dashboard.html";
+
+        }
+    );
+
+}
+
+
+
+/* =========================================================
+   GLOBAL API
+========================================================= */
 
 window.mwanikiAI = {
 
@@ -2058,14 +2043,30 @@ window.mwanikiAI = {
         startTest,
 
     speak:
-        speak,
+        () =>
+            speak(
+                latestAnswerText
+            ),
 
     stopSpeech:
-        stopSpeech
+        stopSpeech,
+
+    exitTest:
+        exitTest
+
 };
 
 
-console.log(
-    "✅ Mwaniki AI Tutor ready"
+
+/* =========================================================
+   INITIAL STATE
+========================================================= */
+
+setLiveStatus(
+    "Ready"
 );
 
+console.log(
+    "🤖 Mwaniki AI interface loaded."
+);
+```
