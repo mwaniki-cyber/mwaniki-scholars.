@@ -1,4 +1,4 @@
-```javascript
+
 import { supabase } from "./supabase.js";
 
 
@@ -2470,4 +2470,3 @@ console.log(
 console.log(
     "🧠 Mwaniki internal retrieval: independent"
 );
-```
