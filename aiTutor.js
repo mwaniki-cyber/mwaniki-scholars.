@@ -1,3 +1,4 @@
+````javascript
 import { supabase } from "./supabase.js";
 
 console.log("🚀 Mwaniki AI Tutor loaded");
@@ -6,26 +7,59 @@ console.log("🚀 Mwaniki AI Tutor loaded");
 // ELEMENTS
 // =====================================================
 
-const aiQuestion = document.getElementById("aiQuestion");
-const askAIButton = document.getElementById("askAIButton");
-const aiAnswer = document.getElementById("aiAnswer");
-const aiSearchStatus = document.getElementById("aiSearchStatus");
-const aiStatus = document.getElementById("aiStatus");
-const aiImages = document.getElementById("aiImages");
-const mwanikiSources = document.getElementById("mwanikiSources");
-const webResults = document.getElementById("webResults");
+const aiQuestion =
+    document.getElementById("aiQuestion");
 
-const testPanel = document.getElementById("testPanel");
-const testProgress = document.getElementById("testProgress");
-const testStatus = document.getElementById("testStatus");
-const testQuestion = document.getElementById("testQuestion");
-const testOptions = document.getElementById("testOptions");
-const testFeedback = document.getElementById("testFeedback");
-const testNext = document.getElementById("testNext");
-const testExit = document.getElementById("testExit");
+const askAIButton =
+    document.getElementById("askAIButton");
+
+const aiAnswer =
+    document.getElementById("aiAnswer");
+
+const aiSearchStatus =
+    document.getElementById("aiSearchStatus");
+
+const aiStatus =
+    document.getElementById("aiStatus");
+
+const aiImages =
+    document.getElementById("aiImages");
+
+const mwanikiSources =
+    document.getElementById("mwanikiSources");
+
+const webResults =
+    document.getElementById("webResults");
+
+const testPanel =
+    document.getElementById("testPanel");
+
+const testProgress =
+    document.getElementById("testProgress");
+
+const testStatus =
+    document.getElementById("testStatus");
+
+const testQuestion =
+    document.getElementById("testQuestion");
+
+const testOptions =
+    document.getElementById("testOptions");
+
+const testFeedback =
+    document.getElementById("testFeedback");
+
+const testNext =
+    document.getElementById("testNext");
+
+const testExit =
+    document.getElementById("testExit");
 
 const backToDashboardButton =
-    document.getElementById("backToDashboardButton");
+    document.getElementById(
+        "backToDashboardButton"
+    );
+
 
 // =====================================================
 // STATE
@@ -34,21 +68,32 @@ const backToDashboardButton =
 let currentAnswerText = "";
 
 let currentTestTopic = "";
+
 let currentTestQuestion = null;
+
 let currentTestNumber = 0;
+
 let currentTestLength = 10;
+
 let currentTestScore = 0;
+
 let currentTestUsedIds = [];
+
 let testAnswered = false;
 
 let currentSpeech = null;
+
 
 // =====================================================
 // HTML ESCAPING
 // =====================================================
 
 function escapeHTML(value) {
-    if (value === null || value === undefined) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -60,16 +105,20 @@ function escapeHTML(value) {
         .replace(/'/g, "&#039;");
 }
 
+
 // =====================================================
 // URL SAFETY
 // =====================================================
 
 function safeURL(value) {
+
     try {
-        const url = new URL(
-            String(value || ""),
-            window.location.href
-        );
+
+        const url =
+            new URL(
+                String(value || ""),
+                window.location.href
+            );
 
         if (
             url.protocol === "http:" ||
@@ -77,90 +126,145 @@ function safeURL(value) {
         ) {
             return url.href;
         }
+
     } catch (_) {
+
         return "";
     }
 
     return "";
 }
 
+
 // =====================================================
 // TEXT CLEANING
 // =====================================================
 
 function cleanText(value) {
-    if (value === null || value === undefined) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
-    let text = String(value);
+    let text =
+        String(value);
 
     text = text.replace(
         /```(?:markdown|md|text|html)?/gi,
         ""
     );
 
-    text = text.replace(/```/g, "");
+    text =
+        text.replace(
+            /```/g,
+            ""
+        );
 
-    text = text.replace(/^#{1,6}\s*/gm, "");
+    text =
+        text.replace(
+            /^#{1,6}\s*/gm,
+            ""
+        );
 
-    text = text.replace(/\*\*(.*?)\*\*/g, "$1");
+    text =
+        text.replace(
+            /\*\*(.*?)\*\*/g,
+            "$1"
+        );
 
-    text = text.replace(/__(.*?)__/g, "$1");
+    text =
+        text.replace(
+            /__(.*?)__/g,
+            "$1"
+        );
 
-    text = text.replace(/^\s*[-*]\s+/gm, "");
+    text =
+        text.replace(
+            /^\s*[-*]\s+/gm,
+            ""
+        );
 
-    text = text.replace(/\r/g, "");
+    text =
+        text.replace(
+            /\r/g,
+            ""
+        );
 
-    text = text.replace(/\n{3,}/g, "\n\n");
+    text =
+        text.replace(
+            /\n{3,}/g,
+            "\n\n"
+        );
 
     return text.trim();
 }
+
 
 // =====================================================
 // TEXT → HTML
 // =====================================================
 
 function textToHTML(value) {
-    const text = cleanText(value);
+
+    const text =
+        cleanText(value);
 
     if (!text) {
         return "";
     }
 
-    const paragraphs = text
-        .split(/\n{2,}/)
-        .map(item =>
-            item
-                .trim()
-                .replace(/\n/g, " ")
-        )
-        .filter(Boolean);
+    const paragraphs =
+        text
+            .split(/\n{2,}/)
+            .map(
+                item =>
+                    item
+                        .trim()
+                        .replace(
+                            /\n/g,
+                            " "
+                        )
+            )
+            .filter(Boolean);
 
     return paragraphs
         .map(
             paragraph =>
-                `<p>${escapeHTML(paragraph)}</p>`
+                `<p>${escapeHTML(
+                    paragraph
+                )}</p>`
         )
         .join("");
 }
+
 
 // =====================================================
 // STATUS
 // =====================================================
 
 function setSearchStatus(message) {
+
     if (!aiSearchStatus) {
         return;
     }
 
     if (!message) {
-        aiSearchStatus.classList.add("hidden");
+
+        aiSearchStatus
+            .classList
+            .add("hidden");
+
         aiSearchStatus.innerHTML = "";
+
         return;
     }
 
-    aiSearchStatus.classList.remove("hidden");
+    aiSearchStatus
+        .classList
+        .remove("hidden");
 
     aiSearchStatus.innerHTML = `
         <div class="status-line">
@@ -169,18 +273,27 @@ function setSearchStatus(message) {
     `;
 }
 
+
 function setStatus(message) {
+
     if (!aiStatus) {
         return;
     }
 
     if (!message) {
-        aiStatus.classList.add("hidden");
+
+        aiStatus
+            .classList
+            .add("hidden");
+
         aiStatus.innerHTML = "";
+
         return;
     }
 
-    aiStatus.classList.remove("hidden");
+    aiStatus
+        .classList
+        .remove("hidden");
 
     aiStatus.innerHTML = `
         <div class="status-line">
@@ -189,46 +302,66 @@ function setStatus(message) {
     `;
 }
 
+
 // =====================================================
 // BUTTON STATE
 // =====================================================
 
 function setBusy(busy) {
+
     if (!askAIButton) {
         return;
     }
 
-    askAIButton.disabled = busy;
+    askAIButton.disabled =
+        busy;
 
-    askAIButton.innerHTML = busy
-        ? `
-            <span>Researching...</span>
-            <span>⌛</span>
-          `
-        : `
-            <span>Ask Mwaniki AI</span>
-            <span>➤</span>
-          `;
+    askAIButton.innerHTML =
+        busy
+            ? `
+                <span>Researching...</span>
+                <span>⌛</span>
+              `
+            : `
+                <span>Ask Mwaniki AI</span>
+                <span>➤</span>
+              `;
 }
+
 
 // =====================================================
 // SPEECH
 // =====================================================
 
 function stopSpeech() {
-    if ("speechSynthesis" in window) {
-        window.speechSynthesis.cancel();
+
+    if (
+        "speechSynthesis" in
+        window
+    ) {
+
+        window
+            .speechSynthesis
+            .cancel();
     }
 
     currentSpeech = null;
 }
 
+
 function speak(text) {
-    if (!("speechSynthesis" in window)) {
+
+    if (
+        !(
+            "speechSynthesis"
+            in window
+        )
+    ) {
         return;
     }
 
-    const clean = cleanText(text);
+    const clean =
+        cleanText(text);
 
     if (!clean) {
         return;
@@ -237,65 +370,107 @@ function speak(text) {
     stopSpeech();
 
     currentSpeech =
-        new SpeechSynthesisUtterance(clean);
+        new SpeechSynthesisUtterance(
+            clean
+        );
 
-    currentSpeech.lang = "en-US";
-    currentSpeech.rate = 0.95;
-    currentSpeech.pitch = 1.0;
-    currentSpeech.volume = 1.0;
+    currentSpeech.lang =
+        "en-US";
 
-    window.speechSynthesis.speak(
-        currentSpeech
-    );
+    currentSpeech.rate =
+        0.95;
+
+    currentSpeech.pitch =
+        1.0;
+
+    currentSpeech.volume =
+        1.0;
+
+    window
+        .speechSynthesis
+        .speak(
+            currentSpeech
+        );
 }
+
 
 // =====================================================
 // CARTOON LAUGH
 // =====================================================
 
 const hugeLaughChunks = [
+
     "HEE HEE HEE HEE!",
+
     "AHAHAHAHAHAHAHAHA!",
+
     "HAHAHAHAHAHAHAHAHAHAHAHA!",
+
     "HEEEEEHEHEHEHEHEHEHEHE!",
+
     "AHAHAHAHAHAHAHAHAHAHAHAHAHAHA!",
+
     "HEE HEE HEE HEE HEE HEE!",
+
     "AHAHAHAHAHAHAHAHAHAHAHAHAHAHAHAHA!"
 ];
 
+
 const funnyWrongAnswerReactions = [
+
     "Oops! That answer took a wrong turn.",
+
     "Oof! That one missed the mark.",
+
     "Whoops! The neurons disagreed with that one.",
+
     "Aha! Nice attempt, but not quite.",
+
     "Plot twist! That wasn't the answer.",
+
     "The brain says: try again!",
+
     "That answer wandered off the syllabus.",
+
     "Close! But the textbook isn't celebrating yet.",
+
     "Oops! That one needs a little resuscitation.",
+
     "Not quite! Let's correct that one.",
+
     "The neurons have filed an objection.",
+
     "Almost! Your answer took the scenic route.",
+
     "That one needs another trip through the lecture notes.",
+
     "Interesting choice! Let's fix that one.",
+
     "Nearly there! Let's see what happened."
 ];
+
 
 let funnyReactionPool = [
     ...funnyWrongAnswerReactions
 ];
 
+
 function getRandomFunnyReaction() {
-    if (funnyReactionPool.length === 0) {
+
+    if (
+        funnyReactionPool.length === 0
+    ) {
+
         funnyReactionPool = [
             ...funnyWrongAnswerReactions
         ];
     }
 
-    const index = Math.floor(
-        Math.random() *
-        funnyReactionPool.length
-    );
+    const index =
+        Math.floor(
+            Math.random() *
+            funnyReactionPool.length
+        );
 
     return funnyReactionPool.splice(
         index,
@@ -303,8 +478,17 @@ function getRandomFunnyReaction() {
     )[0];
 }
 
-function speakHugeSqueakyLaugh(reaction) {
-    if (!("speechSynthesis" in window)) {
+
+function speakHugeSqueakyLaugh(
+    reaction
+) {
+
+    if (
+        !(
+            "speechSynthesis"
+            in window
+        )
+    ) {
         return;
     }
 
@@ -313,67 +497,97 @@ function speakHugeSqueakyLaugh(reaction) {
     let index = 0;
 
     const speakNextLaugh = () => {
-        if (index >= hugeLaughChunks.length) {
+
+        if (
+            index >=
+            hugeLaughChunks.length
+        ) {
+
             const reactionUtterance =
                 new SpeechSynthesisUtterance(
                     reaction
                 );
 
-            reactionUtterance.lang = "en-US";
-            reactionUtterance.rate = 1.18;
-            reactionUtterance.pitch = 1.65;
-            reactionUtterance.volume = 1.0;
+            reactionUtterance.lang =
+                "en-US";
 
-            window.speechSynthesis.speak(
-                reactionUtterance
-            );
+            reactionUtterance.rate =
+                1.18;
+
+            reactionUtterance.pitch =
+                1.65;
+
+            reactionUtterance.volume =
+                1.0;
+
+            window
+                .speechSynthesis
+                .speak(
+                    reactionUtterance
+                );
 
             return;
         }
 
         const laugh =
-            hugeLaughChunks[index++];
+            hugeLaughChunks[
+                index++
+            ];
 
         const utterance =
             new SpeechSynthesisUtterance(
                 laugh
             );
 
-        utterance.lang = "en-US";
+        utterance.lang =
+            "en-US";
 
         utterance.rate =
             index % 2 === 0
                 ? 1.48
                 : 1.38;
 
-        utterance.pitch = 2.0;
-        utterance.volume = 1.0;
+        utterance.pitch =
+            2.0;
+
+        utterance.volume =
+            1.0;
 
         utterance.onend =
             speakNextLaugh;
 
-        window.speechSynthesis.speak(
-            utterance
-        );
+        window
+            .speechSynthesis
+            .speak(
+                utterance
+            );
     };
 
     speakNextLaugh();
 }
 
+
 // =====================================================
 // DIRECT IMAGE
 // =====================================================
 
-function renderDirectImage(image) {
-    if (!aiImages || !image) {
+function renderDirectImage(
+    image
+) {
+
+    if (
+        !aiImages ||
+        !image
+    ) {
         return;
     }
 
-    const imageURL = safeURL(
-        image.url ||
-        image.imageUrl ||
-        image.src
-    );
+    const imageURL =
+        safeURL(
+            image.url ||
+            image.imageUrl ||
+            image.src
+        );
 
     if (!imageURL) {
         return;
@@ -388,48 +602,70 @@ function renderDirectImage(image) {
         image.provider ||
         "Web image source";
 
-    const sourceURL = safeURL(
-        image.sourceUrl ||
-        image.pageUrl ||
-        image.link
-    );
+    const sourceURL =
+        safeURL(
+            image.sourceUrl ||
+            image.pageUrl ||
+            image.link
+        );
 
-    aiImages.classList.remove("hidden");
+    aiImages
+        .classList
+        .remove("hidden");
 
     aiImages.innerHTML = `
+
         <div class="ai-image-card">
 
             <img
-                src="${escapeHTML(imageURL)}"
-                alt="${escapeHTML(title)}"
+                src="${escapeHTML(
+                    imageURL
+                )}"
+                alt="${escapeHTML(
+                    title
+                )}"
                 loading="lazy"
                 referrerpolicy="no-referrer"
-                onerror="this.closest('.ai-image-card').remove();"
+                onerror="
+                    this.closest(
+                        '.ai-image-card'
+                    ).remove();
+                "
             >
 
             <div class="ai-image-caption">
 
                 <strong>
-                    Medical visual
+                    ${escapeHTML(
+                        title
+                    )}
                 </strong>
-
-                <br>
 
                 ${
                     sourceURL
                         ? `
-                            Source:
-                            <a
-                                href="${escapeHTML(sourceURL)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                ${escapeHTML(source)}
-                            </a>
+                            <div>
+                                Source:
+                                <a
+                                    href="${escapeHTML(
+                                        sourceURL
+                                    )}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    ${escapeHTML(
+                                        source
+                                    )}
+                                </a>
+                            </div>
                           `
                         : `
-                            Source:
-                            ${escapeHTML(source)}
+                            <div>
+                                Source:
+                                ${escapeHTML(
+                                    source
+                                )}
+                            </div>
                           `
                 }
 
@@ -439,11 +675,15 @@ function renderDirectImage(image) {
     `;
 }
 
+
 // =====================================================
-// WEB RESULTS
+// GOOGLE / WEB RESULTS
 // =====================================================
 
-function renderWebResults(results) {
+function renderWebResults(
+    results
+) {
+
     if (!webResults) {
         return;
     }
@@ -452,89 +692,131 @@ function renderWebResults(results) {
         !Array.isArray(results) ||
         results.length === 0
     ) {
-        webResults.classList.add("hidden");
+
+        webResults
+            .classList
+            .add("hidden");
+
         webResults.innerHTML = "";
+
         return;
     }
 
-    const items = results
-        .slice(0, 8)
-        .map(result => {
-            const title =
-                result.title ||
-                "Web source";
+    const items =
+        results
+            .slice(0, 8)
+            .map(
+                result => {
 
-            const url = safeURL(
-                result.url ||
-                result.link
-            );
+                    const title =
+                        result.title ||
+                        "Web result";
 
-            const displayURL =
-                result.displayUrl ||
-                result.url ||
-                "";
+                    const url =
+                        safeURL(
+                            result.url ||
+                            result.link ||
+                            result.displayUrl
+                        );
 
-            const snippet = cleanText(
-                result.snippet ||
-                result.description ||
-                ""
-            );
+                    const displayURL =
+                        result.displayUrl ||
+                        result.url ||
+                        "";
 
-            return `
-                <div class="web-result">
+                    const snippet =
+                        cleanText(
+                            result.snippet ||
+                            result.description ||
+                            ""
+                        );
 
-                    ${
-                        url
-                            ? `
-                                <a
-                                    class="web-result-title"
-                                    href="${escapeHTML(url)}"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                >
-                                    ${escapeHTML(title)}
-                                </a>
-                              `
-                            : `
-                                <div class="web-result-title">
-                                    ${escapeHTML(title)}
-                                </div>
-                              `
-                    }
+                    return `
 
-                    ${
-                        displayURL
-                            ? `
-                                <span class="web-result-url">
-                                    ${escapeHTML(displayURL)}
-                                </span>
-                              `
-                            : ""
-                    }
+                        <article
+                            class="web-result"
+                        >
 
-                    ${
-                        snippet
-                            ? `
-                                <div class="web-result-snippet">
-                                    ${escapeHTML(snippet)}
-                                </div>
-                              `
-                            : ""
-                    }
+                            ${
+                                url
+                                    ? `
+                                        <a
+                                            class="web-result-title"
+                                            href="${escapeHTML(
+                                                url
+                                            )}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            ${escapeHTML(
+                                                title
+                                            )}
+                                        </a>
+                                      `
+                                    : `
+                                        <div
+                                            class="web-result-title"
+                                        >
+                                            ${escapeHTML(
+                                                title
+                                            )}
+                                        </div>
+                                      `
+                            }
 
-                </div>
-            `;
-        })
-        .join("");
+                            ${
+                                displayURL
+                                    ? `
+                                        <span
+                                            class="web-result-url"
+                                        >
+                                            ${escapeHTML(
+                                                displayURL
+                                            )}
+                                        </span>
+                                      `
+                                    : ""
+                            }
 
-    webResults.classList.remove("hidden");
+                            ${
+                                snippet
+                                    ? `
+                                        <div
+                                            class="web-result-snippet"
+                                        >
+                                            ${escapeHTML(
+                                                snippet
+                                            )}
+                                        </div>
+                                      `
+                                    : ""
+                            }
+
+                        </article>
+                    `;
+                }
+            )
+            .join("");
+
+    webResults
+        .classList
+        .remove("hidden");
 
     webResults.innerHTML = `
+
         <div class="evidence-card">
 
-            <h3>
-                Web evidence used
-            </h3>
+            <div class="research-heading">
+
+                <span>
+                    🔎
+                </span>
+
+                <h3>
+                    Google Search
+                </h3>
+
+            </div>
 
             ${items}
 
@@ -542,92 +824,48 @@ function renderWebResults(results) {
     `;
 }
 
+
 // =====================================================
-// MWANIKI SOURCES
+// IMPORTANT:
+//
+// INTERNAL MWANIKI SOURCES ARE INTENTIONALLY HIDDEN.
+//
+// The backend may return mwanikiSources so that the
+// retrieval pipeline can use them internally.
+//
+// WE DO NOT DISPLAY THEM TO THE STUDENT.
+//
+// This prevents:
+//
+// - source dumps
+// - course-name lists
+// - filenames
+// - source counts
+// - irrelevant material cards
 // =====================================================
 
-function renderMwanikiSources(sources) {
+function hideInternalSources() {
+
     if (!mwanikiSources) {
         return;
     }
 
-    if (
-        !Array.isArray(sources) ||
-        sources.length === 0
-    ) {
-        mwanikiSources.classList.add("hidden");
-        mwanikiSources.innerHTML = "";
-        return;
-    }
+    mwanikiSources
+        .classList
+        .add("hidden");
 
-    const items = sources
-        .slice(0, 10)
-        .map(source => {
-            const title =
-                source.title ||
-                source.unit ||
-                source.course ||
-                "Mwaniki Scholars";
-
-            const detail =
-                source.detail ||
-                source.description ||
-                source.unit ||
-                "";
-
-            return `
-                <div
-                    style="
-                        padding:10px 0;
-                        border-bottom:1px solid #e4edf1;
-                    "
-                >
-
-                    <strong>
-                        ${escapeHTML(title)}
-                    </strong>
-
-                    ${
-                        detail
-                            ? `
-                                <div
-                                    style="
-                                        margin-top:4px;
-                                        color:#6a7c89;
-                                        font-size:13px;
-                                    "
-                                >
-                                    ${escapeHTML(detail)}
-                                </div>
-                              `
-                            : ""
-                    }
-
-                </div>
-            `;
-        })
-        .join("");
-
-    mwanikiSources.classList.remove("hidden");
-
-    mwanikiSources.innerHTML = `
-        <div class="evidence-card">
-
-            <h3>
-                Mwaniki Scholars material
-            </h3>
-
-            ${items}
-
-        </div>
-    `;
+    mwanikiSources.innerHTML = "";
 }
 
+
 // =====================================================
-// MAIN ANSWER
+// MAIN AI ANSWER
 // =====================================================
 
-function renderAnswer(response) {
+function renderAnswer(
+    response
+) {
+
     if (!aiAnswer) {
         return;
     }
@@ -639,49 +877,72 @@ function renderAnswer(response) {
         response.webAnswer ||
         "";
 
-    const cleaned = cleanText(
-        typeof answer === "string"
-            ? answer
-            : JSON.stringify(answer)
-    );
+    const cleaned =
+        cleanText(
+            typeof answer === "string"
+                ? answer
+                : JSON.stringify(
+                    answer
+                )
+        );
 
-    currentAnswerText = cleaned;
+    currentAnswerText =
+        cleaned;
 
     const title =
         response.answerTitle ||
-        "Mwaniki AI Answer";
-
-    const webCount =
-        Number(
-            response.webResultCount || 0
-        );
-
-    const mwanikiCount =
-        Number(
-            response.mwanikiSourceCount || 0
-        );
+        "Mwaniki AI";
 
     const paragraphs =
-        textToHTML(cleaned);
+        textToHTML(
+            cleaned
+        );
 
     aiAnswer.innerHTML = `
+
         <div class="answer-card">
 
             <div class="answer-header">
 
-                <h2>
-                    ${escapeHTML(title)}
-                </h2>
+                <div>
 
-                <span class="answer-badge">
-                    Research synthesis
+                    <span
+                        class="answer-kicker"
+                    >
+                        MWANIKI AI
+                    </span>
+
+                    <h2>
+                        ${escapeHTML(
+                            title
+                        )}
+                    </h2>
+
+                </div>
+
+                <span
+                    class="answer-badge"
+                >
+                    AI Study Partner
                 </span>
 
             </div>
 
+
             <div class="answer-body">
-                ${paragraphs}
+
+                ${
+                    paragraphs ||
+                    `
+                        <p>
+                            No answer was returned.
+                            Please try the question again.
+                        </p>
+                    `
+                }
+
             </div>
+
 
             <div class="answer-actions">
 
@@ -693,6 +954,7 @@ function renderAnswer(response) {
                     🔊 Read Answer
                 </button>
 
+
                 <button
                     type="button"
                     class="small-button"
@@ -703,90 +965,72 @@ function renderAnswer(response) {
 
             </div>
 
-            <div
-                class="evidence-grid"
-                style="padding:0 22px 22px;"
-            >
-
-                <div class="evidence-card">
-
-                    <h3>
-                        Web research
-                    </h3>
-
-                    <p>
-                        ${
-                            webCount > 0
-                                ? `${webCount} relevant web sources`
-                                : "No relevant web sources"
-                        }
-                    </p>
-
-                </div>
-
-                <div class="evidence-card">
-
-                    <h3>
-                        Mwaniki Scholars
-                    </h3>
-
-                    <p>
-                        ${
-                            mwanikiCount > 0
-                                ? `${mwanikiCount} relevant Mwaniki sources`
-                                : "No relevant Mwaniki sources"
-                        }
-                    </p>
-
-                </div>
-
-            </div>
-
         </div>
     `;
+
 
     const readButton =
         document.getElementById(
             "readMainAnswerButton"
         );
 
+
     const stopButton =
         document.getElementById(
             "stopMainAudioButton"
         );
 
+
     if (readButton) {
+
         readButton.addEventListener(
             "click",
-            () => speak(currentAnswerText)
+            () =>
+                speak(
+                    currentAnswerText
+                )
         );
     }
 
+
     if (stopButton) {
+
         stopButton.addEventListener(
             "click",
             stopSpeech
         );
     }
+
+
+    // ALWAYS HIDE INTERNAL MATERIALS
+
+    hideInternalSources();
 }
+
 
 // =====================================================
 // AUTH
 // =====================================================
 
 async function getAccessToken() {
+
     const {
         data,
         error
-    } = await supabase.auth.getSession();
+    } =
+        await supabase.auth.getSession();
 
     if (error) {
         throw error;
     }
 
-    const session = data?.session;
+    const session =
+        data?.session;
 
-    if (!session?.access_token) {
+    if (
+        !session?.access_token
+    ) {
+
         throw new Error(
             "Your student session has expired. Please log in again."
         );
@@ -795,11 +1039,15 @@ async function getAccessToken() {
     return session.access_token;
 }
 
+
 // =====================================================
 // EDGE FUNCTION
 // =====================================================
 
-async function callMwanikiAI(payload) {
+async function callMwanikiAI(
+    payload
+) {
+
     const token =
         await getAccessToken();
 
@@ -811,6 +1059,7 @@ async function callMwanikiAI(payload) {
             "mwaniki-ai",
             {
                 body: payload,
+
                 headers: {
                     Authorization:
                         `Bearer ${token}`
@@ -823,111 +1072,235 @@ async function callMwanikiAI(payload) {
     }
 
     if (!data) {
+
         throw new Error(
             "The AI service returned no response."
         );
     }
 
     if (data.error) {
-        throw new Error(data.error);
+        throw new Error(
+            data.error
+        );
     }
 
     return data;
 }
 
+
+// =====================================================
+// CLEAR RESEARCH AREA
+// =====================================================
+
+function clearResearchArea() {
+
+    if (aiImages) {
+
+        aiImages
+            .classList
+            .add("hidden");
+
+        aiImages.innerHTML = "";
+    }
+
+
+    if (webResults) {
+
+        webResults
+            .classList
+            .add("hidden");
+
+        webResults.innerHTML = "";
+    }
+
+
+    // Internal sources must NEVER appear.
+
+    hideInternalSources();
+}
+
+
 // =====================================================
 // SEARCH
 // =====================================================
 
-async function searchAI(query) {
+async function searchAI(
+    query
+) {
+
+    const cleanQuery =
+        cleanText(query);
+
+    if (!cleanQuery) {
+
+        setStatus(
+            "Please enter a medical question."
+        );
+
+        return;
+    }
+
+
     setBusy(true);
 
+
     setSearchStatus(
-        "Searching Google/web first, then checking Mwaniki Scholars..."
+        "Researching your question..."
     );
+
 
     setStatus("");
 
+
     if (aiAnswer) {
-        aiAnswer.innerHTML = "";
+
+        aiAnswer.innerHTML = `
+            <div class="answer-card">
+
+                <div class="answer-body">
+
+                    <div class="ai-loading">
+
+                        <span>
+                            🧠
+                        </span>
+
+                        <div>
+
+                            <strong>
+                                Mwaniki AI is thinking...
+                            </strong>
+
+                            <p>
+                                Checking relevant medical information.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
     }
 
-    if (aiImages) {
-        aiImages.classList.add("hidden");
-        aiImages.innerHTML = "";
-    }
 
-    if (mwanikiSources) {
-        mwanikiSources.classList.add("hidden");
-        mwanikiSources.innerHTML = "";
-    }
+    clearResearchArea();
 
-    if (webResults) {
-        webResults.classList.add("hidden");
-        webResults.innerHTML = "";
-    }
 
     try {
-        const response =
-            await callMwanikiAI({
-                mode: "search",
-                question: query,
-                searchWeb: true,
-                searchMwaniki: true,
-                searchImages: true
-            });
 
-        renderAnswer(response);
+        const response =
+            await callMwanikiAI(
+                {
+                    mode: "search",
+
+                    question:
+                        cleanQuery,
+
+                    searchWeb:
+                        true,
+
+                    searchMwaniki:
+                        true,
+
+                    searchImages:
+                        true
+                }
+            );
+
+
+        // -----------------------------
+        // MAIN AI ANSWER
+        // -----------------------------
+
+        renderAnswer(
+            response
+        );
+
+
+        // -----------------------------
+        // GOOGLE IMAGE
+        // -----------------------------
 
         renderDirectImage(
             response.primaryImage ||
             (
-                Array.isArray(response.images)
+                Array.isArray(
+                    response.images
+                )
                     ? response.images[0]
                     : null
             )
         );
 
-        renderMwanikiSources(
-            response.mwanikiSources
-        );
+
+        // -----------------------------
+        // GOOGLE SEARCH
+        // -----------------------------
 
         renderWebResults(
             response.webResults
         );
 
+
+        // -----------------------------
+        // NEVER DISPLAY INTERNAL DATA
+        // -----------------------------
+
+        hideInternalSources();
+
+
         setSearchStatus(
             "Research complete."
         );
 
+
         setStatus(
             response.status ||
-            "Web evidence was checked first, then compared with relevant Mwaniki Scholars material."
+            "Your answer was synthesized from the available relevant medical information."
         );
 
+
     } catch (error) {
+
         console.error(
             "Mwaniki AI search error:",
             error
         );
 
+
         if (aiAnswer) {
+
             aiAnswer.innerHTML = `
+
                 <div class="answer-card">
 
                     <div class="answer-header">
 
-                        <h2>
-                            Unable to complete research
-                        </h2>
+                        <div>
+
+                            <span
+                                class="answer-kicker"
+                            >
+                                MWANIKI AI
+                            </span>
+
+                            <h2>
+                                Research unavailable
+                            </h2>
+
+                        </div>
 
                     </div>
+
 
                     <div class="answer-body">
 
                         <p>
-                            Mwaniki AI could not complete the
-                            research request right now.
+                            Mwaniki AI could not complete
+                            the research request right now.
                         </p>
 
                         <p>
@@ -940,99 +1313,136 @@ async function searchAI(query) {
             `;
         }
 
+
         setSearchStatus("");
 
+
         setStatus(
-            error.message ||
+            error?.message ||
             "AI research failed."
         );
 
+
     } finally {
+
         setBusy(false);
     }
 }
+
 
 // =====================================================
 // WRONG ANSWER
 // =====================================================
 
-function handleWrongAnswer(question) {
+function handleWrongAnswer(
+    question
+) {
+
     const reaction =
         getRandomFunnyReaction();
+
 
     speakHugeSqueakyLaugh(
         reaction
     );
 
+
     if (
         testFeedback &&
         question
     ) {
+
         testFeedback.innerHTML = `
-            <strong>
-                ${escapeHTML(reaction)}
-            </strong>
 
-            <br><br>
+            <div class="wrong-answer-reaction">
 
-            The correct answer is:
+                <strong>
+                    ${escapeHTML(
+                        reaction
+                    )}
+                </strong>
 
-            <strong>
-                ${escapeHTML(
-                    question.correctAnswer || ""
-                )}
-            </strong>
 
-            ${
-                question.explanation
-                    ? `
-                        <br><br>
-                        ${escapeHTML(
-                            cleanText(
-                                question.explanation
-                            )
-                        )}
-                      `
-                    : ""
-            }
+                <br><br>
+
+
+                The correct answer is:
+
+                <strong>
+                    ${escapeHTML(
+                        question.correctAnswer ||
+                        ""
+                    )}
+                </strong>
+
+
+                ${
+                    question.explanation
+                        ? `
+                            <br><br>
+
+                            ${escapeHTML(
+                                cleanText(
+                                    question.explanation
+                                )
+                            )}
+                          `
+                        : ""
+                }
+
+            </div>
         `;
     }
 }
+
 
 // =====================================================
 // TEST QUESTION
 // =====================================================
 
-function renderTestQuestion(question) {
+function renderTestQuestion(
+    question
+) {
+
     if (!question) {
         return;
     }
 
-    currentTestQuestion = question;
-    testAnswered = false;
+
+    currentTestQuestion =
+        question;
+
+    testAnswered =
+        false;
+
 
     if (testProgress) {
+
         testProgress.textContent =
             `Question ${currentTestNumber} of ${currentTestLength}`;
     }
 
+
     if (testStatus) {
-        testStatus.textContent = "";
+
+        testStatus.textContent =
+            "";
     }
+
 
     if (testFeedback) {
-        testFeedback.innerHTML = "";
+
+        testFeedback.innerHTML =
+            "";
     }
 
+
     if (testQuestion) {
+
         testQuestion.innerHTML = `
+
             <div
-                style="
-                    margin-top:16px;
-                    font-size:19px;
-                    line-height:1.55;
-                    font-weight:800;
-                "
+                class="test-question-text"
             >
                 ${escapeHTML(
                     question.question
@@ -1041,19 +1451,25 @@ function renderTestQuestion(question) {
         `;
     }
 
+
     if (!testOptions) {
         return;
     }
 
+
     const options =
-        Array.isArray(question.options)
+        Array.isArray(
+            question.options
+        )
             ? question.options
             : [];
+
 
     testOptions.innerHTML =
         options
             .map(
                 option => `
+
                     <button
                         type="button"
                         class="test-option"
@@ -1068,355 +1484,558 @@ function renderTestQuestion(question) {
                             )}
                         </strong>
 
-                        &nbsp;
-
-                        ${escapeHTML(
-                            option.text
-                        )}
+                        <span>
+                            ${escapeHTML(
+                                option.text
+                            )}
+                        </span>
 
                     </button>
                 `
             )
             .join("");
 
+
     testOptions
-        .querySelectorAll(".test-option")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    if (testAnswered) {
-                        return;
-                    }
+        .querySelectorAll(
+            ".test-option"
+        )
+        .forEach(
+            button => {
 
-                    testAnswered = true;
+                button.addEventListener(
+                    "click",
+                    () => {
 
-                    const selected =
-                        String(
-                            button.dataset.key || ""
-                        ).toUpperCase();
+                        if (
+                            testAnswered
+                        ) {
+                            return;
+                        }
 
-                    const correct =
-                        String(
-                            question.correctKey || ""
-                        ).toUpperCase();
 
-                    if (selected === correct) {
-                        currentTestScore++;
+                        testAnswered =
+                            true;
 
-                        testFeedback.innerHTML = `
-                            <strong>
-                                ✅ Correct!
-                            </strong>
 
-                            <br><br>
-
-                            ${
-                                question.explanation
-                                    ? escapeHTML(
-                                        cleanText(
-                                            question.explanation
-                                        )
-                                      )
-                                    : "Good work."
-                            }
-                        `;
-
-                        speak(
-                            "Correct. " +
-                            cleanText(
-                                question.explanation ||
-                                "Good work."
+                        const selected =
+                            String(
+                                button.dataset.key ||
+                                ""
                             )
-                        );
+                                .toUpperCase();
 
-                    } else {
-                        handleWrongAnswer(
-                            question
-                        );
-                    }
 
-                    testOptions
-                        .querySelectorAll(
-                            ".test-option"
-                        )
-                        .forEach(
-                            optionButton => {
-                                optionButton.disabled =
-                                    true;
+                        const correct =
+                            String(
+                                question.correctKey ||
+                                ""
+                            )
+                                .toUpperCase();
 
-                                if (
-                                    optionButton.dataset.key ===
-                                    correct
-                                ) {
-                                    optionButton.style.background =
-                                        "rgba(56,190,120,.28)";
+
+                        if (
+                            selected ===
+                            correct
+                        ) {
+
+                            currentTestScore++;
+
+
+                            testFeedback.innerHTML = `
+
+                                <div
+                                    class="correct-answer-reaction"
+                                >
+
+                                    <strong>
+                                        ✅ Correct!
+                                    </strong>
+
+                                    <br><br>
+
+                                    ${
+                                        question.explanation
+                                            ? escapeHTML(
+                                                cleanText(
+                                                    question.explanation
+                                                )
+                                              )
+                                            : "Good work."
+                                    }
+
+                                </div>
+                            `;
+
+
+                            speak(
+                                "Correct. " +
+                                cleanText(
+                                    question.explanation ||
+                                    "Good work."
+                                )
+                            );
+
+
+                        } else {
+
+                            handleWrongAnswer(
+                                question
+                            );
+                        }
+
+
+                        testOptions
+                            .querySelectorAll(
+                                ".test-option"
+                            )
+                            .forEach(
+                                optionButton => {
+
+                                    optionButton.disabled =
+                                        true;
+
+
+                                    if (
+                                        String(
+                                            optionButton.dataset.key ||
+                                            ""
+                                        )
+                                            .toUpperCase() ===
+                                        correct
+                                    ) {
+
+                                        optionButton.classList.add(
+                                            "correct-option"
+                                        );
+                                    }
+
+
+                                    if (
+                                        String(
+                                            optionButton.dataset.key ||
+                                            ""
+                                        )
+                                            .toUpperCase() ===
+                                        selected &&
+                                        selected !==
+                                        correct
+                                    ) {
+
+                                        optionButton.classList.add(
+                                            "wrong-option"
+                                        );
+                                    }
+
                                 }
-                            }
-                        );
-                }
-            );
-        });
+                            );
+
+                    }
+                );
+
+            }
+        );
 }
+
 
 // =====================================================
 // NEXT TEST QUESTION
 // =====================================================
 
 async function loadNextTestQuestion() {
+
     if (
         currentTestNumber >
         currentTestLength
     ) {
+
         finishTest();
+
         return;
     }
 
+
     if (testStatus) {
+
         testStatus.textContent =
-            "Researching the next question...";
+            "Preparing the next medical question...";
     }
 
+
     try {
+
         const response =
-            await callMwanikiAI({
-                mode: "test",
-                testTopic:
-                    currentTestTopic,
-                usedQuestionIds:
-                    currentTestUsedIds,
-                questionNumber:
-                    currentTestNumber,
-                testLength:
-                    currentTestLength,
-                searchMwaniki: true,
-                searchWeb: true,
-                searchImages: false
-            });
+            await callMwanikiAI(
+                {
+                    mode: "test",
+
+                    testTopic:
+                        currentTestTopic,
+
+                    usedQuestionIds:
+                        currentTestUsedIds,
+
+                    questionNumber:
+                        currentTestNumber,
+
+                    testLength:
+                        currentTestLength,
+
+                    searchMwaniki:
+                        true,
+
+                    searchWeb:
+                        true,
+
+                    searchImages:
+                        false
+                }
+            );
+
 
         const question =
             response.testQuestion;
 
+
         if (!question) {
+
             throw new Error(
                 "No test question was returned."
             );
         }
 
+
         if (
-            question.id !== undefined &&
-            question.id !== null
+            question.id !==
+                undefined &&
+            question.id !==
+                null
         ) {
+
             currentTestUsedIds.push(
-                String(question.id)
+                String(
+                    question.id
+                )
             );
         }
+
 
         renderTestQuestion(
             question
         );
 
+
     } catch (error) {
+
         console.error(
             "Test question error:",
             error
         );
 
+
         if (testStatus) {
+
             testStatus.textContent =
                 "The next question could not be loaded. Please try again.";
         }
     }
 }
 
+
 // =====================================================
 // FINISH TEST
 // =====================================================
 
 function finishTest() {
+
     if (testQuestion) {
+
         testQuestion.innerHTML = `
+
             <div
-                style="
-                    font-size:24px;
-                    font-weight:900;
-                    margin-top:20px;
-                "
+                class="test-complete"
             >
                 Test completed
             </div>
         `;
     }
 
+
     if (testOptions) {
-        testOptions.innerHTML = "";
+
+        testOptions.innerHTML =
+            "";
     }
 
+
     const percentage =
-        currentTestLength > 0
+        currentTestLength >
+            0
+
             ? Math.round(
                 (
                     currentTestScore /
                     currentTestLength
-                ) * 100
+                ) *
+                100
             )
+
             : 0;
 
+
     if (testFeedback) {
+
         testFeedback.innerHTML = `
-            <strong>
-                Score: ${currentTestScore}/${currentTestLength}
-            </strong>
 
-            <br><br>
+            <div
+                class="test-final-score"
+            >
 
-            ${percentage}%
+                <strong>
+                    Score:
+                    ${currentTestScore}/${currentTestLength}
+                </strong>
+
+                <span>
+                    ${percentage}%
+                </span>
+
+            </div>
         `;
     }
 
+
     if (testProgress) {
+
         testProgress.textContent =
             "Completed";
     }
 
+
     if (testStatus) {
+
         testStatus.textContent =
             "Well done. Start another test whenever you're ready.";
     }
 
+
     if (testNext) {
-        testNext.disabled = true;
+
+        testNext.disabled =
+            true;
     }
 }
+
 
 // =====================================================
 // START TEST
 // =====================================================
 
-async function startTest(topic, length = 10) {
-    currentTestTopic = cleanText(topic);
+async function startTest(
+    topic,
+    length = 10
+) {
+
+    currentTestTopic =
+        cleanText(topic);
+
+
+    if (!currentTestTopic) {
+
+        setStatus(
+            "Enter a medical topic before starting the test."
+        );
+
+        return;
+    }
+
 
     currentTestLength =
         Math.max(
             1,
             Math.min(
-                Number(length) || 10,
+                Number(length) ||
+                10,
                 20
             )
         );
 
-    currentTestNumber = 1;
-    currentTestScore = 0;
-    currentTestUsedIds = [];
-    testAnswered = false;
+
+    currentTestNumber =
+        1;
+
+
+    currentTestScore =
+        0;
+
+
+    currentTestUsedIds =
+        [];
+
+
+    testAnswered =
+        false;
+
 
     if (testPanel) {
-        testPanel.classList.remove("hidden");
+
+        testPanel
+            .classList
+            .remove("hidden");
     }
 
+
     if (testNext) {
-        testNext.disabled = false;
+
+        testNext.disabled =
+            false;
     }
+
 
     await loadNextTestQuestion();
 }
+
 
 // =====================================================
 // EVENTS
 // =====================================================
 
 if (askAIButton) {
+
     askAIButton.addEventListener(
         "click",
         async () => {
+
             const query =
                 aiQuestion?.value?.trim();
 
+
             if (!query) {
+
                 setStatus(
                     "Please enter a medical question."
                 );
+
                 return;
             }
 
-            await searchAI(query);
+
+            await searchAI(
+                query
+            );
         }
     );
 }
 
+
 if (aiQuestion) {
+
     aiQuestion.addEventListener(
         "keydown",
         event => {
+
             if (
-                event.key === "Enter" &&
+                event.key ===
+                    "Enter" &&
                 !event.shiftKey
             ) {
+
                 event.preventDefault();
+
                 askAIButton?.click();
             }
         }
     );
 }
 
+
 document
-    .querySelectorAll(".suggestion-button")
-    .forEach(button => {
-        button.addEventListener(
-            "click",
-            () => {
-                const question =
-                    button.dataset.question ||
-                    button.textContent.trim();
+    .querySelectorAll(
+        ".suggestion-button"
+    )
+    .forEach(
+        button => {
 
-                if (aiQuestion) {
-                    aiQuestion.value =
-                        question;
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const question =
+                        button.dataset.question ||
+                        button.textContent.trim();
+
+
+                    if (aiQuestion) {
+
+                        aiQuestion.value =
+                            question;
+                    }
+
+
+                    askAIButton?.click();
                 }
+            );
 
-                askAIButton?.click();
-            }
-        );
-    });
+        }
+    );
 
-if (backToDashboardButton) {
+
+if (
+    backToDashboardButton
+) {
+
     backToDashboardButton.addEventListener(
         "click",
         () => {
+
             window.location.href =
                 "./dashboard.html";
         }
     );
 }
 
+
 if (testNext) {
+
     testNext.addEventListener(
         "click",
         async () => {
-            if (!testAnswered) {
+
+            if (
+                !testAnswered
+            ) {
                 return;
             }
 
+
             currentTestNumber++;
+
 
             if (
                 currentTestNumber >
                 currentTestLength
             ) {
+
                 finishTest();
+
                 return;
             }
+
 
             await loadNextTestQuestion();
         }
     );
 }
 
+
 if (testExit) {
+
     testExit.addEventListener(
         "click",
         () => {
+
             stopSpeech();
+
 
             testPanel?.classList.add(
                 "hidden"
@@ -1425,13 +2044,28 @@ if (testExit) {
     );
 }
 
+
 // =====================================================
 // GLOBAL ACCESS
 // =====================================================
 
 window.mwanikiAI = {
-    search: searchAI,
-    startTest,
-    speak,
-    stopSpeech
+
+    search:
+        searchAI,
+
+    startTest:
+        startTest,
+
+    speak:
+        speak,
+
+    stopSpeech:
+        stopSpeech
 };
+
+
+console.log(
+    "✅ Mwaniki AI Tutor ready"
+);
+````
