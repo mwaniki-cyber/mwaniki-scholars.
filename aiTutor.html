@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,7 +13,7 @@
 
     <meta
         name="description"
-        content="Mwaniki AI — medical learning, researched answers, study materials and medical quizzes."
+        content="Mwaniki AI medical study assistant."
     >
 
     <meta
@@ -37,1513 +37,616 @@
             box-sizing: border-box;
         }
 
-
-        :root {
-
-            --navy: #062b49;
-            --navy-2: #0a3b61;
-            --blue: #0b7285;
-            --cyan: #19a7b8;
-            --white: #ffffff;
-            --bg: #f4f8fb;
-            --card: #ffffff;
-            --border: #dbe7ef;
-            --text: #183247;
-            --muted: #6c7f8e;
-            --success: #14804a;
-            --danger: #b42318;
-            --shadow:
-                0 12px 35px rgba(6, 43, 73, 0.09);
-
+        html {
+            scroll-behavior: smooth;
         }
 
-
         body {
-
             margin: 0;
-
-            min-height: 100vh;
-
             font-family:
+                "Segoe UI",
                 Arial,
                 Helvetica,
                 sans-serif;
-
-            color:
-                var(--text);
-
             background:
                 linear-gradient(
                     180deg,
-                    #edf7fb 0%,
-                    var(--bg) 45%,
-                    #ffffff 100%
+                    #f4f9fc 0%,
+                    #eef6fb 100%
                 );
-
+            color: #17324d;
         }
-
 
         button,
-        input,
         textarea,
-        select {
-
-            font:
-                inherit;
-
+        input {
+            font: inherit;
         }
 
-
-        button {
-
-            cursor:
-                pointer;
-
+        .ai-page {
+            width: 100%;
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 28px 20px 80px;
         }
 
-
-        .top-header {
-
-            position:
-                sticky;
-
-            top:
-                0;
-
-            z-index:
-                100;
-
-            min-height:
-                72px;
-
-            display:
-                flex;
-
-            align-items:
-                center;
-
-            justify-content:
-                space-between;
-
-            gap:
-                20px;
-
-            padding:
-                12px 5vw;
-
-            color:
-                white;
-
-            background:
-                var(--navy);
-
-            box-shadow:
-                0 5px 20px
-                rgba(0, 0, 0, .12);
-
+        .ai-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            margin-bottom: 24px;
         }
 
-
-        .brand-area {
-
-            display:
-                flex;
-
-            align-items:
-                center;
-
-            gap:
-                12px;
-
+        .ai-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
 
-
-        .brand-icon {
-
-            width:
-                44px;
-
-            height:
-                44px;
-
-            display:
-                grid;
-
-            place-items:
-                center;
-
-            border-radius:
-                12px;
-
-            background:
-                rgba(255,255,255,.12);
-
-            font-size:
-                23px;
-
-        }
-
-
-        .brand-name {
-
-            font-size:
-                19px;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .brand-subtitle {
-
-            margin-top:
-                2px;
-
-            font-size:
-                12px;
-
-            opacity:
-                .75;
-
-        }
-
-
-        .back-button {
-
-            display:
-                inline-flex;
-
-            align-items:
-                center;
-
-            gap:
-                7px;
-
-            padding:
-                10px 15px;
-
-            border:
-                1px solid
-                rgba(255,255,255,.2);
-
-            border-radius:
-                10px;
-
-            color:
-                white;
-
-            background:
-                rgba(255,255,255,.08);
-
-            text-decoration:
-                none;
-
-            font-weight:
-                700;
-
-        }
-
-
-        .page {
-
-            width:
-                min(1180px, 92%);
-
-            margin:
-                30px auto 60px;
-
-        }
-
-
-        .hero {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                auto 1fr;
-
-            gap:
-                20px;
-
-            align-items:
-                center;
-
-            padding:
-                30px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                24px;
-
+        .ai-brand-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 15px;
+            display: grid;
+            place-items: center;
             background:
                 linear-gradient(
                     135deg,
                     #062b49,
                     #0b7285
                 );
-
-            color:
-                white;
-
+            color: white;
+            font-size: 24px;
             box-shadow:
-                var(--shadow);
-
+                0 10px 25px
+                rgba(6,43,73,.18);
         }
 
-
-        .hero-icon {
-
-            width:
-                78px;
-
-            height:
-                78px;
-
-            display:
-                grid;
-
-            place-items:
-                center;
-
-            border-radius:
-                22px;
-
-            background:
-                rgba(255,255,255,.12);
-
-            font-size:
-                42px;
-
+        .ai-brand strong {
+            display: block;
+            font-size: 18px;
+            color: #062b49;
         }
 
-
-        .hero h1 {
-
-            margin:
-                0 0 8px;
-
-            font-size:
-                clamp(28px, 5vw, 44px);
-
+        .ai-brand span {
+            display: block;
+            margin-top: 2px;
+            color: #6b7d8e;
+            font-size: 13px;
         }
 
-
-        .hero p {
-
-            margin:
-                0;
-
-            max-width:
-                800px;
-
-            line-height:
-                1.7;
-
-            color:
-                rgba(255,255,255,.85);
-
-        }
-
-
-        .section {
-
-            margin-top:
-                25px;
-
-            padding:
-                25px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                20px;
-
-            background:
-                var(--card);
-
+        .back-button {
+            border: 0;
+            background: white;
+            color: #062b49;
+            border-radius: 12px;
+            padding: 11px 16px;
+            cursor: pointer;
+            font-weight: 700;
             box-shadow:
-                var(--shadow);
-
+                0 5px 18px
+                rgba(15,45,70,.08);
         }
 
-
-        .section-heading {
-
-            display:
-                flex;
-
-            align-items:
-                center;
-
-            justify-content:
-                space-between;
-
-            gap:
-                15px;
-
-            margin-bottom:
-                18px;
-
+        .back-button:hover {
+            transform: translateY(-1px);
         }
 
-
-        .section-heading h2 {
-
-            margin:
-                0;
-
-            color:
-                var(--navy);
-
-            font-size:
-                22px;
-
-        }
-
-
-        .section-heading p {
-
-            margin:
-                6px 0 0;
-
-            color:
-                var(--muted);
-
-        }
-
-
-        .search-box {
-
-            display:
-                flex;
-
-            flex-direction:
-                column;
-
-            gap:
-                14px;
-
-        }
-
-
-        #aiQuestion {
-
-            width:
-                100%;
-
-            min-height:
-                145px;
-
-            resize:
-                vertical;
-
-            padding:
-                17px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                14px;
-
-            outline:
-                none;
-
-            color:
-                var(--text);
-
-            background:
-                #fbfdff;
-
-            line-height:
-                1.6;
-
-        }
-
-
-        #aiQuestion:focus {
-
-            border-color:
-                var(--cyan);
-
-            box-shadow:
-                0 0 0 3px
-                rgba(25,167,184,.12);
-
-        }
-
-
-        .primary-button {
-
-            display:
-                inline-flex;
-
-            align-items:
-                center;
-
-            justify-content:
-                center;
-
-            gap:
-                8px;
-
-            min-height:
-                46px;
-
-            padding:
-                11px 18px;
-
-            border:
-                0;
-
-            border-radius:
-                11px;
-
-            color:
-                white;
-
+        .ai-page-header {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 18px;
             background:
                 linear-gradient(
                     135deg,
-                    var(--navy),
-                    var(--blue)
+                    #062b49,
+                    #0b7285
                 );
-
-            font-weight:
-                800;
-
-            transition:
-                .2s ease;
-
+            color: white;
+            padding: 30px;
+            border-radius: 24px;
+            box-shadow:
+                0 18px 45px
+                rgba(6,43,73,.20);
+            overflow: hidden;
         }
 
-
-        .primary-button:hover {
-
-            transform:
-                translateY(-1px);
-
+        .ai-page-header::after {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -90px;
+            top: -100px;
+            border-radius: 50%;
+            background:
+                rgba(255,255,255,.08);
         }
 
-
-        .primary-button:disabled {
-
-            cursor:
-                not-allowed;
-
-            opacity:
-                .55;
-
-            transform:
-                none;
-
+        .ai-avatar-large {
+            width: 76px;
+            height: 76px;
+            flex: 0 0 76px;
+            border-radius: 24px;
+            display: grid;
+            place-items: center;
+            background:
+                rgba(255,255,255,.15);
+            font-size: 40px;
         }
 
-
-        .suggestion-list {
-
-            display:
-                flex;
-
-            flex-wrap:
-                wrap;
-
-            gap:
-                9px;
-
-            margin:
-                10px 0 15px;
-
+        .eyebrow {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            opacity: .78;
         }
 
+        .ai-page-header h1 {
+            margin: 5px 0 4px;
+            font-size: 34px;
+        }
+
+        .ai-page-header p {
+            margin: 0;
+            opacity: .86;
+        }
+
+        .ai-status {
+            margin-left: auto;
+            position: relative;
+            z-index: 2;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 13px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.13);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .ai-status i {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #65e6a1;
+            box-shadow:
+                0 0 0 5px
+                rgba(101,230,161,.13);
+        }
+
+        .ai-chat-card {
+            margin-top: 22px;
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow:
+                0 12px 35px
+                rgba(15,45,70,.08);
+            border: 1px solid #e2edf3;
+        }
+
+        .ai-recent-questions {
+            min-height: 70px;
+        }
+
+        .ai-chat-welcome {
+            display: flex;
+            gap: 13px;
+            align-items: flex-start;
+        }
+
+        .ai-avatar {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            display: grid;
+            place-items: center;
+            background: #eaf5f8;
+            border-radius: 14px;
+            font-size: 22px;
+        }
+
+        .ai-message {
+            background: #f5f9fb;
+            border-radius: 16px;
+            padding: 14px 16px;
+            line-height: 1.6;
+        }
+
+        .ai-message strong {
+            color: #062b49;
+        }
+
+        .ai-message p {
+            margin: 5px 0 0;
+            color: #5e7182;
+        }
+
+        .suggested-questions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .suggested-questions > span {
+            color: #718293;
+            font-size: 13px;
+            font-weight: 700;
+        }
 
         .suggestion-button {
-
-            padding:
-                9px 13px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                999px;
-
-            color:
-                var(--navy);
-
-            background:
-                #f7fbfd;
-
-            font-weight:
-                700;
-
+            border: 1px solid #d8e7ed;
+            background: #f7fbfc;
+            color: #0b6477;
+            border-radius: 999px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
         }
-
 
         .suggestion-button:hover {
-
-            border-color:
-                var(--cyan);
-
+            background: #eaf5f8;
         }
 
-
-        .ai-status,
-        #aiSearchStatus {
-
-            min-height:
-                22px;
-
-            margin-top:
-                10px;
-
-            color:
-                var(--muted);
-
-            font-size:
-                14px;
-
+        .ai-input {
+            width: 100%;
+            min-height: 125px;
+            resize: vertical;
+            border:
+                1px solid #d7e4eb;
+            border-radius: 16px;
+            padding: 16px;
+            outline: none;
+            background: #fbfdfe;
+            color: #17324d;
+            line-height: 1.6;
         }
 
-
-        .ai-status.success {
-
-            color:
-                var(--success);
-
+        .ai-input:focus {
+            border-color: #0b7285;
+            box-shadow:
+                0 0 0 4px
+                rgba(11,114,133,.09);
         }
 
-
-        .ai-status.error {
-
-            color:
-                var(--danger);
-
+        .ai-input-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 12px;
         }
 
+        .ai-hint {
+            color: #778896;
+            font-size: 12px;
+        }
+
+        #askAIButton {
+            border: 0;
+            border-radius: 13px;
+            padding: 13px 19px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #062b49,
+                    #0b7285
+                );
+            color: white;
+            cursor: pointer;
+            font-weight: 800;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #askAIButton:hover {
+            transform: translateY(-1px);
+        }
+
+        #askAIButton:disabled {
+            opacity: .65;
+            cursor: wait;
+        }
+
+        #aiSearchStatus,
+        #aiStatus {
+            margin-top: 14px;
+        }
+
+        .status-line {
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #f4f8fa;
+            color: #617383;
+            font-size: 13px;
+        }
+
+        .answer-shell {
+            margin-top: 22px;
+        }
 
         .answer-card {
-
             border:
-                1px solid
-                var(--border);
+                1px solid #dfecef;
+            border-radius: 20px;
+            overflow: hidden;
+            background: white;
+        }
 
-            border-radius:
-                16px;
-
-            padding:
-                20px;
-
+        .answer-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 18px 20px;
             background:
-                #fcfeff;
-
+                linear-gradient(
+                    135deg,
+                    #f2f9fb,
+                    #eef7fb
+                );
+            border-bottom:
+                1px solid #e0edf1;
         }
 
-
-        .answer-source-badge {
-
-            display:
-                inline-flex;
-
-            margin-bottom:
-                12px;
-
-            padding:
-                6px 10px;
-
-            border-radius:
-                999px;
-
-            color:
-                #075c70;
-
-            background:
-                #e5f7fa;
-
-            font-size:
-                12px;
-
-            font-weight:
-                800;
-
-            text-transform:
-                uppercase;
-
-            letter-spacing:
-                .04em;
-
+        .answer-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: #062b49;
         }
 
-
-        #aiAnswer h3 {
-
-            margin:
-                0 0 15px;
-
-            color:
-                var(--navy);
-
-            font-size:
-                24px;
-
+        .answer-badge {
+            padding: 7px 10px;
+            border-radius: 999px;
+            background: #dff3f0;
+            color: #087467;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
         }
 
-
-        #aiAnswer p {
-
-            line-height:
-                1.75;
-
-            margin:
-                0 0 14px;
-
+        .answer-body {
+            padding: 22px;
+            line-height: 1.75;
         }
 
-
-        .answer-key-points {
-
-            margin-top:
-                20px;
-
-            padding:
-                17px;
-
-            border-radius:
-                14px;
-
-            background:
-                #f2f8fb;
-
+        .answer-body h3 {
+            color: #062b49;
+            margin: 22px 0 8px;
         }
 
-
-        .answer-key-points h4 {
-
-            margin:
-                0 0 10px;
-
-            color:
-                var(--navy);
-
+        .answer-body p {
+            margin: 0 0 13px;
         }
 
-
-        .answer-key-points li {
-
-            margin-bottom:
-                8px;
-
-            line-height:
-                1.6;
-
+        .answer-body ul {
+            margin-top: 8px;
+            padding-left: 23px;
         }
 
-
-        .answer-test-action {
-
-            margin-top:
-                20px;
-
+        .answer-actions {
+            display: flex;
+            gap: 9px;
+            flex-wrap: wrap;
+            padding: 0 22px 20px;
         }
 
-
-        .section-grid {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap:
-                20px;
-
+        .small-button {
+            border: 1px solid #d6e5eb;
+            background: white;
+            color: #0a6073;
+            border-radius: 10px;
+            padding: 9px 13px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
         }
 
-
-        .source-card,
-        .web-result-card,
-        .ai-image-card {
-
-            padding:
-                17px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                14px;
-
-            background:
-                white;
-
+        .small-button:hover {
+            background: #f2f8fa;
         }
-
-
-        .source-card + .source-card,
-        .web-result-card + .web-result-card {
-
-            margin-top:
-                12px;
-
-        }
-
-
-        .source-card-type {
-
-            color:
-                var(--blue);
-
-            font-size:
-                11px;
-
-            font-weight:
-                800;
-
-            text-transform:
-                uppercase;
-
-            letter-spacing:
-                .06em;
-
-        }
-
-
-        .source-card h4,
-        .web-result-card h4 {
-
-            margin:
-                6px 0 8px;
-
-            color:
-                var(--navy);
-
-        }
-
-
-        .source-meta {
-
-            margin-bottom:
-                9px;
-
-            color:
-                var(--muted);
-
-            font-size:
-                13px;
-
-        }
-
-
-        .source-card p,
-        .web-result-card p {
-
-            margin:
-                0 0 12px;
-
-            color:
-                #4c6170;
-
-            line-height:
-                1.6;
-
-        }
-
-
-        .source-card a,
-        .web-result-card a,
-        .google-search-link a,
-        .ai-image-card a {
-
-            color:
-                var(--blue);
-
-            font-weight:
-                800;
-
-            text-decoration:
-                none;
-
-        }
-
-
-        .web-direct-answer {
-
-            margin-bottom:
-                20px;
-
-            padding:
-                18px;
-
-            border-radius:
-                14px;
-
-            background:
-                #f5fbfd;
-
-            border:
-                1px solid
-                #d7edf2;
-
-        }
-
-
-        .web-direct-answer h3 {
-
-            margin:
-                0 0 10px;
-
-            color:
-                var(--navy);
-
-        }
-
-
-        .web-direct-answer p {
-
-            margin:
-                0 0 10px;
-
-            line-height:
-                1.65;
-
-        }
-
-
-        .image-grid {
-
-            display:
-                grid;
-
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-
-            gap:
-                12px;
-
-        }
-
 
         .ai-image-card {
-
-            margin:
-                0;
-
+            margin-top: 20px;
+            border:
+                1px solid #dfecef;
+            border-radius: 18px;
+            overflow: hidden;
+            background: #f8fbfc;
         }
-
 
         .ai-image-card img {
-
-            width:
-                100%;
-
-            aspect-ratio:
-                16 / 10;
-
-            object-fit:
-                cover;
-
-            display:
-                block;
-
-            border-radius:
-                10px;
-
-            background:
-                #eef4f7;
-
+            display: block;
+            width: 100%;
+            max-height: 480px;
+            object-fit: contain;
+            background: #edf4f7;
         }
 
-
-        .ai-image-card figcaption {
-
-            margin:
-                8px 0;
-
-            color:
-                var(--text);
-
-            font-size:
-                13px;
-
-            line-height:
-                1.4;
-
+        .ai-image-caption {
+            padding: 12px 15px;
+            font-size: 12px;
+            color: #647785;
         }
 
-
-        .google-search-link {
-
-            margin-top:
-                16px;
-
+        .ai-image-caption strong {
+            color: #24485f;
         }
 
-
-        .loading-state,
-        .empty-state {
-
-            padding:
-                25px;
-
-            text-align:
-                center;
-
-            border:
-                1px dashed
-                var(--border);
-
-            border-radius:
-                14px;
-
-            color:
-                var(--muted);
-
-            background:
-                #fafcfd;
-
-        }
-
-
-        .error-state {
-
-            color:
-                var(--danger);
-
-            border-color:
-                #efc5c1;
-
-            background:
-                #fff8f7;
-
-        }
-
-
-        .test-grid {
-
-            display:
-                grid;
-
+        .evidence-grid {
+            display: grid;
             grid-template-columns:
-                1fr auto;
-
-            gap:
-                12px;
-
-            align-items:
-                end;
-
+                repeat(2, minmax(0, 1fr));
+            gap: 15px;
+            margin-top: 22px;
         }
 
-
-        .field {
-
-            display:
-                flex;
-
-            flex-direction:
-                column;
-
-            gap:
-                7px;
-
-        }
-
-
-        .field label {
-
-            font-weight:
-                800;
-
-            color:
-                var(--navy);
-
-        }
-
-
-        .field input,
-        .field select {
-
-            min-height:
-                45px;
-
-            padding:
-                10px 12px;
-
+        .evidence-card {
             border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                10px;
-
-            outline:
-                none;
-
+                1px solid #e0ebf0;
+            border-radius: 17px;
+            padding: 16px;
+            background: #fbfdfe;
         }
 
-
-        #testPanel {
-
-            margin-top:
-                25px;
-
+        .evidence-card h3 {
+            margin: 0 0 9px;
+            color: #062b49;
+            font-size: 15px;
         }
 
-
-        #testPanel[hidden] {
-
-            display:
-                none;
-
+        .evidence-card p {
+            margin: 0;
+            color: #687b8a;
+            font-size: 13px;
+            line-height: 1.6;
         }
 
-
-        .test-header {
-
-            display:
-                flex;
-
-            justify-content:
-                space-between;
-
-            align-items:
-                center;
-
-            gap:
-                15px;
-
-            margin-bottom:
-                18px;
-
+        .source-list {
+            display: grid;
+            gap: 9px;
+            margin-top: 10px;
         }
 
-
-        #testProgress {
-
-            color:
-                var(--blue);
-
-            font-weight:
-                800;
-
+        .source-link {
+            display: block;
+            text-decoration: none;
+            color: #086a7e;
+            font-weight: 700;
+            font-size: 13px;
+            padding: 9px 11px;
+            border-radius: 10px;
+            background: #eef7f9;
         }
 
-
-        #testStatus {
-
-            color:
-                var(--muted);
-
-            font-size:
-                14px;
-
+        .source-link:hover {
+            background: #e2f1f4;
         }
 
-
-        #testQuestion {
-
-            padding:
-                20px;
-
-            border-radius:
-                15px;
-
-            background:
-                #f5fafc;
-
+        .web-result {
+            padding: 11px 0;
+            border-bottom:
+                1px solid #e4edf1;
         }
 
-
-        #testQuestion h3 {
-
-            margin:
-                0;
-
-            color:
-                var(--navy);
-
-            line-height:
-                1.55;
-
+        .web-result:last-child {
+            border-bottom: 0;
         }
 
+        .web-result-title {
+            font-weight: 800;
+            color: #062b49;
+        }
+
+        .web-result-url {
+            display: block;
+            margin-top: 3px;
+            font-size: 11px;
+            color: #0b7285;
+            overflow-wrap: anywhere;
+        }
+
+        .web-result-snippet {
+            margin-top: 6px;
+            color: #687b8a;
+            font-size: 13px;
+            line-height: 1.55;
+        }
+
+        .test-panel {
+            margin-top: 22px;
+            padding: 20px;
+            border-radius: 20px;
+            background: #062b49;
+            color: white;
+        }
+
+        .test-panel h2 {
+            margin-top: 0;
+        }
 
         #testOptions {
-
-            display:
-                grid;
-
-            gap:
-                11px;
-
-            margin-top:
-                15px;
-
+            display: grid;
+            gap: 9px;
+            margin-top: 16px;
         }
 
-
-        .quiz-option {
-
-            display:
-                flex;
-
-            align-items:
-                flex-start;
-
-            gap:
-                12px;
-
-            width:
-                100%;
-
-            padding:
-                14px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                12px;
-
-            text-align:
-                left;
-
-            color:
-                var(--text);
-
-            background:
-                white;
-
-            line-height:
-                1.5;
-
+        .test-option {
+            text-align: left;
+            border: 1px solid rgba(255,255,255,.18);
+            background: rgba(255,255,255,.08);
+            color: white;
+            padding: 13px;
+            border-radius: 12px;
+            cursor: pointer;
         }
 
-
-        .quiz-option:hover:not(:disabled) {
-
-            border-color:
-                var(--cyan);
-
-            background:
-                #f4fbfd;
-
+        .test-option:hover {
+            background: rgba(255,255,255,.14);
         }
 
-
-        .quiz-option:disabled {
-
-            cursor:
-                default;
-
+        .test-feedback {
+            margin-top: 15px;
+            padding: 13px;
+            border-radius: 12px;
+            background: rgba(255,255,255,.08);
+            line-height: 1.6;
         }
 
-
-        .quiz-option-key {
-
-            flex:
-                0 0 auto;
-
-            width:
-                30px;
-
-            height:
-                30px;
-
-            display:
-                grid;
-
-            place-items:
-                center;
-
-            border-radius:
-                50%;
-
-            color:
-                white;
-
-            background:
-                var(--navy);
-
-            font-weight:
-                800;
-
+        .hidden {
+            display: none !important;
         }
 
+        @media (max-width: 760px) {
 
-        .quiz-option.correct {
-
-            border-color:
-                #55a77d;
-
-            background:
-                #effaf4;
-
-        }
-
-
-        .quiz-option.correct
-        .quiz-option-key {
-
-            background:
-                var(--success);
-
-        }
-
-
-        .quiz-option.wrong {
-
-            border-color:
-                #d97870;
-
-            background:
-                #fff4f2;
-
-        }
-
-
-        .quiz-option.wrong
-        .quiz-option-key {
-
-            background:
-                var(--danger);
-
-        }
-
-
-        .quiz-feedback {
-
-            margin-top:
-                18px;
-
-            padding:
-                17px;
-
-            border-radius:
-                13px;
-
-            background:
-                #f4f8fb;
-
-            line-height:
-                1.6;
-
-        }
-
-
-        .correct-feedback {
-
-            border-left:
-                5px solid
-                var(--success);
-
-        }
-
-
-        .wrong-feedback {
-
-            border-left:
-                5px solid
-                var(--danger);
-
-        }
-
-
-        .quiz-feedback p {
-
-            margin:
-                8px 0 0;
-
-        }
-
-
-        .test-actions {
-
-            display:
-                flex;
-
-            flex-wrap:
-                wrap;
-
-            gap:
-                10px;
-
-            margin-top:
-                18px;
-
-        }
-
-
-        .secondary-button {
-
-            min-height:
-                44px;
-
-            padding:
-                10px 16px;
-
-            border:
-                1px solid
-                var(--border);
-
-            border-radius:
-                10px;
-
-            color:
-                var(--navy);
-
-            background:
-                white;
-
-            font-weight:
-                800;
-
-        }
-
-
-        .test-score {
-
-            margin:
-                20px 0 5px;
-
-            color:
-                var(--blue);
-
-            font-size:
-                52px;
-
-            font-weight:
-                900;
-
-        }
-
-
-        .footer {
-
-            padding:
-                25px;
-
-            text-align:
-                center;
-
-            color:
-                var(--muted);
-
-            font-size:
-                13px;
-
-        }
-
-
-        @media (
-            max-width: 800px
-        ) {
-
-            .top-header {
-
-                padding:
-                    10px 4%;
-
+            .ai-page {
+                padding: 15px 12px 70px;
             }
 
-
-            .back-button {
-
-                padding:
-                    8px 10px;
-
+            .ai-topbar {
+                align-items: flex-start;
             }
 
-
-            .page {
-
-                width:
-                    94%;
-
-                margin-top:
-                    18px;
-
+            .ai-page-header {
+                padding: 22px;
+                align-items: flex-start;
             }
 
-
-            .hero {
-
-                grid-template-columns:
-                    1fr;
-
+            .ai-page-header h1 {
+                font-size: 27px;
             }
 
-
-            .section-grid {
-
-                grid-template-columns:
-                    1fr;
-
+            .ai-avatar-large {
+                width: 60px;
+                height: 60px;
+                flex-basis: 60px;
+                font-size: 31px;
             }
 
-
-            .test-grid {
-
-                grid-template-columns:
-                    1fr;
-
+            .ai-status {
+                display: none;
             }
 
-
-            .image-grid {
-
-                grid-template-columns:
-                    1fr;
-
+            .ai-input-actions {
+                align-items: stretch;
+                flex-direction: column;
             }
 
-        }
-
-
-        @media (
-            max-width: 520px
-        ) {
-
-            .brand-subtitle {
-
-                display:
-                    none;
-
+            #askAIButton {
+                justify-content: center;
             }
 
-
-            .hero,
-            .section {
-
-                padding:
-                    18px;
-
-            }
-
-
-            .hero-icon {
-
-                width:
-                    60px;
-
-                height:
-                    60px;
-
-                font-size:
-                    32px;
-
+            .evidence-grid {
+                grid-template-columns: 1fr;
             }
 
         }
@@ -1555,528 +658,282 @@
 
 <body>
 
+<div class="ai-page">
 
-<header class="top-header">
+    <div class="ai-topbar">
 
-    <div class="brand-area">
+        <div class="ai-brand">
 
-        <div class="brand-icon">
-            🩺
-        </div>
-
-        <div>
-
-            <div class="brand-name">
-                Mwaniki Scholars
+            <div class="ai-brand-icon">
+                🤖
             </div>
 
-            <div class="brand-subtitle">
-                Medical Learning Platform
+            <div>
+
+                <strong>
+                    Mwaniki Scholars
+                </strong>
+
+                <span>
+                    Medical Intelligence
+                </span>
+
             </div>
 
         </div>
+
+
+        <button
+            type="button"
+            class="back-button"
+            id="backToDashboardButton"
+        >
+            ← Dashboard
+        </button>
 
     </div>
 
 
-    <a
-        href="./dashboard.html"
-        class="back-button"
-    >
-        ← Dashboard
-    </a>
+    <section class="ai-page-header">
 
-</header>
-
-
-
-<main class="page">
-
-
-    <!-- =====================================================
-         HERO
-    ====================================================== -->
-
-    <section class="hero">
-
-        <div class="hero-icon">
+        <div class="ai-avatar-large">
             🤖
         </div>
 
         <div>
+
+            <span class="eyebrow">
+                MWANIKI INTELLIGENCE
+            </span>
 
             <h1>
                 Mwaniki AI
             </h1>
 
             <p>
-                Your medical study partner. Search current web evidence first,
-                compare it with Mwaniki Scholars material, then turn the topic
-                into focused medical practice questions.
+                Web evidence first. Mwaniki Scholars knowledge second.
             </p>
 
         </div>
 
+
+        <span class="ai-status">
+            <i></i>
+            Ready
+        </span>
+
     </section>
 
 
+    <section class="ai-chat-card">
 
-    <!-- =====================================================
-         ASK AI
-    ====================================================== -->
 
-    <section class="section">
+        <div
+            id="aiRecentQuestions"
+            class="ai-recent-questions"
+        >
 
-        <div class="section-heading">
+            <div class="ai-chat-welcome">
 
-            <div>
+                <div class="ai-avatar">
+                    🤖
+                </div>
 
-                <h2>
-                    Ask a Medical Question
-                </h2>
+                <div class="ai-message assistant">
 
-                <p>
-                    Mwaniki AI researches the web first, then checks your Mwaniki
-                    Scholars courses, notes and quiz material.
-                </p>
+                    <strong>
+                        Hello, Scholar 👋
+                    </strong>
+
+                    <p>
+                        Ask a medical question. I will research current
+                        web evidence first, then compare it with Mwaniki
+                        Scholars courses, notes and quizzes.
+                    </p>
+
+                </div>
 
             </div>
 
         </div>
 
 
-        <div class="search-box">
+        <div class="suggested-questions">
 
-            <textarea
-                id="aiQuestion"
-                placeholder="Ask a medical question..."
-                rows="5"
-            ></textarea>
-
-
-            <div class="suggestion-list">
-
-                <button
-                    type="button"
-                    class="suggestion-button"
-                    data-question="Explain the cardiac cycle in simple terms"
-                >
-                    Cardiac cycle
-                </button>
-
-
-                <button
-                    type="button"
-                    class="suggestion-button"
-                    data-question="What are the common causes of anemia?"
-                >
-                    Causes of anemia
-                </button>
-
-
-                <button
-                    type="button"
-                    class="suggestion-button"
-                    data-question="How do beta blockers work?"
-                >
-                    Beta blockers
-                </button>
-
-
-                <button
-                    type="button"
-                    class="suggestion-button"
-                    data-question="Explain the pathophysiology of malaria"
-                >
-                    Malaria
-                </button>
-
-            </div>
+            <span>
+                Try asking:
+            </span>
 
 
             <button
                 type="button"
+                class="suggestion-button"
+                data-question="What is the heart and what are its main functions?"
+            >
+                What is the heart?
+            </button>
+
+
+            <button
+                type="button"
+                class="suggestion-button"
+                data-question="Explain the cardiac cycle in simple terms."
+            >
+                Cardiac cycle
+            </button>
+
+
+            <button
+                type="button"
+                class="suggestion-button"
+                data-question="What are the major causes of anemia?"
+            >
+                Causes of anemia
+            </button>
+
+
+            <button
+                type="button"
+                class="suggestion-button"
+                data-question="Explain the mechanism of action of beta blockers."
+            >
+                Beta blockers
+            </button>
+
+        </div>
+
+
+        <textarea
+            id="aiQuestion"
+            class="ai-input"
+            placeholder="Ask Mwaniki AI a medical question..."
+        ></textarea>
+
+
+        <div class="ai-input-actions">
+
+            <span class="ai-hint">
+                Mwaniki AI • Web evidence + Mwaniki Scholars
+            </span>
+
+            <button
                 id="askAIButton"
-                class="primary-button"
+                type="button"
             >
-                🤖 Ask AI Tutor
+                <span>
+                    Ask Mwaniki AI
+                </span>
+
+                <span>
+                    ➤
+                </span>
+
             </button>
-
-
-            <div id="aiSearchStatus">
-                Search the web first, then compare the evidence with Mwaniki Scholars material.
-            </div>
-
-
-            <div id="aiStatus"></div>
 
         </div>
 
-    </section>
+
+        <div
+            id="aiSearchStatus"
+            class="hidden"
+        ></div>
 
 
+        <div
+            id="aiStatus"
+            class="hidden"
+        ></div>
 
-    <!-- =====================================================
-         MAIN ANSWER
-    ====================================================== -->
 
-    <section class="section">
+        <div
+            id="aiAnswer"
+            class="answer-shell"
+        ></div>
 
-        <div class="section-heading">
+
+        <div
+            id="testPanel"
+            class="test-panel hidden"
+        >
 
             <div>
 
+                <span class="eyebrow">
+                    SMART TEST
+                </span>
+
                 <h2>
-                    Medical Answer
+                    Medical Knowledge Test
                 </h2>
 
-                <p>
-                    Evidence-based information gathered for your question.
-                </p>
-
             </div>
 
 
-            <strong id="mwanikiResultCount">
-                0 sources
-            </strong>
+            <div id="testProgress"></div>
 
-        </div>
+            <div id="testStatus"></div>
 
+            <div id="testQuestion"></div>
 
-        <div class="answer-card">
+            <div id="testOptions"></div>
 
-            <div id="aiAnswer">
-
-                <div class="empty-state">
-                    Ask a medical question to begin.
-                </div>
-
-            </div>
+            <div
+                id="testFeedback"
+                class="test-feedback"
+            ></div>
 
 
-            <div class="test-actions">
+            <div
+                style="
+                    display:flex;
+                    gap:8px;
+                    flex-wrap:wrap;
+                    margin-top:15px;
+                "
+            >
 
                 <button
+                    id="testNext"
                     type="button"
-                    id="readMainAnswerButton"
-                    class="secondary-button"
+                    class="small-button"
                 >
-                    🔊 Read Answer
+                    Next Question
                 </button>
 
 
                 <button
+                    id="testExit"
                     type="button"
-                    id="stopMainAudioButton"
-                    class="secondary-button"
+                    class="small-button"
                 >
-                    ⏹ Stop
+                    Exit Test
                 </button>
 
             </div>
 
         </div>
 
-    </section>
+
+        <div
+            id="mwanikiSources"
+            class="hidden"
+        ></div>
 
 
-
-    <!-- =====================================================
-         TEST PANEL
-    ====================================================== -->
-
-    <section
-        class="section"
-        id="testPanel"
-        hidden
-    >
-
-        <div class="test-header">
-
-            <div>
-
-                <h2>
-                    Medical Test
-                </h2>
-
-                <div id="testProgress">
-                    Question 0
-                </div>
-
-            </div>
+        <div
+            id="aiImages"
+            class="hidden"
+        ></div>
 
 
-            <div id="testStatus">
-                Preparing...
-            </div>
-
-        </div>
-
-
-        <div id="testQuestion">
-        </div>
-
-
-        <div id="testOptions">
-        </div>
-
-
-        <div id="testFeedback">
-        </div>
-
-
-        <div class="test-actions">
-
-            <button
-                type="button"
-                id="testNext"
-                class="primary-button"
-                style="display:none;"
-            >
-                Next Question
-            </button>
-
-
-            <button
-                type="button"
-                id="readAnswerButton"
-                class="secondary-button"
-            >
-                🔊 Read Question
-            </button>
-
-
-            <button
-                type="button"
-                id="stopAudioButton"
-                class="secondary-button"
-            >
-                ⏹ Stop Audio
-            </button>
-
-
-            <button
-                type="button"
-                id="testExit"
-                class="secondary-button"
-            >
-                Exit Test
-            </button>
-
-        </div>
+        <div
+            id="webResults"
+            class="hidden"
+        ></div>
 
     </section>
 
-
-
-    <!-- =====================================================
-         SOURCES + IMAGES
-    ====================================================== -->
-
-    <div class="section-grid">
-
-
-        <section class="section">
-
-            <div class="section-heading">
-
-                <div>
-
-                    <h2>
-                        Mwaniki Sources
-                    </h2>
-
-                    <p>
-                        Relevant material found inside Mwaniki Scholars.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div id="mwanikiSources">
-
-                <div class="empty-state">
-                    Relevant Mwaniki sources will appear here.
-                </div>
-
-            </div>
-
-        </section>
-
-
-
-        <section class="section">
-
-            <div class="section-heading">
-
-                <div>
-
-                    <h2>
-                        Medical Visuals
-                    </h2>
-
-                    <p>
-                        Direct images returned by the configured image provider.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div id="aiImages">
-
-                <div class="empty-state">
-                    Medical images will appear here when available.
-                </div>
-
-            </div>
-
-        </section>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         WEB RESULTS
-    ====================================================== -->
-
-    <section class="section">
-
-        <div class="section-heading">
-
-            <div>
-
-                <h2>
-                    Web Evidence
-                </h2>
-
-                <p>
-                    Search results used to research the medical question.
-                </p>
-
-            </div>
-
-
-            <strong id="webResultCount">
-                0 results
-            </strong>
-
-        </div>
-
-
-        <div id="webResults">
-
-            <div class="empty-state">
-                Web evidence will appear here.
-            </div>
-
-        </div>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         GENERATE TEST
-    ====================================================== -->
-
-    <section class="section">
-
-        <div class="section-heading">
-
-            <div>
-
-                <h2>
-                    Generate a Medical Test
-                </h2>
-
-                <p>
-                    Questions can use verified Mwaniki or researched web evidence.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="test-grid">
-
-
-            <div class="field">
-
-                <label for="testTopic">
-                    Test Topic
-                </label>
-
-                <input
-                    id="testTopic"
-                    type="text"
-                    placeholder="e.g. cardiac cycle"
-                >
-
-            </div>
-
-
-            <div class="field">
-
-                <label for="testLength">
-                    Questions
-                </label>
-
-                <select id="testLength">
-
-                    <option value="10">
-                        10
-                    </option>
-
-                    <option value="15">
-                        15
-                    </option>
-
-                    <option value="20">
-                        20
-                    </option>
-
-                </select>
-
-            </div>
-
-        </div>
-
-
-        <div style="margin-top:15px;">
-
-            <button
-                type="button"
-                id="startTestButton"
-                class="primary-button"
-            >
-                📝 Start Medical Test
-            </button>
-
-        </div>
-
-    </section>
-
-
-</main>
-
-
-
-<footer class="footer">
-
-    © 2026 Mwaniki Scholars
-    • Medical Learning
-    • Knowledge
-    • Excellence
-
-</footer>
-
+</div>
 
 
 <script
@@ -2084,8 +941,7 @@
     src="./aiTutor.js"
 ></script>
 
-
 </body>
 
 </html>
-
+```
