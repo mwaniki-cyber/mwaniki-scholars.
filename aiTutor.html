@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="en">
 
@@ -31,636 +31,29 @@
         href="./favicon.svg"
     >
 
-    <style>
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
-        body {
-            margin: 0;
-            font-family:
-                "Segoe UI",
-                Arial,
-                Helvetica,
-                sans-serif;
-            background:
-                linear-gradient(
-                    180deg,
-                    #f4f9fc 0%,
-                    #eef6fb 100%
-                );
-            color: #17324d;
-        }
-
-        button,
-        textarea,
-        input {
-            font: inherit;
-        }
-
-        .ai-page {
-            width: 100%;
-            max-width: 1180px;
-            margin: 0 auto;
-            padding: 28px 20px 80px;
-        }
-
-        .ai-topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 18px;
-            margin-bottom: 24px;
-        }
-
-        .ai-brand {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
-
-        .ai-brand-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 15px;
-            display: grid;
-            place-items: center;
-            background:
-                linear-gradient(
-                    135deg,
-                    #062b49,
-                    #0b7285
-                );
-            color: white;
-            font-size: 24px;
-            box-shadow:
-                0 10px 25px
-                rgba(6,43,73,.18);
-        }
-
-        .ai-brand strong {
-            display: block;
-            font-size: 18px;
-            color: #062b49;
-        }
-
-        .ai-brand span {
-            display: block;
-            margin-top: 2px;
-            color: #6b7d8e;
-            font-size: 13px;
-        }
-
-        .back-button {
-            border: 0;
-            background: white;
-            color: #062b49;
-            border-radius: 12px;
-            padding: 11px 16px;
-            cursor: pointer;
-            font-weight: 700;
-            box-shadow:
-                0 5px 18px
-                rgba(15,45,70,.08);
-        }
-
-        .back-button:hover {
-            transform: translateY(-1px);
-        }
-
-        .ai-page-header {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 18px;
-            background:
-                linear-gradient(
-                    135deg,
-                    #062b49,
-                    #0b7285
-                );
-            color: white;
-            padding: 30px;
-            border-radius: 24px;
-            box-shadow:
-                0 18px 45px
-                rgba(6,43,73,.20);
-            overflow: hidden;
-        }
-
-        .ai-page-header::after {
-            content: "";
-            position: absolute;
-            width: 240px;
-            height: 240px;
-            right: -90px;
-            top: -100px;
-            border-radius: 50%;
-            background:
-                rgba(255,255,255,.08);
-        }
-
-        .ai-avatar-large {
-            width: 76px;
-            height: 76px;
-            flex: 0 0 76px;
-            border-radius: 24px;
-            display: grid;
-            place-items: center;
-            background:
-                rgba(255,255,255,.15);
-            font-size: 40px;
-        }
-
-        .eyebrow {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 800;
-            letter-spacing: 1.5px;
-            opacity: .78;
-        }
-
-        .ai-page-header h1 {
-            margin: 5px 0 4px;
-            font-size: 34px;
-        }
-
-        .ai-page-header p {
-            margin: 0;
-            opacity: .86;
-        }
-
-        .ai-status {
-            margin-left: auto;
-            position: relative;
-            z-index: 2;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 9px 13px;
-            border-radius: 999px;
-            background: rgba(255,255,255,.13);
-            font-size: 13px;
-            white-space: nowrap;
-        }
-
-        .ai-status i {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #65e6a1;
-            box-shadow:
-                0 0 0 5px
-                rgba(101,230,161,.13);
-        }
-
-        .ai-chat-card {
-            margin-top: 22px;
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow:
-                0 12px 35px
-                rgba(15,45,70,.08);
-            border: 1px solid #e2edf3;
-        }
-
-        .ai-recent-questions {
-            min-height: 70px;
-        }
-
-        .ai-chat-welcome {
-            display: flex;
-            gap: 13px;
-            align-items: flex-start;
-        }
-
-        .ai-avatar {
-            width: 42px;
-            height: 42px;
-            flex: 0 0 42px;
-            display: grid;
-            place-items: center;
-            background: #eaf5f8;
-            border-radius: 14px;
-            font-size: 22px;
-        }
-
-        .ai-message {
-            background: #f5f9fb;
-            border-radius: 16px;
-            padding: 14px 16px;
-            line-height: 1.6;
-        }
-
-        .ai-message strong {
-            color: #062b49;
-        }
-
-        .ai-message p {
-            margin: 5px 0 0;
-            color: #5e7182;
-        }
-
-        .suggested-questions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin: 20px 0;
-        }
-
-        .suggested-questions > span {
-            color: #718293;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .suggestion-button {
-            border: 1px solid #d8e7ed;
-            background: #f7fbfc;
-            color: #0b6477;
-            border-radius: 999px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .suggestion-button:hover {
-            background: #eaf5f8;
-        }
-
-        .ai-input {
-            width: 100%;
-            min-height: 125px;
-            resize: vertical;
-            border:
-                1px solid #d7e4eb;
-            border-radius: 16px;
-            padding: 16px;
-            outline: none;
-            background: #fbfdfe;
-            color: #17324d;
-            line-height: 1.6;
-        }
-
-        .ai-input:focus {
-            border-color: #0b7285;
-            box-shadow:
-                0 0 0 4px
-                rgba(11,114,133,.09);
-        }
-
-        .ai-input-actions {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            margin-top: 12px;
-        }
-
-        .ai-hint {
-            color: #778896;
-            font-size: 12px;
-        }
-
-        #askAIButton {
-            border: 0;
-            border-radius: 13px;
-            padding: 13px 19px;
-            background:
-                linear-gradient(
-                    135deg,
-                    #062b49,
-                    #0b7285
-                );
-            color: white;
-            cursor: pointer;
-            font-weight: 800;
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        #askAIButton:hover {
-            transform: translateY(-1px);
-        }
-
-        #askAIButton:disabled {
-            opacity: .65;
-            cursor: wait;
-        }
-
-        #aiSearchStatus,
-        #aiStatus {
-            margin-top: 14px;
-        }
-
-        .status-line {
-            padding: 12px 14px;
-            border-radius: 12px;
-            background: #f4f8fa;
-            color: #617383;
-            font-size: 13px;
-        }
-
-        .answer-shell {
-            margin-top: 22px;
-        }
-
-        .answer-card {
-            border:
-                1px solid #dfecef;
-            border-radius: 20px;
-            overflow: hidden;
-            background: white;
-        }
-
-        .answer-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            padding: 18px 20px;
-            background:
-                linear-gradient(
-                    135deg,
-                    #f2f9fb,
-                    #eef7fb
-                );
-            border-bottom:
-                1px solid #e0edf1;
-        }
-
-        .answer-header h2 {
-            margin: 0;
-            font-size: 20px;
-            color: #062b49;
-        }
-
-        .answer-badge {
-            padding: 7px 10px;
-            border-radius: 999px;
-            background: #dff3f0;
-            color: #087467;
-            font-size: 11px;
-            font-weight: 800;
-            text-transform: uppercase;
-        }
-
-        .answer-body {
-            padding: 22px;
-            line-height: 1.75;
-        }
-
-        .answer-body h3 {
-            color: #062b49;
-            margin: 22px 0 8px;
-        }
-
-        .answer-body p {
-            margin: 0 0 13px;
-        }
-
-        .answer-body ul {
-            margin-top: 8px;
-            padding-left: 23px;
-        }
-
-        .answer-actions {
-            display: flex;
-            gap: 9px;
-            flex-wrap: wrap;
-            padding: 0 22px 20px;
-        }
-
-        .small-button {
-            border: 1px solid #d6e5eb;
-            background: white;
-            color: #0a6073;
-            border-radius: 10px;
-            padding: 9px 13px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 13px;
-        }
-
-        .small-button:hover {
-            background: #f2f8fa;
-        }
-
-        .ai-image-card {
-            margin-top: 20px;
-            border:
-                1px solid #dfecef;
-            border-radius: 18px;
-            overflow: hidden;
-            background: #f8fbfc;
-        }
-
-        .ai-image-card img {
-            display: block;
-            width: 100%;
-            max-height: 480px;
-            object-fit: contain;
-            background: #edf4f7;
-        }
-
-        .ai-image-caption {
-            padding: 12px 15px;
-            font-size: 12px;
-            color: #647785;
-        }
-
-        .ai-image-caption strong {
-            color: #24485f;
-        }
-
-        .evidence-grid {
-            display: grid;
-            grid-template-columns:
-                repeat(2, minmax(0, 1fr));
-            gap: 15px;
-            margin-top: 22px;
-        }
-
-        .evidence-card {
-            border:
-                1px solid #e0ebf0;
-            border-radius: 17px;
-            padding: 16px;
-            background: #fbfdfe;
-        }
-
-        .evidence-card h3 {
-            margin: 0 0 9px;
-            color: #062b49;
-            font-size: 15px;
-        }
-
-        .evidence-card p {
-            margin: 0;
-            color: #687b8a;
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .source-list {
-            display: grid;
-            gap: 9px;
-            margin-top: 10px;
-        }
-
-        .source-link {
-            display: block;
-            text-decoration: none;
-            color: #086a7e;
-            font-weight: 700;
-            font-size: 13px;
-            padding: 9px 11px;
-            border-radius: 10px;
-            background: #eef7f9;
-        }
-
-        .source-link:hover {
-            background: #e2f1f4;
-        }
-
-        .web-result {
-            padding: 11px 0;
-            border-bottom:
-                1px solid #e4edf1;
-        }
-
-        .web-result:last-child {
-            border-bottom: 0;
-        }
-
-        .web-result-title {
-            font-weight: 800;
-            color: #062b49;
-        }
-
-        .web-result-url {
-            display: block;
-            margin-top: 3px;
-            font-size: 11px;
-            color: #0b7285;
-            overflow-wrap: anywhere;
-        }
-
-        .web-result-snippet {
-            margin-top: 6px;
-            color: #687b8a;
-            font-size: 13px;
-            line-height: 1.55;
-        }
-
-        .test-panel {
-            margin-top: 22px;
-            padding: 20px;
-            border-radius: 20px;
-            background: #062b49;
-            color: white;
-        }
-
-        .test-panel h2 {
-            margin-top: 0;
-        }
-
-        #testOptions {
-            display: grid;
-            gap: 9px;
-            margin-top: 16px;
-        }
-
-        .test-option {
-            text-align: left;
-            border: 1px solid rgba(255,255,255,.18);
-            background: rgba(255,255,255,.08);
-            color: white;
-            padding: 13px;
-            border-radius: 12px;
-            cursor: pointer;
-        }
-
-        .test-option:hover {
-            background: rgba(255,255,255,.14);
-        }
-
-        .test-feedback {
-            margin-top: 15px;
-            padding: 13px;
-            border-radius: 12px;
-            background: rgba(255,255,255,.08);
-            line-height: 1.6;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        @media (max-width: 760px) {
-
-            .ai-page {
-                padding: 15px 12px 70px;
-            }
-
-            .ai-topbar {
-                align-items: flex-start;
-            }
-
-            .ai-page-header {
-                padding: 22px;
-                align-items: flex-start;
-            }
-
-            .ai-page-header h1 {
-                font-size: 27px;
-            }
-
-            .ai-avatar-large {
-                width: 60px;
-                height: 60px;
-                flex-basis: 60px;
-                font-size: 31px;
-            }
-
-            .ai-status {
-                display: none;
-            }
-
-            .ai-input-actions {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            #askAIButton {
-                justify-content: center;
-            }
-
-            .evidence-grid {
-                grid-template-columns: 1fr;
-            }
-
-        }
-
-    </style>
+    <link
+        rel="stylesheet"
+        href="./aiTutor.css"
+    >
 
 </head>
 
 
 <body>
 
+
+<!-- =========================================================
+     PAGE
+========================================================= -->
+
 <div class="ai-page">
 
-    <div class="ai-topbar">
+
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
+
+    <header class="ai-topbar">
 
         <div class="ai-brand">
 
@@ -685,22 +78,27 @@
 
         <button
             type="button"
-            class="back-button"
             id="backToDashboardButton"
+            class="back-button"
         >
             ← Dashboard
         </button>
 
-    </div>
+    </header>
 
 
-    <section class="ai-page-header">
 
-        <div class="ai-avatar-large">
+    <!-- =====================================================
+         AI HEADER
+    ====================================================== -->
+
+    <section class="ai-hero">
+
+        <div class="ai-hero-avatar">
             🤖
         </div>
 
-        <div>
+        <div class="ai-hero-content">
 
             <span class="eyebrow">
                 MWANIKI INTELLIGENCE
@@ -711,66 +109,65 @@
             </h1>
 
             <p>
-                Web evidence first. Mwaniki Scholars knowledge second.
+                Your medical learning and research companion.
             </p>
 
         </div>
 
 
-        <span class="ai-status">
-            <i></i>
-            Ready
-        </span>
+        <div class="ai-live-status">
+
+            <span class="status-dot"></span>
+
+            <span id="aiLiveStatusText">
+                Ready
+            </span>
+
+        </div>
 
     </section>
 
 
-    <section class="ai-chat-card">
+
+    <!-- =====================================================
+         QUESTION AREA
+    ====================================================== -->
+
+    <section class="question-card">
 
 
-        <div
-            id="aiRecentQuestions"
-            class="ai-recent-questions"
-        >
+        <div class="question-heading">
 
-            <div class="ai-chat-welcome">
+            <div>
 
-                <div class="ai-avatar">
-                    🤖
-                </div>
+                <span class="eyebrow dark">
+                    ASK YOUR QUESTION
+                </span>
 
-                <div class="ai-message assistant">
+                <h2>
+                    What are you studying?
+                </h2>
 
-                    <strong>
-                        Hello, Scholar 👋
-                    </strong>
+            </div>
 
-                    <p>
-                        Ask a medical question. I will research current
-                        web evidence first, then compare it with Mwaniki
-                        Scholars courses, notes and quizzes.
-                    </p>
-
-                </div>
-
+            <div class="question-icon">
+                💡
             </div>
 
         </div>
 
 
-        <div class="suggested-questions">
 
-            <span>
-                Try asking:
-            </span>
+        <!-- SUGGESTIONS -->
 
+        <div class="suggestions-row">
 
             <button
                 type="button"
                 class="suggestion-button"
                 data-question="What is the heart and what are its main functions?"
             >
-                What is the heart?
+                ❤️ Heart
             </button>
 
 
@@ -779,7 +176,7 @@
                 class="suggestion-button"
                 data-question="Explain the cardiac cycle in simple terms."
             >
-                Cardiac cycle
+                🫀 Cardiac Cycle
             </button>
 
 
@@ -788,7 +185,7 @@
                 class="suggestion-button"
                 data-question="What are the major causes of anemia?"
             >
-                Causes of anemia
+                🩸 Anemia
             </button>
 
 
@@ -797,35 +194,43 @@
                 class="suggestion-button"
                 data-question="Explain the mechanism of action of beta blockers."
             >
-                Beta blockers
+                💊 Beta Blockers
             </button>
 
         </div>
+
 
 
         <textarea
             id="aiQuestion"
-            class="ai-input"
+            class="ai-question"
+            rows="4"
             placeholder="Ask Mwaniki AI a medical question..."
+            autocomplete="off"
         ></textarea>
 
 
-        <div class="ai-input-actions">
 
-            <span class="ai-hint">
-                Mwaniki AI • Web evidence + Mwaniki Scholars
+        <div class="question-actions">
+
+            <span class="question-hint">
+                Ask about anatomy, physiology, pathology,
+                microbiology, pharmacology and more.
             </span>
+
 
             <button
                 id="askAIButton"
                 type="button"
+                class="ask-button"
             >
+
                 <span>
-                    Ask Mwaniki AI
+                    🤖 Ask Mwaniki AI
                 </span>
 
                 <span>
-                    ➤
+                    ➜
                 </span>
 
             </button>
@@ -833,28 +238,286 @@
         </div>
 
 
+
         <div
             id="aiSearchStatus"
-            class="hidden"
+            class="status-message hidden"
         ></div>
 
 
         <div
             id="aiStatus"
-            class="hidden"
+            class="status-message hidden"
         ></div>
 
-
-        <div
-            id="aiAnswer"
-            class="answer-shell"
-        ></div>
+    </section>
 
 
-        <div
-            id="testPanel"
-            class="test-panel hidden"
+
+    <!-- =====================================================
+         MAIN INTELLIGENCE WORKSPACE
+====================================================== -->
+
+    <section class="intelligence-workspace">
+
+
+        <!-- =================================================
+             LEFT: RESEARCH
+        ================================================== -->
+
+        <aside class="research-column">
+
+
+            <div class="workspace-heading">
+
+                <div>
+
+                    <span class="eyebrow dark">
+                        RESEARCH
+                    </span>
+
+                    <h2>
+                        Medical Research
+                    </h2>
+
+                </div>
+
+                <div class="workspace-icon">
+                    🔎
+                </div>
+
+            </div>
+
+
+
+            <!-- GOOGLE SEARCH -->
+
+            <div class="research-card">
+
+                <div class="research-card-header">
+
+                    <div>
+
+                        <span class="research-icon">
+                            🔎
+                        </span>
+
+                        <strong>
+                            Google Search
+                        </strong>
+
+                    </div>
+
+
+                    <a
+                        id="googleSearchLink"
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="research-link hidden"
+                    >
+                        Open Google
+                    </a>
+
+                </div>
+
+
+                <div id="webResults">
+
+                    <div class="research-empty">
+
+                        <span>
+                            🔎
+                        </span>
+
+                        <p>
+                            Web research results will appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- GOOGLE IMAGES -->
+
+            <div class="research-card">
+
+                <div class="research-card-header">
+
+                    <div>
+
+                        <span class="research-icon">
+                            🖼️
+                        </span>
+
+                        <strong>
+                            Google Images
+                        </strong>
+
+                    </div>
+
+
+                    <a
+                        id="googleImagesLink"
+                        href="#"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="research-link hidden"
+                    >
+                        View Images
+                    </a>
+
+                </div>
+
+
+                <div id="aiImages">
+
+                    <div class="research-empty">
+
+                        <span>
+                            🖼️
+                        </span>
+
+                        <p>
+                            Relevant medical images will appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- =================================================
+             RIGHT: MWANIKI AI
+        ================================================== -->
+
+        <main class="ai-answer-column">
+
+
+            <div class="workspace-heading">
+
+                <div>
+
+                    <span class="eyebrow dark">
+                        MWANIKI AI
+                    </span>
+
+                    <h2>
+                        Intelligent Answer
+                    </h2>
+
+                </div>
+
+                <div class="workspace-ai-icon">
+                    🤖
+                </div>
+
+            </div>
+
+
+
+            <div
+                id="aiAnswer"
+                class="ai-answer-card"
+            >
+
+                <div class="answer-welcome">
+
+                    <div class="answer-avatar">
+                        🤖
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            Hello, Scholar
+                        </h3>
+
+                        <p>
+                            Ask a medical question and your
+                            synthesized answer will appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- INTERNAL SOURCE CONTAINER
+                 KEPT HIDDEN INTENTIONALLY -->
+
+            <div
+                id="mwanikiSources"
+                class="hidden"
+                aria-hidden="true"
+            ></div>
+
+        </main>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         ANSWER CONTROLS
+    ====================================================== -->
+
+    <section class="answer-control-bar">
+
+
+        <button
+            id="readAnswerButton"
+            type="button"
+            class="control-button read-button"
         >
+            🔊 Read Answer
+        </button>
+
+
+        <button
+            id="stopAudioButton"
+            type="button"
+            class="control-button stop-button"
+        >
+            ⏹ Stop Audio
+        </button>
+
+
+        <button
+            id="startTestButton"
+            type="button"
+            class="control-button test-button"
+        >
+            🧠 Test Me
+        </button>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         SMART TEST
+    ====================================================== -->
+
+    <section
+        id="testPanel"
+        class="test-panel hidden"
+    >
+
+
+        <div class="test-header">
 
             <div>
 
@@ -866,82 +529,162 @@
                     Medical Knowledge Test
                 </h2>
 
+                <p>
+                    Test your understanding of the topic.
+                </p>
+
             </div>
 
 
-            <div id="testProgress"></div>
+            <div class="test-brain">
+                🧠
+            </div>
 
-            <div id="testStatus"></div>
+        </div>
 
-            <div id="testQuestion"></div>
 
-            <div id="testOptions"></div>
+
+        <!-- PROGRESS -->
+
+        <div
+            id="testProgress"
+            class="test-progress"
+        >
+            Question 1
+        </div>
+
+
+
+        <!-- STATUS -->
+
+        <div
+            id="testStatus"
+            class="test-status"
+        ></div>
+
+
+
+        <!-- QUESTION -->
+
+        <div
+            id="testQuestion"
+            class="test-question"
+        ></div>
+
+
+
+        <!-- OPTIONS -->
+
+        <div
+            id="testOptions"
+            class="test-options"
+        ></div>
+
+
+
+        <!-- CARTOON FEEDBACK -->
+
+        <div
+            id="testFeedback"
+            class="test-feedback hidden"
+        >
 
             <div
-                id="testFeedback"
-                class="test-feedback"
-            ></div>
-
-
-            <div
-                style="
-                    display:flex;
-                    gap:8px;
-                    flex-wrap:wrap;
-                    margin-top:15px;
-                "
+                id="testFeedbackCharacter"
+                class="feedback-character"
             >
+                🤖
+            </div>
 
-                <button
-                    id="testNext"
-                    type="button"
-                    class="small-button"
+            <div>
+
+                <strong
+                    id="testFeedbackTitle"
                 >
-                    Next Question
-                </button>
+                    Feedback
+                </strong>
 
-
-                <button
-                    id="testExit"
-                    type="button"
-                    class="small-button"
-                >
-                    Exit Test
-                </button>
+                <p
+                    id="testFeedbackText"
+                ></p>
 
             </div>
 
         </div>
 
 
-        <div
-            id="mwanikiSources"
-            class="hidden"
-        ></div>
+
+        <!-- TEST CONTROLS -->
+
+        <div class="test-controls">
 
 
-        <div
-            id="aiImages"
-            class="hidden"
-        ></div>
+            <button
+                id="testNext"
+                type="button"
+                class="test-next-button"
+            >
+                Next Question →
+            </button>
 
 
-        <div
-            id="webResults"
-            class="hidden"
-        ></div>
+            <button
+                id="testExit"
+                type="button"
+                class="test-exit-button"
+            >
+                Exit Test
+            </button>
+
+        </div>
 
     </section>
 
+
+
+    <!-- =====================================================
+         RECENT QUESTIONS
+    ====================================================== -->
+
+    <section
+        id="aiRecentQuestions"
+        class="recent-questions hidden"
+    ></section>
+
+
+
+    <!-- =====================================================
+         FOOTER
+    ====================================================== -->
+
+    <footer class="ai-footer">
+
+        <strong>
+            Mwaniki Scholars
+        </strong>
+
+        <span>
+            Medical Learning • Intelligence • Excellence
+        </span>
+
+    </footer>
+
+
 </div>
 
+
+
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
 
 <script
     type="module"
     src="./aiTutor.js"
 ></script>
 
+
 </body>
 
 </html>
-
+```
