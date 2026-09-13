@@ -1,1232 +1,1260 @@
 import { supabase } from "./supabase.js";
 
-// ============================================================
+
+// =========================================================
 // MWANIKI SCHOLARS
-// MWANIKI AI SEARCH ENGINE
-// ============================================================
-//
-// IMPORTANT:
-//
-// Recommended questions are ONLY shortcuts.
-// Users can type ANY question.
-//
-// Search flow:
-//
-// 1. Mwaniki Scholars database
-// 2. Optional public web search
-// 3. Optional public image search
-// 4. Google fallback when provider is unavailable
-//
-// ============================================================
+// AI TUTOR / ANSWER ENGINE / TEST ENGINE
+// =========================================================
+
+console.log(
+    "🚀 Mwaniki AI interface loading..."
+);
 
 
-let searchInProgress = false;
+// =========================================================
+// DOM
+// =========================================================
+
+const questionInput =
+    document.getElementById("aiQuestion");
+
+const askButton =
+    document.getElementById("askAIButton");
+
+const aiStatus =
+    document.getElementById("aiStatus");
+
+const searchStatus =
+    document.getElementById("aiSearchStatus");
+
+const answerArea =
+    document.getElementById("aiAnswer");
+
+const webResultsArea =
+    document.getElementById("webResults");
+
+const imageResultsArea =
+    document.getElementById("aiImages");
+
+const webResultCount =
+    document.getElementById("webResultCount");
+
+const testBody =
+    document.getElementById("testBody");
+
+const testProgress =
+    document.getElementById("testProgress");
+
+const startTestButton =
+    document.getElementById("startTestButton");
 
 
-// ============================================================
-// ELEMENT HELPERS
-// ============================================================
+// =========================================================
+// STATE
+// =========================================================
 
-function getQuestionInput() {
+let lastSearchData = null;
 
-    return (
-        document.getElementById("aiQuestion") ||
-        document.getElementById("aiInput") ||
-        document.getElementById("studentQuestion") ||
-        document.getElementById("tutorQuestion") ||
-        document.getElementById("aiTutorQuestion")
-    );
+let currentTest = null;
 
+let testIndex = 0;
+
+let testScore = 0;
+
+let testLocked = false;
+
+
+// =========================================================
+// HTML SAFETY
+// =========================================================
+
+function escapeHTML(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 
-function getAskButton() {
+function safeURL(value) {
 
-    return (
-        document.getElementById("askAIButton") ||
-        document.querySelector(
-            '[onclick="askAI()"]'
-        )
-    );
+    try {
 
-}
-
-
-function getAnswerBox() {
-
-    return document.getElementById(
-        "aiAnswer"
-    );
-
-}
-
-
-function getStatusBox() {
-
-    return document.getElementById(
-        "aiSearchStatus"
-    );
-
-}
-
-
-function getSourcesArea() {
-
-    return document.getElementById(
-        "aiSources"
-    );
-
-}
-
-
-function getImagesArea() {
-
-    return document.getElementById(
-        "aiImages"
-    );
-
-}
-
-
-function getMainStatus() {
-
-    return document.getElementById(
-        "aiStatus"
-    );
-
-}
-
-
-// ============================================================
-// ESCAPE HTML
-// ============================================================
-
-function escapeHTML(
-    value
-) {
-
-    const div =
-        document.createElement(
-            "div"
-        );
-
-    div.textContent =
-        String(
-            value ?? ""
-        );
-
-    return div.innerHTML;
-
-}
-
-
-// ============================================================
-// CLEAR RESULTS
-// ============================================================
-
-function clearResults() {
-
-    const answerBox =
-        getAnswerBox();
-
-    const sourcesArea =
-        getSourcesArea();
-
-    const imagesArea =
-        getImagesArea();
-
-
-    if (
-        answerBox
-    ) {
-
-        answerBox.innerHTML =
-            "";
-
-    }
-
-
-    if (
-        sourcesArea
-    ) {
-
-        sourcesArea.innerHTML =
-            "";
-
-    }
-
-
-    if (
-        imagesArea
-    ) {
-
-        imagesArea.innerHTML =
-            "";
-
-    }
-
-}
-
-
-// ============================================================
-// STATUS
-// ============================================================
-
-function setSearchStatus(
-    message,
-    type = "normal"
-) {
-
-    const statusBox =
-        getStatusBox();
-
-    if (
-        !statusBox
-    ) {
-
-        return;
-
-    }
-
-
-    statusBox.textContent =
-        message;
-
-
-    statusBox.className =
-        "";
-
-
-    statusBox.classList.add(
-        `search-status-${type}`
-    );
-
-}
-
-
-function clearSearchStatus() {
-
-    const statusBox =
-        getStatusBox();
-
-    if (
-        statusBox
-    ) {
-
-        statusBox.textContent =
-            "";
-
-        statusBox.className =
-            "";
-
-    }
-
-}
-
-
-// ============================================================
-// MAIN STATUS BADGE
-// ============================================================
-
-function setMainStatus(
-    message
-) {
-
-    const status =
-        getMainStatus();
-
-    if (
-        status
-    ) {
-
-        const textNodes =
-            Array.from(
-                status.childNodes
-            )
-            .filter(
-                node =>
-                    node.nodeType ===
-                    Node.TEXT_NODE
-            );
-
+        const url =
+            new URL(String(value || ""));
 
         if (
-            textNodes.length > 0
+            url.protocol === "http:" ||
+            url.protocol === "https:"
         ) {
 
-            textNodes[
-                textNodes.length - 1
-            ].textContent =
-                ` ${message}`;
-
-        } else {
-
-            status.append(
-                document.createTextNode(
-                    ` ${message}`
-                )
-            );
-
+            return url.href;
         }
 
-    }
+    } catch (_) {}
 
+    return "#";
 }
 
 
-// ============================================================
+// =========================================================
+// TEXT CLEANING
+// =========================================================
+
+function cleanText(value) {
+
+    return String(value ?? "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+
+function shortenText(
+    value,
+    maxLength = 420
+) {
+
+    const text =
+        cleanText(value);
+
+    if (
+        text.length <= maxLength
+    ) {
+
+        return text;
+    }
+
+    return (
+        text.slice(0, maxLength)
+        + "…"
+    );
+}
+
+
+// =========================================================
+// STATUS
+// =========================================================
+
+function setStatus(
+    message,
+    busy = false
+) {
+
+    if (!aiStatus) {
+        return;
+    }
+
+    aiStatus.innerHTML = `
+
+        <span
+            class="status-dot"
+            style="
+                background:
+                ${busy ? "#d99a25" : "#1aaa83"};
+            "
+        ></span>
+
+        ${escapeHTML(message)}
+
+    `;
+}
+
+
+function setSearchStatus(message) {
+
+    if (!searchStatus) {
+        return;
+    }
+
+    searchStatus.textContent =
+        message || "";
+}
+
+
+// =========================================================
 // LOADING
-// ============================================================
+// =========================================================
 
-function displayAILoading() {
+function showLoading() {
 
-    const answerBox =
-        getAnswerBox();
+    answerArea.innerHTML = `
 
-    if (
-        !answerBox
-    ) {
+        <div class="loading-state">
 
-        return;
+            <div class="spinner"></div>
 
-    }
+            <strong>
+                Mwaniki AI is searching...
+            </strong>
 
+            <p>
+                Checking Mwaniki Scholars learning
+                material first.
+            </p>
 
-    answerBox.innerHTML = `
-        <div class="ai-loading">
-            <div class="ai-loading-spinner"></div>
-
-            <div>
-                <strong>Searching Mwaniki Scholars...</strong>
-
-                <p>
-                    Checking courses, units, notes and quizzes.
-                </p>
-            </div>
         </div>
+
     `;
 
+    webResultsArea.innerHTML = `
+
+        <div class="loading-state">
+
+            Checking web results...
+
+        </div>
+
+    `;
+
+    imageResultsArea.innerHTML = `
+
+        <div
+            class="loading-state"
+            style="grid-column:1/-1;"
+        >
+
+            Searching visual material...
+
+        </div>
+
+    `;
 }
 
 
-// ============================================================
-// ERROR
-// ============================================================
+// =========================================================
+// INVOKE WITH TIMEOUT
+// =========================================================
 
-function displayAIError(
-    message
+async function invokeWithTimeout(
+    promise,
+    timeoutMs
 ) {
 
-    const answerBox =
-        getAnswerBox();
+    let timeoutId;
 
-    if (
-        !answerBox
-    ) {
+    const timeoutPromise =
+        new Promise(
+            (_, reject) => {
 
-        return;
+                timeoutId =
+                    setTimeout(
+                        () => {
 
+                            reject(
+                                new Error(
+                                    "The search timed out."
+                                )
+                            );
+
+                        },
+                        timeoutMs
+                    );
+
+            }
+        );
+
+    try {
+
+        return await Promise.race([
+            promise,
+            timeoutPromise
+        ]);
+
+    } finally {
+
+        clearTimeout(timeoutId);
     }
-
-
-    answerBox.innerHTML = `
-        <div class="ai-error">
-            <strong>Search could not be completed.</strong>
-
-            <p>
-                ${escapeHTML(message)}
-            </p>
-
-            <p>
-                You can try the search again.
-            </p>
-        </div>
-    `;
-
 }
 
 
-// ============================================================
-// ANSWER
-// ============================================================
+// =========================================================
+// ANSWER RENDERING
+// =========================================================
 
-function displayAIAnswer(
-    answer
-) {
+function renderMwanikiAnswer(data) {
 
-    const answerBox =
-        getAnswerBox();
+    const answer =
+        data?.answer;
 
     if (
-        !answerBox
+        !answer ||
+        !cleanText(
+            typeof answer === "string"
+                ? answer
+                : answer.text
+        )
     ) {
 
-        return;
+        answerArea.innerHTML = `
 
-    }
+            <div class="empty-state">
 
+                Mwaniki Scholars does not currently
+                contain a usable answer for this question.
 
-    if (
-        !answer
-    ) {
+                <br><br>
 
-        answerBox.innerHTML = `
-            <div class="ai-empty">
-                No search summary was returned.
+                The web search has been opened on the
+                right-hand side instead.
+
             </div>
+
         `;
 
         return;
-
     }
 
 
+    const answerText =
+        typeof answer === "string"
+            ? answer
+            : answer.text;
+
+
+    const title =
+        typeof answer === "object"
+            ? answer.title
+            : "Answer";
+
+
+    const sourceLabel =
+        typeof answer === "object"
+            ? answer.sourceLabel
+            : "Mwaniki Scholars";
+
+
     const paragraphs =
-        String(answer)
-            .split(/\n\s*\n/)
+        String(answerText)
+            .split(/\n+/)
             .map(
-                paragraph =>
-                    paragraph.trim()
+                part => cleanText(part)
             )
             .filter(Boolean);
 
 
-    answerBox.innerHTML =
-        paragraphs
-            .map(
-                paragraph => `
-                    <p>
-                        ${escapeHTML(
+    answerArea.innerHTML = `
+
+        <span class="source-badge">
+
+            ${escapeHTML(sourceLabel)}
+
+        </span>
+
+        <h2 class="answer-title">
+
+            ${escapeHTML(
+                title || "Medical Answer"
+            )}
+
+        </h2>
+
+        <p class="answer-subtitle">
+
+            Retrieved from Mwaniki Scholars
+            learning material.
+
+        </p>
+
+        <div class="answer-content">
+
+            ${paragraphs
+                .map(
+                    paragraph =>
+                        `<p>${escapeHTML(
                             paragraph
-                        )}
-                    </p>
-                `
-            )
-            .join("");
+                        )}</p>`
+                )
+                .join("")}
 
-}
-
-
-// ============================================================
-// SOURCE HELPERS
-// ============================================================
-
-function getSourceTitle(
-    source
-) {
-
-    return (
-        source?.title ||
-        source?.name ||
-        source?.file_name ||
-        "Mwaniki Scholars resource"
-    );
-
-}
-
-
-function getSourceURL(
-    source
-) {
-
-    return (
-        source?.url ||
-        source?.file_url ||
-        source?.link ||
-        null
-    );
-
-}
-
-
-function getSourceType(
-    source
-) {
-
-    return (
-        source?.type ||
-        source?.source ||
-        "Resource"
-    );
-
-}
-
-
-// ============================================================
-// SOURCE ELEMENT
-// ============================================================
-
-function createSourceElement(
-    source,
-    isMwaniki = false
-) {
-
-    const wrapper =
-        document.createElement(
-            "div"
-        );
-
-
-    wrapper.className =
-        isMwaniki
-            ? "ai-source mwaniki-source"
-            : "ai-source web-source";
-
-
-    const title =
-        getSourceTitle(
-            source
-        );
-
-
-    const url =
-        getSourceURL(
-            source
-        );
-
-
-    const type =
-        getSourceType(
-            source
-        );
-
-
-    const description =
-        source?.description ||
-        "";
-
-
-    wrapper.innerHTML = `
-        <div class="ai-source-type">
-            ${escapeHTML(type)}
         </div>
 
-        <div class="ai-source-title">
-            ${escapeHTML(title)}
-        </div>
-
-        ${
-            description
-                ? `
-                    <div class="ai-source-description">
-                        ${escapeHTML(
-                            description
-                        )}
-                    </div>
-                `
-                : ""
-        }
-
-        ${
-            url
-                ? `
-                    <a
-                        class="ai-source-link"
-                        href="${escapeHTML(url)}"
-                        ${
-                            String(url)
-                                .startsWith(
-                                    "http"
-                                )
-                                ? `
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                `
-                                : ""
-                        }
-                    >
-                        Open source
-                    </a>
-                `
-                : ""
-        }
     `;
-
-
-    return wrapper;
-
 }
 
 
-// ============================================================
-// DISPLAY SOURCES
-// ============================================================
+// =========================================================
+// WEB RESULTS
+// =========================================================
 
-function displaySources(
-    mwanikiSources = [],
-    webResults = []
+function renderWebResults(
+    data,
+    question
 ) {
 
-    const area =
-        getSourcesArea();
-
-    if (
-        !area
-    ) {
-
-        return;
-
-    }
-
-
-    area.innerHTML =
-        "";
-
-
-    const total =
-        mwanikiSources.length +
-        webResults.length;
-
-
-    if (
-        total === 0
-    ) {
-
-        return;
-
-    }
-
-
-    const heading =
-        document.createElement(
-            "h3"
-        );
-
-
-    heading.textContent =
-        "Sources";
-
-
-    area.appendChild(
-        heading
-    );
-
-
-    if (
-        mwanikiSources.length > 0
-    ) {
-
-        const sectionTitle =
-            document.createElement(
-                "div"
-            );
-
-
-        sectionTitle.className =
-            "ai-source-section-title";
-
-
-        sectionTitle.textContent =
-            "Mwaniki Scholars";
-
-
-        area.appendChild(
-            sectionTitle
-        );
-
-
-        mwanikiSources.forEach(
-            source => {
-
-                area.appendChild(
-                    createSourceElement(
-                        source,
-                        true
-                    )
-                );
-
-            }
-        );
-
-    }
-
-
-    if (
-        webResults.length > 0
-    ) {
-
-        const sectionTitle =
-            document.createElement(
-                "div"
-            );
-
-
-        sectionTitle.className =
-            "ai-source-section-title";
-
-
-        sectionTitle.textContent =
-            "Web results";
-
-
-        area.appendChild(
-            sectionTitle
-        );
-
-
-        webResults.forEach(
-            source => {
-
-                area.appendChild(
-                    createSourceElement(
-                        source,
-                        false
-                    )
-                );
-
-            }
-        );
-
-    }
-
-}
-
-
-// ============================================================
-// IMAGE HELPERS
-// ============================================================
-
-function getImageURL(
-    image
-) {
-
-    return (
-        image?.url ||
-        image?.image_url ||
-        image?.thumbnail ||
-        image?.thumbnail_url ||
-        null
-    );
-
-}
-
-
-function getImageTitle(
-    image
-) {
-
-    return (
-        image?.title ||
-        image?.name ||
-        "Medical image"
-    );
-
-}
-
-
-function getImageLink(
-    image
-) {
-
-    return (
-        image?.source_url ||
-        image?.link ||
-        image?.page_url ||
-        getImageURL(
-            image
+    const results =
+        Array.isArray(
+            data?.webResults
         )
-    );
-
-}
-
-
-// ============================================================
-// DISPLAY IMAGES
-// ============================================================
-
-function displayImages(
-    images = []
-) {
-
-    const area =
-        getImagesArea();
-
-    if (
-        !area
-    ) {
-
-        return;
-
-    }
+            ? data.webResults
+            : [];
 
 
-    area.innerHTML =
-        "";
-
-
-    if (
-        images.length === 0
-    ) {
-
-        return;
-
-    }
-
-
-    const heading =
-        document.createElement(
-            "h3"
+    const googleURL =
+        safeURL(
+            data?.googleSearchUrl
+            || (
+                "https://www.google.com/search?q="
+                + encodeURIComponent(question)
+            )
         );
 
 
-    heading.textContent =
-        "Visual results";
+    if (webResultCount) {
+
+        webResultCount.textContent =
+            results.length
+                ? `${results.length} results`
+                : "Google fallback";
+    }
 
 
-    area.appendChild(
-        heading
-    );
+    if (!results.length) {
+
+        webResultsArea.innerHTML = `
+
+            <div class="empty-state">
+
+                <strong>
+                    Search results are available.
+                </strong>
+
+                <p>
+                    Mwaniki Scholars did not return a
+                    usable internal answer, so continue
+                    with Google search for:
+                </p>
+
+                <strong>
+                    ${escapeHTML(question)}
+                </strong>
+
+                <div class="google-fallback">
+
+                    <p>
+                        Open the full Google results
+                        directly for this question.
+                    </p>
+
+                    <a
+                        class="google-button"
+                        href="${googleURL}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        🔎 Search Google
+                    </a>
+
+                </div>
+
+            </div>
+
+        `;
+
+        return;
+    }
 
 
-    const grid =
-        document.createElement(
-            "div"
-        );
+    webResultsArea.innerHTML = `
+
+        ${results
+            .map(
+                result => {
+
+                    const title =
+                        cleanText(
+                            result?.title
+                            || result?.name
+                            || "Web result"
+                        );
+
+                    const url =
+                        safeURL(
+                            result?.url
+                            || result?.link
+                            || result?.href
+                        );
+
+                    const snippet =
+                        shortenText(
+                            result?.snippet
+                            || result?.description
+                            || result?.text
+                            || "",
+                            500
+                        );
 
 
-    grid.className =
-        "ai-image-grid";
+                    return `
 
+                        <article
+                            class="web-result"
+                        >
 
-    images.forEach(
-        image => {
-
-            const imageURL =
-                getImageURL(
-                    image
-                );
-
-
-            if (
-                !imageURL
-            ) {
-
-                return;
-
-            }
-
-
-            const title =
-                getImageTitle(
-                    image
-                );
-
-
-            const link =
-                getImageLink(
-                    image
-                );
-
-
-            const card =
-                document.createElement(
-                    "div"
-                );
-
-
-            card.className =
-                "ai-image-card";
-
-
-            card.innerHTML = `
-                ${
-                    link
-                        ? `
                             <a
-                                href="${escapeHTML(link)}"
+                                href="${url}"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
-                                <img
-                                    src="${escapeHTML(imageURL)}"
-                                    alt="${escapeHTML(title)}"
-                                    loading="lazy"
-                                >
+                                ${escapeHTML(title)}
                             </a>
-                        `
-                        : `
+
+                            <div
+                                class="web-result-url"
+                            >
+                                ${escapeHTML(
+                                    url === "#"
+                                        ? ""
+                                        : url
+                                )}
+                            </div>
+
+                            <div
+                                class="web-result-snippet"
+                            >
+                                ${escapeHTML(
+                                    snippet
+                                )}
+                            </div>
+
+                        </article>
+
+                    `;
+                }
+            )
+            .join("")}
+
+        <div class="google-fallback">
+
+            <p>
+                Want the complete Google search?
+            </p>
+
+            <a
+                class="google-button"
+                href="${googleURL}"
+                target="_blank"
+                rel="noopener noreferrer"
+            >
+                🔎 Open Google Results
+            </a>
+
+        </div>
+
+    `;
+}
+
+
+// =========================================================
+// IMAGE RESULTS
+// =========================================================
+
+function renderImages(data) {
+
+    const images =
+        Array.isArray(
+            data?.images
+        )
+            ? data.images
+            : [];
+
+
+    if (!images.length) {
+
+        imageResultsArea.innerHTML = `
+
+            <div
+                class="empty-state"
+                style="grid-column:1/-1;"
+            >
+
+                No visual results were returned yet.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    imageResultsArea.innerHTML =
+        images
+            .slice(0, 12)
+            .map(
+                image => {
+
+                    const imageURL =
+                        safeURL(
+                            image?.url
+                            || image?.image
+                            || image?.thumbnail
+                        );
+
+                    const title =
+                        cleanText(
+                            image?.title
+                            || "Medical visual"
+                        );
+
+
+                    if (
+                        imageURL === "#"
+                    ) {
+
+                        return "";
+                    }
+
+
+                    return `
+
+                        <a
+                            class="image-result"
+                            href="${imageURL}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+
                             <img
-                                src="${escapeHTML(imageURL)}"
+                                src="${imageURL}"
                                 alt="${escapeHTML(title)}"
                                 loading="lazy"
+                                onerror="
+                                    this.parentElement
+                                        .remove();
+                                "
                             >
-                        `
+
+                            <span>
+                                ${escapeHTML(title)}
+                            </span>
+
+                        </a>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+// =========================================================
+// QUIZ DATA
+// =========================================================
+
+function getQuizQuestions(data) {
+
+    const quizzes =
+        Array.isArray(
+            data?.quizQuestions
+        )
+            ? data.quizQuestions
+            : [];
+
+
+    return quizzes
+        .map(
+            quiz => {
+
+                const options = {
+
+                    A:
+                        cleanText(
+                            quiz?.option_a
+                        ),
+
+                    B:
+                        cleanText(
+                            quiz?.option_b
+                        ),
+
+                    C:
+                        cleanText(
+                            quiz?.option_c
+                        ),
+
+                    D:
+                        cleanText(
+                            quiz?.option_d
+                        )
+
+                };
+
+
+                let correct =
+                    cleanText(
+                        quiz?.correct_answer
+                    );
+
+
+                correct =
+                    correct
+                        .toUpperCase()
+                        .replace(
+                            /OPTION\s+/,
+                            ""
+                        )
+                        .trim();
+
+
+                if (
+                    !["A","B","C","D"]
+                        .includes(correct)
+                ) {
+
+                    const matching =
+                        Object.entries(options)
+                            .find(
+                                ([, value]) =>
+                                    value &&
+                                    value.toLowerCase()
+                                        ===
+                                    correct.toLowerCase()
+                            );
+
+                    if (matching) {
+
+                        correct =
+                            matching[0];
+                    }
                 }
 
-                <div class="ai-image-title">
-                    ${escapeHTML(title)}
-                </div>
-            `;
+
+                if (
+                    !quiz?.question ||
+                    !options.A ||
+                    !options.B ||
+                    !options.C ||
+                    !options.D ||
+                    !["A","B","C","D"]
+                        .includes(correct)
+                ) {
+
+                    return null;
+                }
 
 
-            grid.appendChild(
-                card
+                return {
+
+                    question:
+                        cleanText(
+                            quiz.question
+                        ),
+
+                    options,
+
+                    correct,
+
+                    explanation:
+                        cleanText(
+                            quiz.explanation
+                            || quiz.answer_explanation
+                            || ""
+                        )
+
+                };
+            }
+        )
+        .filter(Boolean);
+}
+
+
+// =========================================================
+// TEST ENGINE
+// =========================================================
+
+function startTest() {
+
+    if (!lastSearchData) {
+
+        testBody.innerHTML = `
+
+            <div class="empty-state">
+
+                Ask Mwaniki AI a question first.
+                Then I can build a test from the
+                relevant material.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    const questions =
+        getQuizQuestions(
+            lastSearchData
+        );
+
+
+    if (!questions.length) {
+
+        testBody.innerHTML = `
+
+            <div class="empty-state">
+
+                I found the study material, but there
+                are no compatible quiz questions for
+                this topic yet.
+
+                <br><br>
+
+                Add questions to the Supabase
+                <strong>quizzes</strong> table and
+                Mwaniki AI will use them here.
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    currentTest =
+        questions
+            .sort(
+                () => Math.random() - 0.5
             );
+
+
+    testIndex = 0;
+
+    testScore = 0;
+
+    testLocked = false;
+
+    renderCurrentQuestion();
+}
+
+
+function renderCurrentQuestion() {
+
+    if (
+        !currentTest ||
+        testIndex >= currentTest.length
+    ) {
+
+        finishTest();
+
+        return;
+    }
+
+
+    const question =
+        currentTest[testIndex];
+
+
+    testLocked = false;
+
+
+    if (testProgress) {
+
+        testProgress.textContent =
+            `Question ${
+                testIndex + 1
+            } of ${
+                currentTest.length
+            }`;
+    }
+
+
+    testBody.innerHTML = `
+
+        <div class="quiz-question">
+
+            ${escapeHTML(
+                question.question
+            )}
+
+        </div>
+
+
+        <div class="quiz-options">
+
+            ${["A","B","C","D"]
+                .map(
+                    letter => `
+
+                        <button
+                            type="button"
+                            class="quiz-option"
+                            data-answer="${letter}"
+                        >
+
+                            <span
+                                class="option-letter"
+                            >
+                                ${letter}
+                            </span>
+
+                            <span>
+                                ${escapeHTML(
+                                    question.options[
+                                        letter
+                                    ]
+                                )}
+                            </span>
+
+                        </button>
+
+                    `
+                )
+                .join("")}
+
+        </div>
+
+    `;
+
+
+    testBody
+        .querySelectorAll(
+            ".quiz-option"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        checkAnswer(
+                            button.dataset.answer
+                        );
+
+                    }
+                );
+
+            }
+        );
+}
+
+
+// =========================================================
+// CHECK ANSWER
+// =========================================================
+
+function checkAnswer(selected) {
+
+    if (testLocked) {
+        return;
+    }
+
+
+    testLocked = true;
+
+
+    const question =
+        currentTest[testIndex];
+
+
+    const isCorrect =
+        selected === question.correct;
+
+
+    const buttons =
+        testBody.querySelectorAll(
+            ".quiz-option"
+        );
+
+
+    buttons.forEach(
+        button => {
+
+            button.disabled = true;
+
+
+            if (
+                button.dataset.answer
+                ===
+                question.correct
+            ) {
+
+                button.classList.add(
+                    "correct"
+                );
+            }
+
+
+            if (
+                button.dataset.answer
+                ===
+                selected &&
+                !isCorrect
+            ) {
+
+                button.classList.add(
+                    "wrong"
+                );
+            }
 
         }
     );
 
 
-    if (
-        grid.children.length > 0
-    ) {
+    if (isCorrect) {
 
-        area.appendChild(
-            grid
+        testScore++;
+
+
+        testBody.insertAdjacentHTML(
+            "beforeend",
+            `
+
+                <div class="quiz-feedback correct">
+
+                    🎉 <strong>Correct!</strong>
+
+                    Nice work, Scholar.
+
+                </div>
+
+                <button
+                    type="button"
+                    class="next-question-button"
+                    id="nextQuestionButton"
+                >
+                    Next Question →
+                </button>
+
+            `
         );
 
+        speak(
+            "Correct! Nice work, Scholar."
+        );
+
+    } else {
+
+        const correctText =
+            question.options[
+                question.correct
+            ];
+
+
+        const joke =
+            "What the heck did you just say? 😄";
+
+
+        testBody.insertAdjacentHTML(
+            "beforeend",
+            `
+
+                <div class="quiz-feedback wrong">
+
+                    😄 <strong>
+                        ${escapeHTML(joke)}
+                    </strong>
+
+                    <div class="quiz-answer">
+
+                        <strong>
+                            Correct answer:
+                        </strong>
+
+                        ${question.correct} —
+                        ${escapeHTML(
+                            correctText
+                        )}
+
+                        ${
+                            question.explanation
+                                ? `
+                                    <br><br>
+                                    <strong>
+                                        Explanation:
+                                    </strong>
+                                    ${escapeHTML(
+                                        question.explanation
+                                    )}
+                                  `
+                                : ""
+                        }
+
+                    </div>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="next-question-button"
+                    id="nextQuestionButton"
+                >
+                    Show Next Question →
+                </button>
+
+            `
+        );
+
+
+        speak(
+            joke
+        );
     }
 
+
+    const nextButton =
+        document.getElementById(
+            "nextQuestionButton"
+        );
+
+
+    if (nextButton) {
+
+        nextButton.addEventListener(
+            "click",
+            () => {
+
+                testIndex++;
+
+                renderCurrentQuestion();
+
+            }
+        );
+    }
 }
 
 
-// ============================================================
-// GOOGLE SEARCH FALLBACK
-// ============================================================
+// =========================================================
+// FINISH TEST
+// =========================================================
 
-function displayGoogleSearchFallback(
-    googleSearchUrl,
-    question
-) {
+function finishTest() {
 
-    const area =
-        getSourcesArea();
+    const total =
+        currentTest?.length || 0;
 
-    if (
-        !area ||
-        !googleSearchUrl
-    ) {
 
-        return;
+    const percentage =
+        total
+            ? Math.round(
+                (testScore / total) * 100
+            )
+            : 0;
 
+
+    if (testProgress) {
+
+        testProgress.textContent =
+            "Finished";
     }
 
 
-    const wrapper =
-        document.createElement(
-            "div"
-        );
+    testBody.innerHTML = `
+
+        <div class="empty-state">
+
+            <h3>
+                Test complete 🎓
+            </h3>
+
+            <p>
+
+                You scored
+
+                <strong>
+                    ${testScore}/${total}
+                </strong>
+
+                (${percentage}%).
+
+            </p>
 
 
-    wrapper.className =
-        "google-fallback";
-
-
-    wrapper.innerHTML = `
-        <div class="ai-source-section-title">
-            Public web search
-        </div>
-
-        <div class="ai-source google-source">
-
-            <div class="ai-source-title">
-                Search Google for:
-                ${escapeHTML(question)}
-            </div>
-
-            <a
-                class="ai-source-link"
-                href="${escapeHTML(
-                    googleSearchUrl
-                )}"
-                target="_blank"
-                rel="noopener noreferrer"
+            <button
+                type="button"
+                class="start-test-button"
+                id="restartTestButton"
             >
-                Open Google Search
-            </a>
+                Try Again
+            </button>
 
         </div>
+
     `;
 
 
-    area.appendChild(
-        wrapper
+    speak(
+        `Test complete. You scored ${testScore} out of ${total}.`
     );
 
-}
 
-
-// ============================================================
-// GOOGLE IMAGE FALLBACK
-// ============================================================
-
-function displayGoogleImageFallback(
-    googleImageSearchUrl,
-    question
-) {
-
-    const area =
-        getImagesArea();
-
-    if (
-        !area ||
-        !googleImageSearchUrl
-    ) {
-
-        return;
-
-    }
-
-
-    const wrapper =
-        document.createElement(
-            "div"
+    const restart =
+        document.getElementById(
+            "restartTestButton"
         );
 
 
-    wrapper.className =
-        "google-image-fallback";
+    if (restart) {
 
-
-    wrapper.innerHTML = `
-        <div class="ai-source-section-title">
-            Image search
-        </div>
-
-        <div class="ai-source">
-
-            <div class="ai-source-title">
-                Search medical images for:
-                ${escapeHTML(question)}
-            </div>
-
-            <a
-                class="ai-source-link"
-                href="${escapeHTML(
-                    googleImageSearchUrl
-                )}"
-                target="_blank"
-                rel="noopener noreferrer"
-            >
-                Open Google Images
-            </a>
-
-        </div>
-    `;
-
-
-    area.appendChild(
-        wrapper
-    );
-
+        restart.addEventListener(
+            "click",
+            startTest
+        );
+    }
 }
 
 
-// ============================================================
-// SAVE QUESTION
-// ============================================================
+// =========================================================
+// TEXT TO SPEECH
+// =========================================================
 
-function saveAIQuestion(
-    question
-) {
+function speak(text) {
 
     try {
 
-        const key =
-            "mwanikiAIQuestions";
+        if (
+            !("speechSynthesis" in window)
+        ) {
+
+            return;
+        }
 
 
-        const existing =
-            JSON.parse(
-                localStorage.getItem(
-                    key
-                ) || "[]"
+        window.speechSynthesis.cancel();
+
+
+        const utterance =
+            new SpeechSynthesisUtterance(
+                text
             );
 
 
-        const updated =
-            [
-                {
-                    question,
-                    timestamp:
-                        new Date()
-                            .toISOString()
-                },
+        utterance.rate = 0.95;
 
-                ...existing.filter(
-                    item =>
-                        item?.question !==
-                        question
-                )
-            ]
-            .slice(
-                0,
-                20
-            );
+        utterance.pitch = 1.05;
+
+        utterance.volume = 1;
 
 
-        localStorage.setItem(
-            key,
-            JSON.stringify(
-                updated
-            )
+        window.speechSynthesis.speak(
+            utterance
         );
 
     } catch (error) {
 
         console.warn(
-            "Could not save AI question:",
+            "Speech synthesis unavailable:",
             error
         );
-
     }
-
 }
 
 
-// ============================================================
-// NORMALIZE RESPONSE
-// ============================================================
-
-function normalizeResponse(
-    data
-) {
-
-    return {
-
-        answer:
-            data?.answer ||
-            data?.summary ||
-            "",
-
-        mwanikiSources:
-            Array.isArray(
-                data?.mwanikiSources
-            )
-                ? data.mwanikiSources
-                : Array.isArray(
-                    data?.sources
-                )
-                    ? data.sources
-                    : [],
-
-        webResults:
-            Array.isArray(
-                data?.webResults
-            )
-                ? data.webResults
-                : Array.isArray(
-                    data?.web_sources
-                )
-                    ? data.web_sources
-                    : [],
-
-        images:
-            Array.isArray(
-                data?.images
-            )
-                ? data.images
-                : Array.isArray(
-                    data?.imageResults
-                )
-                    ? data.imageResults
-                    : [],
-
-        googleSearchUrl:
-            data?.googleSearchUrl ||
-            data?.google_search_url ||
-            null,
-
-        googleImageSearchUrl:
-            data?.googleImageSearchUrl ||
-            data?.google_image_search_url ||
-            null,
-
-        searchStatus:
-            data?.searchStatus ||
-            data?.search_status ||
-            null,
-
-        counts:
-            data?.counts ||
-            null
-
-    };
-
-}
-
-
-// ============================================================
-// TIMEOUT
-// ============================================================
-
-function timeoutPromise(
-    milliseconds
-) {
-
-    return new Promise(
-        (_, reject) => {
-
-            setTimeout(
-                () => {
-
-                    reject(
-                        new Error(
-                            "Mwaniki AI search timed out. Please try again."
-                        )
-                    );
-
-                },
-                milliseconds
-            );
-
-        }
-    );
-
-}
-
-
-// ============================================================
+// =========================================================
 // MAIN SEARCH
-// ============================================================
+// =========================================================
 
-async function askAI(
-    questionFromDashboard = null
-) {
-
-    if (
-        searchInProgress
-    ) {
-
-        return;
-
-    }
-
-
-    const input =
-        getQuestionInput();
-
-    const button =
-        getAskButton();
-
+async function performSearch() {
 
     const question =
-        (
-            questionFromDashboard ||
-            input?.value ||
-            ""
-        )
-        .trim();
-
-
-    // --------------------------------------------------------
-    // VALIDATION
-    // --------------------------------------------------------
-
-    if (
-        !question
-    ) {
-
-        setSearchStatus(
-            "Type a question or search topic first.",
-            "error"
+        cleanText(
+            questionInput?.value
         );
-
-        input?.focus();
-
-        return;
-
-    }
 
 
     if (
@@ -1234,14 +1262,10 @@ async function askAI(
     ) {
 
         setSearchStatus(
-            "Please enter at least two characters.",
-            "error"
+            "Please enter a medical question."
         );
 
-        input?.focus();
-
         return;
-
     }
 
 
@@ -1250,274 +1274,187 @@ async function askAI(
     ) {
 
         setSearchStatus(
-            "Your search is too long. Please shorten it.",
-            "error"
+            "Please keep the question below 2000 characters."
         );
 
         return;
-
     }
 
 
-    // --------------------------------------------------------
-    // LOCK SEARCH
-    // --------------------------------------------------------
+    askButton.disabled = true;
 
-    searchInProgress =
-        true;
-
-
-    if (
-        button
-    ) {
-
-        button.disabled =
-            true;
-
-        button.textContent =
-            "Searching...";
-
-    }
-
-
-    clearResults();
-
+    setStatus(
+        "Searching",
+        true
+    );
 
     setSearchStatus(
-        "Searching Mwaniki Scholars material...",
-        "loading"
+        "Searching Mwaniki Scholars learning material..."
     );
 
-
-    setMainStatus(
-        "Searching"
-    );
-
-
-    displayAILoading();
+    showLoading();
 
 
     try {
 
-        // ----------------------------------------------------
-        // GET SESSION
-        // ----------------------------------------------------
-
-        const {
-            data: sessionData,
-            error: sessionError
-        } =
-            await supabase.auth.getSession();
-
-
-        if (
-            sessionError
-        ) {
-
-            throw new Error(
-                "Unable to read your login session."
-            );
-
-        }
-
-
-        const session =
-            sessionData?.session;
-
-
-        if (
-            !session?.access_token
-        ) {
-
-            throw new Error(
-                "You are not signed in. Please log in again."
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // EDGE FUNCTION REQUEST
-        // ----------------------------------------------------
-
-        const functionPromise =
-            supabase.functions.invoke(
-                "mwaniki-ai",
-                {
-                    body: {
-
-                        question,
-
-                        searchMwaniki:
-                            true,
-
-                        searchWeb:
-                            true,
-
-                        searchImages:
-                            true
-
-                    }
-                }
-            );
-
-
-        // ----------------------------------------------------
-        // HARD FRONTEND TIMEOUT
-        // ----------------------------------------------------
-
         const result =
-            await Promise.race([
-                functionPromise,
-                timeoutPromise(
-                    25000
-                )
-            ]);
+            await invokeWithTimeout(
+                supabase.functions.invoke(
+                    "mwaniki-ai",
+                    {
+                        body: {
+
+                            question,
+
+                            searchMwaniki:
+                                true,
+
+                            searchWeb:
+                                true,
+
+                            searchImages:
+                                true
+
+                        }
+                    }
+                ),
+                25000
+            );
 
 
-        const {
+        if (result.error) {
+
+            throw result.error;
+        }
+
+
+        const data =
+            result.data;
+
+
+        lastSearchData =
+            data;
+
+
+        renderMwanikiAnswer(
+            data
+        );
+
+
+        renderWebResults(
             data,
-            error
-        } =
-            result;
-
-
-        if (
-            error
-        ) {
-
-            throw new Error(
-                error.message ||
-                "Mwaniki AI search failed."
-            );
-
-        }
-
-
-        if (
-            !data
-        ) {
-
-            throw new Error(
-                "Mwaniki AI returned no data."
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // NORMALIZE
-        // ----------------------------------------------------
-
-        const response =
-            normalizeResponse(
-                data
-            );
-
-
-        // ----------------------------------------------------
-        // ANSWER
-        // ----------------------------------------------------
-
-        displayAIAnswer(
-            response.answer
-        );
-
-
-        // ----------------------------------------------------
-        // SOURCES
-        // ----------------------------------------------------
-
-        displaySources(
-            response.mwanikiSources,
-            response.webResults
-        );
-
-
-        // ----------------------------------------------------
-        // IMAGES
-        // ----------------------------------------------------
-
-        displayImages(
-            response.images
-        );
-
-
-        // ----------------------------------------------------
-        // GOOGLE FALLBACK
-        // ----------------------------------------------------
-
-        if (
-            response.googleSearchUrl &&
-            response.webResults.length === 0
-        ) {
-
-            displayGoogleSearchFallback(
-                response.googleSearchUrl,
-                question
-            );
-
-        }
-
-
-        if (
-            response.googleImageSearchUrl &&
-            response.images.length === 0
-        ) {
-
-            displayGoogleImageFallback(
-                response.googleImageSearchUrl,
-                question
-            );
-
-        }
-
-
-        // ----------------------------------------------------
-        // STATUS
-        // ----------------------------------------------------
-
-        const mwanikiCount =
-            response.counts?.mwaniki ??
-            response.mwanikiSources.length;
-
-
-        const webCount =
-            response.counts?.web ??
-            response.webResults.length;
-
-
-        const imageCount =
-            response.counts?.images ??
-            response.images.length;
-
-
-        setSearchStatus(
-            `Search complete — ${mwanikiCount} Mwaniki result${
-                mwanikiCount === 1
-                    ? ""
-                    : "s"
-            }, ${webCount} web result${
-                webCount === 1
-                    ? ""
-                    : "s"
-            }, ${imageCount} image result${
-                imageCount === 1
-                    ? ""
-                    : "s"
-            }.`,
-            "success"
-        );
-
-
-        setMainStatus(
-            "Ready"
-        );
-
-
-        saveAIQuestion(
             question
         );
+
+
+        renderImages(
+            data
+        );
+
+
+        const internalCount =
+            data?.counts?.mwaniki
+            ?? data?.mwanikiSources?.length
+            ?? 0;
+
+
+        if (internalCount > 0) {
+
+            setSearchStatus(
+                "Answer found in Mwaniki Scholars material."
+            );
+
+            setStatus(
+                "Answer ready"
+            );
+
+        } else {
+
+            setSearchStatus(
+                "No internal answer was available. Web results are shown."
+            );
+
+            setStatus(
+                "Web search ready"
+            );
+        }
+
+
+        const quizQuestions =
+            getQuizQuestions(data);
+
+
+        if (
+            quizQuestions.length
+        ) {
+
+            testBody.innerHTML = `
+
+                <div class="empty-state">
+
+                    I found
+                    <strong>
+                        ${quizQuestions.length}
+                    </strong>
+                    test question(s) related to this topic.
+
+                    <br><br>
+
+                    <button
+                        type="button"
+                        id="startTestButton"
+                        class="start-test-button"
+                    >
+                        🧠 Test Me
+                    </button>
+
+                </div>
+
+            `;
+
+
+            document
+                .getElementById(
+                    "startTestButton"
+                )
+                ?.addEventListener(
+                    "click",
+                    startTest
+                );
+
+        } else {
+
+            testBody.innerHTML = `
+
+                <div class="empty-state">
+
+                    No quiz questions are currently
+                    linked to this topic.
+
+                    <br><br>
+
+                    <button
+                        type="button"
+                        id="startTestButton"
+                        class="start-test-button"
+                    >
+                        Try Test Mode
+                    </button>
+
+                </div>
+
+            `;
+
+
+            document
+                .getElementById(
+                    "startTestButton"
+                )
+                ?.addEventListener(
+                    "click",
+                    startTest
+                );
+        }
 
 
     } catch (error) {
@@ -1528,66 +1465,105 @@ async function askAI(
         );
 
 
-        const message =
-            error?.message ||
-            "Something went wrong while searching.";
-
-
-        displayAIError(
-            message
+        setStatus(
+            "Search error"
         );
 
 
         setSearchStatus(
-            message,
-            "error"
+            error?.message
+            || "The AI search could not be completed."
         );
 
 
-        setMainStatus(
-            "Ready"
-        );
+        answerArea.innerHTML = `
+
+            <div class="empty-state">
+
+                <strong>
+                    Mwaniki AI could not complete
+                    the internal search.
+                </strong>
+
+                <p>
+                    The web search area can still be
+                    used to continue the search.
+                </p>
+
+            </div>
+
+        `;
+
+
+        const fallbackURL =
+            "https://www.google.com/search?q="
+            + encodeURIComponent(question);
+
+
+        webResultsArea.innerHTML = `
+
+            <div class="empty-state">
+
+                <strong>
+                    Continue with Google
+                </strong>
+
+                <p>
+                    Mwaniki AI could not retrieve its
+                    internal material for this request.
+                </p>
+
+                <div class="google-fallback">
+
+                    <a
+                        class="google-button"
+                        href="${fallbackURL}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        🔎 Search Google
+                    </a>
+
+                </div>
+
+            </div>
+
+        `;
 
     } finally {
 
-        // ----------------------------------------------------
-        // ALWAYS UNLOCK UI
-        // ----------------------------------------------------
+        askButton.disabled = false;
 
-        searchInProgress =
-            false;
+        setTimeout(
+            () => {
 
+                if (
+                    aiStatus &&
+                    aiStatus.textContent
+                        .includes("Searching")
+                ) {
 
-        if (
-            button
-        ) {
+                    setStatus(
+                        "Ready"
+                    );
+                }
 
-            button.disabled =
-                false;
-
-            button.textContent =
-                "Search Mwaniki AI";
-
-        }
-
+            },
+            1000
+        );
     }
-
 }
 
 
-// ============================================================
-// SUGGESTION BUTTONS
-// ============================================================
+// =========================================================
+// SUGGESTIONS
+// =========================================================
 
-function setupSuggestionButtons() {
-
-    const buttons =
-        document.querySelectorAll(
-            ".suggestion-button"
-        );
-
-
-    buttons.forEach(
+document
+    .querySelectorAll(
+        ".suggestion-button"
+    )
+    .forEach(
         button => {
 
             button.addEventListener(
@@ -1595,29 +1571,13 @@ function setupSuggestionButtons() {
                 () => {
 
                     const question =
-                        button.dataset.question ||
-                        button.textContent.trim();
+                        button.dataset.question
+                        || "";
 
+                    questionInput.value =
+                        question;
 
-                    const input =
-                        getQuestionInput();
-
-
-                    if (
-                        input
-                    ) {
-
-                        input.value =
-                            question;
-
-                        input.focus();
-
-                    }
-
-
-                    askAI(
-                        question
-                    );
+                    performSearch();
 
                 }
             );
@@ -1625,76 +1585,73 @@ function setupSuggestionButtons() {
         }
     );
 
+
+// =========================================================
+// SEARCH BUTTON
+// =========================================================
+
+if (askButton) {
+
+    askButton.addEventListener(
+        "click",
+        performSearch
+    );
 }
 
 
-// ============================================================
-// KEYBOARD SHORTCUT
-// ============================================================
+// =========================================================
+// CTRL/CMD + ENTER
+// =========================================================
 
-function setupKeyboardShortcuts() {
+if (questionInput) {
 
-    const input =
-        getQuestionInput();
-
-
-    if (
-        !input
-    ) {
-
-        return;
-
-    }
-
-
-    input.addEventListener(
+    questionInput.addEventListener(
         "keydown",
         event => {
 
             if (
-                (event.ctrlKey ||
-                    event.metaKey) &&
                 event.key === "Enter"
+                &&
+                (event.ctrlKey || event.metaKey)
             ) {
 
                 event.preventDefault();
 
-                askAI();
-
+                performSearch();
             }
 
         }
     );
-
 }
 
 
-// ============================================================
-// INITIALIZE
-// ============================================================
+// =========================================================
+// START TEST BUTTON
+// =========================================================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+if (startTestButton) {
 
-        setupSuggestionButtons();
-
-        setupKeyboardShortcuts();
-
-        setMainStatus(
-            "Ready"
-        );
-
-    }
-);
+    startTestButton.addEventListener(
+        "click",
+        startTest
+    );
+}
 
 
-// ============================================================
+// =========================================================
 // GLOBAL FUNCTIONS
-// ============================================================
-
-window.askAI =
-    askAI;
+// =========================================================
 
 window.askMwanikiAI =
-    askAI;
+    performSearch;
+
+window.askAI =
+    performSearch;
+
+window.startMwanikiTest =
+    startTest;
+
+
+console.log(
+    "✅ Mwaniki AI search interface initialized."
+);
