@@ -1,73 +1,63 @@
 ```javascript
 import { supabase } from "./supabase.js";
 
-/*
-============================================================
- MWANIKI SCHOLARS
- MWANIKI AI — STUDENT INTERFACE
-============================================================
 
- PAGE ARCHITECTURE
+/* =========================================================
+   MWANIKI SCHOLARS
+   AI TUTOR ENGINE
 
- LEFT
- ├── Google Search
- └── Google Images
+   IMPORTANT ARCHITECTURE
 
- RIGHT
- └── Mwaniki AI synthesized answer
+   1. Mwaniki internal retrieval
+   2. Google web search
+   3. Google image search
 
- BELOW
- ├── Read Answer
- ├── Stop Audio
- └── Test Me
+   These three operations are INDEPENDENT.
 
- SMART TEST
- ├── Question
- ├── Four options
- ├── Cartoon feedback
- ├── Voice reaction
- ├── Next Question
- └── Exit Test
-
- INTERNAL MWANIKI SOURCES
- └── NEVER DISPLAYED TO STUDENT
-============================================================
-*/
+   Google must NEVER depend on Mwaniki having
+   an internal answer.
+========================================================= */
 
 
 /* =========================================================
-   ELEMENTS
+   DOM
 ========================================================= */
 
-const questionInput =
+const aiQuestion =
     document.getElementById("aiQuestion");
 
-const askButton =
+const askAIButton =
     document.getElementById("askAIButton");
 
-const answerArea =
+const aiAnswer =
     document.getElementById("aiAnswer");
 
-const webResults =
-    document.getElementById("webResults");
-
-const imageArea =
-    document.getElementById("aiImages");
-
-const searchStatus =
-    document.getElementById("aiSearchStatus");
+const aiQuestionDisplay =
+    document.getElementById("aiQuestionDisplay");
 
 const aiStatus =
     document.getElementById("aiStatus");
 
-const liveStatusText =
-    document.getElementById("aiLiveStatusText");
+const aiSearchStatus =
+    document.getElementById("aiSearchStatus");
 
-const googleSearchLink =
-    document.getElementById("googleSearchLink");
+const webResults =
+    document.getElementById("webResults");
 
-const googleImagesLink =
-    document.getElementById("googleImagesLink");
+const aiImages =
+    document.getElementById("aiImages");
+
+const backToDashboardButton =
+    document.getElementById("backToDashboardButton");
+
+const readAnswerButton =
+    document.getElementById("readAnswerButton");
+
+const stopAudioButton =
+    document.getElementById("stopAudioButton");
+
+const testMeButton =
+    document.getElementById("testMeButton");
 
 const testPanel =
     document.getElementById("testPanel");
@@ -87,54 +77,20 @@ const testOptions =
 const testFeedback =
     document.getElementById("testFeedback");
 
-const testFeedbackCharacter =
-    document.getElementById(
-        "testFeedbackCharacter"
-    );
-
-const testFeedbackTitle =
-    document.getElementById(
-        "testFeedbackTitle"
-    );
-
-const testFeedbackText =
-    document.getElementById(
-        "testFeedbackText"
-    );
-
 const testNext =
     document.getElementById("testNext");
 
 const testExit =
     document.getElementById("testExit");
 
-const readAnswerButton =
-    document.getElementById(
-        "readAnswerButton"
-    );
-
-const stopAudioButton =
-    document.getElementById(
-        "stopAudioButton"
-    );
-
-const startTestButton =
-    document.getElementById(
-        "startTestButton"
-    );
-
-const backButton =
-    document.getElementById(
-        "backToDashboardButton"
-    );
-
-
 
 /* =========================================================
    STATE
 ========================================================= */
 
-let latestAnswerText = "";
+let currentAnswerText = "";
+
+let currentQuestion = "";
 
 let currentTestTopic = "";
 
@@ -146,37 +102,37 @@ let currentTestScore = 0;
 
 let currentTestUsedIds = [];
 
-let currentTestQuestion = null;
+let currentTestAnswered = false;
 
-let testWaitingForAnswer = false;
+let currentTestCorrectKey = "";
 
 let speechQueue = [];
 
+let speechIndex = 0;
+
+let speechStopped = false;
 
 
 /* =========================================================
-   BASIC HELPERS
+   HELPERS
 ========================================================= */
+
+function cleanText(value) {
+
+    return String(value || "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
 
 function escapeHTML(value) {
 
-    return String(value ?? "")
+    return String(value || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
-}
-
-
-function cleanText(value) {
-
-    return String(value ?? "")
-        .replace(/\r/g, "")
-        .replace(/\u0000/g, "")
-        .trim();
-
 }
 
 
@@ -185,627 +141,615 @@ function safeURL(value) {
     try {
 
         const url =
-            new URL(String(value));
+            new URL(
+                String(value || ""),
+                window.location.href
+            );
 
         if (
-            url.protocol === "http:" ||
-            url.protocol === "https:"
+            url.protocol !== "http:" &&
+            url.protocol !== "https:"
         ) {
-            return url.href;
+            return "";
         }
 
-    } catch (_) {}
+        return url.href;
 
-    return "#";
+    } catch {
 
+        return "";
+    }
 }
 
 
-function showElement(element) {
+function textToHTML(text) {
 
-    if (!element) return;
-
-    element.classList.remove("hidden");
-
-}
-
-
-function hideElement(element) {
-
-    if (!element) return;
-
-    element.classList.add("hidden");
-
-}
-
-
-function setLiveStatus(text) {
-
-    if (liveStatusText) {
-        liveStatusText.textContent = text;
+    if (!text) {
+        return "";
     }
 
+
+    let safe =
+        escapeHTML(text);
+
+
+    safe =
+        safe.replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+        );
+
+
+    safe =
+        safe.replace(
+            /^[-•]\s+(.+)$/gm,
+            "<li>$1</li>"
+        );
+
+
+    safe =
+        safe.replace(
+            /(<li>.*<\/li>)/gs,
+            "<ul>$1</ul>"
+        );
+
+
+    safe =
+        safe.replace(
+            /\n{2,}/g,
+            "</p><p>"
+        );
+
+
+    safe =
+        safe.replace(
+            /\n/g,
+            "<br>"
+        );
+
+
+    if (!safe.includes("<p>")) {
+
+        safe =
+            `<p>${safe}</p>`;
+    }
+
+
+    return safe;
 }
 
 
 function setStatus(
-    element,
     message,
-    visible = true
+    type = ""
 ) {
 
-    if (!element) return;
-
-    if (!message) {
-
-        element.innerHTML = "";
-
-        hideElement(element);
-
+    if (!aiStatus) {
         return;
     }
 
-    element.innerHTML =
-        `<div class="status-line">${escapeHTML(message)}</div>`;
+    aiStatus.textContent =
+        message || "";
 
-    if (visible) {
-        showElement(element);
+    aiStatus.className =
+        "ai-status";
+
+    if (type) {
+        aiStatus.classList.add(type);
     }
-
 }
 
 
-
 /* =========================================================
-   TEXT → SAFE HTML
+   DASHBOARD
 ========================================================= */
 
-function textToHTML(text) {
+if (backToDashboardButton) {
 
-    const cleaned =
-        cleanText(text);
+    backToDashboardButton.addEventListener(
+        "click",
+        () => {
 
-    if (!cleaned) {
-        return "";
-    }
-
-    let html =
-        escapeHTML(cleaned);
-
-    /*
-    Headings
-    */
-
-    html = html.replace(
-        /^###\s+(.+)$/gm,
-        "<h4>$1</h4>"
-    );
-
-    html = html.replace(
-        /^##\s+(.+)$/gm,
-        "<h3>$1</h3>"
-    );
-
-    html = html.replace(
-        /^#\s+(.+)$/gm,
-        "<h2>$1</h2>"
-    );
-
-    /*
-    Bold
-    */
-
-    html = html.replace(
-        /\*\*(.+?)\*\*/g,
-        "<strong>$1</strong>"
-    );
-
-    /*
-    Bullet lines
-    */
-
-    html = html.replace(
-        /^[•*-]\s+(.+)$/gm,
-        "<li>$1</li>"
-    );
-
-    html = html.replace(
-        /(<li>.*?<\/li>)(?:\s*<li>)/gs,
-        "$1<li>"
-    );
-
-    /*
-    Paragraphs
-    */
-
-    const blocks =
-        html
-            .split(/\n{2,}/)
-            .map(block => block.trim())
-            .filter(Boolean);
-
-    return blocks
-        .map(block => {
-
-            if (
-                block.startsWith("<h2>") ||
-                block.startsWith("<h3>") ||
-                block.startsWith("<h4>")
-            ) {
-                return block;
-            }
-
-            if (block.startsWith("<li>")) {
-                return `<ul>${block}</ul>`;
-            }
-
-            return `<p>${block.replace(/\n/g, "<br>")}</p>`;
-
-        })
-        .join("");
-
-}
-
-
-
-/* =========================================================
-   RENDER AI ANSWER
-========================================================= */
-
-function renderAnswer(data) {
-
-    if (!answerArea) return;
-
-    const answer =
-        cleanText(
-            data?.answer ||
-            data?.finalAnswer ||
-            data?.mwanikiAnswer ||
-            data?.webAnswer ||
-            ""
-        );
-
-    latestAnswerText =
-        answer;
-
-    if (!answer) {
-
-        answerArea.innerHTML = `
-            <div class="answer-welcome">
-                <div class="answer-avatar">
-                    🤖
-                </div>
-
-                <div>
-                    <h3>
-                        I could not generate an answer yet.
-                    </h3>
-
-                    <p>
-                        Try asking the question in another way.
-                    </p>
-                </div>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    answerArea.innerHTML = `
-
-        <div class="ai-answer-label">
-            🤖 Mwaniki AI Answer
-        </div>
-
-        <div class="ai-response-content">
-            ${textToHTML(answer)}
-        </div>
-
-    `;
-
-}
-
-
-
-/* =========================================================
-   GOOGLE SEARCH RESULTS
-========================================================= */
-
-function renderWebResults(results) {
-
-    if (!webResults) return;
-
-    const list =
-        Array.isArray(results)
-            ? results
-            : [];
-
-    if (!list.length) {
-
-        webResults.innerHTML = `
-            <div class="research-empty">
-                <span>🔎</span>
-                <p>
-                    No relevant web results were found.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    webResults.innerHTML =
-        list
-            .slice(0, 8)
-            .map(result => {
-
-                const title =
-                    cleanText(
-                        result?.title ||
-                        "Medical result"
-                    );
-
-                const snippet =
-                    cleanText(
-                        result?.snippet ||
-                        result?.description ||
-                        ""
-                    );
-
-                const url =
-                    safeURL(
-                        result?.url ||
-                        result?.link ||
-                        result?.displayUrl ||
-                        ""
-                    );
-
-                return `
-
-                    <article class="web-result">
-
-                        <a
-                            href="${url}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-
-                            <div class="web-result-title">
-                                ${escapeHTML(title)}
-                            </div>
-
-                            ${
-                                url !== "#"
-                                ?
-                                `
-                                <span class="web-result-url">
-                                    ${escapeHTML(url)}
-                                </span>
-                                `
-                                :
-                                ""
-                            }
-
-                            ${
-                                snippet
-                                ?
-                                `
-                                <div class="web-result-snippet">
-                                    ${escapeHTML(snippet)}
-                                </div>
-                                `
-                                :
-                                ""
-                            }
-
-                        </a>
-
-                    </article>
-                `;
-
-            })
-            .join("");
-
-}
-
-
-
-/* =========================================================
-   GOOGLE IMAGES
-========================================================= */
-
-function renderImages(images) {
-
-    if (!imageArea) return;
-
-    const list =
-        Array.isArray(images)
-            ? images
-            : [];
-
-    if (!list.length) {
-
-        imageArea.innerHTML = `
-            <div class="research-empty">
-                <span>🖼️</span>
-                <p>
-                    No relevant images were found.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    const cards =
-        list
-            .slice(0, 8)
-            .map(image => {
-
-                const imageURL =
-                    safeURL(
-                        image?.imageUrl ||
-                        image?.url ||
-                        image?.thumbnail ||
-                        image?.src ||
-                        ""
-                    );
-
-                const pageURL =
-                    safeURL(
-                        image?.pageUrl ||
-                        image?.sourceUrl ||
-                        image?.contextLink ||
-                        image?.link ||
-                        imageURL
-                    );
-
-                const title =
-                    cleanText(
-                        image?.title ||
-                        image?.caption ||
-                        "Medical image"
-                    );
-
-                if (imageURL === "#") {
-                    return "";
-                }
-
-                return `
-
-                    <article class="ai-image-card">
-
-                        <a
-                            href="${pageURL}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-
-                            <img
-                                src="${imageURL}"
-                                alt="${escapeHTML(title)}"
-                                loading="lazy"
-                                referrerpolicy="no-referrer"
-                                onerror="this.closest('.ai-image-card').remove();"
-                            >
-
-                            <div class="ai-image-caption">
-                                ${escapeHTML(title)}
-                            </div>
-
-                        </a>
-
-                    </article>
-
-                `;
-
-            })
-            .filter(Boolean)
-            .join("");
-
-
-    if (!cards) {
-
-        imageArea.innerHTML = `
-            <div class="research-empty">
-                <span>🖼️</span>
-                <p>
-                    Images could not be displayed.
-                </p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    imageArea.innerHTML = `
-
-        <div class="image-results-grid">
-            ${cards}
-        </div>
-
-    `;
-
-}
-
-
-
-/* =========================================================
-   GOOGLE LINKS
-========================================================= */
-
-function updateGoogleLinks(data, question) {
-
-    const searchURL =
-        data?.googleSearchUrl ||
-        data?.googleSearchURL ||
-        data?.searchUrl ||
-        "";
-
-    const imagesURL =
-        data?.googleImagesUrl ||
-        data?.googleImagesURL ||
-        data?.imagesUrl ||
-        "";
-
-
-    if (
-        googleSearchLink &&
-        searchURL
-    ) {
-
-        googleSearchLink.href =
-            safeURL(searchURL);
-
-        showElement(
-            googleSearchLink
-        );
-
-    } else if (googleSearchLink) {
-
-        const query =
-            encodeURIComponent(
-                question
-            );
-
-        googleSearchLink.href =
-            `https://www.google.com/search?q=${query}`;
-
-        showElement(
-            googleSearchLink
-        );
-
-    }
-
-
-    if (
-        googleImagesLink &&
-        imagesURL
-    ) {
-
-        googleImagesLink.href =
-            safeURL(imagesURL);
-
-        showElement(
-            googleImagesLink
-        );
-
-    } else if (googleImagesLink) {
-
-        const query =
-            encodeURIComponent(
-                question
-            );
-
-        googleImagesLink.href =
-            `https://www.google.com/search?tbm=isch&q=${query}`;
-
-        showElement(
-            googleImagesLink
-        );
-
-    }
-
-}
-
-
-
-/* =========================================================
-   INVOKE EDGE FUNCTION
-========================================================= */
-
-async function invokeAI(body) {
-
-    const {
-        data,
-        error
-    } = await supabase.functions.invoke(
-        "mwaniki-ai",
-        {
-            body
+            window.location.href =
+                "./dashboard.html";
         }
     );
+}
 
 
-    if (error) {
+/* =========================================================
+   SUGGESTED QUESTIONS
+========================================================= */
+
+document
+    .querySelectorAll(".suggestion-button")
+    .forEach((button) => {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                const question =
+                    button.dataset.question ||
+                    button.textContent.trim();
+
+                if (aiQuestion) {
+
+                    aiQuestion.value =
+                        question;
+
+                    aiQuestion.focus();
+                }
+
+                searchAI();
+            }
+        );
+
+    });
+
+
+/* =========================================================
+   ENTER KEY
+========================================================= */
+
+if (aiQuestion) {
+
+    aiQuestion.addEventListener(
+        "keydown",
+        (event) => {
+
+            if (
+                event.key === "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                searchAI();
+            }
+
+        }
+    );
+}
+
+
+/* =========================================================
+   MAIN AI SEARCH
+========================================================= */
+
+async function searchAI() {
+
+    const query =
+        cleanText(
+            aiQuestion?.value
+        );
+
+
+    if (!query) {
+
+        setStatus(
+            "Enter a medical question first.",
+            "error"
+        );
+
+        aiQuestion?.focus();
+
+        return;
+    }
+
+
+    currentQuestion =
+        query;
+
+
+    if (aiQuestionDisplay) {
+
+        aiQuestionDisplay.textContent =
+            query;
+    }
+
+
+    if (askAIButton) {
+
+        askAIButton.disabled =
+            true;
+
+        askAIButton.innerHTML =
+            "<span>⏳</span> Researching...";
+    }
+
+
+    setStatus(
+        "Searching Mwaniki AI and the web..."
+    );
+
+
+    if (aiSearchStatus) {
+
+        aiSearchStatus.textContent =
+            "Searching Google independently...";
+    }
+
+
+    clearResearchPanels();
+
+
+    try {
+
+        /* =================================================
+           AUTH
+        ================================================== */
+
+        const {
+            data: {
+                session
+            } = {}
+        } =
+            await supabase.auth.getSession();
+
+
+        if (!session) {
+
+            throw new Error(
+                "Please log in before using Mwaniki AI."
+            );
+        }
+
+
+        /* =================================================
+           ONE REQUEST — THREE INDEPENDENT RETRIEVAL PATHS
+        ================================================== */
+
+        const response =
+            await supabase.functions.invoke(
+                "mwaniki-ai",
+                {
+                    body: {
+
+                        mode: "search",
+
+                        question: query,
+
+                        /*
+                         * IMPORTANT
+                         *
+                         * All three are independently enabled.
+                         */
+
+                        searchMwaniki: true,
+
+                        searchWeb: true,
+
+                        searchImages: true
+                    }
+                }
+            );
+
+
+        if (response.error) {
+
+            throw response.error;
+        }
+
+
+        const data =
+            response.data || {};
+
+
+        /* =================================================
+           INTERNAL AI ANSWER
+        ================================================== */
+
+        const aiAnswerText =
+            cleanText(
+                data.answer ||
+                data.finalAnswer ||
+                data.mwanikiAnswer ||
+                ""
+            );
+
+
+        currentAnswerText =
+            aiAnswerText;
+
+
+        /* =================================================
+           GOOGLE RESULTS
+           
+           THESE ARE READ EVEN WHEN AI ANSWER IS EMPTY.
+        ================================================== */
+
+        const results =
+            Array.isArray(data.webResults)
+                ? data.webResults
+                : [];
+
+
+        const images =
+            Array.isArray(data.images)
+                ? data.images
+                : [];
+
+
+        const primaryImage =
+            data.primaryImage ||
+            null;
+
+
+        const googleSearchUrl =
+            data.googleSearchUrl ||
+            "";
+
+
+        const googleImagesUrl =
+            data.googleImagesUrl ||
+            "";
+
+
+        /* =================================================
+           RENDER EVERYTHING INDEPENDENTLY
+        ================================================== */
+
+        renderAnswer(
+            query,
+            aiAnswerText
+        );
+
+
+        renderWebResults(
+            results,
+            googleSearchUrl
+        );
+
+
+        renderImages(
+            images,
+            primaryImage,
+            googleImagesUrl
+        );
+
+
+        /* =================================================
+           STATUS
+        ================================================== */
+
+        if (
+            aiAnswerText &&
+            results.length
+        ) {
+
+            setStatus(
+                "Mwaniki AI answer and web research are ready.",
+                "success"
+            );
+
+        } else if (
+            aiAnswerText &&
+            !results.length
+        ) {
+
+            setStatus(
+                "Mwaniki AI answered the question. No web results were returned.",
+                "success"
+            );
+
+        } else if (
+            !aiAnswerText &&
+            results.length
+        ) {
+
+            setStatus(
+                "Mwaniki has no strong internal material for this question. Web research is available on the left.",
+                "success"
+            );
+
+        } else {
+
+            setStatus(
+                "No internal answer or web results were returned.",
+                "error"
+            );
+        }
+
+
+        if (aiSearchStatus) {
+
+            if (results.length) {
+
+                aiSearchStatus.textContent =
+                    `${results.length} web result${results.length === 1 ? "" : "s"} found.`;
+
+            } else {
+
+                aiSearchStatus.textContent =
+                    "No web results found.";
+            }
+        }
+
+
+    } catch (error) {
 
         console.error(
             "Mwaniki AI error:",
             error
         );
 
-        throw error;
+
+        /*
+         * IMPORTANT:
+         *
+         * If the Edge Function itself failed,
+         * we still explain the problem.
+         *
+         * We do NOT pretend Google results exist.
+         */
+
+        setStatus(
+            error?.message ||
+            "The AI service could not complete the request.",
+            "error"
+        );
+
+
+        if (aiAnswer) {
+
+            aiAnswer.innerHTML = `
+
+                <div class="answer-fallback">
+
+                    <div class="fallback-icon">
+                        ⚠️
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Mwaniki AI could not complete this request.
+                        </strong>
+
+                        <p>
+                            Please try the question again.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            `;
+        }
+
+
+    } finally {
+
+        if (askAIButton) {
+
+            askAIButton.disabled =
+                false;
+
+            askAIButton.innerHTML =
+                "<span>🤖</span> Ask Mwaniki AI";
+        }
+
     }
-
-
-    return data;
 }
 
 
-
 /* =========================================================
-   SEARCH
+   CLEAR RESEARCH
 ========================================================= */
 
-async function searchAI() {
+function clearResearchPanels() {
 
-    if (!questionInput) return;
+    if (webResults) {
 
-    const question =
-        cleanText(
-            questionInput.value
-        );
+        webResults.innerHTML = `
 
-    if (!question) {
+            <div class="research-placeholder">
 
-        questionInput.focus();
+                <div class="placeholder-icon">
+                    ⏳
+                </div>
+
+                <strong>
+                    Searching Google...
+                </strong>
+
+                <p>
+                    Web research is running independently.
+                </p>
+
+            </div>
+
+        `;
+    }
+
+
+    if (aiImages) {
+
+        aiImages.innerHTML = `
+
+            <div class="research-placeholder">
+
+                <div class="placeholder-icon">
+                    ⏳
+                </div>
+
+                <strong>
+                    Searching images...
+                </strong>
+
+                <p>
+                    Visual research is running independently.
+                </p>
+
+            </div>
+
+        `;
+    }
+}
+
+
+/* =========================================================
+   RENDER AI ANSWER
+========================================================= */
+
+function renderAnswer(
+    question,
+    answer
+) {
+
+    if (!aiAnswer) {
+        return;
+    }
+
+
+    if (answer) {
+
+        aiAnswer.innerHTML = `
+
+            <div class="answer-question">
+                ${escapeHTML(question)}
+            </div>
+
+            <div class="answer-body">
+                ${textToHTML(answer)}
+            </div>
+
+        `;
 
         return;
     }
 
 
-    askButton.disabled =
-        true;
+    /*
+     * No internal Mwaniki answer.
+     *
+     * This is NOT an error.
+     *
+     * Google is still independently available.
+     */
 
-    setLiveStatus(
-        "Researching..."
-    );
+    aiAnswer.innerHTML = `
 
+        <div class="answer-question">
+            ${escapeHTML(question)}
+        </div>
 
-    setStatus(
-        searchStatus,
-        "Researching your medical question...",
-        true
-    );
+        <div class="answer-fallback">
 
-
-    setStatus(
-        aiStatus,
-        "",
-        false
-    );
-
-
-    answerArea.innerHTML = `
-
-        <div class="answer-welcome">
-
-            <div class="answer-avatar">
-                🔬
+            <div class="fallback-icon">
+                🌐
             </div>
 
             <div>
 
-                <h3>
-                    Researching...
-                </h3>
+                <strong>
+                    Mwaniki AI does not have enough internal material for this question.
+                </strong>
 
                 <p>
-                    Mwaniki AI is preparing your answer.
+                    Web research has been performed independently.
+                    Review the Google results on the left.
                 </p>
 
             </div>
@@ -813,189 +757,568 @@ async function searchAI() {
         </div>
 
     `;
+}
 
 
-    webResults.innerHTML = `
-        <div class="research-empty">
-            <span>🔎</span>
-            <p>
-                Searching the web...
-            </p>
-        </div>
-    `;
+/* =========================================================
+   GOOGLE WEB RESULTS
+========================================================= */
+
+function renderWebResults(
+    results = [],
+    googleSearchUrl = ""
+) {
+
+    if (!webResults) {
+        return;
+    }
 
 
-    imageArea.innerHTML = `
-        <div class="research-empty">
-            <span>🖼️</span>
-            <p>
-                Searching medical images...
-            </p>
-        </div>
-    `;
+    webResults.innerHTML =
+        "";
 
 
-    try {
+    if (
+        !Array.isArray(results) ||
+        results.length === 0
+    ) {
 
-        const data =
-            await invokeAI({
+        webResults.innerHTML = `
 
-                mode:
-                    "search",
+            <div class="research-empty">
 
-                question,
-
-                searchWeb:
-                    true,
-
-                searchMwaniki:
-                    true,
-
-                searchImages:
-                    true
-
-            });
-
-
-        console.log(
-            "Mwaniki AI response:",
-            data
-        );
-
-
-        renderAnswer(
-            data
-        );
-
-
-        renderWebResults(
-            data?.webResults
-        );
-
-
-        renderImages(
-            data?.images
-        );
-
-
-        updateGoogleLinks(
-            data,
-            question
-        );
-
-
-        setStatus(
-            searchStatus,
-            "",
-            false
-        );
-
-
-        setLiveStatus(
-            "Ready"
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-
-
-        answerArea.innerHTML = `
-
-            <div class="answer-welcome">
-
-                <div class="answer-avatar">
-                    ⚠️
+                <div class="research-empty-icon">
+                    🔎
                 </div>
 
-                <div>
+                <strong>
+                    No web results found
+                </strong>
 
-                    <h3>
-                        Mwaniki AI could not complete the request.
-                    </h3>
+                <p>
+                    Try another wording or search Google directly.
+                </p>
 
-                    <p>
-                        Please check your connection and try again.
-                    </p>
-
-                </div>
+                ${
+                    safeURL(googleSearchUrl)
+                        ? `
+                            <a
+                                href="${safeURL(googleSearchUrl)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="google-search-link"
+                            >
+                                Search Google directly →
+                            </a>
+                        `
+                        : ""
+                }
 
             </div>
 
         `;
 
-
-        setStatus(
-            searchStatus,
-            error?.message ||
-            "Unable to contact Mwaniki AI.",
-            true
-        );
-
-
-        setLiveStatus(
-            "Connection problem"
-        );
-
-    } finally {
-
-        askButton.disabled =
-            false;
-
+        return;
     }
 
+
+    results.forEach(
+        (result) => {
+
+            if (!result) {
+                return;
+            }
+
+
+            const title =
+                cleanText(
+                    result.title ||
+                    result.name ||
+                    "Web result"
+                );
+
+
+            const snippet =
+                cleanText(
+                    result.snippet ||
+                    result.description ||
+                    ""
+                );
+
+
+            const url =
+                result.url ||
+                result.link ||
+                result.displayUrl ||
+                "";
+
+
+            const safe =
+                safeURL(url);
+
+
+            const card =
+                document.createElement(
+                    "article"
+                );
+
+
+            card.className =
+                "web-result-card";
+
+
+            card.innerHTML = `
+
+                <div class="web-result-label">
+                    GOOGLE SEARCH
+                </div>
+
+                <h4>
+                    ${escapeHTML(title)}
+                </h4>
+
+                ${
+                    url
+                        ? `
+                            <div class="web-result-url">
+                                ${escapeHTML(url)}
+                            </div>
+                        `
+                        : ""
+                }
+
+                ${
+                    snippet
+                        ? `
+                            <p>
+                                ${escapeHTML(snippet)}
+                            </p>
+                        `
+                        : ""
+                }
+
+                ${
+                    safe
+                        ? `
+                            <a
+                                href="${safe}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="web-result-open"
+                            >
+                                Open result →
+                            </a>
+                        `
+                        : ""
+                }
+
+            `;
+
+
+            webResults.appendChild(
+                card
+            );
+
+        }
+    );
+
+
+    const safeGoogle =
+        safeURL(
+            googleSearchUrl
+        );
+
+
+    if (safeGoogle) {
+
+        const moreLink =
+            document.createElement("a");
+
+
+        moreLink.href =
+            safeGoogle;
+
+
+        moreLink.target =
+            "_blank";
+
+
+        moreLink.rel =
+            "noopener noreferrer";
+
+
+        moreLink.className =
+            "google-search-link";
+
+
+        moreLink.textContent =
+            "View more Google results →";
+
+
+        webResults.appendChild(
+            moreLink
+        );
+    }
 }
 
+
+/* =========================================================
+   GOOGLE IMAGES
+========================================================= */
+
+function renderImages(
+    images = [],
+    primaryImage = null,
+    googleImagesUrl = ""
+) {
+
+    if (!aiImages) {
+        return;
+    }
+
+
+    aiImages.innerHTML =
+        "";
+
+
+    const imageList = [];
+
+
+    if (primaryImage) {
+
+        imageList.push(
+            primaryImage
+        );
+    }
+
+
+    if (Array.isArray(images)) {
+
+        images.forEach(
+            (image) => {
+
+                if (image) {
+
+                    imageList.push(
+                        image
+                    );
+                }
+
+            }
+        );
+    }
+
+
+    const uniqueUrls =
+        new Set();
+
+
+    const normalizedImages =
+        imageList
+            .map(
+                (image) => {
+
+                    if (
+                        typeof image === "string"
+                    ) {
+
+                        return {
+                            url: image,
+                            title: "Medical image"
+                        };
+                    }
+
+
+                    return {
+
+                        url:
+                            image.imageUrl ||
+                            image.url ||
+                            image.thumbnail ||
+                            "",
+
+                        title:
+                            image.title ||
+                            image.name ||
+                            "Medical image"
+                    };
+
+                }
+            )
+            .filter(
+                (image) => {
+
+                    const url =
+                        safeURL(
+                            image.url
+                        );
+
+
+                    if (!url) {
+                        return false;
+                    }
+
+
+                    if (
+                        uniqueUrls.has(url)
+                    ) {
+
+                        return false;
+                    }
+
+
+                    uniqueUrls.add(url);
+
+                    image.url =
+                        url;
+
+                    return true;
+                }
+            );
+
+
+    if (
+        normalizedImages.length === 0
+    ) {
+
+        aiImages.innerHTML = `
+
+            <div class="research-empty">
+
+                <div class="research-empty-icon">
+                    🖼️
+                </div>
+
+                <strong>
+                    No images found
+                </strong>
+
+                <p>
+                    Try viewing Google Images directly.
+                </p>
+
+                ${
+                    safeURL(googleImagesUrl)
+                        ? `
+                            <a
+                                href="${safeURL(googleImagesUrl)}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="google-search-link"
+                            >
+                                View Google Images →
+                            </a>
+                        `
+                        : ""
+                }
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    normalizedImages
+        .slice(0, 12)
+        .forEach(
+            (image) => {
+
+                const card =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                card.className =
+                    "image-result-card";
+
+
+                card.innerHTML = `
+
+                    <a
+                        href="${image.url}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+
+                        <img
+                            src="${image.url}"
+                            alt="${escapeHTML(image.title)}"
+                            loading="lazy"
+                        >
+
+                    </a>
+
+                    <div class="image-result-title">
+                        ${escapeHTML(image.title)}
+                    </div>
+
+                `;
+
+
+                aiImages.appendChild(
+                    card
+                );
+
+            }
+        );
+
+
+    const safeGoogle =
+        safeURL(
+            googleImagesUrl
+        );
+
+
+    if (safeGoogle) {
+
+        const moreLink =
+            document.createElement("a");
+
+
+        moreLink.href =
+            safeGoogle;
+
+
+        moreLink.target =
+            "_blank";
+
+
+        moreLink.rel =
+            "noopener noreferrer";
+
+
+        moreLink.className =
+            "google-search-link";
+
+
+        moreLink.textContent =
+            "View more Google Images →";
+
+
+        aiImages.appendChild(
+            moreLink
+        );
+    }
+}
+
+
+/* =========================================================
+   READ ANSWER
+========================================================= */
+
+if (readAnswerButton) {
+
+    readAnswerButton.addEventListener(
+        "click",
+        () => {
+
+            if (!currentAnswerText) {
+
+                speakText(
+                    "There is no Mwaniki AI answer to read. Please review the web research results."
+                );
+
+                return;
+            }
+
+
+            speakText(
+                currentAnswerText
+            );
+
+        }
+    );
+}
+
+
+/* =========================================================
+   STOP AUDIO
+========================================================= */
+
+if (stopAudioButton) {
+
+    stopAudioButton.addEventListener(
+        "click",
+        stopSpeech
+    );
+}
 
 
 /* =========================================================
    SPEECH
 ========================================================= */
 
-function stopSpeech() {
+function speakText(text) {
 
     if (
-        "speechSynthesis"
-        in window
+        !("speechSynthesis" in window)
     ) {
 
-        window.speechSynthesis.cancel();
-
+        return;
     }
 
-    speechQueue = [];
-
-    setLiveStatus(
-        "Ready"
-    );
-
-}
-
-
-function speak(text) {
 
     stopSpeech();
 
+
     const cleaned =
         cleanText(text);
+
 
     if (!cleaned) {
         return;
     }
 
 
+    speechQueue =
+        splitSpeech(
+            cleaned
+        );
+
+
+    speechIndex =
+        0;
+
+    speechStopped =
+        false;
+
+
+    speakNextChunk();
+}
+
+
+function splitSpeech(text) {
+
+    const sentences =
+        text.match(
+            /[^.!?]+[.!?]+/g
+        );
+
+
     if (
-        !("speechSynthesis" in window)
+        !sentences ||
+        !sentences.length
     ) {
 
-        setStatus(
-            aiStatus,
-            "Voice playback is not supported by this browser.",
-            true
-        );
+        return [
+            text
+        ];
+    }
+
+
+    return sentences;
+}
+
+
+function speakNextChunk() {
+
+    if (
+        speechStopped ||
+        speechIndex >= speechQueue.length
+    ) {
 
         return;
     }
@@ -1003,729 +1326,94 @@ function speak(text) {
 
     const utterance =
         new SpeechSynthesisUtterance(
-            cleaned
+            speechQueue[
+                speechIndex
+            ]
         );
 
 
     utterance.rate =
-        0.94;
+        0.98;
+
 
     utterance.pitch =
         1.0;
 
+
     utterance.volume =
-        1.0;
-
-
-    utterance.onstart =
-        () => {
-
-            setLiveStatus(
-                "Reading..."
-            );
-
-        };
+        1;
 
 
     utterance.onend =
         () => {
 
-            setLiveStatus(
-                "Ready"
-            );
+            if (speechStopped) {
+                return;
+            }
 
-        };
+            speechIndex++;
 
-
-    utterance.onerror =
-        () => {
-
-            setLiveStatus(
-                "Ready"
-            );
-
+            speakNextChunk();
         };
 
 
     window.speechSynthesis.speak(
         utterance
     );
-
 }
 
 
+function stopSpeech() {
 
-/* =========================================================
-   CARTOON VOICES
-========================================================= */
-
-function cartoonWrongAnswer() {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-
-    const phrases = [
-
-        "Oops! Not quite! Try again, Scholar!",
-
-        "Almost! That one needs another look!",
-
-        "Not this time! Think carefully, Scholar!",
-
-        "Oops! Your medical detective work needs another clue!",
-
-        "Close one! Let's sharpen that knowledge!"
-
-    ];
-
-
-    const phrase =
-        phrases[
-            Math.floor(
-                Math.random() *
-                phrases.length
-            )
-        ];
-
-
-    const voice =
-        new SpeechSynthesisUtterance(
-            phrase
-        );
-
-
-    voice.rate =
-        1.25;
-
-    voice.pitch =
-        1.65;
-
-    voice.volume =
-        1;
-
-
-    window.speechSynthesis.cancel();
-
-    window.speechSynthesis.speak(
-        voice
-    );
-
-}
-
-
-function cartoonCorrectAnswer() {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-
-    const phrases = [
-
-        "Excellent! That is correct!",
-
-        "Brilliant work, Scholar!",
-
-        "Correct! Mwaniki Scholar power!",
-
-        "Well done! You got it!",
-
-        "Outstanding! Keep going!"
-
-    ];
-
-
-    const phrase =
-        phrases[
-            Math.floor(
-                Math.random() *
-                phrases.length
-            )
-        ];
-
-
-    const voice =
-        new SpeechSynthesisUtterance(
-            phrase
-        );
-
-
-    voice.rate =
-        1.18;
-
-    voice.pitch =
-        1.55;
-
-    voice.volume =
-        1;
-
-
-    window.speechSynthesis.cancel();
-
-    window.speechSynthesis.speak(
-        voice
-    );
-
-}
-
-
-
-/* =========================================================
-   TEST HELPERS
-========================================================= */
-
-function normalizeCorrectKey(
-    question
-) {
-
-    const raw =
-        cleanText(
-            question?.correctKey ||
-            question?.correct_answer ||
-            question?.correctAnswer ||
-            ""
-        );
-
-
-    if (
-        /^[ABCD]$/i.test(raw)
-    ) {
-
-        return raw.toUpperCase();
-
-    }
-
-
-    const options =
-        Array.isArray(
-            question?.options
-        )
-            ? question.options
-            : [];
-
-
-    const index =
-        options.findIndex(
-            option =>
-                cleanText(
-                    option
-                ).toLowerCase() ===
-                raw.toLowerCase()
-        );
-
-
-    if (index >= 0) {
-
-        return String.fromCharCode(
-            65 + index
-        );
-
-    }
-
-
-    return null;
-
-}
-
-
-
-function normalizeTestQuestion(
-    question
-) {
-
-    if (!question) {
-        return null;
-    }
-
-
-    const options =
-        Array.isArray(
-            question.options
-        )
-            ? question.options
-                .map(
-                    option =>
-                        cleanText(option)
-                )
-                .filter(Boolean)
-            : [];
-
-
-    if (
-        options.length !== 4
-    ) {
-
-        return null;
-
-    }
-
-
-    const correctKey =
-        normalizeCorrectKey(
-            question
-        );
-
-
-    if (
-        !correctKey
-    ) {
-
-        return null;
-
-    }
-
-
-    return {
-
-        id:
-            String(
-                question.id ||
-                question.questionId ||
-                Date.now()
-            ),
-
-        question:
-            cleanText(
-                question.question
-            ),
-
-        options,
-
-        correctKey,
-
-        correctAnswer:
-            cleanText(
-                question.correctAnswer ||
-                options[
-                    correctKey.charCodeAt(0) - 65
-                ]
-            ),
-
-        explanation:
-            cleanText(
-                question.explanation ||
-                ""
-            )
-
-    };
-
-}
-
-
-
-/* =========================================================
-   TEST FEEDBACK
-========================================================= */
-
-function showTestFeedback(
-    correct,
-    question
-) {
-
-    showElement(
-        testFeedback
-    );
-
-
-    if (correct) {
-
-        testFeedbackCharacter.textContent =
-            "🎉";
-
-        testFeedbackTitle.textContent =
-            "Excellent work!";
-
-        testFeedbackText.textContent =
-            question.explanation ||
-            "Your answer is correct.";
-
-        testFeedback.style.background =
-            "rgba(60,190,130,.18)";
-
-
-        cartoonCorrectAnswer();
-
-    } else {
-
-        testFeedbackCharacter.textContent =
-            "🤖";
-
-        testFeedbackTitle.textContent =
-            "Not quite!";
-
-        testFeedbackText.textContent =
-            question.explanation ||
-            `The correct answer is ${question.correctAnswer}.`;
-
-        testFeedback.style.background =
-            "rgba(220,80,80,.18)";
-
-
-        cartoonWrongAnswer();
-
-    }
-
-}
-
-
-
-/* =========================================================
-   RENDER TEST QUESTION
-========================================================= */
-
-function renderTestQuestion(
-    question
-) {
-
-    currentTestQuestion =
-        question;
-
-    testWaitingForAnswer =
+    speechStopped =
         true;
 
+    speechQueue =
+        [];
 
-    hideElement(
-        testFeedback
-    );
-
-
-    testQuestion.innerHTML =
-        `<div>${textToHTML(question.question)}</div>`;
-
-
-    testOptions.innerHTML =
-        question.options
-            .map(
-                (option, index) => {
-
-                    const key =
-                        String.fromCharCode(
-                            65 + index
-                        );
-
-                    return `
-
-                        <button
-                            type="button"
-                            class="test-option"
-                            data-key="${key}"
-                        >
-
-                            <strong>
-                                ${key}.
-                            </strong>
-
-                            ${escapeHTML(option)}
-
-                        </button>
-
-                    `;
-
-                }
-            )
-            .join("");
-
-
-    testProgress.textContent =
-        `Question ${currentTestNumber} of ${currentTestLength}`;
-
-
-    testOptions
-        .querySelectorAll(
-            ".test-option"
-        )
-        .forEach(
-            button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        answerTestQuestion(
-                            button.dataset.key
-                        );
-
-                    }
-                );
-
-            }
-        );
-
-}
-
-
-
-/* =========================================================
-   ANSWER TEST QUESTION
-========================================================= */
-
-function answerTestQuestion(
-    selectedKey
-) {
-
-    if (
-        !currentTestQuestion ||
-        !testWaitingForAnswer
-    ) {
-        return;
-    }
-
-
-    testWaitingForAnswer =
-        false;
-
-
-    const correctKey =
-        currentTestQuestion.correctKey;
-
-
-    const correct =
-        selectedKey ===
-        correctKey;
-
-
-    if (correct) {
-
-        currentTestScore++;
-
-    }
-
-
-    currentTestUsedIds.push(
-        currentTestQuestion.id
-    );
-
-
-    testOptions
-        .querySelectorAll(
-            ".test-option"
-        )
-        .forEach(
-            button => {
-
-                button.disabled =
-                    true;
-
-
-                if (
-                    button.dataset.key ===
-                    correctKey
-                ) {
-
-                    button.classList.add(
-                        "correct"
-                    );
-
-                }
-
-
-                if (
-                    button.dataset.key ===
-                    selectedKey &&
-                    selectedKey !==
-                    correctKey
-                ) {
-
-                    button.classList.add(
-                        "wrong"
-                    );
-
-                }
-
-            }
-        );
-
-
-    showTestFeedback(
-        correct,
-        currentTestQuestion
-    );
+    speechIndex =
+        0;
 
 
     if (
-        currentTestNumber >=
-        currentTestLength
+        "speechSynthesis" in window
     ) {
 
-        testStatus.textContent =
-            `Test complete — score: ${currentTestScore}/${currentTestLength}`;
-
-        testNext.textContent =
-            "Finish Test";
-
-    } else {
-
-        testStatus.textContent =
-            correct
-                ? "Correct answer."
-                : "Review the explanation and continue.";
-
+        window.speechSynthesis.cancel();
     }
-
 }
 
 
-
 /* =========================================================
-   LOAD TEST QUESTION
+   TEST ME
 ========================================================= */
 
-async function loadNextTestQuestion() {
+if (testMeButton) {
 
-    testWaitingForAnswer =
-        false;
-
-
-    testQuestion.innerHTML = `
-        <div class="research-empty">
-            <span>🧠</span>
-            <p>
-                Preparing your question...
-            </p>
-        </div>
-    `;
-
-
-    testOptions.innerHTML =
-        "";
-
-
-    hideElement(
-        testFeedback
+    testMeButton.addEventListener(
+        "click",
+        startTest
     );
-
-
-    testNext.disabled =
-        true;
-
-
-    try {
-
-        const data =
-            await invokeAI({
-
-                mode:
-                    "test",
-
-                testTopic:
-                    currentTestTopic,
-
-                usedQuestionIds:
-                    currentTestUsedIds,
-
-                questionNumber:
-                    currentTestNumber,
-
-                testLength:
-                    currentTestLength,
-
-                searchMwaniki:
-                    true,
-
-                searchWeb:
-                    true,
-
-                searchImages:
-                    false
-
-            });
-
-
-        const question =
-            normalizeTestQuestion(
-                data?.testQuestion
-            );
-
-
-        if (!question) {
-
-            testQuestion.innerHTML = `
-                <div class="test-question">
-                    I could not create a reliable question
-                    for this topic yet.
-                </div>
-            `;
-
-            testStatus.textContent =
-                "Try another topic or ask Mwaniki AI first.";
-
-            testNext.disabled =
-                false;
-
-            testNext.textContent =
-                "Try Again";
-
-            return;
-
-        }
-
-
-        currentTestNumber++;
-
-        renderTestQuestion(
-            question
-        );
-
-
-        testStatus.textContent =
-            "Choose the best answer.";
-
-
-    } catch (error) {
-
-        console.error(
-            "Test question error:",
-            error
-        );
-
-
-        testQuestion.innerHTML = `
-            <div class="test-question">
-                The test question could not be loaded.
-            </div>
-        `;
-
-
-        testStatus.textContent =
-            error?.message ||
-            "Unable to load the next question.";
-
-    } finally {
-
-        testNext.disabled =
-            false;
-
-    }
-
 }
 
-
-
-/* =========================================================
-   START TEST
-========================================================= */
 
 async function startTest() {
 
     const topic =
         cleanText(
-            questionInput.value ||
-            latestAnswerText
+            aiQuestion?.value ||
+            currentQuestion
         );
 
 
     if (!topic) {
 
-        questionInput.focus();
+        setStatus(
+            "Ask a question first, then start Test Me.",
+            "error"
+        );
 
         return;
-
     }
 
 
@@ -1741,119 +1429,755 @@ async function startTest() {
     currentTestUsedIds =
         [];
 
-    currentTestQuestion =
-        null;
+    currentTestAnswered =
+        false;
 
-
-    showElement(
-        testPanel
-    );
-
-
-    testStatus.textContent =
-        "Preparing your medical test...";
-
-
-    testProgress.textContent =
-        `Question 0 of ${currentTestLength}`;
-
-
-    testQuestion.innerHTML =
+    currentTestCorrectKey =
         "";
+
+
+    if (testPanel) {
+
+        testPanel.hidden =
+            false;
+
+        testPanel.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+
+
+    await loadNextTestQuestion();
+}
+
+
+/* =========================================================
+   LOAD NEXT TEST QUESTION
+========================================================= */
+
+async function loadNextTestQuestion() {
+
+    currentTestNumber++;
+
+    currentTestAnswered =
+        false;
+
+    currentTestCorrectKey =
+        "";
+
+
+    if (
+        currentTestNumber >
+        currentTestLength
+    ) {
+
+        finishTest();
+
+        return;
+    }
+
+
+    updateTestProgress();
+
+
+    if (testQuestion) {
+
+        testQuestion.textContent =
+            "Generating your question...";
+    }
+
+
+    if (testOptions) {
+
+        testOptions.innerHTML =
+            "";
+    }
+
+
+    if (testFeedback) {
+
+        testFeedback.innerHTML =
+            "";
+    }
+
+
+    if (testNext) {
+
+        testNext.disabled =
+            true;
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            "Preparing a medical question...";
+    }
+
+
+    try {
+
+        const {
+            data: {
+                session
+            } = {}
+        } =
+            await supabase.auth.getSession();
+
+
+        if (!session) {
+
+            throw new Error(
+                "Please log in before starting a test."
+            );
+        }
+
+
+        const response =
+            await supabase.functions.invoke(
+                "mwaniki-ai",
+                {
+                    body: {
+
+                        mode: "test",
+
+                        testTopic:
+                            currentTestTopic,
+
+                        usedQuestionIds:
+                            currentTestUsedIds,
+
+                        questionNumber:
+                            currentTestNumber,
+
+                        testLength:
+                            currentTestLength,
+
+                        /*
+                         * Test retrieval can use both
+                         * internal material and web research.
+                         */
+
+                        searchMwaniki:
+                            true,
+
+                        searchWeb:
+                            true,
+
+                        searchImages:
+                            false
+                    }
+                }
+            );
+
+
+        if (response.error) {
+
+            throw response.error;
+        }
+
+
+        const data =
+            response.data || {};
+
+
+        const question =
+            data.testQuestion ||
+            data.question ||
+            null;
+
+
+        if (!question) {
+
+            throw new Error(
+                "A suitable test question could not be created."
+            );
+        }
+
+
+        renderTestQuestion(
+            question
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Test question error:",
+            error
+        );
+
+
+        if (testQuestion) {
+
+            testQuestion.textContent =
+                "Unable to create this test question.";
+        }
+
+
+        if (testStatus) {
+
+            testStatus.textContent =
+                error?.message ||
+                "Please try again.";
+        }
+
+        if (testNext) {
+
+            testNext.disabled =
+                true;
+        }
+
+    }
+}
+
+
+/* =========================================================
+   RENDER TEST QUESTION
+========================================================= */
+
+function renderTestQuestion(
+    question
+) {
+
+    const questionText =
+        cleanText(
+            question.question ||
+            question.text ||
+            ""
+        );
+
+
+    const options =
+        Array.isArray(
+            question.options
+        )
+            ? question.options
+            : [];
+
+
+    if (
+        !questionText ||
+        options.length < 4
+    ) {
+
+        throw new Error(
+            "The test question was incomplete."
+        );
+    }
+
+
+    currentTestCorrectKey =
+        normalizeCorrectKey(
+            question
+        );
+
+
+    if (question.id != null) {
+
+        currentTestUsedIds.push(
+            String(question.id)
+        );
+    }
+
+
+    if (testQuestion) {
+
+        testQuestion.textContent =
+            questionText;
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            "";
+    }
+
+
+    if (!testOptions) {
+        return;
+    }
 
 
     testOptions.innerHTML =
         "";
 
 
-    hideElement(
-        testFeedback
+    const letters =
+        [
+            "A",
+            "B",
+            "C",
+            "D"
+        ];
+
+
+    options
+        .slice(0, 4)
+        .forEach(
+            (option, index) => {
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                button.type =
+                    "button";
+
+
+                button.className =
+                    "test-option";
+
+
+                button.dataset.key =
+                    letters[index];
+
+
+                button.innerHTML = `
+
+                    <span class="option-letter">
+                        ${letters[index]}
+                    </span>
+
+                    <span>
+                        ${escapeHTML(
+                            typeof option === "string"
+                                ? option
+                                : (
+                                    option.label ||
+                                    option.text ||
+                                    ""
+                                )
+                        )}
+                    </span>
+
+                `;
+
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        handleTestAnswer(
+                            button,
+                            letters[index],
+                            options,
+                            question
+                        );
+
+                    }
+                );
+
+
+                testOptions.appendChild(
+                    button
+                );
+
+            }
+        );
+}
+
+
+/* =========================================================
+   CORRECT ANSWER NORMALIZATION
+========================================================= */
+
+function normalizeCorrectKey(
+    question
+) {
+
+    const raw =
+        String(
+            question.correctKey ||
+            question.correct_answer ||
+            question.correctAnswer ||
+            ""
+        )
+            .trim();
+
+
+    const upper =
+        raw.toUpperCase();
+
+
+    if (
+        [
+            "A",
+            "B",
+            "C",
+            "D"
+        ].includes(upper)
+    ) {
+
+        return upper;
+    }
+
+
+    const options =
+        Array.isArray(
+            question.options
+        )
+            ? question.options
+            : [];
+
+
+    const normalizedRaw =
+        cleanText(
+            raw
+        ).toLowerCase();
+
+
+    const index =
+        options.findIndex(
+            (option) => {
+
+                const text =
+                    typeof option === "string"
+                        ? option
+                        : (
+                            option.label ||
+                            option.text ||
+                            ""
+                        );
+
+                return (
+                    cleanText(
+                        text
+                    ).toLowerCase()
+                    === normalizedRaw
+                );
+            }
+        );
+
+
+    if (
+        index >= 0 &&
+        index < 4
+    ) {
+
+        return [
+            "A",
+            "B",
+            "C",
+            "D"
+        ][index];
+    }
+
+
+    return "";
+}
+
+
+/* =========================================================
+   HANDLE TEST ANSWER
+========================================================= */
+
+function handleTestAnswer(
+    selectedButton,
+    selectedKey,
+    options,
+    question
+) {
+
+    if (currentTestAnswered) {
+        return;
+    }
+
+
+    currentTestAnswered =
+        true;
+
+
+    const buttons =
+        testOptions?.querySelectorAll(
+            ".test-option"
+        ) || [];
+
+
+    buttons.forEach(
+        (button) => {
+
+            button.disabled =
+                true;
+
+        }
     );
 
 
-    testNext.textContent =
-        "Next Question →";
+    const correctKey =
+        currentTestCorrectKey;
 
 
-    testPanel.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-    });
+    const correctIndex =
+        [
+            "A",
+            "B",
+            "C",
+            "D"
+        ].indexOf(
+            correctKey
+        );
 
 
-    await loadNextTestQuestion();
+    const correctOption =
+        correctIndex >= 0
+            ? options[correctIndex]
+            : null;
 
+
+    const correctText =
+        typeof correctOption === "string"
+            ? correctOption
+            : (
+                correctOption?.label ||
+                correctOption?.text ||
+                question.correctAnswer ||
+                ""
+            );
+
+
+    if (
+        correctKey &&
+        selectedKey === correctKey
+    ) {
+
+        currentTestScore++;
+
+
+        selectedButton.classList.add(
+            "correct"
+        );
+
+
+        markCorrectOption(
+            correctKey
+        );
+
+
+        showCorrectFeedback(
+            question,
+            correctText
+        );
+
+
+        playCorrectReaction();
+
+
+    } else {
+
+        selectedButton.classList.add(
+            "wrong"
+        );
+
+
+        markCorrectOption(
+            correctKey
+        );
+
+
+        showWrongFeedback(
+            question,
+            correctText
+        );
+
+
+        playWrongReaction();
+
+    }
+
+
+    if (testNext) {
+
+        testNext.disabled =
+            false;
+    }
+
+
+    updateTestProgress();
 }
 
+
+/* =========================================================
+   MARK CORRECT OPTION
+========================================================= */
+
+function markCorrectOption(
+    correctKey
+) {
+
+    if (!correctKey) {
+        return;
+    }
+
+
+    const correctButton =
+        testOptions?.querySelector(
+            `[data-key="${correctKey}"]`
+        );
+
+
+    if (correctButton) {
+
+        correctButton.classList.add(
+            "correct"
+        );
+    }
+}
+
+
+/* =========================================================
+   FEEDBACK
+========================================================= */
+
+function showCorrectFeedback(
+    question,
+    correctText
+) {
+
+    if (!testFeedback) {
+        return;
+    }
+
+
+    const explanation =
+        cleanText(
+            question.explanation ||
+            question.feedback ||
+            ""
+        );
+
+
+    testFeedback.className =
+        "test-feedback feedback-correct";
+
+
+    testFeedback.innerHTML = `
+
+        <strong>
+            🎉 Correct!
+        </strong>
+
+        <div>
+            ${escapeHTML(
+                explanation ||
+                `The correct answer is ${correctText}.`
+            )}
+        </div>
+
+    `;
+}
+
+
+function showWrongFeedback(
+    question,
+    correctText
+) {
+
+    if (!testFeedback) {
+        return;
+    }
+
+
+    const explanation =
+        cleanText(
+            question.explanation ||
+            question.feedback ||
+            ""
+        );
+
+
+    testFeedback.className =
+        "test-feedback feedback-wrong";
+
+
+    testFeedback.innerHTML = `
+
+        <strong>
+            😅 Not quite!
+        </strong>
+
+        <div>
+            ${
+                explanation
+                    ? escapeHTML(
+                        explanation
+                    )
+                    : `
+                        The correct answer is
+                        ${escapeHTML(correctText)}.
+                    `
+            }
+        </div>
+
+    `;
+}
+
+
+/* =========================================================
+   TEST PROGRESS
+========================================================= */
+
+function updateTestProgress() {
+
+    if (!testProgress) {
+        return;
+    }
+
+
+    const displayNumber =
+        Math.min(
+            currentTestNumber,
+            currentTestLength
+        );
+
+
+    testProgress.textContent =
+        `Question ${displayNumber} of ${currentTestLength} • Score ${currentTestScore}`;
+}
 
 
 /* =========================================================
    NEXT QUESTION
 ========================================================= */
 
-async function nextTestQuestion() {
+if (testNext) {
 
-    if (
-        currentTestNumber >=
-        currentTestLength &&
-        !testWaitingForAnswer
-    ) {
+    testNext.addEventListener(
+        "click",
+        () => {
 
-        testStatus.textContent =
-            `Final score: ${currentTestScore}/${currentTestLength}`;
+            loadNextTestQuestion();
 
-        testNext.textContent =
-            "Restart Test";
-
-        testNext.onclick =
-            () => {
-
-                testNext.onclick =
-                    null;
-
-                startTest();
-
-            };
-
-        return;
-
-    }
-
-
-    if (
-        testWaitingForAnswer
-    ) {
-
-        testStatus.textContent =
-            "Choose an answer before continuing.";
-
-        return;
-
-    }
-
-
-    await loadNextTestQuestion();
-
+        }
+    );
 }
-
 
 
 /* =========================================================
    EXIT TEST
 ========================================================= */
 
+if (testExit) {
+
+    testExit.addEventListener(
+        "click",
+        exitTest
+    );
+}
+
+
 function exitTest() {
 
-    stopSpeech();
+    if (testPanel) {
 
+        testPanel.hidden =
+            true;
+    }
 
-    hideElement(
-        testPanel
-    );
-
-
-    currentTestTopic =
-        "";
 
     currentTestNumber =
         0;
@@ -1864,170 +2188,234 @@ function exitTest() {
     currentTestUsedIds =
         [];
 
-    currentTestQuestion =
-        null;
+    currentTestAnswered =
+        false;
 
-    testQuestion.innerHTML =
+    currentTestCorrectKey =
         "";
 
-    testOptions.innerHTML =
-        "";
 
-    testStatus.textContent =
-        "";
+    if (testFeedback) {
 
-    hideElement(
-        testFeedback
-    );
+        testFeedback.innerHTML =
+            "";
+    }
 
 
-    setLiveStatus(
-        "Ready"
-    );
+    if (testOptions) {
 
+        testOptions.innerHTML =
+            "";
+    }
 }
 
 
-
 /* =========================================================
-   SUGGESTION BUTTONS
+   FINISH TEST
 ========================================================= */
 
-document
-    .querySelectorAll(
-        ".suggestion-button"
-    )
-    .forEach(
-        button => {
+function finishTest() {
 
-            button.addEventListener(
-                "click",
-                () => {
+    const percentage =
+        Math.round(
+            (
+                currentTestScore /
+                currentTestLength
+            ) * 100
+        );
 
-                    const question =
-                        button.dataset.question ||
-                        "";
 
-                    questionInput.value =
-                        question;
+    if (testQuestion) {
 
-                    questionInput.focus();
+        testQuestion.innerHTML = `
 
-                }
-            );
+            <strong>
+                Test Complete
+            </strong>
 
-        }
+            <br><br>
+
+            You scored
+            ${currentTestScore}
+            /
+            ${currentTestLength}
+
+            (${percentage}%).
+
+        `;
+    }
+
+
+    if (testOptions) {
+
+        testOptions.innerHTML =
+            "";
+    }
+
+
+    if (testFeedback) {
+
+        testFeedback.className =
+            "test-feedback feedback-correct";
+
+
+        testFeedback.innerHTML = `
+
+            <strong>
+                🏆 Test finished!
+            </strong>
+
+            <div>
+                Keep studying and try another test
+                to improve your score.
+            </div>
+
+        `;
+    }
+
+
+    if (testNext) {
+
+        testNext.disabled =
+            true;
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            "";
+    }
+
+
+    currentTestNumber =
+        currentTestLength;
+}
+
+
+/* =========================================================
+   CARTOON CORRECT REACTION
+========================================================= */
+
+function playCorrectReaction() {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        return;
+    }
+
+
+    const phrases = [
+        "Yes! That's it!",
+        "Excellent!",
+        "Brilliant!",
+        "You got it!",
+        "Fantastic answer!"
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            phrase
+        );
+
+
+    utterance.rate =
+        1.25;
+
+
+    utterance.pitch =
+        1.55;
+
+
+    utterance.volume =
+        0.85;
+
+
+    window.speechSynthesis.speak(
+        utterance
     );
-
+}
 
 
 /* =========================================================
-   EVENT LISTENERS
+   CARTOON WRONG REACTION
 ========================================================= */
 
-if (askButton) {
+function playWrongReaction() {
 
-    askButton.addEventListener(
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        return;
+    }
+
+
+    const phrases = [
+        "Ooooh! Not quite!",
+        "Whoops! Try again!",
+        "Almost there!",
+        "Aha! That's not it!",
+        "Nice try!"
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            phrase
+        );
+
+
+    utterance.rate =
+        1.4;
+
+
+    utterance.pitch =
+        1.8;
+
+
+    utterance.volume =
+        0.9;
+
+
+    window.speechSynthesis.speak(
+        utterance
+    );
+}
+
+
+/* =========================================================
+   ASK BUTTON
+========================================================= */
+
+if (askAIButton) {
+
+    askAIButton.addEventListener(
         "click",
         searchAI
     );
-
 }
-
-
-if (questionInput) {
-
-    questionInput.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Enter" &&
-                (event.ctrlKey || event.metaKey)
-            ) {
-
-                event.preventDefault();
-
-                searchAI();
-
-            }
-
-        }
-    );
-
-}
-
-
-if (readAnswerButton) {
-
-    readAnswerButton.addEventListener(
-        "click",
-        () => {
-
-            speak(
-                latestAnswerText
-            );
-
-        }
-    );
-
-}
-
-
-if (stopAudioButton) {
-
-    stopAudioButton.addEventListener(
-        "click",
-        stopSpeech
-    );
-
-}
-
-
-if (startTestButton) {
-
-    startTestButton.addEventListener(
-        "click",
-        startTest
-    );
-
-}
-
-
-if (testNext) {
-
-    testNext.addEventListener(
-        "click",
-        nextTestQuestion
-    );
-
-}
-
-
-if (testExit) {
-
-    testExit.addEventListener(
-        "click",
-        exitTest
-    );
-
-}
-
-
-if (backButton) {
-
-    backButton.addEventListener(
-        "click",
-        () => {
-
-            window.location.href =
-                "./dashboard.html";
-
-        }
-    );
-
-}
-
 
 
 /* =========================================================
@@ -2043,30 +2431,43 @@ window.mwanikiAI = {
         startTest,
 
     speak:
-        () =>
-            speak(
-                latestAnswerText
-            ),
+        () => {
+
+            if (currentAnswerText) {
+
+                speakText(
+                    currentAnswerText
+                );
+            }
+
+        },
 
     stopSpeech:
-        stopSpeech,
-
-    exitTest:
-        exitTest
+        stopSpeech
 
 };
-
 
 
 /* =========================================================
    INITIAL STATE
 ========================================================= */
 
-setLiveStatus(
-    "Ready"
+console.log(
+    "🚀 Mwaniki AI Tutor loaded."
 );
 
+
 console.log(
-    "🤖 Mwaniki AI interface loaded."
+    "🌐 Google Search: independent"
+);
+
+
+console.log(
+    "🖼️ Google Images: independent"
+);
+
+
+console.log(
+    "🧠 Mwaniki internal retrieval: independent"
 );
 ```
