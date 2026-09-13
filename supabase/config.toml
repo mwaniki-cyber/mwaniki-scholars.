@@ -1,0 +1,24 @@
+
+# ============================================================
+# MWANIKI SCHOLARS
+# SUPABASE EDGE FUNCTION CONFIGURATION
+# ============================================================
+
+# ------------------------------------------------------------
+# MWANIKI AI
+# ------------------------------------------------------------
+#
+# We handle authentication ourselves inside index.ts using:
+#
+# supabase.auth.getUser(accessToken)
+#
+# Therefore Supabase's gateway JWT verification is disabled
+# for this function.
+#
+# The function STILL checks that the user has a valid session.
+# ------------------------------------------------------------
+
+[functions.mwaniki-ai]
+
+verify_jwt = false
+
