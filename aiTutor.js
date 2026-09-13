@@ -1,27 +1,42 @@
-
+```javascript
 import { supabase } from "./supabase.js";
 
+/*
+===========================================================
+ MWANIKI SCHOLARS
+ AI TUTOR FRONTEND
+===========================================================
+
+ FEATURES
+ ----------------------------------------------------------
+ • Mwaniki AI
+ • Supabase Edge Function
+ • Google Search
+ • Google Images
+ • Suggested questions
+ • Read Answer
+ • Stop Audio
+ • Natural browser voice selection
+ • Smart Medical Test
+ • Existing Supabase quizzes
+ • Cartoon correct/wrong feedback
+ • Dashboard navigation
+===========================================================
+*/
+
 
 /* =========================================================
-   MWANIKI SCHOLARS
-   AI TUTOR ENGINE
-
-   IMPORTANT ARCHITECTURE
-
-   1. Mwaniki internal retrieval
-   2. Google web search
-   3. Google image search
-
-   These three operations are INDEPENDENT.
-
-   Google must NEVER depend on Mwaniki having
-   an internal answer.
+   DOM ELEMENTS
 ========================================================= */
 
+const backToDashboardButton =
+    document.getElementById("backToDashboardButton");
 
-/* =========================================================
-   DOM
-========================================================= */
+const aiRecentQuestions =
+    document.getElementById("aiRecentQuestions");
+
+const suggestionButtons =
+    document.querySelectorAll(".suggestion-button");
 
 const aiQuestion =
     document.getElementById("aiQuestion");
@@ -29,35 +44,14 @@ const aiQuestion =
 const askAIButton =
     document.getElementById("askAIButton");
 
-const aiAnswer =
-    document.getElementById("aiAnswer");
-
-const aiQuestionDisplay =
-    document.getElementById("aiQuestionDisplay");
+const aiSearchStatus =
+    document.getElementById("aiSearchStatus");
 
 const aiStatus =
     document.getElementById("aiStatus");
 
-const aiSearchStatus =
-    document.getElementById("aiSearchStatus");
-
-const webResults =
-    document.getElementById("webResults");
-
-const aiImages =
-    document.getElementById("aiImages");
-
-const backToDashboardButton =
-    document.getElementById("backToDashboardButton");
-
-const readAnswerButton =
-    document.getElementById("readAnswerButton");
-
-const stopAudioButton =
-    document.getElementById("stopAudioButton");
-
-const testMeButton =
-    document.getElementById("testMeButton");
+const aiAnswer =
+    document.getElementById("aiAnswer");
 
 const testPanel =
     document.getElementById("testPanel");
@@ -83,6 +77,24 @@ const testNext =
 const testExit =
     document.getElementById("testExit");
 
+const readAnswerButton =
+    document.getElementById("readAnswerButton");
+
+const stopAudioButton =
+    document.getElementById("stopAudioButton");
+
+const testMeButton =
+    document.getElementById("testMeButton");
+
+const mwanikiSources =
+    document.getElementById("mwanikiSources");
+
+const aiImages =
+    document.getElementById("aiImages");
+
+const webResults =
+    document.getElementById("webResults");
+
 
 /* =========================================================
    STATE
@@ -90,7 +102,9 @@ const testExit =
 
 let currentAnswerText = "";
 
-let currentQuestion = "";
+let currentQuestionText = "";
+
+let currentTestQuestion = null;
 
 let currentTestTopic = "";
 
@@ -100,11 +114,9 @@ let currentTestLength = 10;
 
 let currentTestScore = 0;
 
-let currentTestUsedIds = [];
-
 let currentTestAnswered = false;
 
-let currentTestCorrectKey = "";
+let currentTestUsedIds = [];
 
 let speechQueue = [];
 
@@ -112,22 +124,30 @@ let speechIndex = 0;
 
 let speechStopped = false;
 
+let selectedNaturalVoice = null;
+
 
 /* =========================================================
-   HELPERS
+   BASIC HELPERS
 ========================================================= */
 
 function cleanText(value) {
 
-    return String(value || "")
-        .replace(/\s+/g, " ")
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/\r/g, " ")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]{2,}/g, " ")
         .trim();
 }
 
 
 function escapeHTML(value) {
 
-    return String(value || "")
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -141,107 +161,52 @@ function safeURL(value) {
     try {
 
         const url =
-            new URL(
-                String(value || ""),
-                window.location.href
-            );
+            new URL(String(value));
 
         if (
-            url.protocol !== "http:" &&
-            url.protocol !== "https:"
+            url.protocol === "https:" ||
+            url.protocol === "http:"
         ) {
-            return "";
+            return url.href;
         }
 
-        return url.href;
+    } catch (_) {}
 
-    } catch {
-
-        return "";
-    }
+    return "#";
 }
 
 
-function textToHTML(text) {
+function textToHTML(value) {
 
-    if (!text) {
+    const cleaned =
+        cleanText(value);
+
+    if (!cleaned) {
         return "";
     }
 
-
-    let safe =
-        escapeHTML(text);
-
-
-    safe =
-        safe.replace(
-            /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>"
-        );
-
-
-    safe =
-        safe.replace(
-            /^[-•]\s+(.+)$/gm,
-            "<li>$1</li>"
-        );
-
-
-    safe =
-        safe.replace(
-            /(<li>.*<\/li>)/gs,
-            "<ul>$1</ul>"
-        );
-
-
-    safe =
-        safe.replace(
-            /\n{2,}/g,
-            "</p><p>"
-        );
-
-
-    safe =
-        safe.replace(
-            /\n/g,
-            "<br>"
-        );
-
-
-    if (!safe.includes("<p>")) {
-
-        safe =
-            `<p>${safe}</p>`;
-    }
-
-
-    return safe;
+    return escapeHTML(cleaned)
+        .replace(/\n\n+/g, "</p><p>")
+        .replace(/\n/g, "<br>");
 }
 
 
-function setStatus(
-    message,
-    type = ""
-) {
+function setStatus(message = "") {
 
-    if (!aiStatus) {
-        return;
+    if (aiStatus) {
+        aiStatus.textContent =
+            message;
     }
 
-    aiStatus.textContent =
-        message || "";
-
-    aiStatus.className =
-        "ai-status";
-
-    if (type) {
-        aiStatus.classList.add(type);
+    if (aiSearchStatus) {
+        aiSearchStatus.textContent =
+            message;
     }
 }
 
 
 /* =========================================================
-   DASHBOARD
+   DASHBOARD BUTTON
 ========================================================= */
 
 if (backToDashboardButton) {
@@ -251,9 +216,11 @@ if (backToDashboardButton) {
         () => {
 
             window.location.href =
-                "./dashboard.html";
+                "dashboard.html";
+
         }
     );
+
 }
 
 
@@ -261,42 +228,44 @@ if (backToDashboardButton) {
    SUGGESTED QUESTIONS
 ========================================================= */
 
-document
-    .querySelectorAll(".suggestion-button")
-    .forEach((button) => {
+suggestionButtons.forEach(button => {
 
-        button.addEventListener(
-            "click",
-            () => {
+    button.addEventListener(
+        "click",
+        () => {
 
-                const question =
+            const question =
+                cleanText(
                     button.dataset.question ||
-                    button.textContent.trim();
+                    button.textContent
+                );
 
-                if (aiQuestion) {
-
-                    aiQuestion.value =
-                        question;
-
-                    aiQuestion.focus();
-                }
-
-                searchAI();
+            if (!question) {
+                return;
             }
-        );
 
-    });
+            if (aiQuestion) {
+                aiQuestion.value =
+                    question;
+            }
+
+            searchAI(question);
+
+        }
+    );
+
+});
 
 
 /* =========================================================
-   ENTER KEY
+   ENTER TO ASK
 ========================================================= */
 
 if (aiQuestion) {
 
     aiQuestion.addEventListener(
         "keydown",
-        (event) => {
+        event => {
 
             if (
                 event.key === "Enter" &&
@@ -305,903 +274,582 @@ if (aiQuestion) {
 
                 event.preventDefault();
 
-                searchAI();
-            }
-
-        }
-    );
-}
-
-
-/* =========================================================
-   MAIN AI SEARCH
-========================================================= */
-
-async function searchAI() {
-
-    const query =
-        cleanText(
-            aiQuestion?.value
-        );
-
-
-    if (!query) {
-
-        setStatus(
-            "Enter a medical question first.",
-            "error"
-        );
-
-        aiQuestion?.focus();
-
-        return;
-    }
-
-
-    currentQuestion =
-        query;
-
-
-    if (aiQuestionDisplay) {
-
-        aiQuestionDisplay.textContent =
-            query;
-    }
-
-
-    if (askAIButton) {
-
-        askAIButton.disabled =
-            true;
-
-        askAIButton.innerHTML =
-            "<span>⏳</span> Researching...";
-    }
-
-
-    setStatus(
-        "Searching Mwaniki AI and the web..."
-    );
-
-
-    if (aiSearchStatus) {
-
-        aiSearchStatus.textContent =
-            "Searching Google independently...";
-    }
-
-
-    clearResearchPanels();
-
-
-    try {
-
-        /* =================================================
-           AUTH
-        ================================================== */
-
-        const {
-            data: {
-                session
-            } = {}
-        } =
-            await supabase.auth.getSession();
-
-
-        if (!session) {
-
-            throw new Error(
-                "Please log in before using Mwaniki AI."
-            );
-        }
-
-
-        /* =================================================
-           ONE REQUEST — THREE INDEPENDENT RETRIEVAL PATHS
-        ================================================== */
-
-        const response =
-            await supabase.functions.invoke(
-                "mwaniki-ai",
-                {
-                    body: {
-
-                        mode: "search",
-
-                        question: query,
-
-                        /*
-                         * IMPORTANT
-                         *
-                         * All three are independently enabled.
-                         */
-
-                        searchMwaniki: true,
-
-                        searchWeb: true,
-
-                        searchImages: true
-                    }
+                if (askAIButton) {
+                    askAIButton.click();
                 }
-            );
 
-
-        if (response.error) {
-
-            throw response.error;
-        }
-
-
-        const data =
-            response.data || {};
-
-
-        /* =================================================
-           INTERNAL AI ANSWER
-        ================================================== */
-
-        const aiAnswerText =
-            cleanText(
-                data.answer ||
-                data.finalAnswer ||
-                data.mwanikiAnswer ||
-                ""
-            );
-
-
-        currentAnswerText =
-            aiAnswerText;
-
-
-        /* =================================================
-           GOOGLE RESULTS
-           
-           THESE ARE READ EVEN WHEN AI ANSWER IS EMPTY.
-        ================================================== */
-
-        const results =
-            Array.isArray(data.webResults)
-                ? data.webResults
-                : [];
-
-
-        const images =
-            Array.isArray(data.images)
-                ? data.images
-                : [];
-
-
-        const primaryImage =
-            data.primaryImage ||
-            null;
-
-
-        const googleSearchUrl =
-            data.googleSearchUrl ||
-            "";
-
-
-        const googleImagesUrl =
-            data.googleImagesUrl ||
-            "";
-
-
-        /* =================================================
-           RENDER EVERYTHING INDEPENDENTLY
-        ================================================== */
-
-        renderAnswer(
-            query,
-            aiAnswerText
-        );
-
-
-        renderWebResults(
-            results,
-            googleSearchUrl
-        );
-
-
-        renderImages(
-            images,
-            primaryImage,
-            googleImagesUrl
-        );
-
-
-        /* =================================================
-           STATUS
-        ================================================== */
-
-        if (
-            aiAnswerText &&
-            results.length
-        ) {
-
-            setStatus(
-                "Mwaniki AI answer and web research are ready.",
-                "success"
-            );
-
-        } else if (
-            aiAnswerText &&
-            !results.length
-        ) {
-
-            setStatus(
-                "Mwaniki AI answered the question. No web results were returned.",
-                "success"
-            );
-
-        } else if (
-            !aiAnswerText &&
-            results.length
-        ) {
-
-            setStatus(
-                "Mwaniki has no strong internal material for this question. Web research is available on the left.",
-                "success"
-            );
-
-        } else {
-
-            setStatus(
-                "No internal answer or web results were returned.",
-                "error"
-            );
-        }
-
-
-        if (aiSearchStatus) {
-
-            if (results.length) {
-
-                aiSearchStatus.textContent =
-                    `${results.length} web result${results.length === 1 ? "" : "s"} found.`;
-
-            } else {
-
-                aiSearchStatus.textContent =
-                    "No web results found.";
             }
+
         }
+    );
 
-
-    } catch (error) {
-
-        console.error(
-            "Mwaniki AI error:",
-            error
-        );
-
-
-        /*
-         * IMPORTANT:
-         *
-         * If the Edge Function itself failed,
-         * we still explain the problem.
-         *
-         * We do NOT pretend Google results exist.
-         */
-
-        setStatus(
-            error?.message ||
-            "The AI service could not complete the request.",
-            "error"
-        );
-
-
-        if (aiAnswer) {
-
-            aiAnswer.innerHTML = `
-
-                <div class="answer-fallback">
-
-                    <div class="fallback-icon">
-                        ⚠️
-                    </div>
-
-                    <div>
-
-                        <strong>
-                            Mwaniki AI could not complete this request.
-                        </strong>
-
-                        <p>
-                            Please try the question again.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            `;
-        }
-
-
-    } finally {
-
-        if (askAIButton) {
-
-            askAIButton.disabled =
-                false;
-
-            askAIButton.innerHTML =
-                "<span>🤖</span> Ask Mwaniki AI";
-        }
-
-    }
 }
 
 
 /* =========================================================
-   CLEAR RESEARCH
+   ASK AI BUTTON
 ========================================================= */
 
-function clearResearchPanels() {
+if (askAIButton) {
 
-    if (webResults) {
+    askAIButton.addEventListener(
+        "click",
+        () => {
 
-        webResults.innerHTML = `
+            const question =
+                cleanText(
+                    aiQuestion?.value
+                );
 
-            <div class="research-placeholder">
+            if (!question) {
 
-                <div class="placeholder-icon">
-                    ⏳
-                </div>
+                setStatus(
+                    "Please enter a medical question."
+                );
 
-                <strong>
-                    Searching Google...
-                </strong>
+                if (aiQuestion) {
+                    aiQuestion.focus();
+                }
 
-                <p>
-                    Web research is running independently.
-                </p>
+                return;
+            }
 
-            </div>
+            searchAI(question);
 
-        `;
-    }
+        }
+    );
 
-
-    if (aiImages) {
-
-        aiImages.innerHTML = `
-
-            <div class="research-placeholder">
-
-                <div class="placeholder-icon">
-                    ⏳
-                </div>
-
-                <strong>
-                    Searching images...
-                </strong>
-
-                <p>
-                    Visual research is running independently.
-                </p>
-
-            </div>
-
-        `;
-    }
 }
 
 
 /* =========================================================
-   RENDER AI ANSWER
+   NATURAL VOICE ENGINE
 ========================================================= */
 
-function renderAnswer(
-    question,
-    answer
+/*
+   Browser speech synthesis can choose a very robotic
+   system voice if no voice is explicitly selected.
+
+   We therefore:
+
+   1. Load available voices.
+   2. Prefer Microsoft / Google natural voices.
+   3. Prefer voices containing Natural / Online / Neural.
+   4. Keep one voice for the complete answer.
+   5. Use normal pitch.
+   6. Use a slower, comfortable speaking rate.
+*/
+
+
+function getAvailableVoices() {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+        return [];
+    }
+
+    return window
+        .speechSynthesis
+        .getVoices();
+}
+
+
+function scoreVoice(voice) {
+
+    const name =
+        cleanText(
+            voice?.name
+        ).toLowerCase();
+
+    const lang =
+        cleanText(
+            voice?.lang
+        ).toLowerCase();
+
+    let score = 0;
+
+
+    /* English */
+
+    if (
+        lang === "en-us"
+    ) {
+        score += 20;
+    }
+
+    if (
+        lang === "en-gb"
+    ) {
+        score += 19;
+    }
+
+    if (
+        lang.startsWith("en-")
+    ) {
+        score += 10;
+    }
+
+
+    /* Natural voices */
+
+    if (
+        name.includes("natural")
+    ) {
+        score += 100;
+    }
+
+    if (
+        name.includes("online")
+    ) {
+        score += 80;
+    }
+
+    if (
+        name.includes("neural")
+    ) {
+        score += 80;
+    }
+
+
+    /* Microsoft natural voices */
+
+    if (
+        name.includes("microsoft")
+    ) {
+        score += 30;
+    }
+
+
+    /* Good known voices */
+
+    if (
+        name.includes("ava")
+    ) {
+        score += 35;
+    }
+
+    if (
+        name.includes("jenny")
+    ) {
+        score += 35;
+    }
+
+    if (
+        name.includes("aria")
+    ) {
+        score += 35;
+    }
+
+    if (
+        name.includes("guy")
+    ) {
+        score += 30;
+    }
+
+    if (
+        name.includes("sonia")
+    ) {
+        score += 30;
+    }
+
+    if (
+        name.includes("ryan")
+    ) {
+        score += 30;
+    }
+
+    if (
+        name.includes("google")
+    ) {
+        score += 25;
+    }
+
+    if (
+        name.includes("samantha")
+    ) {
+        score += 25;
+    }
+
+    if (
+        name.includes("karen")
+    ) {
+        score += 25;
+    }
+
+    if (
+        name.includes("daniel")
+    ) {
+        score += 25;
+    }
+
+
+    return score;
+}
+
+
+function chooseNaturalVoice() {
+
+    const voices =
+        getAvailableVoices();
+
+    if (!voices.length) {
+        selectedNaturalVoice = null;
+        return null;
+    }
+
+    const englishVoices =
+        voices.filter(
+            voice =>
+                cleanText(
+                    voice.lang
+                )
+                .toLowerCase()
+                .startsWith("en")
+        );
+
+
+    const candidates =
+        englishVoices.length
+            ? englishVoices
+            : voices;
+
+
+    const ranked =
+        [...candidates]
+            .sort(
+                (a, b) =>
+                    scoreVoice(b) -
+                    scoreVoice(a)
+            );
+
+
+    selectedNaturalVoice =
+        ranked[0] || null;
+
+    return selectedNaturalVoice;
+}
+
+
+/*
+   Voices are often loaded asynchronously by Chrome/Edge.
+*/
+
+if (
+    "speechSynthesis" in window
 ) {
 
-    if (!aiAnswer) {
-        return;
+    chooseNaturalVoice();
+
+    window.speechSynthesis.onvoiceschanged =
+        () => {
+
+            chooseNaturalVoice();
+
+        };
+
+}
+
+
+/* =========================================================
+   STOP SPEECH
+========================================================= */
+
+function stopSpeech() {
+
+    speechStopped = true;
+
+    speechQueue = [];
+
+    speechIndex = 0;
+
+    if (
+        "speechSynthesis" in window
+    ) {
+
+        window
+            .speechSynthesis
+            .cancel();
+
     }
 
+}
 
-    if (answer) {
 
-        aiAnswer.innerHTML = `
+/* =========================================================
+   SPLIT SPEECH
+========================================================= */
 
-            <div class="answer-question">
-                ${escapeHTML(question)}
-            </div>
+function splitSpeech(text) {
 
-            <div class="answer-body">
-                ${textToHTML(answer)}
-            </div>
+    const cleaned =
+        cleanText(text);
 
-        `;
-
-        return;
+    if (!cleaned) {
+        return [];
     }
 
 
     /*
-     * No internal Mwaniki answer.
-     *
-     * This is NOT an error.
-     *
-     * Google is still independently available.
-     */
+       Keep sentences together where possible.
+       This prevents the voice from sounding like it
+       is restarting after every few words.
+    */
 
-    aiAnswer.innerHTML = `
-
-        <div class="answer-question">
-            ${escapeHTML(question)}
-        </div>
-
-        <div class="answer-fallback">
-
-            <div class="fallback-icon">
-                🌐
-            </div>
-
-            <div>
-
-                <strong>
-                    Mwaniki AI does not have enough internal material for this question.
-                </strong>
-
-                <p>
-                    Web research has been performed independently.
-                    Review the Google results on the left.
-                </p>
-
-            </div>
-
-        </div>
-
-    `;
-}
-
-
-/* =========================================================
-   GOOGLE WEB RESULTS
-========================================================= */
-
-function renderWebResults(
-    results = [],
-    googleSearchUrl = ""
-) {
-
-    if (!webResults) {
-        return;
-    }
-
-
-    webResults.innerHTML =
-        "";
+    const sentences =
+        cleaned.match(
+            /[^.!?]+[.!?]+/g
+        );
 
 
     if (
-        !Array.isArray(results) ||
-        results.length === 0
+        !sentences ||
+        !sentences.length
     ) {
 
-        webResults.innerHTML = `
+        return [cleaned];
 
-            <div class="research-empty">
-
-                <div class="research-empty-icon">
-                    🔎
-                </div>
-
-                <strong>
-                    No web results found
-                </strong>
-
-                <p>
-                    Try another wording or search Google directly.
-                </p>
-
-                ${
-                    safeURL(googleSearchUrl)
-                        ? `
-                            <a
-                                href="${safeURL(googleSearchUrl)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="google-search-link"
-                            >
-                                Search Google directly →
-                            </a>
-                        `
-                        : ""
-                }
-
-            </div>
-
-        `;
-
-        return;
     }
 
 
-    results.forEach(
-        (result) => {
+    const chunks = [];
 
-            if (!result) {
+    let currentChunk = "";
+
+    sentences.forEach(
+        sentence => {
+
+            const part =
+                cleanText(sentence);
+
+            if (!part) {
                 return;
             }
 
 
-            const title =
-                cleanText(
-                    result.title ||
-                    result.name ||
-                    "Web result"
-                );
+            /*
+               Aim for comfortable chunks rather than
+               one utterance per sentence.
+            */
 
+            if (
+                (
+                    currentChunk.length +
+                    part.length
+                ) < 420
+            ) {
 
-            const snippet =
-                cleanText(
-                    result.snippet ||
-                    result.description ||
-                    ""
-                );
+                currentChunk +=
+                    (
+                        currentChunk
+                            ? " "
+                            : ""
+                    ) +
+                    part;
 
+            } else {
 
-            const url =
-                result.url ||
-                result.link ||
-                result.displayUrl ||
-                "";
-
-
-            const safe =
-                safeURL(url);
-
-
-            const card =
-                document.createElement(
-                    "article"
-                );
-
-
-            card.className =
-                "web-result-card";
-
-
-            card.innerHTML = `
-
-                <div class="web-result-label">
-                    GOOGLE SEARCH
-                </div>
-
-                <h4>
-                    ${escapeHTML(title)}
-                </h4>
-
-                ${
-                    url
-                        ? `
-                            <div class="web-result-url">
-                                ${escapeHTML(url)}
-                            </div>
-                        `
-                        : ""
+                if (currentChunk) {
+                    chunks.push(
+                        currentChunk
+                    );
                 }
 
-                ${
-                    snippet
-                        ? `
-                            <p>
-                                ${escapeHTML(snippet)}
-                            </p>
-                        `
-                        : ""
-                }
+                currentChunk =
+                    part;
 
-                ${
-                    safe
-                        ? `
-                            <a
-                                href="${safe}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="web-result-open"
-                            >
-                                Open result →
-                            </a>
-                        `
-                        : ""
-                }
-
-            `;
-
-
-            webResults.appendChild(
-                card
-            );
+            }
 
         }
     );
 
 
-    const safeGoogle =
-        safeURL(
-            googleSearchUrl
-        );
-
-
-    if (safeGoogle) {
-
-        const moreLink =
-            document.createElement("a");
-
-
-        moreLink.href =
-            safeGoogle;
-
-
-        moreLink.target =
-            "_blank";
-
-
-        moreLink.rel =
-            "noopener noreferrer";
-
-
-        moreLink.className =
-            "google-search-link";
-
-
-        moreLink.textContent =
-            "View more Google results →";
-
-
-        webResults.appendChild(
-            moreLink
+    if (currentChunk) {
+        chunks.push(
+            currentChunk
         );
     }
+
+
+    return chunks;
 }
 
 
 /* =========================================================
-   GOOGLE IMAGES
+   SPEAK NEXT NATURAL CHUNK
 ========================================================= */
 
-function renderImages(
-    images = [],
-    primaryImage = null,
-    googleImagesUrl = ""
-) {
-
-    if (!aiImages) {
-        return;
-    }
-
-
-    aiImages.innerHTML =
-        "";
-
-
-    const imageList = [];
-
-
-    if (primaryImage) {
-
-        imageList.push(
-            primaryImage
-        );
-    }
-
-
-    if (Array.isArray(images)) {
-
-        images.forEach(
-            (image) => {
-
-                if (image) {
-
-                    imageList.push(
-                        image
-                    );
-                }
-
-            }
-        );
-    }
-
-
-    const uniqueUrls =
-        new Set();
-
-
-    const normalizedImages =
-        imageList
-            .map(
-                (image) => {
-
-                    if (
-                        typeof image === "string"
-                    ) {
-
-                        return {
-                            url: image,
-                            title: "Medical image"
-                        };
-                    }
-
-
-                    return {
-
-                        url:
-                            image.imageUrl ||
-                            image.url ||
-                            image.thumbnail ||
-                            "",
-
-                        title:
-                            image.title ||
-                            image.name ||
-                            "Medical image"
-                    };
-
-                }
-            )
-            .filter(
-                (image) => {
-
-                    const url =
-                        safeURL(
-                            image.url
-                        );
-
-
-                    if (!url) {
-                        return false;
-                    }
-
-
-                    if (
-                        uniqueUrls.has(url)
-                    ) {
-
-                        return false;
-                    }
-
-
-                    uniqueUrls.add(url);
-
-                    image.url =
-                        url;
-
-                    return true;
-                }
-            );
-
+function speakNextChunk() {
 
     if (
-        normalizedImages.length === 0
+        speechStopped ||
+        speechIndex >=
+        speechQueue.length
     ) {
-
-        aiImages.innerHTML = `
-
-            <div class="research-empty">
-
-                <div class="research-empty-icon">
-                    🖼️
-                </div>
-
-                <strong>
-                    No images found
-                </strong>
-
-                <p>
-                    Try viewing Google Images directly.
-                </p>
-
-                ${
-                    safeURL(googleImagesUrl)
-                        ? `
-                            <a
-                                href="${safeURL(googleImagesUrl)}"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                class="google-search-link"
-                            >
-                                View Google Images →
-                            </a>
-                        `
-                        : ""
-                }
-
-            </div>
-
-        `;
-
         return;
     }
 
 
-    normalizedImages
-        .slice(0, 12)
-        .forEach(
-            (image) => {
-
-                const card =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                card.className =
-                    "image-result-card";
-
-
-                card.innerHTML = `
-
-                    <a
-                        href="${image.url}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-
-                        <img
-                            src="${image.url}"
-                            alt="${escapeHTML(image.title)}"
-                            loading="lazy"
-                        >
-
-                    </a>
-
-                    <div class="image-result-title">
-                        ${escapeHTML(image.title)}
-                    </div>
-
-                `;
-
-
-                aiImages.appendChild(
-                    card
-                );
-
-            }
+    const chunk =
+        cleanText(
+            speechQueue[
+                speechIndex
+            ]
         );
 
 
-    const safeGoogle =
-        safeURL(
-            googleImagesUrl
-        );
+    if (!chunk) {
 
+        speechIndex++;
 
-    if (safeGoogle) {
+        speakNextChunk();
 
-        const moreLink =
-            document.createElement("a");
+        return;
 
-
-        moreLink.href =
-            safeGoogle;
-
-
-        moreLink.target =
-            "_blank";
-
-
-        moreLink.rel =
-            "noopener noreferrer";
-
-
-        moreLink.className =
-            "google-search-link";
-
-
-        moreLink.textContent =
-            "View more Google Images →";
-
-
-        aiImages.appendChild(
-            moreLink
-        );
     }
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            chunk
+        );
+
+
+    /*
+       IMPORTANT:
+       This is deliberately NOT the cartoon voice.
+    */
+
+    if (
+        selectedNaturalVoice
+    ) {
+
+        utterance.voice =
+            selectedNaturalVoice;
+
+    }
+
+
+    utterance.lang =
+        selectedNaturalVoice?.lang ||
+        "en-US";
+
+
+    /*
+       Natural educational voice.
+    */
+
+    utterance.rate =
+        0.93;
+
+    utterance.pitch =
+        1.0;
+
+    utterance.volume =
+        1.0;
+
+
+    utterance.onend =
+        () => {
+
+            if (speechStopped) {
+                return;
+            }
+
+            speechIndex++;
+
+            /*
+               Tiny delay prevents some browsers from
+               producing a clipped transition.
+            */
+
+            window.setTimeout(
+                () => {
+
+                    speakNextChunk();
+
+                },
+                40
+            );
+
+        };
+
+
+    utterance.onerror =
+        event => {
+
+            console.warn(
+                "Speech synthesis error:",
+                event
+            );
+
+            if (speechStopped) {
+                return;
+            }
+
+            speechIndex++;
+
+            speakNextChunk();
+
+        };
+
+
+    window
+        .speechSynthesis
+        .speak(utterance);
+
+}
+
+
+/* =========================================================
+   NATURAL SPEECH PUBLIC FUNCTION
+========================================================= */
+
+function speakText(text) {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+
+        setStatus(
+            "Speech synthesis is not supported by this browser."
+        );
+
+        return;
+
+    }
+
+
+    const cleaned =
+        cleanText(text);
+
+
+    if (!cleaned) {
+        return;
+    }
+
+
+    stopSpeech();
+
+
+    /*
+       Re-evaluate the voice in case Edge/Chrome
+       loaded voices after page startup.
+    */
+
+    chooseNaturalVoice();
+
+
+    speechQueue =
+        splitSpeech(cleaned);
+
+    speechIndex = 0;
+
+    speechStopped = false;
+
+
+    speakNextChunk();
+
 }
 
 
@@ -1217,13 +865,13 @@ if (readAnswerButton) {
 
             if (!currentAnswerText) {
 
-                speakText(
-                    "There is no Mwaniki AI answer to read. Please review the web research results."
+                setStatus(
+                    "There is no answer to read yet."
                 );
 
                 return;
-            }
 
+            }
 
             speakText(
                 currentAnswerText
@@ -1231,32 +879,42 @@ if (readAnswerButton) {
 
         }
     );
+
 }
 
 
 /* =========================================================
-   STOP AUDIO
+   STOP AUDIO BUTTON
 ========================================================= */
 
 if (stopAudioButton) {
 
     stopAudioButton.addEventListener(
         "click",
-        stopSpeech
+        () => {
+
+            stopSpeech();
+
+            setStatus(
+                "Audio stopped."
+            );
+
+        }
     );
+
 }
 
 
 /* =========================================================
-   SPEECH
+   SEARCH AI
 ========================================================= */
 
-function speakText(text) {
+async function searchAI(question) {
 
-    if (
-        !("speechSynthesis" in window)
-    ) {
+    const query =
+        cleanText(question);
 
+    if (!query) {
         return;
     }
 
@@ -1264,255 +922,34 @@ function speakText(text) {
     stopSpeech();
 
 
-    const cleaned =
-        cleanText(text);
+    currentQuestionText =
+        query;
 
 
-    if (!cleaned) {
-        return;
-    }
+    if (askAIButton) {
 
-
-    speechQueue =
-        splitSpeech(
-            cleaned
-        );
-
-
-    speechIndex =
-        0;
-
-    speechStopped =
-        false;
-
-
-    speakNextChunk();
-}
-
-
-function splitSpeech(text) {
-
-    const sentences =
-        text.match(
-            /[^.!?]+[.!?]+/g
-        );
-
-
-    if (
-        !sentences ||
-        !sentences.length
-    ) {
-
-        return [
-            text
-        ];
-    }
-
-
-    return sentences;
-}
-
-
-function speakNextChunk() {
-
-    if (
-        speechStopped ||
-        speechIndex >= speechQueue.length
-    ) {
-
-        return;
-    }
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            speechQueue[
-                speechIndex
-            ]
-        );
-
-
-    utterance.rate =
-        0.98;
-
-
-    utterance.pitch =
-        1.0;
-
-
-    utterance.volume =
-        1;
-
-
-    utterance.onend =
-        () => {
-
-            if (speechStopped) {
-                return;
-            }
-
-            speechIndex++;
-
-            speakNextChunk();
-        };
-
-
-    window.speechSynthesis.speak(
-        utterance
-    );
-}
-
-
-function stopSpeech() {
-
-    speechStopped =
-        true;
-
-    speechQueue =
-        [];
-
-    speechIndex =
-        0;
-
-
-    if (
-        "speechSynthesis" in window
-    ) {
-
-        window.speechSynthesis.cancel();
-    }
-}
-
-
-/* =========================================================
-   TEST ME
-========================================================= */
-
-if (testMeButton) {
-
-    testMeButton.addEventListener(
-        "click",
-        startTest
-    );
-}
-
-
-async function startTest() {
-
-    const topic =
-        cleanText(
-            aiQuestion?.value ||
-            currentQuestion
-        );
-
-
-    if (!topic) {
-
-        setStatus(
-            "Ask a question first, then start Test Me.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    currentTestTopic =
-        topic;
-
-    currentTestNumber =
-        0;
-
-    currentTestScore =
-        0;
-
-    currentTestUsedIds =
-        [];
-
-    currentTestAnswered =
-        false;
-
-    currentTestCorrectKey =
-        "";
-
-
-    if (testPanel) {
-
-        testPanel.hidden =
-            false;
-
-        testPanel.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
-
-
-    await loadNextTestQuestion();
-}
-
-
-/* =========================================================
-   LOAD NEXT TEST QUESTION
-========================================================= */
-
-async function loadNextTestQuestion() {
-
-    currentTestNumber++;
-
-    currentTestAnswered =
-        false;
-
-    currentTestCorrectKey =
-        "";
-
-
-    if (
-        currentTestNumber >
-        currentTestLength
-    ) {
-
-        finishTest();
-
-        return;
-    }
-
-
-    updateTestProgress();
-
-
-    if (testQuestion) {
-
-        testQuestion.textContent =
-            "Generating your question...";
-    }
-
-
-    if (testOptions) {
-
-        testOptions.innerHTML =
-            "";
-    }
-
-
-    if (testFeedback) {
-
-        testFeedback.innerHTML =
-            "";
-    }
-
-
-    if (testNext) {
-
-        testNext.disabled =
+        askAIButton.disabled =
             true;
+
+        askAIButton.textContent =
+            "Thinking...";
+
     }
 
 
-    if (testStatus) {
+    setStatus(
+        "Searching Mwaniki AI..."
+    );
 
-        testStatus.textContent =
-            "Preparing a medical question...";
+
+    if (aiAnswer) {
+
+        aiAnswer.innerHTML = `
+            <div class="ai-loading">
+                <span>Searching medical knowledge...</span>
+            </div>
+        `;
+
     }
 
 
@@ -1523,41 +960,37 @@ async function loadNextTestQuestion() {
                 session
             } = {}
         } =
-            await supabase.auth.getSession();
+            await supabase.auth
+                .getSession();
 
 
-        if (!session) {
+        const accessToken =
+            session?.access_token ||
+            "";
+
+
+        if (!accessToken) {
 
             throw new Error(
-                "Please log in before starting a test."
+                "You are not signed in."
             );
+
         }
 
 
-        const response =
+        const {
+            data,
+            error
+        } =
             await supabase.functions.invoke(
                 "mwaniki-ai",
                 {
                     body: {
 
-                        mode: "test",
+                        mode: "search",
 
-                        testTopic:
-                            currentTestTopic,
-
-                        usedQuestionIds:
-                            currentTestUsedIds,
-
-                        questionNumber:
-                            currentTestNumber,
-
-                        testLength:
-                            currentTestLength,
-
-                        /*
-                         * Test retrieval can use both
-                         * internal material and web research.
-                         */
+                        question:
+                            query,
 
                         searchMwaniki:
                             true,
@@ -1566,70 +999,1236 @@ async function loadNextTestQuestion() {
                             true,
 
                         searchImages:
-                            false
+                            true
+
+                    },
+
+                    headers: {
+
+                        Authorization:
+                            `Bearer ${accessToken}`
+
                     }
+
                 }
             );
 
 
-        if (response.error) {
+        if (error) {
 
-            throw response.error;
+            throw error;
+
         }
 
 
-        const data =
-            response.data || {};
-
-
-        const question =
-            data.testQuestion ||
-            data.question ||
-            null;
-
-
-        if (!question) {
+        if (!data) {
 
             throw new Error(
-                "A suitable test question could not be created."
+                "The AI returned no data."
             );
+
         }
 
 
-        renderTestQuestion(
-            question
+        console.log(
+            "Mwaniki AI response:",
+            data
+        );
+
+
+        const answer =
+            cleanText(
+                data.answer ||
+                data.finalAnswer ||
+                data.mwanikiAnswer ||
+                data.webAnswer ||
+                ""
+            );
+
+
+        currentAnswerText =
+            answer;
+
+
+        renderAnswer(
+            query,
+            answer
+        );
+
+
+        renderWebResults(
+            data.webResults || []
+        );
+
+
+        renderImages(
+            data.images || [],
+            data.primaryImage || null
+        );
+
+
+        /*
+           We deliberately do NOT display internal
+           Mwaniki sources to the student.
+        */
+
+        if (mwanikiSources) {
+
+            mwanikiSources.innerHTML =
+                "";
+
+            mwanikiSources.style.display =
+                "none";
+
+        }
+
+
+        if (answer) {
+
+            setStatus(
+                "Mwaniki AI is ready."
+            );
+
+        } else {
+
+            setStatus(
+                "No direct answer was returned."
+            );
+
+        }
+
+
+        saveRecentQuestion(
+            query
         );
 
 
     } catch (error) {
 
         console.error(
-            "Test question error:",
+            "Mwaniki AI error:",
             error
         );
 
 
-        if (testQuestion) {
+        currentAnswerText =
+            "";
 
-            testQuestion.textContent =
-                "Unable to create this test question.";
+
+        if (aiAnswer) {
+
+            aiAnswer.innerHTML = `
+                <div class="ai-error">
+                    <strong>Unable to answer right now.</strong>
+                    <p>
+                        ${escapeHTML(
+                            error?.message ||
+                            "Please try again."
+                        )}
+                    </p>
+                </div>
+            `;
+
         }
+
+
+        setStatus(
+            error?.message ||
+            "AI request failed."
+        );
+
+    } finally {
+
+        if (askAIButton) {
+
+            askAIButton.disabled =
+                false;
+
+            askAIButton.textContent =
+                "🤖 Ask Mwaniki AI";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   RENDER ANSWER
+========================================================= */
+
+function renderAnswer(
+    question,
+    answer
+) {
+
+    if (!aiAnswer) {
+        return;
+    }
+
+
+    const safeQuestion =
+        escapeHTML(question);
+
+
+    const safeAnswer =
+        textToHTML(answer);
+
+
+    if (!answer) {
+
+        aiAnswer.innerHTML = `
+
+            <div class="ai-empty">
+
+                <div class="ai-empty-icon">
+                    🤖
+                </div>
+
+                <h3>
+                    I could not build a reliable answer.
+                </h3>
+
+                <p>
+                    Try making the medical question more specific.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    aiAnswer.innerHTML = `
+
+        <div class="answer-question">
+
+            <span class="answer-label">
+                YOUR QUESTION
+            </span>
+
+            <h3>
+                ${safeQuestion}
+            </h3>
+
+        </div>
+
+
+        <div class="answer-body">
+
+            <span class="answer-label">
+                MWANIKI AI
+            </span>
+
+            <div class="answer-text">
+
+                <p>
+                    ${safeAnswer}
+                </p>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   GOOGLE SEARCH RESULTS
+========================================================= */
+
+function renderWebResults(results) {
+
+    if (!webResults) {
+        return;
+    }
+
+
+    const items =
+        Array.isArray(results)
+            ? results
+            : [];
+
+
+    if (!items.length) {
+
+        webResults.innerHTML = `
+
+            <div class="web-empty">
+
+                <span>
+                    🔎
+                </span>
+
+                <p>
+                    No Google results were returned for this question.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    const cards =
+        items
+            .slice(0, 8)
+            .map(
+                result => {
+
+                    const title =
+                        cleanText(
+                            result.title ||
+                            "Medical search result"
+                        );
+
+                    const snippet =
+                        cleanText(
+                            result.snippet ||
+                            result.description ||
+                            ""
+                        );
+
+                    const url =
+                        safeURL(
+                            result.url ||
+                            result.link ||
+                            result.displayUrl
+                        );
+
+
+                    return `
+
+                        <article
+                            class="web-result-card"
+                        >
+
+                            <div class="web-result-label">
+                                GOOGLE SEARCH
+                            </div>
+
+                            <h3>
+                                ${escapeHTML(
+                                    title
+                                )}
+                            </h3>
+
+                            ${
+                                snippet
+                                    ? `
+                                    <p>
+                                        ${escapeHTML(
+                                            snippet
+                                        )}
+                                    </p>
+                                    `
+                                    : ""
+                            }
+
+                            ${
+                                url !== "#"
+                                    ? `
+                                    <a
+                                        href="${url}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="web-result-link"
+                                    >
+                                        Open result →
+                                    </a>
+                                    `
+                                    : ""
+                            }
+
+                        </article>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    webResults.innerHTML = `
+
+        <div class="web-results-heading">
+
+            <div>
+
+                <span>
+                    RESEARCH
+                </span>
+
+                <h3>
+                    Google Search
+                </h3>
+
+            </div>
+
+        </div>
+
+        <div class="web-results-grid">
+
+            ${cards}
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   GOOGLE IMAGES
+========================================================= */
+
+function renderImages(
+    images,
+    primaryImage = null
+) {
+
+    if (!aiImages) {
+        return;
+    }
+
+
+    const imageList =
+        Array.isArray(images)
+            ? images
+            : [];
+
+
+    const finalImages =
+        primaryImage
+            ? [
+                primaryImage,
+                ...imageList
+            ]
+            : imageList;
+
+
+    const uniqueImages =
+        [];
+
+
+    const seen =
+        new Set();
+
+
+    finalImages.forEach(
+        image => {
+
+            const url =
+                image?.url ||
+                image?.imageUrl ||
+                image?.link ||
+                image?.src ||
+                "";
+
+
+            if (!url) {
+                return;
+            }
+
+
+            if (
+                seen.has(url)
+            ) {
+                return;
+            }
+
+
+            seen.add(url);
+
+            uniqueImages.push({
+                ...image,
+                url
+            });
+
+        }
+    );
+
+
+    if (!uniqueImages.length) {
+
+        aiImages.innerHTML = `
+
+            <div class="images-empty">
+
+                <span>
+                    🖼
+                </span>
+
+                <p>
+                    No image results were returned.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    const cards =
+        uniqueImages
+            .slice(0, 12)
+            .map(
+                image => {
+
+                    const imageURL =
+                        safeURL(
+                            image.url
+                        );
+
+
+                    if (
+                        imageURL === "#"
+                    ) {
+                        return "";
+                    }
+
+
+                    const title =
+                        cleanText(
+                            image.title ||
+                            image.alt ||
+                            "Medical image"
+                        );
+
+
+                    return `
+
+                        <article
+                            class="image-result-card"
+                        >
+
+                            <a
+                                href="${imageURL}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+
+                                <img
+                                    src="${imageURL}"
+                                    alt="${escapeHTML(title)}"
+                                    loading="lazy"
+                                    referrerpolicy="no-referrer"
+                                >
+
+                            </a>
+
+                            <div class="image-result-title">
+                                ${escapeHTML(title)}
+                            </div>
+
+                        </article>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    aiImages.innerHTML = `
+
+        <div class="images-results-heading">
+
+            <div>
+
+                <span>
+                    VISUAL RESEARCH
+                </span>
+
+                <h3>
+                    Google Images
+                </h3>
+
+            </div>
+
+        </div>
+
+
+        <div class="images-grid">
+
+            ${cards}
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   RECENT QUESTIONS
+========================================================= */
+
+function getRecentQuestions() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(
+                "mwanikiAIRecentQuestions"
+            );
+
+        if (!saved) {
+            return [];
+        }
+
+        const parsed =
+            JSON.parse(saved);
+
+        return Array.isArray(parsed)
+            ? parsed
+            : [];
+
+    } catch (_) {
+
+        return [];
+
+    }
+
+}
+
+
+function saveRecentQuestion(question) {
+
+    const query =
+        cleanText(question);
+
+    if (!query) {
+        return;
+    }
+
+
+    let questions =
+        getRecentQuestions();
+
+
+    questions =
+        [
+            query,
+            ...questions.filter(
+                item =>
+                    item !== query
+            )
+        ]
+        .slice(0, 8);
+
+
+    try {
+
+        localStorage.setItem(
+            "mwanikiAIRecentQuestions",
+            JSON.stringify(
+                questions
+            )
+        );
+
+    } catch (_) {}
+
+
+    renderRecentQuestions();
+
+}
+
+
+function renderRecentQuestions() {
+
+    if (!aiRecentQuestions) {
+        return;
+    }
+
+
+    const questions =
+        getRecentQuestions();
+
+
+    if (!questions.length) {
+
+        aiRecentQuestions.innerHTML =
+            "";
+
+        return;
+
+    }
+
+
+    aiRecentQuestions.innerHTML = `
+
+        <div class="recent-heading">
+            Recent questions
+        </div>
+
+        <div class="recent-question-list">
+
+            ${questions
+                .map(
+                    question => `
+
+                        <button
+                            type="button"
+                            class="recent-question-button"
+                            data-recent-question="${escapeHTML(
+                                question
+                            )}"
+                        >
+                            ${escapeHTML(
+                                question
+                            )}
+                        </button>
+
+                    `
+                )
+                .join("")}
+
+        </div>
+
+    `;
+
+
+    aiRecentQuestions
+        .querySelectorAll(
+            ".recent-question-button"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const question =
+                            button.dataset
+                                .recentQuestion ||
+                            "";
+
+                        if (aiQuestion) {
+                            aiQuestion.value =
+                                question;
+                        }
+
+                        searchAI(
+                            question
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   TEST ME BUTTON
+========================================================= */
+
+if (testMeButton) {
+
+    testMeButton.addEventListener(
+        "click",
+        () => {
+
+            startTest();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   START TEST
+========================================================= */
+
+async function startTest(
+    topic = ""
+) {
+
+    stopSpeech();
+
+
+    currentTestTopic =
+        cleanText(
+            topic ||
+            currentQuestionText ||
+            aiQuestion?.value ||
+            "medical science"
+        );
+
+
+    currentTestNumber = 0;
+
+    currentTestScore = 0;
+
+    currentTestAnswered =
+        false;
+
+    currentTestUsedIds = [];
+
+
+    if (testPanel) {
+
+        testPanel.style.display =
+            "block";
+
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            "Preparing your medical test...";
+
+    }
+
+
+    if (testProgress) {
+
+        testProgress.textContent =
+            `0 / ${currentTestLength}`;
+
+    }
+
+
+    if (testQuestion) {
+
+        testQuestion.innerHTML =
+            "";
+
+    }
+
+
+    if (testOptions) {
+
+        testOptions.innerHTML =
+            "";
+
+    }
+
+
+    if (testFeedback) {
+
+        testFeedback.innerHTML =
+            "";
+
+    }
+
+
+    if (testNext) {
+
+        testNext.style.display =
+            "none";
+
+    }
+
+
+    try {
+
+        await loadNextTestQuestion();
+
+    } catch (error) {
+
+        console.error(
+            "Test error:",
+            error
+        );
 
 
         if (testStatus) {
 
             testStatus.textContent =
                 error?.message ||
-                "Please try again.";
-        }
+                "Unable to start the test.";
 
-        if (testNext) {
-
-            testNext.disabled =
-                true;
         }
 
     }
+
+}
+
+
+/* =========================================================
+   LOAD NEXT TEST QUESTION
+========================================================= */
+
+async function loadNextTestQuestion() {
+
+    currentTestAnswered =
+        false;
+
+
+    if (
+        currentTestNumber >=
+        currentTestLength
+    ) {
+
+        finishTest();
+
+        return;
+
+    }
+
+
+    currentTestNumber++;
+
+
+    if (testProgress) {
+
+        testProgress.textContent =
+            `${currentTestNumber} / ${currentTestLength}`;
+
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            "Loading question...";
+
+    }
+
+
+    if (testQuestion) {
+
+        testQuestion.innerHTML =
+            "";
+
+    }
+
+
+    if (testOptions) {
+
+        testOptions.innerHTML =
+            "";
+
+    }
+
+
+    if (testFeedback) {
+
+        testFeedback.innerHTML =
+            "";
+
+    }
+
+
+    if (testNext) {
+
+        testNext.style.display =
+            "none";
+
+    }
+
+
+    const {
+        data: {
+            session
+        } = {}
+    } =
+        await supabase.auth
+            .getSession();
+
+
+    const accessToken =
+        session?.access_token ||
+        "";
+
+
+    if (!accessToken) {
+
+        throw new Error(
+            "You are not signed in."
+        );
+
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.functions.invoke(
+            "mwaniki-ai",
+            {
+
+                body: {
+
+                    mode: "test",
+
+                    testTopic:
+                        currentTestTopic,
+
+                    usedQuestionIds:
+                        currentTestUsedIds,
+
+                    questionNumber:
+                        currentTestNumber,
+
+                    testLength:
+                        currentTestLength,
+
+                    searchMwaniki:
+                        true,
+
+                    searchWeb:
+                        true,
+
+                    searchImages:
+                        false
+
+                },
+
+                headers: {
+
+                    Authorization:
+                        `Bearer ${accessToken}`
+
+                }
+
+            }
+        );
+
+
+    if (error) {
+
+        throw error;
+
+    }
+
+
+    if (!data) {
+
+        throw new Error(
+            "No test question was returned."
+        );
+
+    }
+
+
+    console.log(
+        "Test question:",
+        data
+    );
+
+
+    if (
+        data.available === false
+    ) {
+
+        throw new Error(
+            data.message ||
+            "A suitable question could not be generated."
+        );
+
+    }
+
+
+    currentTestQuestion =
+        normalizeTestQuestion(
+            data
+        );
+
+
+    if (
+        !currentTestQuestion
+    ) {
+
+        throw new Error(
+            "The returned test question was incomplete."
+        );
+
+    }
+
+
+    if (
+        currentTestQuestion.id
+    ) {
+
+        currentTestUsedIds.push(
+            currentTestQuestion.id
+        );
+
+    }
+
+
+    renderTestQuestion(
+        currentTestQuestion
+    );
+
+
+    /*
+       Read the question naturally if the browser supports
+       speech. This uses the normal natural voice engine,
+       NOT the cartoon reaction voice.
+    */
+
+    speakText(
+        currentTestQuestion.question
+    );
+
+}
+
+
+/* =========================================================
+   NORMALIZE TEST QUESTION
+========================================================= */
+
+function normalizeTestQuestion(data) {
+
+    const question =
+        cleanText(
+            data.question ||
+            data.testQuestion ||
+            ""
+        );
+
+
+    const rawOptions =
+        Array.isArray(
+            data.options
+        )
+            ? data.options
+            : [];
+
+
+    const options =
+        rawOptions
+            .map(
+                option => {
+
+                    if (
+                        typeof option ===
+                        "string"
+                    ) {
+
+                        return {
+                            value: "",
+                            label:
+                                cleanText(
+                                    option
+                                )
+                        };
+
+                    }
+
+
+                    return {
+                        value:
+                            cleanText(
+                                option.value ||
+                                ""
+                            ),
+
+                        label:
+                            cleanText(
+                                option.label ||
+                                option.text ||
+                                ""
+                            )
+                    };
+
+                }
+            )
+            .filter(
+                option =>
+                    option.label
+            )
+            .slice(0, 4);
+
+
+    let correctKey =
+        cleanText(
+            data.correctKey ||
+            data.correct_answer ||
+            data.correctAnswer ||
+            ""
+        )
+        .toUpperCase();
+
+
+    if (
+        !["A", "B", "C", "D"]
+            .includes(
+                correctKey
+            )
+    ) {
+
+        const answerText =
+            cleanText(
+                data.correctAnswer ||
+                data.correct_answer ||
+                ""
+            );
+
+
+        const index =
+            options.findIndex(
+                option =>
+                    cleanText(
+                        option.label
+                    ).toLowerCase() ===
+                    answerText.toLowerCase()
+            );
+
+
+        if (index >= 0) {
+
+            correctKey =
+                String.fromCharCode(
+                    65 + index
+                );
+
+        }
+
+    }
+
+
+    if (
+        !question ||
+        options.length !== 4 ||
+        !["A", "B", "C", "D"]
+            .includes(
+                correctKey
+            )
+    ) {
+
+        return null;
+
+    }
+
+
+    return {
+
+        id:
+            data.id ||
+            data.quizId ||
+            "",
+
+        question,
+
+        options,
+
+        correctKey
+
+    };
+
 }
 
 
@@ -1641,59 +2240,31 @@ function renderTestQuestion(
     question
 ) {
 
-    const questionText =
-        cleanText(
-            question.question ||
-            question.text ||
-            ""
-        );
-
-
-    const options =
-        Array.isArray(
-            question.options
-        )
-            ? question.options
-            : [];
-
-
-    if (
-        !questionText ||
-        options.length < 4
-    ) {
-
-        throw new Error(
-            "The test question was incomplete."
-        );
+    if (!testQuestion) {
+        return;
     }
 
 
-    currentTestCorrectKey =
-        normalizeCorrectKey(
-            question
-        );
+    testQuestion.innerHTML = `
+
+        <div class="test-question-number">
+
+            Question
+            ${currentTestNumber}
+
+            of
+            ${currentTestLength}
+
+        </div>
 
 
-    if (question.id != null) {
+        <h3>
+            ${escapeHTML(
+                question.question
+            )}
+        </h3>
 
-        currentTestUsedIds.push(
-            String(question.id)
-        );
-    }
-
-
-    if (testQuestion) {
-
-        testQuestion.textContent =
-            questionText;
-    }
-
-
-    if (testStatus) {
-
-        testStatus.textContent =
-            "";
-    }
+    `;
 
 
     if (!testOptions) {
@@ -1702,188 +2273,87 @@ function renderTestQuestion(
 
 
     testOptions.innerHTML =
-        "";
+        question.options
+            .map(
+                (option, index) => {
+
+                    const letter =
+                        String.fromCharCode(
+                            65 + index
+                        );
 
 
-    const letters =
-        [
-            "A",
-            "B",
-            "C",
-            "D"
-        ];
+                    return `
+
+                        <button
+                            type="button"
+                            class="test-option"
+                            data-key="${letter}"
+                        >
+
+                            <span class="test-option-letter">
+                                ${letter}
+                            </span>
+
+                            <span class="test-option-text">
+                                ${escapeHTML(
+                                    option.label
+                                )}
+                            </span>
+
+                        </button>
+
+                    `;
+
+                }
+            )
+            .join("");
 
 
-    options
-        .slice(0, 4)
+    testOptions
+        .querySelectorAll(
+            ".test-option"
+        )
         .forEach(
-            (option, index) => {
-
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-
-                button.type =
-                    "button";
-
-
-                button.className =
-                    "test-option";
-
-
-                button.dataset.key =
-                    letters[index];
-
-
-                button.innerHTML = `
-
-                    <span class="option-letter">
-                        ${letters[index]}
-                    </span>
-
-                    <span>
-                        ${escapeHTML(
-                            typeof option === "string"
-                                ? option
-                                : (
-                                    option.label ||
-                                    option.text ||
-                                    ""
-                                )
-                        )}
-                    </span>
-
-                `;
-
+            button => {
 
                 button.addEventListener(
                     "click",
                     () => {
 
-                        handleTestAnswer(
-                            button,
-                            letters[index],
-                            options,
-                            question
+                        answerTestQuestion(
+                            button.dataset.key
                         );
 
                     }
                 );
 
-
-                testOptions.appendChild(
-                    button
-                );
-
-            }
-        );
-}
-
-
-/* =========================================================
-   CORRECT ANSWER NORMALIZATION
-========================================================= */
-
-function normalizeCorrectKey(
-    question
-) {
-
-    const raw =
-        String(
-            question.correctKey ||
-            question.correct_answer ||
-            question.correctAnswer ||
-            ""
-        )
-            .trim();
-
-
-    const upper =
-        raw.toUpperCase();
-
-
-    if (
-        [
-            "A",
-            "B",
-            "C",
-            "D"
-        ].includes(upper)
-    ) {
-
-        return upper;
-    }
-
-
-    const options =
-        Array.isArray(
-            question.options
-        )
-            ? question.options
-            : [];
-
-
-    const normalizedRaw =
-        cleanText(
-            raw
-        ).toLowerCase();
-
-
-    const index =
-        options.findIndex(
-            (option) => {
-
-                const text =
-                    typeof option === "string"
-                        ? option
-                        : (
-                            option.label ||
-                            option.text ||
-                            ""
-                        );
-
-                return (
-                    cleanText(
-                        text
-                    ).toLowerCase()
-                    === normalizedRaw
-                );
             }
         );
 
 
-    if (
-        index >= 0 &&
-        index < 4
-    ) {
+    if (testStatus) {
 
-        return [
-            "A",
-            "B",
-            "C",
-            "D"
-        ][index];
+        testStatus.textContent =
+            "Choose the best answer.";
+
     }
 
-
-    return "";
 }
 
 
 /* =========================================================
-   HANDLE TEST ANSWER
+   ANSWER TEST QUESTION
 ========================================================= */
 
-function handleTestAnswer(
-    selectedButton,
-    selectedKey,
-    options,
-    question
+function answerTestQuestion(
+    selectedKey
 ) {
 
-    if (currentTestAnswered) {
+    if (
+        currentTestAnswered ||
+        !currentTestQuestion
+    ) {
         return;
     }
 
@@ -1892,126 +2362,15 @@ function handleTestAnswer(
         true;
 
 
-    const buttons =
-        testOptions?.querySelectorAll(
-            ".test-option"
-        ) || [];
-
-
-    buttons.forEach(
-        (button) => {
-
-            button.disabled =
-                true;
-
-        }
-    );
-
-
     const correctKey =
-        currentTestCorrectKey;
+        currentTestQuestion
+            .correctKey;
 
 
-    const correctIndex =
-        [
-            "A",
-            "B",
-            "C",
-            "D"
-        ].indexOf(
-            correctKey
+    const selectedButton =
+        testOptions?.querySelector(
+            `[data-key="${selectedKey}"]`
         );
-
-
-    const correctOption =
-        correctIndex >= 0
-            ? options[correctIndex]
-            : null;
-
-
-    const correctText =
-        typeof correctOption === "string"
-            ? correctOption
-            : (
-                correctOption?.label ||
-                correctOption?.text ||
-                question.correctAnswer ||
-                ""
-            );
-
-
-    if (
-        correctKey &&
-        selectedKey === correctKey
-    ) {
-
-        currentTestScore++;
-
-
-        selectedButton.classList.add(
-            "correct"
-        );
-
-
-        markCorrectOption(
-            correctKey
-        );
-
-
-        showCorrectFeedback(
-            question,
-            correctText
-        );
-
-
-        playCorrectReaction();
-
-
-    } else {
-
-        selectedButton.classList.add(
-            "wrong"
-        );
-
-
-        markCorrectOption(
-            correctKey
-        );
-
-
-        showWrongFeedback(
-            question,
-            correctText
-        );
-
-
-        playWrongReaction();
-
-    }
-
-
-    if (testNext) {
-
-        testNext.disabled =
-            false;
-    }
-
-
-    updateTestProgress();
-}
-
-
-/* =========================================================
-   MARK CORRECT OPTION
-========================================================= */
-
-function markCorrectOption(
-    correctKey
-) {
-
-    if (!correctKey) {
-        return;
-    }
 
 
     const correctButton =
@@ -2020,123 +2379,300 @@ function markCorrectOption(
         );
 
 
-    if (correctButton) {
+    testOptions
+        ?.querySelectorAll(
+            ".test-option"
+        )
+        .forEach(
+            button => {
 
-        correctButton.classList.add(
-            "correct"
-        );
-    }
-}
+                button.disabled =
+                    true;
 
-
-/* =========================================================
-   FEEDBACK
-========================================================= */
-
-function showCorrectFeedback(
-    question,
-    correctText
-) {
-
-    if (!testFeedback) {
-        return;
-    }
-
-
-    const explanation =
-        cleanText(
-            question.explanation ||
-            question.feedback ||
-            ""
-        );
-
-
-    testFeedback.className =
-        "test-feedback feedback-correct";
-
-
-    testFeedback.innerHTML = `
-
-        <strong>
-            🎉 Correct!
-        </strong>
-
-        <div>
-            ${escapeHTML(
-                explanation ||
-                `The correct answer is ${correctText}.`
-            )}
-        </div>
-
-    `;
-}
-
-
-function showWrongFeedback(
-    question,
-    correctText
-) {
-
-    if (!testFeedback) {
-        return;
-    }
-
-
-    const explanation =
-        cleanText(
-            question.explanation ||
-            question.feedback ||
-            ""
-        );
-
-
-    testFeedback.className =
-        "test-feedback feedback-wrong";
-
-
-    testFeedback.innerHTML = `
-
-        <strong>
-            😅 Not quite!
-        </strong>
-
-        <div>
-            ${
-                explanation
-                    ? escapeHTML(
-                        explanation
-                    )
-                    : `
-                        The correct answer is
-                        ${escapeHTML(correctText)}.
-                    `
             }
-        </div>
+        );
 
-    `;
+
+    if (
+        selectedKey ===
+        correctKey
+    ) {
+
+        currentTestScore++;
+
+
+        selectedButton
+            ?.classList
+            .add(
+                "correct"
+            );
+
+
+        if (testFeedback) {
+
+            testFeedback.innerHTML = `
+
+                <div class="test-correct-feedback">
+
+                    <div class="feedback-cartoon">
+                        🎉
+                    </div>
+
+                    <strong>
+                        Correct!
+                    </strong>
+
+                    <p>
+                        Excellent work. Keep going.
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+
+        playCorrectReaction();
+
+
+    } else {
+
+        selectedButton
+            ?.classList
+            .add(
+                "wrong"
+            );
+
+
+        correctButton
+            ?.classList
+            .add(
+                "correct"
+            );
+
+
+        const correctOption =
+            currentTestQuestion.options
+                [
+                    "ABCD"
+                        .indexOf(
+                            correctKey
+                        )
+                ];
+
+
+        if (testFeedback) {
+
+            testFeedback.innerHTML = `
+
+                <div class="test-wrong-feedback">
+
+                    <div class="feedback-cartoon">
+                        🧠
+                    </div>
+
+                    <strong>
+                        Not quite.
+                    </strong>
+
+                    <p>
+                        The correct answer is:
+                        <strong>
+                            ${escapeHTML(
+                                correctKey
+                            )}.
+                            ${escapeHTML(
+                                correctOption?.label ||
+                                ""
+                            )}
+                        </strong>
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+
+        playWrongReaction();
+
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            `Score: ${currentTestScore} / ${currentTestNumber}`;
+
+    }
+
+
+    if (testNext) {
+
+        testNext.style.display =
+            "inline-flex";
+
+    }
+
 }
 
 
 /* =========================================================
-   TEST PROGRESS
+   CARTOON CORRECT REACTION
 ========================================================= */
 
-function updateTestProgress() {
+function playCorrectReaction() {
 
-    if (!testProgress) {
+    if (
+        !("speechSynthesis" in window)
+    ) {
         return;
     }
 
 
-    const displayNumber =
-        Math.min(
-            currentTestNumber,
-            currentTestLength
+    const phrases = [
+
+        "Yes! That's it!",
+
+        "Excellent!",
+
+        "Brilliant!",
+
+        "You got it!",
+
+        "Fantastic answer!"
+
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    /*
+       STOP the natural question voice first.
+    */
+
+    window
+        .speechSynthesis
+        .cancel();
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            phrase
         );
 
 
-    testProgress.textContent =
-        `Question ${displayNumber} of ${currentTestLength} • Score ${currentTestScore}`;
+    /*
+       Cartoon voice is intentionally different
+       from the normal AI voice.
+    */
+
+    utterance.rate =
+        1.25;
+
+    utterance.pitch =
+        1.55;
+
+    utterance.volume =
+        0.85;
+
+
+    utterance.onend =
+        () => {
+
+            /*
+               Do not automatically continue normal speech.
+            */
+
+        };
+
+
+    window
+        .speechSynthesis
+        .speak(
+            utterance
+        );
+
+}
+
+
+/* =========================================================
+   CARTOON WRONG REACTION
+========================================================= */
+
+function playWrongReaction() {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+        return;
+    }
+
+
+    const phrases = [
+
+        "Ooooh! Not quite!",
+
+        "Whoops! Try again!",
+
+        "Almost there!",
+
+        "Aha! That's not it!",
+
+        "Nice try!"
+
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    window
+        .speechSynthesis
+        .cancel();
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            phrase
+        );
+
+
+    /*
+       Cartoon voice intentionally preserved.
+    */
+
+    utterance.rate =
+        1.4;
+
+    utterance.pitch =
+        1.8;
+
+    utterance.volume =
+        0.9;
+
+
+    window
+        .speechSynthesis
+        .speak(
+            utterance
+        );
+
 }
 
 
@@ -2150,10 +2686,30 @@ if (testNext) {
         "click",
         () => {
 
-            loadNextTestQuestion();
+            stopSpeech();
+
+            loadNextTestQuestion()
+                .catch(
+                    error => {
+
+                        console.error(
+                            error
+                        );
+
+                        if (testStatus) {
+
+                            testStatus.textContent =
+                                error?.message ||
+                                "Could not load the next question.";
+
+                        }
+
+                    }
+                );
 
         }
     );
+
 }
 
 
@@ -2165,19 +2721,25 @@ if (testExit) {
 
     testExit.addEventListener(
         "click",
-        exitTest
+        () => {
+
+            stopSpeech();
+
+            exitTest();
+
+        }
     );
+
 }
 
 
 function exitTest() {
 
-    if (testPanel) {
+    stopSpeech();
 
-        testPanel.hidden =
-            true;
-    }
 
+    currentTestQuestion =
+        null;
 
     currentTestNumber =
         0;
@@ -2185,28 +2747,54 @@ function exitTest() {
     currentTestScore =
         0;
 
-    currentTestUsedIds =
-        [];
-
     currentTestAnswered =
         false;
 
-    currentTestCorrectKey =
-        "";
+    currentTestUsedIds =
+        [];
 
 
-    if (testFeedback) {
+    if (testPanel) {
 
-        testFeedback.innerHTML =
+        testPanel.style.display =
+            "none";
+
+    }
+
+
+    if (testQuestion) {
+        testQuestion.innerHTML =
             "";
     }
 
 
     if (testOptions) {
-
         testOptions.innerHTML =
             "";
     }
+
+
+    if (testFeedback) {
+        testFeedback.innerHTML =
+            "";
+    }
+
+
+    if (testStatus) {
+
+        testStatus.textContent =
+            "";
+
+    }
+
+
+    if (testProgress) {
+
+        testProgress.textContent =
+            "";
+
+    }
+
 }
 
 
@@ -2216,33 +2804,54 @@ function exitTest() {
 
 function finishTest() {
 
+    stopSpeech();
+
+
     const percentage =
-        Math.round(
-            (
-                currentTestScore /
-                currentTestLength
-            ) * 100
-        );
+        currentTestLength > 0
+            ? Math.round(
+                (
+                    currentTestScore /
+                    currentTestLength
+                ) *
+                100
+            )
+            : 0;
 
 
     if (testQuestion) {
 
         testQuestion.innerHTML = `
 
-            <strong>
-                Test Complete
-            </strong>
+            <div class="test-finished">
 
-            <br><br>
+                <div class="test-finished-icon">
+                    🏆
+                </div>
 
-            You scored
-            ${currentTestScore}
-            /
-            ${currentTestLength}
+                <h3>
+                    Test Complete
+                </h3>
 
-            (${percentage}%).
+                <p>
+                    You scored
+                    <strong>
+                        ${currentTestScore}
+                    </strong>
+                    out of
+                    <strong>
+                        ${currentTestLength}
+                    </strong>.
+                </p>
+
+                <div class="test-final-score">
+                    ${percentage}%
+                </div>
+
+            </div>
 
         `;
+
     }
 
 
@@ -2250,171 +2859,64 @@ function finishTest() {
 
         testOptions.innerHTML =
             "";
+
     }
 
 
     if (testFeedback) {
 
-        testFeedback.className =
-            "test-feedback feedback-correct";
-
-
         testFeedback.innerHTML = `
 
-            <strong>
-                🏆 Test finished!
-            </strong>
+            <div class="test-finished-message">
 
-            <div>
-                Keep studying and try another test
-                to improve your score.
+                ${
+                    percentage >= 80
+                        ? "Excellent performance."
+                        : percentage >= 60
+                            ? "Good work. Keep reviewing."
+                            : "Keep studying and try again."
+                }
+
             </div>
 
         `;
+
     }
 
 
     if (testNext) {
 
-        testNext.disabled =
-            true;
+        testNext.style.display =
+            "none";
+
     }
 
 
     if (testStatus) {
 
         testStatus.textContent =
-            "";
+            `Final score: ${currentTestScore} / ${currentTestLength}`;
+
     }
 
 
-    currentTestNumber =
-        currentTestLength;
-}
+    if (testProgress) {
 
+        testProgress.textContent =
+            `${currentTestLength} / ${currentTestLength}`;
 
-/* =========================================================
-   CARTOON CORRECT REACTION
-========================================================= */
-
-function playCorrectReaction() {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-
-        return;
     }
 
 
-    const phrases = [
-        "Yes! That's it!",
-        "Excellent!",
-        "Brilliant!",
-        "You got it!",
-        "Fantastic answer!"
-    ];
+    /*
+       Natural voice for the final score.
+       NOT cartoon voice.
+    */
 
-
-    const phrase =
-        phrases[
-            Math.floor(
-                Math.random() *
-                phrases.length
-            )
-        ];
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            phrase
-        );
-
-
-    utterance.rate =
-        1.25;
-
-
-    utterance.pitch =
-        1.55;
-
-
-    utterance.volume =
-        0.85;
-
-
-    window.speechSynthesis.speak(
-        utterance
+    speakText(
+        `Test complete. You scored ${currentTestScore} out of ${currentTestLength}.`
     );
-}
 
-
-/* =========================================================
-   CARTOON WRONG REACTION
-========================================================= */
-
-function playWrongReaction() {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-
-        return;
-    }
-
-
-    const phrases = [
-        "Ooooh! Not quite!",
-        "Whoops! Try again!",
-        "Almost there!",
-        "Aha! That's not it!",
-        "Nice try!"
-    ];
-
-
-    const phrase =
-        phrases[
-            Math.floor(
-                Math.random() *
-                phrases.length
-            )
-        ];
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            phrase
-        );
-
-
-    utterance.rate =
-        1.4;
-
-
-    utterance.pitch =
-        1.8;
-
-
-    utterance.volume =
-        0.9;
-
-
-    window.speechSynthesis.speak(
-        utterance
-    );
-}
-
-
-/* =========================================================
-   ASK BUTTON
-========================================================= */
-
-if (askAIButton) {
-
-    askAIButton.addEventListener(
-        "click",
-        searchAI
-    );
 }
 
 
@@ -2431,42 +2933,68 @@ window.mwanikiAI = {
         startTest,
 
     speak:
-        () => {
-
-            if (currentAnswerText) {
-
-                speakText(
-                    currentAnswerText
-                );
-            }
-
-        },
+        speakText,
 
     stopSpeech:
-        stopSpeech
+        stopSpeech,
+
+    finishTest:
+        finishTest
 
 };
 
 
 /* =========================================================
-   INITIAL STATE
+   INITIALIZATION
+========================================================= */
+
+renderRecentQuestions();
+
+
+/*
+   Make sure voices are loaded as early as possible.
+*/
+
+if (
+    "speechSynthesis" in window
+) {
+
+    chooseNaturalVoice();
+
+}
+
+
+/* =========================================================
+   DEBUG
 ========================================================= */
 
 console.log(
     "🚀 Mwaniki AI Tutor loaded."
 );
 
-
 console.log(
-    "🌐 Google Search: independent"
+    "🔊 Natural voice:",
+    selectedNaturalVoice?.name ||
+    "Browser default until voices load"
 );
 
-
 console.log(
-    "🖼️ Google Images: independent"
+    "🧠 Smart Test:",
+    Boolean(testPanel)
 );
 
+console.log(
+    "🔎 Google Search:",
+    Boolean(webResults)
+);
 
 console.log(
-    "🧠 Mwaniki internal retrieval: independent"
+    "🖼 Google Images:",
+    Boolean(aiImages)
 );
+
+console.log(
+    "📚 Internal source display:",
+    "Hidden from student UI"
+);
+
