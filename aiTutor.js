@@ -7,20 +7,23 @@ import { supabase } from "./supabase.js";
  AI TUTOR FRONTEND
 ===========================================================
 
- FEATURES
+ VOICE SYSTEM
  ----------------------------------------------------------
- • Mwaniki AI
- • Supabase Edge Function
- • Google Search
- • Google Images
- • Suggested questions
+ NORMAL VOICE
+ • AI answers
+ • Test questions
+ • Final score
  • Read Answer
- • Stop Audio
- • Natural browser voice selection
- • Smart Medical Test
- • Existing Supabase quizzes
- • Cartoon correct/wrong feedback
- • Dashboard navigation
+
+ CARTOON VOICE
+ • Correct answer
+ • Wrong answer
+ • Exaggerated pitch
+ • Faster delivery
+ • Dedicated voice selection
+
+ IMPORTANT:
+ The cartoon voice is NEVER used for normal AI speech.
 ===========================================================
 */
 
@@ -118,6 +121,11 @@ let currentTestAnswered = false;
 
 let currentTestUsedIds = [];
 
+
+/* =========================================================
+   NORMAL SPEECH STATE
+========================================================= */
+
 let speechQueue = [];
 
 let speechIndex = 0;
@@ -128,12 +136,22 @@ let selectedNaturalVoice = null;
 
 
 /* =========================================================
+   CARTOON SPEECH STATE
+========================================================= */
+
+let selectedCartoonVoice = null;
+
+
+/* =========================================================
    BASIC HELPERS
 ========================================================= */
 
 function cleanText(value) {
 
-    if (value === null || value === undefined) {
+    if (
+        value === null ||
+        value === undefined
+    ) {
         return "";
     }
 
@@ -206,7 +224,7 @@ function setStatus(message = "") {
 
 
 /* =========================================================
-   DASHBOARD BUTTON
+   DASHBOARD
 ========================================================= */
 
 if (backToDashboardButton) {
@@ -225,36 +243,38 @@ if (backToDashboardButton) {
 
 
 /* =========================================================
-   SUGGESTED QUESTIONS
+   SUGGESTIONS
 ========================================================= */
 
-suggestionButtons.forEach(button => {
+suggestionButtons.forEach(
+    button => {
 
-    button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+            "click",
+            () => {
 
-            const question =
-                cleanText(
-                    button.dataset.question ||
-                    button.textContent
-                );
+                const question =
+                    cleanText(
+                        button.dataset.question ||
+                        button.textContent
+                    );
 
-            if (!question) {
-                return;
+                if (!question) {
+                    return;
+                }
+
+                if (aiQuestion) {
+                    aiQuestion.value =
+                        question;
+                }
+
+                searchAI(question);
+
             }
+        );
 
-            if (aiQuestion) {
-                aiQuestion.value =
-                    question;
-            }
-
-            searchAI(question);
-
-        }
-    );
-
-});
+    }
+);
 
 
 /* =========================================================
@@ -274,9 +294,7 @@ if (aiQuestion) {
 
                 event.preventDefault();
 
-                if (askAIButton) {
-                    askAIButton.click();
-                }
+                askAIButton?.click();
 
             }
 
@@ -287,7 +305,7 @@ if (aiQuestion) {
 
 
 /* =========================================================
-   ASK AI BUTTON
+   ASK AI
 ========================================================= */
 
 if (askAIButton) {
@@ -307,11 +325,10 @@ if (askAIButton) {
                     "Please enter a medical question."
                 );
 
-                if (aiQuestion) {
-                    aiQuestion.focus();
-                }
+                aiQuestion?.focus();
 
                 return;
+
             }
 
             searchAI(question);
@@ -323,23 +340,8 @@ if (askAIButton) {
 
 
 /* =========================================================
-   NATURAL VOICE ENGINE
+   VOICE ENGINE
 ========================================================= */
-
-/*
-   Browser speech synthesis can choose a very robotic
-   system voice if no voice is explicitly selected.
-
-   We therefore:
-
-   1. Load available voices.
-   2. Prefer Microsoft / Google natural voices.
-   3. Prefer voices containing Natural / Online / Neural.
-   4. Keep one voice for the complete answer.
-   5. Use normal pitch.
-   6. Use a slower, comfortable speaking rate.
-*/
-
 
 function getAvailableVoices() {
 
@@ -352,10 +354,15 @@ function getAvailableVoices() {
     return window
         .speechSynthesis
         .getVoices();
+
 }
 
 
-function scoreVoice(voice) {
+/* =========================================================
+   NORMAL VOICE SCORING
+========================================================= */
+
+function scoreNaturalVoice(voice) {
 
     const name =
         cleanText(
@@ -370,116 +377,74 @@ function scoreVoice(voice) {
     let score = 0;
 
 
-    /* English */
-
-    if (
-        lang === "en-us"
-    ) {
+    if (lang === "en-us") {
         score += 20;
     }
 
-    if (
-        lang === "en-gb"
-    ) {
+    if (lang === "en-gb") {
         score += 19;
     }
 
-    if (
-        lang.startsWith("en-")
-    ) {
+    if (lang.startsWith("en-")) {
         score += 10;
     }
 
 
-    /* Natural voices */
-
-    if (
-        name.includes("natural")
-    ) {
+    if (name.includes("natural")) {
         score += 100;
     }
 
-    if (
-        name.includes("online")
-    ) {
+    if (name.includes("online")) {
         score += 80;
     }
 
-    if (
-        name.includes("neural")
-    ) {
+    if (name.includes("neural")) {
         score += 80;
     }
 
 
-    /* Microsoft natural voices */
-
-    if (
-        name.includes("microsoft")
-    ) {
+    if (name.includes("microsoft")) {
         score += 30;
     }
 
-
-    /* Good known voices */
-
-    if (
-        name.includes("ava")
-    ) {
-        score += 35;
-    }
-
-    if (
-        name.includes("jenny")
-    ) {
-        score += 35;
-    }
-
-    if (
-        name.includes("aria")
-    ) {
-        score += 35;
-    }
-
-    if (
-        name.includes("guy")
-    ) {
-        score += 30;
-    }
-
-    if (
-        name.includes("sonia")
-    ) {
-        score += 30;
-    }
-
-    if (
-        name.includes("ryan")
-    ) {
-        score += 30;
-    }
-
-    if (
-        name.includes("google")
-    ) {
+    if (name.includes("google")) {
         score += 25;
     }
 
-    if (
-        name.includes("samantha")
-    ) {
+
+    if (name.includes("ava")) {
+        score += 35;
+    }
+
+    if (name.includes("jenny")) {
+        score += 35;
+    }
+
+    if (name.includes("aria")) {
+        score += 35;
+    }
+
+    if (name.includes("guy")) {
+        score += 30;
+    }
+
+    if (name.includes("sonia")) {
+        score += 30;
+    }
+
+    if (name.includes("ryan")) {
+        score += 30;
+    }
+
+    if (name.includes("samantha")) {
         score += 25;
     }
 
-    if (
-        name.includes("karen")
-    ) {
+    if (name.includes("karen")) {
         score += 25;
     }
 
-    if (
-        name.includes("daniel")
-    ) {
+    if (name.includes("daniel")) {
         score += 25;
     }
 
@@ -488,17 +453,26 @@ function scoreVoice(voice) {
 }
 
 
+/* =========================================================
+   SELECT NATURAL VOICE
+========================================================= */
+
 function chooseNaturalVoice() {
 
     const voices =
         getAvailableVoices();
 
     if (!voices.length) {
-        selectedNaturalVoice = null;
+
+        selectedNaturalVoice =
+            null;
+
         return null;
+
     }
 
-    const englishVoices =
+
+    const english =
         voices.filter(
             voice =>
                 cleanText(
@@ -510,58 +484,281 @@ function chooseNaturalVoice() {
 
 
     const candidates =
-        englishVoices.length
-            ? englishVoices
+        english.length
+            ? english
             : voices;
 
 
-    const ranked =
-        [...candidates]
-            .sort(
-                (a, b) =>
-                    scoreVoice(b) -
-                    scoreVoice(a)
-            );
+    candidates.sort(
+        (a, b) =>
+            scoreNaturalVoice(b) -
+            scoreNaturalVoice(a)
+    );
 
 
     selectedNaturalVoice =
-        ranked[0] || null;
+        candidates[0] || null;
+
 
     return selectedNaturalVoice;
-}
-
-
-/*
-   Voices are often loaded asynchronously by Chrome/Edge.
-*/
-
-if (
-    "speechSynthesis" in window
-) {
-
-    chooseNaturalVoice();
-
-    window.speechSynthesis.onvoiceschanged =
-        () => {
-
-            chooseNaturalVoice();
-
-        };
 
 }
 
 
 /* =========================================================
-   STOP SPEECH
+   CARTOON VOICE SCORING
+========================================================= */
+
+/*
+   We deliberately select a DIFFERENT voice from the
+   normal AI voice.
+
+   Preference is given to voices that sound suitable
+   for an animated / playful reaction.
+
+   This cannot manufacture a Disney-style character voice
+   because browser speech synthesis does not expose an
+   actual cartoon voice effect, but it does give us a
+   clearly separate playful voice when the browser has
+   multiple English voices available.
+*/
+
+function scoreCartoonVoice(
+    voice
+) {
+
+    const name =
+        cleanText(
+            voice?.name
+        ).toLowerCase();
+
+    const lang =
+        cleanText(
+            voice?.lang
+        ).toLowerCase();
+
+    let score = 0;
+
+
+    if (
+        lang.startsWith("en")
+    ) {
+        score += 20;
+    }
+
+
+    /*
+       Prefer voices different from the normal
+       natural Microsoft voice.
+    */
+
+    if (
+        name.includes("google")
+    ) {
+        score += 40;
+    }
+
+
+    if (
+        name.includes("samantha")
+    ) {
+        score += 45;
+    }
+
+
+    if (
+        name.includes("karen")
+    ) {
+        score += 45;
+    }
+
+
+    if (
+        name.includes("daniel")
+    ) {
+        score += 40;
+    }
+
+
+    if (
+        name.includes("female")
+    ) {
+        score += 25;
+    }
+
+
+    /*
+       Avoid using the exact same voice as normal AI.
+    */
+
+    if (
+        selectedNaturalVoice &&
+        voice.name ===
+        selectedNaturalVoice.name
+    ) {
+
+        score -= 100;
+
+    }
+
+
+    /*
+       Natural/online voices are not automatically
+       preferred here because we want separation
+       from the normal AI voice.
+    */
+
+    if (
+        name.includes("natural")
+    ) {
+        score -= 10;
+    }
+
+
+    return score;
+
+}
+
+
+/* =========================================================
+   SELECT CARTOON VOICE
+========================================================= */
+
+function chooseCartoonVoice() {
+
+    const voices =
+        getAvailableVoices();
+
+    if (!voices.length) {
+
+        selectedCartoonVoice =
+            null;
+
+        return null;
+
+    }
+
+
+    const english =
+        voices.filter(
+            voice =>
+                cleanText(
+                    voice.lang
+                )
+                .toLowerCase()
+                .startsWith("en")
+        );
+
+
+    const candidates =
+        english.length
+            ? english
+            : voices;
+
+
+    candidates.sort(
+        (a, b) =>
+            scoreCartoonVoice(b) -
+            scoreCartoonVoice(a)
+    );
+
+
+    selectedCartoonVoice =
+        candidates[0] || null;
+
+
+    /*
+       If the browser only exposes one voice,
+       we have no second voice to select.
+    */
+
+    if (
+        selectedCartoonVoice &&
+        selectedNaturalVoice &&
+        selectedCartoonVoice.name ===
+        selectedNaturalVoice.name
+    ) {
+
+        selectedCartoonVoice =
+            null;
+
+    }
+
+
+    return selectedCartoonVoice;
+
+}
+
+
+/* =========================================================
+   LOAD VOICES
+========================================================= */
+
+function loadSpeechVoices() {
+
+    chooseNaturalVoice();
+
+    chooseCartoonVoice();
+
+}
+
+
+if (
+    "speechSynthesis" in window
+) {
+
+    loadSpeechVoices();
+
+
+    window.speechSynthesis
+        .addEventListener(
+            "voiceschanged",
+            () => {
+
+                loadSpeechVoices();
+
+                console.log(
+                    "🎙 Voices loaded:",
+                    getAvailableVoices()
+                        .map(
+                            voice =>
+                                `${voice.name} (${voice.lang})`
+                        )
+                );
+
+                console.log(
+                    "🔊 Normal voice:",
+                    selectedNaturalVoice?.name ||
+                    "browser default"
+                );
+
+                console.log(
+                    "🎭 Cartoon voice:",
+                    selectedCartoonVoice?.name ||
+                    "pitch-based fallback"
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   STOP ALL SPEECH
 ========================================================= */
 
 function stopSpeech() {
 
-    speechStopped = true;
+    speechStopped =
+        true;
 
-    speechQueue = [];
+    speechQueue =
+        [];
 
-    speechIndex = 0;
+    speechIndex =
+        0;
+
 
     if (
         "speechSynthesis" in window
@@ -577,7 +774,7 @@ function stopSpeech() {
 
 
 /* =========================================================
-   SPLIT SPEECH
+   SPLIT NORMAL SPEECH
 ========================================================= */
 
 function splitSpeech(text) {
@@ -589,12 +786,6 @@ function splitSpeech(text) {
         return [];
     }
 
-
-    /*
-       Keep sentences together where possible.
-       This prevents the voice from sounding like it
-       is restarting after every few words.
-    */
 
     const sentences =
         cleaned.match(
@@ -614,7 +805,9 @@ function splitSpeech(text) {
 
     const chunks = [];
 
-    let currentChunk = "";
+    let current =
+        "";
+
 
     sentences.forEach(
         sentence => {
@@ -627,21 +820,15 @@ function splitSpeech(text) {
             }
 
 
-            /*
-               Aim for comfortable chunks rather than
-               one utterance per sentence.
-            */
-
             if (
-                (
-                    currentChunk.length +
-                    part.length
-                ) < 420
+                current.length +
+                part.length <
+                420
             ) {
 
-                currentChunk +=
+                current +=
                     (
-                        currentChunk
+                        current
                             ? " "
                             : ""
                     ) +
@@ -649,13 +836,13 @@ function splitSpeech(text) {
 
             } else {
 
-                if (currentChunk) {
+                if (current) {
                     chunks.push(
-                        currentChunk
+                        current
                     );
                 }
 
-                currentChunk =
+                current =
                     part;
 
             }
@@ -664,19 +851,18 @@ function splitSpeech(text) {
     );
 
 
-    if (currentChunk) {
-        chunks.push(
-            currentChunk
-        );
+    if (current) {
+        chunks.push(current);
     }
 
 
     return chunks;
+
 }
 
 
 /* =========================================================
-   SPEAK NEXT NATURAL CHUNK
+   NORMAL SPEECH CHUNK
 ========================================================= */
 
 function speakNextChunk() {
@@ -715,11 +901,6 @@ function speakNextChunk() {
         );
 
 
-    /*
-       IMPORTANT:
-       This is deliberately NOT the cartoon voice.
-    */
-
     if (
         selectedNaturalVoice
     ) {
@@ -727,16 +908,19 @@ function speakNextChunk() {
         utterance.voice =
             selectedNaturalVoice;
 
+        utterance.lang =
+            selectedNaturalVoice.lang;
+
+    } else {
+
+        utterance.lang =
+            "en-US";
+
     }
 
 
-    utterance.lang =
-        selectedNaturalVoice?.lang ||
-        "en-US";
-
-
     /*
-       Natural educational voice.
+       NORMAL EDUCATIONAL VOICE
     */
 
     utterance.rate =
@@ -758,12 +942,7 @@ function speakNextChunk() {
 
             speechIndex++;
 
-            /*
-               Tiny delay prevents some browsers from
-               producing a clipped transition.
-            */
-
-            window.setTimeout(
+            setTimeout(
                 () => {
 
                     speakNextChunk();
@@ -776,11 +955,11 @@ function speakNextChunk() {
 
 
     utterance.onerror =
-        event => {
+        error => {
 
             console.warn(
-                "Speech synthesis error:",
-                event
+                "Normal speech error:",
+                error
             );
 
             if (speechStopped) {
@@ -796,13 +975,15 @@ function speakNextChunk() {
 
     window
         .speechSynthesis
-        .speak(utterance);
+        .speak(
+            utterance
+        );
 
 }
 
 
 /* =========================================================
-   NATURAL SPEECH PUBLIC FUNCTION
+   NORMAL SPEAK FUNCTION
 ========================================================= */
 
 function speakText(text) {
@@ -823,7 +1004,6 @@ function speakText(text) {
     const cleaned =
         cleanText(text);
 
-
     if (!cleaned) {
         return;
     }
@@ -832,23 +1012,243 @@ function speakText(text) {
     stopSpeech();
 
 
-    /*
-       Re-evaluate the voice in case Edge/Chrome
-       loaded voices after page startup.
-    */
-
-    chooseNaturalVoice();
+    loadSpeechVoices();
 
 
     speechQueue =
         splitSpeech(cleaned);
 
-    speechIndex = 0;
+    speechIndex =
+        0;
 
-    speechStopped = false;
+    speechStopped =
+        false;
 
 
     speakNextChunk();
+
+}
+
+
+/* =========================================================
+   CARTOON SPEECH ENGINE
+========================================================= */
+
+/*
+   This is completely separate from speakText().
+
+   The normal AI voice is NEVER used here unless the
+   browser literally exposes only one voice.
+
+   The exaggerated pitch/rate gives the selected voice
+   an animated reaction character.
+*/
+
+function speakCartoon(
+    text,
+    type = "wrong"
+) {
+
+    if (
+        !("speechSynthesis" in window)
+    ) {
+        return;
+    }
+
+
+    const phrase =
+        cleanText(text);
+
+    if (!phrase) {
+        return;
+    }
+
+
+    /*
+       Kill whatever was speaking.
+    */
+
+    window
+        .speechSynthesis
+        .cancel();
+
+
+    loadSpeechVoices();
+
+
+    const utterance =
+        new SpeechSynthesisUtterance(
+            phrase
+        );
+
+
+    /*
+       USE A DIFFERENT VOICE.
+    */
+
+    if (
+        selectedCartoonVoice
+    ) {
+
+        utterance.voice =
+            selectedCartoonVoice;
+
+        utterance.lang =
+            selectedCartoonVoice.lang;
+
+    } else {
+
+        /*
+           If Edge only gives us one voice,
+           the exaggerated pitch/rate remains
+           as the fallback.
+        */
+
+        utterance.lang =
+            "en-US";
+
+    }
+
+
+    if (
+        type === "correct"
+    ) {
+
+        /*
+           HAPPY CARTOON
+        */
+
+        utterance.rate =
+            1.35;
+
+        utterance.pitch =
+            1.75;
+
+        utterance.volume =
+            1.0;
+
+    } else {
+
+        /*
+           SILLY / SURPRISED CARTOON
+        */
+
+        utterance.rate =
+            1.48;
+
+        utterance.pitch =
+            1.95;
+
+        utterance.volume =
+            1.0;
+
+    }
+
+
+    utterance.onstart =
+        () => {
+
+            console.log(
+                "🎭 Cartoon voice:",
+                utterance.voice?.name ||
+                "pitch fallback"
+            );
+
+        };
+
+
+    utterance.onerror =
+        error => {
+
+            console.warn(
+                "Cartoon speech error:",
+                error
+            );
+
+        };
+
+
+    window
+        .speechSynthesis
+        .speak(
+            utterance
+        );
+
+}
+
+
+/* =========================================================
+   CORRECT CARTOON REACTION
+========================================================= */
+
+function playCorrectReaction() {
+
+    const phrases = [
+
+        "Yes! That's it!",
+
+        "Excellent! You got it!",
+
+        "Brilliant! Fantastic answer!",
+
+        "Yes! Absolutely correct!",
+
+        "Woohoo! You nailed it!"
+
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    speakCartoon(
+        phrase,
+        "correct"
+    );
+
+}
+
+
+/* =========================================================
+   WRONG CARTOON REACTION
+========================================================= */
+
+function playWrongReaction() {
+
+    const phrases = [
+
+        "Ooooh! Not quite!",
+
+        "Whoops! Almost there!",
+
+        "Aha! Not this time!",
+
+        "Nice try! Keep going!",
+
+        "Oops! Let's have another look!"
+
+    ];
+
+
+    const phrase =
+        phrases[
+            Math.floor(
+                Math.random() *
+                phrases.length
+            )
+        ];
+
+
+    speakCartoon(
+        phrase,
+        "wrong"
+    );
 
 }
 
@@ -884,7 +1284,7 @@ if (readAnswerButton) {
 
 
 /* =========================================================
-   STOP AUDIO BUTTON
+   STOP AUDIO
 ========================================================= */
 
 if (stopAudioButton) {
@@ -945,9 +1345,15 @@ async function searchAI(question) {
     if (aiAnswer) {
 
         aiAnswer.innerHTML = `
+
             <div class="ai-loading">
-                <span>Searching medical knowledge...</span>
+
+                <span>
+                    Searching medical knowledge...
+                </span>
+
             </div>
+
         `;
 
     }
@@ -985,6 +1391,7 @@ async function searchAI(question) {
             await supabase.functions.invoke(
                 "mwaniki-ai",
                 {
+
                     body: {
 
                         mode: "search",
@@ -1015,9 +1422,7 @@ async function searchAI(question) {
 
 
         if (error) {
-
             throw error;
-
         }
 
 
@@ -1068,8 +1473,7 @@ async function searchAI(question) {
 
 
         /*
-           We deliberately do NOT display internal
-           Mwaniki sources to the student.
+           INTERNAL MATERIALS STAY HIDDEN.
         */
 
         if (mwanikiSources) {
@@ -1083,19 +1487,11 @@ async function searchAI(question) {
         }
 
 
-        if (answer) {
-
-            setStatus(
-                "Mwaniki AI is ready."
-            );
-
-        } else {
-
-            setStatus(
-                "No direct answer was returned."
-            );
-
-        }
+        setStatus(
+            answer
+                ? "Mwaniki AI is ready."
+                : "No direct answer was returned."
+        );
 
 
         saveRecentQuestion(
@@ -1118,15 +1514,22 @@ async function searchAI(question) {
         if (aiAnswer) {
 
             aiAnswer.innerHTML = `
+
                 <div class="ai-error">
-                    <strong>Unable to answer right now.</strong>
+
+                    <strong>
+                        Unable to answer right now.
+                    </strong>
+
                     <p>
                         ${escapeHTML(
                             error?.message ||
                             "Please try again."
                         )}
                     </p>
+
                 </div>
+
             `;
 
         }
@@ -1136,6 +1539,7 @@ async function searchAI(question) {
             error?.message ||
             "AI request failed."
         );
+
 
     } finally {
 
@@ -1155,7 +1559,7 @@ async function searchAI(question) {
 
 
 /* =========================================================
-   RENDER ANSWER
+   ANSWER RENDER
 ========================================================= */
 
 function renderAnswer(
@@ -1166,14 +1570,6 @@ function renderAnswer(
     if (!aiAnswer) {
         return;
     }
-
-
-    const safeQuestion =
-        escapeHTML(question);
-
-
-    const safeAnswer =
-        textToHTML(answer);
 
 
     if (!answer) {
@@ -1212,7 +1608,7 @@ function renderAnswer(
             </span>
 
             <h3>
-                ${safeQuestion}
+                ${escapeHTML(question)}
             </h3>
 
         </div>
@@ -1227,7 +1623,7 @@ function renderAnswer(
             <div class="answer-text">
 
                 <p>
-                    ${safeAnswer}
+                    ${textToHTML(answer)}
                 </p>
 
             </div>
@@ -1240,7 +1636,7 @@ function renderAnswer(
 
 
 /* =========================================================
-   GOOGLE SEARCH RESULTS
+   GOOGLE SEARCH
 ========================================================= */
 
 function renderWebResults(results) {
@@ -1267,7 +1663,7 @@ function renderWebResults(results) {
                 </span>
 
                 <p>
-                    No Google results were returned for this question.
+                    No Google results were returned.
                 </p>
 
             </div>
@@ -1317,18 +1713,14 @@ function renderWebResults(results) {
                             </div>
 
                             <h3>
-                                ${escapeHTML(
-                                    title
-                                )}
+                                ${escapeHTML(title)}
                             </h3>
 
                             ${
                                 snippet
                                     ? `
                                     <p>
-                                        ${escapeHTML(
-                                            snippet
-                                        )}
+                                        ${escapeHTML(snippet)}
                                     </p>
                                     `
                                     : ""
@@ -1376,6 +1768,7 @@ function renderWebResults(results) {
 
         </div>
 
+
         <div class="web-results-grid">
 
             ${cards}
@@ -1407,7 +1800,7 @@ function renderImages(
             : [];
 
 
-    const finalImages =
+    const combined =
         primaryImage
             ? [
                 primaryImage,
@@ -1416,15 +1809,14 @@ function renderImages(
             : imageList;
 
 
+    const seen =
+        new Set();
+
     const uniqueImages =
         [];
 
 
-    const seen =
-        new Set();
-
-
-    finalImages.forEach(
+    combined.forEach(
         image => {
 
             const url =
@@ -1440,9 +1832,7 @@ function renderImages(
             }
 
 
-            if (
-                seen.has(url)
-            ) {
+            if (seen.has(url)) {
                 return;
             }
 
@@ -1487,15 +1877,13 @@ function renderImages(
             .map(
                 image => {
 
-                    const imageURL =
+                    const url =
                         safeURL(
                             image.url
                         );
 
 
-                    if (
-                        imageURL === "#"
-                    ) {
+                    if (url === "#") {
                         return "";
                     }
 
@@ -1515,13 +1903,13 @@ function renderImages(
                         >
 
                             <a
-                                href="${imageURL}"
+                                href="${url}"
                                 target="_blank"
                                 rel="noopener noreferrer"
                             >
 
                                 <img
-                                    src="${imageURL}"
+                                    src="${url}"
                                     alt="${escapeHTML(title)}"
                                     loading="lazy"
                                     referrerpolicy="no-referrer"
@@ -1589,8 +1977,10 @@ function getRecentQuestions() {
             return [];
         }
 
+
         const parsed =
             JSON.parse(saved);
+
 
         return Array.isArray(parsed)
             ? parsed
@@ -1605,7 +1995,9 @@ function getRecentQuestions() {
 }
 
 
-function saveRecentQuestion(question) {
+function saveRecentQuestion(
+    question
+) {
 
     const query =
         cleanText(question);
@@ -1736,7 +2128,7 @@ function renderRecentQuestions() {
 
 
 /* =========================================================
-   TEST ME BUTTON
+   TEST ME
 ========================================================= */
 
 if (testMeButton) {
@@ -1773,14 +2165,17 @@ async function startTest(
         );
 
 
-    currentTestNumber = 0;
+    currentTestNumber =
+        0;
 
-    currentTestScore = 0;
+    currentTestScore =
+        0;
 
     currentTestAnswered =
         false;
 
-    currentTestUsedIds = [];
+    currentTestUsedIds =
+        [];
 
 
     if (testPanel) {
@@ -1808,34 +2203,23 @@ async function startTest(
 
 
     if (testQuestion) {
-
-        testQuestion.innerHTML =
-            "";
-
+        testQuestion.innerHTML = "";
     }
 
 
     if (testOptions) {
-
-        testOptions.innerHTML =
-            "";
-
+        testOptions.innerHTML = "";
     }
 
 
     if (testFeedback) {
-
-        testFeedback.innerHTML =
-            "";
-
+        testFeedback.innerHTML = "";
     }
 
 
     if (testNext) {
-
         testNext.style.display =
             "none";
-
     }
 
 
@@ -1865,7 +2249,7 @@ async function startTest(
 
 
 /* =========================================================
-   LOAD NEXT TEST QUESTION
+   LOAD TEST QUESTION
 ========================================================= */
 
 async function loadNextTestQuestion() {
@@ -1906,34 +2290,23 @@ async function loadNextTestQuestion() {
 
 
     if (testQuestion) {
-
-        testQuestion.innerHTML =
-            "";
-
+        testQuestion.innerHTML = "";
     }
 
 
     if (testOptions) {
-
-        testOptions.innerHTML =
-            "";
-
+        testOptions.innerHTML = "";
     }
 
 
     if (testFeedback) {
-
-        testFeedback.innerHTML =
-            "";
-
+        testFeedback.innerHTML = "";
     }
 
 
     if (testNext) {
-
         testNext.style.display =
             "none";
-
     }
 
 
@@ -2007,9 +2380,7 @@ async function loadNextTestQuestion() {
 
 
     if (error) {
-
         throw error;
-
     }
 
 
@@ -2074,9 +2445,7 @@ async function loadNextTestQuestion() {
 
 
     /*
-       Read the question naturally if the browser supports
-       speech. This uses the normal natural voice engine,
-       NOT the cartoon reaction voice.
+       NATURAL VOICE FOR QUESTION.
     */
 
     speakText(
@@ -2090,7 +2459,9 @@ async function loadNextTestQuestion() {
    NORMALIZE TEST QUESTION
 ========================================================= */
 
-function normalizeTestQuestion(data) {
+function normalizeTestQuestion(
+    data
+) {
 
     const question =
         cleanText(
@@ -2101,9 +2472,7 @@ function normalizeTestQuestion(data) {
 
 
     const rawOptions =
-        Array.isArray(
-            data.options
-        )
+        Array.isArray(data.options)
             ? data.options
             : [];
 
@@ -2130,6 +2499,7 @@ function normalizeTestQuestion(data) {
 
 
                     return {
+
                         value:
                             cleanText(
                                 option.value ||
@@ -2142,6 +2512,7 @@ function normalizeTestQuestion(data) {
                                 option.text ||
                                 ""
                             )
+
                     };
 
                 }
@@ -2165,9 +2536,7 @@ function normalizeTestQuestion(data) {
 
     if (
         !["A", "B", "C", "D"]
-            .includes(
-                correctKey
-            )
+            .includes(correctKey)
     ) {
 
         const answerText =
@@ -2204,9 +2573,7 @@ function normalizeTestQuestion(data) {
         !question ||
         options.length !== 4 ||
         !["A", "B", "C", "D"]
-            .includes(
-                correctKey
-            )
+            .includes(correctKey)
     ) {
 
         return null;
@@ -2251,7 +2618,6 @@ function renderTestQuestion(
 
             Question
             ${currentTestNumber}
-
             of
             ${currentTestLength}
 
@@ -2291,11 +2657,15 @@ function renderTestQuestion(
                             data-key="${letter}"
                         >
 
-                            <span class="test-option-letter">
+                            <span
+                                class="test-option-letter"
+                            >
                                 ${letter}
                             </span>
 
-                            <span class="test-option-text">
+                            <span
+                                class="test-option-text"
+                            >
                                 ${escapeHTML(
                                     option.label
                                 )}
@@ -2433,6 +2803,10 @@ function answerTestQuestion(
         }
 
 
+        /*
+           🎭 CARTOON VOICE
+        */
+
         playCorrectReaction();
 
 
@@ -2453,13 +2827,11 @@ function answerTestQuestion(
 
 
         const correctOption =
-            currentTestQuestion.options
-                [
-                    "ABCD"
-                        .indexOf(
-                            correctKey
-                        )
-                ];
+            currentTestQuestion.options[
+                "ABCD".indexOf(
+                    correctKey
+                )
+            ];
 
 
         if (testFeedback) {
@@ -2469,11 +2841,11 @@ function answerTestQuestion(
                 <div class="test-wrong-feedback">
 
                     <div class="feedback-cartoon">
-                        🧠
+                        😅
                     </div>
 
                     <strong>
-                        Not quite.
+                        Not quite!
                     </strong>
 
                     <p>
@@ -2481,7 +2853,8 @@ function answerTestQuestion(
                         <strong>
                             ${escapeHTML(
                                 correctKey
-                            )}.
+                            )}
+                            —
                             ${escapeHTML(
                                 correctOption?.label ||
                                 ""
@@ -2495,6 +2868,10 @@ function answerTestQuestion(
 
         }
 
+
+        /*
+           🎭 CARTOON VOICE
+        */
 
         playWrongReaction();
 
@@ -2515,163 +2892,6 @@ function answerTestQuestion(
             "inline-flex";
 
     }
-
-}
-
-
-/* =========================================================
-   CARTOON CORRECT REACTION
-========================================================= */
-
-function playCorrectReaction() {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-
-    const phrases = [
-
-        "Yes! That's it!",
-
-        "Excellent!",
-
-        "Brilliant!",
-
-        "You got it!",
-
-        "Fantastic answer!"
-
-    ];
-
-
-    const phrase =
-        phrases[
-            Math.floor(
-                Math.random() *
-                phrases.length
-            )
-        ];
-
-
-    /*
-       STOP the natural question voice first.
-    */
-
-    window
-        .speechSynthesis
-        .cancel();
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            phrase
-        );
-
-
-    /*
-       Cartoon voice is intentionally different
-       from the normal AI voice.
-    */
-
-    utterance.rate =
-        1.25;
-
-    utterance.pitch =
-        1.55;
-
-    utterance.volume =
-        0.85;
-
-
-    utterance.onend =
-        () => {
-
-            /*
-               Do not automatically continue normal speech.
-            */
-
-        };
-
-
-    window
-        .speechSynthesis
-        .speak(
-            utterance
-        );
-
-}
-
-
-/* =========================================================
-   CARTOON WRONG REACTION
-========================================================= */
-
-function playWrongReaction() {
-
-    if (
-        !("speechSynthesis" in window)
-    ) {
-        return;
-    }
-
-
-    const phrases = [
-
-        "Ooooh! Not quite!",
-
-        "Whoops! Try again!",
-
-        "Almost there!",
-
-        "Aha! That's not it!",
-
-        "Nice try!"
-
-    ];
-
-
-    const phrase =
-        phrases[
-            Math.floor(
-                Math.random() *
-                phrases.length
-            )
-        ];
-
-
-    window
-        .speechSynthesis
-        .cancel();
-
-
-    const utterance =
-        new SpeechSynthesisUtterance(
-            phrase
-        );
-
-
-    /*
-       Cartoon voice intentionally preserved.
-    */
-
-    utterance.rate =
-        1.4;
-
-    utterance.pitch =
-        1.8;
-
-    utterance.volume =
-        0.9;
-
-
-    window
-        .speechSynthesis
-        .speak(
-            utterance
-        );
 
 }
 
@@ -2763,36 +2983,27 @@ function exitTest() {
 
 
     if (testQuestion) {
-        testQuestion.innerHTML =
-            "";
+        testQuestion.innerHTML = "";
     }
 
 
     if (testOptions) {
-        testOptions.innerHTML =
-            "";
+        testOptions.innerHTML = "";
     }
 
 
     if (testFeedback) {
-        testFeedback.innerHTML =
-            "";
+        testFeedback.innerHTML = "";
     }
 
 
     if (testStatus) {
-
-        testStatus.textContent =
-            "";
-
+        testStatus.textContent = "";
     }
 
 
     if (testProgress) {
-
-        testProgress.textContent =
-            "";
-
+        testProgress.textContent = "";
     }
 
 }
@@ -2813,8 +3024,7 @@ function finishTest() {
                 (
                     currentTestScore /
                     currentTestLength
-                ) *
-                100
+                ) * 100
             )
             : 0;
 
@@ -2856,10 +3066,7 @@ function finishTest() {
 
 
     if (testOptions) {
-
-        testOptions.innerHTML =
-            "";
-
+        testOptions.innerHTML = "";
     }
 
 
@@ -2909,8 +3116,7 @@ function finishTest() {
 
 
     /*
-       Natural voice for the final score.
-       NOT cartoon voice.
+       Final score uses the NORMAL voice.
     */
 
     speakText(
@@ -2950,23 +3156,8 @@ window.mwanikiAI = {
 
 renderRecentQuestions();
 
+loadSpeechVoices();
 
-/*
-   Make sure voices are loaded as early as possible.
-*/
-
-if (
-    "speechSynthesis" in window
-) {
-
-    chooseNaturalVoice();
-
-}
-
-
-/* =========================================================
-   DEBUG
-========================================================= */
 
 console.log(
     "🚀 Mwaniki AI Tutor loaded."
@@ -2975,7 +3166,13 @@ console.log(
 console.log(
     "🔊 Natural voice:",
     selectedNaturalVoice?.name ||
-    "Browser default until voices load"
+    "browser default"
+);
+
+console.log(
+    "🎭 Cartoon voice:",
+    selectedCartoonVoice?.name ||
+    "pitch fallback"
 );
 
 console.log(
@@ -2992,9 +3189,4 @@ console.log(
     "🖼 Google Images:",
     Boolean(aiImages)
 );
-
-console.log(
-    "📚 Internal source display:",
-    "Hidden from student UI"
-);
-
+```
