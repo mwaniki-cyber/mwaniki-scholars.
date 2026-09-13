@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -13,7 +13,7 @@
 
     <meta
         name="description"
-        content="Mwaniki AI medical study assistant."
+        content="Mwaniki Scholars AI Tutor — medical learning, web research and smart testing."
     >
 
     <meta
@@ -22,7 +22,7 @@
     >
 
     <title>
-        Mwaniki AI | Mwaniki Scholars
+        Mwaniki Scholars | AI Tutor
     </title>
 
     <link
@@ -63,13 +63,13 @@
 
             <div>
 
-                <strong>
+                <div class="ai-brand-name">
                     Mwaniki Scholars
-                </strong>
+                </div>
 
-                <span>
-                    Medical Intelligence
-                </span>
+                <div class="ai-brand-subtitle">
+                    Medical Intelligence & Learning
+                </div>
 
             </div>
 
@@ -77,9 +77,9 @@
 
 
         <button
-            type="button"
             id="backToDashboardButton"
-            class="back-button"
+            type="button"
+            class="dashboard-button"
         >
             ← Dashboard
         </button>
@@ -89,39 +89,29 @@
 
 
     <!-- =====================================================
-         AI HEADER
+         PAGE HEADER
     ====================================================== -->
 
-    <section class="ai-hero">
+    <section class="ai-page-header">
 
-        <div class="ai-hero-avatar">
+        <div class="ai-header-avatar">
             🤖
         </div>
 
-        <div class="ai-hero-content">
+        <div>
 
-            <span class="eyebrow">
-                MWANIKI INTELLIGENCE
+            <span class="ai-eyebrow">
+                AI STUDY PARTNER
             </span>
 
             <h1>
-                Mwaniki AI
+                Mwaniki AI Tutor
             </h1>
 
             <p>
-                Your medical learning and research companion.
+                Ask medical questions, research the web, study explanations,
+                and test your knowledge.
             </p>
-
-        </div>
-
-
-        <div class="ai-live-status">
-
-            <span class="status-dot"></span>
-
-            <span id="aiLiveStatusText">
-                Ready
-            </span>
 
         </div>
 
@@ -130,93 +120,32 @@
 
 
     <!-- =====================================================
-         QUESTION AREA
+         MAIN WORKSPACE
     ====================================================== -->
 
-    <section class="question-card">
+    <main class="ai-workspace">
 
 
-        <div class="question-heading">
+        <!-- =================================================
+             SEARCH / QUESTION BAR
+        ================================================== -->
 
-            <div>
+        <section class="question-bar">
 
-                <span class="eyebrow dark">
-                    ASK YOUR QUESTION
+            <div class="question-input-wrap">
+
+                <span class="question-icon">
+                    ✨
                 </span>
 
-                <h2>
-                    What are you studying?
-                </h2>
+                <textarea
+                    id="aiQuestion"
+                    rows="2"
+                    placeholder="Ask a medical question..."
+                    autocomplete="off"
+                ></textarea>
 
             </div>
-
-            <div class="question-icon">
-                💡
-            </div>
-
-        </div>
-
-
-
-        <!-- SUGGESTIONS -->
-
-        <div class="suggestions-row">
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="What is the heart and what are its main functions?"
-            >
-                ❤️ Heart
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="Explain the cardiac cycle in simple terms."
-            >
-                🫀 Cardiac Cycle
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="What are the major causes of anemia?"
-            >
-                🩸 Anemia
-            </button>
-
-
-            <button
-                type="button"
-                class="suggestion-button"
-                data-question="Explain the mechanism of action of beta blockers."
-            >
-                💊 Beta Blockers
-            </button>
-
-        </div>
-
-
-
-        <textarea
-            id="aiQuestion"
-            class="ai-question"
-            rows="4"
-            placeholder="Ask Mwaniki AI a medical question..."
-            autocomplete="off"
-        ></textarea>
-
-
-
-        <div class="question-actions">
-
-            <span class="question-hint">
-                Ask about anatomy, physiology, pathology,
-                microbiology, pharmacology and more.
-            </span>
 
 
             <button
@@ -224,459 +153,500 @@
                 type="button"
                 class="ask-button"
             >
-
-                <span>
-                    🤖 Ask Mwaniki AI
-                </span>
-
-                <span>
-                    ➜
-                </span>
-
+                <span>🤖</span>
+                Ask Mwaniki AI
             </button>
 
-        </div>
+        </section>
 
 
 
-        <div
-            id="aiSearchStatus"
-            class="status-message hidden"
-        ></div>
+        <!-- =================================================
+             SUGGESTIONS
+        ================================================== -->
 
+        <section class="suggestions-section">
+
+            <span class="suggestions-label">
+                TRY ASKING
+            </span>
+
+
+            <div class="suggestion-list">
+
+                <button
+                    type="button"
+                    class="suggestion-button"
+                    data-question="What is the heart and what are its main functions?"
+                >
+                    ❤️ Explain the heart
+                </button>
+
+
+                <button
+                    type="button"
+                    class="suggestion-button"
+                    data-question="What are the major causes of anemia?"
+                >
+                    🩸 Causes of anemia
+                </button>
+
+
+                <button
+                    type="button"
+                    class="suggestion-button"
+                    data-question="Explain the cardiac cycle simply."
+                >
+                    ❤️ Explain cardiac cycle
+                </button>
+
+
+                <button
+                    type="button"
+                    class="suggestion-button"
+                    data-question="What are the main functions of the lymphatic system?"
+                >
+                    🫀 Lymphatic system
+                </button>
+
+
+                <button
+                    type="button"
+                    class="suggestion-button"
+                    data-question="Explain beta blockers and their main uses."
+                >
+                    💊 Beta blockers
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =================================================
+             STATUS
+        ================================================== -->
 
         <div
             id="aiStatus"
-            class="status-message hidden"
+            class="ai-status"
+            aria-live="polite"
         ></div>
 
-    </section>
-
-
-
-    <!-- =====================================================
-         MAIN INTELLIGENCE WORKSPACE
-====================================================== -->
-
-    <section class="intelligence-workspace">
 
 
         <!-- =================================================
-             LEFT: RESEARCH
+             TWO-COLUMN INTELLIGENCE AREA
         ================================================== -->
 
-        <aside class="research-column">
+        <section class="intelligence-grid">
 
 
-            <div class="workspace-heading">
+            <!-- =============================================
+                 LEFT — GOOGLE RESEARCH
+            ============================================== -->
 
-                <div>
-
-                    <span class="eyebrow dark">
-                        RESEARCH
-                    </span>
-
-                    <h2>
-                        Medical Research
-                    </h2>
-
-                </div>
-
-                <div class="workspace-icon">
-                    🔎
-                </div>
-
-            </div>
+            <aside class="research-column">
 
 
+                <!-- GOOGLE SEARCH -->
 
-            <!-- GOOGLE SEARCH -->
+                <section class="research-panel">
 
-            <div class="research-card">
+                    <div class="panel-header">
 
-                <div class="research-card-header">
+                        <div class="panel-title-wrap">
 
-                    <div>
+                            <div class="panel-icon search-icon">
+                                🔎
+                            </div>
 
-                        <span class="research-icon">
-                            🔎
-                        </span>
+                            <div>
 
-                        <strong>
-                            Google Search
-                        </strong>
+                                <span class="panel-kicker">
+                                    WEB RESEARCH
+                                </span>
+
+                                <h2>
+                                    Google Search
+                                </h2>
+
+                            </div>
+
+                        </div>
 
                     </div>
 
 
-                    <a
-                        id="googleSearchLink"
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="research-link hidden"
+                    <div
+                        id="aiSearchStatus"
+                        class="research-status"
                     >
-                        Open Google
-                    </a>
-
-                </div>
-
-
-                <div id="webResults">
-
-                    <div class="research-empty">
-
-                        <span>
-                            🔎
-                        </span>
-
-                        <p>
-                            Web research results will appear here.
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- GOOGLE IMAGES -->
-
-            <div class="research-card">
-
-                <div class="research-card-header">
-
-                    <div>
-
-                        <span class="research-icon">
-                            🖼️
-                        </span>
-
-                        <strong>
-                            Google Images
-                        </strong>
-
+                        Ready to search the web.
                     </div>
 
 
-                    <a
-                        id="googleImagesLink"
-                        href="#"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="research-link hidden"
+                    <div
+                        id="webResults"
+                        class="web-results"
                     >
-                        View Images
-                    </a>
 
-                </div>
+                        <div class="research-placeholder">
+
+                            <div class="placeholder-icon">
+                                🔎
+                            </div>
+
+                            <strong>
+                                Web research will appear here
+                            </strong>
+
+                            <p>
+                                Ask a question to search for additional information.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
 
 
-                <div id="aiImages">
 
-                    <div class="research-empty">
+                <!-- GOOGLE IMAGES -->
 
-                        <span>
-                            🖼️
-                        </span>
+                <section class="research-panel images-panel">
 
-                        <p>
-                            Relevant medical images will appear here.
-                        </p>
+                    <div class="panel-header">
+
+                        <div class="panel-title-wrap">
+
+                            <div class="panel-icon image-icon">
+                                🖼️
+                            </div>
+
+                            <div>
+
+                                <span class="panel-kicker">
+                                    VISUAL RESEARCH
+                                </span>
+
+                                <h2>
+                                    Google Images
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="aiImages"
+                        class="image-results"
+                    >
+
+                        <div class="research-placeholder">
+
+                            <div class="placeholder-icon">
+                                🖼️
+                            </div>
+
+                            <strong>
+                                Medical images will appear here
+                            </strong>
+
+                            <p>
+                                Images related to your question will be shown here.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </aside>
+
+
+
+            <!-- =============================================
+                 RIGHT — MWANIKI AI
+            ============================================== -->
+
+            <section class="ai-column">
+
+
+                <div class="ai-answer-panel">
+
+
+                    <!-- AI PANEL HEADER -->
+
+                    <div class="ai-panel-header">
+
+                        <div class="ai-panel-identity">
+
+                            <div class="ai-mini-avatar">
+                                🤖
+                            </div>
+
+                            <div>
+
+                                <span class="panel-kicker">
+                                    MWANIKI AI
+                                </span>
+
+                                <h2>
+                                    Medical Explanation
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="ai-live-indicator">
+
+                            <span></span>
+
+                            LIVE
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- QUESTION -->
+
+                    <div
+                        id="aiQuestionDisplay"
+                        class="ai-question-display"
+                    >
+                        Ask a medical question to begin.
+                    </div>
+
+
+
+                    <!-- ANSWER -->
+
+                    <div
+                        id="aiAnswer"
+                        class="ai-answer"
+                    >
+
+                        <div class="answer-welcome">
+
+                            <div class="welcome-icon">
+                                🧠
+                            </div>
+
+                            <h3>
+                                Ready to teach
+                            </h3>
+
+                            <p>
+                                Ask a medical question and Mwaniki AI will
+                                provide a focused explanation while web
+                                research runs independently.
+                            </p>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
 
-        </aside>
+            </section>
+
+        </section>
 
 
 
         <!-- =================================================
-             RIGHT: MWANIKI AI
+             ACTION BAR
         ================================================== -->
 
-        <main class="ai-answer-column">
+        <section class="action-bar">
+
+            <div class="action-group">
+
+                <button
+                    id="readAnswerButton"
+                    type="button"
+                    class="action-button read-button"
+                >
+                    🔊 Read Answer
+                </button>
 
 
-            <div class="workspace-heading">
-
-                <div>
-
-                    <span class="eyebrow dark">
-                        MWANIKI AI
-                    </span>
-
-                    <h2>
-                        Intelligent Answer
-                    </h2>
-
-                </div>
-
-                <div class="workspace-ai-icon">
-                    🤖
-                </div>
+                <button
+                    id="stopAudioButton"
+                    type="button"
+                    class="action-button stop-button"
+                >
+                    ⏹ Stop Audio
+                </button>
 
             </div>
 
 
-
-            <div
-                id="aiAnswer"
-                class="ai-answer-card"
+            <button
+                id="testMeButton"
+                type="button"
+                class="test-me-button"
             >
+                🧠 Test Me
+            </button>
 
-                <div class="answer-welcome">
+        </section>
 
-                    <div class="answer-avatar">
-                        🤖
+
+
+        <!-- =================================================
+             SMART TEST
+        ================================================== -->
+
+        <section
+            id="testPanel"
+            class="test-panel"
+            hidden
+        >
+
+
+            <!-- TEST HEADER -->
+
+            <div class="test-header">
+
+                <div class="test-title-area">
+
+                    <div class="test-icon">
+                        🧠
                     </div>
 
                     <div>
 
-                        <h3>
-                            Hello, Scholar
-                        </h3>
+                        <span class="panel-kicker">
+                            SMART MEDICAL TEST
+                        </span>
 
-                        <p>
-                            Ask a medical question and your
-                            synthesized answer will appear here.
-                        </p>
+                        <h2>
+                            Test Your Knowledge
+                        </h2>
 
                     </div>
 
+                </div>
+
+
+                <div
+                    id="testProgress"
+                    class="test-progress"
+                >
+                    Question 1 of 10 • Score 0
                 </div>
 
             </div>
 
 
 
-            <!-- INTERNAL SOURCE CONTAINER
-                 KEPT HIDDEN INTENTIONALLY -->
+            <!-- TEST STATUS -->
 
             <div
-                id="mwanikiSources"
-                class="hidden"
-                aria-hidden="true"
+                id="testStatus"
+                class="test-status"
             ></div>
 
-        </main>
-
-    </section>
 
 
-
-    <!-- =====================================================
-         ANSWER CONTROLS
-    ====================================================== -->
-
-    <section class="answer-control-bar">
-
-
-        <button
-            id="readAnswerButton"
-            type="button"
-            class="control-button read-button"
-        >
-            🔊 Read Answer
-        </button>
-
-
-        <button
-            id="stopAudioButton"
-            type="button"
-            class="control-button stop-button"
-        >
-            ⏹ Stop Audio
-        </button>
-
-
-        <button
-            id="startTestButton"
-            type="button"
-            class="control-button test-button"
-        >
-            🧠 Test Me
-        </button>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         SMART TEST
-    ====================================================== -->
-
-    <section
-        id="testPanel"
-        class="test-panel hidden"
-    >
-
-
-        <div class="test-header">
-
-            <div>
-
-                <span class="eyebrow">
-                    SMART TEST
-                </span>
-
-                <h2>
-                    Medical Knowledge Test
-                </h2>
-
-                <p>
-                    Test your understanding of the topic.
-                </p>
-
-            </div>
-
-
-            <div class="test-brain">
-                🧠
-            </div>
-
-        </div>
-
-
-
-        <!-- PROGRESS -->
-
-        <div
-            id="testProgress"
-            class="test-progress"
-        >
-            Question 1
-        </div>
-
-
-
-        <!-- STATUS -->
-
-        <div
-            id="testStatus"
-            class="test-status"
-        ></div>
-
-
-
-        <!-- QUESTION -->
-
-        <div
-            id="testQuestion"
-            class="test-question"
-        ></div>
-
-
-
-        <!-- OPTIONS -->
-
-        <div
-            id="testOptions"
-            class="test-options"
-        ></div>
-
-
-
-        <!-- CARTOON FEEDBACK -->
-
-        <div
-            id="testFeedback"
-            class="test-feedback hidden"
-        >
+            <!-- TEST QUESTION -->
 
             <div
-                id="testFeedbackCharacter"
-                class="feedback-character"
+                id="testQuestion"
+                class="test-question"
             >
-                🤖
+                Your test question will appear here.
             </div>
 
-            <div>
 
-                <strong
-                    id="testFeedbackTitle"
+
+            <!-- TEST OPTIONS -->
+
+            <div
+                id="testOptions"
+                class="test-options"
+            ></div>
+
+
+
+            <!-- TEST FEEDBACK -->
+
+            <div
+                id="testFeedback"
+                class="test-feedback"
+            ></div>
+
+
+
+            <!-- TEST CONTROLS -->
+
+            <div class="test-controls">
+
+                <button
+                    id="testNext"
+                    type="button"
+                    class="test-next-button"
+                    disabled
                 >
-                    Feedback
-                </strong>
+                    Next Question →
+                </button>
 
-                <p
-                    id="testFeedbackText"
-                ></p>
+
+                <button
+                    id="testExit"
+                    type="button"
+                    class="test-exit-button"
+                >
+                    Exit Test
+                </button>
 
             </div>
 
-        </div>
+
+        </section>
 
 
 
-        <!-- TEST CONTROLS -->
+        <!-- =================================================
+             FOOTER NOTE
+        ================================================== -->
 
-        <div class="test-controls">
+        <div class="ai-footer-note">
 
+            <span>
+                Mwaniki Scholars
+            </span>
 
-            <button
-                id="testNext"
-                type="button"
-                class="test-next-button"
-            >
-                Next Question →
-            </button>
+            <span>
+                •
+            </span>
 
-
-            <button
-                id="testExit"
-                type="button"
-                class="test-exit-button"
-            >
-                Exit Test
-            </button>
+            <span>
+                Medical learning powered by focused retrieval,
+                web research and interactive practice.
+            </span>
 
         </div>
 
-    </section>
 
-
-
-    <!-- =====================================================
-         RECENT QUESTIONS
-    ====================================================== -->
-
-    <section
-        id="aiRecentQuestions"
-        class="recent-questions hidden"
-    ></section>
-
-
-
-    <!-- =====================================================
-         FOOTER
-    ====================================================== -->
-
-    <footer class="ai-footer">
-
-        <strong>
-            Mwaniki Scholars
-        </strong>
-
-        <span>
-            Medical Learning • Intelligence • Excellence
-        </span>
-
-    </footer>
-
+    </main>
 
 </div>
 
 
-
-<!-- =========================================================
-     JAVASCRIPT
-========================================================= -->
 
 <script
     type="module"
@@ -687,4 +657,4 @@
 </body>
 
 </html>
-```
+
