@@ -2513,3 +2513,361 @@ select:focus-visible {
         transition-duration: 0.01ms !important;
     }
 }
+/* =========================================================
+   MWANIKI SCHOLARS
+   COURSE LIBRARY - FINAL CARD FIX
+========================================================= */
+
+#courseGrid.course-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+
+    gap: 20px;
+
+    width: 100%;
+    align-items: stretch;
+}
+
+
+/* =========================================================
+   COURSE CARD
+========================================================= */
+
+#courseGrid .course-card {
+
+    display: flex;
+    flex-direction: column;
+
+    width: 100%;
+    min-width: 0;
+
+    min-height: 0;
+
+    background: #ffffff;
+
+    border: 1px solid #dce9e7;
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 4px 16px rgba(20, 80, 75, 0.06);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+
+#courseGrid .course-card:hover {
+
+    transform:
+        translateY(-4px);
+
+    box-shadow:
+        0 10px 28px rgba(20, 80, 75, 0.12);
+
+    border-color:
+        #b9dcd7;
+}
+
+
+/* =========================================================
+   COURSE VISUAL
+========================================================= */
+
+#courseGrid .course-card-image {
+
+    position: relative;
+
+    width: 100%;
+
+    height: 145px;
+
+    min-height: 145px;
+
+    flex: 0 0 145px;
+
+    overflow: hidden;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e8f5f3,
+            #f5faf9
+        );
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+}
+
+
+/* =========================================================
+   REAL COURSE IMAGE
+========================================================= */
+
+#courseGrid .course-card-image img {
+
+    display: block;
+
+    width: 100%;
+
+    height: 100%;
+
+    object-fit: cover;
+}
+
+
+/* =========================================================
+   IMAGE FAILURE / NO IMAGE
+========================================================= */
+
+#courseGrid .course-card-image.no-image {
+
+    background:
+        linear-gradient(
+            135deg,
+            #e8f5f3,
+            #f7fbfa
+        );
+}
+
+
+/* =========================================================
+   CLEAN PLACEHOLDER
+   NO EMOJI
+========================================================= */
+
+#courseGrid .course-card-placeholder {
+
+    width: 68px;
+
+    height: 68px;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b8f83,
+            #08756d
+        );
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    box-shadow:
+        0 8px 18px rgba(
+            8,
+            117,
+            109,
+            0.18
+        );
+}
+
+
+/*
+   Simple medical-book style mark.
+   This is CSS, NOT an emoji.
+*/
+
+#courseGrid .course-card-placeholder::before {
+
+    content: "";
+
+    width: 25px;
+
+    height: 31px;
+
+    border-radius:
+        3px 5px 5px 3px;
+
+    background: #ffffff;
+
+    box-shadow:
+        5px 3px 0 #d7efeb,
+        10px 6px 0 #a8d9d3;
+
+    transform:
+        translateX(-5px);
+}
+
+
+/* =========================================================
+   COURSE CONTENT
+========================================================= */
+
+#courseGrid .course-card-content {
+
+    display: flex;
+
+    flex-direction: column;
+
+    flex: 1 1 auto;
+
+    min-width: 0;
+
+    padding: 18px 18px 20px;
+
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   COURSE TITLE
+========================================================= */
+
+#courseGrid .course-card-title {
+
+    margin: 0 0 9px;
+
+    color:
+        #123f3b;
+
+    font-size: 18px;
+
+    line-height: 1.3;
+
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   COURSE DESCRIPTION
+========================================================= */
+
+#courseGrid .course-card-description {
+
+    margin: 0;
+
+    color:
+        #607775;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    display: -webkit-box;
+
+    -webkit-line-clamp: 3;
+
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+
+    flex: 1 1 auto;
+}
+
+
+/* =========================================================
+   VIEW COURSE BUTTON
+========================================================= */
+
+#courseGrid .course-card-button {
+
+    width: 100%;
+
+    margin-top: 17px;
+
+    min-height: 42px;
+
+    border: 0;
+
+    border-radius: 10px;
+
+    background:
+        #0b8178;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+#courseGrid .course-card-button:hover {
+
+    background:
+        #086b64;
+
+    transform:
+        translateY(-1px);
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1200px) {
+
+    #courseGrid.course-grid {
+
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr));
+
+    }
+
+}
+
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+    #courseGrid.course-grid {
+
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    #courseGrid.course-grid {
+
+        grid-template-columns:
+            1fr;
+
+        gap: 16px;
+
+    }
+
+    #courseGrid .course-card-image {
+
+        height: 135px;
+
+        min-height: 135px;
+
+        flex-basis: 135px;
+
+    }
+
+}
