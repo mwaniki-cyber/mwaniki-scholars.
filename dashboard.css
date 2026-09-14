@@ -3489,3 +3489,387 @@ select:focus-visible {
         padding: 18px !important;
     }
 }
+/* =========================================================
+   MWANIKI SCHOLARS
+   FINAL EMPTY-FRAME REMOVAL
+   RECOMMENDATIONS + RECENT COURSE
+   ========================================================= */
+
+
+/* =========================================================
+   1. RECOMMENDATIONS
+   REMOVE THE OUTER EMPTY FRAME
+   ========================================================= */
+
+/* The recommendations section itself should be transparent */
+.recommendations-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+
+    overflow: visible !important;
+}
+
+
+/*
+   Remove the artificial frame around the recommendation
+   container/card if one was created by the previous CSS.
+*/
+.recommendations-grid > * {
+    width: 100% !important;
+    min-width: 0 !important;
+
+    position: relative !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    padding: 20px !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-medium) !important;
+
+    box-shadow: var(--shadow-small) !important;
+
+    overflow: visible !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/*
+   IMPORTANT:
+   Do not allow a pseudo-element to become the
+   large empty frame.
+*/
+.recommendations-grid::before,
+.recommendations-grid::after,
+.recommendations-grid > *::before,
+.recommendations-grid > *::after {
+    content: none !important;
+    display: none !important;
+}
+
+
+/* Recommendation content must remain normal */
+.recommendations-grid h3,
+.recommendations-grid h4 {
+    position: static !important;
+
+    margin: 0 0 10px !important;
+
+    color: var(--text-dark) !important;
+
+    font-size: 18px !important;
+    font-weight: 800 !important;
+
+    line-height: 1.35 !important;
+}
+
+
+.recommendations-grid p {
+    position: static !important;
+
+    margin: 0 0 18px !important;
+
+    color: var(--muted) !important;
+
+    font-size: 13px !important;
+    line-height: 1.65 !important;
+}
+
+
+.recommendations-grid a,
+.recommendations-grid button {
+    position: static !important;
+
+    margin-top: auto !important;
+
+    width: fit-content !important;
+
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    min-height: 40px !important;
+
+    padding: 10px 16px !important;
+
+    border: none !important;
+    border-radius: 10px !important;
+
+    background: var(--primary) !important;
+    color: #ffffff !important;
+
+    text-decoration: none !important;
+
+    font-size: 13px !important;
+    font-weight: 800 !important;
+}
+
+
+/* =========================================================
+   2. RECENT COURSE
+   REMOVE THE EMPTY RIGHT-HAND FRAME
+   ========================================================= */
+
+/*
+   The Recent Course area must use the full available width.
+*/
+
+.recent-course,
+.recent-course-section,
+#recentCourse,
+#recentCourseSection {
+    width: 100% !important;
+
+    display: block !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border: none !important;
+
+    box-shadow: none !important;
+
+    overflow: visible !important;
+}
+
+
+/*
+   Remove pseudo-element frames.
+*/
+
+.recent-course::before,
+.recent-course::after,
+.recent-course-section::before,
+.recent-course-section::after,
+#recentCourse::before,
+#recentCourse::after,
+#recentCourseSection::before,
+#recentCourseSection::after {
+    content: none !important;
+    display: none !important;
+}
+
+
+/*
+   Recent course content should not be pushed
+   into the left side.
+*/
+
+.recent-course > *,
+.recent-course-section > *,
+#recentCourse > *,
+#recentCourseSection > * {
+    max-width: 100% !important;
+
+    box-sizing: border-box !important;
+}
+
+
+/* =========================================================
+   RECENT COURSE CARD
+   ========================================================= */
+
+.recent-course-card,
+.recent-course-item,
+.recent-course-content {
+    width: 100% !important;
+
+    min-width: 0 !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+
+    gap: 20px !important;
+
+    padding: 20px !important;
+
+    box-sizing: border-box !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid var(--border) !important;
+
+    border-radius: var(--radius-medium) !important;
+
+    box-shadow: var(--shadow-small) !important;
+
+    overflow: visible !important;
+}
+
+
+/*
+   Recent course image/visual
+*/
+
+.recent-course-card img,
+.recent-course-item img,
+.recent-course-image {
+    flex: 0 0 120px !important;
+
+    width: 120px !important;
+
+    height: 90px !important;
+
+    object-fit: cover !important;
+
+    border-radius: 12px !important;
+}
+
+
+/*
+   Recent course text area
+*/
+
+.recent-course-card > div,
+.recent-course-item > div,
+.recent-course-content > div {
+    min-width: 0 !important;
+
+    flex: 1 1 auto !important;
+
+    width: auto !important;
+
+    position: static !important;
+}
+
+
+/*
+   Recent course heading
+*/
+
+.recent-course-card h3,
+.recent-course-card h4,
+.recent-course-item h3,
+.recent-course-item h4 {
+    margin: 0 0 8px !important;
+
+    color: var(--text-dark) !important;
+
+    font-size: 18px !important;
+
+    font-weight: 800 !important;
+
+    line-height: 1.35 !important;
+}
+
+
+/*
+   Recent course description
+*/
+
+.recent-course-card p,
+.recent-course-item p {
+    margin: 0 0 14px !important;
+
+    color: var(--muted) !important;
+
+    font-size: 13px !important;
+
+    line-height: 1.6 !important;
+}
+
+
+/* =========================================================
+   REMOVE RIGHT-HAND EMPTY FRAME / PLACEHOLDER
+   ========================================================= */
+
+.recent-course-card .placeholder,
+.recent-course-card .empty-card,
+.recent-course-card .course-placeholder,
+.recent-course-card .recent-placeholder,
+.recent-course-item .placeholder,
+.recent-course-item .empty-card,
+.recent-course-item .course-placeholder,
+.recent-course-item .recent-placeholder {
+    display: none !important;
+
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+
+    height: 0 !important;
+    min-height: 0 !important;
+
+    padding: 0 !important;
+    margin: 0 !important;
+
+    border: none !important;
+    box-shadow: none !important;
+
+    background: transparent !important;
+
+    overflow: hidden !important;
+}
+
+
+/* =========================================================
+   REMOVE ABSOLUTE RIGHT-SIDE OBJECTS
+   ========================================================= */
+
+.recent-course-card::before,
+.recent-course-card::after,
+.recent-course-item::before,
+.recent-course-item::after,
+.recent-course-content::before,
+.recent-course-content::after {
+    content: none !important;
+
+    display: none !important;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .recommendations-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr)) !important;
+    }
+
+}
+
+
+@media (max-width: 600px) {
+
+    .recommendations-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .recent-course-card,
+    .recent-course-item,
+    .recent-course-content {
+        flex-direction: column !important;
+
+        align-items: stretch !important;
+    }
+
+    .recent-course-card img,
+    .recent-course-item img,
+    .recent-course-image {
+        width: 100% !important;
+
+        height: 160px !important;
+
+        flex: none !important;
+    }
+}
