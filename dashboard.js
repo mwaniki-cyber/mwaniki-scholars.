@@ -145,19 +145,27 @@ function updateQuizCounters() {
     );
 }
 
+
 /* =========================================================
-   CURRENT DATE
+MWANIKI SCHOLARS
+LIVE DATE AND TIME
 ========================================================= */
 
 function updateCurrentDate() {
-    const element = $("currentDate");
+
+    const element =
+        $("currentDate") ||
+        $("dashboardDate") ||
+        document.querySelector(".dashboard-date");
 
     if (!element) {
         return;
     }
 
-    element.textContent =
-        new Date().toLocaleDateString(
+    const now = new Date();
+
+    const datePart =
+        now.toLocaleDateString(
             "en-KE",
             {
                 weekday: "long",
@@ -165,6 +173,43 @@ function updateCurrentDate() {
                 month: "long",
                 year: "numeric"
             }
+        );
+
+    const timePart =
+        now.toLocaleTimeString(
+            "en-KE",
+            {
+                hour: "numeric",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
+            }
+        );
+
+    element.textContent =
+        `${datePart} • ${timePart}`;
+}
+
+
+/* =========================================================
+START LIVE DASHBOARD CLOCK
+========================================================= */
+
+function startDashboardClock() {
+
+    updateCurrentDate();
+
+    if (window.mwanikiDashboardClock) {
+
+        clearInterval(
+            window.mwanikiDashboardClock
+        );
+    }
+
+    window.mwanikiDashboardClock =
+        setInterval(
+            updateCurrentDate,
+            1000
         );
 }
 
@@ -1774,24 +1819,95 @@ function renderCourseProgress() {
     );
 }
 
+
 /* =========================================================
-   DASHBOARD STATISTICS
+MWANIKI SCHOLARS
+DASHBOARD STATISTICS ENGINE
+========================================================= */
+
+function setCounterText(ids, value) {
+
+    const safeValue =
+        value === null ||
+        value === undefined
+            ? 0
+            : value;
+
+    ids.forEach(id => {
+
+        const element = $(id);
+
+        if (!element) {
+            return;
+        }
+
+        element.textContent =
+            Number(safeValue).toLocaleString();
+    });
+}
+
+
+/* =========================================================
+UPDATE DASHBOARD STATISTICS
 ========================================================= */
 
 function updateDashboardStatistics() {
+
+    /* -----------------------------------------------------
+       COURSES
+    ----------------------------------------------------- */
+
+    const totalCourses =
+        Array.isArray(allCourses)
+            ? allCourses.length
+            : 0;
 
     setCounterText(
         [
             "totalCourses",
             "coursesCount"
         ],
-        allCourses.length
+        totalCourses
     );
 
-    updateNotesCounters();
-    updateQuizCounters();
 
-    updateQuizProgress();
+    /* -----------------------------------------------------
+       NOTES
+    ----------------------------------------------------- */
+
+    if (
+        typeof updateNotesCounters ===
+        "function"
+    ) {
+
+        updateNotesCounters();
+    }
+
+
+    /* -----------------------------------------------------
+       QUIZZES
+    ----------------------------------------------------- */
+
+    if (
+        typeof updateQuizCounters ===
+        "function"
+    ) {
+
+        updateQuizCounters();
+    }
+
+
+    /* -----------------------------------------------------
+       QUIZ PROGRESS
+    ----------------------------------------------------- */
+
+    if (
+        typeof updateQuizProgress ===
+        "function"
+    ) {
+
+        updateQuizProgress();
+    }
 }
 
 /* =========================================================
@@ -2022,75 +2138,597 @@ function setupLogout() {
 
     });
 }
+
 /* =========================================================
-   RECENT ACTIVITY
+MWANIKI SCHOLARS
+RECENT COURSE / CONTINUE LEARNING ENGINe
 ========================================================= */
 
-function setupRecentActivity() {
-    const container =
-        $("recentActivity") ||
-        $("activityList") ||
-        document.querySelector(".recent-activity-list");
 
-    if (!container) return;
+/* =========================================================
+GET LAST COURSE
+========================================================= */
 
-    renderRecentlyStudied();
-}
-
-function renderRecentlyStudied() {
-    const container =
-        $("recentActivity") ||
-        $("activityList") ||
-        document.querySelector(".recent-activity-list");
-
-    if (!container) return;
-
-    const stored = localStorage.getItem("mwanikiRecentActivity");
-
-    let activities = [];
+function getLastCourse() {
 
     try {
-        activities = stored ? JSON.parse(stored) : [];
-    } catch {
-        activities = [];
-    }
 
-    if (!Array.isArray(activities) || activities.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📚</div>
-                <h3>No recent activity</h3>
-                <p>Start studying a course to see your recent activity here.</p>
-            </div>
-        `;
+        const saved =
+            localStorage.getItem(
+                "mwanikiLastCourse"
+            );
+
+        if (!saved) {
+            return null;
+        }
+
+        const course =
+            JSON.parse(saved);
+
+        if (
+            !course ||
+            course.id === undefined ||
+            !course.title
+        ) {
+
+            return null;
+        }
+
+        return course;
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to read last course:",
+            error
+        );
+
+        return null;
+    }
+}
+
+
+/* =========================================================
+SAVE LAST COURSE
+========================================================= */
+
+function saveLastCourse(course) {
+
+    if (!course) {
         return;
     }
 
-    container.innerHTML = activities
-        .slice(0, 8)
-        .map(activity => {
-            const title =
-                activity.title ||
-                activity.unitTitle ||
-                activity.courseTitle ||
-                "Study activity";
+    const normalizedCourse = {
 
-            const type = activity.type || "Learning";
+        id: course.id,
 
-            return `
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        ${type === "quiz" ? "📝" : "📖"}
-                    </div>
+        title:
+            course.title ||
+            "Untitled Course",
 
-                    <div class="activity-content">
-                        <strong>${escapeHTML(title)}</strong>
-                        <span>${escapeHTML(type)}</span>
-                    </div>
+        description:
+            course.description ||
+            "",
+
+        image:
+            course.image ||
+            "",
+
+        created_at:
+            course.created_at ||
+            null
+    };
+
+
+    localStorage.setItem(
+        "mwanikiLastCourse",
+        JSON.stringify(
+            normalizedCourse
+        )
+    );
+}
+
+
+/* =========================================================
+GET RECENT COURSES
+========================================================= */
+
+function getRecentCourses() {
+
+    try {
+
+        const saved =
+            localStorage.getItem(
+                "mwanikiRecentCourses"
+            );
+
+        if (!saved) {
+            return [];
+        }
+
+        const courses =
+            JSON.parse(saved);
+
+        if (!Array.isArray(courses)) {
+            return [];
+        }
+
+        return courses;
+
+    } catch (error) {
+
+        console.warn(
+            "Unable to read recent courses:",
+            error
+        );
+
+        return [];
+    }
+}
+
+
+/* =========================================================
+SAVE COURSE TO RECENT COURSES
+========================================================= */
+
+function saveRecentCourse(course) {
+
+    if (!course) {
+        return;
+    }
+
+    const normalizedCourse = {
+
+        id: course.id,
+
+        title:
+            course.title ||
+            "Untitled Course",
+
+        description:
+            course.description ||
+            "",
+
+        image:
+            course.image ||
+            "",
+
+        created_at:
+            course.created_at ||
+            null
+    };
+
+
+    let recentCourses =
+        getRecentCourses();
+
+
+    recentCourses = [
+
+        normalizedCourse,
+
+        ...recentCourses.filter(
+            item =>
+                String(item.id) !==
+                String(normalizedCourse.id)
+        )
+
+    ].slice(0, 5);
+
+
+    localStorage.setItem(
+        "mwanikiRecentCourses",
+        JSON.stringify(
+            recentCourses
+        )
+    );
+}
+
+
+/* =========================================================
+OPEN COURSE
+========================================================= */
+
+function openCourse(course) {
+
+    if (!course) {
+        return;
+    }
+
+    const cleanCourse = {
+
+        id: course.id,
+
+        title:
+            course.title ||
+            "Untitled Course",
+
+        description:
+            course.description ||
+            "",
+
+        image:
+            course.image ||
+            "",
+
+        created_at:
+            course.created_at ||
+            null
+    };
+
+
+    /* -----------------------------------------------------
+       SELECTED COURSE
+    ----------------------------------------------------- */
+
+    localStorage.setItem(
+        "selectedCourse",
+        String(cleanCourse.id)
+    );
+
+    localStorage.setItem(
+        "selectedCourseName",
+        cleanCourse.title
+    );
+
+
+    /* -----------------------------------------------------
+       LAST COURSE
+    ----------------------------------------------------- */
+
+    saveLastCourse(
+        cleanCourse
+    );
+
+
+    /* -----------------------------------------------------
+       RECENT COURSES
+    ----------------------------------------------------- */
+
+    saveRecentCourse(
+        cleanCourse
+    );
+
+
+    /* -----------------------------------------------------
+       OPEN COURSE PAGE
+    ----------------------------------------------------- */
+
+    window.location.href =
+        getCourseURL(
+            cleanCourse
+        );
+}
+
+
+/* =========================================================
+RENDER CONTINUE LEARNING
+========================================================= */
+
+function renderContinueLearning() {
+
+    const container =
+        $("continueLearning");
+
+    if (!container) {
+        return;
+    }
+
+    const course =
+        getLastCourse();
+
+
+    /* -----------------------------------------------------
+       NO COURSE YET
+    ----------------------------------------------------- */
+
+    if (!course) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    📚
                 </div>
-            `;
-        })
-        .join("");
+
+                <strong>
+                    Start your learning journey
+                </strong>
+
+                <span>
+                    Choose a course from the Course Library
+                    to begin studying.
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    /* -----------------------------------------------------
+       COURSE EXISTS
+    ----------------------------------------------------- */
+
+    container.innerHTML = `
+
+        <div class="continue-course-card">
+
+            <div class="continue-course-icon">
+
+                ${
+                    course.image
+
+                        ? `
+                            <img
+                                src="${escapeHTML(course.image)}"
+                                alt="${escapeHTML(
+                                    course.title ||
+                                    "Course"
+                                )}"
+                            >
+                        `
+
+                        : `
+                            <span>
+                                📚
+                            </span>
+                        `
+                }
+
+            </div>
+
+
+            <div class="continue-course-info">
+
+                <span class="continue-label">
+                    Continue Learning
+                </span>
+
+                <h3>
+                    ${escapeHTML(
+                        course.title ||
+                        "Selected Course"
+                    )}
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        course.description ||
+                        "Continue studying this course."
+                    )}
+                </p>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="primary-button"
+                id="continueCourseButton"
+            >
+                Continue
+            </button>
+
+        </div>
+
+    `;
+
+
+    const button =
+        $("continueCourseButton");
+
+
+    if (button) {
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                openCourse(
+                    course
+                );
+
+            }
+        );
+    }
+}
+
+
+/* =========================================================
+RENDER RECENT COURSES
+========================================================= */
+
+function renderRecentCourses() {
+
+    const container =
+
+        $("recentCourses") ||
+
+        $("recentActivity") ||
+
+        $("activityList") ||
+
+        document.querySelector(
+            ".recent-courses-list"
+        ) ||
+
+        document.querySelector(
+            ".recent-activity-list"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const recentCourses =
+        getRecentCourses();
+
+
+    /* -----------------------------------------------------
+       NO RECENT COURSES
+    ----------------------------------------------------- */
+
+    if (
+        !recentCourses.length
+    ) {
+
+        container.innerHTML = `
+
+            <div class="empty-state">
+
+                <div class="empty-state-icon">
+                    📚
+                </div>
+
+                <h3>
+                    No recent courses
+                </h3>
+
+                <p>
+                    Open a course from the Course Library
+                    and it will appear here.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    /* -----------------------------------------------------
+       RECENT COURSE CARDS
+    ----------------------------------------------------- */
+
+    container.innerHTML = `
+
+        <div class="recent-courses-grid">
+
+            ${recentCourses
+                .slice(0, 5)
+                .map(
+                    course => `
+
+                        <article
+                            class="recent-course-card"
+                            data-course-id="${escapeHTML(
+                                course.id
+                            )}"
+                        >
+
+                            <div class="recent-course-image">
+
+                                ${
+                                    course.image
+
+                                        ? `
+                                            <img
+                                                src="${escapeHTML(
+                                                    course.image
+                                                )}"
+                                                alt="${escapeHTML(
+                                                    course.title ||
+                                                    "Course"
+                                                )}"
+                                                loading="lazy"
+                                            >
+                                        `
+
+                                        : `
+                                            <span>
+                                                📚
+                                            </span>
+                                        `
+                                }
+
+                            </div>
+
+
+                            <div class="recent-course-content">
+
+                                <span class="recent-course-label">
+                                    Recently Studied
+                                </span>
+
+                                <h3>
+                                    ${escapeHTML(
+                                        course.title ||
+                                        "Untitled Course"
+                                    )}
+                                </h3>
+
+                                <p>
+                                    ${escapeHTML(
+                                        course.description ||
+                                        "Continue studying this course."
+                                    )}
+                                </p>
+
+
+                                <button
+                                    type="button"
+                                    class="secondary-button recent-course-button"
+                                    data-course-id="${escapeHTML(
+                                        course.id
+                                    )}"
+                                >
+                                    Open Course
+                                </button>
+
+                            </div>
+
+                        </article>
+
+                    `
+                )
+                .join("")}
+
+        </div>
+
+    `;
+
+
+    /* -----------------------------------------------------
+       BUTTON EVENTS
+    ----------------------------------------------------- */
+
+    container
+        .querySelectorAll(
+            ".recent-course-button"
+        )
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    const courseId =
+                        button.dataset.courseId;
+
+                    const course =
+                        recentCourses.find(
+                            item =>
+                                String(item.id) ===
+                                String(courseId)
+                        );
+
+                    if (course) {
+
+                        openCourse(
+                            course
+                        );
+                    }
+                }
+            );
+
+        });
 }
 
 
