@@ -3872,4 +3872,16 @@ select:focus-visible {
 
         flex: none !important;
     }
+}/* =========================================================
+   REMOVE BOOK EMOJI FROM COURSE CARDS
+========================================================= */
+
+.course-card::before,
+.course-card::after,
+.course-card .course-icon::before,
+.course-card .course-icon::after,
+.course-image::before,
+.course-image::after {
+    content: none !important;
+    display: none !important;
 }
