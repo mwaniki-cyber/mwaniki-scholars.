@@ -1934,7 +1934,7 @@ DASHBOARD STATISTICS ENGINE
         element.textContent =
             Number(safeValue).toLocaleString();
     });
-}
+
 
 
 /* =========================================================
