@@ -417,6 +417,8 @@ function getCourseURL(course) {
     );
 }
 
+
+
 /* =========================================================
    OPEN COURSE
 ========================================================= */
@@ -426,30 +428,61 @@ function openCourse(course) {
         return;
     }
 
+    const cleanCourse = {
+        id: course.id,
+        title: course.title || "Untitled Course",
+        description: course.description || "",
+        image: course.image || "",
+        created_at: course.created_at || null
+    };
+
     localStorage.setItem(
         "selectedCourse",
-        String(course.id)
+        String(cleanCourse.id)
     );
 
     localStorage.setItem(
         "selectedCourseName",
-        course.title || ""
+        cleanCourse.title
     );
 
     localStorage.setItem(
         "mwanikiLastCourse",
-        JSON.stringify({
-            id: course.id,
-            title: course.title || "",
-            description:
-                course.description || "",
-            image:
-                course.image || ""
-        })
+        JSON.stringify(cleanCourse)
+    );
+
+    /* Save the last five courses */
+    let recentCourses = [];
+
+    try {
+        const saved =
+            localStorage.getItem("mwanikiRecentCourses");
+
+        recentCourses = saved
+            ? JSON.parse(saved)
+            : [];
+    } catch {
+        recentCourses = [];
+    }
+
+    if (!Array.isArray(recentCourses)) {
+        recentCourses = [];
+    }
+
+    recentCourses = [
+        cleanCourse,
+        ...recentCourses.filter(course =>
+            String(course.id) !== String(cleanCourse.id)
+        )
+    ].slice(0, 5);
+
+    localStorage.setItem(
+        "mwanikiRecentCourses",
+        JSON.stringify(recentCourses)
     );
 
     window.location.href =
-        getCourseURL(course);
+        getCourseURL(cleanCourse);
 }
 
 /* =========================================================
