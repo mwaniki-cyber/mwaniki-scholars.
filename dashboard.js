@@ -2238,7 +2238,6 @@ RECENT COURSE / CONTINUE LEARNING ENGINe
 /* =========================================================
 GET LAST COURSE
 ========================================================= */
-
 function getLastCourse() {
 
     try {
