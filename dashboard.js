@@ -1916,7 +1916,6 @@ MWANIKI SCHOLARS
 DASHBOARD STATISTICS ENGINE
 ========================================================= */
 
-function setCounterText(ids, value) {
 
     const safeValue =
         value === null ||
