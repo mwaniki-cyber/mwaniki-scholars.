@@ -295,22 +295,7 @@ async function loadStudentProfile() {
     }
 }
 
-/* =========================================================
-   COURSE IMAGE
-========================================================= */
 
-function getCourseImage(course) {
-    const image = course?.image || "";
-
-    if (
-        typeof image !== "string" ||
-        !image.trim()
-    ) {
-        return "";
-    }
-
-    return image.trim();
-}
 
 /* =========================================================
    COURSE URL
