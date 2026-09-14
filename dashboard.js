@@ -1619,4 +1619,294 @@ if (document.readyState === "loading") {
     );
 } else {
     initializeDashboard();
+}/* =========================================================
+   FINAL FIX:
+   NOTIFICATION BUTTON
+   PROFILE BUTTON
+   PROFILE IMAGE DISPLAY
+========================================================= */
+
+function forcePanelVisibility(panel, shouldOpen) {
+    if (!panel) {
+        return;
+    }
+
+    if (shouldOpen) {
+        panel.classList.add("active");
+        panel.classList.add("open");
+
+        panel.removeAttribute("hidden");
+        panel.setAttribute("aria-hidden", "false");
+
+        panel.style.display = "flex";
+        panel.style.visibility = "visible";
+        panel.style.opacity = "1";
+        panel.style.pointerEvents = "auto";
+        panel.style.zIndex = "9999";
+    } else {
+        panel.classList.remove("active");
+        panel.classList.remove("open");
+
+        panel.setAttribute("aria-hidden", "true");
+
+        panel.style.display = "none";
+        panel.style.visibility = "hidden";
+        panel.style.opacity = "0";
+        panel.style.pointerEvents = "none";
+    }
+}
+
+function finalSetupNotificationButton() {
+    const button = document.getElementById("notificationButton");
+    const panel = document.getElementById("notificationPanel");
+    const closeButton = document.getElementById(
+        "closeNotificationPanel"
+    );
+
+    if (!button) {
+        console.error("❌ #notificationButton was not found.");
+        return;
+    }
+
+    if (!panel) {
+        console.error("❌ #notificationPanel was not found.");
+        return;
+    }
+
+    console.log("✅ Notification button connected.");
+
+    forcePanelVisibility(panel, false);
+
+    button.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isOpen =
+            panel.classList.contains("active") ||
+            panel.classList.contains("open");
+
+        forcePanelVisibility(panel, !isOpen);
+
+        if (!isOpen && typeof renderNotifications === "function") {
+            renderNotifications();
+        }
+    };
+
+    if (closeButton) {
+        closeButton.onclick = function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            forcePanelVisibility(panel, false);
+        };
+    }
+}
+
+function finalSetupProfileButton() {
+    const button = document.getElementById("profileButton");
+    const panel = document.getElementById("profilePanel");
+    const closeButton = document.getElementById(
+        "closeProfilePanel"
+    );
+
+    if (!button) {
+        console.error("❌ #profileButton was not found.");
+        return;
+    }
+
+    if (!panel) {
+        console.error("❌ #profilePanel was not found.");
+        return;
+    }
+
+    console.log("✅ Profile button connected.");
+
+    forcePanelVisibility(panel, false);
+
+    button.onclick = function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const isOpen =
+            panel.classList.contains("active") ||
+            panel.classList.contains("open");
+
+        forcePanelVisibility(panel, !isOpen);
+
+        if (
+            !isOpen &&
+            typeof renderStudentProfile === "function"
+        ) {
+            renderStudentProfile();
+        }
+    };
+
+    if (closeButton) {
+        closeButton.onclick = function (event) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            forcePanelVisibility(panel, false);
+        };
+    }
+}
+
+/* =========================================================
+   PROFILE IMAGE DISPLAY
+========================================================= */
+
+function getPossibleProfileImage() {
+    if (!currentStudent) {
+        return "";
+    }
+
+    return (
+        currentStudent.photo_url ||
+        currentStudent.photo ||
+        currentStudent.avatar_url ||
+        currentStudent.profile_image ||
+        currentStudent.image ||
+        currentUser?.user_metadata?.photo_url ||
+        currentUser?.user_metadata?.avatar_url ||
+        currentUser?.user_metadata?.picture ||
+        ""
+    );
+}
+
+function createInitialsAvatar(name) {
+    const safeName = String(name || "Student").trim();
+
+    const initials = safeName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(word => word.charAt(0).toUpperCase())
+        .join("");
+
+    const svg = `
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="160"
+            height="160"
+            viewBox="0 0 160 160"
+        >
+            <rect width="160" height="160" rx="80" fill="#087f73"/>
+            <text
+                x="80"
+                y="96"
+                text-anchor="middle"
+                font-size="54"
+                font-family="Arial, sans-serif"
+                font-weight="700"
+                fill="#ffffff"
+            >
+                ${initials || "S"}
+            </text>
+        </svg>
+    `;
+
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+function displayProfileImage() {
+    const displayName =
+        typeof getStudentDisplayName === "function"
+            ? getStudentDisplayName()
+            : "Student";
+
+    const imageURL = getPossibleProfileImage();
+
+    const headerAvatar = document.getElementById(
+        "headerProfileAvatar"
+    );
+
+    const largeAvatar = document.getElementById(
+        "profileLargeAvatar"
+    );
+
+    const fallbackURL = createInitialsAvatar(displayName);
+
+    [headerAvatar, largeAvatar].forEach(image => {
+        if (!image) {
+            return;
+        }
+
+        image.setAttribute("alt", `${displayName} profile photo`);
+
+        image.onerror = function () {
+            this.onerror = null;
+            this.src = fallbackURL;
+        };
+
+        image.src = imageURL || fallbackURL;
+        image.style.display = "block";
+        image.style.visibility = "visible";
+        image.style.opacity = "1";
+    });
+
+    console.log(
+        imageURL
+            ? "✅ Student profile image displayed."
+            : "ℹ️ No saved profile image found. Initials avatar displayed."
+    );
+}
+
+/* =========================================================
+   REPAIR PROFILE INPUTS
+========================================================= */
+
+function repairProfileFields() {
+    const profileName = document.getElementById("profileName");
+    const profileEmail = document.getElementById("profileEmail");
+    const profilePhone = document.getElementById("profilePhone");
+    const profileCourse = document.getElementById("profileCourse");
+    const profileLevel = document.getElementById("profileLevel");
+
+    if (profileName && currentStudent) {
+        profileName.value =
+            currentStudent.full_name ||
+            getStudentDisplayName();
+    }
+
+    if (profileEmail && currentStudent) {
+        profileEmail.value =
+            currentStudent.email ||
+            currentUser?.email ||
+            "";
+
+        profileEmail.readOnly = true;
+    }
+
+    if (profilePhone && currentStudent) {
+        profilePhone.value = currentStudent.phone || "";
+    }
+
+    if (profileCourse && currentStudent) {
+        profileCourse.value = currentStudent.course || "";
+    }
+
+    if (profileLevel && currentStudent) {
+        profileLevel.value = currentStudent.level || "";
+    }
+}
+
+/* =========================================================
+   INITIALIZE THE FINAL REPAIR
+========================================================= */
+
+function initializeFinalDashboardRepair() {
+    finalSetupNotificationButton();
+    finalSetupProfileButton();
+    displayProfileImage();
+    repairProfileFields();
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeFinalDashboardRepair,
+        { once: true }
+    );
+} else {
+    initializeFinalDashboardRepair();
 }
