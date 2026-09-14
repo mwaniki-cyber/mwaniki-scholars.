@@ -3,14 +3,14 @@ import { supabase } from "./supabase.js";
 /* =========================================================
    MWANIKI SCHOLARS
    STUDENT DASHBOARD ENGINE
-   ========================================================= */
+========================================================= */
 
 console.log("🚀 Mwaniki Scholars dashboard engine loaded");
 
 
 /* =========================================================
    GLOBAL STATE
-   ========================================================= */
+========================================================= */
 
 let currentUser = null;
 
@@ -23,7 +23,7 @@ let currentProfile = null;
 
 /* =========================================================
    DOM HELPER
-   ========================================================= */
+========================================================= */
 
 function $(id) {
     return document.getElementById(id);
@@ -32,7 +32,7 @@ function $(id) {
 
 /* =========================================================
    HTML ESCAPE
-   ========================================================= */
+========================================================= */
 
 function escapeHTML(value) {
 
@@ -51,7 +51,7 @@ function escapeHTML(value) {
 
 /* =========================================================
    SAFE TEXT
-   ========================================================= */
+========================================================= */
 
 function cleanText(value, fallback = "") {
 
@@ -69,7 +69,7 @@ function cleanText(value, fallback = "") {
 
 /* =========================================================
    INITIALIZATION
-   ========================================================= */
+========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -128,7 +128,7 @@ async function initializeDashboard() {
 
 /* =========================================================
    CURRENT DATE
-   ========================================================= */
+========================================================= */
 
 function setCurrentDate() {
 
@@ -150,13 +150,12 @@ function setCurrentDate() {
                 day: "numeric"
             }
         );
-
 }
 
 
 /* =========================================================
    LOAD CURRENT USER
-   ========================================================= */
+========================================================= */
 
 async function loadCurrentUser() {
 
@@ -196,13 +195,12 @@ async function loadCurrentUser() {
 
         currentUser = null;
     }
-
 }
 
 
 /* =========================================================
    LOAD PROFILE
-   ========================================================= */
+========================================================= */
 
 async function loadProfile() {
 
@@ -224,18 +222,13 @@ async function loadProfile() {
 
         if (error) {
 
-            /*
-             * Some Mwaniki Scholars installations may not
-             * have a profiles table. Do not break the
-             * dashboard if it is unavailable.
-             */
-
             console.warn(
                 "⚠️ Profile table could not be read:",
                 error.message
             );
 
             setDefaultStudentName();
+
             return;
         }
 
@@ -253,13 +246,12 @@ async function loadProfile() {
         setDefaultStudentName();
 
     }
-
 }
 
 
 /* =========================================================
    DEFAULT STUDENT NAME
-   ========================================================= */
+========================================================= */
 
 function setDefaultStudentName() {
 
@@ -270,13 +262,12 @@ function setDefaultStudentName() {
         "Student";
 
     setStudentName(name);
-
 }
 
 
 /* =========================================================
    SET STUDENT NAME
-   ========================================================= */
+========================================================= */
 
 function setStudentName(name) {
 
@@ -321,13 +312,12 @@ function setStudentName(name) {
     ) {
         largeAvatar.textContent = initial;
     }
-
 }
 
 
 /* =========================================================
    POPULATE PROFILE
-   ========================================================= */
+========================================================= */
 
 function populateProfile(profile) {
 
@@ -402,13 +392,12 @@ function populateProfile(profile) {
     if (photo) {
         setProfilePhoto(photo);
     }
-
 }
 
 
 /* =========================================================
    SET PROFILE PHOTO
-   ========================================================= */
+========================================================= */
 
 function setProfilePhoto(url) {
 
@@ -443,13 +432,12 @@ function setProfilePhoto(url) {
         `;
 
     }
-
 }
 
 
 /* =========================================================
    NAVIGATION
-   ========================================================= */
+========================================================= */
 
 function setupNavigation() {
 
@@ -480,7 +468,7 @@ function setupNavigation() {
 
 /* =========================================================
    SIDE PANELS
-   ========================================================= */
+========================================================= */
 
 function setupPanels() {
 
@@ -620,7 +608,7 @@ function closePanel(panel) {
 
 /* =========================================================
    PROFILE ACTIONS
-   ========================================================= */
+========================================================= */
 
 function setupProfileActions() {
 
@@ -677,7 +665,7 @@ function setupProfileActions() {
 
 /* =========================================================
    SAVE PROFILE
-   ========================================================= */
+========================================================= */
 
 async function saveProfile() {
 
@@ -770,7 +758,7 @@ async function saveProfile() {
 
 /* =========================================================
    PROFILE STATUS
-   ========================================================= */
+========================================================= */
 
 function showProfileStatus(
     message,
@@ -798,7 +786,7 @@ function showProfileStatus(
 
 /* =========================================================
    CHANGE PASSWORD
-   ========================================================= */
+========================================================= */
 
 async function changePassword() {
 
@@ -834,7 +822,7 @@ async function changePassword() {
 
 /* =========================================================
    SIGN OUT
-   ========================================================= */
+========================================================= */
 
 async function signOut() {
 
@@ -869,7 +857,7 @@ async function signOut() {
 
 /* =========================================================
    PROFILE PHOTO
-   ========================================================= */
+========================================================= */
 
 async function handleProfilePhoto(event) {
 
@@ -905,11 +893,6 @@ async function handleProfilePhoto(event) {
         return;
     }
 
-    /*
-     * Local preview.
-     * This does not require storage configuration.
-     */
-
     const reader =
         new FileReader();
 
@@ -933,7 +916,7 @@ async function handleProfilePhoto(event) {
 
 /* =========================================================
    REFRESH BUTTONS
-   ========================================================= */
+========================================================= */
 
 function setupRefreshButtons() {
 
@@ -998,7 +981,7 @@ function setupRefreshButtons() {
 
 /* =========================================================
    RECENT COURSE BUTTON
-   ========================================================= */
+========================================================= */
 
 function setupRecentCourseButton() {
 
@@ -1038,7 +1021,7 @@ function setupRecentCourseButton() {
 
 /* =========================================================
    LOAD ALL DASHBOARD DATA
-   ========================================================= */
+========================================================= */
 
 async function loadDashboardData() {
 
@@ -1053,7 +1036,7 @@ async function loadDashboardData() {
 
 /* =========================================================
    LOAD COURSES
-   ========================================================= */
+========================================================= */
 
 async function loadCourses() {
 
@@ -1121,6 +1104,7 @@ async function loadCourses() {
 
         area.innerHTML = `
             <div class="loading-state">
+
                 <strong>
                     Unable to load courses.
                 </strong>
@@ -1128,6 +1112,7 @@ async function loadCourses() {
                 <span>
                     Please try the Refresh button.
                 </span>
+
             </div>
         `;
 
@@ -1138,7 +1123,7 @@ async function loadCourses() {
 
 /* =========================================================
    RENDER COURSES
-   ========================================================= */
+========================================================= */
 
 function renderCourses() {
 
@@ -1178,8 +1163,9 @@ function renderCourses() {
      * IMPORTANT:
      *
      * #courseGrid is already the CSS grid.
-     * Therefore we insert cards directly.
-     * We DO NOT create another .course-grid.
+     * Cards are inserted directly into it.
+     *
+     * DO NOT create another .course-grid here.
      */
 
     area.innerHTML =
@@ -1189,7 +1175,7 @@ function renderCourses() {
 
     area
         .querySelectorAll(
-            "[data-course-id]"
+            ".course-card-button[data-course-id]"
         )
         .forEach(button => {
 
@@ -1222,7 +1208,7 @@ function renderCourses() {
 
 /* =========================================================
    COURSE IMAGE
-   ========================================================= */
+========================================================= */
 
 function getCourseImage(course) {
 
@@ -1237,15 +1223,18 @@ function getCourseImage(course) {
     }
 
     return image;
-
 }
 
 
 /* =========================================================
    CREATE COURSE CARD
-   ========================================================= */
+   NO EMOJIS IN COURSE DISPLAY
+========================================================= */
 
 function createCourseCard(course) {
+
+    const courseId =
+        course?.id ?? "";
 
     const title =
         cleanText(
@@ -1265,51 +1254,50 @@ function createCourseCard(course) {
     return `
         <article
             class="course-card"
+            data-course-id="${escapeHTML(courseId)}"
         >
 
-            ${
-                image
-                    ? `
-                        <img
-                            class="course-card-image"
-                            src="${escapeHTML(image)}"
-                            alt="${escapeHTML(title)}"
-                            loading="lazy"
-                            onerror="this.style.display='none';"
-                        >
-                    `
-                    : `
-                        <div
-                            class="course-card-image"
-                            aria-hidden="true"
-                            style="
-                                display:flex;
-                                align-items:center;
-                                justify-content:center;
-                                font-size:42px;
-                            "
-                        >
-                            📚
-                        </div>
-                    `
-            }
+            <div class="course-card-image">
+
+                ${
+                    image
+                        ? `
+                            <img
+                                src="${escapeHTML(image)}"
+                                alt="${escapeHTML(title)}"
+                                loading="lazy"
+                                onerror="
+                                    this.style.display='none';
+                                    this.parentElement.classList.add('no-image');
+                                "
+                            >
+                        `
+                        : `
+                            <div
+                                class="course-card-placeholder"
+                                aria-hidden="true"
+                            ></div>
+                        `
+                }
+
+            </div>
 
             <div
                 class="course-card-content"
             >
 
-                <h3>
+                <h3 class="course-card-title">
                     ${escapeHTML(title)}
                 </h3>
 
-                <p>
+                <p class="course-card-description">
                     ${escapeHTML(description)}
                 </p>
 
                 <button
                     type="button"
-                    class="primary-button"
-                    data-course-id="${escapeHTML(course.id)}"
+                    class="primary-button course-card-button"
+                    data-course-id="${escapeHTML(courseId)}"
                 >
                     View Course
                 </button>
@@ -1318,13 +1306,12 @@ function createCourseCard(course) {
 
         </article>
     `;
-
 }
 
 
 /* =========================================================
    OPEN COURSE
-   ========================================================= */
+========================================================= */
 
 function openCourse(course) {
 
@@ -1370,7 +1357,7 @@ function openCourse(course) {
 
 /* =========================================================
    LOAD NOTES
-   ========================================================= */
+========================================================= */
 
 async function loadNotes() {
 
@@ -1393,10 +1380,6 @@ async function loadNotes() {
     `;
 
     try {
-
-        /*
-         * Published notes from the public notes table.
-         */
 
         const {
             data,
@@ -1442,11 +1425,6 @@ async function loadNotes() {
             error
         );
 
-        /*
-         * If RLS/schema prevents the notes table query,
-         * don't crash the whole dashboard.
-         */
-
         allNotes = [];
 
         area.innerHTML = `
@@ -1470,7 +1448,7 @@ async function loadNotes() {
 
 /* =========================================================
    RENDER NOTES
-   ========================================================= */
+========================================================= */
 
 function renderNotes() {
 
@@ -1506,13 +1484,6 @@ function renderNotes() {
         return;
     }
 
-    /*
-     * IMPORTANT:
-     *
-     * #notesGrid is already the CSS grid.
-     * Therefore we insert note cards directly.
-     */
-
     area.innerHTML =
         allNotes
             .map(createNoteCard)
@@ -1523,7 +1494,7 @@ function renderNotes() {
 
 /* =========================================================
    CREATE NOTE CARD
-   ========================================================= */
+========================================================= */
 
 function createNoteCard(note) {
 
@@ -1602,13 +1573,12 @@ function createNoteCard(note) {
 
         </article>
     `;
-
 }
 
 
 /* =========================================================
    LOAD QUIZZES
-   ========================================================= */
+========================================================= */
 
 async function loadQuizzes() {
 
@@ -1663,7 +1633,7 @@ async function loadQuizzes() {
 
 /* =========================================================
    UPDATE COURSE COUNT
-   ========================================================= */
+========================================================= */
 
 function updateCourseCount() {
 
@@ -1680,7 +1650,7 @@ function updateCourseCount() {
 
 /* =========================================================
    UPDATE NOTES COUNT
-   ========================================================= */
+========================================================= */
 
 function updateNotesCount() {
 
@@ -1697,7 +1667,7 @@ function updateNotesCount() {
 
 /* =========================================================
    UPDATE QUIZ COUNT
-   ========================================================= */
+========================================================= */
 
 function updateQuizCount() {
 
@@ -1714,7 +1684,7 @@ function updateQuizCount() {
 
 /* =========================================================
    UPDATE PROGRESS
-   ========================================================= */
+========================================================= */
 
 function updateProgress() {
 
@@ -1723,10 +1693,6 @@ function updateProgress() {
 
     const progressBar =
         $("learningProgressBar");
-
-    /*
-     * Use local quiz progress if available.
-     */
 
     let progress = 0;
 
@@ -1787,7 +1753,8 @@ function updateProgress() {
 
 /* =========================================================
    RECOMMENDATIONS
-   ========================================================= */
+   NO EMOJIS IN COURSE DISPLAY
+========================================================= */
 
 function loadRecommendations() {
 
@@ -1816,54 +1783,67 @@ function loadRecommendations() {
         recommendations
             .map(course => {
 
-                return `
-                    <article class="course-card">
+                const image =
+                    getCourseImage(course);
 
-                        ${
-                            getCourseImage(course)
-                                ? `
-                                    <img
-                                        class="course-card-image"
-                                        src="${escapeHTML(getCourseImage(course))}"
-                                        alt="${escapeHTML(course.title)}"
-                                        loading="lazy"
-                                    >
-                                `
-                                : `
-                                    <div
-                                        class="course-card-image"
-                                        style="
-                                            display:flex;
-                                            align-items:center;
-                                            justify-content:center;
-                                            font-size:38px;
-                                        "
-                                    >
-                                        📖
-                                    </div>
-                                `
-                        }
+                const title =
+                    cleanText(
+                        course?.title,
+                        "Untitled Course"
+                    );
+
+                const description =
+                    cleanText(
+                        course?.description,
+                        "Explore this medical course."
+                    );
+
+                return `
+                    <article
+                        class="course-card"
+                        data-course-id="${escapeHTML(course.id)}"
+                    >
+
+                        <div class="course-card-image">
+
+                            ${
+                                image
+                                    ? `
+                                        <img
+                                            src="${escapeHTML(image)}"
+                                            alt="${escapeHTML(title)}"
+                                            loading="lazy"
+                                            onerror="
+                                                this.style.display='none';
+                                                this.parentElement.classList.add('no-image');
+                                            "
+                                        >
+                                    `
+                                    : `
+                                        <div
+                                            class="course-card-placeholder"
+                                            aria-hidden="true"
+                                        ></div>
+                                    `
+                            }
+
+                        </div>
 
                         <div
                             class="course-card-content"
                         >
 
-                            <h3>
-                                ${escapeHTML(course.title)}
+                            <h3 class="course-card-title">
+                                ${escapeHTML(title)}
                             </h3>
 
-                            <p>
-                                ${escapeHTML(
-                                    cleanText(
-                                        course.description,
-                                        "Explore this medical course."
-                                    )
-                                )}
+                            <p class="course-card-description">
+                                ${escapeHTML(description)}
                             </p>
 
                             <button
                                 type="button"
-                                class="primary-button"
+                                class="primary-button course-card-button"
                                 data-recommended-course-id="${escapeHTML(course.id)}"
                             >
                                 Start Learning
@@ -1913,7 +1893,7 @@ function loadRecommendations() {
 
 /* =========================================================
    RECENT COURSE
-   ========================================================= */
+========================================================= */
 
 function getRecentCourse() {
 
@@ -1990,9 +1970,16 @@ function loadRecentCourse() {
         }
 
         if (placeholder) {
-            placeholder.style.width = "100%";
-            placeholder.style.height = "100%";
-            placeholder.style.minHeight = "220px";
+
+            placeholder.style.width =
+                "100%";
+
+            placeholder.style.height =
+                "100%";
+
+            placeholder.style.minHeight =
+                "220px";
+
         }
 
         return;
@@ -2081,7 +2068,7 @@ function loadRecentCourse() {
 
 /* =========================================================
    AUTH STATE
-   ========================================================= */
+========================================================= */
 
 supabase.auth.onAuthStateChange(
     (event, session) => {
@@ -2115,7 +2102,7 @@ supabase.auth.onAuthStateChange(
 
 /* =========================================================
    PROFILE PHOTO INPUT
-   ========================================================= */
+========================================================= */
 
 const profilePhotoInput =
     $("profilePhotoInput");
@@ -2132,7 +2119,7 @@ if (profilePhotoInput) {
 
 /* =========================================================
    GLOBAL ERROR LOGGING
-   ========================================================= */
+========================================================= */
 
 window.addEventListener(
     "error",
