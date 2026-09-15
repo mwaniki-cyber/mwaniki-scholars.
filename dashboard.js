@@ -888,9 +888,7 @@ function renderCourseLibrary() {
                     >
                 `
                 : `
-                    <div class="course-image-placeholder">
-                        <span>📚</span>
-                    </div>
+                  <div class="course-card-placeholder" aria-hidden="true"></div>
                 `;
 
             return `
