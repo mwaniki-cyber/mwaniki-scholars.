@@ -3991,4 +3991,318 @@ select:focus-visible {
 
 .notification-panel-count[hidden] {
     display: none !important;
+}/* =========================================================
+MWANIKI AI / TURBO AI
+VISIBILITY + DISPLAY FIX
+========================================================= */
+
+#ai-tutor {
+display: block !important;
+visibility: visible !important;
+opacity: 1 !important;
+width: 100%;
+max-width: 100%;
+position: relative;
+overflow: visible;
 }
+
+/* =========================================================
+AI SECTION HEADER
+========================================================= */
+
+#ai-tutor .section-heading {
+display: flex !important;
+align-items: flex-start;
+justify-content: space-between;
+gap: 24px;
+width: 100%;
+}
+
+/* =========================================================
+AI STATUS
+========================================================= */
+
+#ai-tutor .ai-status {
+display: inline-flex !important;
+align-items: center;
+gap: 8px;
+padding: 8px 14px;
+border-radius: 999px;
+white-space: nowrap;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-status-dot {
+display: inline-block !important;
+width: 9px;
+height: 9px;
+border-radius: 50%;
+background: #087f73;
+}
+
+/* =========================================================
+AI HERO
+========================================================= */
+
+#ai-tutor .ai-hero-card {
+display: flex !important;
+align-items: center;
+gap: 20px;
+width: 100%;
+box-sizing: border-box;
+margin-top: 24px;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-hero-icon {
+display: flex !important;
+align-items: center;
+justify-content: center;
+flex: 0 0 64px;
+width: 64px;
+height: 64px;
+font-size: 32px;
+}
+
+#ai-tutor .ai-hero-content {
+display: block !important;
+flex: 1;
+min-width: 0;
+}
+
+#ai-tutor .ai-hero-content h3,
+#ai-tutor .ai-hero-content p {
+display: block !important;
+visibility: visible !important;
+}
+
+/* =========================================================
+AI SUBSECTIONS
+========================================================= */
+
+#ai-tutor .ai-subsection {
+display: block !important;
+width: 100%;
+margin-top: 28px;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-subsection-header {
+display: block !important;
+width: 100%;
+}
+
+#ai-tutor .ai-subsection-header h3 {
+display: block !important;
+}
+
+/* =========================================================
+SUGGESTED QUESTIONS
+========================================================= */
+
+#ai-tutor .ai-suggestions {
+display: grid !important;
+grid-template-columns: repeat(4, minmax(0, 1fr));
+gap: 14px;
+width: 100%;
+margin-top: 16px;
+}
+
+#ai-tutor .ai-suggestion {
+display: flex !important;
+align-items: center;
+justify-content: flex-start;
+min-height: 54px;
+width: 100%;
+box-sizing: border-box;
+cursor: pointer;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+/* =========================================================
+QUESTION CARD
+========================================================= */
+
+#ai-tutor .ai-question-card {
+display: block !important;
+width: 100%;
+box-sizing: border-box;
+margin-top: 28px;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-question-header {
+display: block !important;
+width: 100%;
+}
+
+#ai-tutor .ai-question-label {
+display: block !important;
+visibility: visible !important;
+}
+
+#ai-tutor #aiQuestion {
+display: block !important;
+visibility: visible !important;
+opacity: 1 !important;
+width: 100%;
+min-height: 130px;
+box-sizing: border-box;
+resize: vertical;
+}
+
+#ai-tutor .ai-question-actions {
+display: flex !important;
+align-items: center;
+justify-content: space-between;
+gap: 20px;
+margin-top: 14px;
+width: 100%;
+}
+
+/* =========================================================
+TURBO AI BUTTON
+========================================================= */
+
+#ai-tutor #askAIButton {
+display: inline-flex !important;
+align-items: center;
+justify-content: center;
+gap: 9px;
+min-width: 190px;
+min-height: 48px;
+padding: 12px 20px;
+cursor: pointer;
+visibility: visible !important;
+opacity: 1 !important;
+position: relative;
+z-index: 20;
+}
+
+#ai-tutor #askAIButtonText {
+display: inline !important;
+visibility: visible !important;
+}
+
+#ai-tutor .ai-button-icon {
+display: inline-block !important;
+}
+
+/* =========================================================
+ANSWER CARD
+========================================================= */
+
+#ai-tutor .ai-answer-card {
+display: block !important;
+width: 100%;
+box-sizing: border-box;
+margin-top: 28px;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-answer-header {
+display: block !important;
+}
+
+#ai-tutor #aiAnswer {
+display: block !important;
+min-height: 180px;
+width: 100%;
+box-sizing: border-box;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-empty-state {
+display: flex !important;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+min-height: 160px;
+text-align: center;
+}
+
+#ai-tutor .ai-empty-icon {
+display: block !important;
+font-size: 34px;
+margin-bottom: 10px;
+}
+
+/* =========================================================
+RECENT QUESTIONS
+========================================================= */
+
+#ai-tutor .ai-recent-questions {
+display: block !important;
+width: 100%;
+min-height: 60px;
+visibility: visible !important;
+opacity: 1 !important;
+}
+
+#ai-tutor .ai-empty-recent {
+display: block !important;
+visibility: visible !important;
+}
+
+/* =========================================================
+MOBILE / TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+
+```
+#ai-tutor .ai-suggestions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#ai-tutor .ai-question-actions {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#ai-tutor #askAIButton {
+    width: 100%;
+}
+```
+
+}
+
+@media (max-width: 600px) {
+
+```
+#ai-tutor .section-heading {
+    flex-direction: column;
+}
+
+#ai-tutor .ai-suggestions {
+    grid-template-columns: 1fr;
+}
+
+#ai-tutor .ai-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+}
+```
+
+}
+
+/* =========================================================
+IMPORTANT:
+KEEP TURBO AI ABOVE OTHER DASHBOARD LAYERS
+========================================================= */
+
+#ai-tutor {
+z-index: 1;
+}
+
+#ai-tutor * {
+box-sizing: border-box;
+}
+
