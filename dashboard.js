@@ -1,4 +1,4 @@
-```javascript
+
 import { supabase } from "./supabase.js";
 
 /* =========================================================
@@ -5311,4 +5311,4 @@ if (
 console.log(
     "✅ Mwaniki Scholars dashboard.js loaded successfully."
 );
-```
+
