@@ -11,8 +11,41 @@ console.log("📚 Mwaniki Scholars Course Engine Loaded");
 // SELECTED COURSE
 // ============================================================
 
-const courseId = localStorage.getItem("selectedCourse");
-const courseName = localStorage.getItem("selectedCourseName");
+// ============================================================
+// SELECTED COURSE
+// ============================================================
+
+// First try the URL:
+// course.html?course_id=63
+
+const urlParams = new URLSearchParams(
+    window.location.search
+);
+
+const urlCourseId =
+    urlParams.get("course_id");
+
+// Fall back to localStorage
+const storedCourseId =
+    localStorage.getItem("selectedCourse");
+
+// Use URL first, then localStorage
+const courseId =
+    urlCourseId ||
+    storedCourseId;
+
+const courseName =
+    localStorage.getItem("selectedCourseName");
+
+// Keep localStorage synchronized with the URL
+if (courseId) {
+
+    localStorage.setItem(
+        "selectedCourse",
+        String(courseId)
+    );
+
+}
 
 // ============================================================
 // PAGE ELEMENTS
