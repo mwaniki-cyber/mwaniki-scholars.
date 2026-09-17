@@ -24,7 +24,6 @@
         Mwaniki Scholars | Student Dashboard
     </title>
 
-
     <link
         rel="icon"
         type="image/svg+xml"
@@ -145,6 +144,7 @@
             class="header-action"
             id="notificationButton"
             aria-label="Notifications"
+            aria-expanded="false"
         >
 
             <span class="header-action-icon">
@@ -158,19 +158,25 @@
         </button>
 
 
+        <!-- =================================================
+             FIXED PROFILE AVATAR
+             MUST BE IMG — NOT SPAN
+        ================================================== -->
+
         <button
             type="button"
             class="profile-button"
             id="profileButton"
             aria-label="Open student profile"
+            aria-expanded="false"
         >
 
-            <span
+            <img
                 class="profile-avatar"
                 id="headerProfileAvatar"
+                src=""
+                alt="Student profile photo"
             >
-                M
-            </span>
 
             <span
                 class="profile-button-name"
@@ -289,14 +295,15 @@
 
         <!-- =================================================
              PROFILE PHOTO
+             FIXED: REAL IMG ELEMENT
         ================================================== -->
 
-        <div
+        <img
             class="profile-large-avatar"
             id="profileLargeAvatar"
+            src=""
+            alt="Student profile photo"
         >
-            S
-        </div>
 
 
         <div class="profile-photo-control">
@@ -691,6 +698,7 @@
 
     <!-- =================================================
          RECENT COURSE
+         FIXED: NO IMAGE / NO IMAGE PLACEHOLDER
     ================================================== -->
 
     <section
@@ -719,25 +727,6 @@
             class="recent-course-card"
             id="recentCourseCard"
         >
-
-            <div class="recent-course-visual">
-
-                <img
-                    id="recentCourseImage"
-                    class="recent-course-image"
-                    src=""
-                    alt=""
-                    hidden
-                >
-
-                <div
-                    id="recentCourseImagePlaceholder"
-                    class="recent-course-image-placeholder"
-                    aria-hidden="true"
-                ></div>
-
-            </div>
-
 
             <div class="recent-course-content">
 
@@ -1289,6 +1278,7 @@
 
     <span>
         © 2026 Mwaniki Scholars
+        reach us on +254768016189 
     </span>
 
 </footer>
