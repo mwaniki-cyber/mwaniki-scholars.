@@ -3973,7 +3973,316 @@ function setupSearch() {
         }
     );
 }
+/* =========================================================
+   TURBO AI
+   MWANIKI SCHOLARS STUDENT DASHBOARD
+========================================================= */
 
+const TURBO_AI_FUNCTION_URL =
+    "https://bazixdwtysmkkdeloerx.supabase.co/functions/v1/turbo-ai";
+
+/* =========================================================
+   ASK TURBO AI
+========================================================= */
+
+async function askTurboAI() {
+
+    const questionInput =
+        $("#aiQuestion");
+
+    const askButton =
+        $("#askAIButton");
+
+    const answerElement =
+        $("#aiAnswer");
+
+    if (!questionInput) {
+
+        console.warn(
+            "⚠️ #aiQuestion was not found."
+        );
+
+        return;
+    }
+
+    if (!answerElement) {
+
+        console.warn(
+            "⚠️ #aiAnswer was not found."
+        );
+
+        return;
+    }
+
+    const question =
+        String(
+            questionInput.value || ""
+        ).trim();
+
+    if (!question) {
+
+        answerElement.textContent =
+            "Please enter a medical question first.";
+
+        answerElement.dataset.messageType =
+            "warning";
+
+        return;
+    }
+
+    /*
+        Prevent extremely large requests from being
+        unnecessarily sent to Turbo AI.
+    */
+
+    if (question.length > 2000) {
+
+        answerElement.textContent =
+            "Your question is too long. Please keep it within 2,000 characters.";
+
+        answerElement.dataset.messageType =
+            "warning";
+
+        return;
+    }
+
+    /*
+        Disable the button while Turbo AI is working.
+    */
+
+    if (askButton) {
+
+        askButton.disabled =
+            true;
+
+        askButton.dataset.originalText =
+            askButton.textContent;
+
+        askButton.textContent =
+            "Thinking...";
+    }
+
+    answerElement.dataset.messageType =
+        "loading";
+
+    answerElement.innerHTML = `
+        <div class="ai-loading">
+            <span>Turbo AI is thinking...</span>
+        </div>
+    `;
+
+    try {
+
+        /*
+            The student's Supabase session is automatically
+            used here. We do NOT send the Gemini API key.
+        */
+
+        const {
+            data: {
+                session
+            } = {}
+        } =
+            await supabase.auth
+                .getSession();
+
+        if (!session?.access_token) {
+
+            throw new Error(
+                "Your session has expired. Please sign in again."
+            );
+        }
+
+        const response =
+            await fetch(
+                TURBO_AI_FUNCTION_URL,
+                {
+                    method:
+                        "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "application/json",
+
+                        "Authorization":
+                            `Bearer ${session.access_token}`
+                    },
+
+                    body:
+                        JSON.stringify({
+                            message:
+                                question
+                        })
+                }
+            );
+
+        let result = null;
+
+        try {
+
+            result =
+                await response.json();
+
+        } catch {
+
+            result = null;
+        }
+
+        console.log(
+            "🤖 Turbo AI response:",
+            result
+        );
+
+        if (!response.ok) {
+
+            const serverMessage =
+                result?.error ||
+                result?.message ||
+                `Turbo AI request failed (${response.status}).`;
+
+            throw new Error(
+                serverMessage
+            );
+        }
+
+        if (
+            !result ||
+            result.success !== true ||
+            !result.answer
+        ) {
+
+            throw new Error(
+                result?.error ||
+                "Turbo AI did not return a valid answer."
+            );
+        }
+
+        /*
+            Display the answer as text rather than injecting
+            arbitrary HTML returned by the AI.
+        */
+
+        answerElement.textContent =
+            result.answer;
+
+        answerElement.dataset.messageType =
+            "success";
+
+        /*
+            Store the latest question locally so the student
+            can see what they most recently asked.
+        */
+
+        writeStorage(
+            "mwanikiLastAIQuestion",
+            {
+                question,
+                timestamp:
+                    new Date().toISOString()
+            }
+        );
+
+        console.log(
+            "✅ Turbo AI answer displayed successfully."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Turbo AI request failed:",
+            error
+        );
+
+        answerElement.textContent =
+            error?.message ||
+            "Turbo AI could not generate a response. Please try again.";
+
+        answerElement.dataset.messageType =
+            "error";
+
+    } finally {
+
+        if (askButton) {
+
+            askButton.disabled =
+                false;
+
+            askButton.textContent =
+                askButton.dataset
+                    .originalText ||
+                "Ask AI";
+        }
+    }
+}
+
+/* =========================================================
+   TURBO AI EVENT HANDLER
+========================================================= */
+
+function setupTurboAI() {
+
+    const askButton =
+        $("#askAIButton");
+
+    const questionInput =
+        $("#aiQuestion");
+
+    if (!askButton) {
+
+        console.warn(
+            "⚠️ #askAIButton was not found."
+        );
+
+        return;
+    }
+
+    if (!questionInput) {
+
+        console.warn(
+            "⚠️ #aiQuestion was not found."
+        );
+
+        return;
+    }
+
+    /*
+        Prevent multiple event handlers if the setup
+        function is ever called again.
+    */
+
+    askButton.onclick =
+        function (event) {
+
+            event.preventDefault();
+
+            askTurboAI();
+        };
+
+    /*
+        Allow Ctrl + Enter to submit the question.
+    */
+
+    questionInput.addEventListener(
+        "keydown",
+        function (event) {
+
+            if (
+                event.key === "Enter" &&
+                event.ctrlKey
+            ) {
+
+                event.preventDefault();
+
+                askTurboAI();
+            }
+        }
+    );
+
+    console.log(
+        "🤖 Turbo AI dashboard interface ready."
+    );
+}
 /* =========================================================
    OUTSIDE PANEL CLOSING
 ========================================================= */
