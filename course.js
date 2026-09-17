@@ -7,9 +7,6 @@ import { supabase } from "./supabase.js";
 
 console.log("📚 Mwaniki Scholars Course Engine Loaded");
 
-// ============================================================
-// SELECTED COURSE
-// ============================================================
 
 // ============================================================
 // SELECTED COURSE
