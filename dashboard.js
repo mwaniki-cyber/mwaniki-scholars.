@@ -1,9 +1,18 @@
+```javascript
 import { supabase } from "./supabase.js";
 
 /* =========================================================
    MWANIKI SCHOLARS
    STUDENT DASHBOARD ENGINE
-   COMPLETE VERSION ALIGNED WITH dashboard.html
+   COMPLETE VERSION
+   ---------------------------------------------------------
+   IMPORTANT ARCHITECTURE:
+
+   Mwaniki AI = separate system / aiTutor.html
+
+   Turbo AI = separate dashboard system
+   Turbo AI MUST NOT use Mwaniki AI DOM IDs,
+   storage keys, handlers or backend code.
 ========================================================= */
 
 console.log("🚀 Mwaniki Scholars dashboard engine loaded");
@@ -42,10 +51,25 @@ const NOTIFICATION_STATE_PREFIX =
     Change this ID whenever a significant dashboard/app
     improvement is released.
 
-    Students will receive one notification for each new ID.
+    Students receive one notification for each new ID.
 */
 const APP_UPDATE_ID =
     "mwaniki-dashboard-update-2026-09";
+
+/* =========================================================
+   TURBO AI CONFIGURATION
+   ---------------------------------------------------------
+   THIS IS COMPLETELY SEPARATE FROM MWANIKI AI.
+========================================================= */
+
+const TURBO_AI_FUNCTION_URL =
+    "https://bazixdwtysmkkdeloerx.supabase.co/functions/v1/turbo-ai";
+
+const TURBO_AI_LAST_QUESTION_KEY =
+    "mwanikiTurboAILastQuestion";
+
+const TURBO_AI_RECENT_QUESTIONS_KEY =
+    "mwanikiTurboAIRecentQuestions";
 
 /* =========================================================
    DOM HELPERS
@@ -124,10 +148,10 @@ function getFieldValue(selector) {
         return "";
     }
 
-    if (
-        "value" in element
-    ) {
-        return String(element.value ?? "").trim();
+    if ("value" in element) {
+        return String(
+            element.value ?? ""
+        ).trim();
     }
 
     return String(
@@ -164,9 +188,11 @@ function showMessage(
         return;
     }
 
-    element.textContent = message;
+    element.textContent =
+        message;
 
-    element.dataset.messageType = type;
+    element.dataset.messageType =
+        type;
 
     element.classList.remove(
         "success",
@@ -190,6 +216,7 @@ function readStorage(
     fallback = null
 ) {
     try {
+
         const value =
             localStorage.getItem(key);
 
@@ -1074,12 +1101,15 @@ function setupProfilePanel() {
     }
 
     if (panel) {
+
         setPanelOpen(
             panel,
             false
         );
     }
-}/* =========================================================
+}
+
+/* =========================================================
    REPAIR PROFILE FIELDS
 ========================================================= */
 
@@ -1397,11 +1427,6 @@ async function uploadProfilePhoto(
         );
     }
 
-    console.log(
-        "🔗 Profile photo public URL:",
-        publicURL
-    );
-
     const {
         error: profileError
     } = await supabase
@@ -1498,10 +1523,6 @@ function setupProfilePhoto() {
                 return;
             }
 
-            /*
-                Show the selected photo immediately
-                while it is being uploaded.
-            */
             const reader =
                 new FileReader();
 
@@ -1556,10 +1577,6 @@ function setupProfilePhoto() {
                     error
                 );
 
-                /*
-                    Restore the previously saved image
-                    if the upload failed.
-                */
                 displayProfileImage();
 
                 showMessage(
@@ -1937,7 +1954,9 @@ function createWelcomeNotification() {
     saveNotificationState(
         state
     );
-}/* =========================================================
+}
+
+/* =========================================================
    CONTENT NOTIFICATIONS
 ========================================================= */
 
@@ -1962,11 +1981,6 @@ function syncContentNotifications() {
                 String(note.id)
         );
 
-    /*
-        First visit:
-        establish a baseline so existing content does not
-        create dozens of false "new content" notifications.
-    */
     if (!state.contentBaselineReady) {
 
         state.knownCourseIds =
@@ -2101,11 +2115,6 @@ function syncContentNotifications() {
         );
     }
 
-    /*
-        Application update notification.
-        Change APP_UPDATE_ID when a new significant
-        dashboard improvement is released.
-    */
     if (
         state.lastAppUpdateId !==
         APP_UPDATE_ID
@@ -2142,6 +2151,8 @@ function syncContentNotifications() {
 
 /* =========================================================
    NOTIFICATION BADGE
+   ---------------------------------------------------------
+   Shows the NUMBER OF UNREAD NOTIFICATIONS.
 ========================================================= */
 
 function updateNotificationBadge() {
@@ -2155,6 +2166,16 @@ function updateNotificationBadge() {
                 !notification.read
         ).length;
 
+    /*
+        Main supported badge.
+    */
+    const mainBadge =
+        $("#notificationBadge");
+
+    /*
+        Support additional badge selectors in case
+        the stylesheet/HTML uses another class.
+    */
     const possibleBadges =
         $all(
             "#notificationBadge, [data-notification-count], .notification-badge, .notification-count"
@@ -2166,15 +2187,22 @@ function updateNotificationBadge() {
             if (unreadCount > 0) {
 
                 badge.textContent =
-                    unreadCount >
-                    99
+                    unreadCount > 99
                         ? "99+"
                         : String(
                             unreadCount
                         );
 
                 badge.style.display =
-                    "";
+                    "inline-flex";
+
+                badge.style.visibility =
+                    "visible";
+
+                badge.setAttribute(
+                    "aria-hidden",
+                    "false"
+                );
 
                 badge.setAttribute(
                     "aria-label",
@@ -2188,15 +2216,48 @@ function updateNotificationBadge() {
 
                 badge.style.display =
                     "none";
+
+                badge.setAttribute(
+                    "aria-hidden",
+                    "true"
+                );
             }
         }
     );
 
     /*
-        If the current HTML has no badge, the notification
-        button itself still works normally.
+        Also update the panel count.
     */
+    const panelCount =
+        $("#notificationPanelCount");
 
+    if (panelCount) {
+
+        if (unreadCount > 0) {
+
+            panelCount.textContent =
+                unreadCount > 99
+                    ? "99+"
+                    : String(
+                        unreadCount
+                    );
+
+            panelCount.hidden =
+                false;
+
+        } else {
+
+            panelCount.textContent =
+                "0";
+
+            panelCount.hidden =
+                true;
+        }
+    }
+
+    /*
+        Main notification button accessibility.
+    */
     const button =
         $("#notificationButton");
 
@@ -2208,6 +2269,26 @@ function updateNotificationBadge() {
                 ? `Notifications, ${unreadCount} unread`
                 : "Notifications"
         );
+
+        button.dataset.unreadCount =
+            String(unreadCount);
+    }
+
+    /*
+        Optional visible text counter.
+    */
+    const visibleCount =
+        $("#notificationCount");
+
+    if (visibleCount) {
+
+        visibleCount.textContent =
+            String(unreadCount);
+
+        visibleCount.style.display =
+            unreadCount > 0
+                ? ""
+                : "none";
     }
 }
 
@@ -2256,6 +2337,7 @@ function renderNotifications() {
         $("#notificationContent");
 
     if (!content) {
+        updateNotificationBadge();
         return;
     }
 
@@ -2312,13 +2394,26 @@ function renderNotifications() {
                             tabindex="0"
                         >
 
-                            <div class="notification-item-header">
+                            <div
+                                class="notification-item-header"
+                            >
 
                                 <strong>
                                     ${escapeHTML(
                                         notification.title
                                     )}
                                 </strong>
+
+                                ${
+                                    notification.read
+                                        ? ""
+                                        : `
+                                            <span
+                                                class="notification-unread-dot"
+                                                aria-label="Unread"
+                                            ></span>
+                                        `
+                                }
 
                             </div>
 
@@ -2362,6 +2457,31 @@ function renderNotifications() {
                         item.classList.remove(
                             "unread"
                         );
+
+                        renderNotifications();
+                    }
+                );
+
+                item.addEventListener(
+                    "keydown",
+                    event => {
+
+                        if (
+                            event.key ===
+                                "Enter" ||
+                            event.key ===
+                                " "
+                        ) {
+
+                            event.preventDefault();
+
+                            markNotificationRead(
+                                item.dataset
+                                    .notificationId
+                            );
+
+                            renderNotifications();
+                        }
                     }
                 );
             }
@@ -2426,6 +2546,7 @@ function markAllNotificationsRead() {
         getNotifications();
 
     if (!notifications.length) {
+        updateNotificationBadge();
         return;
     }
 
@@ -2442,6 +2563,8 @@ function markAllNotificationsRead() {
     );
 
     updateNotificationBadge();
+
+    renderNotifications();
 }
 
 /* =========================================================
@@ -2529,6 +2652,8 @@ function setupNotificationPanel() {
             false
         );
     }
+
+    updateNotificationBadge();
 }
 
 /* =========================================================
@@ -2587,11 +2712,6 @@ function setupNavigation() {
             const sectionId =
                 link.dataset.section;
 
-            /*
-                Links such as AI Tutor, Book a Tutor
-                and Inbox do not have data-section,
-                so they must continue normally.
-            */
             if (!sectionId) {
                 return;
             }
@@ -2629,12 +2749,6 @@ function setupNavigation() {
         }
     );
 
-    /*
-        Quick action links also point to dashboard
-        sections. Make them scroll smoothly without
-        interfering with external pages.
-    */
-
     $all(
         'a[href^="#"]'
     ).forEach(
@@ -2653,7 +2767,9 @@ function setupNavigation() {
 
                     const targetId =
                         link
-                            .getAttribute("href")
+                            .getAttribute(
+                                "href"
+                            )
                             ?.slice(1);
 
                     if (!targetId) {
@@ -2807,10 +2923,12 @@ async function loadCourses() {
    COURSE LIBRARY RENDERING
    IMPORTANT:
    NO COURSE IMAGE
-   NO COURSE IMAGE PLACEHOLDER
+   NO IMAGE PLACEHOLDER
 ========================================================= */
 
-function renderCourseLibrary() {
+function renderCourseLibrary(
+    coursesToRender = allCourses
+) {
 
     const courseGrid =
         $("#courseGrid");
@@ -2824,12 +2942,12 @@ function renderCourseLibrary() {
         return;
     }
 
-    if (!allCourses.length) {
+    if (!coursesToRender.length) {
 
         courseGrid.innerHTML = `
 
             <div class="empty-state">
-                No courses are currently available.
+                No courses match your search.
             </div>
 
         `;
@@ -2838,7 +2956,7 @@ function renderCourseLibrary() {
     }
 
     courseGrid.innerHTML =
-        allCourses
+        coursesToRender
             .map(
                 course => `
 
@@ -2917,7 +3035,276 @@ function renderCourseLibrary() {
                 );
             }
         );
-}/* =========================================================
+}
+
+/* =========================================================
+   COURSE SEARCH
+   ---------------------------------------------------------
+   Searches:
+   - Course title
+   - Course description
+========================================================= */
+
+function performCourseSearch(
+    shouldScroll = false
+) {
+
+    const searchInput =
+        $("#courseSearch");
+
+    const searchStatus =
+        $("#courseSearchStatus");
+
+    if (!searchInput) {
+        return;
+    }
+
+    const searchTerm =
+        String(
+            searchInput.value || ""
+        )
+            .trim()
+            .toLowerCase();
+
+    if (!searchTerm) {
+
+        renderCourseLibrary(
+            allCourses
+        );
+
+        if (searchStatus) {
+
+            searchStatus.textContent =
+                `${allCourses.length.toLocaleString()} courses available`;
+
+            searchStatus.dataset
+                .messageType =
+                "info";
+        }
+
+        if (shouldScroll) {
+
+            scrollToCourses();
+        }
+
+        return;
+    }
+
+    const matchingCourses =
+        allCourses.filter(
+            course => {
+
+                const searchableText =
+                    `${course.title} ${course.description || ""}`
+                        .toLowerCase();
+
+                return searchableText
+                    .includes(
+                        searchTerm
+                    );
+            }
+        );
+
+    renderCourseLibrary(
+        matchingCourses
+    );
+
+    if (searchStatus) {
+
+        searchStatus.textContent =
+            `${matchingCourses.length.toLocaleString()} course${matchingCourses.length === 1 ? "" : "s"} found`;
+
+        searchStatus.dataset
+            .messageType =
+            matchingCourses.length
+                ? "success"
+                : "warning";
+    }
+
+    if (shouldScroll) {
+
+        scrollToCourses();
+    }
+}
+
+function clearCourseSearch() {
+
+    const searchInput =
+        $("#courseSearch");
+
+    const searchStatus =
+        $("#courseSearchStatus");
+
+    if (searchInput) {
+        searchInput.value = "";
+    }
+
+    renderCourseLibrary(
+        allCourses
+    );
+
+    if (searchStatus) {
+
+        searchStatus.textContent =
+            `${allCourses.length.toLocaleString()} courses available`;
+
+        searchStatus.dataset
+            .messageType =
+            "info";
+    }
+}
+
+function scrollToCourses() {
+
+    const coursesSection =
+        $("#courses");
+
+    if (!coursesSection) {
+        return;
+    }
+
+    coursesSection.scrollIntoView(
+        {
+            behavior:
+                "smooth",
+
+            block:
+                "start"
+        }
+    );
+
+    activateSection(
+        "courses"
+    );
+}
+
+function setupCourseSearch() {
+
+    const searchInput =
+        $("#courseSearch");
+
+    const searchButton =
+        $("#searchCourseButton");
+
+    const clearButton =
+        $("#clearCourseSearchButton");
+
+    if (searchButton) {
+
+        searchButton.onclick =
+            function (event) {
+
+                event.preventDefault();
+
+                performCourseSearch(
+                    true
+                );
+            };
+    }
+
+    if (clearButton) {
+
+        clearButton.onclick =
+            function (event) {
+
+                event.preventDefault();
+
+                clearCourseSearch();
+            };
+    }
+
+    if (searchInput) {
+
+        searchInput.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    performCourseSearch(
+                        true
+                    );
+                }
+
+                if (
+                    event.key ===
+                        "Escape"
+                ) {
+
+                    clearCourseSearch();
+                }
+            }
+        );
+
+        searchInput.addEventListener(
+            "input",
+            function () {
+
+                /*
+                    Live filtering makes navigation easier,
+                    while the Search button remains available.
+                */
+                performCourseSearch(
+                    false
+                );
+            }
+        );
+    }
+
+    /*
+        Optional shortcut:
+        pressing "/" focuses course search.
+    */
+    document.addEventListener(
+        "keydown",
+        function (event) {
+
+            const activeElement =
+                document.activeElement;
+
+            const isTyping =
+                activeElement &&
+                (
+                    activeElement.tagName ===
+                        "INPUT" ||
+                    activeElement.tagName ===
+                        "TEXTAREA" ||
+                    activeElement.isContentEditable
+                );
+
+            if (
+                event.key === "/" &&
+                !isTyping
+            ) {
+
+                const input =
+                    $("#courseSearch");
+
+                if (input) {
+
+                    event.preventDefault();
+
+                    input.focus();
+
+                    scrollToCourses();
+                }
+            }
+        }
+    );
+
+    if (searchStatus) {
+
+        searchStatus.textContent =
+            `${allCourses.length.toLocaleString()} courses available`;
+    }
+}
+
+/* =========================================================
    RECENT COURSE
    IMPORTANT:
    NO IMAGE
@@ -2960,25 +3347,7 @@ function renderRecentCourse() {
         buttonElement.onclick =
             function () {
 
-                const coursesSection =
-                    $("#courses");
-
-                if (coursesSection) {
-
-                    coursesSection.scrollIntoView(
-                        {
-                            behavior:
-                                "smooth",
-
-                            block:
-                                "start"
-                        }
-                    );
-
-                    activateSection(
-                        "courses"
-                    );
-                }
+                scrollToCourses();
             };
 
         return;
@@ -3276,17 +3645,11 @@ function getSafeURL(
         return "";
     }
 
-    /*
-        Accept normal HTTPS/HTTP URLs and relative paths.
-        Reject javascript:, data:, vbscript:, etc.
-    */
-
     if (
         /^https?:\/\//i.test(
             value
         ) ||
-        value.startsWith("/")
-        ||
+        value.startsWith("/") ||
         value.startsWith("./") ||
         value.startsWith("../")
     ) {
@@ -3755,7 +4118,9 @@ function mwanikiTrackUnit(
 }
 
 window.mwanikiTrackUnit =
-    mwanikiTrackUnit;/* =========================================================
+    mwanikiTrackUnit;
+
+/* =========================================================
    REFRESH BUTTONS
 ========================================================= */
 
@@ -3781,6 +4146,8 @@ function setupRefreshButtons() {
                 try {
 
                     await loadCourses();
+
+                    setupCourseSearch();
 
                     syncContentNotifications();
 
@@ -3882,14 +4249,6 @@ function filterCards(
 
 function setupSearch() {
 
-    /*
-        The current dashboard.html supplied by you does
-        not contain search inputs.
-
-        This function therefore safely does nothing now,
-        but it remains compatible with future search fields.
-    */
-
     const courseSearch =
         $("#courseSearch");
 
@@ -3901,9 +4260,8 @@ function setupSearch() {
         courseSearch.oninput =
             function () {
 
-                filterCards(
-                    courseSearch,
-                    ".course-card"
+                performCourseSearch(
+                    false
                 );
             };
     }
@@ -3920,12 +4278,6 @@ function setupSearch() {
             };
     }
 
-    /*
-        Optional future inputs using:
-        data-dashboard-search="courses"
-        data-dashboard-search="notes"
-    */
-
     $all(
         "[data-dashboard-search]"
     ).forEach(
@@ -3933,9 +4285,9 @@ function setupSearch() {
 
             if (
                 input ===
-                courseSearch ||
+                    courseSearch ||
                 input ===
-                notesSearch
+                    notesSearch
             ) {
                 return;
             }
@@ -3953,9 +4305,8 @@ function setupSearch() {
                         "courses"
                     ) {
 
-                        filterCards(
-                            input,
-                            ".course-card"
+                        performCourseSearch(
+                            false
                         );
 
                     } else if (
@@ -3972,14 +4323,227 @@ function setupSearch() {
             );
         }
     );
+
+    setupCourseSearch();
 }
+
 /* =========================================================
    TURBO AI
-   MWANIKI SCHOLARS STUDENT DASHBOARD
+   ---------------------------------------------------------
+   IMPORTANT:
+
+   Turbo AI does NOT use:
+       #aiQuestion
+       #askAIButton
+       #aiAnswer
+
+   Those IDs belong to the separate Mwaniki AI system.
+
+   Turbo AI uses:
+       #turboAISection
+       #turboAIQuestion
+       #askTurboAIButton
+       #turboAIAnswer
+       #turboAIStatus
+       #turboAIRecentQuestions
 ========================================================= */
 
-const TURBO_AI_FUNCTION_URL =
-    "https://bazixdwtysmkkdeloerx.supabase.co/functions/v1/turbo-ai";
+/* =========================================================
+   TURBO AI RECENT QUESTIONS
+========================================================= */
+
+function getTurboAIRecentQuestions() {
+
+    const questions =
+        readStorage(
+            TURBO_AI_RECENT_QUESTIONS_KEY,
+            []
+        );
+
+    return Array.isArray(
+        questions
+    )
+        ? questions
+        : [];
+}
+
+function saveTurboAIQuestion(
+    question
+) {
+
+    const cleanedQuestion =
+        String(
+            question || ""
+        ).trim();
+
+    if (!cleanedQuestion) {
+        return;
+    }
+
+    const existing =
+        getTurboAIRecentQuestions();
+
+    const filtered =
+        existing.filter(
+            item =>
+                String(
+                    item.question || ""
+                ).toLowerCase() !==
+                cleanedQuestion.toLowerCase()
+        );
+
+    filtered.unshift({
+
+        question:
+            cleanedQuestion,
+
+        timestamp:
+            new Date().toISOString()
+    });
+
+    writeStorage(
+        TURBO_AI_RECENT_QUESTIONS_KEY,
+        filtered.slice(
+            0,
+            8
+        )
+    );
+}
+
+function renderTurboAIRecentQuestions() {
+
+    const container =
+        $("#turboAIRecentQuestions");
+
+    if (!container) {
+        return;
+    }
+
+    const questions =
+        getTurboAIRecentQuestions();
+
+    if (!questions.length) {
+
+        container.innerHTML = `
+
+            <div class="turbo-ai-empty-history">
+                Your recent Turbo AI questions will appear here.
+            </div>
+
+        `;
+
+        return;
+    }
+
+    container.innerHTML =
+        questions
+            .map(
+                item => `
+
+                    <button
+                        type="button"
+                        class="turbo-ai-history-item"
+                        data-turbo-question="${escapeHTML(
+                            item.question
+                        )}"
+                    >
+                        ${escapeHTML(
+                            item.question
+                        )}
+                    </button>
+
+                `
+            )
+            .join("");
+
+    container
+        .querySelectorAll(
+            "[data-turbo-question]"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    function () {
+
+                        const input =
+                            $("#turboAIQuestion");
+
+                        if (!input) {
+                            return;
+                        }
+
+                        input.value =
+                            button.dataset
+                                .turboQuestion ||
+                            "";
+
+                        input.focus();
+
+                        scrollToTurboAI();
+                    }
+                );
+            }
+        );
+}
+
+/* =========================================================
+   TURBO AI STATUS
+========================================================= */
+
+function setTurboAIStatus(
+    message,
+    type = "info"
+) {
+
+    const status =
+        $("#turboAIStatus");
+
+    if (!status) {
+        return;
+    }
+
+    status.textContent =
+        message || "";
+
+    status.dataset.messageType =
+        type;
+
+    status.style.display =
+        message
+            ? ""
+            : "none";
+}
+
+/* =========================================================
+   TURBO AI SCROLL
+========================================================= */
+
+function scrollToTurboAI() {
+
+    const section =
+        $("#turbo-ai") ||
+        $("#turboAISection");
+
+    if (!section) {
+        return;
+    }
+
+    section.scrollIntoView(
+        {
+            behavior:
+                "smooth",
+
+            block:
+                "start"
+        }
+    );
+
+    activateSection(
+        "turbo-ai"
+    );
+}
 
 /* =========================================================
    ASK TURBO AI
@@ -3988,18 +4552,18 @@ const TURBO_AI_FUNCTION_URL =
 async function askTurboAI() {
 
     const questionInput =
-        $("#aiQuestion");
+        $("#turboAIQuestion");
 
     const askButton =
-        $("#askAIButton");
+        $("#askTurboAIButton");
 
     const answerElement =
-        $("#aiAnswer");
+        $("#turboAIAnswer");
 
     if (!questionInput) {
 
         console.warn(
-            "⚠️ #aiQuestion was not found."
+            "⚠️ #turboAIQuestion was not found."
         );
 
         return;
@@ -4008,7 +4572,7 @@ async function askTurboAI() {
     if (!answerElement) {
 
         console.warn(
-            "⚠️ #aiAnswer was not found."
+            "⚠️ #turboAIAnswer was not found."
         );
 
         return;
@@ -4027,13 +4591,13 @@ async function askTurboAI() {
         answerElement.dataset.messageType =
             "warning";
 
+        setTurboAIStatus(
+            "Enter a question to begin.",
+            "warning"
+        );
+
         return;
     }
-
-    /*
-        Prevent extremely large requests from being
-        unnecessarily sent to Turbo AI.
-    */
 
     if (question.length > 2000) {
 
@@ -4043,12 +4607,13 @@ async function askTurboAI() {
         answerElement.dataset.messageType =
             "warning";
 
+        setTurboAIStatus(
+            "Question is too long.",
+            "warning"
+        );
+
         return;
     }
-
-    /*
-        Disable the button while Turbo AI is working.
-    */
 
     if (askButton) {
 
@@ -4065,18 +4630,15 @@ async function askTurboAI() {
     answerElement.dataset.messageType =
         "loading";
 
-    answerElement.innerHTML = `
-        <div class="ai-loading">
-            <span>Turbo AI is thinking...</span>
-        </div>
-    `;
+    answerElement.textContent =
+        "Turbo AI is thinking...";
+
+    setTurboAIStatus(
+        "Turbo AI is processing your question...",
+        "loading"
+    );
 
     try {
-
-        /*
-            The student's Supabase session is automatically
-            used here. We do NOT send the Gemini API key.
-        */
 
         const {
             data: {
@@ -4159,8 +4721,9 @@ async function askTurboAI() {
         }
 
         /*
-            Display the answer as text rather than injecting
-            arbitrary HTML returned by the AI.
+            SECURITY:
+            Display the AI response as text.
+            Do not inject arbitrary HTML from the AI.
         */
 
         answerElement.textContent =
@@ -4169,19 +4732,30 @@ async function askTurboAI() {
         answerElement.dataset.messageType =
             "success";
 
+        setTurboAIStatus(
+            "Turbo AI answered successfully.",
+            "success"
+        );
+
         /*
-            Store the latest question locally so the student
-            can see what they most recently asked.
+            Turbo AI gets its own storage.
+            It does NOT use Mwaniki AI storage.
         */
 
         writeStorage(
-            "mwanikiLastAIQuestion",
+            TURBO_AI_LAST_QUESTION_KEY,
             {
                 question,
                 timestamp:
                     new Date().toISOString()
             }
         );
+
+        saveTurboAIQuestion(
+            question
+        );
+
+        renderTurboAIRecentQuestions();
 
         console.log(
             "✅ Turbo AI answer displayed successfully."
@@ -4201,6 +4775,11 @@ async function askTurboAI() {
         answerElement.dataset.messageType =
             "error";
 
+        setTurboAIStatus(
+            "Turbo AI could not complete the request.",
+            "error"
+        );
+
     } finally {
 
         if (askButton) {
@@ -4211,7 +4790,7 @@ async function askTurboAI() {
             askButton.textContent =
                 askButton.dataset
                     .originalText ||
-                "Ask AI";
+                "Ask Turbo AI";
         }
     }
 }
@@ -4223,33 +4802,32 @@ async function askTurboAI() {
 function setupTurboAI() {
 
     const askButton =
-        $("#askAIButton");
+        $("#askTurboAIButton");
 
     const questionInput =
-        $("#aiQuestion");
+        $("#turboAIQuestion");
 
-    if (!askButton) {
+    const clearButton =
+        $("#clearTurboAIButton");
 
-        console.warn(
-            "⚠️ #askAIButton was not found."
-        );
-
-        return;
-    }
-
-    if (!questionInput) {
-
-        console.warn(
-            "⚠️ #aiQuestion was not found."
-        );
-
-        return;
-    }
+    const section =
+        $("#turbo-ai") ||
+        $("#turboAISection");
 
     /*
-        Prevent multiple event handlers if the setup
-        function is ever called again.
+        Turbo AI section is optional.
+        If it is not present, do not generate an error
+        involving Mwaniki AI.
     */
+
+    if (!askButton || !questionInput) {
+
+        console.log(
+            "ℹ️ Turbo AI dashboard interface is not present on this page."
+        );
+
+        return;
+    }
 
     askButton.onclick =
         function (event) {
@@ -4258,10 +4836,6 @@ function setupTurboAI() {
 
             askTurboAI();
         };
-
-    /*
-        Allow Ctrl + Enter to submit the question.
-    */
 
     questionInput.addEventListener(
         "keydown",
@@ -4279,10 +4853,50 @@ function setupTurboAI() {
         }
     );
 
+    if (clearButton) {
+
+        clearButton.onclick =
+            function (event) {
+
+                event.preventDefault();
+
+                questionInput.value =
+                    "";
+
+                const answer =
+                    $("#turboAIAnswer");
+
+                if (answer) {
+
+                    answer.textContent =
+                        "Ask Turbo AI a medical learning question.";
+
+                    answer.dataset.messageType =
+                        "info";
+                }
+
+                setTurboAIStatus(
+                    "",
+                    "info"
+                );
+
+                questionInput.focus();
+            };
+    }
+
+    renderTurboAIRecentQuestions();
+
     console.log(
         "🤖 Turbo AI dashboard interface ready."
     );
+
+    if (section) {
+
+        section.dataset.turboAIReady =
+            "true";
+    }
 }
+
 /* =========================================================
    OUTSIDE PANEL CLOSING
 ========================================================= */
@@ -4386,10 +5000,6 @@ async function initializeDashboard() {
 
         startDashboardClock();
 
-        /*
-            Set up UI handlers once.
-        */
-
         setupNavigation();
 
         setupNotificationPanel();
@@ -4403,19 +5013,16 @@ async function initializeDashboard() {
         setupChangePassword();
 
         setupLogout();
+
         setupRefreshButtons();
 
-       setupSearch();
+        setupSearch();
 
-       setupTurboAI();
+        setupTurboAI();
 
-       setupOutsidePanelClosing();
+        setupOutsidePanelClosing();
 
         setupEscapeKey();
-
-        /*
-            Authentication
-        */
 
         currentUser =
             await getAuthenticatedUser();
@@ -4437,11 +5044,6 @@ async function initializeDashboard() {
             currentUser.email
         );
 
-        /*
-            Load the student's profile first so the
-            welcome message and profile photo are available.
-        */
-
         const profileLoaded =
             await loadStudentProfile();
 
@@ -4452,16 +5054,7 @@ async function initializeDashboard() {
             );
         }
 
-        /*
-            Welcome notification is created once per student
-            on this browser/device.
-        */
-
         createWelcomeNotification();
-
-        /*
-            Load all dashboard content.
-        */
 
         await Promise.all([
             loadCourses(),
@@ -4470,15 +5063,12 @@ async function initializeDashboard() {
         ]);
 
         /*
-            Now that courses and notes are available,
-            compare them with the student's known content.
+            Reinitialize the search state after courses
+            have arrived from Supabase.
         */
+        setupCourseSearch();
 
         syncContentNotifications();
-
-        /*
-            Final rendering pass.
-        */
 
         renderStudentProfile();
 
@@ -4546,9 +5136,13 @@ window.mwanikiDashboard = {
 
             await loadCourses();
 
+            setupCourseSearch();
+
             syncContentNotifications();
 
             updateDashboardStatistics();
+
+            updateNotificationBadge();
         },
 
     refreshNotes:
@@ -4559,6 +5153,8 @@ window.mwanikiDashboard = {
             syncContentNotifications();
 
             updateDashboardStatistics();
+
+            updateNotificationBadge();
         },
 
     refreshAll:
@@ -4570,6 +5166,8 @@ window.mwanikiDashboard = {
                 loadQuizzes()
             ]);
 
+            setupCourseSearch();
+
             syncContentNotifications();
 
             renderRecentCourse();
@@ -4579,6 +5177,8 @@ window.mwanikiDashboard = {
             updateDashboardStatistics();
 
             renderNotifications();
+
+            updateNotificationBadge();
         },
 
     openProfile:
@@ -4604,28 +5204,33 @@ window.mwanikiDashboard = {
         closeNotificationPanel,
 
     markNotificationsRead:
-        markAllNotificationsRead
+        markAllNotificationsRead,
+
+    searchCourses:
+        function (term) {
+
+            const searchInput =
+                $("#courseSearch");
+
+            if (!searchInput) {
+                return;
+            }
+
+            searchInput.value =
+                String(term || "");
+
+            performCourseSearch(
+                true
+            );
+        },
+
+    askTurboAI:
+        askTurboAI
 };
 
 /* =========================================================
    OPTIONAL PUBLIC NOTIFICATION FUNCTION
 ========================================================= */
-
-/*
-    This allows another Mwaniki Scholars dashboard script
-    to create a local student notification without requiring
-    a new database table.
-
-    Example from another script:
-
-        window.mwanikiAddNotification({
-            id: "some-unique-id",
-            title: "New update",
-            message: "Something new is available.",
-            type: "update"
-        });
-
-*/
 
 window.mwanikiAddNotification =
     function (notification) {
@@ -4663,15 +5268,6 @@ supabase.auth.onAuthStateChange(
 
             return;
         }
-
-        /*
-            The normal initial page load is handled by
-            initializeDashboard() below.
-
-            SIGNED_IN is still handled here for cases where
-            authentication completes after the dashboard page
-            has loaded.
-        */
 
         if (
             event ===
@@ -4715,3 +5311,4 @@ if (
 console.log(
     "✅ Mwaniki Scholars dashboard.js loaded successfully."
 );
+```
