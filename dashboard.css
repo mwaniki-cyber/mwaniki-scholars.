@@ -3912,8 +3912,7 @@ select:focus-visible {
     display: none !important;
 }
 /* =========================================================
-   MWANIKI SCHOLARS
-   UNREAD NOTIFICATION BADGE
+   NOTIFICATION BADGE
 ========================================================= */
 
 .notification-button {
@@ -3922,11 +3921,13 @@ select:focus-visible {
 
 .notification-badge {
     position: absolute;
-    top: -4px;
-    right: -4px;
+
+    top: -5px;
+    right: -5px;
 
     min-width: 19px;
     height: 19px;
+
     padding: 0 5px;
 
     display: flex;
@@ -3945,9 +3946,49 @@ select:focus-visible {
     border: 2px solid #ffffff;
 
     box-sizing: border-box;
-    z-index: 10;
+
+    z-index: 20;
 }
 
 .notification-badge[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
+   NOTIFICATION PANEL COUNT
+========================================================= */
+
+.notification-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.notification-title-row h2 {
+    margin: 0;
+}
+
+.notification-panel-count {
+    min-width: 22px;
+    height: 22px;
+
+    padding: 0 7px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: #dc3545;
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.notification-panel-count[hidden] {
     display: none !important;
 }
