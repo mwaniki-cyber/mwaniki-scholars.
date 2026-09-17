@@ -1,4 +1,3 @@
-
 import { supabase } from "./supabase.js";
 
 /* =========================================================
@@ -11,6 +10,7 @@ import { supabase } from "./supabase.js";
    Mwaniki AI = separate system / aiTutor.html
 
    Turbo AI = separate dashboard system
+
    Turbo AI MUST NOT use Mwaniki AI DOM IDs,
    storage keys, handlers or backend code.
 ========================================================= */
@@ -47,19 +47,13 @@ const NOTIFICATION_STORAGE_PREFIX =
 const NOTIFICATION_STATE_PREFIX =
     "mwanikiNotificationState_";
 
-/*
-    Change this ID whenever a significant dashboard/app
-    improvement is released.
-
-    Students receive one notification for each new ID.
-*/
 const APP_UPDATE_ID =
     "mwaniki-dashboard-update-2026-09";
 
 /* =========================================================
    TURBO AI CONFIGURATION
    ---------------------------------------------------------
-   THIS IS COMPLETELY SEPARATE FROM MWANIKI AI.
+   COMPLETELY SEPARATE FROM MWANIKI AI
 ========================================================= */
 
 const TURBO_AI_FUNCTION_URL =
@@ -211,16 +205,22 @@ function showMessage(
    STORAGE HELPERS
 ========================================================= */
 
-function readStorage(key, fallback = null) {
+function readStorage(
+    key,
+    fallback = null
+) {
     try {
-        const value = localStorage.getItem(key);
+        const value =
+            localStorage.getItem(key);
 
         if (!value) {
             return fallback;
         }
 
         return JSON.parse(value);
+
     } catch (error) {
+
         console.warn(
             `⚠️ Could not read localStorage key: ${key}`,
             error
@@ -230,13 +230,19 @@ function readStorage(key, fallback = null) {
     }
 }
 
-function writeStorage(key, value) {
+function writeStorage(
+    key,
+    value
+) {
     try {
+
         localStorage.setItem(
             key,
             JSON.stringify(value)
         );
+
     } catch (error) {
+
         console.warn(
             `⚠️ Could not write localStorage key: ${key}`,
             error
@@ -246,14 +252,18 @@ function writeStorage(key, value) {
 
 function removeStorage(key) {
     try {
+
         localStorage.removeItem(key);
+
     } catch (error) {
+
         console.warn(
             `⚠️ Could not remove localStorage key: ${key}`,
             error
         );
     }
 }
+
 /* =========================================================
    COURSE NORMALIZATION
 ========================================================= */
@@ -1785,8 +1795,7 @@ function saveNotifications(
 
     writeStorage(
         key,
-        notifications
-            .slice(0, 50)
+        notifications.slice(0, 50)
     );
 }
 
@@ -2135,7 +2144,7 @@ function syncContentNotifications() {
 /* =========================================================
    NOTIFICATION BADGE
    ---------------------------------------------------------
-   Shows the NUMBER OF UNREAD NOTIFICATIONS.
+   SHOWS NUMBER OF UNREAD NOTIFICATIONS
 ========================================================= */
 
 function updateNotificationBadge() {
@@ -2149,16 +2158,6 @@ function updateNotificationBadge() {
                 !notification.read
         ).length;
 
-    /*
-        Main supported badge.
-    */
-    const mainBadge =
-        $("#notificationBadge");
-
-    /*
-        Support additional badge selectors in case
-        the stylesheet/HTML uses another class.
-    */
     const possibleBadges =
         $all(
             "#notificationBadge, [data-notification-count], .notification-badge, .notification-count"
@@ -2208,9 +2207,6 @@ function updateNotificationBadge() {
         }
     );
 
-    /*
-        Also update the panel count.
-    */
     const panelCount =
         $("#notificationPanelCount");
 
@@ -2238,9 +2234,6 @@ function updateNotificationBadge() {
         }
     }
 
-    /*
-        Main notification button accessibility.
-    */
     const button =
         $("#notificationButton");
 
@@ -2257,9 +2250,6 @@ function updateNotificationBadge() {
             String(unreadCount);
     }
 
-    /*
-        Optional visible text counter.
-    */
     const visibleCount =
         $("#notificationCount");
 
@@ -2320,7 +2310,9 @@ function renderNotifications() {
         $("#notificationContent");
 
     if (!content) {
+
         updateNotificationBadge();
+
         return;
     }
 
@@ -2437,10 +2429,6 @@ function renderNotifications() {
                                 .notificationId
                         );
 
-                        item.classList.remove(
-                            "unread"
-                        );
-
                         renderNotifications();
                     }
                 );
@@ -2529,7 +2517,9 @@ function markAllNotificationsRead() {
         getNotifications();
 
     if (!notifications.length) {
+
         updateNotificationBadge();
+
         return;
     }
 
@@ -2877,6 +2867,23 @@ async function loadCourses() {
 
         updateDashboardStatistics();
 
+        /*
+            Apply an existing search after fresh
+            course data has loaded.
+        */
+        const searchInput =
+            $("#courseSearch");
+
+        if (
+            searchInput &&
+            searchInput.value.trim()
+        ) {
+
+            performCourseSearch(
+                false
+            );
+        }
+
     } catch (error) {
 
         console.error(
@@ -2904,7 +2911,7 @@ async function loadCourses() {
 
 /* =========================================================
    COURSE LIBRARY RENDERING
-   IMPORTANT:
+   ---------------------------------------------------------
    NO COURSE IMAGE
    NO IMAGE PLACEHOLDER
 ========================================================= */
@@ -3023,9 +3030,18 @@ function renderCourseLibrary(
 /* =========================================================
    COURSE SEARCH
    ---------------------------------------------------------
-   Searches:
-   - Course title
-   - Course description
+   FIXED:
+
+   searchStatus is now properly declared.
+
+   The search system:
+   - searches title
+   - searches description
+   - works with Enter
+   - works with Search button
+   - works live while typing
+   - supports Clear
+   - supports "/" shortcut
 ========================================================= */
 
 function performCourseSearch(
@@ -3060,8 +3076,7 @@ function performCourseSearch(
             searchStatus.textContent =
                 `${allCourses.length.toLocaleString()} courses available`;
 
-            searchStatus.dataset
-                .messageType =
+            searchStatus.dataset.messageType =
                 "info";
         }
 
@@ -3097,8 +3112,7 @@ function performCourseSearch(
         searchStatus.textContent =
             `${matchingCourses.length.toLocaleString()} course${matchingCourses.length === 1 ? "" : "s"} found`;
 
-        searchStatus.dataset
-            .messageType =
+        searchStatus.dataset.messageType =
             matchingCourses.length
                 ? "success"
                 : "warning";
@@ -3131,8 +3145,7 @@ function clearCourseSearch() {
         searchStatus.textContent =
             `${allCourses.length.toLocaleString()} courses available`;
 
-        searchStatus.dataset
-            .messageType =
+        searchStatus.dataset.messageType =
             "info";
     }
 }
@@ -3172,6 +3185,54 @@ function setupCourseSearch() {
     const clearButton =
         $("#clearCourseSearchButton");
 
+    /*
+        IMPORTANT:
+        This was the missing declaration that caused:
+
+        ReferenceError: searchStatus is not defined
+    */
+    const searchStatus =
+        $("#courseSearchStatus");
+
+    /*
+        Prevent duplicate event handlers.
+        This function is called again after refresh.
+    */
+    if (searchInput) {
+
+        searchInput.onkeydown =
+            function (event) {
+
+                if (
+                    event.key ===
+                    "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    performCourseSearch(
+                        true
+                    );
+                }
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    clearCourseSearch();
+                }
+            };
+
+        searchInput.oninput =
+            function () {
+
+                performCourseSearch(
+                    false
+                );
+            };
+    }
+
     if (searchButton) {
 
         searchButton.onclick =
@@ -3193,103 +3254,100 @@ function setupCourseSearch() {
                 event.preventDefault();
 
                 clearCourseSearch();
+
+                if (searchInput) {
+                    searchInput.focus();
+                }
             };
     }
 
-    if (searchInput) {
+    /*
+        "/" focuses the course search.
+    */
+    if (
+        !document.body.dataset
+            .courseSearchShortcutReady
+    ) {
 
-        searchInput.addEventListener(
+        document.body.dataset
+            .courseSearchShortcutReady =
+            "true";
+
+        document.addEventListener(
             "keydown",
             function (event) {
 
-                if (
-                    event.key ===
-                    "Enter"
-                ) {
+                const activeElement =
+                    document.activeElement;
 
-                    event.preventDefault();
-
-                    performCourseSearch(
-                        true
+                const isTyping =
+                    activeElement &&
+                    (
+                        activeElement.tagName ===
+                            "INPUT" ||
+                        activeElement.tagName ===
+                            "TEXTAREA" ||
+                        activeElement.isContentEditable
                     );
-                }
 
                 if (
-                    event.key ===
-                        "Escape"
+                    event.key === "/" &&
+                    !isTyping
                 ) {
 
-                    clearCourseSearch();
+                    const input =
+                        $("#courseSearch");
+
+                    if (input) {
+
+                        event.preventDefault();
+
+                        scrollToCourses();
+
+                        setTimeout(
+                            () => {
+                                input.focus();
+                            },
+                            250
+                        );
+                    }
                 }
-            }
-        );
-
-        searchInput.addEventListener(
-            "input",
-            function () {
-
-                /*
-                    Live filtering makes navigation easier,
-                    while the Search button remains available.
-                */
-                performCourseSearch(
-                    false
-                );
             }
         );
     }
 
     /*
-        Optional shortcut:
-        pressing "/" focuses course search.
+        Initialize the status safely.
     */
-    document.addEventListener(
-        "keydown",
-        function (event) {
-
-            const activeElement =
-                document.activeElement;
-
-            const isTyping =
-                activeElement &&
-                (
-                    activeElement.tagName ===
-                        "INPUT" ||
-                    activeElement.tagName ===
-                        "TEXTAREA" ||
-                    activeElement.isContentEditable
-                );
-
-            if (
-                event.key === "/" &&
-                !isTyping
-            ) {
-
-                const input =
-                    $("#courseSearch");
-
-                if (input) {
-
-                    event.preventDefault();
-
-                    input.focus();
-
-                    scrollToCourses();
-                }
-            }
-        }
-    );
-
     if (searchStatus) {
 
-        searchStatus.textContent =
-            `${allCourses.length.toLocaleString()} courses available`;
+        const existingTerm =
+            searchInput?.value
+                ?.trim();
+
+        if (existingTerm) {
+
+            searchStatus.textContent =
+                "Searching courses...";
+
+        } else {
+
+            searchStatus.textContent =
+                `${allCourses.length.toLocaleString()} courses available`;
+
+            searchStatus.dataset.messageType =
+                "info";
+        }
     }
+
+    console.log(
+        "🔎 Course search initialized."
+    );
 }
 
 /* =========================================================
    RECENT COURSE
-   IMPORTANT:
+   ---------------------------------------------------------
    NO IMAGE
    NO IMAGE PLACEHOLDER
 ========================================================= */
@@ -4130,8 +4188,6 @@ function setupRefreshButtons() {
 
                     await loadCourses();
 
-                    setupCourseSearch();
-
                     syncContentNotifications();
 
                     renderNotifications();
@@ -4193,7 +4249,7 @@ function setupRefreshButtons() {
 }
 
 /* =========================================================
-   SEARCH
+   GENERIC CARD FILTER
 ========================================================= */
 
 function filterCards(
@@ -4230,24 +4286,14 @@ function filterCards(
     );
 }
 
-function setupSearch() {
+/* =========================================================
+   SEARCH
+========================================================= */
 
-    const courseSearch =
-        $("#courseSearch");
+function setupSearch() {
 
     const notesSearch =
         $("#notesSearch");
-
-    if (courseSearch) {
-
-        courseSearch.oninput =
-            function () {
-
-                performCourseSearch(
-                    false
-                );
-            };
-    }
 
     if (notesSearch) {
 
@@ -4266,44 +4312,49 @@ function setupSearch() {
     ).forEach(
         input => {
 
+            const target =
+                input.dataset
+                    .dashboardSearch;
+
             if (
-                input ===
-                    courseSearch ||
-                input ===
-                    notesSearch
+                target ===
+                "notes"
             ) {
-                return;
-            }
 
-            input.addEventListener(
-                "input",
-                function () {
-
-                    const target =
-                        input.dataset
-                            .dashboardSearch;
-
-                    if (
-                        target ===
-                        "courses"
-                    ) {
-
-                        performCourseSearch(
-                            false
-                        );
-
-                    } else if (
-                        target ===
-                        "notes"
-                    ) {
+                input.oninput =
+                    function () {
 
                         filterCards(
                             input,
                             ".note-card"
                         );
-                    }
-                }
-            );
+                    };
+
+            } else if (
+                target ===
+                "courses"
+            ) {
+
+                input.oninput =
+                    function () {
+
+                        const courseSearch =
+                            $("#courseSearch");
+
+                        if (
+                            courseSearch &&
+                            input !== courseSearch
+                        ) {
+
+                            courseSearch.value =
+                                input.value;
+                        }
+
+                        performCourseSearch(
+                            false
+                        );
+                    };
+            }
         }
     );
 
@@ -4313,22 +4364,16 @@ function setupSearch() {
 /* =========================================================
    TURBO AI
    ---------------------------------------------------------
-   IMPORTANT:
+   COMPLETELY SEPARATE FROM MWANIKI AI
 
-   Turbo AI does NOT use:
-       #aiQuestion
-       #askAIButton
-       #aiAnswer
+   Mwaniki AI IDs are NOT USED HERE.
 
-   Those IDs belong to the separate Mwaniki AI system.
-
-   Turbo AI uses:
-       #turboAISection
-       #turboAIQuestion
-       #askTurboAIButton
-       #turboAIAnswer
-       #turboAIStatus
-       #turboAIRecentQuestions
+   Turbo AI IDs:
+   #turboAIQuestion
+   #askTurboAIButton
+   #turboAIAnswer
+   #turboAIStatus
+   #turboAIRecentQuestions
 ========================================================= */
 
 /* =========================================================
@@ -4704,9 +4749,8 @@ async function askTurboAI() {
         }
 
         /*
-            SECURITY:
-            Display the AI response as text.
-            Do not inject arbitrary HTML from the AI.
+            Display AI answer as TEXT.
+            Never inject arbitrary AI HTML.
         */
 
         answerElement.textContent =
@@ -4721,8 +4765,8 @@ async function askTurboAI() {
         );
 
         /*
-            Turbo AI gets its own storage.
-            It does NOT use Mwaniki AI storage.
+            Turbo AI uses its own storage keys.
+            Mwaniki AI storage is untouched.
         */
 
         writeStorage(
@@ -4797,12 +4841,6 @@ function setupTurboAI() {
         $("#turbo-ai") ||
         $("#turboAISection");
 
-    /*
-        Turbo AI section is optional.
-        If it is not present, do not generate an error
-        involving Mwaniki AI.
-    */
-
     if (!askButton || !questionInput) {
 
         console.log(
@@ -4812,6 +4850,12 @@ function setupTurboAI() {
         return;
     }
 
+    /*
+        Use onclick/onkeydown rather than repeatedly
+        adding listeners because initialization can happen
+        again after authentication.
+    */
+
     askButton.onclick =
         function (event) {
 
@@ -4820,8 +4864,7 @@ function setupTurboAI() {
             askTurboAI();
         };
 
-    questionInput.addEventListener(
-        "keydown",
+    questionInput.onkeydown =
         function (event) {
 
             if (
@@ -4833,8 +4876,7 @@ function setupTurboAI() {
 
                 askTurboAI();
             }
-        }
-    );
+        };
 
     if (clearButton) {
 
@@ -4885,6 +4927,17 @@ function setupTurboAI() {
 ========================================================= */
 
 function setupOutsidePanelClosing() {
+
+    if (
+        document.body.dataset
+            .outsidePanelsReady
+    ) {
+        return;
+    }
+
+    document.body.dataset
+        .outsidePanelsReady =
+        "true";
 
     document.addEventListener(
         "click",
@@ -4940,6 +4993,17 @@ function setupOutsidePanelClosing() {
 ========================================================= */
 
 function setupEscapeKey() {
+
+    if (
+        document.body.dataset
+            .escapeKeyReady
+    ) {
+        return;
+    }
+
+    document.body.dataset
+        .escapeKeyReady =
+        "true";
 
     document.addEventListener(
         "keydown",
@@ -5039,6 +5103,12 @@ async function initializeDashboard() {
 
         createWelcomeNotification();
 
+        /*
+            Load all dashboard data independently.
+            A failure in one section does not prevent
+            the others from loading.
+        */
+
         await Promise.all([
             loadCourses(),
             loadNotes(),
@@ -5046,8 +5116,8 @@ async function initializeDashboard() {
         ]);
 
         /*
-            Reinitialize the search state after courses
-            have arrived from Supabase.
+            Course search is initialized AFTER course
+            data has arrived.
         */
         setupCourseSearch();
 
@@ -5060,6 +5130,8 @@ async function initializeDashboard() {
         renderRecentCourse();
 
         renderRecommendations();
+
+        renderNotesLibrary();
 
         renderNotifications();
 
@@ -5212,7 +5284,7 @@ window.mwanikiDashboard = {
 };
 
 /* =========================================================
-   OPTIONAL PUBLIC NOTIFICATION FUNCTION
+   PUBLIC NOTIFICATION FUNCTION
 ========================================================= */
 
 window.mwanikiAddNotification =
@@ -5294,4 +5366,3 @@ if (
 console.log(
     "✅ Mwaniki Scholars dashboard.js loaded successfully."
 );
-
