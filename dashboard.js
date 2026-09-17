@@ -4403,12 +4403,13 @@ async function initializeDashboard() {
         setupChangePassword();
 
         setupLogout();
-
         setupRefreshButtons();
 
-        setupSearch();
+       setupSearch();
 
-        setupOutsidePanelClosing();
+       setupTurboAI();
+
+       setupOutsidePanelClosing();
 
         setupEscapeKey();
 
