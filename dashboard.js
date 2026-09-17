@@ -208,26 +208,19 @@ function showMessage(
 }
 
 /* =========================================================
-   LOCAL STORAGE HELPERS
+   STORAGE HELPERS
 ========================================================= */
 
-function readStorage(
-    key,
-    fallback = null
-) {
+function readStorage(key, fallback = null) {
     try {
-
-        const value =
-            localStorage.getItem(key);
+        const value = localStorage.getItem(key);
 
         if (!value) {
             return fallback;
         }
 
         return JSON.parse(value);
-
     } catch (error) {
-
         console.warn(
             `⚠️ Could not read localStorage key: ${key}`,
             error
@@ -237,19 +230,13 @@ function readStorage(
     }
 }
 
-function writeStorage(
-    key,
-    value
-) {
+function writeStorage(key, value) {
     try {
-
         localStorage.setItem(
             key,
             JSON.stringify(value)
         );
-
     } catch (error) {
-
         console.warn(
             `⚠️ Could not write localStorage key: ${key}`,
             error
@@ -259,18 +246,14 @@ function writeStorage(
 
 function removeStorage(key) {
     try {
-
         localStorage.removeItem(key);
-
     } catch (error) {
-
         console.warn(
             `⚠️ Could not remove localStorage key: ${key}`,
             error
         );
     }
 }
-
 /* =========================================================
    COURSE NORMALIZATION
 ========================================================= */
