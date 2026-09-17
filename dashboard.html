@@ -193,27 +193,40 @@
 
 
 
+
 <!-- =====================================================
-     NOTIFICATION PANEL
-====================================================== -->
+     NOTIFICATION SIDE PANEL
+===================================================== -->
 
 <aside
-    class="side-panel"
+    class="side-panel notification-panel"
     id="notificationPanel"
     aria-hidden="true"
 >
 
     <div class="side-panel-header">
 
-        <div>
+        <div class="side-panel-heading">
 
             <span class="panel-kicker">
                 Student centre
             </span>
 
-            <h2>
-                Notifications
-            </h2>
+            <div class="notification-title-row">
+
+                <h2>
+                    Notifications
+                </h2>
+
+                <span
+                    class="notification-panel-count"
+                    id="notificationPanelCount"
+                    hidden
+                >
+                    0
+                </span>
+
+            </div>
 
         </div>
 
@@ -249,9 +262,8 @@
 
     </div>
 
+
 </aside>
-
-
 
 <!-- =====================================================
      PROFILE PANEL
