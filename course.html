@@ -114,52 +114,29 @@
     <!-- =====================================================
          BACK TO DASHBOARD SCRIPT
          ===================================================== -->
+    </section>
+</main>
 
-    <script>
+<script>
+document.getElementById("backToDashboard").addEventListener("click", function () {
+    console.log("🏠 Returning to student dashboard...");
 
-        document
-            .getElementById("backToDashboard")
-            .addEventListener("click", function () {
+    // Clear the temporary course/unit selection
+    localStorage.removeItem("selectedCourse");
+    localStorage.removeItem("selectedCourseName");
+    localStorage.removeItem("selectedUnit");
+    localStorage.removeItem("selectedUnitTitle");
 
-                console.log(
-                    "🏠 Returning to student dashboard..."
-                );
+    // Return to dashboard
+    window.location.href = "./dashboard.html";
+});
+</script>
 
+<script type="module" src="./course.js"></script>
 
-                /*
-                 * Clear only the current course/unit selection.
-                 * This prevents the previous course from being
-                 * accidentally reopened.
-                 */
-
-                localStorage.removeItem(
-                    "selectedCourse"
-                );
-
-                localStorage.removeItem(
-                    "selectedCourseName"
-                );
-
-                localStorage.removeItem(
-                    "selectedUnit"
-                );
-
-                localStorage.removeItem(
-                    "selectedUnitTitle"
-                );
-
-
-                /*
-                 * IMPORTANT:
-                 * Use the actual dashboard file here.
-                 *
-                 * If your dashboard is called dashboard.html,
-                 * this is correct.
-                 */
-
-              window.location.href =
-    `course.html?course_id=${encodeURIComponent(selectedId)}`;
-
+</body>
+</html>
+ 
             });
 
     </script>
