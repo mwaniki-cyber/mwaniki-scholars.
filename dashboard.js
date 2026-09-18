@@ -4578,214 +4578,108 @@ function scrollToTurboAI() {
 ========================================================= */
 
 async function askTurboAI() {
+    const questionInput = document.getElementById("turboAIQuestion");
+    const answerBox = document.getElementById("turboAIAnswer");
+    const statusBox = document.getElementById("turboAIStatus");
+    const askButton = document.getElementById("askTurboAIButton");
 
-    const questionInput =
-        $("#turboAIQuestion");
-
-    const askButton =
-        $("#askTurboAIButton");
-
-    const answerElement =
-        $("#turboAIAnswer");
-
-    if (!questionInput) {
-
-        console.warn(
-            "⚠️ #turboAIQuestion was not found."
-        );
-
+    if (!questionInput || !answerBox || !askButton) {
+        console.error("❌ Turbo AI elements were not found.");
         return;
     }
 
-    if (!answerElement) {
-
-        console.warn(
-            "⚠️ #turboAIAnswer was not found."
-        );
-
-        return;
-    }
-
-    const question =
-        String(
-            questionInput.value || ""
-        ).trim();
+    const question = questionInput.value.trim();
 
     if (!question) {
+        if (statusBox) {
+            statusBox.textContent = "Please enter a question.";
+        }
 
-        answerElement.textContent =
-            "Please enter a medical question first.";
+        answerBox.innerHTML =
+            "<p>Please enter a question for Turbo AI.</p>";
 
-        answerElement.dataset.messageType =
-            "warning";
-
-        setTurboAIStatus(
-            "Enter a question to begin.",
-            "warning"
-        );
-
+        questionInput.focus();
         return;
     }
 
-    if (question.length > 2000) {
+    askButton.disabled = true;
 
-        answerElement.textContent =
-            "Your question is too long. Please keep it within 2,000 characters.";
-
-        answerElement.dataset.messageType =
-            "warning";
-
-        setTurboAIStatus(
-            "Question is too long.",
-            "warning"
-        );
-
-        return;
+    if (statusBox) {
+        statusBox.textContent = "Turbo AI is thinking...";
     }
 
-    if (askButton) {
-
-        askButton.disabled =
-            true;
-
-        askButton.dataset.originalText =
-            askButton.textContent;
-
-        askButton.textContent =
-            "Thinking...";
-    }
-
-    answerElement.dataset.messageType =
-        "loading";
-
-    answerElement.textContent =
-        "Turbo AI is thinking...";
-
-    setTurboAIStatus(
-        "Turbo AI is processing your question...",
-        "loading"
-    );
+    answerBox.innerHTML = `
+        <div class="turbo-ai-loading">
+            <span>Turbo AI is preparing your answer...</span>
+        </div>
+    `;
 
     try {
+        console.log("🤖 Sending question to Turbo AI...");
 
         const {
-            data: {
-                session
-            } = {}
-        } =
-            await supabase.auth
-                .getSession();
-
-        if (!session?.access_token) {
-
-            throw new Error(
-                "Your session has expired. Please sign in again."
-            );
-        }
-
-        const response =
-            await fetch(
-                TURBO_AI_FUNCTION_URL,
-                {
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "application/json",
-
-                        "Authorization":
-                            `Bearer ${session.access_token}`
-                    },
-
-                    body:
-                        JSON.stringify({
-                            message:
-                                question
-                        })
-                }
-            );
-
-        let result = null;
-
-        try {
-
-            result =
-                await response.json();
-
-        } catch {
-
-            result = null;
-        }
-
-        console.log(
-            "🤖 Turbo AI response:",
-            result
-        );
-
-        if (!response.ok) {
-
-            const serverMessage =
-                result?.error ||
-                result?.message ||
-                `Turbo AI request failed (${response.status}).`;
-
-            throw new Error(
-                serverMessage
-            );
-        }
-
-        if (
-            !result ||
-            result.success !== true ||
-            !result.answer
-        ) {
-
-            throw new Error(
-                result?.error ||
-                "Turbo AI did not return a valid answer."
-            );
-        }
-
-        /*
-            Display AI answer as TEXT.
-            Never inject arbitrary AI HTML.
-        */
-
-        answerElement.textContent =
-            result.answer;
-
-        answerElement.dataset.messageType =
-            "success";
-
-        setTurboAIStatus(
-            "Turbo AI answered successfully.",
-            "success"
-        );
-
-        /*
-            Turbo AI uses its own storage keys.
-            Mwaniki AI storage is untouched.
-        */
-
-        writeStorage(
-            TURBO_AI_LAST_QUESTION_KEY,
+            data,
+            error
+        } = await supabase.functions.invoke(
+            "turbo-ai",
             {
-                question,
-                timestamp:
-                    new Date().toISOString()
+                body: {
+                    message: question
+                }
             }
         );
 
-        saveTurboAIQuestion(
-            question
-        );
+        if (error) {
+            console.error(
+                "❌ Turbo AI function error:",
+                error
+            );
 
-        renderTurboAIRecentQuestions();
+            throw new Error(
+                error.message ||
+                "Turbo AI could not be reached."
+            );
+        }
+
+        if (!data) {
+            throw new Error(
+                "Turbo AI returned no response."
+            );
+        }
+
+        if (!data.success) {
+            throw new Error(
+                data.error ||
+                "Turbo AI could not answer the question."
+            );
+        }
+
+        const answer =
+            typeof data.answer === "string"
+                ? data.answer.trim()
+                : "";
+
+        if (!answer) {
+            throw new Error(
+                "Turbo AI returned an empty answer."
+            );
+        }
+
+        answerBox.innerHTML = `
+            <div class="turbo-ai-response">
+                ${formatTurboAIAnswer(answer)}
+            </div>
+        `;
+
+        if (statusBox) {
+            statusBox.textContent =
+                "Turbo AI response ready.";
+        }
+
+        saveTurboAIRecentQuestion(question);
 
         console.log(
-            "✅ Turbo AI answer displayed successfully."
+            "✅ Turbo AI response received successfully."
         );
 
     } catch (error) {
@@ -4795,30 +4689,25 @@ async function askTurboAI() {
             error
         );
 
-        answerElement.textContent =
-            error?.message ||
-            "Turbo AI could not generate a response. Please try again.";
+        answerBox.innerHTML = `
+            <div class="turbo-ai-error">
+                <strong>Turbo AI could not respond.</strong>
+                <p>
+                    ${escapeHTML(
+                        error.message ||
+                        "Please try again."
+                    )}
+                </p>
+            </div>
+        `;
 
-        answerElement.dataset.messageType =
-            "error";
-
-        setTurboAIStatus(
-            "Turbo AI could not complete the request.",
-            "error"
-        );
+        if (statusBox) {
+            statusBox.textContent =
+                "Turbo AI request failed.";
+        }
 
     } finally {
-
-        if (askButton) {
-
-            askButton.disabled =
-                false;
-
-            askButton.textContent =
-                askButton.dataset
-                    .originalText ||
-                "Ask Turbo AI";
-        }
+        askButton.disabled = false;
     }
 }
 
