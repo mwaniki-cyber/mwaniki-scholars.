@@ -1949,82 +1949,145 @@ img {
    WHATSAPP
 ========================================================= */
 
-.whatsapp-section {
+/* =========================================================
+   MWANIKI SCHOLARS
+   FLOATING WHATSAPP CHANNEL
+   LEFT SIDE
+========================================================= */
+
+.mwaniki-whatsapp-float {
+    position: fixed;
+
+    left: 22px;
+    bottom: 110px;
+
+    width: 58px;
+    height: 58px;
+
     display: flex;
-
-    align-items: center;
-
-    justify-content: space-between;
-
-    gap: 25px;
-
-    margin-bottom: 30px;
-
-    padding: 28px 30px;
-
-    border: 1px solid #cde4de;
-
-    border-radius: var(--radius-large);
-
-    background:
-        linear-gradient(
-            135deg,
-            #eff9f6,
-            #f7fbfa
-        );
-}
-
-.whatsapp-section h2 {
-    margin: 0;
-
-    color: var(--text-dark);
-
-    font-size: 21px;
-}
-
-.whatsapp-section p {
-    max-width: 750px;
-
-    margin: 7px 0 0;
-
-    color: var(--muted);
-
-    font-size: 13px;
-}
-
-.whatsapp-button {
-    flex: 0 0 auto;
-
-    display: inline-flex;
-
     align-items: center;
     justify-content: center;
 
-    min-height: 44px;
+    padding: 0;
 
-    padding: 0 18px;
+    border-radius: 50%;
 
-    border: 1px solid var(--primary);
+    background: #25D366;
 
-    border-radius: 9px;
+    color: #ffffff;
 
-    background: var(--primary);
+    text-decoration: none;
 
-    color: var(--white);
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.20);
 
-    font-size: 12px;
+    z-index: 9999;
 
-    font-weight: 800;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.mwaniki-whatsapp-float svg {
+    width: 32px;
+    height: 32px;
+
+    display: block;
+
+    fill: #ffffff;
+}
+
+.mwaniki-whatsapp-float:hover {
+    transform: scale(1.08);
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.mwaniki-whatsapp-float:active {
+    transform: scale(0.96);
+}
+
+.mwaniki-whatsapp-float:focus-visible {
+    outline: 3px solid rgba(8, 127, 115, 0.35);
+    outline-offset: 4px;
+}
+
+
+/* =========================================================
+   WHATSAPP TOOLTIP
+========================================================= */
+
+.mwaniki-whatsapp-tooltip {
+    position: absolute;
+
+    left: 72px;
+    top: 50%;
+
+    transform:
+        translateY(-50%)
+        translateX(-8px);
+
+    padding: 9px 13px;
+
+    border-radius: 8px;
+
+    background: #173b3a;
+    color: #ffffff;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    line-height: 1.2;
 
     white-space: nowrap;
+
+    opacity: 0;
+    visibility: hidden;
+
+    pointer-events: none;
+
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease;
 }
 
-.whatsapp-button:hover {
-    background: var(--primary-dark);
+.mwaniki-whatsapp-float:hover
+.mwaniki-whatsapp-tooltip,
+.mwaniki-whatsapp-float:focus-visible
+.mwaniki-whatsapp-tooltip {
+    opacity: 1;
+    visibility: visible;
 
-    border-color: var(--primary-dark);
+    transform:
+        translateY(-50%)
+        translateX(0);
 }
 
+
+/* =========================================================
+   MOBILE WHATSAPP
+========================================================= */
+
+@media (max-width: 768px) {
+
+    .mwaniki-whatsapp-float {
+        left: 14px;
+        bottom: 88px;
+
+        width: 52px;
+        height: 52px;
+    }
+
+    .mwaniki-whatsapp-float svg {
+        width: 29px;
+        height: 29px;
+    }
+
+    .mwaniki-whatsapp-tooltip {
+        display: none;
+    }
+}
 /* =========================================================
    FOOTER
 ========================================================= */
