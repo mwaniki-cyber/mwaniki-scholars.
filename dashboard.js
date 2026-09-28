@@ -83,7 +83,8 @@ function setText(selector, value) {
     const element = $(selector);
 
     if (element) {
-        element.textContent = value ?? "";
+        element.textContent =
+            value ?? "";
     }
 }
 
@@ -91,15 +92,20 @@ function setHTML(selector, value) {
     const element = $(selector);
 
     if (element) {
-        element.innerHTML = value ?? "";
+        element.innerHTML =
+            value ?? "";
     }
 }
 
-function showElement(selector, displayValue = "") {
+function showElement(
+    selector,
+    displayValue = ""
+) {
     const element = $(selector);
 
     if (element) {
-        element.style.display = displayValue;
+        element.style.display =
+            displayValue;
     }
 }
 
@@ -107,28 +113,47 @@ function hideElement(selector) {
     const element = $(selector);
 
     if (element) {
-        element.style.display = "none";
+        element.style.display =
+            "none";
     }
 }
 
 function escapeHTML(value) {
-    return String(value ?? "")
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    return String(
+        value ?? ""
+    )
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+        .replace(
+            /</g,
+            "&lt;"
+        )
+        .replace(
+            />/g,
+            "&gt;"
+        )
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+        .replace(
+            /'/g,
+            "&#039;"
+        );
 }
 
-function setCounterText(selector, value) {
+function setCounterText(
+    selector,
+    value
+) {
     const element = $(selector);
 
-    if (!element) {
-        return;
+    if (element) {
+        element.textContent =
+            Number(value || 0).toLocaleString();
     }
-
-    element.textContent =
-        Number(value || 0).toLocaleString();
 }
 
 /* =========================================================
@@ -138,67 +163,54 @@ function setCounterText(selector, value) {
 function getFieldValue(selector) {
     const element = $(selector);
 
-    if (!element) {
-        return "";
-    }
-
-    if ("value" in element) {
-        return String(
-            element.value ?? ""
-        ).trim();
-    }
-
-    return String(
-        element.textContent ?? ""
-    ).trim();
+    return element
+        ? String(element.value || "").trim()
+        : "";
 }
 
-function setFieldValue(selector, value) {
+function setFieldValue(
+    selector,
+    value
+) {
     const element = $(selector);
 
-    if (!element) {
-        return;
-    }
-
-    if ("value" in element) {
-        element.value = value ?? "";
-    } else {
-        element.textContent = value ?? "";
+    if (element) {
+        element.value =
+            value ?? "";
     }
 }
 
 /* =========================================================
-   USER-FACING STATUS MESSAGE
+   USER-FACING STATUS
 ========================================================= */
 
 function showMessage(
-    selector,
     message,
     type = "info"
 ) {
-    const element = $(selector);
+    const status =
+        $("#dashboardMessage") ||
+        $("#profileMessage") ||
+        $("#statusMessage");
 
-    if (!element) {
+    if (!status) {
+        console.log(
+            `[${type}]`,
+            message
+        );
         return;
     }
 
-    element.textContent =
-        message;
+    status.textContent =
+        message || "";
 
-    element.dataset.messageType =
+    status.dataset.messageType =
         type;
 
-    element.classList.remove(
-        "success",
-        "error",
-        "info",
-        "warning"
-    );
-
-    element.classList.add(type);
-
-    element.style.display =
-        message ? "block" : "";
+    status.style.display =
+        message
+            ? ""
+            : "none";
 }
 
 /* =========================================================
@@ -210,19 +222,19 @@ function readStorage(
     fallback = null
 ) {
     try {
-        const value =
+        const raw =
             localStorage.getItem(key);
 
-        if (!value) {
+        if (raw === null) {
             return fallback;
         }
 
-        return JSON.parse(value);
+        return JSON.parse(raw);
 
     } catch (error) {
 
         console.warn(
-            `⚠️ Could not read localStorage key: ${key}`,
+            `⚠️ Could not read localStorage key "${key}".`,
             error
         );
 
@@ -241,24 +253,26 @@ function writeStorage(
             JSON.stringify(value)
         );
 
+        return true;
+
     } catch (error) {
 
-        console.warn(
-            `⚠️ Could not write localStorage key: ${key}`,
+        console.error(
+            `❌ Could not write localStorage key "${key}".`,
             error
         );
+
+        return false;
     }
 }
 
 function removeStorage(key) {
     try {
-
         localStorage.removeItem(key);
-
     } catch (error) {
-
         console.warn(
-            `⚠️ Could not remove localStorage key: ${key}`,
+            "⚠️ Could not remove storage key:",
+            key,
             error
         );
     }
@@ -277,8 +291,15 @@ function normalizeCourse(course) {
     const id =
         course.id ??
         course.courseId ??
-        course.course_id ??
-        null;
+        course.course_id;
+
+    if (
+        id === undefined ||
+        id === null ||
+        id === ""
+    ) {
+        return null;
+    }
 
     const title =
         course.title ||
@@ -287,32 +308,13 @@ function normalizeCourse(course) {
         course.name ||
         "Untitled Course";
 
-    if (
-        id === null ||
-        id === undefined ||
-        id === ""
-    ) {
-        return null;
-    }
-
     return {
-
         id,
-
-        title:
-            String(title).trim() ||
-            "Untitled Course",
-
+        title,
         description:
-            String(
-                course.description || ""
-            ).trim(),
-
+            course.description || "",
         image:
-            String(
-                course.image || ""
-            ).trim(),
-
+            course.image || "",
         created_at:
             course.created_at || null
     };
@@ -324,17 +326,17 @@ function normalizeCourse(course) {
 
 function getCourseURL(course) {
 
-    const normalizedCourse =
+    const normalized =
         normalizeCourse(course);
 
-    if (!normalizedCourse) {
-        return "./courses.html";
+    if (!normalized) {
+        return "./course.html";
     }
 
     return (
         `./course.html?course_id=` +
         encodeURIComponent(
-            normalizedCourse.id
+            normalized.id
         )
     );
 }
@@ -345,103 +347,105 @@ function getCourseURL(course) {
 
 function getLastCourse() {
 
-    const storedCourse =
+    return normalizeCourse(
         readStorage(
             "mwanikiLastCourse",
             null
-        );
-
-    return normalizeCourse(
-        storedCourse
+        )
     );
 }
 
 function saveLastCourse(course) {
 
-    const normalizedCourse =
+    const normalized =
         normalizeCourse(course);
 
-    if (!normalizedCourse) {
+    if (!normalized) {
         return;
     }
 
     writeStorage(
         "mwanikiLastCourse",
-        normalizedCourse
+        normalized
     );
 }
 
 function getRecentCourses() {
 
-    const recentCourses =
+    const courses =
         readStorage(
             "mwanikiRecentCourses",
             []
         );
 
-    if (!Array.isArray(recentCourses)) {
+    if (!Array.isArray(courses)) {
         return [];
     }
 
-    return recentCourses
+    return courses
         .map(normalizeCourse)
         .filter(Boolean);
 }
 
 function saveRecentCourse(course) {
 
-    const normalizedCourse =
+    const normalized =
         normalizeCourse(course);
 
-    if (!normalizedCourse) {
+    if (!normalized) {
         return;
     }
 
-    const existingCourses =
+    const existing =
         getRecentCourses();
 
-    const filteredCourses =
-        existingCourses.filter(
+    const filtered =
+        existing.filter(
             item =>
                 String(item.id) !==
-                String(normalizedCourse.id)
+                String(normalized.id)
         );
 
-    filteredCourses.unshift(
-        normalizedCourse
+    filtered.unshift(
+        normalized
     );
 
     writeStorage(
         "mwanikiRecentCourses",
-        filteredCourses.slice(0, 8)
+        filtered.slice(0, 8)
     );
 }
 
 function saveSelectedCourse(course) {
 
-    const normalizedCourse =
+    const normalized =
         normalizeCourse(course);
 
-    if (!normalizedCourse) {
+    if (!normalized) {
         return;
     }
 
     writeStorage(
         "selectedCourse",
-        normalizedCourse.id
+        normalized.id
     );
 
-    writeStorage(
+    localStorage.setItem(
+        "selectedCourse",
+        String(normalized.id)
+    );
+
+    localStorage.setItem(
         "selectedCourseName",
-        normalizedCourse.title
+        normalized.title
     );
 
     saveLastCourse(
-        normalizedCourse
+        normalized
     );
 
     saveRecentCourse(
-        normalizedCourse
+        normalized
     );
 }
 
@@ -451,13 +455,13 @@ function saveSelectedCourse(course) {
 
 function openCourse(course) {
 
-    const normalizedCourse =
+    const normalized =
         normalizeCourse(course);
 
-    if (!normalizedCourse) {
+    if (!normalized) {
 
         console.warn(
-            "⚠️ Cannot open invalid course:",
+            "⚠️ Cannot open invalid course.",
             course
         );
 
@@ -465,12 +469,12 @@ function openCourse(course) {
     }
 
     saveSelectedCourse(
-        normalizedCourse
+        normalized
     );
 
     window.location.href =
         getCourseURL(
-            normalizedCourse
+            normalized
         );
 }
 
@@ -478,43 +482,107 @@ window.mwanikiOpenCourse =
     openCourse;
 
 /* =========================================================
+   COURSE COMMUNITY
+   ---------------------------------------------------------
+   IMPORTANT:
+
+   Community is keyed by COURSE ID.
+
+   This is necessary because courses can have the same
+   name but different IDs, e.g. Clinical Pharmacology.
+========================================================= */
+
+function openCourseCommunity(
+    course
+) {
+
+    const normalized =
+        normalizeCourse(course);
+
+    if (!normalized) {
+
+        console.warn(
+            "⚠️ Cannot open community for invalid course.",
+            course
+        );
+
+        return;
+    }
+
+    /*
+     * Store the exact course identity.
+     */
+    localStorage.setItem(
+        "communityCourseId",
+        String(normalized.id)
+    );
+
+    localStorage.setItem(
+        "communityCourseName",
+        normalized.title
+    );
+
+    /*
+     * Also keep the normal selected-course state
+     * synchronized.
+     */
+    saveSelectedCourse(
+        normalized
+    );
+
+    /*
+     * Pass the course ID directly in the URL.
+     * community.js should use this ID as its primary
+     * course identity.
+     */
+    const communityURL =
+        `./community.html?course_id=${encodeURIComponent(
+            normalized.id
+        )}`;
+
+    console.log(
+        "💬 Opening course community:",
+        {
+            courseId:
+                normalized.id,
+            courseName:
+                normalized.title
+        }
+    );
+
+    window.location.href =
+        communityURL;
+}
+
+window.mwanikiOpenCourseCommunity =
+    openCourseCommunity;
+
+/* =========================================================
    LIVE DATE AND TIME
 ========================================================= */
 
 function updateCurrentDate() {
 
-    const currentDateElement =
+    const element =
         $("#currentDate");
 
-    if (!currentDateElement) {
+    if (!element) {
         return;
     }
 
     const now =
         new Date();
 
-    const formattedDate =
+    element.textContent =
         now.toLocaleDateString(
             "en-KE",
             {
                 weekday: "long",
-                year: "numeric",
+                day: "numeric",
                 month: "long",
-                day: "numeric"
+                year: "numeric"
             }
         );
-
-    const formattedTime =
-        now.toLocaleTimeString(
-            "en-KE",
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
-
-    currentDateElement.textContent =
-        `${formattedDate} • ${formattedTime}`;
 }
 
 function startDashboardClock() {
@@ -522,7 +590,6 @@ function startDashboardClock() {
     updateCurrentDate();
 
     if (dashboardClockTimer) {
-
         clearInterval(
             dashboardClockTimer
         );
@@ -546,12 +613,13 @@ async function getAuthenticatedUser() {
         const {
             data,
             error
-        } = await supabase.auth.getUser();
+        } =
+            await supabase.auth.getUser();
 
         if (error) {
 
             console.error(
-                "❌ Could not get authenticated user:",
+                "❌ Authentication check failed:",
                 error
             );
 
@@ -571,7 +639,7 @@ async function getAuthenticatedUser() {
     }
 }
 
-async function handleSignedOut() {
+function handleSignedOut() {
 
     currentUser = null;
     currentStudent = null;
@@ -583,7 +651,8 @@ async function handleSignedOut() {
             dashboardClockTimer
         );
 
-        dashboardClockTimer = null;
+        dashboardClockTimer =
+            null;
     }
 
     window.location.href =
@@ -605,23 +674,24 @@ async function loadStudentProfile() {
         const {
             data,
             error
-        } = await supabase
-            .from("students")
-            .select(`
-                id,
-                full_name,
-                email,
-                phone,
-                course,
-                level,
-                photo_url,
-                created_at
-            `)
-            .eq(
-                "id",
-                currentUser.id
-            )
-            .maybeSingle();
+        } =
+            await supabase
+                .from("students")
+                .select(`
+                    id,
+                    full_name,
+                    email,
+                    phone,
+                    course,
+                    level,
+                    photo_url,
+                    created_at
+                `)
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .maybeSingle();
 
         if (error) {
 
@@ -630,33 +700,65 @@ async function loadStudentProfile() {
                 error
             );
 
+            currentStudent = {
+                id:
+                    currentUser.id,
+                full_name:
+                    currentUser.user_metadata?.full_name ||
+                    currentUser.user_metadata?.name ||
+                    currentUser.email?.split("@")[0] ||
+                    "Student",
+                email:
+                    currentUser.email || "",
+                phone:
+                    currentUser.user_metadata?.phone || "",
+                course:
+                    currentUser.user_metadata?.course || "",
+                level:
+                    currentUser.user_metadata?.level || "",
+                photo_url:
+                    currentUser.user_metadata?.photo_url || ""
+            };
+
+            renderStudentProfile();
+
             return false;
         }
 
-        currentStudent =
-            data || {
+        if (data) {
+
+            currentStudent =
+                data;
+
+        } else {
+
+            currentStudent = {
 
                 id:
                     currentUser.id,
 
                 full_name:
-                    currentUser
-                        .user_metadata
-                        ?.full_name ||
-                    currentUser
-                        .user_metadata
-                        ?.name ||
+                    currentUser.user_metadata?.full_name ||
+                    currentUser.user_metadata?.name ||
+                    currentUser.email?.split("@")[0] ||
                     "Student",
 
                 email:
-                    currentUser.email ||
-                    "",
+                    currentUser.email || "",
 
-                phone: "",
-                course: "",
-                level: "",
-                photo_url: ""
+                phone:
+                    currentUser.user_metadata?.phone || "",
+
+                course:
+                    currentUser.user_metadata?.course || "",
+
+                level:
+                    currentUser.user_metadata?.level || "",
+
+                photo_url:
+                    currentUser.user_metadata?.photo_url || ""
             };
+        }
 
         renderStudentProfile();
 
@@ -665,7 +767,7 @@ async function loadStudentProfile() {
     } catch (error) {
 
         console.error(
-            "❌ Unexpected profile error:",
+            "❌ Unexpected student profile error:",
             error
         );
 
@@ -673,206 +775,188 @@ async function loadStudentProfile() {
     }
 }
 
-/* =========================================================
-   STUDENT NAME
-========================================================= */
-
 function getStudentDisplayName() {
 
-    if (!currentStudent) {
-        return "Student";
-    }
-
     return (
-
-        currentStudent.full_name ||
-
-        currentStudent.name ||
-
-        currentUser
-            ?.user_metadata
-            ?.full_name ||
-
-        currentUser
-            ?.email
-            ?.split("@")[0] ||
-
+        currentStudent?.full_name ||
+        currentUser?.user_metadata?.full_name ||
+        currentUser?.user_metadata?.name ||
+        currentUser?.email?.split("@")[0] ||
         "Student"
     );
 }
 
 function getStudentFirstName() {
 
-    return getStudentDisplayName()
-        .trim()
-        .split(/\s+/)[0] ||
-        "Student";
+    const name =
+        getStudentDisplayName()
+            .trim();
+
+    return (
+        name.split(/\s+/)[0] ||
+        "Student"
+    );
 }
 
 /* =========================================================
    PROFILE AVATAR
 ========================================================= */
 
-function createInitialsAvatar(name) {
+function createInitialsAvatar(
+    name
+) {
 
     const safeName =
         String(
             name || "Student"
         ).trim();
 
-    const initials =
+    const parts =
         safeName
             .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map(
-                word =>
-                    word
-                        .charAt(0)
-                        .toUpperCase()
-            )
-            .join("");
+            .filter(Boolean);
 
-    const svg = `
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="160"
-            height="160"
-            viewBox="0 0 160 160"
+    let initials =
+        "S";
+
+    if (parts.length >= 2) {
+
+        initials =
+            (
+                parts[0][0] +
+                parts[parts.length - 1][0]
+            ).toUpperCase();
+
+    } else if (parts.length === 1) {
+
+        initials =
+            parts[0]
+                .slice(0, 2)
+                .toUpperCase();
+    }
+
+    return `
+        <span
+            class="avatar-initials"
+            aria-hidden="true"
         >
-            <rect
-                width="160"
-                height="160"
-                rx="80"
-                fill="#087f73"
-            />
-
-            <text
-                x="80"
-                y="96"
-                text-anchor="middle"
-                font-size="54"
-                font-family="Arial, sans-serif"
-                font-weight="700"
-                fill="#ffffff"
-            >
-                ${escapeHTML(
-                    initials || "S"
-                )}
-            </text>
-        </svg>
+            ${escapeHTML(initials)}
+        </span>
     `;
-
-    return (
-        "data:image/svg+xml;charset=UTF-8," +
-        encodeURIComponent(svg)
-    );
 }
 
 function getPossibleProfileImage() {
 
-    if (!currentStudent) {
-        return "";
-    }
+    const candidates = [
+
+        currentStudent?.photo_url,
+
+        currentStudent?.avatar_url,
+
+        currentStudent?.profile_image,
+
+        currentStudent?.profile_photo,
+
+        currentUser?.user_metadata?.photo_url,
+
+        currentUser?.user_metadata?.avatar_url,
+
+        currentUser?.user_metadata?.profile_image,
+
+        currentUser?.user_metadata?.picture
+
+    ];
 
     return (
-
-        currentStudent.photo_url ||
-
-        currentStudent.photo ||
-
-        currentStudent.avatar_url ||
-
-        currentStudent.profile_image ||
-
-        currentStudent.image ||
-
-        currentUser
-            ?.user_metadata
-            ?.photo_url ||
-
-        currentUser
-            ?.user_metadata
-            ?.avatar_url ||
-
-        currentUser
-            ?.user_metadata
-            ?.picture ||
-
+        candidates
+            .map(
+                value =>
+                    String(
+                        value || ""
+                    ).trim()
+            )
+            .find(Boolean) ||
         ""
     );
 }
 
 function setAvatar(
-    selector,
-    photoURL,
+    element,
+    imageURL,
     name
 ) {
-
-    const element =
-        $(selector);
 
     if (!element) {
         return;
     }
 
-    const fallbackURL =
+    const fallback =
         createInitialsAvatar(
             name
         );
 
-    element.setAttribute(
-        "alt",
-        `${name} profile photo`
-    );
+    if (!imageURL) {
 
-    element.onerror =
-        function () {
+        element.innerHTML =
+            fallback;
 
-            this.onerror = null;
+        return;
+    }
 
-            this.src =
-                fallbackURL;
-        };
+    element.innerHTML = `
+        <img
+            src="${escapeHTML(imageURL)}"
+            alt="${escapeHTML(name || "Student")}"
+            loading="lazy"
+            referrerpolicy="no-referrer"
+        >
+    `;
 
-    element.src =
-        photoURL ||
-        fallbackURL;
+    const image =
+        element.querySelector(
+            "img"
+        );
 
-    element.style.display =
-        "block";
+    if (image) {
 
-    element.style.visibility =
-        "visible";
+        image.addEventListener(
+            "error",
+            () => {
 
-    element.style.opacity =
-        "1";
+                element.innerHTML =
+                    fallback;
+            },
+            {
+                once: true
+            }
+        );
+    }
 }
 
 function displayProfileImage() {
 
-    const displayName =
-        getStudentDisplayName();
-
     const imageURL =
         getPossibleProfileImage();
 
+    const name =
+        getStudentDisplayName();
+
     setAvatar(
-        "#headerProfileAvatar",
+        $("#headerProfileAvatar"),
         imageURL,
-        displayName
+        name
     );
 
     setAvatar(
-        "#profileLargeAvatar",
+        $("#profileLargeAvatar"),
         imageURL,
-        displayName
+        name
     );
 
     console.log(
         imageURL
-            ? "✅ Student profile image displayed."
-            : "ℹ️ No saved profile image found. Initials avatar displayed."
+            ? "🖼️ Student profile image displayed."
+            : "ℹ️ Student profile image not available; initials displayed."
     );
 }
 
@@ -882,67 +966,61 @@ function displayProfileImage() {
 
 function renderStudentProfile() {
 
-    if (!currentStudent) {
-        return;
-    }
-
-    const displayName =
+    const name =
         getStudentDisplayName();
 
+    const firstName =
+        getStudentFirstName();
+
+    const email =
+        currentStudent?.email ||
+        currentUser?.email ||
+        "";
+
     setText(
-        "#headerProfileName",
-        displayName
+        "#studentName",
+        name
+    );
+
+    setText(
+        "#profileName",
+        name
     );
 
     setText(
         "#welcomeName",
-        getStudentFirstName()
+        firstName
+    );
+
+    setText(
+        "#profileEmailDisplay",
+        email
     );
 
     setFieldValue(
-        "#profileName",
-        currentStudent.full_name ||
-        displayName
+        "#profileFullName",
+        name
     );
 
     setFieldValue(
         "#profileEmail",
-        currentStudent.email ||
-        currentUser?.email ||
-        ""
+        email
     );
 
     setFieldValue(
         "#profilePhone",
-        currentStudent.phone ||
-        ""
+        currentStudent?.phone || ""
     );
 
     setFieldValue(
         "#profileCourse",
-        currentStudent.course ||
-        ""
+        currentStudent?.course || ""
     );
 
     setFieldValue(
         "#profileLevel",
-        currentStudent.level ||
-        ""
+        currentStudent?.level || ""
     );
-
-    const profileEmail =
-        $("#profileEmail");
-
-    if (profileEmail) {
-
-        profileEmail.readOnly =
-            true;
-
-        profileEmail.setAttribute(
-            "aria-readonly",
-            "true"
-        );
-    }
 
     displayProfileImage();
 }
@@ -953,74 +1031,24 @@ function renderStudentProfile() {
 
 function setPanelOpen(
     panel,
-    shouldOpen
+    open
 ) {
 
     if (!panel) {
         return;
     }
 
-    if (shouldOpen) {
+    panel.classList.toggle(
+        "active",
+        Boolean(open)
+    );
 
-        panel.classList.add(
-            "active"
-        );
-
-        panel.classList.add(
-            "open"
-        );
-
-        panel.removeAttribute(
-            "hidden"
-        );
-
-        panel.setAttribute(
-            "aria-hidden",
-            "false"
-        );
-
-        panel.style.display =
-            "flex";
-
-        panel.style.visibility =
-            "visible";
-
-        panel.style.opacity =
-            "1";
-
-        panel.style.pointerEvents =
-            "auto";
-
-        panel.style.zIndex =
-            "9999";
-
-    } else {
-
-        panel.classList.remove(
-            "active"
-        );
-
-        panel.classList.remove(
-            "open"
-        );
-
-        panel.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-
-        panel.style.display =
-            "none";
-
-        panel.style.visibility =
-            "hidden";
-
-        panel.style.opacity =
-            "0";
-
-        panel.style.pointerEvents =
-            "none";
-    }
+    panel.setAttribute(
+        "aria-hidden",
+        open
+            ? "false"
+            : "true"
+    );
 }
 
 function openProfilePanel() {
@@ -1041,7 +1069,7 @@ function closeProfilePanel() {
 
 function setupProfilePanel() {
 
-    const profileButton =
+    const button =
         $("#profileButton");
 
     const closeButton =
@@ -1050,28 +1078,25 @@ function setupProfilePanel() {
     const panel =
         $("#profilePanel");
 
-    if (!profileButton) {
+    if (button) {
 
-        console.warn(
-            "⚠️ #profileButton was not found."
-        );
-
-    } else {
-
-        profileButton.onclick =
+        button.onclick =
             function (event) {
 
                 event.preventDefault();
                 event.stopPropagation();
 
+                if (!panel) {
+                    return;
+                }
+
                 const isOpen =
-                    panel?.classList
-                        .contains("active");
+                    panel.classList.contains(
+                        "active"
+                    );
 
                 if (isOpen) {
-
                     closeProfilePanel();
-
                 } else {
 
                     renderStudentProfile();
@@ -1113,43 +1138,35 @@ function repairProfileFields() {
     }
 
     setFieldValue(
-        "#profileName",
+        "#profileFullName",
         currentStudent.full_name ||
-        getStudentDisplayName()
+            getStudentDisplayName()
     );
 
     setFieldValue(
         "#profileEmail",
         currentStudent.email ||
-        currentUser?.email ||
-        ""
+            currentUser?.email ||
+            ""
     );
 
     setFieldValue(
         "#profilePhone",
         currentStudent.phone ||
-        ""
+            ""
     );
 
     setFieldValue(
         "#profileCourse",
         currentStudent.course ||
-        ""
+            ""
     );
 
     setFieldValue(
         "#profileLevel",
         currentStudent.level ||
-        ""
+            ""
     );
-
-    const profileEmail =
-        $("#profileEmail");
-
-    if (profileEmail) {
-        profileEmail.readOnly =
-            true;
-    }
 }
 
 /* =========================================================
@@ -1158,31 +1175,32 @@ function repairProfileFields() {
 
 function setupProfileForm() {
 
-    const saveButton =
+    const button =
         $("#saveProfileButton");
 
-    if (!saveButton) {
+    if (!button) {
         return;
     }
 
-    saveButton.onclick =
-        saveStudentProfile;
+    button.onclick =
+        async function (event) {
+
+            event.preventDefault();
+
+            await saveStudentProfile();
+        };
 }
 
 async function saveStudentProfile() {
 
-    if (
-        !currentUser ||
-        !currentStudent
-    ) {
+    if (!currentUser) {
         return;
     }
 
     const fullName =
         getFieldValue(
-            "#profileName"
-        ) ||
-        getStudentDisplayName();
+            "#profileFullName"
+        );
 
     const phone =
         getFieldValue(
@@ -1199,116 +1217,94 @@ async function saveStudentProfile() {
             "#profileLevel"
         );
 
-    const saveButton =
-        $("#saveProfileButton");
+    if (!fullName) {
 
-    if (saveButton) {
+        showMessage(
+            "Please enter your full name.",
+            "warning"
+        );
 
-        saveButton.disabled =
-            true;
-
-        saveButton.textContent =
-            "Saving...";
+        return;
     }
 
-    showMessage(
-        "#profileSaveStatus",
-        "Saving profile...",
-        "info"
-    );
+    const button =
+        $("#saveProfileButton");
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.textContent =
+            "Saving...";
+    }
 
     try {
 
         const {
             data,
             error
-        } = await supabase
-            .from("students")
-            .update({
-
-                full_name:
-                    fullName,
-
-                phone:
+        } =
+            await supabase
+                .from("students")
+                .update({
+                    full_name:
+                        fullName,
                     phone,
-
-                course:
                     course,
-
-                level:
                     level
-            })
-            .eq(
-                "id",
-                currentUser.id
-            )
-            .select()
-            .maybeSingle();
+                })
+                .eq(
+                    "id",
+                    currentUser.id
+                )
+                .select()
+                .maybeSingle();
 
         if (error) {
-
-            console.error(
-                "❌ Profile update failed:",
-                error
-            );
-
-            showMessage(
-                "#profileSaveStatus",
-                "Could not save your profile. Please try again.",
-                "error"
-            );
-
-            return;
+            throw error;
         }
 
         currentStudent = {
-
-            ...currentStudent,
-
+            ...(currentStudent || {}),
             ...(data || {}),
-
+            id:
+                currentUser.id,
             full_name:
                 fullName,
-
-            phone:
-                phone,
-
-            course:
-                course,
-
-            level:
-                level
+            phone,
+            course,
+            level
         };
 
         renderStudentProfile();
 
         showMessage(
-            "#profileSaveStatus",
-            "Profile saved successfully.",
+            "Profile updated successfully.",
             "success"
         );
 
     } catch (error) {
 
         console.error(
-            "❌ Unexpected profile save error:",
+            "❌ Profile update failed:",
             error
         );
 
         showMessage(
-            "#profileSaveStatus",
-            "An unexpected error occurred while saving.",
+            error.message ||
+                "Unable to update your profile.",
             "error"
         );
 
     } finally {
 
-        if (saveButton) {
+        if (button) {
 
-            saveButton.disabled =
+            button.disabled =
                 false;
 
-            saveButton.textContent =
+            button.textContent =
                 "Save Profile";
         }
     }
@@ -1323,7 +1319,7 @@ function sanitizeFileName(
 ) {
 
     return String(
-        fileName || "profile-photo"
+        fileName || "profile"
     )
         .replace(
             /[^a-zA-Z0-9._-]/g,
@@ -1332,257 +1328,209 @@ function sanitizeFileName(
         .replace(
             /-+/g,
             "-"
-        )
-        .slice(0, 100);
+        );
 }
 
 async function uploadProfilePhoto(
     file
 ) {
 
-    if (!currentUser) {
-
-        throw new Error(
-            "No authenticated student."
-        );
+    if (!currentUser || !file) {
+        return false;
     }
 
-    const safeFileName =
-        sanitizeFileName(
-            file.name
+    if (!file.type.startsWith("image/")) {
+
+        showMessage(
+            "Please select an image file.",
+            "warning"
         );
 
-    const extension =
-        safeFileName.includes(".")
-            ? safeFileName
-                .split(".")
-                .pop()
-                .toLowerCase()
-            : "jpg";
+        return false;
+    }
 
-    const storagePath =
-        `${currentUser.id}/` +
-        `${Date.now()}-profile.${extension}`;
+    if (
+        file.size >
+        MAX_PROFILE_PHOTO_SIZE
+    ) {
 
-    console.log(
-        "📤 Uploading profile photo:",
-        storagePath
-    );
-
-    const {
-        error: uploadError
-    } = await supabase.storage
-        .from(
-            PROFILE_PHOTO_BUCKET
-        )
-        .upload(
-            storagePath,
-            file,
-            {
-                cacheControl:
-                    "3600",
-
-                contentType:
-                    file.type,
-
-                upsert:
-                    true
-            }
+        showMessage(
+            "Profile image must be 5 MB or smaller.",
+            "warning"
         );
 
-    if (uploadError) {
+        return false;
+    }
+
+    try {
+
+        const extension =
+            (
+                file.name
+                    .split(".")
+                    .pop() ||
+                "jpg"
+            )
+                .toLowerCase();
+
+        const safeExtension =
+            sanitizeFileName(
+                extension
+            );
+
+        const path =
+            `${currentUser.id}/${Date.now()}-profile.${safeExtension}`;
+
+        const {
+            error:
+                uploadError
+        } =
+            await supabase
+                .storage
+                .from(
+                    PROFILE_PHOTO_BUCKET
+                )
+                .upload(
+                    path,
+                    file,
+                    {
+                        upsert: true,
+                        contentType:
+                            file.type
+                    }
+                );
+
+        if (uploadError) {
+            throw uploadError;
+        }
+
+        const {
+            data:
+                publicData
+        } =
+            supabase
+                .storage
+                .from(
+                    PROFILE_PHOTO_BUCKET
+                )
+                .getPublicUrl(
+                    path
+                );
+
+        const publicURL =
+            publicData?.publicUrl || "";
+
+        if (!publicURL) {
+            throw new Error(
+                "Could not obtain the public profile image URL."
+            );
+        }
+
+        const {
+            error:
+                updateError
+        } =
+            await supabase
+                .from("students")
+                .update({
+                    photo_url:
+                        publicURL
+                })
+                .eq(
+                    "id",
+                    currentUser.id
+                );
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        currentStudent = {
+            ...(currentStudent || {}),
+            photo_url:
+                publicURL
+        };
+
+        displayProfileImage();
+
+        showMessage(
+            "Profile photo updated successfully.",
+            "success"
+        );
+
+        return true;
+
+    } catch (error) {
 
         console.error(
             "❌ Profile photo upload failed:",
-            uploadError
+            error
         );
 
-        throw uploadError;
+        showMessage(
+            error.message ||
+                "Unable to upload profile photo.",
+            "error"
+        );
+
+        return false;
     }
-
-    const {
-        data: publicData
-    } = supabase.storage
-        .from(
-            PROFILE_PHOTO_BUCKET
-        )
-        .getPublicUrl(
-            storagePath
-        );
-
-    const publicURL =
-        publicData?.publicUrl;
-
-    if (!publicURL) {
-
-        throw new Error(
-            "Could not generate the public profile photo URL."
-        );
-    }
-
-    const {
-        error: profileError
-    } = await supabase
-        .from("students")
-        .update({
-            photo_url:
-                publicURL
-        })
-        .eq(
-            "id",
-            currentUser.id
-        );
-
-    if (profileError) {
-
-        console.error(
-            "❌ Could not save photo URL:",
-            profileError
-        );
-
-        throw profileError;
-    }
-
-    currentStudent = {
-
-        ...currentStudent,
-
-        photo_url:
-            publicURL
-    };
-
-    displayProfileImage();
-
-    return publicURL;
 }
 
 function setupProfilePhoto() {
 
-    const photoInput =
+    const input =
         $("#profilePhotoInput");
 
-    if (!photoInput) {
-
-        console.warn(
-            "⚠️ #profilePhotoInput was not found."
-        );
-
+    if (!input) {
         return;
     }
 
-    photoInput.onchange =
-        async function (event) {
+    input.onchange =
+        async function () {
 
             const file =
-                event.target.files?.[0];
+                input.files?.[0];
 
             if (!file) {
                 return;
             }
 
-            if (
-                !file.type ||
-                !file.type.startsWith(
-                    "image/"
-                )
-            ) {
+            const preview =
+                $("#profilePhotoPreview");
 
-                showMessage(
-                    "#profileSaveStatus",
-                    "Please select a valid image file.",
-                    "error"
-                );
+            if (preview) {
 
-                photoInput.value =
-                    "";
-
-                return;
-            }
-
-            if (
-                file.size >
-                MAX_PROFILE_PHOTO_SIZE
-            ) {
-
-                showMessage(
-                    "#profileSaveStatus",
-                    "The profile photo must be 5 MB or smaller.",
-                    "error"
-                );
-
-                photoInput.value =
-                    "";
-
-                return;
-            }
-
-            const reader =
-                new FileReader();
-
-            reader.onload =
-                function () {
-
-                    const previewURL =
-                        reader.result;
-
-                    setAvatar(
-                        "#headerProfileAvatar",
-                        previewURL,
-                        getStudentDisplayName()
+                const objectURL =
+                    URL.createObjectURL(
+                        file
                     );
 
-                    setAvatar(
-                        "#profileLargeAvatar",
-                        previewURL,
-                        getStudentDisplayName()
-                    );
-                };
+                if (
+                    preview.tagName
+                        .toLowerCase() ===
+                    "img"
+                ) {
 
-            reader.readAsDataURL(
+                    preview.src =
+                        objectURL;
+
+                } else {
+
+                    preview.innerHTML = `
+                        <img
+                            src="${objectURL}"
+                            alt="Profile photo preview"
+                        >
+                    `;
+                }
+            }
+
+            await uploadProfilePhoto(
                 file
             );
 
-            showMessage(
-                "#profileSaveStatus",
-                "Uploading profile photo...",
-                "info"
-            );
-
-            photoInput.disabled =
-                true;
-
-            try {
-
-                await uploadProfilePhoto(
-                    file
-                );
-
-                showMessage(
-                    "#profileSaveStatus",
-                    "Profile photo uploaded and saved successfully.",
-                    "success"
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "❌ Profile photo process failed:",
-                    error
-                );
-
-                displayProfileImage();
-
-                showMessage(
-                    "#profileSaveStatus",
-                    "Photo upload failed. Make sure the student-profiles bucket allows uploads.",
-                    "error"
-                );
-
-            } finally {
-
-                photoInput.disabled =
-                    false;
-            }
+            input.value = "";
         };
 }
 
@@ -1600,14 +1548,11 @@ function setupChangePassword() {
     }
 
     button.onclick =
-        async function () {
+        async function (event) {
+
+            event.preventDefault();
 
             if (!currentUser?.email) {
-
-                alert(
-                    "No registered email address was found."
-                );
-
                 return;
             }
 
@@ -1624,36 +1569,33 @@ function setupChangePassword() {
                 } =
                     await supabase.auth
                         .resetPasswordForEmail(
-                            currentUser.email
+                            currentUser.email,
+                            {
+                                redirectTo:
+                                    `${window.location.origin}${window.location.pathname}`
+                            }
                         );
 
                 if (error) {
-
-                    console.error(
-                        "❌ Password reset error:",
-                        error
-                    );
-
-                    alert(
-                        "Could not send the password reset email."
-                    );
-
-                    return;
+                    throw error;
                 }
 
-                alert(
-                    "A password reset email has been sent to your registered email address."
+                showMessage(
+                    "Password reset instructions have been sent to your email.",
+                    "success"
                 );
 
             } catch (error) {
 
                 console.error(
-                    "❌ Unexpected password reset error:",
+                    "❌ Password reset failed:",
                     error
                 );
 
-                alert(
-                    "An unexpected error occurred."
+                showMessage(
+                    error.message ||
+                        "Unable to send password reset instructions.",
+                    "error"
                 );
 
             } finally {
@@ -1673,21 +1615,20 @@ function setupChangePassword() {
 
 function setupLogout() {
 
-    const logoutButton =
+    const button =
         $("#logoutButton");
 
-    if (!logoutButton) {
+    if (!button) {
         return;
     }
 
-    logoutButton.onclick =
-        async function () {
+    button.onclick =
+        async function (event) {
 
-            logoutButton.disabled =
+            event.preventDefault();
+
+            button.disabled =
                 true;
-
-            logoutButton.textContent =
-                "Signing out...";
 
             try {
 
@@ -1698,19 +1639,7 @@ function setupLogout() {
                         .signOut();
 
                 if (error) {
-
-                    console.error(
-                        "❌ Logout failed:",
-                        error
-                    );
-
-                    logoutButton.disabled =
-                        false;
-
-                    logoutButton.textContent =
-                        "Sign Out";
-
-                    return;
+                    throw error;
                 }
 
                 window.location.href =
@@ -1719,15 +1648,17 @@ function setupLogout() {
             } catch (error) {
 
                 console.error(
-                    "❌ Unexpected logout error:",
+                    "❌ Logout failed:",
                     error
                 );
 
-                logoutButton.disabled =
+                button.disabled =
                     false;
 
-                logoutButton.textContent =
-                    "Sign Out";
+                showMessage(
+                    "Unable to sign out. Please try again.",
+                    "error"
+                );
             }
         };
 }
@@ -1795,7 +1726,14 @@ function saveNotifications(
 
     writeStorage(
         key,
-        notifications.slice(0, 50)
+        Array.isArray(
+            notifications
+        )
+            ? notifications.slice(
+                0,
+                50
+            )
+            : []
     );
 }
 
@@ -1835,7 +1773,7 @@ function saveNotificationState(
 
     writeStorage(
         key,
-        state
+        state || {}
     );
 }
 
@@ -1846,15 +1784,11 @@ function saveNotificationState(
 function addNotification({
     id,
     type = "info",
-    title,
-    message,
+    title = "Mwaniki Scholars",
+    message = "",
     created_at =
         new Date().toISOString()
-}) {
-
-    if (!currentUser) {
-        return;
-    }
+} = {}) {
 
     if (!id) {
         return;
@@ -1863,29 +1797,29 @@ function addNotification({
     const notifications =
         getNotifications();
 
-    const alreadyExists =
+    const existing =
         notifications.some(
             notification =>
-                notification.id === id
+                String(
+                    notification.id
+                ) ===
+                String(id)
         );
 
-    if (alreadyExists) {
+    if (existing) {
         return;
     }
 
     notifications.unshift({
 
-        id,
+        id:
+            String(id),
 
         type,
 
-        title:
-            title ||
-            "Mwaniki Scholars",
+        title,
 
-        message:
-            message ||
-            "",
+        message,
 
         created_at,
 
@@ -1898,11 +1832,6 @@ function addNotification({
     );
 
     updateNotificationBadge();
-
-    console.log(
-        "🔔 Notification added:",
-        title
-    );
 }
 
 /* =========================================================
@@ -1940,12 +1869,13 @@ function createWelcomeNotification() {
             new Date().toISOString()
     });
 
-    state.welcomeSent =
-        true;
+    saveNotificationState({
 
-    saveNotificationState(
-        state
-    );
+        ...state,
+
+        welcomeSent:
+            true
+    });
 }
 
 /* =========================================================
@@ -1973,20 +1903,30 @@ function syncContentNotifications() {
                 String(note.id)
         );
 
-    if (!state.contentBaselineReady) {
+    /*
+     * First visit establishes a baseline so existing
+     * content does not generate hundreds of notifications.
+     */
+    if (!state.contentBaselineCreated) {
 
-        state.knownCourseIds =
-            currentCourseIds;
+        saveNotificationState({
 
-        state.knownNoteIds =
-            currentNoteIds;
+            ...state,
 
-        state.contentBaselineReady =
-            true;
+            knownCourseIds:
+                currentCourseIds,
 
-        saveNotificationState(
-            state
-        );
+            knownNoteIds:
+                currentNoteIds,
+
+            contentBaselineCreated:
+                true,
+
+            appUpdateShown:
+                Boolean(
+                    state.appUpdateShown
+                )
+        });
 
     } else {
 
@@ -1994,14 +1934,18 @@ function syncContentNotifications() {
             Array.isArray(
                 state.knownCourseIds
             )
-                ? state.knownCourseIds
+                ? state.knownCourseIds.map(
+                    String
+                )
                 : [];
 
         const knownNoteIds =
             Array.isArray(
                 state.knownNoteIds
             )
-                ? state.knownNoteIds
+                ? state.knownNoteIds.map(
+                    String
+                )
                 : [];
 
         const newCourses =
@@ -2020,96 +1964,71 @@ function syncContentNotifications() {
                     )
             );
 
-        if (newCourses.length) {
+        newCourses.forEach(
+            course => {
 
-            addNotification({
+                addNotification({
 
-                id:
-                    `new-courses-${newCourses
-                        .map(c => c.id)
-                        .join("-")}`,
+                    id:
+                        `course-${course.id}`,
 
-                type:
-                    "course",
+                    type:
+                        "course",
 
-                title:
-                    "New courses available",
+                    title:
+                        "New Course Available",
 
-                message:
-                    newCourses.length === 1
-                        ? `A new course, "${newCourses[0].title}", has been added to the Course Library.`
-                        : `${newCourses.length} new courses have been added to the Course Library.`,
+                    message:
+                        `${course.title} has been added to Mwaniki Scholars.`,
 
-                created_at:
-                    newCourses
-                        .map(
-                            c =>
-                                c.created_at
-                        )
-                        .filter(Boolean)
-                        .sort()
-                        .pop() ||
-                    new Date().toISOString()
-            });
-        }
-
-        if (newNotes.length) {
-
-            addNotification({
-
-                id:
-                    `new-notes-${newNotes
-                        .map(n => n.id)
-                        .join("-")}`,
-
-                type:
-                    "notes",
-
-                title:
-                    "New study notes available",
-
-                message:
-                    newNotes.length === 1
-                        ? `A new study resource, "${newNotes[0].file_name || newNotes[0].unit || "Medical note"}", has been published.`
-                        : `${newNotes.length} new study resources have been published in the Notes Library.`,
-
-                created_at:
-                    newNotes
-                        .map(
-                            n =>
-                                n.created_at
-                        )
-                        .filter(Boolean)
-                        .sort()
-                        .pop() ||
-                    new Date().toISOString()
-            });
-        }
-
-        state.knownCourseIds =
-            Array.from(
-                new Set([
-                    ...knownCourseIds,
-                    ...currentCourseIds
-                ])
-            ).slice(-500);
-
-        state.knownNoteIds =
-            Array.from(
-                new Set([
-                    ...knownNoteIds,
-                    ...currentNoteIds
-                ])
-            ).slice(-1000);
-
-        saveNotificationState(
-            state
+                    created_at:
+                        course.created_at ||
+                        new Date().toISOString()
+                });
+            }
         );
+
+        newNotes.forEach(
+            note => {
+
+                addNotification({
+
+                    id:
+                        `note-${note.id}`,
+
+                    type:
+                        "note",
+
+                    title:
+                        "New Notes Available",
+
+                    message:
+                        `${note.file_name || note.unit || "New study notes"} is now available in the Notes Library.`,
+
+                    created_at:
+                        note.created_at ||
+                        new Date().toISOString()
+                });
+            }
+        );
+
+        saveNotificationState({
+
+            ...state,
+
+            knownCourseIds:
+                currentCourseIds,
+
+            knownNoteIds:
+                currentNoteIds
+        });
     }
 
+    const latestState =
+        getNotificationState();
+
     if (
-        state.lastAppUpdateId !==
-        APP_UPDATE_ID
+        !latestState.appUpdateShown
     ) {
 
         addNotification({
@@ -2121,21 +2040,22 @@ function syncContentNotifications() {
                 "update",
 
             title:
-                "Mwaniki Scholars dashboard updated",
+                "Dashboard Updated",
 
             message:
-                "Your dashboard has received improvements to make your learning experience smoother. Check your profile, notifications, courses and study resources.",
+                "Your Mwaniki Scholars dashboard has been updated with improved course navigation, notifications and learning tools.",
 
             created_at:
                 new Date().toISOString()
         });
 
-        state.lastAppUpdateId =
-            APP_UPDATE_ID;
+        saveNotificationState({
 
-        saveNotificationState(
-            state
-        );
+            ...latestState,
+
+            appUpdateShown:
+                true
+        });
     }
 
     updateNotificationBadge();
@@ -2143,8 +2063,6 @@ function syncContentNotifications() {
 
 /* =========================================================
    NOTIFICATION BADGE
-   ---------------------------------------------------------
-   SHOWS NUMBER OF UNREAD NOTIFICATIONS
 ========================================================= */
 
 function updateNotificationBadge() {
@@ -2158,52 +2076,32 @@ function updateNotificationBadge() {
                 !notification.read
         ).length;
 
-    const possibleBadges =
+    const targets =
         $all(
             "#notificationBadge, [data-notification-count], .notification-badge, .notification-count"
         );
 
-    possibleBadges.forEach(
+    targets.forEach(
         badge => {
 
-            if (unreadCount > 0) {
+            badge.textContent =
+                unreadCount > 99
+                    ? "99+"
+                    : String(
+                        unreadCount
+                    );
 
-                badge.textContent =
-                    unreadCount > 99
-                        ? "99+"
-                        : String(
-                            unreadCount
-                        );
+            badge.style.display =
+                unreadCount > 0
+                    ? ""
+                    : "none";
 
-                badge.style.display =
-                    "inline-flex";
-
-                badge.style.visibility =
-                    "visible";
-
-                badge.setAttribute(
-                    "aria-hidden",
-                    "false"
-                );
-
-                badge.setAttribute(
-                    "aria-label",
-                    `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-                );
-
-            } else {
-
-                badge.textContent =
-                    "";
-
-                badge.style.display =
-                    "none";
-
-                badge.setAttribute(
-                    "aria-hidden",
-                    "true"
-                );
-            }
+            badge.setAttribute(
+                "aria-hidden",
+                unreadCount > 0
+                    ? "false"
+                    : "true"
+            );
         }
     );
 
@@ -2212,26 +2110,31 @@ function updateNotificationBadge() {
 
     if (panelCount) {
 
-        if (unreadCount > 0) {
+        panelCount.textContent =
+            String(
+                unreadCount
+            );
 
-            panelCount.textContent =
-                unreadCount > 99
-                    ? "99+"
-                    : String(
-                        unreadCount
-                    );
+        panelCount.style.display =
+            unreadCount > 0
+                ? ""
+                : "none";
+    }
 
-            panelCount.hidden =
-                false;
+    const visibleCount =
+        $("#notificationCount");
 
-        } else {
+    if (visibleCount) {
 
-            panelCount.textContent =
-                "0";
+        visibleCount.textContent =
+            String(
+                unreadCount
+            );
 
-            panelCount.hidden =
-                true;
-        }
+        visibleCount.style.display =
+            unreadCount > 0
+                ? ""
+                : "none";
     }
 
     const button =
@@ -2248,20 +2151,6 @@ function updateNotificationBadge() {
 
         button.dataset.unreadCount =
             String(unreadCount);
-    }
-
-    const visibleCount =
-        $("#notificationCount");
-
-    if (visibleCount) {
-
-        visibleCount.textContent =
-            String(unreadCount);
-
-        visibleCount.style.display =
-            unreadCount > 0
-                ? ""
-                : "none";
     }
 }
 
@@ -2867,10 +2756,6 @@ async function loadCourses() {
 
         updateDashboardStatistics();
 
-        /*
-            Apply an existing search after fresh
-            course data has loaded.
-        */
         const searchInput =
             $("#courseSearch");
 
@@ -2914,6 +2799,8 @@ async function loadCourses() {
    ---------------------------------------------------------
    NO COURSE IMAGE
    NO IMAGE PLACEHOLDER
+
+   COMMUNITY BUTTON ADDED
 ========================================================= */
 
 function renderCourseLibrary(
@@ -2974,15 +2861,31 @@ function renderCourseLibrary(
                                 )}
                             </p>
 
-                            <button
-                                type="button"
-                                class="course-card-button"
-                                data-open-course="${escapeHTML(
-                                    course.id
-                                )}"
+                            <div
+                                class="course-card-actions"
                             >
-                                Start Learning
-                            </button>
+
+                                <button
+                                    type="button"
+                                    class="course-card-button"
+                                    data-open-course="${escapeHTML(
+                                        course.id
+                                    )}"
+                                >
+                                    Start Learning
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="course-card-button course-community-button"
+                                    data-open-course-community="${escapeHTML(
+                                        course.id
+                                    )}"
+                                >
+                                    💬 Community
+                                </button>
+
+                            </div>
 
                         </div>
 
@@ -2992,6 +2895,9 @@ function renderCourseLibrary(
             )
             .join("");
 
+    /*
+     * Start Learning buttons.
+     */
     courseGrid
         .querySelectorAll(
             "[data-open-course]"
@@ -3025,23 +2931,50 @@ function renderCourseLibrary(
                 );
             }
         );
+
+    /*
+     * Course Community buttons.
+     *
+     * Each button is resolved against the actual
+     * course ID rather than the course title.
+     */
+    courseGrid
+        .querySelectorAll(
+            "[data-open-course-community]"
+        )
+        .forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const courseId =
+                            button.dataset
+                                .openCourseCommunity;
+
+                        const course =
+                            allCourses.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        courseId
+                                    )
+                            );
+
+                        openCourseCommunity(
+                            course
+                        );
+                    }
+                );
+            }
+        );
 }
 
 /* =========================================================
    COURSE SEARCH
-   ---------------------------------------------------------
-   FIXED:
-
-   searchStatus is now properly declared.
-
-   The search system:
-   - searches title
-   - searches description
-   - works with Enter
-   - works with Search button
-   - works live while typing
-   - supports Clear
-   - supports "/" shortcut
 ========================================================= */
 
 function performCourseSearch(
@@ -3081,7 +3014,6 @@ function performCourseSearch(
         }
 
         if (shouldScroll) {
-
             scrollToCourses();
         }
 
@@ -3119,7 +3051,6 @@ function performCourseSearch(
     }
 
     if (shouldScroll) {
-
         scrollToCourses();
     }
 }
@@ -3185,19 +3116,9 @@ function setupCourseSearch() {
     const clearButton =
         $("#clearCourseSearchButton");
 
-    /*
-        IMPORTANT:
-        This was the missing declaration that caused:
-
-        ReferenceError: searchStatus is not defined
-    */
     const searchStatus =
         $("#courseSearchStatus");
 
-    /*
-        Prevent duplicate event handlers.
-        This function is called again after refresh.
-    */
     if (searchInput) {
 
         searchInput.onkeydown =
@@ -3261,9 +3182,6 @@ function setupCourseSearch() {
             };
     }
 
-    /*
-        "/" focuses the course search.
-    */
     if (
         !document.body.dataset
             .courseSearchShortcutReady
@@ -3316,9 +3234,6 @@ function setupCourseSearch() {
         );
     }
 
-    /*
-        Initialize the status safely.
-    */
     if (searchStatus) {
 
         const existingTerm =
@@ -3347,9 +3262,6 @@ function setupCourseSearch() {
 
 /* =========================================================
    RECENT COURSE
-   ---------------------------------------------------------
-   NO IMAGE
-   NO IMAGE PLACEHOLDER
 ========================================================= */
 
 function renderRecentCourse() {
@@ -3827,7 +3739,6 @@ function renderNotesLibrary() {
             .join("");
 }
 
-
 /* =========================================================
    QUIZ LOADING
 ========================================================= */
@@ -3840,16 +3751,21 @@ async function loadQuizzes() {
             "📝 Loading all quiz questions from Supabase..."
         );
 
-        const PAGE_SIZE = 1000;
+        const PAGE_SIZE =
+            1000;
 
-        let allQuizRows = [];
+        let allQuizRows =
+            [];
 
-        let from = 0;
+        let from =
+            0;
 
         while (true) {
 
             const to =
-                from + PAGE_SIZE - 1;
+                from +
+                PAGE_SIZE -
+                1;
 
             console.log(
                 `📝 Loading quiz rows ${from}–${to}...`
@@ -3858,31 +3774,33 @@ async function loadQuizzes() {
             const {
                 data,
                 error
-            } = await supabase
-                .from("quizzes")
-                .select(`
-                    id,
-                    course_id,
-                    question,
-                    option_a,
-                    option_b,
-                    option_c,
-                    option_d,
-                    correct_answer,
-                    created_at,
-                    course,
-                    unit
-                `)
-                .order(
-                    "id",
-                    {
-                        ascending: true
-                    }
-                )
-                .range(
-                    from,
-                    to
-                );
+            } =
+                await supabase
+                    .from("quizzes")
+                    .select(`
+                        id,
+                        course_id,
+                        question,
+                        option_a,
+                        option_b,
+                        option_c,
+                        option_d,
+                        correct_answer,
+                        created_at,
+                        course,
+                        unit
+                    `)
+                    .order(
+                        "id",
+                        {
+                            ascending:
+                                true
+                        }
+                    )
+                    .range(
+                        from,
+                        to
+                    );
 
             if (error) {
 
@@ -3891,16 +3809,14 @@ async function loadQuizzes() {
                     error
                 );
 
-                allQuizzes = [];
+                allQuizzes =
+                    [];
 
                 updateDashboardStatistics();
 
                 return;
             }
 
-            /*
-             * No more rows available.
-             */
             if (
                 !data ||
                 data.length === 0
@@ -3909,39 +3825,28 @@ async function loadQuizzes() {
                 break;
             }
 
-            /*
-             * Add this batch to the complete
-             * quiz collection.
-             */
             allQuizRows =
-                allQuizRows.concat(data);
+                allQuizRows.concat(
+                    data
+                );
 
             console.log(
                 `📝 Quiz batch loaded: ${data.length} | ` +
                 `Total loaded: ${allQuizRows.length}`
             );
 
-            /*
-             * If fewer than 1,000 rows were returned,
-             * this was the final batch.
-             */
             if (
-                data.length < PAGE_SIZE
+                data.length <
+                PAGE_SIZE
             ) {
 
                 break;
             }
 
-            /*
-             * Move to the next batch.
-             */
-            from += PAGE_SIZE;
+            from +=
+                PAGE_SIZE;
         }
 
-        /*
-         * Store the complete quiz collection
-         * globally for the dashboard.
-         */
         allQuizzes =
             allQuizRows;
 
@@ -3959,7 +3864,8 @@ async function loadQuizzes() {
             error
         );
 
-        allQuizzes = [];
+        allQuizzes =
+            [];
 
         updateDashboardStatistics();
     }
@@ -3979,7 +3885,8 @@ function calculateQuizProgress() {
 
     if (
         !progress ||
-        typeof progress !== "object"
+        typeof progress !==
+            "object"
     ) {
         return 0;
     }
@@ -4501,6 +4408,14 @@ function saveTurboAIQuestion(
             8
         )
     );
+
+    /*
+     * Keep the last question separately as well.
+     */
+    writeStorage(
+        TURBO_AI_LAST_QUESTION_KEY,
+        cleanedQuestion
+    );
 }
 
 function renderTurboAIRecentQuestions() {
@@ -4639,38 +4554,98 @@ function scrollToTurboAI() {
 }
 
 /* =========================================================
+   TURBO AI ANSWER FORMATTER
+========================================================= */
+
+function formatTurboAIAnswer(
+    answer
+) {
+
+    const safe =
+        escapeHTML(
+            answer || ""
+        );
+
+    return safe
+        .replace(
+            /\*\*(.*?)\*\*/g,
+            "<strong>$1</strong>"
+        )
+        .replace(
+            /\n\n+/g,
+            "</p><p>"
+        )
+        .replace(
+            /\n/g,
+            "<br>"
+        );
+}
+
+/* =========================================================
    ASK TURBO AI
 ========================================================= */
 
 async function askTurboAI() {
-    const questionInput = document.getElementById("turboAIQuestion");
-    const answerBox = document.getElementById("turboAIAnswer");
-    const statusBox = document.getElementById("turboAIStatus");
-    const askButton = document.getElementById("askTurboAIButton");
 
-    if (!questionInput || !answerBox || !askButton) {
-        console.error("❌ Turbo AI elements were not found.");
+    const questionInput =
+        document.getElementById(
+            "turboAIQuestion"
+        );
+
+    const answerBox =
+        document.getElementById(
+            "turboAIAnswer"
+        );
+
+    const statusBox =
+        document.getElementById(
+            "turboAIStatus"
+        );
+
+    const askButton =
+        document.getElementById(
+            "askTurboAIButton"
+        );
+
+    if (
+        !questionInput ||
+        !answerBox ||
+        !askButton
+    ) {
+
+        console.error(
+            "❌ Turbo AI elements were not found."
+        );
+
         return;
     }
 
-    const question = questionInput.value.trim();
+    const question =
+        questionInput.value.trim();
 
     if (!question) {
+
         if (statusBox) {
-            statusBox.textContent = "Please enter a question.";
+
+            statusBox.textContent =
+                "Please enter a question.";
         }
 
         answerBox.innerHTML =
             "<p>Please enter a question for Turbo AI.</p>";
 
         questionInput.focus();
+
         return;
     }
 
-    askButton.disabled = true;
+    askButton.disabled =
+        true;
 
     if (statusBox) {
-        statusBox.textContent = "Turbo AI is thinking...";
+
+        statusBox.textContent =
+            "Turbo AI is thinking.";
     }
 
     answerBox.innerHTML = `
@@ -4680,21 +4655,27 @@ async function askTurboAI() {
     `;
 
     try {
-        console.log("🤖 Sending question to Turbo AI...");
+
+        console.log(
+            "🤖 Sending question to Turbo AI..."
+        );
 
         const {
             data,
             error
-        } = await supabase.functions.invoke(
-            "turbo-ai",
-            {
-                body: {
-                    message: question
+        } =
+            await supabase.functions.invoke(
+                "turbo-ai",
+                {
+                    body: {
+                        message:
+                            question
+                    }
                 }
-            }
-        );
+            );
 
         if (error) {
+
             console.error(
                 "❌ Turbo AI function error:",
                 error
@@ -4707,12 +4688,14 @@ async function askTurboAI() {
         }
 
         if (!data) {
+
             throw new Error(
                 "Turbo AI returned no response."
             );
         }
 
         if (!data.success) {
+
             throw new Error(
                 data.error ||
                 "Turbo AI could not answer the question."
@@ -4720,11 +4703,13 @@ async function askTurboAI() {
         }
 
         const answer =
-            typeof data.answer === "string"
+            typeof data.answer ===
+                "string"
                 ? data.answer.trim()
                 : "";
 
         if (!answer) {
+
             throw new Error(
                 "Turbo AI returned an empty answer."
             );
@@ -4737,11 +4722,28 @@ async function askTurboAI() {
         `;
 
         if (statusBox) {
+
             statusBox.textContent =
                 "Turbo AI response ready.";
+
+            statusBox.dataset.messageType =
+                "success";
         }
 
-        saveTurboAIRecentQuestion(question);
+        /*
+         * CORRECT FUNCTION NAME.
+         *
+         * The old code called:
+         * saveTurboAIRecentQuestion()
+         *
+         * but the actual function is:
+         * saveTurboAIQuestion()
+         */
+        saveTurboAIQuestion(
+            question
+        );
+
+        renderTurboAIRecentQuestions();
 
         console.log(
             "✅ Turbo AI response received successfully."
@@ -4756,23 +4758,34 @@ async function askTurboAI() {
 
         answerBox.innerHTML = `
             <div class="turbo-ai-error">
-                <strong>Turbo AI could not respond.</strong>
+
+                <strong>
+                    Turbo AI could not respond.
+                </strong>
+
                 <p>
                     ${escapeHTML(
                         error.message ||
                         "Please try again."
                     )}
                 </p>
+
             </div>
         `;
 
         if (statusBox) {
+
             statusBox.textContent =
                 "Turbo AI request failed.";
+
+            statusBox.dataset.messageType =
+                "error";
         }
 
     } finally {
-        askButton.disabled = false;
+
+        askButton.disabled =
+            false;
     }
 }
 
@@ -4795,7 +4808,10 @@ function setupTurboAI() {
         $("#turbo-ai") ||
         $("#turboAISection");
 
-    if (!askButton || !questionInput) {
+    if (
+        !askButton ||
+        !questionInput
+    ) {
 
         console.log(
             "ℹ️ Turbo AI dashboard interface is not present on this page."
@@ -4803,12 +4819,6 @@ function setupTurboAI() {
 
         return;
     }
-
-    /*
-        Use onclick/onkeydown rather than repeatedly
-        adding listeners because initialization can happen
-        again after authentication.
-    */
 
     askButton.onclick =
         function (event) {
@@ -4875,7 +4885,6 @@ function setupTurboAI() {
             "true";
     }
 }
-
 /* =========================================================
    OUTSIDE PANEL CLOSING
 ========================================================= */
@@ -5058,11 +5067,8 @@ async function initializeDashboard() {
         createWelcomeNotification();
 
         /*
-            Load all dashboard data independently.
-            A failure in one section does not prevent
-            the others from loading.
-        */
-
+         * Load every dashboard data source independently.
+         */
         await Promise.all([
             loadCourses(),
             loadNotes(),
@@ -5070,9 +5076,9 @@ async function initializeDashboard() {
         ]);
 
         /*
-            Course search is initialized AFTER course
-            data has arrived.
-        */
+         * Course search is initialized after courses
+         * have arrived.
+         */
         setupCourseSearch();
 
         syncContentNotifications();
@@ -5233,6 +5239,21 @@ window.mwanikiDashboard = {
             );
         },
 
+    /*
+     * Course Community API
+     */
+    openCourseCommunity:
+        function (course) {
+
+            openCourseCommunity(
+                course
+            );
+        },
+
+    /*
+     * Turbo AI remains independent from
+     * Mwaniki AI.
+     */
     askTurboAI:
         askTurboAI
 };
@@ -5251,6 +5272,18 @@ window.mwanikiAddNotification =
         renderNotifications();
 
         updateNotificationBadge();
+    };
+
+/* =========================================================
+   PUBLIC COURSE COMMUNITY FUNCTION
+========================================================= */
+
+window.mwanikiOpenCommunity =
+    function (course) {
+
+        openCourseCommunity(
+            course
+        );
     };
 
 /* =========================================================
