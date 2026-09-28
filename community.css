@@ -1,1142 +1,2135 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+/* ============================================================
+   MWANIKI SCHOLARS
+   COMMUNITY — PHASE 2
+   DISCORD-STYLE COMMUNITY INTERFACE
+============================================================ */
+
+:root {
+  --primary: #087f73;
+  --primary-dark: #05665d;
+  --primary-soft: #e7f3f1;
+
+  --accent: #0b7285;
+  --accent-soft: #e8f5f7;
+
+  --community-bg: #f4f7f8;
+  --sidebar-bg: #102d2c;
+  --sidebar-dark: #0b2322;
+  --sidebar-hover: rgba(255,255,255,.08);
+  --sidebar-active: rgba(8,127,115,.25);
+
+  --chat-bg: #ffffff;
+  --member-bg: #f8fafb;
+
+  --text: #173b3a;
+  --text-soft: #58706f;
+  --text-muted: #819190;
+
+  --border: #dfe8e7;
+
+  --success: #2e9b67;
+  --warning: #d99a27;
+  --danger: #d9534f;
+
+  --shadow: 0 10px 30px rgba(23,59,58,.08);
+
+  --sidebar-width: 270px;
+  --member-width: 280px;
+  --header-height: 74px;
+
+  --radius: 12px;
+}
+
+/* ============================================================
+   RESET
+============================================================ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: var(--text);
+  background: var(--community-bg);
+  overflow: hidden;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ============================================================
+   APP
+============================================================ */
+
+.community-app {
+  width: 100%;
+  height: 100vh;
+  display: grid;
+  grid-template-columns:
+    var(--sidebar-width)
+    minmax(0, 1fr)
+    var(--member-width);
+
+  overflow: hidden;
+}
 
-    <meta
-        name="description"
-        content="Mwaniki Community - academic discussion and study community for Mwaniki Scholars."
-    >
+/* ============================================================
+   LEFT SIDEBAR
+============================================================ */
 
-    <title>Mwaniki Community | Mwaniki Scholars</title>
+.community-sidebar {
+  min-width: 0;
+  height: 100vh;
 
-    <link
-        rel="icon"
-        type="image/png"
-        href="./favicon.png"
-    >
+  display: flex;
+  flex-direction: column;
 
-    <link
-        rel="stylesheet"
-        href="./community.css"
-    >
-</head>
+  background:
+    linear-gradient(
+      180deg,
+      var(--sidebar-bg),
+      var(--sidebar-dark)
+    );
 
-<body>
-
-<div id="communityApp" class="community-app">
-
-    <!-- =====================================================
-         MOBILE OVERLAY
-    ====================================================== -->
+  color: #fff;
 
-    <div
-        id="mobileOverlay"
-        class="mobile-overlay"
-        aria-hidden="true"
-    ></div>
-
-
-    <!-- =====================================================
-         LEFT COMMUNITY SIDEBAR
-    ====================================================== -->
-
-    <aside
-        id="communitySidebar"
-        class="community-sidebar"
-        aria-label="Community navigation"
-    >
-
-        <div class="sidebar-brand">
-
-            <div class="brand-mark">
-                M
-            </div>
-
-            <div class="brand-copy">
-                <strong>Mwaniki</strong>
-                <span>Community</span>
-            </div>
-
-            <button
-                id="closeSidebarButton"
-                class="mobile-close-button"
-                type="button"
-                aria-label="Close navigation"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <!-- COMMUNITY SELECTOR -->
-
-        <div class="community-selector">
-
-            <button
-                id="communitySelectorButton"
-                class="community-selector-button"
-                type="button"
-            >
-
-                <span class="community-icon">
-                    MS
-                </span>
-
-                <span class="community-selector-copy">
-                    <strong id="activeCommunityName">
-                        Mwaniki Scholars
-                    </strong>
-
-                    <small>
-                        Academic Community
-                    </small>
-                </span>
-
-                <span class="selector-chevron">
-                    ▾
-                </span>
-
-            </button>
-
-        </div>
-
-
-        <!-- QUICK ACTIONS -->
-
-        <div class="sidebar-section">
-
-            <div class="sidebar-section-title">
-                COMMUNITY
-            </div>
-
-            <button
-                class="sidebar-action active"
-                type="button"
-                data-channel="general-chat"
-                data-channel-name="General Chat"
-            >
-                <span class="sidebar-action-icon">💬</span>
-                <span>General Chat</span>
-                <span
-                    id="generalUnread"
-                    class="channel-unread"
-                    hidden
-                >
-                    0
-                </span>
-            </button>
-
-
-            <button
-                class="sidebar-action"
-                type="button"
-                data-channel="announcements"
-                data-channel-name="Announcements"
-            >
-                <span class="sidebar-action-icon">📢</span>
-                <span>Announcements</span>
-                <span
-                    id="announcementsUnread"
-                    class="channel-unread"
-                    hidden
-                >
-                    0
-                </span>
-            </button>
-
-
-            <button
-                class="sidebar-action"
-                type="button"
-                data-channel="introductions"
-                data-channel-name="Introductions"
-            >
-                <span class="sidebar-action-icon">👋</span>
-                <span>Introductions</span>
-                <span
-                    id="introductionsUnread"
-                    class="channel-unread"
-                    hidden
-                >
-                    0
-                </span>
-            </button>
-
-        </div>
-
-
-        <!-- MEDICAL SCIENCES -->
-
-        <div class="sidebar-section">
-
-            <div class="sidebar-section-heading">
-
-                <span>
-                    MEDICAL SCIENCES
-                </span>
-
-                <button
-                    id="medicalCategoryButton"
-                    class="category-toggle"
-                    type="button"
-                    aria-label="Toggle medical channels"
-                >
-                    −
-                </button>
-
-            </div>
-
-
-            <div
-                id="medicalChannels"
-                class="channel-group"
-            >
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="hematology"
-                    data-channel-name="Hematology"
-                >
-                    <span class="hash">#</span>
-                    <span>hematology</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="hematology"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="clinical-chemistry"
-                    data-channel-name="Clinical Chemistry"
-                >
-                    <span class="hash">#</span>
-                    <span>clinical-chemistry</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="clinical-chemistry"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="microbiology"
-                    data-channel-name="Microbiology"
-                >
-                    <span class="hash">#</span>
-                    <span>microbiology</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="microbiology"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="parasitology"
-                    data-channel-name="Parasitology"
-                >
-                    <span class="hash">#</span>
-                    <span>parasitology</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="parasitology"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="blood-transfusion"
-                    data-channel-name="Blood Transfusion"
-                >
-                    <span class="hash">#</span>
-                    <span>blood-transfusion</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="blood-transfusion"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- STUDY GROUPS -->
-
-        <div class="sidebar-section">
-
-            <div class="sidebar-section-heading">
-
-                <span>
-                    STUDY GROUPS
-                </span>
-
-                <button
-                    id="studyCategoryButton"
-                    class="category-toggle"
-                    type="button"
-                    aria-label="Toggle study channels"
-                >
-                    −
-                </button>
-
-            </div>
-
-
-            <div
-                id="studyChannels"
-                class="channel-group"
-            >
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="exam-preparation"
-                    data-channel-name="Exam Preparation"
-                >
-                    <span class="hash">#</span>
-                    <span>exam-preparation</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="exam-preparation"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="assignment-help"
-                    data-channel-name="Assignment Help"
-                >
-                    <span class="hash">#</span>
-                    <span>assignment-help</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="assignment-help"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="revision"
-                    data-channel-name="Revision"
-                >
-                    <span class="hash">#</span>
-                    <span>revision</span>
-                    <span
-                        class="channel-unread"
-                        data-unread-for="revision"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- AI & LEARNING -->
-
-        <div class="sidebar-section">
-
-            <div class="sidebar-section-heading">
-
-                <span>
-                    AI & LEARNING
-                </span>
-
-                <button
-                    id="aiCategoryButton"
-                    class="category-toggle"
-                    type="button"
-                    aria-label="Toggle AI channels"
-                >
-                    −
-                </button>
-
-            </div>
-
-
-            <div
-                id="aiChannels"
-                class="channel-group"
-            >
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="mwaniki-ai"
-                    data-channel-name="Mwaniki AI"
-                >
-                    <span class="channel-ai-icon">
-                        ✦
-                    </span>
-
-                    <span>
-                        mwaniki-ai
-                    </span>
-
-                    <span
-                        class="channel-unread"
-                        data-unread-for="mwaniki-ai"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    class="channel-link"
-                    type="button"
-                    data-channel="turbo-ai"
-                    data-channel-name="Turbo AI"
-                >
-                    <span class="channel-ai-icon turbo">
-                        ⚡
-                    </span>
-
-                    <span>
-                        turbo-ai
-                    </span>
-
-                    <span
-                        class="channel-unread"
-                        data-unread-for="turbo-ai"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- USER AREA -->
-
-        <div class="sidebar-user-area">
-
-            <div class="current-user">
-
-                <div
-                    id="currentUserAvatar"
-                    class="user-avatar"
-                >
-                    S
-
-                    <span
-                        id="currentUserPresence"
-                        class="presence-dot online"
-                    ></span>
-                </div>
-
-
-                <div class="current-user-copy">
-
-                    <strong id="currentUserName">
-                        Student
-                    </strong>
-
-                    <span id="currentUserRole">
-                        Student
-                    </span>
-
-                </div>
-
-
-                <button
-                    id="communitySettingsButton"
-                    class="user-settings-button"
-                    type="button"
-                    aria-label="Community settings"
-                >
-                    ⚙
-                </button>
-
-            </div>
-
-        </div>
-
-    </aside>
-
-
-    <!-- =====================================================
-         MAIN COMMUNITY AREA
-    ====================================================== -->
-
-    <main class="community-main">
-
-        <!-- TOP HEADER -->
-
-        <header class="community-header">
-
-            <div class="header-left">
-
-                <button
-                    id="openSidebarButton"
-                    class="mobile-menu-button"
-                    type="button"
-                    aria-label="Open community navigation"
-                >
-                    ☰
-                </button>
-
-
-                <div class="channel-title-block">
-
-                    <div class="channel-title-row">
-
-                        <span
-                            id="activeChannelIcon"
-                            class="channel-title-hash"
-                        >
-                            #
-                        </span>
-
-                        <h1 id="activeChannelName">
-                            General Chat
-                        </h1>
-
-                    </div>
-
-
-                    <p id="activeChannelDescription">
-                        Welcome to the Mwaniki Scholars community.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <div class="header-actions">
-
-                <button
-                    id="searchButton"
-                    class="header-icon-button"
-                    type="button"
-                    title="Search messages"
-                    aria-label="Search messages"
-                >
-                    🔎
-                </button>
-
-
-                <button
-                    id="notificationsButton"
-                    class="header-icon-button notification-button"
-                    type="button"
-                    title="Notifications"
-                    aria-label="Notifications"
-                >
-                    🔔
-
-                    <span
-                        id="communityNotificationBadge"
-                        class="notification-badge"
-                        hidden
-                    >
-                        0
-                    </span>
-                </button>
-
-
-                <button
-                    id="memberPanelButton"
-                    class="header-icon-button mobile-member-button"
-                    type="button"
-                    title="Members"
-                    aria-label="Members"
-                >
-                    👥
-                </button>
-
-            </div>
-
-        </header>
-
-
-        <!-- SEARCH BAR -->
-
-        <div
-            id="messageSearchBar"
-            class="message-search-bar"
-            hidden
-        >
-
-            <div class="search-input-wrapper">
-
-                <span>
-                    🔎
-                </span>
-
-                <input
-                    id="messageSearchInput"
-                    type="search"
-                    placeholder="Search messages in this community..."
-                    autocomplete="off"
-                >
-
-                <button
-                    id="clearMessageSearchButton"
-                    type="button"
-                    aria-label="Clear search"
-                >
-                    ×
-                </button>
-
-            </div>
-
-            <div
-                id="messageSearchResults"
-                class="message-search-results"
-            ></div>
-
-        </div>
-
-
-        <!-- CHAT CONTENT -->
-
-        <section
-            id="chatArea"
-            class="chat-area"
-        >
-
-            <!-- WELCOME / MESSAGE VIEW -->
-
-            <div
-                id="messagesContainer"
-                class="messages-container"
-                aria-live="polite"
-            >
-
-                <div
-                    id="messagesLoading"
-                    class="messages-loading"
-                >
-
-                    <div class="loading-spinner"></div>
-
-                    <p>
-                        Loading community messages...
-                    </p>
-
-                </div>
-
-            </div>
-
-
-            <!-- TYPING INDICATOR -->
-
-            <div
-                id="typingIndicator"
-                class="typing-indicator"
-                aria-live="polite"
-            >
-                <span id="typingText"></span>
-            </div>
-
-
-            <!-- COMPOSER -->
-
-            <div class="composer-area">
-
-                <div
-                    id="replyPreview"
-                    class="reply-preview"
-                    hidden
-                >
-
-                    <div>
-                        <span class="reply-label">
-                            Replying to
-                        </span>
-
-                        <strong id="replyPreviewName">
-                            Student
-                        </strong>
-
-                        <p id="replyPreviewText">
-                            Message
-                        </p>
-                    </div>
-
-                    <button
-                        id="cancelReplyButton"
-                        type="button"
-                        aria-label="Cancel reply"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-
-                <form
-                    id="messageComposer"
-                    class="message-composer"
-                >
-
-                    <button
-                        id="attachmentButton"
-                        class="composer-button"
-                        type="button"
-                        title="Attach a file"
-                        aria-label="Attach a file"
-                    >
-                        +
-                    </button>
-
-
-                    <input
-                        id="attachmentInput"
-                        type="file"
-                        hidden
-                        multiple
-                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"
-                    >
-
-
-                    <div class="composer-input-wrap">
-
-                        <textarea
-                            id="messageInput"
-                            rows="1"
-                            maxlength="4000"
-                            placeholder="Message #general-chat"
-                            autocomplete="off"
-                        ></textarea>
-
-
-                        <div class="composer-tools">
-
-                            <span
-                                id="characterCount"
-                                class="character-count"
-                            >
-                                0/4000
-                            </span>
-
-                            <button
-                                id="emojiButton"
-                                class="composer-mini-button"
-                                type="button"
-                                title="Add emoji"
-                                aria-label="Add emoji"
-                            >
-                                ☺
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <button
-                        id="sendMessageButton"
-                        class="send-message-button"
-                        type="submit"
-                        title="Send message"
-                        aria-label="Send message"
-                    >
-                        ➤
-                    </button>
-
-                </form>
-
-
-                <div
-                    id="attachmentPreview"
-                    class="attachment-preview"
-                    hidden
-                ></div>
-
-
-                <p class="composer-hint">
-                    Be respectful, academic and helpful.
-                    Press Enter to send.
-                </p>
-
-            </div>
-
-        </section>
-
-    </main>
-
-
-    <!-- =====================================================
-         RIGHT MEMBER PANEL
-    ====================================================== -->
-
-    <aside
-        id="memberSidebar"
-        class="member-sidebar"
-        aria-label="Community members"
-    >
-
-        <div class="member-header">
-
-            <div>
-
-                <strong>
-                    Members
-                </strong>
-
-                <span id="memberCount">
-                    0
-                </span>
-
-            </div>
-
-
-            <button
-                id="closeMemberPanelButton"
-                class="member-close-button"
-                type="button"
-                aria-label="Close members"
-            >
-                ×
-            </button>
-
-        </div>
-
-
-        <div class="member-search">
-
-            <input
-                id="memberSearchInput"
-                type="search"
-                placeholder="Search members..."
-                autocomplete="off"
-            >
-
-        </div>
-
-
-        <div
-            id="memberList"
-            class="member-list"
-        >
-
-            <div class="member-loading">
-                Loading members...
-            </div>
-
-        </div>
-
-    </aside>
-
-</div>
-
-
-<!-- =========================================================
-     MESSAGE CONTEXT / ACTION MENU
-========================================================== -->
-
-<div
-    id="messageActionMenu"
-    class="message-action-menu"
-    hidden
->
-
-    <button
-        type="button"
-        data-action="reply"
-    >
-        ↩ Reply
-    </button>
-
-    <button
-        type="button"
-        data-action="react"
-    >
-        🙂 React
-    </button>
-
-    <button
-        type="button"
-        data-action="copy"
-    >
-        ⧉ Copy message
-    </button>
-
-    <button
-        type="button"
-        data-action="report"
-    >
-        ⚑ Report
-    </button>
-
-</div>
-
-
-<!-- =========================================================
-     EMOJI PICKER
-========================================================== -->
-
-<div
-    id="emojiPicker"
-    class="emoji-picker"
-    hidden
->
-
-    <button type="button" data-emoji="👍">👍</button>
-    <button type="button" data-emoji="❤️">❤️</button>
-    <button type="button" data-emoji="😂">😂</button>
-    <button type="button" data-emoji="🎉">🎉</button>
-    <button type="button" data-emoji="👏">👏</button>
-    <button type="button" data-emoji="🔥">🔥</button>
-    <button type="button" data-emoji="💡">💡</button>
-    <button type="button" data-emoji="🧠">🧠</button>
-    <button type="button" data-emoji="📚">📚</button>
-    <button type="button" data-emoji="❤️">💯</button>
-
-</div>
-
-
-<!-- =========================================================
-     NOTIFICATIONS PANEL
-========================================================== -->
-
-<div
-    id="communityNotificationPanel"
-    class="floating-panel notification-panel"
-    hidden
->
-
-    <div class="floating-panel-header">
-
-        <div>
-            <strong>
-                Community Notifications
-            </strong>
-
-            <small>
-                Your latest community activity
-            </small>
-        </div>
-
-        <button
-            id="closeNotificationPanelButton"
-            type="button"
-        >
-            ×
-        </button>
-
-    </div>
-
-
-    <div
-        id="communityNotificationContent"
-        class="notification-content"
-    >
-
-        <div class="empty-state">
-            No new notifications.
-        </div>
-
-    </div>
-
-
-    <div class="notification-footer">
-
-        <button
-            id="markNotificationsReadButton"
-            type="button"
-            class="secondary-button"
-        >
-            Mark all as read
-        </button>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     COMMUNITY SETTINGS
-========================================================== -->
-
-<div
-    id="communitySettingsPanel"
-    class="floating-panel settings-panel"
-    hidden
->
-
-    <div class="floating-panel-header">
-
-        <div>
-            <strong>
-                Community Settings
-            </strong>
-
-            <small>
-                Your community preferences
-            </small>
-        </div>
-
-        <button
-            id="closeSettingsPanelButton"
-            type="button"
-        >
-            ×
-        </button>
-
-    </div>
-
-
-    <div class="settings-content">
-
-        <label class="setting-row">
-
-            <span>
-                Enter key sends message
-            </span>
+  border-right: 1px solid rgba(255,255,255,.05);
 
-            <input
-                id="enterToSendToggle"
-                type="checkbox"
-                checked
-            >
+  overflow: hidden;
+}
 
-        </label>
+.sidebar-header {
+  height: var(--header-height);
 
+  padding: 0 18px;
 
-        <label class="setting-row">
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-            <span>
-                Show online presence
-            </span>
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
 
-            <input
-                id="presenceToggle"
-                type="checkbox"
-                checked
-            >
+.community-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
 
-        </label>
+.community-brand-icon {
+  width: 39px;
+  height: 39px;
 
+  border-radius: 11px;
 
-        <label class="setting-row">
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-            <span>
-                Desktop-style notifications
-            </span>
+  background: var(--primary);
+  color: #fff;
 
-            <input
-                id="communityNotificationsToggle"
-                type="checkbox"
-                checked
-            >
+  font-weight: 800;
+  font-size: 18px;
 
-        </label>
+  box-shadow:
+    0 7px 18px rgba(8,127,115,.28);
+}
 
-    </div>
+.community-brand strong {
+  display: block;
+  font-size: 15px;
+  line-height: 1.1;
+}
 
-</div>
+.community-brand span {
+  display: block;
+  margin-top: 3px;
 
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+}
 
-<!-- =========================================================
-     TOAST
-========================================================== -->
+/* ============================================================
+   SEARCH
+============================================================ */
 
-<div
-    id="communityToast"
-    class="community-toast"
-    role="status"
-    aria-live="polite"
-></div>
+.community-search-wrapper {
+  padding: 13px 13px 7px;
+}
 
+.community-search {
+  height: 38px;
 
-<!-- =========================================================
-     AUTH / ERROR SCREEN
-========================================================== -->
+  display: flex;
+  align-items: center;
 
-<div
-    id="communityAuthScreen"
-    class="community-auth-screen"
-    hidden
->
+  padding: 0 11px;
 
-    <div class="auth-card">
+  border-radius: 9px;
 
-        <div class="auth-logo">
-            M
-        </div>
+  background: rgba(255,255,255,.07);
 
-        <h2>
-            Mwaniki Community
-        </h2>
+  border: 1px solid rgba(255,255,255,.06);
+}
 
-        <p id="communityAuthMessage">
-            Please sign in to access the community.
-        </p>
+.search-icon {
+  margin-right: 8px;
+  color: rgba(255,255,255,.5);
+  font-size: 17px;
+}
 
-        <button
-            id="communityLoginButton"
-            type="button"
-            class="primary-button"
-        >
-            Return to Login
-        </button>
+.community-search input {
+  width: 100%;
+  min-width: 0;
 
-    </div>
+  border: 0;
+  outline: 0;
 
-</div>
+  background: transparent;
+  color: #fff;
 
+  font-size: 12px;
+}
 
-<!-- =========================================================
-     SUPABASE
-========================================================== -->
+.community-search input::placeholder {
+  color: rgba(255,255,255,.42);
+}
 
-<script src="./supabase.js"></script>
+.clear-search {
+  border: 0;
+  background: transparent;
+  color: rgba(255,255,255,.6);
+}
 
-<script src="./community.js"></script>
+/* ============================================================
+   SIDEBAR SECTIONS
+============================================================ */
 
-</body>
-</html>
+.sidebar-section {
+  padding: 10px 10px 0;
+}
+
+.channels-section {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-section-title {
+  height: 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 7px;
+
+  color: rgba(255,255,255,.43);
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .09em;
+}
+
+.small-action {
+  width: 24px;
+  height: 24px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+  color: rgba(255,255,255,.55);
+
+  font-size: 16px;
+}
+
+.small-action:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+/* ============================================================
+   COMMUNITY LIST
+============================================================ */
+
+.community-list {
+  max-height: 155px;
+  overflow-y: auto;
+}
+
+.community-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 9px 9px;
+
+  margin-bottom: 3px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: rgba(255,255,255,.73);
+
+  text-align: left;
+
+  transition:
+    background .15s ease,
+    color .15s ease;
+}
+
+.community-item:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+.community-item.active {
+  background: var(--sidebar-active);
+  color: #fff;
+}
+
+.community-item-icon {
+  width: 31px;
+  height: 31px;
+
+  flex: 0 0 31px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 8px;
+
+  background: rgba(255,255,255,.09);
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.community-item.active .community-item-icon {
+  background: var(--primary);
+}
+
+.community-item-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.community-item-name {
+  display: block;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.community-item-description {
+  display: block;
+
+  margin-top: 2px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: rgba(255,255,255,.38);
+
+  font-size: 10px;
+}
+
+/* ============================================================
+   CHANNEL LIST
+============================================================ */
+
+.channel-list {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+
+  padding-right: 3px;
+}
+
+.channel-category {
+  margin-top: 9px;
+  margin-bottom: 3px;
+
+  padding: 0 7px;
+
+  color: rgba(255,255,255,.38);
+
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.channel-item {
+  width: 100%;
+
+  min-height: 38px;
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 7px 9px;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: rgba(255,255,255,.58);
+
+  text-align: left;
+}
+
+.channel-item:hover {
+  background: var(--sidebar-hover);
+  color: #fff;
+}
+
+.channel-item.active {
+  background: var(--sidebar-active);
+  color: #fff;
+}
+
+.channel-symbol {
+  width: 20px;
+
+  font-size: 17px;
+  color: rgba(255,255,255,.34);
+  text-align: center;
+}
+
+.channel-item.active .channel-symbol {
+  color: #7ce2d8;
+}
+
+.channel-name {
+  flex: 1;
+
+  min-width: 0;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  font-size: 12px;
+}
+
+.channel-unread {
+  min-width: 19px;
+  height: 19px;
+
+  padding: 0 5px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: var(--primary);
+  color: #fff;
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   SIDEBAR USER
+============================================================ */
+
+.sidebar-user {
+  min-height: 67px;
+
+  padding: 10px 11px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  background: rgba(0,0,0,.15);
+
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.sidebar-user-avatar {
+  width: 35px;
+  height: 35px;
+
+  flex: 0 0 35px;
+
+  position: relative;
+
+  overflow: hidden;
+
+  border-radius: 50%;
+
+  background: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #fff;
+
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sidebar-user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sidebar-user-avatar img:not([src]) {
+  display: none;
+}
+
+.sidebar-user-avatar span {
+  display: flex;
+}
+
+.sidebar-user-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.sidebar-user-info strong {
+  display: block;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: #fff;
+
+  font-size: 11px;
+}
+
+.sidebar-user-info span {
+  display: block;
+  margin-top: 3px;
+
+  color: #69d09d;
+
+  font-size: 9px;
+}
+
+/* ============================================================
+   ICON BUTTON
+============================================================ */
+
+.icon-btn {
+  width: 34px;
+  height: 34px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+
+  color: inherit;
+
+  font-size: 16px;
+}
+
+.icon-btn:hover {
+  background: rgba(255,255,255,.09);
+}
+
+.mobile-only {
+  display: none;
+}
+
+/* ============================================================
+   MAIN CHAT
+============================================================ */
+
+.community-main {
+  min-width: 0;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--chat-bg);
+}
+
+/* ============================================================
+   CHAT HEADER
+============================================================ */
+
+.chat-header {
+  height: var(--header-height);
+
+  flex: 0 0 var(--header-height);
+
+  padding: 0 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid var(--border);
+
+  background: #fff;
+
+  z-index: 5;
+}
+
+.chat-header-left {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.channel-hash {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.channel-heading {
+  min-width: 0;
+}
+
+.channel-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.channel-heading h1 {
+  margin: 0;
+
+  max-width: 400px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--text);
+
+  font-size: 15px;
+}
+
+.channel-heading p {
+  margin: 3px 0 0;
+
+  max-width: 520px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--text-muted);
+
+  font-size: 10px;
+}
+
+.private-badge {
+  padding: 3px 7px;
+
+  border-radius: 5px;
+
+  background: #fff4df;
+  color: #9a6813;
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.chat-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.header-action {
+  position: relative;
+
+  width: 36px;
+  height: 36px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: transparent;
+  color: var(--text-soft);
+
+  font-size: 16px;
+}
+
+.header-action:hover {
+  background: var(--community-bg);
+  color: var(--primary);
+}
+
+.notification-badge {
+  position: absolute;
+
+  top: 1px;
+  right: 1px;
+
+  min-width: 17px;
+  height: 17px;
+
+  padding: 0 4px;
+
+  border-radius: 9px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--danger);
+  color: #fff;
+
+  border: 2px solid #fff;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+/* ============================================================
+   MESSAGE AREA
+============================================================ */
+
+.message-area {
+  position: relative;
+
+  flex: 1;
+  min-height: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(8,127,115,.035),
+      transparent 45%
+    ),
+    #fff;
+}
+
+/* ============================================================
+   WELCOME
+============================================================ */
+
+.channel-welcome {
+  padding: 42px 30px 20px;
+
+  text-align: center;
+}
+
+.welcome-icon {
+  width: 58px;
+  height: 58px;
+
+  margin: 0 auto 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.channel-welcome h2 {
+  margin: 0;
+
+  font-size: 21px;
+}
+
+.channel-welcome p {
+  max-width: 600px;
+
+  margin: 8px auto 0;
+
+  color: var(--text-muted);
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   MESSAGE LIST
+============================================================ */
+
+.message-list {
+  flex: 1;
+  min-height: 0;
+
+  overflow-y: auto;
+
+  padding: 8px 22px 22px;
+}
+
+.message {
+  position: relative;
+
+  display: flex;
+  gap: 11px;
+
+  padding: 7px 10px;
+  margin: 2px 0;
+
+  border-radius: 9px;
+
+  transition: background .12s ease;
+}
+
+.message:hover {
+  background: #f7faf9;
+}
+
+.message.highlighted {
+  background: #eef8f6;
+}
+
+.message-avatar {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  overflow: hidden;
+
+  border-radius: 50%;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.message-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.message-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.message-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+
+  min-height: 19px;
+}
+
+.message-author {
+  color: var(--text);
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.message-role {
+  padding: 2px 5px;
+
+  border-radius: 4px;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 7px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.message-time {
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.message-body {
+  color: #425c5a;
+
+  font-size: 12px;
+  line-height: 1.55;
+
+  word-break: break-word;
+}
+
+.message-body strong {
+  color: var(--text);
+}
+
+.message-body a {
+  color: var(--primary);
+}
+
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+
+  margin-top: 7px;
+}
+
+.reaction {
+  min-height: 25px;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  padding: 3px 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 7px;
+
+  background: #fff;
+
+  color: var(--text-soft);
+
+  font-size: 10px;
+}
+
+.reaction:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.reaction.active {
+  background: var(--primary-soft);
+  border-color: rgba(8,127,115,.3);
+  color: var(--primary);
+}
+
+.message-actions {
+  position: absolute;
+
+  top: -7px;
+  right: 10px;
+
+  display: none;
+
+  padding: 3px;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  background: #fff;
+
+  box-shadow: var(--shadow);
+}
+
+.message:hover .message-actions {
+  display: flex;
+}
+
+.message-action {
+  width: 29px;
+  height: 27px;
+
+  border: 0;
+  border-radius: 5px;
+
+  background: transparent;
+  color: var(--text-soft);
+}
+
+.message-action:hover {
+  background: var(--community-bg);
+  color: var(--primary);
+}
+
+.message-action.danger:hover {
+  color: var(--danger);
+}
+
+/* ============================================================
+   DATE DIVIDER
+============================================================ */
+
+.date-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 17px 10px;
+
+  color: var(--text-muted);
+
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.date-divider::before,
+.date-divider::after {
+  content: "";
+
+  height: 1px;
+
+  flex: 1;
+
+  background: var(--border);
+}
+
+/* ============================================================
+   TYPING
+============================================================ */
+
+.typing-indicator {
+  min-height: 28px;
+
+  padding: 0 24px 4px;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  color: var(--text-muted);
+
+  font-size: 9px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 3px;
+}
+
+.typing-dots i {
+  width: 4px;
+  height: 4px;
+
+  border-radius: 50%;
+
+  background: var(--primary);
+
+  animation: typingPulse 1.2s infinite ease-in-out;
+}
+
+.typing-dots i:nth-child(2) {
+  animation-delay: .15s;
+}
+
+.typing-dots i:nth-child(3) {
+  animation-delay: .3s;
+}
+
+@keyframes typingPulse {
+  0%, 60%, 100% {
+    opacity: .25;
+    transform: translateY(0);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+/* ============================================================
+   COMPOSER
+============================================================ */
+
+.message-composer-area {
+  padding: 10px 20px 14px;
+
+  background: #fff;
+
+  border-top: 1px solid rgba(223,232,231,.5);
+}
+
+.message-form {
+  min-height: 48px;
+
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+
+  padding: 6px;
+
+  border: 1px solid var(--border);
+  border-radius: 12px;
+
+  background: #fbfcfc;
+
+  transition:
+    border-color .15s ease,
+    box-shadow .15s ease;
+}
+
+.message-form:focus-within {
+  border-color: rgba(8,127,115,.45);
+
+  box-shadow:
+    0 0 0 3px rgba(8,127,115,.06);
+}
+
+.composer-btn {
+  width: 34px;
+  height: 34px;
+
+  flex: 0 0 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 8px;
+
+  background: transparent;
+  color: var(--text-muted);
+
+  font-size: 17px;
+}
+
+.composer-btn:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.message-form textarea {
+  flex: 1;
+
+  min-width: 0;
+  min-height: 34px;
+  max-height: 150px;
+
+  padding: 8px 4px;
+
+  border: 0;
+  outline: 0;
+
+  resize: none;
+
+  background: transparent;
+  color: var(--text);
+
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.message-form textarea::placeholder {
+  color: #9aa9a8;
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+}
+
+.send-btn {
+  width: 35px;
+  height: 35px;
+
+  border: 0;
+  border-radius: 9px;
+
+  background: var(--primary);
+  color: #fff;
+
+  font-size: 15px;
+
+  transition:
+    background .15s ease,
+    transform .15s ease;
+}
+
+.send-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+
+.send-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.composer-hint {
+  padding: 5px 5px 0;
+
+  color: #9aa8a7;
+
+  font-size: 8px;
+}
+
+.composer-hint strong {
+  color: #6c7c7a;
+}
+
+.reply-preview {
+  margin-bottom: 7px;
+
+  padding: 8px 11px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-left: 3px solid var(--primary);
+  border-radius: 7px;
+
+  background: var(--primary-soft);
+}
+
+.reply-preview strong {
+  display: block;
+
+  color: var(--primary);
+
+  font-size: 10px;
+}
+
+.reply-preview span {
+  display: block;
+
+  max-width: 500px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  margin-top: 2px;
+
+  color: var(--text-soft);
+
+  font-size: 9px;
+}
+
+.reply-preview button {
+  width: 25px;
+  height: 25px;
+
+  border: 0;
+  background: transparent;
+
+  color: var(--text-muted);
+  font-size: 17px;
+}
+
+.attachment-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+
+  padding: 8px 0;
+}
+
+.attachment-chip {
+  padding: 6px 8px;
+
+  border: 1px solid var(--border);
+  border-radius: 7px;
+
+  background: var(--community-bg);
+
+  color: var(--text-soft);
+
+  font-size: 9px;
+}
+
+/* ============================================================
+   RIGHT MEMBER PANEL
+============================================================ */
+
+.member-panel {
+  min-width: 0;
+  height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--member-bg);
+
+  border-left: 1px solid var(--border);
+
+  overflow: hidden;
+}
+
+.member-header {
+  height: var(--header-height);
+
+  padding: 0 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-bottom: 1px solid var(--border);
+
+  background: #fff;
+}
+
+.member-header h2 {
+  margin: 0;
+
+  font-size: 13px;
+}
+
+.member-header span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: var(--text-muted);
+
+  font-size: 9px;
+}
+
+.member-header .icon-btn {
+  color: var(--text-soft);
+}
+
+.member-search {
+  padding: 11px 12px;
+}
+
+.member-search input {
+  width: 100%;
+  height: 34px;
+
+  padding: 0 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  outline: 0;
+
+  background: #fff;
+
+  color: var(--text);
+
+  font-size: 10px;
+}
+
+.member-search input:focus {
+  border-color: rgba(8,127,115,.4);
+}
+
+.member-status-group {
+  padding: 6px 11px;
+}
+
+.member-group-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 4px 5px 7px;
+
+  color: var(--text-muted);
+
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.member-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-item {
+  min-height: 43px;
+
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  padding: 6px 7px;
+
+  border-radius: 8px;
+}
+
+.member-item:hover {
+  background: #edf3f2;
+}
+
+.member-avatar {
+  position: relative;
+
+  width: 31px;
+  height: 31px;
+
+  flex: 0 0 31px;
+
+  overflow: hidden;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: var(--primary-soft);
+  color: var(--primary);
+
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+.presence-dot {
+  position: absolute;
+
+  right: -1px;
+  bottom: -1px;
+
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  border: 2px solid var(--member-bg);
+
+  background: #9aa8a7;
+}
+
+.presence-dot.online {
+  background: #35b978;
+}
+
+.member-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.member-name {
+  display: block;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: var(--text);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.member-role {
+  display: block;
+
+  margin-top: 2px;
+
+  color: var(--text-muted);
+
+  font-size: 8px;
+}
+
+/* ============================================================
+   MODALS
+============================================================ */
+
+.modal {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+}
+
+.modal-backdrop {
+  position: absolute;
+
+  inset: 0;
+
+  background: rgba(7,28,27,.55);
+
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  position: relative;
+
+  width: min(520px, 100%);
+  max-height: 85vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-radius: 15px;
+
+  background: #fff;
+
+  box-shadow:
+    0 25px 80px rgba(0,0,0,.22);
+
+  animation: modalIn .16s ease;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.modal-header {
+  padding: 18px 20px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  margin: 0;
+
+  font-size: 15px;
+}
+
+.modal-header p {
+  margin: 5px 0 0;
+
+  color: var(--text-muted);
+
+  font-size: 9px;
+}
+
+.modal-close {
+  width: 30px;
+  height: 30px;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: var(--community-bg);
+
+  color: var(--text-muted);
+
+  font-size: 18px;
+}
+
+.modal-close:hover {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.modal-body {
+  padding: 18px 20px;
+
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 13px 20px;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+
+  border-top: 1px solid var(--border);
+}
+
+.modal-body label {
+  display: block;
+
+  margin-bottom: 14px;
+
+  color: var(--text);
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.modal-body input,
+.modal-body textarea {
+  width: 100%;
+
+  margin-top: 6px;
+
+  padding: 10px;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  outline: 0;
+
+  background: #fff;
+
+  color: var(--text);
+
+  font-size: 11px;
+}
+
+.modal-body input:focus,
+.modal-body textarea:focus {
+  border-color: rgba(8,127,115,.5);
+}
+
+.checkbox-row {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+}
+
+.checkbox-row input {
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.primary-btn,
+.secondary-btn {
+  min-height: 36px;
+
+  padding: 0 14px;
+
+  border-radius: 8px;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.primary-btn {
+  border: 0;
+
+  background: var(--primary);
+  color: #fff;
+}
+
+.primary-btn:hover {
+  background: var(--primary-dark);
+}
+
+.secondary-btn {
+  border: 1px solid var(--border);
+
+  background: #fff;
+  color: var(--text-soft);
+}
+
+/* ============================================================
+   SEARCH
+============================================================ */
+
+.large-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 0 11px;
+
+  height: 42px;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: #fff;
+}
+
+.large-search span {
+  color: var(--text-muted);
+}
+
+.large-search input {
+  flex: 1;
+
+  border: 0;
+  outline: 0;
+
+  font-size: 11px;
+}
+
+.search-results {
+  min-height: 150px;
+
+  margin-top: 12px;
+
+  overflow-y: auto;
+}
+
+.search-result {
+  padding: 11px;
+
+  margin-bottom: 6px;
+
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  cursor: pointer;
+}
+
+.search-result:hover {
+  background: var(--community-bg);
+}
+
+.search-result-channel {
+  color: var(--primary);
+
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.search-result-author {
+  margin-top: 3px;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.search-result-text {
+  margin-top: 3px;
+
+  color: var(--text-soft);
+
+  font-size: 10px;
+}
+
+/* ============================================================
+   NOTIFICATIONS
+============================================================ */
+
+.notification-list {
+  padding: 10px 12px;
+
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 11px;
+
+  margin-bottom: 6px;
+
+  border-radius: 9px;
+
+  background: #f8faf9;
+
+  border: 1px solid var(--border);
+}
+
+.notification-item.unread {
+  background: var(--primary-soft);
+  border-color: rgba(8,127,115,.15);
+}
+
+.notification-title {
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.notification-text {
+  margin-top: 4px;
+
+  color: var(--text-soft);
+
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.notification-time {
+  margin-top: 6px;
+
+  color: var(--text-muted);
+
+  font-size: 8px;
+}
+
+/* ============================================================
+   CONTEXT MENU
+============================================================ */
+
+.context-menu {
+  position: fixed;
+
+  z-index: 1500;
+
+  min-width: 150px;
+
+  padding: 5px;
+
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  background: #fff;
+
+  box-shadow:
+    0 12px 40px rgba(0,0,0,.15);
+}
+
+.context-menu button {
+  width: 100%;
+
+  padding: 8px 10px;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: var(--text-soft);
+
+  text-align: left;
+
+  font-size: 10px;
+}
+
+.context-menu button:hover {
+  background: var(--community-bg);
+  color: var(--primary);
+}
+
+.context-menu button.danger-action:hover {
+  color: var(--danger);
+}
+
+/* ============================================================
+   TOAST
+============================================================ */
+
+.community-toast {
+  position: fixed;
+
+  left: 50%;
+  bottom: 25px;
+
+  z-index: 2000;
+
+  transform: translateX(-50%);
+
+  max-width: min(400px, calc(100vw - 30px));
+
+  padding: 10px 15px;
+
+  border-radius: 9px;
+
+  background: #173b3a;
+  color: #fff;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.18);
+
+  font-size: 10px;
+}
+
+.community-toast.success {
+  background: var(--primary);
+}
+
+.community-toast.error {
+  background: var(--danger);
+}
+
+/* ============================================================
+   LOADING
+============================================================ */
+
+.sidebar-loading,
+.empty-state {
+  padding: 16px 8px;
+
+  color: rgba(255,255,255,.4);
+
+  text-align: center;
+
+  font-size: 9px;
+}
+
+.empty-state {
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   SCROLLBARS
+============================================================ */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(8,127,115,.25) transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background: rgba(8,127,115,.22);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(8,127,115,.4);
+}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+
+@media (max-width: 1100px) {
+
+  .community-app {
+    grid-template-columns:
+      240px
+      minmax(0, 1fr);
+  }
+
+  .member-panel {
+    position: fixed;
+
+    top: 0;
+    right: 0;
+    bottom: 0;
+
+    z-index: 300;
+
+    width: min(280px, 85vw);
+
+    transform: translateX(100%);
+
+    transition: transform .2s ease;
+
+    box-shadow:
+      -15px 0 40px rgba(0,0,0,.12);
+  }
+
+  .member-panel.open {
+    transform: translateX(0);
+  }
+
+  .mobile-only {
+    display: inline-flex;
+  }
+
+  #closeMembersBtn {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 760px) {
+
+  body {
+    overflow: hidden;
+  }
+
+  .community-app {
+    display: block;
+  }
+
+  .community-sidebar {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    z-index: 500;
+
+    width: min(285px, 88vw);
+
+    transform: translateX(-100%);
+
+    transition: transform .2s ease;
+
+    box-shadow:
+      15px 0 40px rgba(0,0,0,.14);
+  }
+
+  .community-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .community-main {
+    width: 100%;
+  }
+
+  .mobile-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 400;
+
+    background: rgba(0,0,0,.4);
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity .2s ease;
+  }
+
+  .mobile-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .chat-header {
+    padding: 0 10px;
+  }
+
+  .channel-heading h1 {
+    max-width: 190px;
+  }
+
+  .channel-heading p {
+    max-width: 210px;
+  }
+
+  .channel-hash {
+    width: 32px;
+    height: 32px;
+  }
+
+  .message-list {
+    padding-left: 9px;
+    padding-right: 9px;
+  }
+
+  .message-composer-area {
+    padding: 8px 9px 10px;
+  }
+
+  .composer-hint {
+    display: none;
+  }
+
+  .chat-header-actions {
+    gap: 0;
+  }
+
+  .header-action {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+@media (max-width: 450px) {
+
+  .channel-heading p {
+    display: none;
+  }
+
+  .channel-hash {
+    display: none;
+  }
+
+  .chat-header {
+    height: 62px;
+  }
+
+  .community-main {
+    height: 100vh;
+  }
+
+  .message {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .message-avatar {
+    width: 32px;
+    height: 32px;
+    flex-basis: 32px;
+  }
+
+  .message-body {
+    font-size: 11px;
+  }
+
+  .channel-welcome {
+    padding-top: 25px;
+  }
+
+  .channel-welcome h2 {
+    font-size: 17px;
+  }
+}
