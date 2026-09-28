@@ -10,6 +10,16 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="description"
+        content="Mwaniki Scholars course learning page."
+    >
+
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
+
     <title>
         Course | Mwaniki Scholars
     </title>
@@ -19,10 +29,99 @@
         href="./style.css"
     >
 
+    <style>
+
+        /* =====================================================
+           COURSE COMMUNITY BUTTON
+           ===================================================== */
+
+        .course-action-bar {
+            width: 100%;
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 18px 24px 0;
+            box-sizing: border-box;
+
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+
+        .course-community-button {
+            border: none;
+            border-radius: 10px;
+
+            padding: 12px 20px;
+
+            background: #087f73;
+            color: #ffffff;
+
+            font-size: 15px;
+            font-weight: 700;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease,
+                background 0.2s ease;
+
+            box-shadow:
+                0 4px 12px rgba(8, 127, 115, 0.20);
+        }
+
+
+        .course-community-button:hover {
+            background: #066b61;
+
+            transform: translateY(-1px);
+
+            box-shadow:
+                0 6px 16px rgba(8, 127, 115, 0.28);
+        }
+
+
+        .course-community-button:active {
+            transform: translateY(0);
+        }
+
+
+        .course-community-button:focus-visible {
+            outline: 3px solid rgba(8, 127, 115, 0.25);
+            outline-offset: 2px;
+        }
+
+
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
+        @media (max-width: 700px) {
+
+            .course-action-bar {
+                padding-left: 16px;
+                padding-right: 16px;
+
+                justify-content: stretch;
+            }
+
+
+            .course-community-button {
+                width: 100%;
+            }
+
+        }
+
+    </style>
+
 </head>
 
 
 <body>
+
 
     <!-- =====================================================
          COURSE HEADER
@@ -47,6 +146,7 @@
                 Loading Course...
             </h1>
 
+
             <p id="courseDescription">
                 Please wait while the course loads.
             </p>
@@ -54,6 +154,25 @@
         </div>
 
     </header>
+
+
+
+    <!-- =====================================================
+         COURSE ACTIONS
+         ===================================================== -->
+
+    <div class="course-action-bar">
+
+        <button
+            type="button"
+            id="openCourseCommunity"
+            class="course-community-button"
+        >
+            💬 Open Course Community
+        </button>
+
+    </div>
+
 
 
     <!-- =====================================================
@@ -88,6 +207,7 @@
         </section>
 
 
+
         <!-- =================================================
              NOTES
              ================================================= -->
@@ -111,35 +231,172 @@
     </main>
 
 
+
     <!-- =====================================================
-         BACK TO DASHBOARD SCRIPT
+         COURSE NAVIGATION
          ===================================================== -->
-    </section>
-</main>
 
-<script>
-document.getElementById("backToDashboard").addEventListener("click", function () {
-    console.log("🏠 Returning to student dashboard...");
+    <script>
 
-    // Clear the temporary course/unit selection
-    localStorage.removeItem("selectedCourse");
-    localStorage.removeItem("selectedCourseName");
-    localStorage.removeItem("selectedUnit");
-    localStorage.removeItem("selectedUnitTitle");
+        document.addEventListener("DOMContentLoaded", function () {
 
-    // Return to dashboard
-    window.location.href = "./dashboard.html";
-});
-</script>
+            /* =================================================
+               BACK TO DASHBOARD
+               ================================================= */
 
-<script type="module" src="./course.js"></script>
+            const backButton =
+                document.getElementById("backToDashboard");
 
-</body>
-</html>
- 
-            });
+
+            if (backButton) {
+
+                backButton.addEventListener(
+                    "click",
+                    function () {
+
+                        console.log(
+                            "🏠 Returning to student dashboard..."
+                        );
+
+
+                        /*
+                         * Clear temporary course/unit selections.
+                         */
+
+                        localStorage.removeItem(
+                            "selectedCourse"
+                        );
+
+                        localStorage.removeItem(
+                            "selectedCourseName"
+                        );
+
+                        localStorage.removeItem(
+                            "selectedUnit"
+                        );
+
+                        localStorage.removeItem(
+                            "selectedUnitTitle"
+                        );
+
+
+                        /*
+                         * Return to dashboard.
+                         */
+
+                        window.location.href =
+                            "./dashboard.html";
+
+                    }
+                );
+
+            }
+
+
+
+            /* =================================================
+               OPEN COURSE COMMUNITY
+               ================================================= */
+
+            const communityButton =
+                document.getElementById(
+                    "openCourseCommunity"
+                );
+
+
+            if (communityButton) {
+
+                communityButton.addEventListener(
+                    "click",
+                    function () {
+
+                        /*
+                         * The course ID is normally stored by
+                         * dashboard.js when the student opens a
+                         * course.
+                         */
+
+                        const courseId =
+                            localStorage.getItem(
+                                "selectedCourse"
+                            );
+
+
+                        const courseName =
+                            localStorage.getItem(
+                                "selectedCourseName"
+                            );
+
+
+                        console.log(
+                            "💬 Opening course community:",
+                            {
+                                courseId,
+                                courseName
+                            }
+                        );
+
+
+                        /*
+                         * A course must be selected before
+                         * opening its community.
+                         */
+
+                        if (!courseId) {
+
+                            console.warn(
+                                "⚠️ No selected course ID found."
+                            );
+
+
+                            alert(
+                                "Please return to the Course Library and open the course again."
+                            );
+
+
+                            return;
+
+                        }
+
+
+                        /*
+                         * Preserve the course information so
+                         * community.js can identify the correct
+                         * course-specific community.
+                         */
+
+                        localStorage.setItem(
+                            "communityCourseId",
+                            String(courseId)
+                        );
+
+
+                        if (courseName) {
+
+                            localStorage.setItem(
+                                "communityCourseName",
+                                courseName
+                            );
+
+                        }
+
+
+                        /*
+                         * Open the course-specific community.
+                         */
+
+                        window.location.href =
+                            "./community.html";
+
+                    }
+                );
+
+            }
+
+        });
 
     </script>
+
 
 
     <!-- =====================================================
