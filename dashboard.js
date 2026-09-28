@@ -1141,9 +1141,18 @@ function setPanelOpen(
 ) {
 
     if (!panel) {
+
+        console.warn(
+            "⚠️ setPanelOpen(): panel was not found."
+        );
+
         return;
     }
 
+
+    /* =====================================================
+       OPEN PANEL
+    ===================================================== */
 
     if (shouldOpen) {
 
@@ -1178,8 +1187,14 @@ function setPanelOpen(
         panel.style.zIndex =
             "10000";
 
+    }
 
-    } else {
+
+    /* =====================================================
+       CLOSE PANEL
+    ===================================================== */
+
+    else {
 
         panel.classList.remove(
             "active"
@@ -1212,38 +1227,54 @@ function setPanelOpen(
 }
 
 
-    if (!panel) {
-        return;
-    }
-
-    panel.classList.toggle(
-        "active",
-        Boolean(open)
-    );
-
-    panel.setAttribute(
-        "aria-hidden",
-        open
-            ? "false"
-            : "true"
-    );
-}
+/* =========================================================
+   OPEN PROFILE PANEL
+========================================================= */
 
 function openProfilePanel() {
 
+    const panel =
+        $("#profilePanel");
+
+    if (!panel) {
+
+        console.warn(
+            "⚠️ #profilePanel was not found."
+        );
+
+        return;
+    }
+
     setPanelOpen(
-        $("#profilePanel"),
+        panel,
         true
     );
 }
 
+
+/* =========================================================
+   CLOSE PROFILE PANEL
+========================================================= */
+
 function closeProfilePanel() {
 
+    const panel =
+        $("#profilePanel");
+
+    if (!panel) {
+        return;
+    }
+
     setPanelOpen(
-        $("#profilePanel"),
+        panel,
         false
     );
 }
+
+
+/* =========================================================
+   SETUP PROFILE PANEL
+========================================================= */
 
 function setupProfilePanel() {
 
@@ -1256,53 +1287,133 @@ function setupProfilePanel() {
     const panel =
         $("#profilePanel");
 
-    if (button) {
 
-        button.onclick =
-            function (event) {
+    /* =====================================================
+       REQUIRED ELEMENT CHECK
+    ===================================================== */
 
-                event.preventDefault();
-                event.stopPropagation();
+    if (!button) {
 
-                if (!panel) {
-                    return;
-                }
+        console.error(
+            "❌ #profileButton was not found."
+        );
 
-                const isOpen =
-                    panel.classList.contains(
-                        "active"
-                    );
-
-                if (isOpen) {
-                    closeProfilePanel();
-                } else {
-
-                    renderStudentProfile();
-
-                    openProfilePanel();
-                }
-            };
+        return;
     }
+
+    if (!panel) {
+
+        console.error(
+            "❌ #profilePanel was not found."
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       PREVENT DUPLICATE EVENT LISTENERS
+    ===================================================== */
+
+    if (
+        button.dataset.profileReady === "true"
+    ) {
+
+        console.log(
+            "👤 Profile panel is already initialized."
+        );
+
+        return;
+    }
+
+    button.dataset.profileReady =
+        "true";
+
+
+    /* =====================================================
+       START CLOSED
+    ===================================================== */
+
+    setPanelOpen(
+        panel,
+        false
+    );
+
+
+    /* =====================================================
+       PROFILE BUTTON
+    ===================================================== */
+
+    button.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            const isOpen =
+                panel.classList.contains(
+                    "active"
+                ) ||
+                panel.getAttribute(
+                    "aria-hidden"
+                ) === "false";
+
+
+            if (isOpen) {
+
+                closeProfilePanel();
+
+                return;
+            }
+
+
+            /* =============================================
+               REFRESH PROFILE CONTENT
+            ============================================= */
+
+            renderStudentProfile();
+
+
+            /* =============================================
+               OPEN PROFILE PANEL
+            ============================================= */
+
+            openProfilePanel();
+
+        }
+    );
+
+
+    /* =====================================================
+       CLOSE BUTTON
+    ===================================================== */
 
     if (closeButton) {
 
-        closeButton.onclick =
+        closeButton.addEventListener(
+            "click",
             function (event) {
 
                 event.preventDefault();
                 event.stopPropagation();
 
                 closeProfilePanel();
-            };
-    }
 
-    if (panel) {
+            }
+        );
 
-        setPanelOpen(
-            panel,
-            false
+    } else {
+
+        console.warn(
+            "⚠️ #closeProfilePanel was not found."
         );
     }
+
+
+    console.log(
+        "👤 Profile panel ready."
+    );
 }
 
 /* =========================================================
