@@ -2,7 +2,7 @@ import { supabase } from "./supabase.js";
 
 // ============================================================
 // MWANIKI SCHOLARS
-// CLEAN COURSE PAGE ENGINE
+// COURSE PAGE ENGINE
 // ============================================================
 
 console.log("📚 Mwaniki Scholars Course Engine Loaded");
@@ -31,10 +31,12 @@ const courseId =
     urlCourseId ||
     storedCourseId;
 
-const courseName =
-    localStorage.getItem("selectedCourseName");
+let courseName =
+    localStorage.getItem("selectedCourseName") || "";
+
 
 // Keep localStorage synchronized with the URL
+
 if (courseId) {
 
     localStorage.setItem(
@@ -44,17 +46,39 @@ if (courseId) {
 
 }
 
+
 // ============================================================
 // PAGE ELEMENTS
 // ============================================================
 
-const courseTitle = document.getElementById("courseTitle");
-const courseDescription = document.getElementById("courseDescription");
-const unitsArea = document.getElementById("unitsArea");
-const notesArea = document.getElementById("notesArea");
+const courseTitle =
+    document.getElementById("courseTitle");
 
-console.log("📚 Selected Course ID:", courseId);
-console.log("📚 Selected Course Name:", courseName);
+const courseDescription =
+    document.getElementById("courseDescription");
+
+const unitsArea =
+    document.getElementById("unitsArea");
+
+const notesArea =
+    document.getElementById("notesArea");
+
+const communityButton =
+    document.getElementById(
+        "openCourseCommunity"
+    );
+
+
+console.log(
+    "📚 Selected Course ID:",
+    courseId
+);
+
+console.log(
+    "📚 Selected Course Name:",
+    courseName
+);
+
 
 // ============================================================
 // ESCAPE HTML
@@ -71,6 +95,7 @@ function escapeHTML(value) {
 
 }
 
+
 // ============================================================
 // VALID URL
 // ============================================================
@@ -81,7 +106,8 @@ function isValidURL(value) {
         return false;
     }
 
-    const url = String(value).trim();
+    const url =
+        String(value).trim();
 
     return (
         url.startsWith("https://") ||
@@ -89,6 +115,7 @@ function isValidURL(value) {
     );
 
 }
+
 
 // ============================================================
 // GET UNIT NOTES
@@ -105,7 +132,11 @@ function getUnitNotes(unit) {
         unit.notes_content &&
         String(unit.notes_content).trim() !== ""
     ) {
-        return String(unit.notes_content);
+
+        return String(
+            unit.notes_content
+        );
+
     }
 
     // Older notes column
@@ -113,12 +144,17 @@ function getUnitNotes(unit) {
         unit.notes &&
         String(unit.notes).trim() !== ""
     ) {
-        return String(unit.notes);
+
+        return String(
+            unit.notes
+        );
+
     }
 
     return "";
 
 }
+
 
 // ============================================================
 // FORMAT NOTES
@@ -130,9 +166,11 @@ function formatDetailedNotes(content) {
         return "";
     }
 
-    let text = escapeHTML(content);
+    let text =
+        escapeHTML(content);
 
     // Headings
+
     text = text.replace(
         /^### (.*)$/gm,
         "<h4>$1</h4>"
@@ -149,42 +187,49 @@ function formatDetailedNotes(content) {
     );
 
     // Bold
+
     text = text.replace(
         /\*\*(.*?)\*\*/g,
         "<strong>$1</strong>"
     );
 
     // Italics
+
     text = text.replace(
         /\*(.*?)\*/g,
         "<em>$1</em>"
     );
 
     // Horizontal rules
+
     text = text.replace(
         /^---$/gm,
         "<hr>"
     );
 
     // Bullets
+
     text = text.replace(
         /^\s*[-•]\s+(.*)$/gm,
         "<li>$1</li>"
     );
 
     // Numbered lists
+
     text = text.replace(
         /^\s*\d+\.\s+(.*)$/gm,
         "<li>$1</li>"
     );
 
     // Wrap consecutive list items
+
     text = text.replace(
         /((?:<li>.*?<\/li>\s*)+)/gs,
         "<ul>$1</ul>"
     );
 
     // Line breaks
+
     text = text.replace(
         /\n{2,}/g,
         "<br><br>"
@@ -198,6 +243,101 @@ function formatDetailedNotes(content) {
     return text;
 
 }
+
+
+// ============================================================
+// COURSE COMMUNITY
+// ============================================================
+
+function initializeCourseCommunity() {
+
+    if (!communityButton) {
+
+        console.warn(
+            "⚠️ #openCourseCommunity was not found."
+        );
+
+        return;
+
+    }
+
+
+    // No course ID
+
+    if (!courseId) {
+
+        communityButton.disabled = true;
+
+        communityButton.title =
+            "No course selected.";
+
+        return;
+
+    }
+
+
+    communityButton.addEventListener(
+        "click",
+        function () {
+
+            console.log(
+                "💬 Opening community for course:",
+                {
+                    courseId,
+                    courseName
+                }
+            );
+
+
+            // ------------------------------------------------
+            // Preserve the current course
+            // ------------------------------------------------
+
+            localStorage.setItem(
+                "communityCourseId",
+                String(courseId)
+            );
+
+
+            if (courseName) {
+
+                localStorage.setItem(
+                    "communityCourseName",
+                    courseName
+                );
+
+            }
+
+
+            // ------------------------------------------------
+            // Open course community
+            // ------------------------------------------------
+
+            const communityURL =
+                `./community.html?course_id=${encodeURIComponent(
+                    courseId
+                )}`;
+
+
+            console.log(
+                "➡️ Community URL:",
+                communityURL
+            );
+
+
+            window.location.href =
+                communityURL;
+
+        }
+    );
+
+
+    console.log(
+        "✅ Course Community button initialized."
+    );
+
+}
+
 
 // ============================================================
 // LOAD COURSE
@@ -216,14 +356,19 @@ async function loadCourse() {
             courseId
         );
 
+
         const {
             data,
             error
         } = await supabase
             .from("courses")
             .select("*")
-            .eq("id", Number(courseId))
+            .eq(
+                "id",
+                Number(courseId)
+            )
             .single();
+
 
         if (error) {
 
@@ -236,6 +381,7 @@ async function loadCourse() {
 
         }
 
+
         if (!data) {
 
             throw new Error(
@@ -244,23 +390,44 @@ async function loadCourse() {
 
         }
 
+
         console.log(
             "✅ Course loaded:",
             data
         );
 
+
+        // ------------------------------------------------
+        // Get authoritative course name from Supabase
+        // ------------------------------------------------
+
+        courseName =
+            data.title ||
+            courseName ||
+            "Course";
+
+
+        localStorage.setItem(
+            "selectedCourseName",
+            courseName
+        );
+
+
+        // ------------------------------------------------
         // Course title
+        // ------------------------------------------------
 
         if (courseTitle) {
 
             courseTitle.textContent =
-                data.title ||
-                courseName ||
-                "Course";
+                courseName;
 
         }
 
+
+        // ------------------------------------------------
         // Course description
+        // ------------------------------------------------
 
         if (courseDescription) {
 
@@ -269,6 +436,12 @@ async function loadCourse() {
                 "Medical learning course";
 
         }
+
+
+        console.log(
+            "💬 Community course name synchronized:",
+            courseName
+        );
 
     }
 
@@ -279,12 +452,14 @@ async function loadCourse() {
             error
         );
 
+
         if (courseTitle) {
 
             courseTitle.textContent =
                 "Unable to Load Course";
 
         }
+
 
         if (courseDescription) {
 
@@ -297,6 +472,7 @@ async function loadCourse() {
 
 }
 
+
 // ============================================================
 // LOAD UNITS
 // ============================================================
@@ -306,6 +482,7 @@ async function loadUnits() {
     if (!courseId) {
         return;
     }
+
 
     if (!unitsArea) {
 
@@ -317,6 +494,7 @@ async function loadUnits() {
 
     }
 
+
     // Loading state
 
     unitsArea.innerHTML = `
@@ -325,19 +503,20 @@ async function loadUnits() {
         </div>
     `;
 
+
     try {
 
         console.log(
             "🔎 Loading units from Supabase..."
         );
 
+
         /*
-         * IMPORTANT:
+         * We deliberately retrieve notes_content here
+         * so notes can be opened later.
          *
-         * We deliberately retrieve notes_content here only
-         * so that notes can be opened later.
-         *
-         * We DO NOT render notes_content inside the card.
+         * We DO NOT render notes_content inside
+         * the unit card.
          */
 
         const {
@@ -366,6 +545,7 @@ async function loadUnits() {
                 }
             );
 
+
         if (error) {
 
             console.error(
@@ -377,10 +557,12 @@ async function loadUnits() {
 
         }
 
+
         console.log(
             "📖 Units loaded:",
             data
         );
+
 
         // No units
 
@@ -408,6 +590,7 @@ async function loadUnits() {
 
         }
 
+
         renderUnits(data);
 
     }
@@ -418,6 +601,7 @@ async function loadUnits() {
             "❌ Failed to load units:",
             error
         );
+
 
         unitsArea.innerHTML = `
             <div class="error">
@@ -437,6 +621,7 @@ async function loadUnits() {
 
 }
 
+
 // ============================================================
 // RENDER CLEAN UNIT CARDS
 // ============================================================
@@ -447,24 +632,31 @@ function renderUnits(units) {
         return;
     }
 
+
     // Completely clear previous content
 
     unitsArea.innerHTML = "";
+
 
     units.forEach(
         (unit, index) => {
 
             const unitCard =
-                document.createElement("article");
+                document.createElement(
+                    "article"
+                );
+
 
             unitCard.className =
                 "unit-card";
+
 
             // =================================================
             // IMAGE
             // =================================================
 
             let imageHTML = "";
+
 
             if (
                 isValidURL(unit.image)
@@ -487,11 +679,13 @@ function renderUnits(units) {
 
             }
 
+
             // =================================================
             // VIDEO
             // =================================================
 
             let videoHTML = "";
+
 
             if (
                 isValidURL(unit.video_url)
@@ -520,6 +714,7 @@ function renderUnits(units) {
 
             }
 
+
             // =================================================
             // NOTES STATUS
             // =================================================
@@ -527,20 +722,14 @@ function renderUnits(units) {
             const notes =
                 getUnitNotes(unit);
 
+
             const notesAvailable =
                 notes.trim() !== "";
+
 
             // =================================================
             // CLEAN CARD
             // =================================================
-            //
-            // VERY IMPORTANT:
-            //
-            // notes_content IS NOT placed here.
-            //
-            // This prevents Markdown and long notes from
-            // appearing inside the course cards.
-            //
 
             unitCard.innerHTML = `
 
@@ -577,6 +766,7 @@ function renderUnits(units) {
 
                     </button>
 
+
                     <button
                         type="button"
                         class="notes-btn notes-button"
@@ -590,6 +780,7 @@ function renderUnits(units) {
 
                 </div>
 
+
                 <div class="notes-status">
 
                     ${
@@ -602,6 +793,7 @@ function renderUnits(units) {
 
             `;
 
+
             unitsArea.appendChild(
                 unitCard
             );
@@ -609,12 +801,15 @@ function renderUnits(units) {
         }
     );
 
+
     // ========================================================
     // QUIZ BUTTONS
     // ========================================================
 
     unitsArea
-        .querySelectorAll(".quiz-button")
+        .querySelectorAll(
+            ".quiz-button"
+        )
         .forEach(
             button => {
 
@@ -625,8 +820,10 @@ function renderUnits(units) {
                         const selectedUnitId =
                             this.dataset.unitId;
 
+
                         const selectedUnitTitle =
                             this.dataset.unitTitle;
+
 
                         console.log(
                             "📝 Starting Supabase quiz:",
@@ -639,6 +836,7 @@ function renderUnits(units) {
                             }
                         );
 
+
                         // Save course
 
                         localStorage.setItem(
@@ -646,10 +844,12 @@ function renderUnits(units) {
                             String(courseId)
                         );
 
+
                         localStorage.setItem(
                             "selectedCourseName",
                             courseName || ""
                         );
+
 
                         // Save unit
 
@@ -658,13 +858,15 @@ function renderUnits(units) {
                             String(selectedUnitId)
                         );
 
+
                         localStorage.setItem(
                             "selectedUnitTitle",
                             selectedUnitTitle
                         );
 
+
                         // =================================================
-                        // IMPORTANT QUIZ URL
+                        // QUIZ URL
                         // =================================================
 
                         const quizURL =
@@ -678,10 +880,12 @@ function renderUnits(units) {
                                 selectedUnitTitle
                             )}`;
 
+
                         console.log(
                             "➡️ Opening Supabase quiz:",
                             quizURL
                         );
+
 
                         window.location.href =
                             quizURL;
@@ -692,12 +896,15 @@ function renderUnits(units) {
             }
         );
 
+
     // ========================================================
     // NOTES BUTTONS
     // ========================================================
 
     unitsArea
-        .querySelectorAll(".notes-button")
+        .querySelectorAll(
+            ".notes-button"
+        )
         .forEach(
             button => {
 
@@ -708,14 +915,17 @@ function renderUnits(units) {
                         const selectedUnitId =
                             this.dataset.unitId;
 
+
                         const selectedUnitTitle =
                             this.dataset.unitTitle;
+
 
                         console.log(
                             "📄 Opening notes:",
                             selectedUnitTitle,
                             selectedUnitId
                         );
+
 
                         await showUnitNotes(
                             Number(selectedUnitId),
@@ -728,11 +938,13 @@ function renderUnits(units) {
             }
         );
 
+
     console.log(
         `✅ ${units.length} clean unit cards displayed`
     );
 
 }
+
 
 // ============================================================
 // SHOW UNIT NOTES
@@ -753,6 +965,7 @@ async function showUnitNotes(
 
     }
 
+
     // Loading
 
     notesArea.innerHTML = `
@@ -766,10 +979,12 @@ async function showUnitNotes(
         </div>
     `;
 
+
     notesArea.scrollIntoView({
         behavior: "smooth",
         block: "start"
     });
+
 
     try {
 
@@ -798,6 +1013,7 @@ async function showUnitNotes(
             )
             .single();
 
+
         if (unitError) {
 
             console.warn(
@@ -806,6 +1022,7 @@ async function showUnitNotes(
             );
 
         }
+
 
         // ====================================================
         // DIRECT NOTES
@@ -816,6 +1033,7 @@ async function showUnitNotes(
             const directNotes =
                 getUnitNotes(unit);
 
+
             if (
                 directNotes &&
                 directNotes.trim() !== ""
@@ -825,16 +1043,20 @@ async function showUnitNotes(
                     "✅ Direct unit notes found."
                 );
 
+
                 renderDetailedNotes(
-                    unit.title || unitTitle,
+                    unit.title ||
+                    unitTitle,
                     directNotes
                 );
+
 
                 return;
 
             }
 
         }
+
 
         // ====================================================
         // SECOND: NOTES TABLE
@@ -843,6 +1065,7 @@ async function showUnitNotes(
         console.log(
             "🔎 Searching public.notes..."
         );
+
 
         const {
             data: uploadedNotes,
@@ -874,6 +1097,7 @@ async function showUnitNotes(
                 }
             );
 
+
         if (notesError) {
 
             console.error(
@@ -882,6 +1106,7 @@ async function showUnitNotes(
             );
 
         }
+
 
         if (
             uploadedNotes &&
@@ -897,6 +1122,7 @@ async function showUnitNotes(
 
         }
 
+
         // ====================================================
         // THIRD: TEXT FALLBACK
         // ====================================================
@@ -904,6 +1130,7 @@ async function showUnitNotes(
         console.log(
             "🔎 Trying text-based notes search..."
         );
+
 
         const {
             data: fallbackNotes,
@@ -935,6 +1162,7 @@ async function showUnitNotes(
                 }
             );
 
+
         if (fallbackError) {
 
             console.warn(
@@ -943,6 +1171,7 @@ async function showUnitNotes(
             );
 
         }
+
 
         if (
             fallbackNotes &&
@@ -957,6 +1186,7 @@ async function showUnitNotes(
             return;
 
         }
+
 
         // ====================================================
         // NO NOTES
@@ -1005,6 +1235,7 @@ async function showUnitNotes(
             error
         );
 
+
         notesArea.innerHTML = `
 
             <section class="error-notes">
@@ -1034,10 +1265,12 @@ async function showUnitNotes(
 
         `;
 
+
         const retry =
             document.getElementById(
                 "retryNotesButton"
             );
+
 
         if (retry) {
 
@@ -1059,6 +1292,7 @@ async function showUnitNotes(
 
 }
 
+
 // ============================================================
 // RENDER DETAILED NOTES
 // ============================================================
@@ -1071,6 +1305,7 @@ function renderDetailedNotes(
     if (!notesArea) {
         return;
     }
+
 
     notesArea.innerHTML = `
 
@@ -1096,6 +1331,7 @@ function renderDetailedNotes(
 
             </div>
 
+
             <div class="notes-content">
 
                 ${formatDetailedNotes(notesContent)}
@@ -1107,6 +1343,7 @@ function renderDetailedNotes(
     `;
 
 }
+
 
 // ============================================================
 // RENDER UPLOADED NOTES
@@ -1121,7 +1358,9 @@ function renderUploadedNotes(
         return;
     }
 
+
     let cards = "";
+
 
     uploadedNotes.forEach(
         note => {
@@ -1132,9 +1371,11 @@ function renderUploadedNotes(
                 return;
             }
 
+
             const fileName =
                 note.file_name ||
                 "Course Notes";
+
 
             const fileExtension =
                 fileName
@@ -1142,12 +1383,14 @@ function renderUploadedNotes(
                     .pop()
                     .toUpperCase();
 
+
             const createdDate =
                 note.created_at
                     ? new Date(
                         note.created_at
                     ).toLocaleDateString()
                     : "";
+
 
             cards += `
 
@@ -1157,11 +1400,13 @@ function renderUploadedNotes(
                         📄
                     </div>
 
+
                     <div class="uploaded-note-info">
 
                         <h3>
                             ${escapeHTML(fileName)}
                         </h3>
+
 
                         <p>
 
@@ -1180,6 +1425,7 @@ function renderUploadedNotes(
                         </p>
 
                     </div>
+
 
                     <div class="uploaded-note-action">
 
@@ -1203,6 +1449,7 @@ function renderUploadedNotes(
         }
     );
 
+
     if (!cards) {
 
         notesArea.innerHTML = `
@@ -1225,6 +1472,7 @@ function renderUploadedNotes(
 
     }
 
+
     notesArea.innerHTML = `
 
         <section class="course-notes">
@@ -1234,6 +1482,7 @@ function renderUploadedNotes(
                 <span class="notes-icon">
                     📚
                 </span>
+
 
                 <div>
 
@@ -1249,6 +1498,7 @@ function renderUploadedNotes(
 
             </div>
 
+
             <div class="uploaded-notes-list">
 
                 ${cards}
@@ -1261,11 +1511,14 @@ function renderUploadedNotes(
 
 }
 
+
 // ============================================================
 // GLOBAL NOTES ACCESS
 // ============================================================
 
-window.showUnitNotes = showUnitNotes;
+window.showUnitNotes =
+    showUnitNotes;
+
 
 // ============================================================
 // INITIALIZE COURSE PAGE
@@ -1277,6 +1530,14 @@ async function initializeCoursePage() {
         "🚀 Initializing Mwaniki Scholars Course Page..."
     );
 
+
+    // ========================================================
+    // COMMUNITY BUTTON
+    // ========================================================
+
+    initializeCourseCommunity();
+
+
     // ========================================================
     // NO COURSE SELECTED
     // ========================================================
@@ -1287,6 +1548,7 @@ async function initializeCoursePage() {
             "❌ No selected course found."
         );
 
+
         if (courseTitle) {
 
             courseTitle.textContent =
@@ -1294,12 +1556,14 @@ async function initializeCoursePage() {
 
         }
 
+
         if (courseDescription) {
 
             courseDescription.textContent =
                 "Please return to the courses page and select a course.";
 
         }
+
 
         if (unitsArea) {
 
@@ -1322,9 +1586,11 @@ async function initializeCoursePage() {
 
         }
 
+
         return;
 
     }
+
 
     // ========================================================
     // LOAD COURSE
@@ -1332,17 +1598,20 @@ async function initializeCoursePage() {
 
     await loadCourse();
 
+
     // ========================================================
     // LOAD UNITS
     // ========================================================
 
     await loadUnits();
 
+
     console.log(
         "✅ Course page fully initialized."
     );
 
 }
+
 
 // ============================================================
 // START
