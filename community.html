@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +10,7 @@
 
     <meta
         name="description"
-        content="Mwaniki Scholars Community — connect, discuss, study and learn together."
+        content="Mwaniki Community - academic discussion and study community for Mwaniki Scholars."
     >
 
     <title>Mwaniki Community | Mwaniki Scholars</title>
@@ -19,734 +18,614 @@
     <link
         rel="icon"
         type="image/png"
-        href="favicon.png"
+        href="./favicon.png"
     >
 
     <link
         rel="stylesheet"
-        href="community.css"
+        href="./community.css"
     >
 </head>
 
 <body>
 
+<div id="communityApp" class="community-app">
+
     <!-- =====================================================
-         APPLICATION
-         ===================================================== -->
+         MOBILE OVERLAY
+    ====================================================== -->
 
-    <div id="communityApp" class="community-app">
-
-        <!-- =================================================
-             MOBILE OVERLAY
-             ================================================= -->
-
-        <div
-            id="mobileOverlay"
-            class="mobile-overlay"
-            aria-hidden="true"
-        ></div>
+    <div
+        id="mobileOverlay"
+        class="mobile-overlay"
+        aria-hidden="true"
+    ></div>
 
 
-        <!-- =================================================
-             LEFT SIDEBAR
-             ================================================= -->
+    <!-- =====================================================
+         LEFT COMMUNITY SIDEBAR
+    ====================================================== -->
 
-        <aside
-            id="communitySidebar"
-            class="community-sidebar"
-            aria-label="Community navigation"
-        >
+    <aside
+        id="communitySidebar"
+        class="community-sidebar"
+        aria-label="Community navigation"
+    >
 
-            <!-- BRAND -->
-            <div class="sidebar-brand">
+        <div class="sidebar-brand">
 
-                <a
-                    href="dashboard.html"
-                    class="brand-link"
-                    aria-label="Return to Mwaniki Scholars dashboard"
+            <div class="brand-mark">
+                M
+            </div>
+
+            <div class="brand-copy">
+                <strong>Mwaniki</strong>
+                <span>Community</span>
+            </div>
+
+            <button
+                id="closeSidebarButton"
+                class="mobile-close-button"
+                type="button"
+                aria-label="Close navigation"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <!-- COMMUNITY SELECTOR -->
+
+        <div class="community-selector">
+
+            <button
+                id="communitySelectorButton"
+                class="community-selector-button"
+                type="button"
+            >
+
+                <span class="community-icon">
+                    MS
+                </span>
+
+                <span class="community-selector-copy">
+                    <strong id="activeCommunityName">
+                        Mwaniki Scholars
+                    </strong>
+
+                    <small>
+                        Academic Community
+                    </small>
+                </span>
+
+                <span class="selector-chevron">
+                    ▾
+                </span>
+
+            </button>
+
+        </div>
+
+
+        <!-- QUICK ACTIONS -->
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-title">
+                COMMUNITY
+            </div>
+
+            <button
+                class="sidebar-action active"
+                type="button"
+                data-channel="general-chat"
+                data-channel-name="General Chat"
+            >
+                <span class="sidebar-action-icon">💬</span>
+                <span>General Chat</span>
+                <span
+                    id="generalUnread"
+                    class="channel-unread"
+                    hidden
                 >
+                    0
+                </span>
+            </button>
 
-                    <div class="brand-logo">
-                        MS
-                    </div>
 
-                    <div class="brand-text">
-                        <strong>Mwaniki</strong>
-                        <span>Scholars</span>
-                    </div>
+            <button
+                class="sidebar-action"
+                type="button"
+                data-channel="announcements"
+                data-channel-name="Announcements"
+            >
+                <span class="sidebar-action-icon">📢</span>
+                <span>Announcements</span>
+                <span
+                    id="announcementsUnread"
+                    class="channel-unread"
+                    hidden
+                >
+                    0
+                </span>
+            </button>
 
-                </a>
+
+            <button
+                class="sidebar-action"
+                type="button"
+                data-channel="introductions"
+                data-channel-name="Introductions"
+            >
+                <span class="sidebar-action-icon">👋</span>
+                <span>Introductions</span>
+                <span
+                    id="introductionsUnread"
+                    class="channel-unread"
+                    hidden
+                >
+                    0
+                </span>
+            </button>
+
+        </div>
+
+
+        <!-- MEDICAL SCIENCES -->
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-heading">
+
+                <span>
+                    MEDICAL SCIENCES
+                </span>
 
                 <button
-                    id="closeSidebarButton"
-                    class="mobile-close-button"
+                    id="medicalCategoryButton"
+                    class="category-toggle"
                     type="button"
-                    aria-label="Close navigation"
+                    aria-label="Toggle medical channels"
                 >
-                    ×
+                    −
                 </button>
 
             </div>
 
 
-            <!-- COMMUNITY SELECTOR -->
-
-            <div class="community-selector">
+            <div
+                id="medicalChannels"
+                class="channel-group"
+            >
 
                 <button
-                    id="communitySelectorButton"
-                    class="community-selector-button"
+                    class="channel-link"
                     type="button"
-                    aria-expanded="false"
+                    data-channel="hematology"
+                    data-channel-name="Hematology"
                 >
+                    <span class="hash">#</span>
+                    <span>hematology</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="hematology"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
 
-                    <div class="community-icon">
-                        MS
-                    </div>
 
-                    <div class="community-selector-text">
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="clinical-chemistry"
+                    data-channel-name="Clinical Chemistry"
+                >
+                    <span class="hash">#</span>
+                    <span>clinical-chemistry</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="clinical-chemistry"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
 
-                        <strong id="communityName">
-                            Mwaniki Scholars
-                        </strong>
 
-                        <span>
-                            Community
-                        </span>
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="microbiology"
+                    data-channel-name="Microbiology"
+                >
+                    <span class="hash">#</span>
+                    <span>microbiology</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="microbiology"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
 
-                    </div>
 
-                    <span class="selector-chevron">
-                        ▾
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="parasitology"
+                    data-channel-name="Parasitology"
+                >
+                    <span class="hash">#</span>
+                    <span>parasitology</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="parasitology"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="blood-transfusion"
+                    data-channel-name="Blood Transfusion"
+                >
+                    <span class="hash">#</span>
+                    <span>blood-transfusion</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="blood-transfusion"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- STUDY GROUPS -->
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-heading">
+
+                <span>
+                    STUDY GROUPS
+                </span>
+
+                <button
+                    id="studyCategoryButton"
+                    class="category-toggle"
+                    type="button"
+                    aria-label="Toggle study channels"
+                >
+                    −
+                </button>
+
+            </div>
+
+
+            <div
+                id="studyChannels"
+                class="channel-group"
+            >
+
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="exam-preparation"
+                    data-channel-name="Exam Preparation"
+                >
+                    <span class="hash">#</span>
+                    <span>exam-preparation</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="exam-preparation"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="assignment-help"
+                    data-channel-name="Assignment Help"
+                >
+                    <span class="hash">#</span>
+                    <span>assignment-help</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="assignment-help"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="revision"
+                    data-channel-name="Revision"
+                >
+                    <span class="hash">#</span>
+                    <span>revision</span>
+                    <span
+                        class="channel-unread"
+                        data-unread-for="revision"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- AI & LEARNING -->
+
+        <div class="sidebar-section">
+
+            <div class="sidebar-section-heading">
+
+                <span>
+                    AI & LEARNING
+                </span>
+
+                <button
+                    id="aiCategoryButton"
+                    class="category-toggle"
+                    type="button"
+                    aria-label="Toggle AI channels"
+                >
+                    −
+                </button>
+
+            </div>
+
+
+            <div
+                id="aiChannels"
+                class="channel-group"
+            >
+
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="mwaniki-ai"
+                    data-channel-name="Mwaniki AI"
+                >
+                    <span class="channel-ai-icon">
+                        ✦
                     </span>
 
+                    <span>
+                        mwaniki-ai
+                    </span>
+
+                    <span
+                        class="channel-unread"
+                        data-unread-for="mwaniki-ai"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+
+                <button
+                    class="channel-link"
+                    type="button"
+                    data-channel="turbo-ai"
+                    data-channel-name="Turbo AI"
+                >
+                    <span class="channel-ai-icon turbo">
+                        ⚡
+                    </span>
+
+                    <span>
+                        turbo-ai
+                    </span>
+
+                    <span
+                        class="channel-unread"
+                        data-unread-for="turbo-ai"
+                        hidden
+                    >
+                        0
+                    </span>
                 </button>
 
             </div>
 
-
-            <!-- NAVIGATION -->
-
-            <div class="sidebar-scroll">
-
-                <section class="channel-section">
-
-                    <div class="channel-section-heading">
-
-                        <span>
-                            COMMUNITY
-                        </span>
-
-                    </div>
-
-                    <button
-                        class="sidebar-home active"
-                        type="button"
-                        data-special-channel="home"
-                    >
-
-                        <span class="sidebar-item-icon">
-                            🏠
-                        </span>
-
-                        <span>
-                            Home
-                        </span>
-
-                    </button>
-
-                </section>
+        </div>
 
 
-                <!-- CHANNEL LIST -->
+        <!-- USER AREA -->
 
-                <section class="channel-section">
+        <div class="sidebar-user-area">
 
-                    <div class="channel-section-heading">
+            <div class="current-user">
 
-                        <span>
-                            CHANNELS
-                        </span>
-
-                        <button
-                            id="createChannelButton"
-                            class="section-add-button"
-                            type="button"
-                            title="Create channel"
-                            aria-label="Create channel"
-                        >
-                            +
-                        </button>
-
-                    </div>
-
-                    <div id="channelList">
-
-                        <div class="channel-loading">
-                            Loading channels...
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- STUDY -->
-
-                <section class="channel-section">
-
-                    <div class="channel-section-heading">
-
-                        <span>
-                            STUDY
-                        </span>
-
-                    </div>
-
-                    <button
-                        class="sidebar-item"
-                        type="button"
-                        data-special-channel="study"
-                    >
-
-                        <span class="sidebar-item-icon">
-                            🎓
-                        </span>
-
-                        <span>
-                            Study Groups
-                        </span>
-
-                    </button>
-
-                    <button
-                        class="sidebar-item"
-                        type="button"
-                        data-special-channel="assignments"
-                    >
-
-                        <span class="sidebar-item-icon">
-                            📝
-                        </span>
-
-                        <span>
-                            Assignment Help
-                        </span>
-
-                    </button>
-
-                </section>
-
-
-                <!-- COURSES -->
-
-                <section class="channel-section">
-
-                    <div class="channel-section-heading">
-
-                        <span>
-                            COURSES
-                        </span>
-
-                    </div>
-
-                    <div id="courseChannelList">
-
-                        <button
-                            class="sidebar-item"
-                            type="button"
-                            data-course-placeholder="true"
-                        >
-
-                            <span class="sidebar-item-icon">
-                                📚
-                            </span>
-
-                            <span>
-                                Course communities
-                            </span>
-
-                        </button>
-
-                    </div>
-
-                </section>
-
-            </div>
-
-
-            <!-- CURRENT USER -->
-
-            <div class="sidebar-user">
-
-                <div class="user-avatar-wrap">
-
-                    <img
-                        id="sidebarAvatar"
-                        class="user-avatar"
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='80' height='80' rx='40' fill='%23087f73'/%3E%3Ctext x='40' y='49' text-anchor='middle' font-size='28' fill='white'%3EMS%3C/text%3E%3C/svg%3E"
-                        alt="Profile"
-                    >
+                <div
+                    id="currentUserAvatar"
+                    class="user-avatar"
+                >
+                    S
 
                     <span
-                        id="sidebarPresenceDot"
-                        class="presence-dot offline"
+                        id="currentUserPresence"
+                        class="presence-dot online"
                     ></span>
-
                 </div>
 
-                <div class="sidebar-user-info">
 
-                    <strong id="sidebarUserName">
+                <div class="current-user-copy">
+
+                    <strong id="currentUserName">
                         Student
                     </strong>
 
-                    <span id="sidebarUserStatus">
-                        Offline
+                    <span id="currentUserRole">
+                        Student
                     </span>
 
                 </div>
 
+
                 <button
-                    id="userSettingsButton"
+                    id="communitySettingsButton"
                     class="user-settings-button"
                     type="button"
-                    aria-label="User settings"
+                    aria-label="Community settings"
                 >
                     ⚙
                 </button>
 
             </div>
 
-        </aside>
+        </div>
+
+    </aside>
 
 
-        <!-- =================================================
-             MAIN CONTENT
-             ================================================= -->
+    <!-- =====================================================
+         MAIN COMMUNITY AREA
+    ====================================================== -->
 
-        <main class="community-main">
+    <main class="community-main">
+
+        <!-- TOP HEADER -->
+
+        <header class="community-header">
+
+            <div class="header-left">
+
+                <button
+                    id="openSidebarButton"
+                    class="mobile-menu-button"
+                    type="button"
+                    aria-label="Open community navigation"
+                >
+                    ☰
+                </button>
 
 
-            <!-- =================================================
-                 TOP BAR
-                 ================================================= -->
+                <div class="channel-title-block">
 
-            <header class="community-topbar">
-
-                <div class="topbar-left">
-
-                    <button
-                        id="openSidebarButton"
-                        class="mobile-menu-button"
-                        type="button"
-                        aria-label="Open navigation"
-                    >
-                        ☰
-                    </button>
-
-                    <div class="current-channel">
+                    <div class="channel-title-row">
 
                         <span
-                            id="currentChannelIcon"
-                            class="current-channel-icon"
+                            id="activeChannelIcon"
+                            class="channel-title-hash"
                         >
                             #
                         </span>
 
-                        <div>
-
-                            <h1 id="currentChannelName">
-                                general-chat
-                            </h1>
-
-                            <p id="currentChannelDescription">
-                                General Mwaniki Scholars discussion.
-                            </p>
-
-                        </div>
+                        <h1 id="activeChannelName">
+                            General Chat
+                        </h1>
 
                     </div>
+
+
+                    <p id="activeChannelDescription">
+                        Welcome to the Mwaniki Scholars community.
+                    </p>
 
                 </div>
-
-
-                <div class="topbar-actions">
-
-                    <button
-                        id="searchButton"
-                        class="topbar-button"
-                        type="button"
-                        aria-label="Search"
-                        title="Search"
-                    >
-                        🔎
-                    </button>
-
-                    <button
-                        id="notificationButton"
-                        class="topbar-button notification-button"
-                        type="button"
-                        aria-label="Notifications"
-                        title="Notifications"
-                    >
-
-                        🔔
-
-                        <span
-                            id="notificationBadge"
-                            class="notification-badge hidden"
-                        >
-                            0
-                        </span>
-
-                    </button>
-
-                    <a
-                        href="dashboard.html"
-                        class="dashboard-button"
-                        title="Return to dashboard"
-                    >
-                        Dashboard
-                    </a>
-
-                </div>
-
-            </header>
-
-
-            <!-- =================================================
-                 CONTENT AREA
-                 ================================================= -->
-
-            <div class="community-content">
-
-
-                <!-- =================================================
-                     CHAT AREA
-                     ================================================= -->
-
-                <section class="chat-panel">
-
-                    <!-- CHAT HEADER -->
-
-                    <div class="chat-header">
-
-                        <div class="chat-header-info">
-
-                            <div
-                                id="chatHeaderIcon"
-                                class="chat-header-icon"
-                            >
-                                #
-                            </div>
-
-                            <div>
-
-                                <h2 id="chatHeaderTitle">
-                                    general-chat
-                                </h2>
-
-                                <p id="chatHeaderDescription">
-                                    General Mwaniki Scholars discussion.
-                                </p>
-
-                            </div>
-
-                        </div>
-
-                        <div class="chat-header-actions">
-
-                            <button
-                                id="channelInfoButton"
-                                class="icon-button"
-                                type="button"
-                                aria-label="Channel information"
-                                title="Channel information"
-                            >
-                                ⓘ
-                            </button>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- MESSAGES -->
-
-                    <div
-                        id="messagesContainer"
-                        class="messages-container"
-                        aria-live="polite"
-                        aria-label="Messages"
-                    >
-
-                        <div
-                            id="messagesWelcome"
-                            class="messages-welcome"
-                        >
-
-                            <div class="welcome-icon">
-                                #
-                            </div>
-
-                            <h2>
-                                Welcome to Mwaniki Scholars Community
-                            </h2>
-
-                            <p>
-                                This is the beginning of the
-                                <strong>#general-chat</strong>
-                                channel.
-                            </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <!-- TYPING INDICATOR -->
-
-                    <div
-                        id="typingIndicator"
-                        class="typing-indicator"
-                        aria-live="polite"
-                    >
-                        <span id="typingText"></span>
-                    </div>
-
-
-                    <!-- MESSAGE COMPOSER -->
-
-                    <div class="composer-wrapper">
-
-                        <form
-                            id="messageForm"
-                            class="message-composer"
-                        >
-
-                            <button
-                                id="attachmentButton"
-                                class="composer-button"
-                                type="button"
-                                aria-label="Attach file"
-                                title="Attachments coming soon"
-                            >
-                                +
-                            </button>
-
-                            <input
-                                id="messageInput"
-                                type="text"
-                                autocomplete="off"
-                                maxlength="10000"
-                                placeholder="Message #general-chat"
-                                aria-label="Message"
-                                disabled
-                            >
-
-                            <button
-                                id="emojiButton"
-                                class="composer-button"
-                                type="button"
-                                aria-label="Add reaction"
-                                title="Emoji"
-                            >
-                                😊
-                            </button>
-
-                            <button
-                                id="sendMessageButton"
-                                class="send-button"
-                                type="submit"
-                                aria-label="Send message"
-                                disabled
-                            >
-                                ➤
-                            </button>
-
-                        </form>
-
-                        <div class="composer-hint">
-
-                            <span>
-                                Be respectful and help keep Mwaniki Scholars educational.
-                            </span>
-
-                            <span>
-                                <strong>Enter</strong> to send
-                            </span>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- =================================================
-                     RIGHT MEMBERS PANEL
-                     ================================================= -->
-
-                <aside
-                    id="membersPanel"
-                    class="members-panel"
-                >
-
-                    <div class="members-header">
-
-                        <div>
-
-                            <h2>
-                                Members
-                            </h2>
-
-                            <span id="memberCount">
-                                0 members
-                            </span>
-
-                        </div>
-
-                        <button
-                            id="closeMembersButton"
-                            class="mobile-close-button"
-                            type="button"
-                            aria-label="Close members"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-
-                    <div class="members-search">
-
-                        <input
-                            id="memberSearchInput"
-                            type="search"
-                            placeholder="Search members..."
-                            autocomplete="off"
-                        >
-
-                    </div>
-
-
-                    <div
-                        id="membersList"
-                        class="members-list"
-                    >
-
-                        <div class="member-loading">
-                            Loading members...
-                        </div>
-
-                    </div>
-
-                </aside>
 
             </div>
 
-        </main>
 
-    </div>
-
-
-    <!-- =====================================================
-         SEARCH MODAL
-         ===================================================== -->
-
-    <div
-        id="searchModal"
-        class="modal hidden"
-        aria-hidden="true"
-    >
-
-        <div class="modal-backdrop"></div>
-
-        <div class="modal-card search-modal-card">
-
-            <div class="modal-header">
-
-                <div>
-                    <h2>Search Community</h2>
-                    <p>Find messages across Mwaniki Community.</p>
-                </div>
+            <div class="header-actions">
 
                 <button
-                    id="closeSearchModal"
-                    class="modal-close"
+                    id="searchButton"
+                    class="header-icon-button"
                     type="button"
+                    title="Search messages"
+                    aria-label="Search messages"
                 >
-                    ×
+                    🔎
+                </button>
+
+
+                <button
+                    id="notificationsButton"
+                    class="header-icon-button notification-button"
+                    type="button"
+                    title="Notifications"
+                    aria-label="Notifications"
+                >
+                    🔔
+
+                    <span
+                        id="communityNotificationBadge"
+                        class="notification-badge"
+                        hidden
+                    >
+                        0
+                    </span>
+                </button>
+
+
+                <button
+                    id="memberPanelButton"
+                    class="header-icon-button mobile-member-button"
+                    type="button"
+                    title="Members"
+                    aria-label="Members"
+                >
+                    👥
                 </button>
 
             </div>
 
-            <div class="modal-body">
+        </header>
 
-                <div class="search-input-row">
 
-                    <input
-                        id="communitySearchInput"
-                        type="search"
-                        placeholder="Search messages..."
-                        autocomplete="off"
-                    >
+        <!-- SEARCH BAR -->
 
-                    <button
-                        id="communitySearchSubmit"
-                        type="button"
-                        class="primary-button"
-                    >
-                        Search
-                    </button>
+        <div
+            id="messageSearchBar"
+            class="message-search-bar"
+            hidden
+        >
 
-                </div>
+            <div class="search-input-wrapper">
 
-                <div
-                    id="searchResults"
-                    class="search-results"
+                <span>
+                    🔎
+                </span>
+
+                <input
+                    id="messageSearchInput"
+                    type="search"
+                    placeholder="Search messages in this community..."
+                    autocomplete="off"
                 >
-                    Enter a search term to find community messages.
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         CHANNEL INFO MODAL
-         ===================================================== -->
-
-    <div
-        id="channelInfoModal"
-        class="modal hidden"
-        aria-hidden="true"
-    >
-
-        <div class="modal-backdrop"></div>
-
-        <div class="modal-card">
-
-            <div class="modal-header">
-
-                <div>
-                    <h2 id="channelInfoTitle">
-                        Channel
-                    </h2>
-
-                    <p>
-                        Channel information
-                    </p>
-                </div>
 
                 <button
-                    id="closeChannelInfoModal"
-                    class="modal-close"
+                    id="clearMessageSearchButton"
                     type="button"
+                    aria-label="Clear search"
                 >
                     ×
                 </button>
@@ -754,131 +633,510 @@
             </div>
 
             <div
-                id="channelInfoContent"
-                class="modal-body channel-info-content"
+                id="messageSearchResults"
+                class="message-search-results"
             ></div>
 
         </div>
 
-    </div>
 
+        <!-- CHAT CONTENT -->
 
-    <!-- =====================================================
-         CREATE CHANNEL MODAL
-         ===================================================== -->
+        <section
+            id="chatArea"
+            class="chat-area"
+        >
 
-    <div
-        id="createChannelModal"
-        class="modal hidden"
-        aria-hidden="true"
-    >
+            <!-- WELCOME / MESSAGE VIEW -->
 
-        <div class="modal-backdrop"></div>
+            <div
+                id="messagesContainer"
+                class="messages-container"
+                aria-live="polite"
+            >
 
-        <div class="modal-card">
-
-            <div class="modal-header">
-
-                <div>
-                    <h2>Create Channel</h2>
-                    <p>Create a new community discussion channel.</p>
-                </div>
-
-                <button
-                    id="closeCreateChannelModal"
-                    class="modal-close"
-                    type="button"
+                <div
+                    id="messagesLoading"
+                    class="messages-loading"
                 >
-                    ×
-                </button>
+
+                    <div class="loading-spinner"></div>
+
+                    <p>
+                        Loading community messages...
+                    </p>
+
+                </div>
 
             </div>
 
-            <form
-                id="createChannelForm"
-                class="modal-body"
+
+            <!-- TYPING INDICATOR -->
+
+            <div
+                id="typingIndicator"
+                class="typing-indicator"
+                aria-live="polite"
             >
+                <span id="typingText"></span>
+            </div>
 
-                <label for="newChannelName">
-                    Channel name
-                </label>
 
-                <input
-                    id="newChannelName"
-                    type="text"
-                    maxlength="100"
-                    placeholder="e.g. hematology"
-                    required
-                >
+            <!-- COMPOSER -->
 
-                <label for="newChannelDescription">
-                    Description
-                </label>
-
-                <textarea
-                    id="newChannelDescription"
-                    maxlength="500"
-                    rows="4"
-                    placeholder="What is this channel for?"
-                ></textarea>
-
-                <label for="newChannelType">
-                    Channel type
-                </label>
-
-                <select id="newChannelType">
-
-                    <option value="text">
-                        Text
-                    </option>
-
-                    <option value="study">
-                        Study
-                    </option>
-
-                    <option value="announcement">
-                        Announcement
-                    </option>
-
-                </select>
+            <div class="composer-area">
 
                 <div
-                    id="createChannelError"
-                    class="form-error hidden"
+                    id="replyPreview"
+                    class="reply-preview"
+                    hidden
+                >
+
+                    <div>
+                        <span class="reply-label">
+                            Replying to
+                        </span>
+
+                        <strong id="replyPreviewName">
+                            Student
+                        </strong>
+
+                        <p id="replyPreviewText">
+                            Message
+                        </p>
+                    </div>
+
+                    <button
+                        id="cancelReplyButton"
+                        type="button"
+                        aria-label="Cancel reply"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <form
+                    id="messageComposer"
+                    class="message-composer"
+                >
+
+                    <button
+                        id="attachmentButton"
+                        class="composer-button"
+                        type="button"
+                        title="Attach a file"
+                        aria-label="Attach a file"
+                    >
+                        +
+                    </button>
+
+
+                    <input
+                        id="attachmentInput"
+                        type="file"
+                        hidden
+                        multiple
+                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.txt"
+                    >
+
+
+                    <div class="composer-input-wrap">
+
+                        <textarea
+                            id="messageInput"
+                            rows="1"
+                            maxlength="4000"
+                            placeholder="Message #general-chat"
+                            autocomplete="off"
+                        ></textarea>
+
+
+                        <div class="composer-tools">
+
+                            <span
+                                id="characterCount"
+                                class="character-count"
+                            >
+                                0/4000
+                            </span>
+
+                            <button
+                                id="emojiButton"
+                                class="composer-mini-button"
+                                type="button"
+                                title="Add emoji"
+                                aria-label="Add emoji"
+                            >
+                                ☺
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <button
+                        id="sendMessageButton"
+                        class="send-message-button"
+                        type="submit"
+                        title="Send message"
+                        aria-label="Send message"
+                    >
+                        ➤
+                    </button>
+
+                </form>
+
+
+                <div
+                    id="attachmentPreview"
+                    class="attachment-preview"
+                    hidden
                 ></div>
 
-                <button
-                    type="submit"
-                    class="primary-button full-width"
-                >
-                    Create Channel
-                </button>
 
-            </form>
+                <p class="composer-hint">
+                    Be respectful, academic and helpful.
+                    Press Enter to send.
+                </p>
 
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =====================================================
+         RIGHT MEMBER PANEL
+    ====================================================== -->
+
+    <aside
+        id="memberSidebar"
+        class="member-sidebar"
+        aria-label="Community members"
+    >
+
+        <div class="member-header">
+
+            <div>
+
+                <strong>
+                    Members
+                </strong>
+
+                <span id="memberCount">
+                    0
+                </span>
+
+            </div>
+
+
+            <button
+                id="closeMemberPanelButton"
+                class="member-close-button"
+                type="button"
+                aria-label="Close members"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="member-search">
+
+            <input
+                id="memberSearchInput"
+                type="search"
+                placeholder="Search members..."
+                autocomplete="off"
+            >
+
+        </div>
+
+
+        <div
+            id="memberList"
+            class="member-list"
+        >
+
+            <div class="member-loading">
+                Loading members...
+            </div>
+
+        </div>
+
+    </aside>
+
+</div>
+
+
+<!-- =========================================================
+     MESSAGE CONTEXT / ACTION MENU
+========================================================== -->
+
+<div
+    id="messageActionMenu"
+    class="message-action-menu"
+    hidden
+>
+
+    <button
+        type="button"
+        data-action="reply"
+    >
+        ↩ Reply
+    </button>
+
+    <button
+        type="button"
+        data-action="react"
+    >
+        🙂 React
+    </button>
+
+    <button
+        type="button"
+        data-action="copy"
+    >
+        ⧉ Copy message
+    </button>
+
+    <button
+        type="button"
+        data-action="report"
+    >
+        ⚑ Report
+    </button>
+
+</div>
+
+
+<!-- =========================================================
+     EMOJI PICKER
+========================================================== -->
+
+<div
+    id="emojiPicker"
+    class="emoji-picker"
+    hidden
+>
+
+    <button type="button" data-emoji="👍">👍</button>
+    <button type="button" data-emoji="❤️">❤️</button>
+    <button type="button" data-emoji="😂">😂</button>
+    <button type="button" data-emoji="🎉">🎉</button>
+    <button type="button" data-emoji="👏">👏</button>
+    <button type="button" data-emoji="🔥">🔥</button>
+    <button type="button" data-emoji="💡">💡</button>
+    <button type="button" data-emoji="🧠">🧠</button>
+    <button type="button" data-emoji="📚">📚</button>
+    <button type="button" data-emoji="❤️">💯</button>
+
+</div>
+
+
+<!-- =========================================================
+     NOTIFICATIONS PANEL
+========================================================== -->
+
+<div
+    id="communityNotificationPanel"
+    class="floating-panel notification-panel"
+    hidden
+>
+
+    <div class="floating-panel-header">
+
+        <div>
+            <strong>
+                Community Notifications
+            </strong>
+
+            <small>
+                Your latest community activity
+            </small>
+        </div>
+
+        <button
+            id="closeNotificationPanelButton"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <div
+        id="communityNotificationContent"
+        class="notification-content"
+    >
+
+        <div class="empty-state">
+            No new notifications.
         </div>
 
     </div>
 
 
-    <!-- =====================================================
-         TOAST
-         ===================================================== -->
+    <div class="notification-footer">
 
-    <div
-        id="toastContainer"
-        class="toast-container"
-        aria-live="polite"
-    ></div>
+        <button
+            id="markNotificationsReadButton"
+            type="button"
+            class="secondary-button"
+        >
+            Mark all as read
+        </button>
+
+    </div>
+
+</div>
 
 
-    <!-- =====================================================
-         JAVASCRIPT
-         ===================================================== -->
+<!-- =========================================================
+     COMMUNITY SETTINGS
+========================================================== -->
 
-    <script src="supabase.js"></script>
-    <script src="community.js"></script>
+<div
+    id="communitySettingsPanel"
+    class="floating-panel settings-panel"
+    hidden
+>
+
+    <div class="floating-panel-header">
+
+        <div>
+            <strong>
+                Community Settings
+            </strong>
+
+            <small>
+                Your community preferences
+            </small>
+        </div>
+
+        <button
+            id="closeSettingsPanelButton"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+
+    <div class="settings-content">
+
+        <label class="setting-row">
+
+            <span>
+                Enter key sends message
+            </span>
+
+            <input
+                id="enterToSendToggle"
+                type="checkbox"
+                checked
+            >
+
+        </label>
+
+
+        <label class="setting-row">
+
+            <span>
+                Show online presence
+            </span>
+
+            <input
+                id="presenceToggle"
+                type="checkbox"
+                checked
+            >
+
+        </label>
+
+
+        <label class="setting-row">
+
+            <span>
+                Desktop-style notifications
+            </span>
+
+            <input
+                id="communityNotificationsToggle"
+                type="checkbox"
+                checked
+            >
+
+        </label>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TOAST
+========================================================== -->
+
+<div
+    id="communityToast"
+    class="community-toast"
+    role="status"
+    aria-live="polite"
+></div>
+
+
+<!-- =========================================================
+     AUTH / ERROR SCREEN
+========================================================== -->
+
+<div
+    id="communityAuthScreen"
+    class="community-auth-screen"
+    hidden
+>
+
+    <div class="auth-card">
+
+        <div class="auth-logo">
+            M
+        </div>
+
+        <h2>
+            Mwaniki Community
+        </h2>
+
+        <p id="communityAuthMessage">
+            Please sign in to access the community.
+        </p>
+
+        <button
+            id="communityLoginButton"
+            type="button"
+            class="primary-button"
+        >
+            Return to Login
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SUPABASE
+========================================================== -->
+
+<script src="./supabase.js"></script>
+
+<script src="./community.js"></script>
 
 </body>
 </html>
-
