@@ -4631,3 +4631,112 @@ box-sizing: border-box;
     }
 
 }
+/* =====================================================
+   FLOATING WHATSAPP CHANNEL
+====================================================== */
+
+.floating-whatsapp {
+    position: fixed;
+    left: 22px;
+    bottom: 28px;
+    z-index: 9999;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    min-height: 52px;
+    padding: 10px 17px 10px 12px;
+
+    border-radius: 999px;
+
+    background: #25D366;
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    box-shadow:
+        0 8px 24px rgba(0, 0, 0, 0.18),
+        0 2px 8px rgba(0, 0, 0, 0.12);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.floating-whatsapp:hover {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 12px 30px rgba(0, 0, 0, 0.22),
+        0 4px 12px rgba(0, 0, 0, 0.14);
+}
+
+.floating-whatsapp:focus-visible {
+    outline: 3px solid rgba(37, 211, 102, 0.35);
+    outline-offset: 3px;
+}
+
+.floating-whatsapp-icon {
+    width: 32px;
+    height: 32px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex: 0 0 32px;
+
+    border-radius: 50%;
+
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.floating-whatsapp-icon svg {
+    width: 21px;
+    height: 21px;
+
+    display: block;
+
+    fill: currentColor;
+}
+
+.floating-whatsapp-text {
+    white-space: nowrap;
+}
+
+
+/* =====================================================
+   MOBILE
+====================================================== */
+
+@media (max-width: 700px) {
+
+    .floating-whatsapp {
+        left: 16px;
+        bottom: 18px;
+
+        min-height: 48px;
+        padding: 8px 13px 8px 9px;
+
+        gap: 8px;
+
+        font-size: 13px;
+    }
+
+    .floating-whatsapp-icon {
+        width: 30px;
+        height: 30px;
+
+        flex-basis: 30px;
+    }
+
+    .floating-whatsapp-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+}
