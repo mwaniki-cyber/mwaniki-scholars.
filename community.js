@@ -1,17 +1,18 @@
 /* =========================================================
    MWANIKI SCHOLARS
-   MWANIKI COMMUNITY — DATABASE ALIGNED ENGINE
+   COMMUNITY ENGINE
+   =========================================================
 
-   IMPORTANT ARCHITECTURE
-
-   - Uses the existing Supabase ES module.
-   - Does NOT create another Supabase client.
-   - Is isolated from dashboard.js.
-   - Is isolated from Mwaniki AI.
-   - Is isolated from Turbo AI.
-   - Uses course_id for course identity.
-   - Supports duplicate course titles safely.
-   - Uses the actual Phase 3 database tables.
+   IMPORTANT:
+   - community.js is an ES module.
+   - Supabase comes from ./supabase.js.
+   - Does not create another Supabase client.
+   - Uses the confirmed database schema.
+   - Course communities are identified by course_id.
+   - chat_messages uses user_id.
+   - chat_presence uses last_seen_at.
+   - chat_channels uses channel_type / is_private.
+   - chat_communities uses created_by / icon_url.
 ========================================================= */
 
 import { supabase } from "./supabase.js";
@@ -23,21 +24,21 @@ import { supabase } from "./supabase.js";
 
 
     console.log(
-        "🚀 Mwaniki Community Phase 3 database-aligned engine loaded"
+        "🚀 Mwaniki Community engine loaded"
     );
 
 
     /* =====================================================
        SUPABASE
-    ====================================================== */
+    ===================================================== */
 
-    const supabaseClient = supabase;
+    const db = supabase;
 
 
-    if (!supabaseClient) {
+    if (!db) {
 
         console.error(
-            "❌ Supabase client was not created by supabase.js."
+            "❌ Supabase client is unavailable."
         );
 
         return;
@@ -45,8 +46,8 @@ import { supabase } from "./supabase.js";
 
 
     /* =====================================================
-       STATE
-    ====================================================== */
+       APPLICATION STATE
+    ===================================================== */
 
     const state = {
 
@@ -54,9 +55,9 @@ import { supabase } from "./supabase.js";
 
         profile: null,
 
-        communities: [],
-
         courses: [],
+
+        communities: [],
 
         channels: [],
 
@@ -70,13 +71,7 @@ import { supabase } from "./supabase.js";
 
         currentRole: "student",
 
-        currentReplyMessage: null,
-
-        communityRealtime: null,
-
-        messageRealtime: null,
-
-        presenceTimer: null,
+        replyMessage: null,
 
         channelSearch: "",
 
@@ -84,84 +79,44 @@ import { supabase } from "./supabase.js";
 
         messageSearch: "",
 
-        collapsedCategories: new Set()
+        collapsedCategories: new Set(),
+
+        communityRealtime: null,
+
+        messageRealtime: null,
+
+        presenceInterval: null
 
     };
 
 
     /* =====================================================
-       DOM HELPERS
-    ====================================================== */
+       DOM
+    ===================================================== */
 
-    const $ = selector =>
-        document.querySelector(selector);
+    function byId(id) {
+
+        return document.getElementById(id);
+    }
 
 
-    const $$ = selector =>
-        Array.from(
+    function query(selector) {
+
+        return document.querySelector(selector);
+    }
+
+
+    function queryAll(selector) {
+
+        return Array.from(
             document.querySelectorAll(selector)
         );
-
-
-    const getElement = id =>
-        document.getElementById(id);
-
-
-    /* =====================================================
-       TOAST
-    ====================================================== */
-
-    let toastTimer = null;
-
-
-    function showToast(
-        message,
-        type = "normal"
-    ) {
-
-        const toast =
-            getElement(
-                "communityToast"
-            );
-
-        if (!toast) return;
-
-
-        toast.textContent =
-            String(message || "");
-
-
-        toast.dataset.type =
-            type;
-
-
-        toast.classList.add(
-            "show"
-        );
-
-
-        clearTimeout(
-            toastTimer
-        );
-
-
-        toastTimer =
-            setTimeout(
-                () => {
-
-                    toast.classList.remove(
-                        "show"
-                    );
-
-                },
-                3500
-            );
     }
 
 
     /* =====================================================
-       TEXT HELPERS
-    ====================================================== */
+       HTML SAFETY
+    ===================================================== */
 
     function escapeHTML(value) {
 
@@ -169,136 +124,121 @@ import { supabase } from "./supabase.js";
             value === null ||
             value === undefined
         ) {
+
             return "";
         }
 
 
         return String(value)
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 
 
     function initials(name) {
 
-        const text =
-            String(
-                name ||
-                "Student"
-            )
-                .trim();
+        const value = String(
+            name || "Student"
+        ).trim();
 
 
-        if (!text) {
-            return "S";
+        if (!value) {
+
+            return "ST";
         }
 
 
         const parts =
-            text
-                .split(/\s+/)
-                .filter(Boolean);
+            value.split(/\s+/);
 
 
-        if (
-            parts.length === 1
-        ) {
+        if (parts.length === 1) {
 
             return parts[0]
-                .substring(
-                    0,
-                    2
-                )
+                .substring(0, 2)
                 .toUpperCase();
         }
 
 
         return (
             parts[0][0] +
-            parts[
-                parts.length - 1
-            ][0]
+            parts[parts.length - 1][0]
         ).toUpperCase();
     }
 
 
-    function getDisplayName(record) {
+    function slugify(value) {
 
-        if (!record) {
-
-            return "Student";
-        }
-
-
-        return (
-            record.nickname ||
-            record.full_name ||
-            record.name ||
-            record.display_name ||
-            record.username ||
-            record.email ||
-            record.user_email ||
-            record._profile?.full_name ||
-            record._profile?.name ||
-            record._profile?.email ||
-            "Student"
-        );
+        return String(value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/^-+/, "")
+            .replace(/-+$/, "")
+            .substring(0, 90);
     }
 
 
-    function getUserId(record) {
+    /* =====================================================
+       TOAST
+    ===================================================== */
 
-        if (!record) {
-            return null;
+    let toastTimer = null;
+
+
+    function toast(message, type = "normal") {
+
+        const element =
+            byId("communityToast");
+
+
+        if (!element) {
+
+            console.log(message);
+
+            return;
         }
 
 
-        return (
-            record.user_id ||
-            record.userId ||
-            record.id ||
-            record.uid ||
-            null
-        );
+        element.textContent =
+            String(message || "");
+
+
+        element.dataset.type =
+            type;
+
+
+        element.classList.add("show");
+
+
+        clearTimeout(toastTimer);
+
+
+        toastTimer = setTimeout(() => {
+
+            element.classList.remove("show");
+
+        }, 3500);
     }
 
+
+    /* =====================================================
+       ROLE
+    ===================================================== */
 
     function normalizeRole(role) {
 
         const value =
-            String(
-                role ||
-                "student"
-            )
-                .trim()
+            String(role || "student")
                 .toLowerCase()
-                .replace(
-                    /[\s_-]+/g,
-                    ""
-                );
+                .replace(/[\s_-]/g, "");
 
 
         if (
             value === "superadmin" ||
-            value === "owner" ||
             value === "superadministrator"
         ) {
 
@@ -307,8 +247,8 @@ import { supabase } from "./supabase.js";
 
 
         if (
-            value === "admin" ||
-            value === "administrator"
+            value === "administrator" ||
+            value === "admin"
         ) {
 
             return "admin";
@@ -339,9 +279,7 @@ import { supabase } from "./supabase.js";
 
     function roleLabel(role) {
 
-        switch (
-            normalizeRole(role)
-        ) {
+        switch (normalizeRole(role)) {
 
             case "super_admin":
                 return "Super Admin";
@@ -361,76 +299,52 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* =====================================================
-       PERMISSIONS
-    ====================================================== */
-
-    const permissions = {
-
-        student: {
-            view: true,
-            send: true,
-            react: true,
-            createChannel: false,
-            createCommunity: false,
-            moderate: false,
-            manageMembers: false,
-            manageCommunity: false
-        },
-
-        tutor: {
-            view: true,
-            send: true,
-            react: true,
-            createChannel: true,
-            createCommunity: false,
-            moderate: false,
-            manageMembers: false,
-            manageCommunity: false
-        },
-
-        moderator: {
-            view: true,
-            send: true,
-            react: true,
-            createChannel: true,
-            createCommunity: false,
-            moderate: true,
-            manageMembers: true,
-            manageCommunity: false
-        },
-
-        admin: {
-            view: true,
-            send: true,
-            react: true,
-            createChannel: true,
-            createCommunity: true,
-            moderate: true,
-            manageMembers: true,
-            manageCommunity: true
-        },
-
-        super_admin: {
-            view: true,
-            send: true,
-            react: true,
-            createChannel: true,
-            createCommunity: true,
-            moderate: true,
-            manageMembers: true,
-            manageCommunity: true
-        }
-
-    };
-
-
     function can(permission) {
 
         const role =
             normalizeRole(
                 state.currentRole
             );
+
+
+        const permissions = {
+
+            student: {
+                send: true,
+                createChannel: false,
+                createCommunity: false,
+                moderate: false
+            },
+
+            tutor: {
+                send: true,
+                createChannel: true,
+                createCommunity: false,
+                moderate: false
+            },
+
+            moderator: {
+                send: true,
+                createChannel: true,
+                createCommunity: false,
+                moderate: true
+            },
+
+            admin: {
+                send: true,
+                createChannel: true,
+                createCommunity: true,
+                moderate: true
+            },
+
+            super_admin: {
+                send: true,
+                createChannel: true,
+                createCommunity: true,
+                moderate: true
+            }
+
+        };
 
 
         return Boolean(
@@ -440,170 +354,111 @@ import { supabase } from "./supabase.js";
     }
 
 
-    function applyPermissionUI() {
-
-        const createChannelButton =
-            getElement(
-                "createChannelButton"
-            );
-
-
-        const createCommunityButton =
-            getElement(
-                "createCommunityButton"
-            );
-
-
-        const menuChannel =
-            getElement(
-                "communityMenuCreateChannel"
-            );
-
-
-        const menuCommunity =
-            getElement(
-                "communityMenuCreateCommunity"
-            );
-
-
-        if (createChannelButton) {
-
-            createChannelButton.style.display =
-                can("createChannel")
-                    ? "flex"
-                    : "none";
-        }
-
-
-        if (createCommunityButton) {
-
-            createCommunityButton.style.display =
-                can("createCommunity")
-                    ? "flex"
-                    : "none";
-        }
-
-
-        if (menuChannel) {
-
-            menuChannel.style.display =
-                can("createChannel")
-                    ? "block"
-                    : "none";
-        }
-
-
-        if (menuCommunity) {
-
-            menuCommunity.style.display =
-                can("createCommunity")
-                    ? "block"
-                    : "none";
-        }
-
-
-        const badge =
-            getElement(
-                "activeRoleBadge"
-            );
-
-
-        if (badge) {
-
-            badge.textContent =
-                roleLabel(
-                    state.currentRole
-                );
-        }
-
-
-        const input =
-            getElement(
-                "messageInput"
-            );
-
-
-        const sendButton =
-            getElement(
-                "sendMessageButton"
-            );
-
-
-        if (input) {
-
-            input.disabled =
-                !can("send");
-
-
-            input.placeholder =
-                can("send")
-                    ? `Message #${
-                        state.currentChannel?.name ||
-                        "channel"
-                    }`
-                    : "You cannot send messages here.";
-        }
-
-
-        if (sendButton) {
-
-            sendButton.disabled =
-                !can("send");
-        }
-    }
-
-
     /* =====================================================
-       AUTH
-    ====================================================== */
+       USER / MEMBER HELPERS
+    ===================================================== */
 
-    async function getAuthenticatedUser() {
+    function memberUserId(member) {
 
-        const {
-            data,
-            error
-        } =
-            await supabaseClient
-                .auth
-                .getUser();
-
-
-        if (error) {
-
-            console.error(
-                "❌ Unable to retrieve authenticated user:",
-                error
-            );
+        if (!member) {
 
             return null;
         }
 
 
         return (
-            data?.user ||
+            member.user_id ||
+            member.id ||
+            null
+        );
+    }
+
+
+    function displayName(member) {
+
+        if (!member) {
+
+            return "Student";
+        }
+
+
+        return (
+            member.nickname ||
+            member.full_name ||
+            member.name ||
+            member.display_name ||
+            member.username ||
+            member.email ||
+            member._profile?.full_name ||
+            member._profile?.name ||
+            member._profile?.email ||
+            "Student"
+        );
+    }
+
+
+    function findMember(userId) {
+
+        if (!userId) {
+
+            return null;
+        }
+
+
+        return (
+            state.members.find(
+                member =>
+                    String(
+                        memberUserId(member)
+                    ) ===
+                    String(userId)
+            ) ||
             null
         );
     }
 
 
     /* =====================================================
-       PROFILE
-    ====================================================== */
+       AUTHENTICATION
+    ===================================================== */
 
-    async function loadCurrentProfile() {
+    async function getUser() {
+
+        const result =
+            await db.auth.getUser();
+
+
+        if (result.error) {
+
+            console.error(
+                "❌ Auth error:",
+                result.error
+            );
+
+            return null;
+        }
+
+
+        return result.data?.user || null;
+    }
+
+
+    /* =====================================================
+       STUDENT PROFILE
+    ===================================================== */
+
+    async function loadProfile() {
 
         if (!state.user) {
+
             return;
         }
 
 
         try {
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
+            const result =
+                await db
                     .from("students")
                     .select("*")
                     .eq(
@@ -614,18 +469,18 @@ import { supabase } from "./supabase.js";
 
 
             if (
-                !error &&
-                data
+                !result.error &&
+                result.data
             ) {
 
                 state.profile =
-                    data;
+                    result.data;
             }
 
         } catch (error) {
 
             console.warn(
-                "⚠️ Student profile lookup unavailable:",
+                "⚠️ Profile lookup unavailable:",
                 error
             );
         }
@@ -634,20 +489,17 @@ import { supabase } from "./supabase.js";
 
     /* =====================================================
        COURSES
-    ====================================================== */
+    ===================================================== */
 
     async function loadCourses() {
 
         try {
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
+            const result =
+                await db
                     .from("courses")
                     .select(
-                        "id,title"
+                        "id,title,description"
                     )
                     .order(
                         "title",
@@ -657,14 +509,15 @@ import { supabase } from "./supabase.js";
                     );
 
 
-            if (error) {
-                throw error;
+            if (result.error) {
+
+                throw result.error;
             }
 
 
             state.courses =
-                Array.isArray(data)
-                    ? data
+                Array.isArray(result.data)
+                    ? result.data
                     : [];
 
 
@@ -672,283 +525,350 @@ import { supabase } from "./supabase.js";
 
 
             console.log(
-                "📚 Community courses loaded:",
+                "📚 Courses loaded:",
                 state.courses.length
             );
 
         } catch (error) {
 
-            console.warn(
-                "⚠️ Could not load courses:",
+            console.error(
+                "❌ Course loading failed:",
                 error
             );
 
 
-            state.courses =
-                [];
-
+            state.courses = [];
 
             populateCourseSelects();
         }
+    }
+
+
+    function getCourse(courseId) {
+
+        if (
+            courseId === null ||
+            courseId === undefined
+        ) {
+
+            return null;
+        }
+
+
+        return (
+            state.courses.find(
+                course =>
+                    String(course.id) ===
+                    String(courseId)
+            ) ||
+            null
+        );
+    }
+
+
+    function getCourseName(courseId) {
+
+        return (
+            getCourse(courseId)?.title ||
+            ""
+        );
     }
 
 
     function populateCourseSelects() {
 
         const communitySelect =
-            getElement(
-                "communityCourseSelect"
-            );
+            byId("communityCourseSelect");
 
 
         const channelSelect =
-            getElement(
-                "channelCourseSelect"
-            );
+            byId("channelCourseSelect");
 
 
         if (communitySelect) {
 
+            let html =
+                '<option value="">General Community</option>';
+
+
+            state.courses.forEach(
+                course => {
+
+                    html +=
+                        "<option value=\"" +
+                        escapeHTML(course.id) +
+                        "\">" +
+                        escapeHTML(course.title) +
+                        "</option>";
+                }
+            );
+
+
             communitySelect.innerHTML =
-                `
-                <option value="">
-                    General Community
-                </option>
-                ` +
-                state.courses
-                    .map(
-                        course => `
-                            <option
-                                value="${escapeHTML(course.id)}"
-                            >
-                                ${escapeHTML(course.title)}
-                            </option>
-                        `
-                    )
-                    .join("");
+                html;
         }
 
 
         if (channelSelect) {
 
-            channelSelect.innerHTML =
-                `
-                <option value="">
-                    No specific course
-                </option>
-                ` +
-                state.courses
-                    .map(
-                        course => `
-                            <option
-                                value="${escapeHTML(course.id)}"
-                            >
-                                ${escapeHTML(course.title)}
-                            </option>
-                        `
-                    )
-                    .join("");
-        }
-    }
+            let html =
+                '<option value="">No specific course</option>';
 
 
-    function getCourseName(courseId) {
+            state.courses.forEach(
+                course => {
 
-        const course =
-            state.courses.find(
-                item =>
-                    String(item.id) ===
-                    String(courseId)
+                    html +=
+                        "<option value=\"" +
+                        escapeHTML(course.id) +
+                        "\">" +
+                        escapeHTML(course.title) +
+                        "</option>";
+                }
             );
 
 
-        return (
-            course?.title ||
-            null
-        );
+            channelSelect.innerHTML =
+                html;
+        }
     }
 
 
     /* =====================================================
        COMMUNITIES
-    ====================================================== */
+    ===================================================== */
 
     async function loadCommunities() {
 
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from("chat_communities")
-                    .select("*")
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending: true
-                        }
-                    );
+        const result =
+            await db
+                .from("chat_communities")
+                .select("*")
+                .eq(
+                    "is_active",
+                    true
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
 
 
-            if (error) {
-                throw error;
-            }
-
-
-            state.communities =
-                Array.isArray(data)
-                    ? data
-                    : [];
-
-
-            renderCommunityRail();
-
-
-            console.log(
-                "🏘️ Communities loaded:",
-                state.communities.length
-            );
-
-        } catch (error) {
+        if (result.error) {
 
             console.error(
-                "❌ Failed to load communities:",
-                error
+                "❌ Community loading failed:",
+                result.error
             );
 
 
-            state.communities =
-                [];
-
+            state.communities = [];
 
             renderCommunityRail();
 
-
-            showToast(
-                "Could not load communities.",
-                "error"
-            );
+            return;
         }
+
+
+        state.communities =
+            result.data || [];
+
+
+        renderCommunityRail();
+
+
+        console.log(
+            "🏘️ Communities loaded:",
+            state.communities.length
+        );
     }
 
 
     /* =====================================================
        COMMUNITY RAIL
-    ====================================================== */
+    ===================================================== */
 
     function renderCommunityRail() {
 
         const rail =
-            getElement(
-                "communityRail"
-            );
+            byId("communityRail");
 
 
         if (!rail) {
+
+            return;
+        }
+
+
+        if (!state.communities.length) {
+
+            rail.innerHTML =
+                '<div class="channel-empty">No communities</div>';
+
+            return;
+        }
+
+
+        let html = "";
+
+
+        state.communities.forEach(
+            community => {
+
+                const active =
+                    state.currentCommunity &&
+                    String(
+                        state.currentCommunity.id
+                    ) ===
+                    String(community.id);
+
+
+                const icon =
+                    community.icon_url ||
+                    initials(
+                        community.name
+                    );
+
+
+                html +=
+                    '<button ' +
+                    'type="button" ' +
+                    'class="community-rail-item ' +
+                    (
+                        active
+                            ? "active"
+                            : ""
+                    ) +
+                    '" ' +
+                    'data-community-id="' +
+                    escapeHTML(
+                        community.id
+                    ) +
+                    '" ' +
+                    'title="' +
+                    escapeHTML(
+                        community.name
+                    ) +
+                    '">' +
+                    '<div class="community-rail-icon">' +
+                    escapeHTML(icon) +
+                    "</div>" +
+                    "</button>";
+            }
+        );
+
+
+        rail.innerHTML =
+            html;
+
+
+        queryAll(
+            ".community-rail-item[data-community-id]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        await switchCommunity(
+                            button.dataset.communityId
+                        );
+                    }
+                );
+            }
+        );
+    }
+
+
+    /* =====================================================
+       COMMUNITY MEMBERSHIP / ROLE
+    ===================================================== */
+
+    async function ensureMembership() {
+
+        if (
+            !state.user ||
+            !state.currentCommunity
+        ) {
+
+            return;
+        }
+
+
+        const lookup =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select(
+                    "id,role,is_banned"
+                )
+                .eq(
+                    "community_id",
+                    state.currentCommunity.id
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
+
+
+        if (lookup.error) {
+
+            console.warn(
+                "⚠️ Membership lookup failed:",
+                lookup.error
+            );
+
+            return;
+        }
+
+
+        if (lookup.data) {
+
             return;
         }
 
 
         if (
-            !state.communities.length
+            state.currentCommunity.is_public ===
+            true
         ) {
 
-            rail.innerHTML = `
-                <div class="community-rail-item active">
-                    <div class="community-rail-icon text-icon">
-                        MS
-                    </div>
-                </div>
-            `;
+            const insert =
+                await db
+                    .from(
+                        "chat_community_members"
+                    )
+                    .insert({
 
-            return;
+                        community_id:
+                            state.currentCommunity.id,
+
+                        user_id:
+                            state.user.id,
+
+                        role:
+                            "student"
+                    });
+
+
+            if (insert.error) {
+
+                console.warn(
+                    "⚠️ Could not automatically join community:",
+                    insert.error
+                );
+            }
         }
-
-
-        rail.innerHTML =
-            state.communities
-                .map(
-                    community => {
-
-                        const active =
-                            state.currentCommunity &&
-                            String(
-                                state.currentCommunity.id
-                            ) ===
-                            String(
-                                community.id
-                            );
-
-
-                        const icon =
-                            community.icon_url ||
-                            initials(
-                                community.name
-                            );
-
-
-                        return `
-                            <button
-                                type="button"
-                                class="community-rail-item ${
-                                    active
-                                        ? "active"
-                                        : ""
-                                }"
-                                data-community-id="${escapeHTML(
-                                    community.id
-                                )}"
-                                title="${escapeHTML(
-                                    community.name
-                                )}"
-                            >
-
-                                <div
-                                    class="community-rail-icon ${
-                                        String(icon).length > 2
-                                            ? "text-icon"
-                                            : ""
-                                    }"
-                                >
-                                    ${escapeHTML(icon)}
-                                </div>
-
-                            </button>
-                        `;
-                    }
-                )
-                .join("");
-
-
-        $$(".community-rail-item[data-community-id]")
-            .forEach(
-                button => {
-
-                    button.addEventListener(
-                        "click",
-                        async () => {
-
-                            await switchCommunity(
-                                button.dataset.communityId
-                            );
-                        }
-                    );
-                }
-            );
     }
 
 
-    /* =====================================================
-       COMMUNITY ROLE
-    ====================================================== */
-
-    async function loadCommunityRole() {
+    async function loadRole() {
 
         state.currentRole =
             "student";
@@ -959,164 +879,168 @@ import { supabase } from "./supabase.js";
             !state.currentCommunity
         ) {
 
-            applyPermissionUI();
+            updatePermissionUI();
 
             return;
         }
 
 
-        try {
+        const result =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select(
+                    "role,is_banned,is_muted,nickname"
+                )
+                .eq(
+                    "community_id",
+                    state.currentCommunity.id
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_community_members"
-                    )
-                    .select(
-                        "role,nickname,is_muted,is_banned"
-                    )
-                    .eq(
-                        "community_id",
-                        state.currentCommunity.id
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    )
-                    .maybeSingle();
 
+        if (
+            !result.error &&
+            result.data
+        ) {
 
             if (
-                !error &&
-                data
+                result.data.is_banned
             ) {
 
                 state.currentRole =
+                    "student";
+
+            } else {
+
+                state.currentRole =
                     normalizeRole(
-                        data.role
+                        result.data.role
                     );
-
-
-                if (
-                    data.is_banned
-                ) {
-
-                    state.currentRole =
-                        "student";
-
-
-                    showToast(
-                        "Your access to this community has been restricted.",
-                        "error"
-                    );
-                }
             }
-
-        } catch (error) {
-
-            console.warn(
-                "⚠️ Could not determine community role:",
-                error
-            );
         }
 
 
-        applyPermissionUI();
+        updatePermissionUI();
     }
 
 
-    /* =====================================================
-       ENSURE COMMUNITY MEMBERSHIP
-    ====================================================== */
+    function updatePermissionUI() {
 
-    async function ensureCommunityMembership() {
+        const roleBadge =
+            byId("activeRoleBadge");
 
-        if (
-            !state.user ||
-            !state.currentCommunity
-        ) {
-            return;
+
+        if (roleBadge) {
+
+            roleBadge.textContent =
+                roleLabel(
+                    state.currentRole
+                );
         }
 
 
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_community_members"
-                    )
-                    .select(
-                        "id,role,is_banned"
-                    )
-                    .eq(
-                        "community_id",
-                        state.currentCommunity.id
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    )
-                    .maybeSingle();
-
-
-            if (error) {
-                return;
-            }
-
-
-            if (!data) {
-
-                const {
-                    error:
-                    insertError
-                } =
-                    await supabaseClient
-                        .from(
-                            "chat_community_members"
-                        )
-                        .insert({
-                            community_id:
-                                state.currentCommunity.id,
-
-                            user_id:
-                                state.user.id,
-
-                            role:
-                                "student"
-                        });
-
-
-                if (
-                    insertError
-                ) {
-
-                    console.warn(
-                        "⚠️ Could not automatically join community:",
-                        insertError
-                    );
-                }
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "⚠️ Community membership check failed:",
-                error
+        const createChannel =
+            byId(
+                "createChannelButton"
             );
+
+
+        const createCommunity =
+            byId(
+                "createCommunityButton"
+            );
+
+
+        const menuChannel =
+            byId(
+                "communityMenuCreateChannel"
+            );
+
+
+        const menuCommunity =
+            byId(
+                "communityMenuCreateCommunity"
+            );
+
+
+        if (createChannel) {
+
+            createChannel.style.display =
+                can("createChannel")
+                    ? ""
+                    : "none";
+        }
+
+
+        if (createCommunity) {
+
+            createCommunity.style.display =
+                can("createCommunity")
+                    ? ""
+                    : "none";
+        }
+
+
+        if (menuChannel) {
+
+            menuChannel.style.display =
+                can("createChannel")
+                    ? ""
+                    : "none";
+        }
+
+
+        if (menuCommunity) {
+
+            menuCommunity.style.display =
+                can("createCommunity")
+                    ? ""
+                    : "none";
+        }
+
+
+        const input =
+            byId("messageInput");
+
+
+        const send =
+            byId("sendMessageButton");
+
+
+        if (input) {
+
+            input.disabled =
+                !can("send");
+
+
+            if (state.currentChannel) {
+
+                input.placeholder =
+                    can("send")
+                        ? "Message #" +
+                          state.currentChannel.name
+                        : "You cannot send messages here.";
+            }
+        }
+
+
+        if (send) {
+
+            send.disabled =
+                !can("send");
         }
     }
 
 
     /* =====================================================
        SWITCH COMMUNITY
-    ====================================================== */
+    ===================================================== */
 
     async function switchCommunity(
         communityId
@@ -1132,8 +1056,8 @@ import { supabase } from "./supabase.js";
 
         if (!community) {
 
-            showToast(
-                "Community could not be found.",
+            toast(
+                "Community not found.",
                 "error"
             );
 
@@ -1149,27 +1073,16 @@ import { supabase } from "./supabase.js";
             null;
 
 
-        state.channels =
-            [];
+        state.channels = [];
 
+        state.messages = [];
 
-        state.members =
-            [];
-
-
-        state.messages =
-            [];
-
-
-        state.currentReplyMessage =
-            null;
+        state.members = [];
 
 
         localStorage.setItem(
             "mwanikiCommunityId",
-            String(
-                community.id
-            )
+            String(community.id)
         );
 
 
@@ -1178,9 +1091,9 @@ import { supabase } from "./supabase.js";
         renderActiveCommunity();
 
 
-        await ensureCommunityMembership();
+        await ensureMembership();
 
-        await loadCommunityRole();
+        await loadRole();
 
         await loadChannels();
 
@@ -1190,341 +1103,297 @@ import { supabase } from "./supabase.js";
 
 
         console.log(
-            "🔄 Switched community:",
+            "🔄 Active community:",
             community.name
         );
     }
 
 
-    /* =====================================================
-       ACTIVE COMMUNITY
-    ====================================================== */
-
     function renderActiveCommunity() {
 
-        const community =
-            state.currentCommunity;
+        if (
+            !state.currentCommunity
+        ) {
 
-
-        if (!community) {
             return;
         }
 
 
         const name =
-            getElement(
+            byId(
                 "activeCommunityName"
             );
 
 
         const description =
-            getElement(
+            byId(
                 "activeCommunityDescription"
             );
 
 
         const icon =
-            getElement(
+            byId(
                 "activeCommunityIcon"
-            );
-
-
-        const courseName =
-            getElement(
-                "communityCourseName"
-            );
-
-
-        const courseLabel =
-            getElement(
-                "communityCourseLabel"
             );
 
 
         if (name) {
 
             name.textContent =
-                community.name ||
-                "Community";
+                state.currentCommunity.name ||
+                "Mwaniki Community";
         }
 
 
         if (description) {
 
             description.textContent =
-                community.description ||
-                "Mwaniki Scholars learning community";
+                state.currentCommunity.description ||
+                "Medical learning community";
         }
 
 
         if (icon) {
 
             icon.textContent =
-                community.icon_url ||
+                state.currentCommunity.icon_url ||
                 initials(
-                    community.name
+                    state.currentCommunity.name
                 );
         }
 
 
-        /*
-         * chat_communities currently does not contain
-         * course_id in the confirmed schema.
-         *
-         * Course context therefore comes from the URL/
-         * selected course channel instead.
-         */
+        updateCourseBanner(
+            null
+        );
+    }
 
-        if (courseName) {
 
-            courseName.textContent =
-                "General Community";
+    /* =====================================================
+       COURSE BANNER
+    ===================================================== */
+
+    function updateCourseBanner(
+        courseId
+    ) {
+
+        const name =
+            byId(
+                "communityCourseName"
+            );
+
+
+        const label =
+            byId(
+                "communityCourseLabel"
+            );
+
+
+        if (!name || !label) {
+
+            return;
         }
 
 
-        if (courseLabel) {
+        if (courseId) {
 
-            courseLabel.textContent =
-                "Community";
+            const course =
+                getCourse(courseId);
+
+
+            name.textContent =
+                course?.title ||
+                "Course Community";
+
+
+            label.textContent =
+                "Course Community";
+
+
+            return;
         }
+
+
+        name.textContent =
+            "General Community";
+
+
+        label.textContent =
+            "Community";
+    }
+
+
+    /* =====================================================
+       COURSE ID FROM URL
+    ===================================================== */
+
+    function getRequestedCourseId() {
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        return params.get(
+            "course_id"
+        );
     }
 
 
     /* =====================================================
        CHANNELS
-    ====================================================== */
+    ===================================================== */
 
     async function loadChannels() {
 
-        if (!state.currentCommunity) {
+        if (
+            !state.currentCommunity
+        ) {
+
             return;
         }
 
 
-        const container =
-            getElement(
-                "channelList"
-            );
+        const list =
+            byId("channelList");
 
 
-        if (container) {
+        if (list) {
 
-            container.innerHTML = `
-                <div class="channel-loading">
-                    Loading channels...
-                </div>
-            `;
+            list.innerHTML =
+                '<div class="channel-loading">Loading channels...</div>';
         }
 
 
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_channels"
-                    )
-                    .select(
-                        "*"
-                    )
-                    .eq(
-                        "community_id",
-                        state.currentCommunity.id
-                    )
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .order(
-                        "position",
-                        {
-                            ascending: true
-                        }
-                    );
+        const result =
+            await db
+                .from("chat_channels")
+                .select("*")
+                .eq(
+                    "community_id",
+                    state.currentCommunity.id
+                )
+                .eq(
+                    "is_active",
+                    true
+                )
+                .order(
+                    "position",
+                    {
+                        ascending: true
+                    }
+                );
 
 
-            if (error) {
-                throw error;
+        if (result.error) {
+
+            console.error(
+                "❌ Channel loading failed:",
+                result.error
+            );
+
+
+            state.channels = [];
+
+
+            if (list) {
+
+                list.innerHTML =
+                    '<div class="channel-empty">Unable to load channels.</div>';
             }
 
 
-            let channels =
-                Array.isArray(data)
-                    ? data
-                    : [];
+            return;
+        }
 
 
-            /*
-             * Private channels are visible only to:
-             *
-             * - members
-             * - moderators
-             * - admins
-             * - super admins
-             */
+        let channels =
+            result.data || [];
 
-            const privateChannels =
-                channels.filter(
+
+        channels =
+            await filterPrivateChannels(
+                channels
+            );
+
+
+        state.channels =
+            channels;
+
+
+        renderChannels();
+
+
+        let selected = null;
+
+
+        const requestedCourseId =
+            getRequestedCourseId();
+
+
+        /*
+         * COURSE ID HAS PRIORITY.
+         *
+         * This means Clinical Pharmacology 29
+         * and Clinical Pharmacology 49 remain
+         * completely separate.
+         */
+
+        if (requestedCourseId) {
+
+            selected =
+                channels.find(
                     channel =>
-                        channel.is_private === true
-                );
-
-
-            if (
-                privateChannels.length
-            ) {
-
-                channels =
-                    await filterPrivateChannels(
-                        channels
-                    );
-            }
-
-
-            state.channels =
-                channels;
-
-
-            renderChannels();
-
-
-            const urlParams =
-                new URLSearchParams(
-                    window.location.search
-                );
-
-
-            const requestedCourseId =
-                urlParams.get(
-                    "course_id"
-                );
-
-
-            let selected =
-                null;
-
-
-            /*
-             * Course-specific channel gets priority.
-             */
-
-            if (
-                requestedCourseId
-            ) {
-
-                selected =
-                    state.channels.find(
-                        channel =>
-                            String(
-                                channel.course_id
-                            ) ===
-                            String(
-                                requestedCourseId
-                            )
-                    );
-
-
-                if (selected) {
-
-                    const courseName =
-                        getCourseName(
+                        channel.course_id !== null &&
+                        String(
+                            channel.course_id
+                        ) ===
+                        String(
                             requestedCourseId
-                        );
-
-
-                    const bannerName =
-                        getElement(
-                            "communityCourseName"
-                        );
-
-
-                    const bannerLabel =
-                        getElement(
-                            "communityCourseLabel"
-                        );
-
-
-                    if (bannerName) {
-
-                        bannerName.textContent =
-                            courseName ||
-                            selected.name;
-                    }
-
-
-                    if (bannerLabel) {
-
-                        bannerLabel.textContent =
-                            "Course Community";
-                    }
-                }
-            }
-
-
-            /*
-             * General fallback.
-             */
-
-            if (!selected) {
-
-                selected =
-                    state.channels.find(
-                        channel =>
-                            String(
-                                channel.name
-                            ).toLowerCase() ===
-                            "general"
-                    );
-            }
-
-
-            if (!selected) {
-
-                selected =
-                    state.channels[0];
-            }
+                        )
+                );
 
 
             if (selected) {
 
-                await selectChannel(
-                    selected.id
+                updateCourseBanner(
+                    selected.course_id
                 );
-
-            } else {
-
-                renderEmptyChannelState();
             }
+        }
 
 
-            console.log(
-                "📢 Channels loaded:",
-                state.channels.length
+        if (!selected) {
+
+            selected =
+                channels.find(
+                    channel =>
+                        String(
+                            channel.name || ""
+                        ).toLowerCase() ===
+                        "general"
+                );
+        }
+
+
+        if (!selected) {
+
+            selected =
+                channels[0] ||
+                null;
+        }
+
+
+        if (selected) {
+
+            await selectChannel(
+                selected.id
             );
 
-        } catch (error) {
+        } else {
 
-            console.error(
-                "❌ Failed to load channels:",
-                error
-            );
-
-
-            state.channels =
-                [];
-
-
-            if (container) {
-
-                container.innerHTML = `
-                    <div class="channel-empty">
-                        Unable to load channels.
-                    </div>
-                `;
-            }
+            renderEmptyChannel();
         }
     }
 
@@ -1542,100 +1411,68 @@ import { supabase } from "./supabase.js";
         }
 
 
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_channel_members"
-                    )
-                    .select(
-                        "channel_id"
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            const allowed =
-                new Set(
-                    (data || [])
-                        .map(
-                            row =>
-                                String(
-                                    row.channel_id
-                                )
-                        )
+        const result =
+            await db
+                .from(
+                    "chat_channel_members"
+                )
+                .select(
+                    "channel_id"
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
                 );
 
 
-            return channels.filter(
-                channel => {
-
-                    if (
-                        channel.is_private !== true
-                    ) {
-
-                        return true;
-                    }
-
-
-                    if (
-                        can("manageMembers") ||
-                        can("manageCommunity")
-                    ) {
-
-                        return true;
-                    }
-
-
-                    return allowed.has(
-                        String(
-                            channel.id
-                        )
-                    );
-                }
-            );
-
-        } catch (error) {
-
-            console.warn(
-                "⚠️ Private channel filtering failed:",
-                error
+        const memberChannelIds =
+            new Set(
+                (result.data || [])
+                    .map(
+                        row =>
+                            String(
+                                row.channel_id
+                            )
+                    )
             );
 
 
-            return channels.filter(
-                channel =>
+        return channels.filter(
+            channel => {
+
+                if (
                     channel.is_private !== true
-            );
-        }
+                ) {
+
+                    return true;
+                }
+
+
+                if (
+                    can("moderate")
+                ) {
+
+                    return true;
+                }
+
+
+                return memberChannelIds.has(
+                    String(
+                        channel.id
+                    )
+                );
+            }
+        );
     }
 
 
     /* =====================================================
-       CHANNEL RENDERING
-    ====================================================== */
+       CHANNEL CATEGORY
+    ===================================================== */
 
-    function getChannelCategory(
+    function channelCategory(
         channel
     ) {
-
-        /*
-         * The confirmed schema has no category column.
-         *
-         * Categories are therefore derived from the
-         * actual channel type/course relationship.
-         */
 
         if (
             channel.course_id !== null &&
@@ -1665,15 +1502,18 @@ import { supabase } from "./supabase.js";
     }
 
 
+    /* =====================================================
+       RENDER CHANNELS
+    ===================================================== */
+
     function renderChannels() {
 
-        const container =
-            getElement(
-                "channelList"
-            );
+        const list =
+            byId("channelList");
 
 
-        if (!container) {
+        if (!list) {
+
             return;
         }
 
@@ -1689,6 +1529,7 @@ import { supabase } from "./supabase.js";
                 channel => {
 
                     if (!search) {
+
                         return true;
                     }
 
@@ -1696,21 +1537,18 @@ import { supabase } from "./supabase.js";
                     const courseName =
                         getCourseName(
                             channel.course_id
-                        ) ||
-                        "";
+                        );
 
 
                     return (
                         String(
-                            channel.name ||
-                            ""
+                            channel.name || ""
                         )
                             .toLowerCase()
                             .includes(search) ||
 
                         String(
-                            channel.description ||
-                            ""
+                            channel.description || ""
                         )
                             .toLowerCase()
                             .includes(search) ||
@@ -1725,17 +1563,14 @@ import { supabase } from "./supabase.js";
 
         if (!filtered.length) {
 
-            container.innerHTML = `
-                <div class="channel-empty">
-                    No channels found.
-                </div>
-            `;
+            list.innerHTML =
+                '<div class="channel-empty">No channels found.</div>';
 
             return;
         }
 
 
-        const categories =
+        const groups =
             new Map();
 
 
@@ -1743,147 +1578,189 @@ import { supabase } from "./supabase.js";
             channel => {
 
                 const category =
-                    getChannelCategory(
+                    channelCategory(
                         channel
                     );
 
 
                 if (
-                    !categories.has(
-                        category
-                    )
+                    !groups.has(category)
                 ) {
 
-                    categories.set(
+                    groups.set(
                         category,
                         []
                     );
                 }
 
 
-                categories
+                groups
                     .get(category)
                     .push(channel);
             }
         );
 
 
-        container.innerHTML =
-            Array.from(
-                categories.entries()
-            )
-                .map(
-                    ([category, channels]) =>
-                        renderChannelCategory(
-                            category,
-                            channels
-                        )
-                )
-                .join("");
+        let html = "";
 
 
-        $$(".channel-category-header")
-            .forEach(
-                button => {
-
-                    button.addEventListener(
-                        "click",
-                        () => {
-
-                            toggleCategory(
-                                button.dataset.category
-                            );
-                        }
-                    );
-                }
-            );
-
-
-        $$(".channel-row")
-            .forEach(
-                row => {
-
-                    row.addEventListener(
-                        "click",
-                        async () => {
-
-                            await selectChannel(
-                                row.dataset.channelId
-                            );
-                        }
-                    );
-                }
-            );
-    }
-
-
-    function renderChannelCategory(
-        category,
-        channels
-    ) {
-
-        const collapsed =
-            state.collapsedCategories.has(
+        groups.forEach(
+            (
+                channels,
                 category
-            );
+            ) => {
 
-
-        return `
-            <div
-                class="channel-category ${
-                    collapsed
-                        ? "collapsed"
-                        : ""
-                }"
-            >
-
-                <button
-                    type="button"
-                    class="channel-category-header"
-                    data-category="${escapeHTML(
+                const collapsed =
+                    state.collapsedCategories.has(
                         category
-                    )}"
-                >
-
-                    <span class="channel-category-title">
-
-                        <span class="channel-category-arrow">
-                            ${collapsed ? "▸" : "▾"}
-                        </span>
-
-                        <span>
-                            ${escapeHTML(category)}
-                        </span>
-
-                    </span>
-
-                    <span>
-                        ${channels.length}
-                    </span>
-
-                </button>
+                    );
 
 
-                <div class="channel-category-items">
-
-                    ${
+                html +=
+                    '<div class="channel-category ' +
+                    (
                         collapsed
-                            ? ""
-                            : channels
-                                .map(
-                                    renderChannelRow
-                                )
-                                .join("")
+                            ? "collapsed"
+                            : ""
+                    ) +
+                    '">';
+
+
+                html +=
+                    '<button ' +
+                    'type="button" ' +
+                    'class="channel-category-header" ' +
+                    'data-category="' +
+                    escapeHTML(category) +
+                    '">';
+
+
+                html +=
+                    '<span class="channel-category-title">';
+
+
+                html +=
+                    '<span class="channel-category-arrow">' +
+                    (
+                        collapsed
+                            ? "▸"
+                            : "▾"
+                    ) +
+                    "</span>";
+
+
+                html +=
+                    "<span>" +
+                    escapeHTML(category) +
+                    "</span>";
+
+
+                html +=
+                    "</span>";
+
+
+                html +=
+                    "<span>" +
+                    String(
+                        channels.length
+                    ) +
+                    "</span>";
+
+
+                html +=
+                    "</button>";
+
+
+                if (!collapsed) {
+
+                    html +=
+                        '<div class="channel-category-items">';
+
+
+                    channels.forEach(
+                        channel => {
+
+                            html +=
+                                renderChannel(
+                                    channel
+                                );
+                        }
+                    );
+
+
+                    html +=
+                        "</div>";
+                }
+
+
+                html +=
+                    "</div>";
+            }
+        );
+
+
+        list.innerHTML =
+            html;
+
+
+        queryAll(
+            ".channel-category-header"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const category =
+                            button.dataset.category;
+
+
+                        if (
+                            state.collapsedCategories.has(
+                                category
+                            )
+                        ) {
+
+                            state.collapsedCategories.delete(
+                                category
+                            );
+
+                        } else {
+
+                            state.collapsedCategories.add(
+                                category
+                            );
+                        }
+
+
+                        renderChannels();
                     }
+                );
+            }
+        );
 
-                </div>
 
-            </div>
-        `;
+        queryAll(
+            ".channel-row"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        await selectChannel(
+                            button.dataset.channelId
+                        );
+                    }
+                );
+            }
+        );
     }
 
 
-    function renderChannelRow(
+    function renderChannel(
         channel
     ) {
 
@@ -1892,13 +1769,16 @@ import { supabase } from "./supabase.js";
             String(
                 state.currentChannel.id
             ) ===
-            String(
-                channel.id
-            );
+            String(channel.id);
 
 
-        const privateChannel =
-            channel.is_private === true;
+        const icon =
+            channel.is_private
+                ? "🔒"
+                : (
+                    channel.icon ||
+                    "#"
+                );
 
 
         const courseName =
@@ -1907,144 +1787,99 @@ import { supabase } from "./supabase.js";
             );
 
 
-        const icon =
-            privateChannel
-                ? "🔒"
-                : channel.icon ||
-                  "#";
+        let html =
+            '<button ' +
+            'type="button" ' +
+            'class="channel-row ' +
+            (
+                active
+                    ? "active"
+                    : ""
+            ) +
+            '" ' +
+            'data-channel-id="' +
+            escapeHTML(channel.id) +
+            '">';
 
 
-        return `
-            <button
-                type="button"
-                class="channel-row ${
-                    active
-                        ? "active"
-                        : ""
-                }"
-                data-channel-id="${escapeHTML(
-                    channel.id
-                )}"
-            >
-
-                <span class="channel-row-icon">
-                    ${escapeHTML(icon)}
-                </span>
+        html +=
+            '<span class="channel-row-icon">' +
+            escapeHTML(icon) +
+            "</span>";
 
 
-                <span class="channel-row-content">
-
-                    <span class="channel-row-name">
-                        ${escapeHTML(
-                            channel.name ||
-                            "channel"
-                        )}
-                    </span>
+        html +=
+            '<span class="channel-row-content">';
 
 
-                    <span class="channel-row-meta">
-
-                        <span>
-                            ${
-                                privateChannel
-                                    ? "Private"
-                                    : "Public"
-                            }
-                        </span>
+        html +=
+            '<span class="channel-row-name">' +
+            escapeHTML(
+                channel.name ||
+                "channel"
+            ) +
+            "</span>";
 
 
-                        ${
-                            courseName
-                                ? `
-                                    <span class="course-mini-badge">
-                                        ${escapeHTML(
-                                            courseName
-                                        )}
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                    </span>
-
-                </span>
-
-            </button>
-        `;
-    }
+        html +=
+            '<span class="channel-row-meta">';
 
 
-    function toggleCategory(
-        category
-    ) {
-
-        if (
-            state.collapsedCategories.has(
-                category
-            )
-        ) {
-
-            state.collapsedCategories.delete(
-                category
+        html +=
+            (
+                channel.is_private
+                    ? "Private"
+                    : "Public"
             );
 
-        } else {
 
-            state.collapsedCategories.add(
-                category
-            );
+        if (courseName) {
+
+            html +=
+                '<span class="course-mini-badge">' +
+                escapeHTML(courseName) +
+                "</span>";
         }
 
 
-        renderChannels();
+        html +=
+            "</span>";
+
+
+        html +=
+            "</span>";
+
+
+        html +=
+            "</button>";
+
+
+        return html;
     }
 
 
-    function renderEmptyChannelState() {
+    function renderEmptyChannel() {
 
-        const container =
-            getElement(
-                "channelList"
-            );
+        const list =
+            byId("channelList");
 
 
-        if (!container) {
+        if (!list) {
+
             return;
         }
 
 
-        container.innerHTML = `
-            <div class="channel-empty">
-
-                <div
-                    style="
-                        font-size:26px;
-                        margin-bottom:8px;
-                    "
-                >
-                    #
-                </div>
-
-                <strong>
-                    No channels yet
-                </strong>
-
-                <p>
-                    ${
-                        can("createChannel")
-                            ? "Create the first channel for this community."
-                            : "A community administrator can create channels."
-                    }
-                </p>
-
-            </div>
-        `;
+        list.innerHTML =
+            '<div class="channel-empty">' +
+            "No channels are available." +
+            "</div>";
     }
 
 
     /* =====================================================
        SELECT CHANNEL
-    ====================================================== */
+    ===================================================== */
 
     async function selectChannel(
         channelId
@@ -2059,6 +1894,7 @@ import { supabase } from "./supabase.js";
 
 
         if (!channel) {
+
             return;
         }
 
@@ -2067,28 +1903,27 @@ import { supabase } from "./supabase.js";
             channel;
 
 
-        state.messages =
-            [];
+        state.messages = [];
 
-
-        clearReply();
+        state.replyMessage = null;
 
 
         renderChannels();
 
         renderActiveChannel();
 
-        applyPermissionUI();
+        updateCourseBanner(
+            channel.course_id
+        );
+
+        updatePermissionUI();
 
 
         await loadMessages();
 
         await markChannelRead();
 
-        setupChannelRealtime();
-
-
-        closeCommunityMenu();
+        setupMessageRealtime();
     }
 
 
@@ -2099,18 +1934,19 @@ import { supabase } from "./supabase.js";
 
 
         if (!channel) {
+
             return;
         }
 
 
         const name =
-            getElement(
+            byId(
                 "activeChannelName"
             );
 
 
         const description =
-            getElement(
+            byId(
                 "activeChannelDescription"
             );
 
@@ -2131,114 +1967,88 @@ import { supabase } from "./supabase.js";
         }
 
 
-        applyPermissionUI();
+        updatePermissionUI();
     }
 
 
     /* =====================================================
        MESSAGES
-    ====================================================== */
+    ===================================================== */
 
     async function loadMessages() {
 
-        const container =
-            getElement(
-                "messageList"
+        if (!state.currentChannel) {
+
+            return;
+        }
+
+
+        const list =
+            byId("messageList");
+
+
+        if (list) {
+
+            list.innerHTML =
+                '<div class="channel-loading">Loading messages...</div>';
+        }
+
+
+        const result =
+            await db
+                .from("chat_messages")
+                .select("*")
+                .eq(
+                    "channel_id",
+                    state.currentChannel.id
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                )
+                .limit(300);
+
+
+        if (result.error) {
+
+            console.error(
+                "❌ Message loading failed:",
+                result.error
             );
 
 
-        if (!container) {
-            return;
-        }
+            state.messages = [];
 
 
-        if (!state.currentChannel) {
-            return;
-        }
+            if (list) {
 
-
-        container.innerHTML = `
-            <div class="channel-loading">
-                Loading messages...
-            </div>
-        `;
-
-
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_messages"
-                    )
-                    .select("*")
-                    .eq(
-                        "channel_id",
-                        state.currentChannel.id
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending: true
-                        }
-                    )
-                    .limit(
-                        300
-                    );
-
-
-            if (error) {
-                throw error;
+                list.innerHTML =
+                    '<div class="channel-empty">Unable to load messages.</div>';
             }
 
 
-            state.messages =
-                Array.isArray(data)
-                    ? data
-                    : [];
-
-
-            renderMessages();
-
-
-            console.log(
-                "💬 Messages loaded:",
-                state.messages.length
-            );
-
-        } catch (error) {
-
-            console.error(
-                "❌ Failed to load messages:",
-                error
-            );
-
-
-            state.messages =
-                [];
-
-
-            container.innerHTML = `
-                <div class="channel-empty">
-                    Unable to load messages.
-                </div>
-            `;
+            return;
         }
+
+
+        state.messages =
+            result.data || [];
+
+
+        renderMessages();
     }
 
 
     function renderMessages() {
 
-        const container =
-            getElement(
-                "messageList"
-            );
+        const list =
+            byId("messageList");
 
 
-        if (!container) {
+        if (!list) {
+
             return;
         }
 
@@ -2259,8 +2069,7 @@ import { supabase } from "./supabase.js";
                 messages.filter(
                     message =>
                         String(
-                            message.content ||
-                            ""
+                            message.content || ""
                         )
                             .toLowerCase()
                             .includes(search)
@@ -2270,47 +2079,57 @@ import { supabase } from "./supabase.js";
 
         if (!messages.length) {
 
-            container.innerHTML = `
-                <div class="welcome-message">
+            let title =
+                "Welcome to the channel";
 
-                    <div class="welcome-icon">
-                        #
-                    </div>
 
-                    <h2>
-                        ${
-                            search
-                                ? "No matching messages"
-                                : `Welcome to #${
-                                    escapeHTML(
-                                        state.currentChannel?.name ||
-                                        "channel"
-                                    )
-                                }`
-                        }
-                    </h2>
+            let paragraph =
+                "Start the conversation and learn with other Mwaniki Scholars students.";
 
-                    <p>
-                        ${
-                            search
-                                ? "Try another search."
-                                : "This is the beginning of this discussion. Start the conversation."
-                        }
-                    </p>
 
-                </div>
-            `;
+            if (search) {
+
+                title =
+                    "No matching messages";
+
+
+                paragraph =
+                    "Try a different search.";
+            }
+
+
+            list.innerHTML =
+                '<div class="welcome-message">' +
+                '<div class="welcome-icon">#</div>' +
+                "<h2>" +
+                escapeHTML(title) +
+                "</h2>" +
+                "<p>" +
+                escapeHTML(paragraph) +
+                "</p>" +
+                "</div>";
+
 
             return;
         }
 
 
-        container.innerHTML =
-            messages
-                .map(
-                    renderMessage
-                )
-                .join("");
+        let html = "";
+
+
+        messages.forEach(
+            message => {
+
+                html +=
+                    renderMessage(
+                        message
+                    );
+            }
+        );
+
+
+        list.innerHTML =
+            html;
 
 
         bindMessageActions();
@@ -2319,8 +2138,8 @@ import { supabase } from "./supabase.js";
         requestAnimationFrame(
             () => {
 
-                container.scrollTop =
-                    container.scrollHeight;
+                list.scrollTop =
+                    list.scrollHeight;
             }
         );
     }
@@ -2330,350 +2149,286 @@ import { supabase } from "./supabase.js";
         message
     ) {
 
-        const sender =
-            resolveMember(
-                message.user_id
-            );
+        const isSystem =
+            !message.user_id;
 
 
-        const senderName =
-            message.user_id
-                ? getDisplayName(
-                    sender
-                )
-                : "Mwaniki Scholars";
-
-
-        const avatarUrl =
-            sender?.photo_url ||
-            sender?._profile?.photo_url ||
-            null;
-
-
-        const avatar =
-            avatarUrl
-                ? `
-                    <img
-                        src="${escapeHTML(
-                            avatarUrl
-                        )}"
-                        alt=""
-                    >
-                `
-                : initials(
-                    senderName
+        const member =
+            isSystem
+                ? null
+                : findMember(
+                    message.user_id
                 );
 
 
-        const isOwn =
+        const name =
+            isSystem
+                ? "Mwaniki Scholars"
+                : displayName(member);
+
+
+        const photo =
+            member?.photo_url ||
+            member?._profile?.photo_url ||
+            "";
+
+
+        let avatarHTML = "";
+
+
+        if (photo) {
+
+            avatarHTML =
+                '<img src="' +
+                escapeHTML(photo) +
+                '" alt="">';
+
+        } else {
+
+            avatarHTML =
+                escapeHTML(
+                    initials(name)
+                );
+        }
+
+
+        const own =
+            state.user &&
             String(
                 message.user_id
             ) ===
             String(
-                state.user?.id
+                state.user.id
             );
 
 
         const canDelete =
-            isOwn ||
+            own ||
             can("moderate");
-
-
-        const canPin =
-            can("moderate");
-
-
-        const deleted =
-            message.is_deleted === true;
 
 
         const content =
-            deleted
+            message.is_deleted
                 ? "This message was deleted."
-                : escapeHTML(
-                    message.content ||
-                    ""
+                : String(
+                    message.content || ""
                 );
 
 
-        const replyMessage =
+        const time =
+            formatDate(
+                message.created_at
+            );
+
+
+        let html =
+            '<article class="message ' +
+            (
+                own
+                    ? "own-message "
+                    : ""
+            ) +
+            (
+                message.is_deleted
+                    ? "deleted-message"
+                    : ""
+            ) +
+            '" data-message-id="' +
+            escapeHTML(message.id) +
+            '">';
+
+
+        html +=
+            '<div class="message-avatar">' +
+            avatarHTML +
+            "</div>";
+
+
+        html +=
+            '<div class="message-body">';
+
+
+        html +=
+            '<div class="message-meta">';
+
+
+        html +=
+            '<span class="message-author">' +
+            escapeHTML(name) +
+            "</span>";
+
+
+        html +=
+            '<span class="message-time">' +
+            escapeHTML(time) +
+            "</span>";
+
+
+        if (message.is_pinned) {
+
+            html +=
+                '<span title="Pinned message">📌</span>';
+        }
+
+
+        html +=
+            "</div>";
+
+
+        if (
             message.parent_message_id
-                ? state.messages.find(
+        ) {
+
+            const parent =
+                state.messages.find(
                     item =>
-                        String(item.id) ===
+                        String(
+                            item.id
+                        ) ===
                         String(
                             message.parent_message_id
                         )
-                )
-                : null;
+                );
 
 
-        return `
-            <article
-                class="message ${
-                    isOwn
-                        ? "own-message"
-                        : ""
-                } ${
-                    deleted
-                        ? "deleted-message"
-                        : ""
-                }"
-                data-message-id="${escapeHTML(
-                    message.id
-                )}"
-            >
+            if (parent) {
 
-                <div class="message-avatar">
-
-                    ${avatar}
-
-                </div>
+                html +=
+                    '<div class="message-reply-reference">' +
+                    escapeHTML(
+                        parent.content || ""
+                    ) +
+                    "</div>";
+            }
+        }
 
 
-                <div class="message-body">
-
-                    <div class="message-meta">
-
-                        <span class="message-author">
-                            ${escapeHTML(
-                                senderName
-                            )}
-                        </span>
+        html +=
+            '<div class="message-content">' +
+            escapeHTML(content) +
+            "</div>";
 
 
-                        <span class="message-time">
-                            ${escapeHTML(
-                                formatDateTime(
-                                    message.created_at
-                                )
-                            )}
-                        </span>
+        if (
+            !message.is_deleted
+        ) {
+
+            html +=
+                '<div class="message-actions">';
 
 
-                        ${
-                            message.is_pinned
-                                ? `
-                                    <span
-                                        title="Pinned message"
-                                    >
-                                        📌
-                                    </span>
-                                `
-                                : ""
-                        }
-
-                    </div>
+            html +=
+                '<button type="button" class="message-action" ' +
+                'data-action="reply" ' +
+                'data-message-id="' +
+                escapeHTML(message.id) +
+                '">' +
+                "↩ Reply" +
+                "</button>";
 
 
-                    ${
-                        replyMessage
-                            ? `
-                                <div
-                                    class="message-reply-reference"
-                                >
-                                    Replying to:
-                                    ${escapeHTML(
-                                        replyMessage.content ||
-                                        ""
-                                    )}
-                                </div>
-                            `
-                            : ""
-                    }
+            if (can("moderate")) {
+
+                html +=
+                    '<button type="button" class="message-action" ' +
+                    'data-action="pin" ' +
+                    'data-message-id="' +
+                    escapeHTML(message.id) +
+                    '">' +
+                    (
+                        message.is_pinned
+                            ? "Unpin"
+                            : "Pin"
+                    ) +
+                    "</button>";
+            }
 
 
-                    <div class="message-content">
-                        ${content}
-                    </div>
+            if (canDelete) {
+
+                html +=
+                    '<button type="button" class="message-action" ' +
+                    'data-action="delete" ' +
+                    'data-message-id="' +
+                    escapeHTML(message.id) +
+                    '">' +
+                    "Delete" +
+                    "</button>";
+            }
 
 
-                    ${
-                        deleted
-                            ? ""
-                            : `
-                                <div class="message-actions">
-
-                                    <button
-                                        type="button"
-                                        class="message-action"
-                                        data-action="reply"
-                                        data-message-id="${escapeHTML(
-                                            message.id
-                                        )}"
-                                    >
-                                        ↩ Reply
-                                    </button>
+            html +=
+                "</div>";
+        }
 
 
-                                    ${
-                                        canPin
-                                            ? `
-                                                <button
-                                                    type="button"
-                                                    class="message-action"
-                                                    data-action="pin"
-                                                    data-message-id="${escapeHTML(
-                                                        message.id
-                                                    )}"
-                                                >
-                                                    ${
-                                                        message.is_pinned
-                                                            ? "Unpin"
-                                                            : "Pin"
-                                                    }
-                                                </button>
-                                            `
-                                            : ""
-                                    }
+        html +=
+            "</div>";
 
 
-                                    ${
-                                        canDelete
-                                            ? `
-                                                <button
-                                                    type="button"
-                                                    class="message-action"
-                                                    data-action="delete"
-                                                    data-message-id="${escapeHTML(
-                                                        message.id
-                                                    )}"
-                                                >
-                                                    Delete
-                                                </button>
-                                            `
-                                            : ""
-                                    }
+        html +=
+            "</article>";
 
-                                </div>
-                            `
-                            : ""
-                    }
 
-                </div>
-
-            </article>
-        `;
+        return html;
     }
 
 
     function bindMessageActions() {
 
-        $$(".message-action")
-            .forEach(
-                button => {
+        queryAll(
+            ".message-action"
+        ).forEach(
+            button => {
 
-                    button.addEventListener(
-                        "click",
-                        async event => {
+                button.addEventListener(
+                    "click",
+                    async event => {
 
-                            event.stopPropagation();
-
-
-                            const action =
-                                button.dataset.action;
+                        event.stopPropagation();
 
 
-                            const id =
-                                button.dataset.messageId;
+                        const action =
+                            button.dataset.action;
 
 
-                            if (
-                                action ===
-                                "reply"
-                            ) {
-
-                                setReplyMessage(
-                                    id
-                                );
-
-                            }
+                        const messageId =
+                            button.dataset.messageId;
 
 
-                            if (
-                                action ===
-                                "delete"
-                            ) {
+                        if (
+                            action ===
+                            "reply"
+                        ) {
 
-                                await deleteMessage(
-                                    id
-                                );
-
-                            }
-
-
-                            if (
-                                action ===
-                                "pin"
-                            ) {
-
-                                await togglePin(
-                                    id
-                                );
-                            }
+                            startReply(
+                                messageId
+                            );
                         }
-                    );
-                }
-            );
-    }
 
 
-    function resolveMember(
-        userId
-    ) {
+                        if (
+                            action ===
+                            "delete"
+                        ) {
 
-        if (!userId) {
-            return null;
-        }
-
-
-        return (
-            state.members.find(
-                member =>
-                    String(
-                        getUserId(
-                            member
-                        )
-                    ) ===
-                    String(
-                        userId
-                    )
-            ) ||
-            null
-        );
-    }
+                            await deleteMessage(
+                                messageId
+                            );
+                        }
 
 
-    function formatDateTime(
-        value
-    ) {
+                        if (
+                            action ===
+                            "pin"
+                        ) {
 
-        if (!value) {
-            return "";
-        }
-
-
-        const date =
-            new Date(
-                value
-            );
-
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-
-            return "";
-        }
-
-
-        return date.toLocaleString(
-            [],
-            {
-                dateStyle: "medium",
-                timeStyle: "short"
+                            await togglePin(
+                                messageId
+                            );
+                        }
+                    }
+                );
             }
         );
     }
@@ -2681,14 +2436,14 @@ import { supabase } from "./supabase.js";
 
     /* =====================================================
        SEND MESSAGE
-    ====================================================== */
+    ===================================================== */
 
     async function sendMessage() {
 
         if (!can("send")) {
 
-            showToast(
-                "You do not have permission to send messages.",
+            toast(
+                "You cannot send messages here.",
                 "error"
             );
 
@@ -2700,17 +2455,17 @@ import { supabase } from "./supabase.js";
             !state.user ||
             !state.currentChannel
         ) {
+
             return;
         }
 
 
         const input =
-            getElement(
-                "messageInput"
-            );
+            byId("messageInput");
 
 
         if (!input) {
+
             return;
         }
 
@@ -2720,6 +2475,7 @@ import { supabase } from "./supabase.js";
 
 
         if (!content) {
+
             return;
         }
 
@@ -2728,7 +2484,7 @@ import { supabase } from "./supabase.js";
             content.length > 5000
         ) {
 
-            showToast(
+            toast(
                 "Message is too long.",
                 "error"
             );
@@ -2737,111 +2493,81 @@ import { supabase } from "./supabase.js";
         }
 
 
-        const sendButton =
-            getElement(
-                "sendMessageButton"
-            );
+        const payload = {
 
+            channel_id:
+                state.currentChannel.id,
 
-        if (sendButton) {
+            user_id:
+                state.user.id,
 
-            sendButton.disabled =
-                true;
-        }
-
-
-        try {
-
-            const payload = {
-
-                channel_id:
-                    state.currentChannel.id,
-
-                user_id:
-                    state.user.id,
-
+            content:
                 content,
 
-                message_type:
-                    "text",
+            message_type:
+                "text",
 
-                parent_message_id:
-                    state.currentReplyMessage?.id ||
-                    null
-            };
-
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_messages"
-                    )
-                    .insert(
-                        payload
-                    )
-                    .select()
-                    .single();
+            parent_message_id:
+                state.replyMessage?.id ||
+                null
+        };
 
 
-            if (error) {
-                throw error;
-            }
+        const result =
+            await db
+                .from(
+                    "chat_messages"
+                )
+                .insert(payload)
+                .select()
+                .single();
 
 
-            input.value = "";
-
-
-            autoResizeTextarea(
-                input
-            );
-
-
-            clearReply();
-
-
-            if (data) {
-
-                addMessageIfMissing(
-                    data
-                );
-
-
-                renderMessages();
-            }
-
-
-            await markChannelRead();
-
-
-        } catch (error) {
+        if (result.error) {
 
             console.error(
-                "❌ Message send failed:",
-                error
+                "❌ Send message failed:",
+                result.error
             );
 
 
-            showToast(
-                error.message ||
+            toast(
+                result.error.message ||
                 "Unable to send message.",
                 "error"
             );
 
-        } finally {
-
-            applyPermissionUI();
+            return;
         }
+
+
+        input.value = "";
+
+        resizeTextarea(input);
+
+        clearReply();
+
+
+        if (result.data) {
+
+            addMessage(
+                result.data
+            );
+
+            renderMessages();
+        }
+
+
+        await markChannelRead();
     }
 
 
-    function addMessageIfMissing(
+    function addMessage(
         message
     ) {
 
         if (!message?.id) {
+
             return;
         }
 
@@ -2849,12 +2575,8 @@ import { supabase } from "./supabase.js";
         const exists =
             state.messages.some(
                 item =>
-                    String(
-                        item.id
-                    ) ===
-                    String(
-                        message.id
-                    )
+                    String(item.id) ===
+                    String(message.id)
             );
 
 
@@ -2869,7 +2591,7 @@ import { supabase } from "./supabase.js";
 
     /* =====================================================
        DELETE MESSAGE
-    ====================================================== */
+    ===================================================== */
 
     async function deleteMessage(
         messageId
@@ -2878,21 +2600,18 @@ import { supabase } from "./supabase.js";
         const message =
             state.messages.find(
                 item =>
-                    String(
-                        item.id
-                    ) ===
-                    String(
-                        messageId
-                    )
+                    String(item.id) ===
+                    String(messageId)
             );
 
 
         if (!message) {
+
             return;
         }
 
 
-        const owner =
+        const own =
             String(
                 message.user_id
             ) ===
@@ -2902,11 +2621,11 @@ import { supabase } from "./supabase.js";
 
 
         if (
-            !owner &&
+            !own &&
             !can("moderate")
         ) {
 
-            showToast(
+            toast(
                 "You cannot delete this message.",
                 "error"
             );
@@ -2915,103 +2634,74 @@ import { supabase } from "./supabase.js";
         }
 
 
-        if (
-            !window.confirm(
+        const confirmed =
+            window.confirm(
                 "Delete this message?"
-            )
-        ) {
+            );
+
+
+        if (!confirmed) {
+
             return;
         }
 
 
-        try {
+        const result =
+            await db
+                .from(
+                    "chat_messages"
+                )
+                .update({
 
-            /*
-             * Soft-delete is used because the database
-             * already contains is_deleted/deleted_at.
-             */
+                    is_deleted:
+                        true,
 
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_messages"
-                    )
-                    .update({
+                    deleted_at:
+                        new Date().toISOString(),
 
-                        is_deleted:
-                            true,
+                    updated_at:
+                        new Date().toISOString()
 
-                        deleted_at:
-                            new Date()
-                                .toISOString(),
-
-                        updated_at:
-                            new Date()
-                                .toISOString()
-
-                    })
-                    .eq(
-                        "id",
-                        messageId
-                    );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            const localMessage =
-                state.messages.find(
-                    item =>
-                        String(
-                            item.id
-                        ) ===
-                        String(
-                            messageId
-                        )
+                })
+                .eq(
+                    "id",
+                    messageId
                 );
 
 
-            if (localMessage) {
-
-                localMessage.is_deleted =
-                    true;
-
-                localMessage.deleted_at =
-                    new Date()
-                        .toISOString();
-            }
-
-
-            renderMessages();
-
-
-            showToast(
-                "Message deleted."
-            );
-
-        } catch (error) {
+        if (result.error) {
 
             console.error(
-                "❌ Message deletion failed:",
-                error
+                "❌ Delete failed:",
+                result.error
             );
 
 
-            showToast(
+            toast(
                 "Unable to delete message.",
                 "error"
             );
+
+            return;
         }
+
+
+        message.is_deleted =
+            true;
+
+
+        renderMessages();
+
+
+        toast(
+            "Message deleted."
+        );
     }
 
 
     /* =====================================================
        PIN MESSAGE
-    ====================================================== */
+    ===================================================== */
 
     async function togglePin(
         messageId
@@ -3019,11 +2709,6 @@ import { supabase } from "./supabase.js";
 
         if (!can("moderate")) {
 
-            showToast(
-                "You do not have permission to pin messages.",
-                "error"
-            );
-
             return;
         }
 
@@ -3031,122 +2716,100 @@ import { supabase } from "./supabase.js";
         const message =
             state.messages.find(
                 item =>
-                    String(
-                        item.id
-                    ) ===
-                    String(
-                        messageId
-                    )
+                    String(item.id) ===
+                    String(messageId)
             );
 
 
         if (!message) {
+
             return;
         }
 
 
-        try {
+        const newValue =
+            !Boolean(
+                message.is_pinned
+            );
 
-            const newValue =
-                !Boolean(
-                    message.is_pinned
+
+        const result =
+            await db
+                .from(
+                    "chat_messages"
+                )
+                .update({
+
+                    is_pinned:
+                        newValue,
+
+                    updated_at:
+                        new Date().toISOString()
+
+                })
+                .eq(
+                    "id",
+                    messageId
                 );
 
 
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_messages"
-                    )
-                    .update({
-                        is_pinned:
-                            newValue,
-
-                        updated_at:
-                            new Date()
-                                .toISOString()
-                    })
-                    .eq(
-                        "id",
-                        messageId
-                    );
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            message.is_pinned =
-                newValue;
-
-
-            renderMessages();
-
-
-            showToast(
-                newValue
-                    ? "Message pinned."
-                    : "Message unpinned."
-            );
-
-        } catch (error) {
+        if (result.error) {
 
             console.error(
                 "❌ Pin update failed:",
-                error
+                result.error
             );
 
 
-            showToast(
-                "Unable to update pinned status.",
+            toast(
+                "Unable to update pinned message.",
                 "error"
             );
+
+            return;
         }
+
+
+        message.is_pinned =
+            newValue;
+
+
+        renderMessages();
     }
 
 
     /* =====================================================
-       REPLY
-    ====================================================== */
+       REPLIES
+    ===================================================== */
 
-    function setReplyMessage(
+    function startReply(
         messageId
     ) {
 
         const message =
             state.messages.find(
                 item =>
-                    String(
-                        item.id
-                    ) ===
-                    String(
-                        messageId
-                    )
+                    String(item.id) ===
+                    String(messageId)
             );
 
 
         if (!message) {
+
             return;
         }
 
 
-        state.currentReplyMessage =
+        state.replyMessage =
             message;
 
 
         const preview =
-            getElement(
-                "replyPreview"
-            );
+            byId("replyPreview");
 
 
         const text =
-            getElement(
-                "replyPreviewText"
-            );
+            byId("replyPreviewText");
 
 
         if (preview) {
@@ -3160,12 +2823,11 @@ import { supabase } from "./supabase.js";
         if (text) {
 
             text.textContent =
-                message.content ||
-                "";
+                message.content || "";
         }
 
 
-        getElement(
+        byId(
             "messageInput"
         )?.focus();
     }
@@ -3173,21 +2835,24 @@ import { supabase } from "./supabase.js";
 
     function clearReply() {
 
-        state.currentReplyMessage =
+        state.replyMessage =
             null;
 
 
-        getElement(
-            "replyPreview"
-        )?.classList.add(
-            "hidden"
-        );
+        const preview =
+            byId("replyPreview");
 
 
         const text =
-            getElement(
-                "replyPreviewText"
+            byId("replyPreviewText");
+
+
+        if (preview) {
+
+            preview.classList.add(
+                "hidden"
             );
+        }
 
 
         if (text) {
@@ -3200,62 +2865,53 @@ import { supabase } from "./supabase.js";
 
     /* =====================================================
        MEMBERS
-    ====================================================== */
+    ===================================================== */
 
     async function loadMembers() {
 
-        if (!state.currentCommunity) {
+        if (
+            !state.currentCommunity
+        ) {
+
             return;
         }
 
 
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_community_members"
-                    )
-                    .select("*")
-                    .eq(
-                        "community_id",
-                        state.currentCommunity.id
-                    );
+        const result =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select("*")
+                .eq(
+                    "community_id",
+                    state.currentCommunity.id
+                );
 
 
-            if (error) {
-                throw error;
-            }
-
-
-            state.members =
-                Array.isArray(data)
-                    ? data
-                    : [];
-
-
-            await enrichMembers();
-
-
-            renderMembers();
-
-        } catch (error) {
+        if (result.error) {
 
             console.error(
-                "❌ Failed to load community members:",
-                error
+                "❌ Member loading failed:",
+                result.error
             );
 
 
-            state.members =
-                [];
-
+            state.members = [];
 
             renderMembers();
+
+            return;
         }
+
+
+        state.members =
+            result.data || [];
+
+
+        await enrichMembers();
+
+        renderMembers();
     }
 
 
@@ -3264,90 +2920,82 @@ import { supabase } from "./supabase.js";
         const ids =
             state.members
                 .map(
-                    getUserId
+                    memberUserId
                 )
                 .filter(Boolean);
 
 
         if (!ids.length) {
+
             return;
         }
 
 
         try {
 
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
+            const result =
+                await db
                     .from(
                         "students"
                     )
-                    .select(
-                        "*"
-                    )
+                    .select("*")
                     .in(
                         "id",
                         ids
                     );
 
 
-            if (error) {
-                throw error;
+            if (
+                result.error ||
+                !result.data
+            ) {
+
+                return;
             }
 
 
             const profiles =
-                Array.isArray(data)
-                    ? data
-                    : [];
+                new Map();
 
 
-            const profileMap =
-                new Map(
-                    profiles.map(
-                        profile => [
-                            String(
-                                profile.id
-                            ),
-                            profile
-                        ]
-                    )
-                );
+            result.data.forEach(
+                profile => {
+
+                    profiles.set(
+                        String(profile.id),
+                        profile
+                    );
+                }
+            );
 
 
             state.members =
                 state.members.map(
                     member => {
 
-                        const userId =
-                            getUserId(
+                        const id =
+                            memberUserId(
                                 member
                             );
 
 
                         const profile =
-                            profileMap.get(
-                                String(
-                                    userId
-                                )
+                            profiles.get(
+                                String(id)
                             );
 
 
                         if (!profile) {
+
                             return member;
                         }
 
 
                         return {
-
                             ...member,
-
-                            ...profile,
-
                             _profile:
-                                profile
+                                profile,
+                            ...profile
                         };
                     }
                 );
@@ -3355,7 +3003,7 @@ import { supabase } from "./supabase.js";
         } catch (error) {
 
             console.warn(
-                "⚠️ Student profile enrichment unavailable:",
+                "⚠️ Member profile enrichment unavailable:",
                 error
             );
         }
@@ -3364,19 +3012,16 @@ import { supabase } from "./supabase.js";
 
     function renderMembers() {
 
-        const container =
-            getElement(
-                "memberList"
-            );
+        const list =
+            byId("memberList");
 
 
         const count =
-            getElement(
-                "memberCount"
-            );
+            byId("memberCount");
 
 
-        if (!container) {
+        if (!list) {
+
             return;
         }
 
@@ -3387,65 +3032,67 @@ import { supabase } from "./supabase.js";
                 .toLowerCase();
 
 
-        const filtered =
-            state.members.filter(
-                member => {
+        let members =
+            [...state.members];
 
-                    if (!search) {
-                        return true;
+
+        if (search) {
+
+            members =
+                members.filter(
+                    member => {
+
+                        const name =
+                            displayName(
+                                member
+                            )
+                                .toLowerCase();
+
+
+                        const role =
+                            roleLabel(
+                                member.role
+                            )
+                                .toLowerCase();
+
+
+                        return (
+                            name.includes(
+                                search
+                            ) ||
+                            role.includes(
+                                search
+                            )
+                        );
                     }
-
-
-                    const name =
-                        getDisplayName(
-                            member
-                        )
-                            .toLowerCase();
-
-
-                    const role =
-                        roleLabel(
-                            member.role
-                        )
-                            .toLowerCase();
-
-
-                    return (
-                        name.includes(
-                            search
-                        ) ||
-                        role.includes(
-                            search
-                        )
-                    );
-                }
-            );
+                );
+        }
 
 
         if (count) {
 
             count.textContent =
-                `${state.members.length} ${
+                String(
+                    state.members.length
+                ) +
+                (
                     state.members.length === 1
-                        ? "member"
-                        : "members"
-                }`;
+                        ? " member"
+                        : " members"
+                );
         }
 
 
-        if (!filtered.length) {
+        if (!members.length) {
 
-            container.innerHTML = `
-                <div class="member-empty">
-                    No members found.
-                </div>
-            `;
+            list.innerHTML =
+                '<div class="member-empty">No members found.</div>';
 
             return;
         }
 
 
-        const roleOrder = {
+        const priority = {
 
             super_admin: 1,
 
@@ -3459,146 +3106,131 @@ import { supabase } from "./supabase.js";
         };
 
 
-        const sorted =
-            [...filtered].sort(
-                (
-                    a,
-                    b
-                ) => {
+        members.sort(
+            (a, b) => {
 
-                    const aRole =
-                        roleOrder[
-                            normalizeRole(
-                                a.role
-                            )
-                        ] || 99;
-
-
-                    const bRole =
-                        roleOrder[
-                            normalizeRole(
-                                b.role
-                            )
-                        ] || 99;
-
-
-                    if (
-                        aRole !==
-                        bRole
-                    ) {
-
-                        return (
-                            aRole -
-                            bRole
-                        );
-                    }
-
-
-                    return getDisplayName(
-                        a
-                    ).localeCompare(
-                        getDisplayName(
-                            b
+                const aRole =
+                    priority[
+                        normalizeRole(
+                            a.role
                         )
+                    ] || 99;
+
+
+                const bRole =
+                    priority[
+                        normalizeRole(
+                            b.role
+                        )
+                    ] || 99;
+
+
+                if (
+                    aRole !==
+                    bRole
+                ) {
+
+                    return (
+                        aRole -
+                        bRole
                     );
                 }
-            );
 
 
-        container.innerHTML =
-            sorted
-                .map(
-                    renderMember
-                )
-                .join("");
-    }
+                return displayName(a)
+                    .localeCompare(
+                        displayName(b)
+                    );
+            }
+        );
 
 
-    function renderMember(
-        member
-    ) {
-
-        const name =
-            getDisplayName(
-                member
-            );
+        let html = "";
 
 
-        const role =
-            roleLabel(
-                member.role
-            );
+        members.forEach(
+            member => {
+
+                const name =
+                    displayName(
+                        member
+                    );
 
 
-        const avatarUrl =
-            member.photo_url ||
-            member._profile?.photo_url ||
-            null;
+                const photo =
+                    member.photo_url ||
+                    member._profile?.photo_url ||
+                    "";
 
 
-        const avatar =
-            avatarUrl
-                ? `
-                    <img
-                        src="${escapeHTML(
-                            avatarUrl
-                        )}"
-                        alt=""
-                    >
-                `
-                : initials(
-                    name
-                );
+                let avatar = "";
 
 
-        return `
-            <div
-                class="member-row"
-                data-user-id="${escapeHTML(
-                    getUserId(member) ||
-                    ""
-                )}"
-            >
+                if (photo) {
 
-                <div class="member-avatar">
+                    avatar =
+                        '<img src="' +
+                        escapeHTML(photo) +
+                        '" alt="">';
 
-                    ${avatar}
+                } else {
 
-                    <span
-                        class="presence-dot"
-                        data-presence-user="${escapeHTML(
-                            getUserId(member) ||
-                            ""
-                        )}"
-                    ></span>
-
-                </div>
+                    avatar =
+                        escapeHTML(
+                            initials(name)
+                        );
+                }
 
 
-                <div class="member-info">
+                html +=
+                    '<div class="member-row">';
 
-                    <span class="member-name">
-                        ${escapeHTML(
-                            name
-                        )}
-                    </span>
 
-                    <span class="member-role">
-                        ${escapeHTML(
-                            role
-                        )}
-                    </span>
+                html +=
+                    '<div class="member-avatar">' +
+                    avatar +
+                    '<span class="presence-dot"></span>' +
+                    "</div>";
 
-                </div>
 
-            </div>
-        `;
+                html +=
+                    '<div class="member-info">';
+
+
+                html +=
+                    '<span class="member-name">' +
+                    escapeHTML(name) +
+                    "</span>";
+
+
+                html +=
+                    '<span class="member-role">' +
+                    escapeHTML(
+                        roleLabel(
+                            member.role
+                        )
+                    ) +
+                    "</span>";
+
+
+                html +=
+                    "</div>";
+
+
+                html +=
+                    "</div>";
+            }
+        );
+
+
+        list.innerHTML =
+            html;
     }
 
 
     /* =====================================================
        READ STATUS
-    ====================================================== */
+    ===================================================== */
 
     async function markChannelRead() {
 
@@ -3606,97 +3238,82 @@ import { supabase } from "./supabase.js";
             !state.user ||
             !state.currentChannel
         ) {
+
             return;
         }
 
 
-        try {
-
-            const latest =
-                state.messages[
-                    state.messages.length - 1
-                ];
+        const latest =
+            state.messages[
+                state.messages.length - 1
+            ];
 
 
-            const {
-                data: existing
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_read_status"
-                    )
-                    .select(
-                        "id"
-                    )
-                    .eq(
-                        "channel_id",
-                        state.currentChannel.id
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    )
-                    .maybeSingle();
+        const existing =
+            await db
+                .from(
+                    "chat_read_status"
+                )
+                .select("id")
+                .eq(
+                    "channel_id",
+                    state.currentChannel.id
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
 
 
-            const payload = {
+        const values = {
 
-                last_read_message_id:
-                    latest?.id ||
-                    null,
+            last_read_message_id:
+                latest?.id ||
+                null,
 
-                last_read_at:
-                    new Date()
-                        .toISOString()
-            };
+            last_read_at:
+                new Date().toISOString()
+        };
 
 
-            if (existing?.id) {
+        if (
+            existing.data?.id
+        ) {
 
-                await supabaseClient
-                    .from(
-                        "chat_read_status"
-                    )
-                    .update(
-                        payload
-                    )
-                    .eq(
-                        "id",
-                        existing.id
-                    );
+            await db
+                .from(
+                    "chat_read_status"
+                )
+                .update(values)
+                .eq(
+                    "id",
+                    existing.data.id
+                );
 
-            } else {
+        } else {
 
-                await supabaseClient
-                    .from(
-                        "chat_read_status"
-                    )
-                    .insert({
+            await db
+                .from(
+                    "chat_read_status"
+                )
+                .insert({
 
-                        channel_id:
-                            state.currentChannel.id,
+                    channel_id:
+                        state.currentChannel.id,
 
-                        user_id:
-                            state.user.id,
+                    user_id:
+                        state.user.id,
 
-                        ...payload
-
-                    });
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "⚠️ Read status unavailable:",
-                error
-            );
+                    ...values
+                });
         }
     }
 
 
     /* =====================================================
-       REALTIME — COMMUNITY
-    ====================================================== */
+       REALTIME COMMUNITY
+    ===================================================== */
 
     async function setupCommunityRealtime() {
 
@@ -3704,38 +3321,39 @@ import { supabase } from "./supabase.js";
             state.communityRealtime
         ) {
 
-            await supabaseClient
-                .removeChannel(
-                    state.communityRealtime
-                );
+            await db.removeChannel(
+                state.communityRealtime
+            );
+
 
             state.communityRealtime =
                 null;
         }
 
 
-        if (!state.currentCommunity) {
+        if (
+            !state.currentCommunity
+        ) {
+
             return;
         }
 
 
         state.communityRealtime =
-            supabaseClient
+            db
                 .channel(
-                    `community-${state.currentCommunity.id}`
+                    "community-" +
+                    state.currentCommunity.id
                 )
                 .on(
                     "postgres_changes",
                     {
                         event: "*",
-
                         schema: "public",
-
-                        table:
-                            "chat_channels",
-
+                        table: "chat_channels",
                         filter:
-                            `community_id=eq.${state.currentCommunity.id}`
+                            "community_id=eq." +
+                            state.currentCommunity.id
                     },
                     async () => {
 
@@ -3755,26 +3373,29 @@ import { supabase } from "./supabase.js";
 
 
     /* =====================================================
-       REALTIME — MESSAGES
-    ====================================================== */
+       REALTIME MESSAGES
+    ===================================================== */
 
-    async function setupChannelRealtime() {
+    async function setupMessageRealtime() {
 
         if (
             state.messageRealtime
         ) {
 
-            await supabaseClient
-                .removeChannel(
-                    state.messageRealtime
-                );
+            await db.removeChannel(
+                state.messageRealtime
+            );
+
 
             state.messageRealtime =
                 null;
         }
 
 
-        if (!state.currentChannel) {
+        if (
+            !state.currentChannel
+        ) {
+
             return;
         }
 
@@ -3784,36 +3405,25 @@ import { supabase } from "./supabase.js";
 
 
         state.messageRealtime =
-            supabaseClient
+            db
                 .channel(
-                    `messages-${channelId}`
+                    "messages-" +
+                    channelId
                 )
                 .on(
                     "postgres_changes",
                     {
                         event: "INSERT",
-
                         schema: "public",
-
-                        table:
-                            "chat_messages",
-
+                        table: "chat_messages",
                         filter:
-                            `channel_id=eq.${channelId}`
+                            "channel_id=eq." +
+                            channelId
                     },
                     payload => {
 
-                        const incoming =
-                            payload.new;
-
-
-                        if (!incoming) {
-                            return;
-                        }
-
-
-                        addMessageIfMissing(
-                            incoming
+                        addMessage(
+                            payload.new
                         );
 
 
@@ -3824,14 +3434,11 @@ import { supabase } from "./supabase.js";
                     "postgres_changes",
                     {
                         event: "UPDATE",
-
                         schema: "public",
-
-                        table:
-                            "chat_messages",
-
+                        table: "chat_messages",
                         filter:
-                            `channel_id=eq.${channelId}`
+                            "channel_id=eq." +
+                            channelId
                     },
                     payload => {
 
@@ -3862,7 +3469,7 @@ import { supabase } from "./supabase.js";
 
                         } else {
 
-                            addMessageIfMissing(
+                            addMessage(
                                 updated
                             );
                         }
@@ -3885,1424 +3492,62 @@ import { supabase } from "./supabase.js";
 
     /* =====================================================
        PRESENCE
-    ====================================================== */
+    ===================================================== */
 
     async function updatePresence(
         status = "online"
     ) {
 
         if (!state.user) {
-            return;
-        }
-
-
-        try {
-
-            const payload = {
-
-                user_id:
-                    state.user.id,
-
-                status,
-
-                last_seen_at:
-                    new Date()
-                        .toISOString(),
-
-                updated_at:
-                    new Date()
-                        .toISOString()
-            };
-
-
-            const {
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_presence"
-                    )
-                    .upsert(
-                        payload,
-                        {
-                            onConflict:
-                                "user_id"
-                        }
-                    );
-
-
-            if (error) {
-
-                console.warn(
-                    "⚠️ Presence update unavailable:",
-                    error
-                );
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "⚠️ Presence error:",
-                error
-            );
-        }
-    }
-
-
-    /* =====================================================
-       COMMUNITY CREATION
-    ====================================================== */
-
-    async function createCommunity(
-        event
-    ) {
-
-        event.preventDefault();
-
-
-        if (!can("createCommunity")) {
-
-            showToast(
-                "Only admins can create communities.",
-                "error"
-            );
 
             return;
         }
 
 
-        const name =
-            getElement(
-                "communityNameInput"
-            )?.value.trim();
-
-
-        const description =
-            getElement(
-                "communityDescriptionInput"
-            )?.value.trim();
-
-
-        const icon =
-            getElement(
-                "communityIconInput"
-            )?.value.trim();
-
-
-        const courseId =
-            getElement(
-                "communityCourseSelect"
-            )?.value ||
-            null;
-
-
-        const message =
-            getElement(
-                "communityFormMessage"
-            );
-
-
-        if (!name) {
-
-            if (message) {
-
-                message.textContent =
-                    "Community name is required.";
-            }
-
-            return;
-        }
-
-
-        try {
-
-            /*
-             * Confirmed chat_communities schema:
-             *
-             * id
-             * name
-             * slug
-             * description
-             * icon_url
-             * banner_url
-             * is_public
-             * is_active
-             * created_by
-             * created_at
-             * updated_at
-             *
-             * There is NO course_id column.
-             */
-
-            const slug =
-                createSlug(
-                    name
-                );
-
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_communities"
-                    )
-                    .insert({
-
-                        name,
-
-                        slug,
-
-                        description:
-                            description ||
-                            null,
-
-                        icon_url:
-                            icon ||
-                            null,
-
-                        is_public:
-                            true,
-
-                        is_active:
-                            true,
-
-                        created_by:
-                            state.user.id
-
-                    })
-                    .select()
-                    .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            if (data?.id) {
-
-                await supabaseClient
-                    .from(
-                        "chat_community_members"
-                    )
-                    .insert({
-
-                        community_id:
-                            data.id,
-
+        const result =
+            await db
+                .from(
+                    "chat_presence"
+                )
+                .upsert(
+                    {
                         user_id:
                             state.user.id,
 
-                        role:
-                            "super_admin"
-                    });
+                        status:
+                            status,
 
+                        last_seen_at:
+                            new Date().toISOString(),
 
-                /*
-                 * If a course was selected, create a
-                 * course-linked channel in the new community.
-                 */
-
-                if (courseId) {
-
-                    const course =
-                        state.courses.find(
-                            item =>
-                                String(
-                                    item.id
-                                ) ===
-                                String(
-                                    courseId
-                                )
-                        );
-
-
-                    if (course) {
-
-                        await supabaseClient
-                            .from(
-                                "chat_channels"
-                            )
-                            .insert({
-
-                                community_id:
-                                    data.id,
-
-                                name:
-                                    course.title,
-
-                                slug:
-                                    `course-${course.id}`,
-
-                                description:
-                                    course.description ||
-                                    `Discussion for ${course.title}`,
-
-                                channel_type:
-                                    "course",
-
-                                icon:
-                                    "🎓",
-
-                                position:
-                                    1000 +
-                                    Number(
-                                        course.id
-                                    ),
-
-                                is_private:
-                                    false,
-
-                                is_archived:
-                                    false,
-
-                                is_active:
-                                    true,
-
-                                course_id:
-                                    Number(
-                                        course.id
-                                    ),
-
-                                created_by:
-                                    state.user.id
-
-                            });
+                        updated_at:
+                            new Date().toISOString()
+                    },
+                    {
+                        onConflict:
+                            "user_id"
                     }
-                }
-            }
-
-
-            closeCommunityModal();
-
-
-            await loadCommunities();
-
-
-            if (data?.id) {
-
-                await switchCommunity(
-                    data.id
-                );
-            }
-
-
-            showToast(
-                "Community created successfully."
-            );
-
-        } catch (error) {
-
-            console.error(
-                "❌ Community creation failed:",
-                error
-            );
-
-
-            if (message) {
-
-                message.textContent =
-                    error.message ||
-                    "Unable to create community.";
-            }
-
-
-            showToast(
-                "Unable to create community.",
-                "error"
-            );
-        }
-    }
-
-
-    /* =====================================================
-       CHANNEL CREATION
-    ====================================================== */
-
-    async function createChannel(
-        event
-    ) {
-
-        event.preventDefault();
-
-
-        if (!can("createChannel")) {
-
-            showToast(
-                "You do not have permission to create channels.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (
-            !state.currentCommunity
-        ) {
-
-            showToast(
-                "Select a community first.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        const name =
-            getElement(
-                "channelNameInput"
-            )?.value.trim();
-
-
-        const description =
-            getElement(
-                "channelDescriptionInput"
-            )?.value.trim();
-
-
-        const visibility =
-            getElement(
-                "channelVisibilitySelect"
-            )?.value ||
-            "public";
-
-
-        const courseId =
-            getElement(
-                "channelCourseSelect"
-            )?.value ||
-            null;
-
-
-        const message =
-            getElement(
-                "channelFormMessage"
-            );
-
-
-        if (!name) {
-
-            if (message) {
-
-                message.textContent =
-                    "Channel name is required.";
-            }
-
-            return;
-        }
-
-
-        const slug =
-            createSlug(
-                name
-            );
-
-
-        try {
-
-            const course =
-                courseId
-                    ? state.courses.find(
-                        item =>
-                            String(
-                                item.id
-                            ) ===
-                            String(
-                                courseId
-                            )
-                    )
-                    : null;
-
-
-            const {
-                data,
-                error
-            } =
-                await supabaseClient
-                    .from(
-                        "chat_channels"
-                    )
-                    .insert({
-
-                        community_id:
-                            state.currentCommunity.id,
-
-                        name,
-
-                        slug,
-
-                        description:
-                            description ||
-                            null,
-
-                        channel_type:
-                            course
-                                ? "course"
-                                : "text",
-
-                        icon:
-                            course
-                                ? "🎓"
-                                : "#",
-
-                        position:
-                            state.channels.length,
-
-                        is_private:
-                            visibility ===
-                            "private",
-
-                        is_archived:
-                            false,
-
-                        is_active:
-                            true,
-
-                        course_id:
-                            course
-                                ? Number(
-                                    course.id
-                                )
-                                : null,
-
-                        created_by:
-                            state.user.id
-
-                    })
-                    .select()
-                    .single();
-
-
-            if (error) {
-                throw error;
-            }
-
-
-            /*
-             * Private channel creator gets membership.
-             */
-
-            if (
-                data?.id &&
-                visibility === "private"
-            ) {
-
-                await supabaseClient
-                    .from(
-                        "chat_channel_members"
-                    )
-                    .insert({
-
-                        channel_id:
-                            data.id,
-
-                        user_id:
-                            state.user.id
-                    });
-            }
-
-
-            closeChannelModal();
-
-
-            await loadChannels();
-
-
-            if (data?.id) {
-
-                await selectChannel(
-                    data.id
-                );
-            }
-
-
-            showToast(
-                "Channel created successfully."
-            );
-
-        } catch (error) {
-
-            console.error(
-                "❌ Channel creation failed:",
-                error
-            );
-
-
-            if (message) {
-
-                message.textContent =
-                    error.message ||
-                    "Unable to create channel.";
-            }
-
-
-            showToast(
-                "Unable to create channel.",
-                "error"
-            );
-        }
-    }
-
-
-    function createSlug(
-        value
-    ) {
-
-        return String(
-            value ||
-            ""
-        )
-            .trim()
-            .toLowerCase()
-            .replace(
-                /[^a-z0-9]+/g,
-                "-"
-            )
-            .replace(
-                /^-+|-+$/g,
-                ""
-            )
-            .substring(
-                0,
-                100
-            );
-    }
-
-
-    /* =====================================================
-       MESSAGE SEARCH
-    ====================================================== */
-
-    function toggleMessageSearch() {
-
-        const panel =
-            getElement(
-                "messageSearchPanel"
-            );
-
-
-        if (!panel) {
-            return;
-        }
-
-
-        panel.classList.toggle(
-            "hidden"
-        );
-
-
-        if (
-            !panel.classList.contains(
-                "hidden"
-            )
-        ) {
-
-            getElement(
-                "messageSearchInput"
-            )?.focus();
-
-        } else {
-
-            state.messageSearch =
-                "";
-
-
-            const input =
-                getElement(
-                    "messageSearchInput"
                 );
 
 
-            if (input) {
+        if (result.error) {
 
-                input.value =
-                    "";
-            }
-
-
-            renderMessages();
+            console.warn(
+                "⚠️ Presence update failed:",
+                result.error
+            );
         }
     }
 
 
-    /* =====================================================
-       COMMUNITY MENU
-    ====================================================== */
-
-    function toggleCommunityMenu() {
-
-        const menu =
-            getElement(
-                "communityMenu"
-            );
-
-
-        if (!menu) {
-            return;
-        }
-
-
-        if (
-            !menu.classList.contains(
-                "hidden"
-            )
-        ) {
-
-            closeCommunityMenu();
-
-            return;
-        }
-
-
-        const button =
-            getElement(
-                "communityMenuButton"
-            );
-
-
-        const rect =
-            button?.getBoundingClientRect();
-
-
-        if (!rect) {
-            return;
-        }
-
-
-        menu.style.top =
-            `${rect.bottom + 5}px`;
-
-
-        menu.style.left =
-            `${Math.max(
-                10,
-                rect.right - 195
-            )}px`;
-
-
-        menu.classList.remove(
-            "hidden"
-        );
-    }
-
-
-    function closeCommunityMenu() {
-
-        getElement(
-            "communityMenu"
-        )?.classList.add(
-            "hidden"
-        );
-    }
-
-
-    /* =====================================================
-       MODALS
-    ====================================================== */
-
-    function openCommunityModal() {
-
-        if (!can("createCommunity")) {
-
-            showToast(
-                "Only admins and super admins can create communities.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        getElement(
-            "communityModal"
-        )?.classList.remove(
-            "hidden"
-        );
-
-
-        getElement(
-            "communityNameInput"
-        )?.focus();
-    }
-
-
-    function closeCommunityModal() {
-
-        getElement(
-            "communityModal"
-        )?.classList.add(
-            "hidden"
-        );
-
-
-        getElement(
-            "communityForm"
-        )?.reset();
-
-
-        const message =
-            getElement(
-                "communityFormMessage"
-            );
-
-
-        if (message) {
-
-            message.textContent =
-                "";
-        }
-    }
-
-
-    function openChannelModal() {
-
-        if (!can("createChannel")) {
-
-            showToast(
-                "You do not have permission to create channels.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        if (!state.currentCommunity) {
-
-            showToast(
-                "Select a community first.",
-                "error"
-            );
-
-            return;
-        }
-
-
-        getElement(
-            "channelModal"
-        )?.classList.remove(
-            "hidden"
-        );
-
-
-        getElement(
-            "channelNameInput"
-        )?.focus();
-    }
-
-
-    function closeChannelModal() {
-
-        getElement(
-            "channelModal"
-        )?.classList.add(
-            "hidden"
-        );
-
-
-        getElement(
-            "channelForm"
-        )?.reset();
-
-
-        const message =
-            getElement(
-                "channelFormMessage"
-            );
-
-
-        if (message) {
-
-            message.textContent =
-                "";
-        }
-    }
-
-
-    /* =====================================================
-       TEXTAREA
-    ====================================================== */
-
-    function autoResizeTextarea(
-        textarea
-    ) {
-
-        if (!textarea) {
-            return;
-        }
-
-
-        textarea.style.height =
-            "auto";
-
-
-        textarea.style.height =
-            `${Math.min(
-                textarea.scrollHeight,
-                150
-            )}px`;
-    }
-
-
-    /* =====================================================
-       MOBILE
-    ====================================================== */
-
-    function setupMobileControls() {
-
-        const sidebar =
-            $(".channel-sidebar");
-
-
-        if (!sidebar) {
-            return;
-        }
-
-
-        const header =
-            $(".community-header");
-
-
-        header?.addEventListener(
-            "dblclick",
-            () => {
-
-                if (
-                    window.innerWidth <=
-                    760
-                ) {
-
-                    sidebar.classList.toggle(
-                        "mobile-open"
-                    );
-                }
-            }
-        );
-
-
-        window.addEventListener(
-            "resize",
-            () => {
-
-                if (
-                    window.innerWidth >
-                    760
-                ) {
-
-                    sidebar.classList.remove(
-                        "mobile-open"
-                    );
-                }
-            }
-        );
-    }
-
-
-    /* =====================================================
-       EVENT LISTENERS
-    ====================================================== */
-
-    function setupEventListeners() {
-
-        getElement(
-            "createCommunityButton"
-        )?.addEventListener(
-            "click",
-            openCommunityModal
-        );
-
-
-        getElement(
-            "communityForm"
-        )?.addEventListener(
-            "submit",
-            createCommunity
-        );
-
-
-        getElement(
-            "closeCommunityModalButton"
-        )?.addEventListener(
-            "click",
-            closeCommunityModal
-        );
-
-
-        getElement(
-            "cancelCommunityButton"
-        )?.addEventListener(
-            "click",
-            closeCommunityModal
-        );
-
-
-        getElement(
-            "createChannelButton"
-        )?.addEventListener(
-            "click",
-            openChannelModal
-        );
-
-
-        getElement(
-            "channelForm"
-        )?.addEventListener(
-            "submit",
-            createChannel
-        );
-
-
-        getElement(
-            "closeChannelModalButton"
-        )?.addEventListener(
-            "click",
-            closeChannelModal
-        );
-
-
-        getElement(
-            "cancelChannelButton"
-        )?.addEventListener(
-            "click",
-            closeChannelModal
-        );
-
-
-        getElement(
-            "communityMenuButton"
-        )?.addEventListener(
-            "click",
-            toggleCommunityMenu
-        );
-
-
-        getElement(
-            "communityMenuCreateChannel"
-        )?.addEventListener(
-            "click",
-            () => {
-
-                closeCommunityMenu();
-
-                openChannelModal();
-            }
-        );
-
-
-        getElement(
-            "communityMenuCreateCommunity"
-        )?.addEventListener(
-            "click",
-            () => {
-
-                closeCommunityMenu();
-
-                openCommunityModal();
-            }
-        );
-
-
-        getElement(
-            "communityMenuRefresh"
-        )?.addEventListener(
-            "click",
-            async () => {
-
-                closeCommunityMenu();
-
-
-                await loadCommunities();
-
-
-                if (
-                    state.currentCommunity
-                ) {
-
-                    const currentId =
-                        state.currentCommunity.id;
-
-
-                    const stillExists =
-                        state.communities.some(
-                            community =>
-                                String(
-                                    community.id
-                                ) ===
-                                String(
-                                    currentId
-                                )
-                        );
-
-
-                    if (
-                        stillExists
-                    ) {
-
-                        await switchCommunity(
-                            currentId
-                        );
-                    }
-                }
-
-
-                showToast(
-                    "Community refreshed."
-                );
-            }
-        );
-
-
-        getElement(
-            "messageForm"
-        )?.addEventListener(
-            "submit",
-            async event => {
-
-                event.preventDefault();
-
-                await sendMessage();
-            }
-        );
-
-
-        getElement(
-            "messageInput"
-        )?.addEventListener(
-            "input",
-            event => {
-
-                autoResizeTextarea(
-                    event.target
-                );
-            }
-        );
-
-
-        getElement(
-            "messageInput"
-        )?.addEventListener(
-            "keydown",
-            async event => {
-
-                if (
-                    event.key ===
-                    "Enter" &&
-                    !event.shiftKey
-                ) {
-
-                    event.preventDefault();
-
-                    await sendMessage();
-                }
-            }
-        );
-
-
-        getElement(
-            "cancelReplyButton"
-        )?.addEventListener(
-            "click",
-            clearReply
-        );
-
-
-        getElement(
-            "memberToggleButton"
-        )?.addEventListener(
-            "click",
-            () => {
-
-                getElement(
-                    "memberSidebar"
-                )?.classList.toggle(
-                    "open"
-                );
-            }
-        );
-
-
-        getElement(
-            "closeMemberSidebarButton"
-        )?.addEventListener(
-            "click",
-            () => {
-
-                getElement(
-                    "memberSidebar"
-                )?.classList.remove(
-                    "open"
-                );
-            }
-        );
-
-
-        getElement(
-            "memberSearchInput"
-        )?.addEventListener(
-            "input",
-            event => {
-
-                state.memberSearch =
-                    event.target.value;
-
-
-                renderMembers();
-            }
-        );
-
-
-        getElement(
-            "channelSearchInput"
-        )?.addEventListener(
-            "input",
-            event => {
-
-                state.channelSearch =
-                    event.target.value;
-
-
-                renderChannels();
-            }
-        );
-
-
-        getElement(
-            "chatSearchButton"
-        )?.addEventListener(
-            "click",
-            toggleMessageSearch
-        );
-
-
-        getElement(
-            "closeMessageSearchButton"
-        )?.addEventListener(
-            "click",
-            toggleMessageSearch
-        );
-
-
-        getElement(
-            "messageSearchInput"
-        )?.addEventListener(
-            "input",
-            event => {
-
-                state.messageSearch =
-                    event.target.value;
-
-
-                renderMessages();
-            }
-        );
-
-
-        getElement(
-            "attachmentButton"
-        )?.addEventListener(
-            "click",
-            () => {
-
-                showToast(
-                    "Attachment storage will be connected after the core chat is verified."
-                );
-            }
-        );
-
-
-        document.addEventListener(
-            "click",
-            event => {
-
-                const menu =
-                    getElement(
-                        "communityMenu"
-                    );
-
-
-                const button =
-                    getElement(
-                        "communityMenuButton"
-                    );
-
-
-                if (
-                    menu &&
-                    !menu.classList.contains(
-                        "hidden"
-                    ) &&
-                    !menu.contains(
-                        event.target
-                    ) &&
-                    !button?.contains(
-                        event.target
-                    )
-                ) {
-
-                    closeCommunityMenu();
-                }
-            }
-        );
-
-
-        document.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key !==
-                    "Escape"
-                ) {
-                    return;
-                }
-
-
-                closeCommunityMenu();
-
-                closeCommunityModal();
-
-                closeChannelModal();
-
-                clearReply();
-            }
-        );
-
-
-        getElement(
-            "communityModal"
-        )?.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    event.currentTarget
-                ) {
-
-                    closeCommunityModal();
-                }
-            }
-        );
-
-
-        getElement(
-            "channelModal"
-        )?.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    event.currentTarget
-                ) {
-
-                    closeChannelModal();
-                }
-            }
-        );
-    }
-
-
-    /* =====================================================
-       INITIAL COMMUNITY
-    ====================================================== */
-
-    async function selectInitialCommunity() {
-
-        if (
-            !state.communities.length
-        ) {
-
-            renderEmptyChannelState();
-
-            return;
-        }
-
-
-        const urlParams =
-            new URLSearchParams(
-                window.location.search
-            );
-
-
-        const requestedCourseId =
-            urlParams.get(
-                "course_id"
-            );
-
-
-        /*
-         * Currently Mwaniki Scholars has one main community.
-         *
-         * We still keep the architecture multi-community.
-         */
-
-        let selected =
-            null;
-
-
-        const stored =
-            localStorage.getItem(
-                "mwanikiCommunityId"
-            );
-
-
-        if (stored) {
-
-            selected =
-                state.communities.find(
-                    community =>
-                        String(
-                            community.id
-                        ) ===
-                        String(
-                            stored
-                        )
-                );
-        }
-
-
-        if (!selected) {
-
-            selected =
-                state.communities[0];
-        }
-
-
-        if (selected) {
-
-            await switchCommunity(
-                selected.id
-            );
-        }
-
-
-        /*
-         * requestedCourseId is intentionally handled
-         * by loadChannels() so the actual course_id is
-         * used to identify duplicate course titles.
-         */
-
-        void requestedCourseId;
-    }
-
-
-    /* =====================================================
-       PRESENCE CLEANUP
-    ====================================================== */
-
-    function setupPresence() {
+    function startPresence() {
 
         updatePresence(
             "online"
         );
 
 
-        state.presenceTimer =
+        state.presenceInterval =
             setInterval(
                 () => {
 
@@ -5336,25 +3581,1150 @@ import { supabase } from "./supabase.js";
                 }
             }
         );
+    }
 
 
-        window.addEventListener(
-            "beforeunload",
+    /* =====================================================
+       CREATE COMMUNITY
+    ===================================================== */
+
+    async function handleCreateCommunity(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        if (!can("createCommunity")) {
+
+            toast(
+                "You do not have permission to create communities.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const name =
+            byId(
+                "communityNameInput"
+            )?.value.trim();
+
+
+        const description =
+            byId(
+                "communityDescriptionInput"
+            )?.value.trim();
+
+
+        const icon =
+            byId(
+                "communityIconInput"
+            )?.value.trim();
+
+
+        const courseId =
+            byId(
+                "communityCourseSelect"
+            )?.value ||
+            "";
+
+
+        const formMessage =
+            byId(
+                "communityFormMessage"
+            );
+
+
+        if (!name) {
+
+            if (formMessage) {
+
+                formMessage.textContent =
+                    "Community name is required.";
+            }
+
+            return;
+        }
+
+
+        const baseSlug =
+            slugify(name);
+
+
+        const slug =
+            baseSlug +
+            "-" +
+            Date.now()
+                .toString()
+                .slice(-6);
+
+
+        const result =
+            await db
+                .from(
+                    "chat_communities"
+                )
+                .insert({
+
+                    name:
+                        name,
+
+                    slug:
+                        slug,
+
+                    description:
+                        description ||
+                        null,
+
+                    icon_url:
+                        icon ||
+                        null,
+
+                    is_public:
+                        true,
+
+                    is_active:
+                        true,
+
+                    created_by:
+                        state.user.id
+                })
+                .select()
+                .single();
+
+
+        if (result.error) {
+
+            console.error(
+                "❌ Community creation failed:",
+                result.error
+            );
+
+
+            if (formMessage) {
+
+                formMessage.textContent =
+                    result.error.message;
+            }
+
+
+            toast(
+                "Unable to create community.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const community =
+            result.data;
+
+
+        /*
+         * Add creator as super admin.
+         */
+
+        await db
+            .from(
+                "chat_community_members"
+            )
+            .insert({
+
+                community_id:
+                    community.id,
+
+                user_id:
+                    state.user.id,
+
+                role:
+                    "super_admin"
+            });
+
+
+        /*
+         * A community cannot directly store course_id
+         * because that column does not exist.
+         *
+         * Instead we create a course channel.
+         */
+
+        if (courseId) {
+
+            const course =
+                getCourse(
+                    courseId
+                );
+
+
+            if (course) {
+
+                await db
+                    .from(
+                        "chat_channels"
+                    )
+                    .insert({
+
+                        community_id:
+                            community.id,
+
+                        name:
+                            course.title,
+
+                        slug:
+                            "course-" +
+                            course.id,
+
+                        description:
+                            course.description ||
+                            "Course discussion community.",
+
+                        channel_type:
+                            "course",
+
+                        icon:
+                            "🎓",
+
+                        position:
+                            1000 +
+                            Number(
+                                course.id
+                            ),
+
+                        is_private:
+                            false,
+
+                        is_archived:
+                            false,
+
+                        is_active:
+                            true,
+
+                        course_id:
+                            Number(
+                                course.id
+                            ),
+
+                        created_by:
+                            state.user.id
+                    });
+            }
+        }
+
+
+        closeCommunityModal();
+
+        await loadCommunities();
+
+        await switchCommunity(
+            community.id
+        );
+
+
+        toast(
+            "Community created successfully."
+        );
+    }
+
+
+    /* =====================================================
+       CREATE CHANNEL
+    ===================================================== */
+
+    async function handleCreateChannel(
+        event
+    ) {
+
+        event.preventDefault();
+
+
+        if (!can("createChannel")) {
+
+            toast(
+                "You do not have permission to create channels.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            !state.currentCommunity
+        ) {
+
+            return;
+        }
+
+
+        const name =
+            byId(
+                "channelNameInput"
+            )?.value.trim();
+
+
+        const description =
+            byId(
+                "channelDescriptionInput"
+            )?.value.trim();
+
+
+        const visibility =
+            byId(
+                "channelVisibilitySelect"
+            )?.value ||
+            "public";
+
+
+        const courseId =
+            byId(
+                "channelCourseSelect"
+            )?.value ||
+            "";
+
+
+        const formMessage =
+            byId(
+                "channelFormMessage"
+            );
+
+
+        if (!name) {
+
+            if (formMessage) {
+
+                formMessage.textContent =
+                    "Channel name is required.";
+            }
+
+            return;
+        }
+
+
+        const course =
+            courseId
+                ? getCourse(courseId)
+                : null;
+
+
+        let channelSlug =
+            slugify(name);
+
+
+        channelSlug =
+            channelSlug +
+            "-" +
+            Date.now()
+                .toString()
+                .slice(-6);
+
+
+        const result =
+            await db
+                .from(
+                    "chat_channels"
+                )
+                .insert({
+
+                    community_id:
+                        state.currentCommunity.id,
+
+                    name:
+                        name,
+
+                    slug:
+                        channelSlug,
+
+                    description:
+                        description ||
+                        null,
+
+                    channel_type:
+                        course
+                            ? "course"
+                            : "text",
+
+                    icon:
+                        course
+                            ? "🎓"
+                            : "#",
+
+                    position:
+                        state.channels.length,
+
+                    is_private:
+                        visibility ===
+                        "private",
+
+                    is_archived:
+                        false,
+
+                    is_active:
+                        true,
+
+                    course_id:
+                        course
+                            ? Number(
+                                course.id
+                            )
+                            : null,
+
+                    created_by:
+                        state.user.id
+                })
+                .select()
+                .single();
+
+
+        if (result.error) {
+
+            console.error(
+                "❌ Channel creation failed:",
+                result.error
+            );
+
+
+            if (formMessage) {
+
+                formMessage.textContent =
+                    result.error.message;
+            }
+
+
+            toast(
+                "Unable to create channel.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const channel =
+            result.data;
+
+
+        /*
+         * Private channel creator receives
+         * explicit channel membership.
+         */
+
+        if (
+            channel &&
+            visibility === "private"
+        ) {
+
+            await db
+                .from(
+                    "chat_channel_members"
+                )
+                .insert({
+
+                    channel_id:
+                        channel.id,
+
+                    user_id:
+                        state.user.id
+                });
+        }
+
+
+        closeChannelModal();
+
+        await loadChannels();
+
+
+        if (channel) {
+
+            await selectChannel(
+                channel.id
+            );
+        }
+
+
+        toast(
+            "Channel created successfully."
+        );
+    }
+
+
+    /* =====================================================
+       MODALS
+    ===================================================== */
+
+    function openCommunityModal() {
+
+        if (!can("createCommunity")) {
+
+            toast(
+                "Only administrators can create communities.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        byId(
+            "communityModal"
+        )?.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    function closeCommunityModal() {
+
+        byId(
+            "communityModal"
+        )?.classList.add(
+            "hidden"
+        );
+
+
+        byId(
+            "communityForm"
+        )?.reset();
+
+
+        const message =
+            byId(
+                "communityFormMessage"
+            );
+
+
+        if (message) {
+
+            message.textContent =
+                "";
+        }
+    }
+
+
+    function openChannelModal() {
+
+        if (!can("createChannel")) {
+
+            toast(
+                "You do not have permission to create channels.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        byId(
+            "channelModal"
+        )?.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    function closeChannelModal() {
+
+        byId(
+            "channelModal"
+        )?.classList.add(
+            "hidden"
+        );
+
+
+        byId(
+            "channelForm"
+        )?.reset();
+
+
+        const message =
+            byId(
+                "channelFormMessage"
+            );
+
+
+        if (message) {
+
+            message.textContent =
+                "";
+        }
+    }
+
+
+    /* =====================================================
+       COMMUNITY MENU
+    ===================================================== */
+
+    function toggleCommunityMenu() {
+
+        const menu =
+            byId(
+                "communityMenu"
+            );
+
+
+        if (!menu) {
+
+            return;
+        }
+
+
+        menu.classList.toggle(
+            "hidden"
+        );
+    }
+
+
+    function closeCommunityMenu() {
+
+        byId(
+            "communityMenu"
+        )?.classList.add(
+            "hidden"
+        );
+    }
+
+
+    /* =====================================================
+       MESSAGE SEARCH
+    ===================================================== */
+
+    function toggleMessageSearch() {
+
+        const panel =
+            byId(
+                "messageSearchPanel"
+            );
+
+
+        if (!panel) {
+
+            return;
+        }
+
+
+        panel.classList.toggle(
+            "hidden"
+        );
+
+
+        if (
+            !panel.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            byId(
+                "messageSearchInput"
+            )?.focus();
+
+        } else {
+
+            state.messageSearch =
+                "";
+
+
+            const input =
+                byId(
+                    "messageSearchInput"
+                );
+
+
+            if (input) {
+
+                input.value =
+                    "";
+            }
+
+
+            renderMessages();
+        }
+    }
+
+
+    /* =====================================================
+       TEXTAREA
+    ===================================================== */
+
+    function resizeTextarea(
+        textarea
+    ) {
+
+        if (!textarea) {
+
+            return;
+        }
+
+
+        textarea.style.height =
+            "auto";
+
+
+        textarea.style.height =
+            Math.min(
+                textarea.scrollHeight,
+                150
+            ) +
+            "px";
+    }
+
+
+    /* =====================================================
+       EVENT LISTENERS
+    ===================================================== */
+
+    function setupEvents() {
+
+        const createCommunity =
+            byId(
+                "createCommunityButton"
+            );
+
+
+        if (createCommunity) {
+
+            createCommunity.addEventListener(
+                "click",
+                openCommunityModal
+            );
+        }
+
+
+        const communityForm =
+            byId(
+                "communityForm"
+            );
+
+
+        if (communityForm) {
+
+            communityForm.addEventListener(
+                "submit",
+                handleCreateCommunity
+            );
+        }
+
+
+        byId(
+            "closeCommunityModalButton"
+        )?.addEventListener(
+            "click",
+            closeCommunityModal
+        );
+
+
+        byId(
+            "cancelCommunityButton"
+        )?.addEventListener(
+            "click",
+            closeCommunityModal
+        );
+
+
+        byId(
+            "createChannelButton"
+        )?.addEventListener(
+            "click",
+            openChannelModal
+        );
+
+
+        byId(
+            "channelForm"
+        )?.addEventListener(
+            "submit",
+            handleCreateChannel
+        );
+
+
+        byId(
+            "closeChannelModalButton"
+        )?.addEventListener(
+            "click",
+            closeChannelModal
+        );
+
+
+        byId(
+            "cancelChannelButton"
+        )?.addEventListener(
+            "click",
+            closeChannelModal
+        );
+
+
+        byId(
+            "communityMenuButton"
+        )?.addEventListener(
+            "click",
+            toggleCommunityMenu
+        );
+
+
+        byId(
+            "communityMenuCreateChannel"
+        )?.addEventListener(
+            "click",
             () => {
 
-                updatePresence(
-                    "offline"
+                closeCommunityMenu();
+
+                openChannelModal();
+            }
+        );
+
+
+        byId(
+            "communityMenuCreateCommunity"
+        )?.addEventListener(
+            "click",
+            () => {
+
+                closeCommunityMenu();
+
+                openCommunityModal();
+            }
+        );
+
+
+        byId(
+            "communityMenuRefresh"
+        )?.addEventListener(
+            "click",
+            async () => {
+
+                closeCommunityMenu();
+
+                await loadCommunities();
+
+
+                if (
+                    state.currentCommunity
+                ) {
+
+                    await switchCommunity(
+                        state.currentCommunity.id
+                    );
+                }
+
+
+                toast(
+                    "Community refreshed."
                 );
+            }
+        );
+
+
+        byId(
+            "messageForm"
+        )?.addEventListener(
+            "submit",
+            async event => {
+
+                event.preventDefault();
+
+                await sendMessage();
+            }
+        );
+
+
+        const messageInput =
+            byId(
+                "messageInput"
+            );
+
+
+        if (messageInput) {
+
+            messageInput.addEventListener(
+                "input",
+                () => {
+
+                    resizeTextarea(
+                        messageInput
+                    );
+                }
+            );
+
+
+            messageInput.addEventListener(
+                "keydown",
+                async event => {
+
+                    if (
+                        event.key ===
+                        "Enter" &&
+                        !event.shiftKey
+                    ) {
+
+                        event.preventDefault();
+
+                        await sendMessage();
+                    }
+                }
+            );
+        }
+
+
+        byId(
+            "cancelReplyButton"
+        )?.addEventListener(
+            "click",
+            clearReply
+        );
+
+
+        byId(
+            "memberToggleButton"
+        )?.addEventListener(
+            "click",
+            () => {
+
+                byId(
+                    "memberSidebar"
+                )?.classList.toggle(
+                    "open"
+                );
+            }
+        );
+
+
+        byId(
+            "closeMemberSidebarButton"
+        )?.addEventListener(
+            "click",
+            () => {
+
+                byId(
+                    "memberSidebar"
+                )?.classList.remove(
+                    "open"
+                );
+            }
+        );
+
+
+        byId(
+            "memberSearchInput"
+        )?.addEventListener(
+            "input",
+            event => {
+
+                state.memberSearch =
+                    event.target.value;
+
+
+                renderMembers();
+            }
+        );
+
+
+        byId(
+            "channelSearchInput"
+        )?.addEventListener(
+            "input",
+            event => {
+
+                state.channelSearch =
+                    event.target.value;
+
+
+                renderChannels();
+            }
+        );
+
+
+        byId(
+            "chatSearchButton"
+        )?.addEventListener(
+            "click",
+            toggleMessageSearch
+        );
+
+
+        byId(
+            "closeMessageSearchButton"
+        )?.addEventListener(
+            "click",
+            toggleMessageSearch
+        );
+
+
+        byId(
+            "messageSearchInput"
+        )?.addEventListener(
+            "input",
+            event => {
+
+                state.messageSearch =
+                    event.target.value;
+
+
+                renderMessages();
+            }
+        );
+
+
+        byId(
+            "attachmentButton"
+        )?.addEventListener(
+            "click",
+            () => {
+
+                toast(
+                    "Attachments will be connected after the core messaging system is verified."
+                );
+            }
+        );
+
+
+        document.addEventListener(
+            "click",
+            event => {
+
+                const menu =
+                    byId(
+                        "communityMenu"
+                    );
+
+
+                const button =
+                    byId(
+                        "communityMenuButton"
+                    );
+
+
+                if (
+                    menu &&
+                    !menu.classList.contains(
+                        "hidden"
+                    ) &&
+                    !menu.contains(
+                        event.target
+                    ) &&
+                    !button?.contains(
+                        event.target
+                    )
+                ) {
+
+                    closeCommunityMenu();
+                }
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    closeCommunityMenu();
+
+                    closeCommunityModal();
+
+                    closeChannelModal();
+
+                    clearReply();
+                }
+            }
+        );
+
+
+        byId(
+            "communityModal"
+        )?.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target ===
+                    event.currentTarget
+                ) {
+
+                    closeCommunityModal();
+                }
+            }
+        );
+
+
+        byId(
+            "channelModal"
+        )?.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target ===
+                    event.currentTarget
+                ) {
+
+                    closeChannelModal();
+                }
             }
         );
     }
 
 
     /* =====================================================
-       INITIALIZATION
-    ====================================================== */
+       INITIAL COMMUNITY
+    ===================================================== */
 
-    async function initializeCommunity() {
+    async function selectInitialCommunity() {
+
+        if (!state.communities.length) {
+
+            renderEmptyChannel();
+
+            return;
+        }
+
+
+        const storedId =
+            localStorage.getItem(
+                "mwanikiCommunityId"
+            );
+
+
+        let community = null;
+
+
+        if (storedId) {
+
+            community =
+                state.communities.find(
+                    item =>
+                        String(item.id) ===
+                        String(storedId)
+                );
+        }
+
+
+        if (!community) {
+
+            community =
+                state.communities[0];
+        }
+
+
+        if (community) {
+
+            await switchCommunity(
+                community.id
+            );
+        }
+    }
+
+
+    /* =====================================================
+       INITIALIZATION
+    ===================================================== */
+
+    async function initialize() {
 
         console.log(
             "🚀 Initializing Mwaniki Community..."
@@ -5362,7 +4732,7 @@ import { supabase } from "./supabase.js";
 
 
         state.user =
-            await getAuthenticatedUser();
+            await getUser();
 
 
         if (!state.user) {
@@ -5381,54 +4751,38 @@ import { supabase } from "./supabase.js";
 
 
         console.log(
-            "🔐 Community authenticated user:",
+            "🔐 Authenticated:",
             state.user.email
         );
 
 
-        await loadCurrentProfile();
+        await loadProfile();
 
         await loadCourses();
 
         await loadCommunities();
 
+        await selectInitialCommunity();
 
-        if (
-            !state.communities.length
-        ) {
+        setupEvents();
 
-            showToast(
-                "No active Mwaniki community is available.",
-                "error"
-            );
+        startPresence();
 
-        } else {
-
-            await selectInitialCommunity();
-        }
-
-
-        applyPermissionUI();
-
-        setupEventListeners();
-
-        setupMobileControls();
-
-        setupPresence();
+        updatePermissionUI();
 
 
         console.log(
-            "✅ Mwaniki Community Phase 3 ready."
+            "✅ Mwaniki Community is ready."
         );
     }
 
 
     /* =====================================================
        AUTH STATE
-    ====================================================== */
+    ===================================================== */
 
-    supabaseClient.auth.onAuthStateChange(
-        async (
+    db.auth.onAuthStateChange(
+        (
             event,
             session
         ) => {
@@ -5446,40 +4800,25 @@ import { supabase } from "./supabase.js";
 
                 window.location.href =
                     "./index.html";
-
-
-                return;
             }
 
 
             if (
-                (
-                    event ===
-                    "SIGNED_IN" ||
-                    event ===
-                    "INITIAL_SESSION"
-                ) &&
+                event ===
+                "SIGNED_IN" &&
                 session?.user
             ) {
 
-                if (
-                    !state.user
-                ) {
-
-                    state.user =
-                        session.user;
-
-
-                    await initializeCommunity();
-                }
+                state.user =
+                    session.user;
             }
         }
     );
 
 
     /* =====================================================
-       START
-    ====================================================== */
+       START APPLICATION
+    ===================================================== */
 
     if (
         document.readyState ===
@@ -5488,7 +4827,7 @@ import { supabase } from "./supabase.js";
 
         document.addEventListener(
             "DOMContentLoaded",
-            initializeCommunity,
+            initialize,
             {
                 once: true
             }
@@ -5496,8 +4835,7 @@ import { supabase } from "./supabase.js";
 
     } else {
 
-        initializeCommunity();
+        initialize();
     }
-
 
 })();
