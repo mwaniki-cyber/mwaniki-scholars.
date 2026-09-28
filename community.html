@@ -1,18 +1,44 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Mwaniki Community | Mwaniki Scholars</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="icon" href="favicon.ico">
-    <link rel="stylesheet" href="community.css">
+    <meta
+        name="description"
+        content="Mwaniki Scholars Community — a medical learning and student collaboration platform."
+    >
 
-    <!-- Supabase -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="supabase.js"></script>
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
+
+    <title>
+        Mwaniki Community | Mwaniki Scholars
+    </title>
+
+    <!-- Correct favicon -->
+    <link
+        rel="icon"
+        type="image/svg+xml"
+        href="./favicon.svg"
+    >
+
+    <!-- Community stylesheet -->
+    <link
+        rel="stylesheet"
+        href="./community.css"
+    >
+
 </head>
+
 
 <body>
 
@@ -20,16 +46,30 @@
 
     <!-- =====================================================
          COMMUNITY RAIL
-    ====================================================== -->
+         ===================================================== -->
+
     <aside class="community-rail">
 
         <div class="rail-logo">
-            <div class="rail-logo-mark">MS</div>
+
+            <div class="rail-logo-mark">
+                MS
+            </div>
+
         </div>
 
-        <div id="communityRail" class="community-rail-list">
-            <!-- Communities injected here -->
+
+        <div
+            id="communityRail"
+            class="community-rail-list"
+        >
+
+            <div class="channel-loading">
+                Loading communities...
+            </div>
+
         </div>
+
 
         <button
             id="createCommunityButton"
@@ -40,9 +80,15 @@
             +
         </button>
 
+
         <div class="rail-divider"></div>
 
-        <a href="dashboard.html" class="rail-home" title="Back to Dashboard">
+
+        <a
+            href="./dashboard.html"
+            class="rail-home"
+            title="Back to Dashboard"
+        >
             🏠
         </a>
 
@@ -51,7 +97,8 @@
 
     <!-- =====================================================
          CHANNEL SIDEBAR
-    ====================================================== -->
+         ===================================================== -->
+
     <aside class="channel-sidebar">
 
         <header class="community-header">
@@ -64,6 +111,7 @@
                 >
                     MS
                 </div>
+
 
                 <div class="community-header-text">
 
@@ -79,6 +127,7 @@
 
             </div>
 
+
             <button
                 id="communityMenuButton"
                 class="icon-button"
@@ -91,11 +140,22 @@
         </header>
 
 
-        <!-- Community information -->
-        <div class="community-course-banner" id="communityCourseBanner">
-            <span class="course-banner-icon">📚</span>
+        <!-- =================================================
+             COURSE CONTEXT
+             ================================================= -->
+
+        <div
+            class="community-course-banner"
+            id="communityCourseBanner"
+        >
+
+            <span class="course-banner-icon">
+                📚
+            </span>
+
 
             <div>
+
                 <strong id="communityCourseName">
                     General Community
                 </strong>
@@ -103,11 +163,16 @@
                 <small id="communityCourseLabel">
                     Community
                 </small>
+
             </div>
+
         </div>
 
 
-        <!-- Channel search -->
+        <!-- =================================================
+             CHANNEL SEARCH
+             ================================================= -->
+
         <div class="channel-search-wrapper">
 
             <input
@@ -120,8 +185,14 @@
         </div>
 
 
-        <!-- Channels -->
-        <div id="channelList" class="channel-list">
+        <!-- =================================================
+             CHANNEL LIST
+             ================================================= -->
+
+        <div
+            id="channelList"
+            class="channel-list"
+        >
 
             <div class="channel-loading">
                 Loading channels...
@@ -130,7 +201,10 @@
         </div>
 
 
-        <!-- Channel creation -->
+        <!-- =================================================
+             CHANNEL FOOTER
+             ================================================= -->
+
         <div class="channel-sidebar-footer">
 
             <button
@@ -138,8 +212,15 @@
                 class="create-channel-button"
                 type="button"
             >
-                <span>＋</span>
-                <span>Create Channel</span>
+
+                <span>
+                    ＋
+                </span>
+
+                <span>
+                    Create Channel
+                </span>
+
             </button>
 
         </div>
@@ -149,7 +230,8 @@
 
     <!-- =====================================================
          MAIN CHAT
-    ====================================================== -->
+         ===================================================== -->
+
     <main class="chat-main">
 
         <header class="chat-header">
@@ -159,6 +241,7 @@
                 <div class="channel-title-icon">
                     #
                 </div>
+
 
                 <div>
 
@@ -184,6 +267,7 @@
                     Student
                 </div>
 
+
                 <button
                     id="memberToggleButton"
                     class="header-action-button"
@@ -192,6 +276,7 @@
                 >
                     👥
                 </button>
+
 
                 <button
                     id="chatSearchButton"
@@ -207,27 +292,38 @@
         </header>
 
 
-        <!-- Search messages -->
+        <!-- =================================================
+             MESSAGE SEARCH
+             ================================================= -->
+
         <div
             id="messageSearchPanel"
             class="message-search-panel hidden"
         >
+
             <input
                 id="messageSearchInput"
                 type="search"
                 placeholder="Search messages in this channel..."
+                autocomplete="off"
             >
+
 
             <button
                 id="closeMessageSearchButton"
                 type="button"
+                title="Close search"
             >
                 ✕
             </button>
+
         </div>
 
 
-        <!-- Messages -->
+        <!-- =================================================
+             MESSAGE LIST
+             ================================================= -->
+
         <section
             id="messageList"
             class="message-list"
@@ -240,11 +336,14 @@
                     #
                 </div>
 
-                <h2>Welcome to the channel</h2>
+                <h2>
+                    Welcome to the channel
+                </h2>
 
                 <p>
-                    Select a channel to start learning and connecting
-                    with other Mwaniki Scholars students.
+                    Select a channel to start learning
+                    and connecting with other
+                    Mwaniki Scholars students.
                 </p>
 
             </div>
@@ -252,28 +351,48 @@
         </section>
 
 
-        <!-- Composer -->
+        <!-- =================================================
+             MESSAGE COMPOSER
+             ================================================= -->
+
         <footer class="message-composer-area">
+
+
+            <!-- Reply preview -->
 
             <div
                 id="replyPreview"
                 class="reply-preview hidden"
             >
+
                 <div>
-                    <strong>Replying to</strong>
+
+                    <strong>
+                        Replying to
+                    </strong>
+
                     <span id="replyPreviewText"></span>
+
                 </div>
+
 
                 <button
                     id="cancelReplyButton"
                     type="button"
+                    title="Cancel reply"
                 >
                     ✕
                 </button>
+
             </div>
 
 
-            <form id="messageForm" class="message-composer">
+            <!-- Composer -->
+
+            <form
+                id="messageForm"
+                class="message-composer"
+            >
 
                 <button
                     id="attachmentButton"
@@ -284,12 +403,15 @@
                     ＋
                 </button>
 
+
                 <textarea
                     id="messageInput"
                     rows="1"
                     placeholder="Message #general"
                     maxlength="5000"
+                    autocomplete="off"
                 ></textarea>
+
 
                 <button
                     id="sendMessageButton"
@@ -300,6 +422,7 @@
                 </button>
 
             </form>
+
 
             <div class="composer-hint">
                 Be respectful, helpful and professional.
@@ -312,7 +435,8 @@
 
     <!-- =====================================================
          MEMBER SIDEBAR
-    ====================================================== -->
+         ===================================================== -->
+
     <aside
         id="memberSidebar"
         class="member-sidebar"
@@ -322,7 +446,9 @@
 
             <div>
 
-                <h2>Members</h2>
+                <h2>
+                    Members
+                </h2>
 
                 <span id="memberCount">
                     0 members
@@ -330,10 +456,12 @@
 
             </div>
 
+
             <button
                 id="closeMemberSidebarButton"
                 class="icon-button"
                 type="button"
+                title="Close members"
             >
                 ✕
             </button>
@@ -347,12 +475,16 @@
                 id="memberSearchInput"
                 type="search"
                 placeholder="Search members..."
+                autocomplete="off"
             >
 
         </div>
 
 
-        <div id="memberList" class="member-list">
+        <div
+            id="memberList"
+            class="member-list"
+        >
 
             <div class="member-loading">
                 Loading members...
@@ -366,8 +498,9 @@
 
 
 <!-- =========================================================
-     COMMUNITY CREATION MODAL
-========================================================= -->
+     CREATE COMMUNITY MODAL
+     ========================================================= -->
+
 <div
     id="communityModal"
     class="modal-overlay hidden"
@@ -378,9 +511,17 @@
         <header class="modal-header">
 
             <div>
-                <h2>Create Community</h2>
-                <p>Create a new learning community.</p>
+
+                <h2>
+                    Create Community
+                </h2>
+
+                <p>
+                    Create a new learning community.
+                </p>
+
             </div>
+
 
             <button
                 id="closeCommunityModalButton"
@@ -396,6 +537,7 @@
         <form id="communityForm">
 
             <label>
+
                 Community Name
 
                 <input
@@ -405,10 +547,12 @@
                     required
                     placeholder="e.g. Medical Laboratory Science"
                 >
+
             </label>
 
 
             <label>
+
                 Description
 
                 <textarea
@@ -417,10 +561,12 @@
                     rows="3"
                     placeholder="Describe this community..."
                 ></textarea>
+
             </label>
 
 
             <label>
+
                 Link to Course
 
                 <select id="communityCourseSelect">
@@ -435,6 +581,7 @@
 
 
             <label>
+
                 Community Icon
 
                 <input
@@ -463,6 +610,7 @@
                     Cancel
                 </button>
 
+
                 <button
                     type="submit"
                     class="primary-button"
@@ -480,8 +628,9 @@
 
 
 <!-- =========================================================
-     CHANNEL CREATION MODAL
-========================================================= -->
+     CREATE CHANNEL MODAL
+     ========================================================= -->
+
 <div
     id="channelModal"
     class="modal-overlay hidden"
@@ -492,9 +641,17 @@
         <header class="modal-header">
 
             <div>
-                <h2>Create Channel</h2>
-                <p>Add a discussion space to this community.</p>
+
+                <h2>
+                    Create Channel
+                </h2>
+
+                <p>
+                    Add a discussion space to this community.
+                </p>
+
             </div>
+
 
             <button
                 id="closeChannelModalButton"
@@ -510,6 +667,7 @@
         <form id="channelForm">
 
             <label>
+
                 Channel Name
 
                 <input
@@ -524,6 +682,7 @@
 
 
             <label>
+
                 Description
 
                 <input
@@ -537,6 +696,7 @@
 
 
             <label>
+
                 Category
 
                 <input
@@ -550,6 +710,7 @@
 
 
             <label>
+
                 Channel Visibility
 
                 <select id="channelVisibilitySelect">
@@ -568,6 +729,7 @@
 
 
             <label>
+
                 Course Discussion
 
                 <select id="channelCourseSelect">
@@ -597,6 +759,7 @@
                     Cancel
                 </button>
 
+
                 <button
                     type="submit"
                     class="primary-button"
@@ -614,8 +777,9 @@
 
 
 <!-- =========================================================
-     COMMUNITY OPTIONS MENU
-========================================================= -->
+     COMMUNITY MENU
+     ========================================================= -->
+
 <div
     id="communityMenu"
     class="context-menu hidden"
@@ -628,12 +792,14 @@
         ＋ Create Channel
     </button>
 
+
     <button
         id="communityMenuCreateCommunity"
         type="button"
     >
         ＋ Create Community
     </button>
+
 
     <button
         id="communityMenuRefresh"
@@ -647,14 +813,27 @@
 
 <!-- =========================================================
      TOAST
-========================================================= -->
+     ========================================================= -->
+
 <div
     id="communityToast"
     class="community-toast"
 ></div>
 
 
-<script src="community.js"></script>
+<!-- =========================================================
+     COMMUNITY ENGINE
+     
+     IMPORTANT:
+     community.js is an ES module because it imports
+     supabase.js.
+     ========================================================= -->
+
+<script
+    type="module"
+    src="./community.js"
+></script>
 
 </body>
+
 </html>
