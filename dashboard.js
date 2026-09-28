@@ -3827,6 +3827,7 @@ function renderNotesLibrary() {
             .join("");
 }
 
+
 /* =========================================================
    QUIZ LOADING
 ========================================================= */
@@ -3835,52 +3836,117 @@ async function loadQuizzes() {
 
     try {
 
-        const {
-            data,
-            error
-        } = await supabase
-            .from("quizzes")
-            .select(`
-                id,
-                course_id,
-                question,
-                option_a,
-                option_b,
-                option_c,
-                option_d,
-                correct_answer,
-                created_at,
-                course,
-                unit
-            `)
-            .order(
-                "id",
-                {
-                    ascending:
-                        true
-                }
+        console.log(
+            "📝 Loading all quiz questions from Supabase..."
+        );
+
+        const PAGE_SIZE = 1000;
+
+        let allQuizRows = [];
+
+        let from = 0;
+
+        while (true) {
+
+            const to =
+                from + PAGE_SIZE - 1;
+
+            console.log(
+                `📝 Loading quiz rows ${from}–${to}...`
             );
 
-        if (error) {
-
-            console.error(
-                "❌ Quiz loading failed:",
+            const {
+                data,
                 error
+            } = await supabase
+                .from("quizzes")
+                .select(`
+                    id,
+                    course_id,
+                    question,
+                    option_a,
+                    option_b,
+                    option_c,
+                    option_d,
+                    correct_answer,
+                    created_at,
+                    course,
+                    unit
+                `)
+                .order(
+                    "id",
+                    {
+                        ascending: true
+                    }
+                )
+                .range(
+                    from,
+                    to
+                );
+
+            if (error) {
+
+                console.error(
+                    "❌ Quiz loading failed:",
+                    error
+                );
+
+                allQuizzes = [];
+
+                updateDashboardStatistics();
+
+                return;
+            }
+
+            /*
+             * No more rows available.
+             */
+            if (
+                !data ||
+                data.length === 0
+            ) {
+
+                break;
+            }
+
+            /*
+             * Add this batch to the complete
+             * quiz collection.
+             */
+            allQuizRows =
+                allQuizRows.concat(data);
+
+            console.log(
+                `📝 Quiz batch loaded: ${data.length} | ` +
+                `Total loaded: ${allQuizRows.length}`
             );
 
-            allQuizzes =
-                [];
+            /*
+             * If fewer than 1,000 rows were returned,
+             * this was the final batch.
+             */
+            if (
+                data.length < PAGE_SIZE
+            ) {
 
-            updateDashboardStatistics();
+                break;
+            }
 
-            return;
+            /*
+             * Move to the next batch.
+             */
+            from += PAGE_SIZE;
         }
 
+        /*
+         * Store the complete quiz collection
+         * globally for the dashboard.
+         */
         allQuizzes =
-            data || [];
+            allQuizRows;
 
         console.log(
-            "📝 Quiz questions loaded:",
+            "✅ ALL quiz questions loaded:",
             allQuizzes.length
         );
 
@@ -3893,8 +3959,7 @@ async function loadQuizzes() {
             error
         );
 
-        allQuizzes =
-            [];
+        allQuizzes = [];
 
         updateDashboardStatistics();
     }
