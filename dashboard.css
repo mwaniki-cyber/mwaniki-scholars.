@@ -4740,3 +4740,191 @@ box-sizing: border-box;
     }
 
 }
+/* =====================================================
+   STUDENT PROFILE PHOTO
+===================================================== */
+
+#headerProfileAvatar,
+#profileLargeAvatar {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    object-fit: cover;
+    object-position: center;
+}
+
+#headerProfileAvatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+}
+
+#profileLargeAvatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+}
+
+
+/* =====================================================
+   NOTIFICATION PANEL
+   JavaScript controls the actual open/closed state.
+===================================================== */
+
+#notificationPanel {
+    position: fixed;
+    top: 78px;
+    right: 20px;
+
+    width: min(420px, calc(100vw - 32px));
+    max-height: calc(100vh - 100px);
+
+    overflow: hidden;
+
+    z-index: 10000;
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    display: none;
+}
+
+
+#notificationPanel.active,
+#notificationPanel.open {
+    display: flex !important;
+
+    visibility: visible !important;
+    opacity: 1 !important;
+
+    pointer-events: auto !important;
+
+    z-index: 10000 !important;
+}
+
+
+#notificationPanel[aria-hidden="true"] {
+    pointer-events: none;
+}
+
+
+#notificationPanel[aria-hidden="false"] {
+    pointer-events: auto;
+}
+
+
+/* =====================================================
+   NOTIFICATION CONTENT
+===================================================== */
+
+#notificationContent {
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    max-height: calc(100vh - 190px);
+
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* =====================================================
+   NOTIFICATION BADGE
+===================================================== */
+
+#notificationBadge {
+    position: absolute;
+
+    top: -7px;
+    right: -8px;
+
+    min-width: 20px;
+    height: 20px;
+
+    padding: 0 5px;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 999px;
+
+    background: #d62828;
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    line-height: 1;
+
+    border: 2px solid #ffffff;
+
+    box-sizing: border-box;
+
+    z-index: 20;
+}
+
+
+.notification-icon-wrapper {
+    position: relative;
+}
+
+
+/* =====================================================
+   NOTIFICATION ITEMS
+===================================================== */
+
+.notification-item {
+    cursor: pointer;
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+.notification-item:hover {
+    transform: translateY(-1px);
+}
+
+
+.notification-item.unread {
+    font-weight: 500;
+}
+
+
+.notification-unread-dot {
+    width: 8px;
+    height: 8px;
+
+    flex: 0 0 8px;
+
+    border-radius: 50%;
+
+    background: #d62828;
+}
+
+
+/* =====================================================
+   MOBILE NOTIFICATION PANEL
+===================================================== */
+
+@media (max-width: 700px) {
+
+    #notificationPanel {
+        top: 70px;
+        right: 12px;
+        left: 12px;
+
+        width: auto;
+
+        max-height:
+            calc(100vh - 84px);
+    }
+
+    #notificationContent {
+        max-height:
+            calc(100vh - 165px);
+    }
+
+}
