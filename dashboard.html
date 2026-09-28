@@ -1,40 +1,42 @@
-
 <!DOCTYPE html>
+
 <html lang="en">
 
 <head>
 
-    <meta charset="UTF-8">
+```
+<meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <meta
-        name="description"
-        content="Mwaniki Scholars Medical Learning Platform student dashboard."
-    >
+<meta
+    name="description"
+    content="Mwaniki Scholars Medical Learning Platform student dashboard."
+>
 
-    <meta
-        name="theme-color"
-        content="#087f73"
-    >
+<meta
+    name="theme-color"
+    content="#087f73"
+>
 
-    <title>
-        Mwaniki Scholars | Student Dashboard
-    </title>
+<title>
+    Mwaniki Scholars | Student Dashboard
+</title>
 
-    <link
-        rel="icon"
-        type="image/svg+xml"
-        href="./favicon.svg"
-    >
+<link
+    rel="icon"
+    type="image/svg+xml"
+    href="./favicon.svg"
+>
 
-    <link
-        rel="stylesheet"
-        href="./dashboard.css"
-    >
+<link
+    rel="stylesheet"
+    href="./dashboard.css"
+>
+```
 
 </head>
 
@@ -46,178 +48,198 @@
 
 <header class="dashboard-header">
 
-    <div class="brand-area">
+```
+<div class="brand-area">
 
-        <div class="brand-icon">
-            MS
-        </div>
+    <div class="brand-icon">
+        MS
+    </div>
 
-        <div class="brand-text">
+    <div class="brand-text">
 
-            <strong>
-                Mwaniki Scholars
-            </strong>
+        <strong>
+            Mwaniki Scholars
+        </strong>
 
-            <span>
-                Medical Learning Platform
-            </span>
-
-        </div>
+        <span>
+            Medical Learning Platform
+        </span>
 
     </div>
 
+</div>
+
+
+<!-- =================================================
+     MAIN NAVIGATION
+================================================== -->
+
+<nav
+    class="main-navigation"
+    aria-label="Main navigation"
+>
+
+    <a
+        href="#overview"
+        class="nav-link active"
+        data-section="overview"
+    >
+        Overview
+    </a>
+
+
+    <a
+        href="#courses"
+        class="nav-link"
+        data-section="courses"
+    >
+        Courses
+    </a>
+
+
+    <a
+        href="#notes"
+        class="nav-link"
+        data-section="notes"
+    >
+        Notes
+    </a>
+
+
+    <a
+        href="#quizzes"
+        class="nav-link"
+        data-section="quizzes"
+    >
+        Quizzes
+    </a>
+
 
     <!-- =================================================
-         MAIN NAVIGATION
+         MWANIKI AI
+         -------------------------------------------------
+         THIS REMAINS SEPARATE FROM TURBO AI
     ================================================== -->
 
-    <nav
-        class="main-navigation"
-        aria-label="Main navigation"
+    <a
+        href="./aiTutor.html"
+        class="nav-link"
+    >
+        AI Tutor
+    </a>
+
+
+    <!-- =================================================
+         TURBO AI
+         -------------------------------------------------
+         COMPLETELY SEPARATE AI SYSTEM
+    ================================================== -->
+
+    <a
+        href="#turbo-ai"
+        class="nav-link"
+        data-section="turbo-ai"
+    >
+        Turbo AI
+    </a>
+
+
+    <!-- =================================================
+         MWANIKI COMMUNITY
+         -------------------------------------------------
+         SEPARATE COMMUNITY APPLICATION
+    ================================================== -->
+
+    <a
+        href="./community.html"
+        class="nav-link"
+    >
+        Community
+    </a>
+
+
+    <a
+        href="./studentTutor.html"
+        class="nav-link"
+    >
+        Book a Tutor
+    </a>
+
+
+    <a
+        href="./studentInbox.html"
+        class="nav-link"
+    >
+        Inbox
+    </a>
+
+</nav>
+
+
+<!-- =================================================
+     HEADER ACTIONS
+================================================== -->
+
+<div class="header-actions">
+
+    <button
+        type="button"
+        class="header-action"
+        id="notificationButton"
+        aria-label="Notifications"
+        aria-expanded="false"
     >
 
-        <a
-            href="#overview"
-            class="nav-link active"
-            data-section="overview"
+        <span
+            class="header-action-icon notification-icon-wrapper"
         >
-            Overview
-        </a>
 
-        <a
-            href="#courses"
-            class="nav-link"
-            data-section="courses"
-        >
-            Courses
-        </a>
-
-        <a
-            href="#notes"
-            class="nav-link"
-            data-section="notes"
-        >
-            Notes
-        </a>
-
-        <a
-            href="#quizzes"
-            class="nav-link"
-            data-section="quizzes"
-        >
-            Quizzes
-        </a>
-
-        <!--
-            IMPORTANT:
-            This is Mwaniki AI.
-            It remains completely separate from Turbo AI.
-        -->
-
-        <a
-            href="./aiTutor.html"
-            class="nav-link"
-        >
-            AI Tutor
-        </a>
-
-        <!--
-            Turbo AI has its own dashboard section.
-        -->
-
-        <a
-            href="#turbo-ai"
-            class="nav-link"
-            data-section="turbo-ai"
-        >
-            Turbo AI
-        </a>
-
-        <a
-            href="./studentTutor.html"
-            class="nav-link"
-        >
-            Book a Tutor
-        </a>
-
-        <a
-            href="./studentInbox.html"
-            class="nav-link"
-        >
-            Inbox
-        </a>
-
-    </nav>
-
-
-    <!-- =================================================
-         HEADER ACTIONS
-    ================================================== -->
-
-    <div class="header-actions">
-
-        <button
-            type="button"
-            class="header-action"
-            id="notificationButton"
-            aria-label="Notifications"
-            aria-expanded="false"
-        >
+            ●
 
             <span
-                class="header-action-icon notification-icon-wrapper"
-            >
+                id="notificationBadge"
+                class="notification-badge"
+                aria-hidden="true"
+                style="display:none;"
+            ></span>
 
-                ●
+        </span>
 
-                <!--
-                    NUMBER OF UNREAD NOTIFICATIONS
-                -->
+        <span class="header-action-text">
+            Notifications
+        </span>
 
-                <span
-                    id="notificationBadge"
-                    class="notification-badge"
-                    aria-hidden="true"
-                    style="display:none;"
-                ></span>
-
-            </span>
-
-            <span class="header-action-text">
-                Notifications
-            </span>
-
-        </button>
+    </button>
 
 
-        <button
-            type="button"
-            class="profile-button"
-            id="profileButton"
-            aria-label="Open student profile"
-            aria-expanded="false"
+    <button
+        type="button"
+        class="profile-button"
+        id="profileButton"
+        aria-label="Open student profile"
+        aria-expanded="false"
+    >
+
+        <img
+            class="profile-avatar"
+            id="headerProfileAvatar"
+            src=""
+            alt="Student profile photo"
         >
 
-            <img
-                class="profile-avatar"
-                id="headerProfileAvatar"
-                src=""
-                alt="Student profile photo"
-            >
+        <span
+            class="profile-button-name"
+            id="headerProfileName"
+        >
+            Student
+        </span>
 
-            <span
-                class="profile-button-name"
-                id="headerProfileName"
-            >
-                Student
-            </span>
+    </button>
 
-        </button>
-
-    </div>
+</div>
+```
 
 </header>
-
 
 <!-- =====================================================
      NOTIFICATION PANEL
@@ -229,65 +251,67 @@
     aria-hidden="true"
 >
 
-    <div class="side-panel-header">
+```
+<div class="side-panel-header">
 
-        <div class="side-panel-heading">
+    <div class="side-panel-heading">
 
-            <span class="panel-kicker">
-                Student centre
+        <span class="panel-kicker">
+            Student centre
+        </span>
+
+        <div class="notification-title-row">
+
+            <h2>
+                Notifications
+            </h2>
+
+            <span
+                class="notification-panel-count"
+                id="notificationPanelCount"
+                hidden
+            >
+                0
             </span>
 
-            <div class="notification-title-row">
-
-                <h2>
-                    Notifications
-                </h2>
-
-                <span
-                    class="notification-panel-count"
-                    id="notificationPanelCount"
-                    hidden
-                >
-                    0
-                </span>
-
-            </div>
-
         </div>
-
-        <button
-            type="button"
-            class="panel-close"
-            id="closeNotificationPanel"
-            aria-label="Close notifications"
-        >
-            ×
-        </button>
 
     </div>
 
 
-    <div
-        class="side-panel-content"
-        id="notificationContent"
+    <button
+        type="button"
+        class="panel-close"
+        id="closeNotificationPanel"
+        aria-label="Close notifications"
     >
+        ×
+    </button>
 
-        <div class="empty-panel">
+</div>
 
-            <strong>
-                You are all caught up.
-            </strong>
 
-            <span>
-                New learning updates will appear here.
-            </span>
+<div
+    class="side-panel-content"
+    id="notificationContent"
+>
 
-        </div>
+    <div class="empty-panel">
+
+        <strong>
+            You are all caught up.
+        </strong>
+
+        <span>
+            New learning updates will appear here.
+        </span>
 
     </div>
+
+</div>
+```
 
 </aside>
-
 
 <!-- =====================================================
      PROFILE PANEL
@@ -299,188 +323,192 @@
     aria-hidden="true"
 >
 
-    <div class="side-panel-header">
+```
+<div class="side-panel-header">
 
-        <div>
+    <div>
 
-            <span class="panel-kicker">
-                Student account
-            </span>
+        <span class="panel-kicker">
+            Student account
+        </span>
 
-            <h2>
-                My Profile
-            </h2>
-
-        </div>
-
-        <button
-            type="button"
-            class="panel-close"
-            id="closeProfilePanel"
-            aria-label="Close profile"
-        >
-            ×
-        </button>
+        <h2>
+            My Profile
+        </h2>
 
     </div>
 
 
-    <div class="profile-panel-content">
+    <button
+        type="button"
+        class="panel-close"
+        id="closeProfilePanel"
+        aria-label="Close profile"
+    >
+        ×
+    </button>
 
-        <img
-            class="profile-large-avatar"
-            id="profileLargeAvatar"
-            src=""
-            alt="Student profile photo"
+</div>
+
+
+<div class="profile-panel-content">
+
+    <img
+        class="profile-large-avatar"
+        id="profileLargeAvatar"
+        src=""
+        alt="Student profile photo"
+    >
+
+
+    <div class="profile-photo-control">
+
+        <label
+            for="profilePhotoInput"
+            class="profile-photo-button"
+        >
+            Change Photo
+        </label>
+
+
+        <input
+            type="file"
+            id="profilePhotoInput"
+            accept="image/*"
+            hidden
         >
 
 
-        <div class="profile-photo-control">
+        <span class="profile-photo-hint">
+            JPG, PNG or other image format.
+            Maximum 5 MB.
+        </span>
 
-            <label
-                for="profilePhotoInput"
-                class="profile-photo-button"
-            >
-                Change Photo
+    </div>
+
+
+    <div class="profile-form">
+
+        <div class="profile-field">
+
+            <label for="profileName">
+                Full Name
             </label>
 
             <input
-                type="file"
-                id="profilePhotoInput"
-                accept="image/*"
-                hidden
+                type="text"
+                id="profileName"
+                readonly
+                aria-readonly="true"
+                autocomplete="name"
             >
 
-            <span class="profile-photo-hint">
-                JPG, PNG or other image format.
-                Maximum 5 MB.
-            </span>
+        </div>
+
+
+        <div class="profile-field">
+
+            <label for="profileEmail">
+                Email Address
+            </label>
+
+            <input
+                type="email"
+                id="profileEmail"
+                readonly
+                aria-readonly="true"
+                autocomplete="email"
+            >
 
         </div>
 
 
-        <div class="profile-form">
+        <div class="profile-field">
 
-            <div class="profile-field">
+            <label for="profilePhone">
+                Phone Number
+            </label>
 
-                <label for="profileName">
-                    Full Name
-                </label>
-
-                <input
-                    type="text"
-                    id="profileName"
-                    readonly
-                    aria-readonly="true"
-                    autocomplete="name"
-                >
-
-            </div>
-
-
-            <div class="profile-field">
-
-                <label for="profileEmail">
-                    Email Address
-                </label>
-
-                <input
-                    type="email"
-                    id="profileEmail"
-                    readonly
-                    aria-readonly="true"
-                    autocomplete="email"
-                >
-
-            </div>
-
-
-            <div class="profile-field">
-
-                <label for="profilePhone">
-                    Phone Number
-                </label>
-
-                <input
-                    type="text"
-                    id="profilePhone"
-                    autocomplete="tel"
-                    placeholder="Enter phone number"
-                >
-
-            </div>
-
-
-            <div class="profile-field">
-
-                <label for="profileCourse">
-                    Course
-                </label>
-
-                <input
-                    type="text"
-                    id="profileCourse"
-                    autocomplete="organization-title"
-                    placeholder="Enter your course"
-                >
-
-            </div>
-
-
-            <div class="profile-field">
-
-                <label for="profileLevel">
-                    Level / Year
-                </label>
-
-                <input
-                    type="text"
-                    id="profileLevel"
-                    placeholder="Enter your level or year"
-                >
-
-            </div>
+            <input
+                type="text"
+                id="profilePhone"
+                autocomplete="tel"
+                placeholder="Enter phone number"
+            >
 
         </div>
 
 
-        <div
-            id="profileSaveStatus"
-            class="profile-save-status"
-            aria-live="polite"
-        ></div>
+        <div class="profile-field">
+
+            <label for="profileCourse">
+                Course
+            </label>
+
+            <input
+                type="text"
+                id="profileCourse"
+                autocomplete="organization-title"
+                placeholder="Enter your course"
+            >
+
+        </div>
 
 
-        <button
-            type="button"
-            class="profile-save-button"
-            id="saveProfileButton"
-        >
-            Save Profile
-        </button>
+        <div class="profile-field">
 
+            <label for="profileLevel">
+                Level / Year
+            </label>
 
-        <button
-            type="button"
-            class="profile-security-button"
-            id="changePasswordButton"
-        >
-            Change Password
-        </button>
+            <input
+                type="text"
+                id="profileLevel"
+                placeholder="Enter your level or year"
+            >
 
-
-        <button
-            type="button"
-            class="logout-button"
-            id="logoutButton"
-        >
-            Sign Out
-        </button>
+        </div>
 
     </div>
 
-</aside>
 
+    <div
+        id="profileSaveStatus"
+        class="profile-save-status"
+        aria-live="polite"
+    ></div>
+
+
+    <button
+        type="button"
+        class="profile-save-button"
+        id="saveProfileButton"
+    >
+        Save Profile
+    </button>
+
+
+    <button
+        type="button"
+        class="profile-security-button"
+        id="changePasswordButton"
+    >
+        Change Password
+    </button>
+
+
+    <button
+        type="button"
+        class="logout-button"
+        id="logoutButton"
+    >
+        Sign Out
+    </button>
+
+</div>
+```
+
+</aside>
 
 <!-- =====================================================
      MAIN DASHBOARD
@@ -488,560 +516,838 @@
 
 <main class="dashboard-main">
 
+```
+<!-- =================================================
+     WELCOME
+================================================== -->
 
-    <!-- =================================================
-         WELCOME
-    ================================================== -->
+<section
+    class="welcome-section"
+    id="overview"
+>
 
-    <section
-        class="welcome-section"
-        id="overview"
-    >
+    <div class="welcome-copy">
 
-        <div class="welcome-copy">
+        <span class="section-kicker">
+            Student Dashboard
+        </span>
+
+
+        <h1>
+            Welcome back,
+            <span id="welcomeName">
+                Student
+            </span>
+        </h1>
+
+
+        <p>
+            Continue your medical learning,
+            review your progress and explore
+            your courses.
+        </p>
+
+    </div>
+
+
+    <div class="welcome-date">
+
+        <span>
+            Today
+        </span>
+
+        <strong id="currentDate">
+            —
+        </strong>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     PROGRESS
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="progress"
+>
+
+    <div class="section-heading">
+
+        <div>
 
             <span class="section-kicker">
-                Student Dashboard
+                Learning overview
             </span>
 
-            <h1>
-                Welcome back,
-                <span id="welcomeName">
-                    Student
+            <h2>
+                Track your progress
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="progress-grid">
+
+        <article class="progress-card">
+
+            <div class="progress-card-top">
+
+                <span class="progress-label">
+                    Courses
                 </span>
-            </h1>
+
+                <span class="progress-value">
+
+                    <strong id="totalCourses">
+                        0
+                    </strong>
+
+                </span>
+
+            </div>
 
             <p>
-                Continue your medical learning,
-                review your progress and explore
-                your courses.
+                Courses available in the library
+            </p>
+
+        </article>
+
+
+        <article class="progress-card">
+
+            <div class="progress-card-top">
+
+                <span class="progress-label">
+                    Notes
+                </span>
+
+                <span class="progress-value">
+
+                    <strong id="totalNotes">
+                        0
+                    </strong>
+
+                </span>
+
+            </div>
+
+            <p>
+                Published learning resources
+            </p>
+
+        </article>
+
+
+        <article class="progress-card">
+
+            <div class="progress-card-top">
+
+                <span class="progress-label">
+                    Quizzes
+                </span>
+
+                <span class="progress-value">
+
+                    <strong id="totalQuizzes">
+                        0
+                    </strong>
+
+                </span>
+
+            </div>
+
+            <p>
+                Questions available for practice
+            </p>
+
+        </article>
+
+
+        <article
+            class="progress-card progress-card-wide"
+        >
+
+            <div class="progress-card-top">
+
+                <span class="progress-label">
+                    Learning progress
+                </span>
+
+                <span class="progress-value">
+
+                    <strong id="learningProgress">
+                        0%
+                    </strong>
+
+                </span>
+
+            </div>
+
+
+            <div class="progress-track">
+
+                <div
+                    class="progress-bar"
+                    id="learningProgressBar"
+                    style="width:0%;"
+                ></div>
+
+            </div>
+
+
+            <p>
+                Your quiz activity contributes
+                to this learning indicator.
+            </p>
+
+        </article>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     RECENT COURSE
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="recent-course"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-kicker">
+                Continue learning
+            </span>
+
+            <h2>
+                Recent course
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div
+        class="recent-course-card"
+        id="recentCourseCard"
+    >
+
+        <div class="recent-course-content">
+
+            <span class="course-label">
+                Continue
+            </span>
+
+            <h3 id="recentCourseTitle">
+                No recent course
+            </h3>
+
+            <p id="recentCourseDescription">
+                Choose a course from the
+                library to begin learning.
+            </p>
+
+            <button
+                type="button"
+                class="primary-button"
+                id="recentCourseButton"
+            >
+                Explore Courses
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     QUICK ACTIONS
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="quick-actions"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-kicker">
+                Shortcuts
+            </span>
+
+            <h2>
+                Quick actions
+            </h2>
+
+        </div>
+
+    </div>
+
+
+    <div class="quick-actions-grid">
+
+
+        <a
+            href="#courses"
+            class="quick-action"
+        >
+
+            <span class="quick-action-icon">
+                C
+            </span>
+
+            <span>
+
+                <strong>
+                    Browse Courses
+                </strong>
+
+                <small>
+                    Explore the medical course library
+                </small>
+
+            </span>
+
+        </a>
+
+
+        <a
+            href="#notes"
+            class="quick-action"
+        >
+
+            <span class="quick-action-icon">
+                N
+            </span>
+
+            <span>
+
+                <strong>
+                    Study Notes
+                </strong>
+
+                <small>
+                    Read published learning materials
+                </small>
+
+            </span>
+
+        </a>
+
+
+        <a
+            href="#quizzes"
+            class="quick-action"
+        >
+
+            <span class="quick-action-icon">
+                Q
+            </span>
+
+            <span>
+
+                <strong>
+                    Practice Quizzes
+                </strong>
+
+                <small>
+                    Test your medical knowledge
+                </small>
+
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             MWANIKI AI
+        ================================================== -->
+
+        <a
+            href="./aiTutor.html"
+            class="quick-action"
+        >
+
+            <span class="quick-action-icon">
+                AI
+            </span>
+
+            <span>
+
+                <strong>
+                    AI Tutor
+                </strong>
+
+                <small>
+                    Open Mwaniki AI
+                </small>
+
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             TURBO AI
+        ================================================== -->
+
+        <a
+            href="#turbo-ai"
+            class="quick-action"
+        >
+
+            <span class="quick-action-icon">
+                T
+            </span>
+
+            <span>
+
+                <strong>
+                    Turbo AI
+                </strong>
+
+                <small>
+                    Ask Turbo AI a medical question
+                </small>
+
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             MWANIKI COMMUNITY
+        ================================================== -->
+
+        <a
+            href="./community.html"
+            class="quick-action"
+        >
+
+            <span class="quick-action-icon">
+                💬
+            </span>
+
+            <span>
+
+                <strong>
+                    Mwaniki Community
+                </strong>
+
+                <small>
+                    Join discussions, study groups and
+                    course communities
+                </small>
+
+            </span>
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     RECOMMENDATIONS
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="recommendations"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-kicker">
+                Suggested for you
+            </span>
+
+            <h2>
+                Recommendations
+            </h2>
+
+            <p>
+                Courses selected from the
+                available Mwaniki Scholars library.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div
+        class="recommendations-grid"
+        id="recommendationsGrid"
+    >
+
+        <div class="loading-state">
+            Loading recommendations...
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     COURSE LIBRARY
+     SEARCH INCLUDED
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="courses"
+>
+
+    <div
+        class="section-heading section-heading-with-action"
+    >
+
+        <div>
+
+            <span class="section-kicker">
+                Medical library
+            </span>
+
+            <h2>
+                Course Library
+            </h2>
+
+            <p>
+                Search for a course or select
+                one to view its units, notes
+                and quizzes.
             </p>
 
         </div>
 
 
-        <div class="welcome-date">
+        <button
+            type="button"
+            class="secondary-button"
+            id="refreshCoursesButton"
+        >
+            Refresh
+        </button>
 
-            <span>
-                Today
-            </span>
+    </div>
 
-            <strong id="currentDate">
-                —
+
+    <!-- COURSE SEARCH -->
+
+    <div
+        class="course-search-panel"
+        id="courseSearchPanel"
+    >
+
+        <div class="course-search-heading">
+
+            <strong>
+                Find a course
             </strong>
 
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         PROGRESS
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="progress"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Learning overview
-                </span>
-
-                <h2>
-                    Track your progress
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <div class="progress-grid">
-
-            <article class="progress-card">
-
-                <div class="progress-card-top">
-
-                    <span class="progress-label">
-                        Courses
-                    </span>
-
-                    <span class="progress-value">
-
-                        <strong id="totalCourses">
-                            0
-                        </strong>
-
-                    </span>
-
-                </div>
-
-                <p>
-                    Courses available in the library
-                </p>
-
-            </article>
-
-
-            <article class="progress-card">
-
-                <div class="progress-card-top">
-
-                    <span class="progress-label">
-                        Notes
-                    </span>
-
-                    <span class="progress-value">
-
-                        <strong id="totalNotes">
-                            0
-                        </strong>
-
-                    </span>
-
-                </div>
-
-                <p>
-                    Published learning resources
-                </p>
-
-            </article>
-
-
-            <article class="progress-card">
-
-                <div class="progress-card-top">
-
-                    <span class="progress-label">
-                        Quizzes
-                    </span>
-
-                    <span class="progress-value">
-
-                        <strong id="totalQuizzes">
-                            0
-                        </strong>
-
-                    </span>
-
-                </div>
-
-                <p>
-                    Questions available for practice
-                </p>
-
-            </article>
-
-
-            <article
-                class="progress-card progress-card-wide"
-            >
-
-                <div class="progress-card-top">
-
-                    <span class="progress-label">
-                        Learning progress
-                    </span>
-
-                    <span class="progress-value">
-
-                        <strong id="learningProgress">
-                            0%
-                        </strong>
-
-                    </span>
-
-                </div>
-
-
-                <div class="progress-track">
-
-                    <div
-                        class="progress-bar"
-                        id="learningProgressBar"
-                        style="width:0%;"
-                    ></div>
-
-                </div>
-
-
-                <p>
-                    Your quiz activity contributes
-                    to this learning indicator.
-                </p>
-
-            </article>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         RECENT COURSE
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="recent-course"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Continue learning
-                </span>
-
-                <h2>
-                    Recent course
-                </h2>
-
-            </div>
+            <span>
+                Search by course name or description.
+            </span>
 
         </div>
 
 
         <div
-            class="recent-course-card"
-            id="recentCourseCard"
+            class="course-search-controls"
         >
 
-            <div class="recent-course-content">
-
-                <span class="course-label">
-                    Continue
-                </span>
-
-                <h3 id="recentCourseTitle">
-                    No recent course
-                </h3>
-
-                <p id="recentCourseDescription">
-                    Choose a course from the
-                    library to begin learning.
-                </p>
-
-                <button
-                    type="button"
-                    class="primary-button"
-                    id="recentCourseButton"
-                >
-                    Explore Courses
-                </button>
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         QUICK ACTIONS
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="quick-actions"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Shortcuts
-                </span>
-
-                <h2>
-                    Quick actions
-                </h2>
-
-            </div>
-
-        </div>
-
-
-        <div class="quick-actions-grid">
-
-            <a
-                href="#courses"
-                class="quick-action"
+            <label
+                for="courseSearch"
+                class="sr-only"
             >
-
-                <span class="quick-action-icon">
-                    C
-                </span>
-
-                <span>
-
-                    <strong>
-                        Browse Courses
-                    </strong>
-
-                    <small>
-                        Explore the medical course library
-                    </small>
-
-                </span>
-
-            </a>
+                Search courses
+            </label>
 
 
-            <a
-                href="#notes"
-                class="quick-action"
+            <input
+                type="search"
+                id="courseSearch"
+                class="course-search-input"
+                placeholder="Search courses..."
+                autocomplete="off"
+                aria-label="Search courses"
             >
-
-                <span class="quick-action-icon">
-                    N
-                </span>
-
-                <span>
-
-                    <strong>
-                        Study Notes
-                    </strong>
-
-                    <small>
-                        Read published learning materials
-                    </small>
-
-                </span>
-
-            </a>
-
-
-            <a
-                href="#quizzes"
-                class="quick-action"
-            >
-
-                <span class="quick-action-icon">
-                    Q
-                </span>
-
-                <span>
-
-                    <strong>
-                        Practice Quizzes
-                    </strong>
-
-                    <small>
-                        Test your medical knowledge
-                    </small>
-
-                </span>
-
-            </a>
-
-
-            <!-- Mwaniki AI -->
-            <a
-                href="./aiTutor.html"
-                class="quick-action"
-            >
-
-                <span class="quick-action-icon">
-                    AI
-                </span>
-
-                <span>
-
-                    <strong>
-                        AI Tutor
-                    </strong>
-
-                    <small>
-                        Open Mwaniki AI
-                    </small>
-
-                </span>
-
-            </a>
-
-
-            <!-- Turbo AI -->
-            <a
-                href="#turbo-ai"
-                class="quick-action"
-            >
-
-                <span class="quick-action-icon">
-                    T
-                </span>
-
-                <span>
-
-                    <strong>
-                        Turbo AI
-                    </strong>
-
-                    <small>
-                        Ask Turbo AI a medical question
-                    </small>
-
-                </span>
-
-            </a>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         RECOMMENDATIONS
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="recommendations"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Suggested for you
-                </span>
-
-                <h2>
-                    Recommendations
-                </h2>
-
-                <p>
-                    Courses selected from the
-                    available Mwaniki Scholars library.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="recommendations-grid"
-            id="recommendationsGrid"
-        >
-
-            <div class="loading-state">
-                Loading recommendations...
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         COURSE LIBRARY
-         SEARCH INCLUDED
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="courses"
-    >
-
-        <div
-            class="section-heading section-heading-with-action"
-        >
-
-            <div>
-
-                <span class="section-kicker">
-                    Medical library
-                </span>
-
-                <h2>
-                    Course Library
-                </h2>
-
-                <p>
-                    Search for a course or select
-                    one to view its units, notes
-                    and quizzes.
-                </p>
-
-            </div>
 
 
             <button
                 type="button"
-                class="secondary-button"
-                id="refreshCoursesButton"
+                id="searchCourseButton"
+                class="primary-button course-search-button"
             >
-                Refresh
+                Search Course
+            </button>
+
+
+            <button
+                type="button"
+                id="clearCourseSearchButton"
+                class="secondary-button course-clear-button"
+            >
+                Clear
             </button>
 
         </div>
 
 
-        <!-- =============================================
-             COURSE SEARCH
-        ============================================== -->
-
         <div
-            class="course-search-panel"
-            id="courseSearchPanel"
+            id="courseSearchStatus"
+            class="course-search-status"
+            aria-live="polite"
         >
+            Loading courses...
+        </div>
 
-            <div class="course-search-heading">
-
-                <strong>
-                    Find a course
-                </strong>
-
-                <span>
-                    Search by course name or description.
-                </span>
-
-            </div>
+    </div>
 
 
-            <div
-                class="course-search-controls"
+    <div
+        class="course-grid"
+        id="courseGrid"
+    >
+
+        <div class="loading-state">
+            Loading courses...
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     NOTES
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="notes"
+>
+
+    <div
+        class="section-heading section-heading-with-action"
+    >
+
+        <div>
+
+            <span class="section-kicker">
+                Study resources
+            </span>
+
+            <h2>
+                Notes Library
+            </h2>
+
+            <p>
+                Access notes published for students.
+            </p>
+
+        </div>
+
+
+        <button
+            type="button"
+            class="secondary-button"
+            id="refreshNotesButton"
+        >
+            Refresh
+        </button>
+
+    </div>
+
+
+    <div
+        class="notes-grid"
+        id="notesGrid"
+    >
+
+        <div class="loading-state">
+            Loading notes...
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     QUIZ CENTRE
+================================================== -->
+
+<section
+    class="dashboard-section"
+    id="quizzes"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-kicker">
+                Assessment
+            </span>
+
+            <h2>
+                Quiz Centre
+            </h2>
+
+            <p>
+                Practice questions from the
+                Mwaniki Scholars course library.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="quiz-centre-card">
+
+        <div>
+
+            <span class="course-label">
+                Practice
+            </span>
+
+            <h3>
+                Strengthen your medical knowledge
+            </h3>
+
+            <p>
+                Open a course, select a unit
+                and start its available quiz.
+            </p>
+
+        </div>
+
+
+        <a
+            href="#courses"
+            class="primary-button"
+        >
+            Choose a Course
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     TURBO AI
+     -------------------------------------------------
+     COMPLETELY SEPARATE FROM MWANIKI AI
+================================================== -->
+
+<section
+    class="dashboard-section turbo-ai-section"
+    id="turbo-ai"
+>
+
+    <div class="section-heading">
+
+        <div>
+
+            <span class="section-kicker">
+                Turbo AI
+            </span>
+
+            <h2>
+                Turbo AI Medical Assistant
+            </h2>
+
+            <p>
+                Ask Turbo AI questions while studying
+                your medical courses.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div
+        class="turbo-ai-card"
+        id="turboAISection"
+    >
+
+        <div class="turbo-ai-introduction">
+
+            <span class="course-label">
+                Separate AI System
+            </span>
+
+            <h3>
+                Ask Turbo AI
+            </h3>
+
+            <p>
+                Enter a medical learning question
+                and Turbo AI will process it through
+                the Turbo AI service.
+            </p>
+
+        </div>
+
+
+        <div class="turbo-ai-form">
+
+            <label
+                for="turboAIQuestion"
+                class="turbo-ai-label"
             >
+                Your medical question
+            </label>
 
-                <label
-                    for="courseSearch"
-                    class="sr-only"
-                >
-                    Search courses
-                </label>
 
-                <input
-                    type="search"
-                    id="courseSearch"
-                    class="course-search-input"
-                    placeholder="Search courses..."
-                    autocomplete="off"
-                    aria-label="Search courses"
-                >
+            <textarea
+                id="turboAIQuestion"
+                class="turbo-ai-question"
+                rows="5"
+                maxlength="2000"
+                placeholder="Example: Explain the cardiac cycle in simple terms."
+            ></textarea>
 
+
+            <div class="turbo-ai-form-actions">
 
                 <button
                     type="button"
-                    id="searchCourseButton"
-                    class="primary-button course-search-button"
+                    id="askTurboAIButton"
+                    class="primary-button"
                 >
-                    Search Course
+                    Ask Turbo AI
                 </button>
 
 
                 <button
                     type="button"
-                    id="clearCourseSearchButton"
-                    class="secondary-button course-clear-button"
+                    id="clearTurboAIButton"
+                    class="secondary-button"
                 >
                     Clear
                 </button>
@@ -1050,454 +1356,272 @@
 
 
             <div
-                id="courseSearchStatus"
-                class="course-search-status"
+                id="turboAIStatus"
+                class="turbo-ai-status"
+                aria-live="polite"
+            ></div>
+
+        </div>
+
+
+        <div class="turbo-ai-answer-wrapper">
+
+            <div class="turbo-ai-answer-heading">
+
+                <strong>
+                    Turbo AI Response
+                </strong>
+
+            </div>
+
+
+            <div
+                id="turboAIAnswer"
+                class="turbo-ai-answer"
                 aria-live="polite"
             >
-                Loading courses...
+                Ask Turbo AI a medical
+                learning question.
             </div>
 
         </div>
 
 
-        <div
-            class="course-grid"
-            id="courseGrid"
-        >
+        <div class="turbo-ai-history">
 
-            <div class="loading-state">
-                Loading courses...
-            </div>
+            <div class="turbo-ai-history-heading">
 
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         NOTES
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="notes"
-    >
-
-        <div
-            class="section-heading section-heading-with-action"
-        >
-
-            <div>
-
-                <span class="section-kicker">
-                    Study resources
-                </span>
-
-                <h2>
-                    Notes Library
-                </h2>
-
-                <p>
-                    Access notes published for students.
-                </p>
+                <strong>
+                    Recent Turbo AI Questions
+                </strong>
 
             </div>
 
 
-            <button
-                type="button"
-                class="secondary-button"
-                id="refreshNotesButton"
+            <div
+                id="turboAIRecentQuestions"
+                class="turbo-ai-recent-questions"
             >
-                Refresh
-            </button>
-
-        </div>
-
-
-        <div
-            class="notes-grid"
-            id="notesGrid"
-        >
-
-            <div class="loading-state">
-                Loading notes...
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         QUIZ CENTRE
-    ================================================== -->
-
-    <section
-        class="dashboard-section"
-        id="quizzes"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Assessment
-                </span>
-
-                <h2>
-                    Quiz Centre
-                </h2>
-
-                <p>
-                    Practice questions from the
-                    Mwaniki Scholars course library.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="quiz-centre-card">
-
-            <div>
-
-                <span class="course-label">
-                    Practice
-                </span>
-
-                <h3>
-                    Strengthen your medical knowledge
-                </h3>
-
-                <p>
-                    Open a course, select a unit
-                    and start its available quiz.
-                </p>
-
-            </div>
-
-
-            <a
-                href="#courses"
-                class="primary-button"
-            >
-                Choose a Course
-            </a>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         TURBO AI
-         -------------------------------------------------
-         COMPLETELY SEPARATE FROM MWANIKI AI
-    ================================================== -->
-
-    <section
-        class="dashboard-section turbo-ai-section"
-        id="turbo-ai"
-    >
-
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Turbo AI
-                </span>
-
-                <h2>
-                    Turbo AI Medical Assistant
-                </h2>
-
-                <p>
-                    Ask Turbo AI questions while studying
-                    your medical courses.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="turbo-ai-card"
-            id="turboAISection"
-        >
-
-            <div class="turbo-ai-introduction">
-
-                <span class="course-label">
-                    Separate AI System
-                </span>
-
-                <h3>
-                    Ask Turbo AI
-                </h3>
-
-                <p>
-                    Enter a medical learning question
-                    and Turbo AI will process it through
-                    the Turbo AI service.
-                </p>
-
-            </div>
-
-
-            <div class="turbo-ai-form">
-
-                <label
-                    for="turboAIQuestion"
-                    class="turbo-ai-label"
-                >
-                    Your medical question
-                </label>
-
-
-                <textarea
-                    id="turboAIQuestion"
-                    class="turbo-ai-question"
-                    rows="5"
-                    maxlength="2000"
-                    placeholder="Example: Explain the cardiac cycle in simple terms."
-                ></textarea>
-
-
-                <div class="turbo-ai-form-actions">
-
-                    <button
-                        type="button"
-                        id="askTurboAIButton"
-                        class="primary-button"
-                    >
-                        Ask Turbo AI
-                    </button>
-
-
-                    <button
-                        type="button"
-                        id="clearTurboAIButton"
-                        class="secondary-button"
-                    >
-                        Clear
-                    </button>
-
-                </div>
-
 
                 <div
-                    id="turboAIStatus"
-                    class="turbo-ai-status"
-                    aria-live="polite"
-                ></div>
-
-            </div>
-
-
-            <div class="turbo-ai-answer-wrapper">
-
-                <div class="turbo-ai-answer-heading">
-
-                    <strong>
-                        Turbo AI Response
-                    </strong>
-
-                </div>
-
-
-                <div
-                    id="turboAIAnswer"
-                    class="turbo-ai-answer"
-                    aria-live="polite"
+                    class="turbo-ai-empty-history"
                 >
-                    Ask Turbo AI a medical
-                    learning question.
-                </div>
-
-            </div>
-
-
-            <div class="turbo-ai-history">
-
-                <div class="turbo-ai-history-heading">
-
-                    <strong>
-                        Recent Turbo AI Questions
-                    </strong>
-
-                </div>
-
-
-                <div
-                    id="turboAIRecentQuestions"
-                    class="turbo-ai-recent-questions"
-                >
-
-                    <div
-                        class="turbo-ai-empty-history"
-                    >
-                        Your recent Turbo AI questions
-                        will appear here.
-                    </div>
-
+                    Your recent Turbo AI questions
+                    will appear here.
                 </div>
 
             </div>
 
         </div>
 
-    </section>
+    </div>
+
+</section>
 
 
-    <!-- =================================================
-         LEARNING SUPPORT
-    ================================================== -->
+<!-- =================================================
+     LEARNING SUPPORT
+================================================== -->
 
-    <section
-        class="dashboard-section"
-        id="learning-support"
-    >
+<section
+    class="dashboard-section"
+    id="learning-support"
+>
 
-        <div class="section-heading">
-
-            <div>
-
-                <span class="section-kicker">
-                    Academic support
-                </span>
-
-                <h2>
-                    Learning Support
-                </h2>
-
-                <p>
-                    Get additional help while studying.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div class="support-grid">
-
-
-            <!-- Mwaniki AI -->
-            <a
-                href="./aiTutor.html"
-                class="support-card"
-            >
-
-                <span class="support-card-title">
-                    AI Tutor
-                </span>
-
-                <span class="support-card-text">
-                    Use Mwaniki AI for explanations
-                    and medical learning questions.
-                </span>
-
-                <span class="support-card-link">
-                    Open AI Tutor
-                </span>
-
-            </a>
-
-
-            <!-- Human tutor -->
-            <a
-                href="./studentTutor.html"
-                class="support-card"
-            >
-
-                <span class="support-card-title">
-                    Book a Tutor
-                </span>
-
-                <span class="support-card-text">
-                    Connect with a human tutor
-                    for academic support.
-                </span>
-
-                <span class="support-card-link">
-                    Book a session
-                </span>
-
-            </a>
-
-
-            <!-- Inbox -->
-            <a
-                href="./studentInbox.html"
-                class="support-card"
-            >
-
-                <span class="support-card-title">
-                    Student Inbox
-                </span>
-
-                <span class="support-card-text">
-                    View messages and academic
-                    communication.
-                </span>
-
-                <span class="support-card-link">
-                    Open Inbox
-                </span>
-
-            </a>
-
-        </div>
-
-    </section>
-
-
-    <!-- =================================================
-         WHATSAPP
-    ================================================== -->
-
-    <section
-        class="whatsapp-section"
-        id="whatsapp"
-    >
+    <div class="section-heading">
 
         <div>
 
             <span class="section-kicker">
-                Stay connected
+                Academic support
             </span>
 
             <h2>
-                Mwaniki Scholars Updates
+                Learning Support
             </h2>
 
             <p>
-                Join the official Mwaniki Scholars
-                WhatsApp Channel for announcements,
-                learning updates and important notices.
+                Get additional help while studying.
             </p>
 
         </div>
 
+    </div>
+
+
+    <div class="support-grid">
+
+
+        <!-- =================================================
+             MWANIKI AI
+        ================================================== -->
 
         <a
-            href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="whatsapp-button"
+            href="./aiTutor.html"
+            class="support-card"
         >
-            Join WhatsApp Channel
+
+            <span class="support-card-title">
+                AI Tutor
+            </span>
+
+            <span class="support-card-text">
+                Use Mwaniki AI for explanations
+                and medical learning questions.
+            </span>
+
+            <span class="support-card-link">
+                Open AI Tutor
+            </span>
+
         </a>
 
-    </section>
+
+        <!-- =================================================
+             TURBO AI
+        ================================================== -->
+
+        <a
+            href="#turbo-ai"
+            class="support-card"
+        >
+
+            <span class="support-card-title">
+                Turbo AI
+            </span>
+
+            <span class="support-card-text">
+                Use the separate Turbo AI system
+                for medical learning questions.
+            </span>
+
+            <span class="support-card-link">
+                Open Turbo AI
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             MWANIKI COMMUNITY
+        ================================================== -->
+
+        <a
+            href="./community.html"
+            class="support-card"
+        >
+
+            <span class="support-card-title">
+                Mwaniki Community
+            </span>
+
+            <span class="support-card-text">
+                Connect with fellow students,
+                tutors and academic communities.
+            </span>
+
+            <span class="support-card-link">
+                Open Community
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             HUMAN TUTOR
+        ================================================== -->
+
+        <a
+            href="./studentTutor.html"
+            class="support-card"
+        >
+
+            <span class="support-card-title">
+                Book a Tutor
+            </span>
+
+            <span class="support-card-text">
+                Connect with a human tutor
+                for academic support.
+            </span>
+
+            <span class="support-card-link">
+                Book a session
+            </span>
+
+        </a>
+
+
+        <!-- =================================================
+             INBOX
+        ================================================== -->
+
+        <a
+            href="./studentInbox.html"
+            class="support-card"
+        >
+
+            <span class="support-card-title">
+                Student Inbox
+            </span>
+
+            <span class="support-card-text">
+                View messages and academic
+                communication.
+            </span>
+
+            <span class="support-card-link">
+                Open Inbox
+            </span>
+
+        </a>
+
+    </div>
+
+</section>
+
+
+<!-- =================================================
+     WHATSAPP
+================================================== -->
+
+<section
+    class="whatsapp-section"
+    id="whatsapp"
+>
+
+    <div>
+
+        <span class="section-kicker">
+            Stay connected
+        </span>
+
+        <h2>
+            Mwaniki Scholars Updates
+        </h2>
+
+        <p>
+            Join the official Mwaniki Scholars
+            WhatsApp Channel for announcements,
+            learning updates and important notices.
+        </p>
+
+    </div>
+
+
+    <a
+        href="https://whatsapp.com/channel/0029Vb89GsYHAdNehXiOP72l"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="whatsapp-button"
+    >
+        Join WhatsApp Channel
+    </a>
+
+</section>
+```
 
 </main>
-
 
 <!-- =====================================================
      FOOTER
@@ -1505,25 +1629,33 @@
 
 <footer class="dashboard-footer">
 
-    <div>
+```
+<div>
 
-        <strong>
-            Mwaniki Scholars
-        </strong>
-
-        <span>
-            Medical learning made accessible.
-        </span>
-
-    </div>
+    <strong>
+        Mwaniki Scholars
+    </strong>
 
     <span>
-        © 2026 Mwaniki Scholars
-        reach us on +254768016189
+        Medical learning made accessible.
     </span>
+
+</div>
+
+
+<span>
+    © 2026 Mwaniki Scholars
+    reach us on +254768016189
+</span>
+```
 
 </footer>
 
+<!-- =====================================================
+     DASHBOARD JAVASCRIPT
+     -----------------------------------------------------
+     Existing dashboard.js remains unchanged.
+====================================================== -->
 
 <script
     type="module"
@@ -1532,4 +1664,3 @@
 
 </body>
 </html>
-
