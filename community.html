@@ -24,14 +24,12 @@
         Mwaniki Community | Mwaniki Scholars
     </title>
 
-    <!-- Correct favicon -->
     <link
         rel="icon"
         type="image/svg+xml"
         href="./favicon.svg"
     >
 
-    <!-- Community stylesheet -->
     <link
         rel="stylesheet"
         href="./community.css"
@@ -42,19 +40,30 @@
 
 <body>
 
-<div class="community-app">
+<div
+    id="communityApp"
+    class="community-app"
+>
+
 
     <!-- =====================================================
-         COMMUNITY RAIL
+         LEFT COMMUNITY RAIL
          ===================================================== -->
 
-    <aside class="community-rail">
+    <aside
+        class="community-rail"
+        aria-label="Communities"
+    >
 
-        <div class="rail-logo">
+        <div class="rail-brand">
 
-            <div class="rail-logo-mark">
+            <div class="rail-logo">
                 MS
             </div>
+
+            <span class="rail-brand-label">
+                Mwaniki
+            </span>
 
         </div>
 
@@ -71,35 +80,51 @@
         </div>
 
 
-        <button
-            id="createCommunityButton"
-            class="rail-add-button"
-            type="button"
-            title="Create Community"
-        >
-            +
-        </button>
+        <div class="rail-bottom">
+
+            <button
+                id="createCommunityButton"
+                class="rail-action-button"
+                type="button"
+                title="Create Community"
+                aria-label="Create Community"
+            >
+                +
+            </button>
 
 
-        <div class="rail-divider"></div>
+            <div class="rail-divider"></div>
 
 
-        <a
-            href="./dashboard.html"
-            class="rail-home"
-            title="Back to Dashboard"
-        >
-            🏠
-        </a>
+            <a
+                href="./dashboard.html"
+                class="rail-action-button rail-home"
+                title="Back to Dashboard"
+                aria-label="Back to Dashboard"
+            >
+                <span>
+                    🏠
+                </span>
+            </a>
+
+        </div>
 
     </aside>
 
 
+
     <!-- =====================================================
-         CHANNEL SIDEBAR
+         CHANNEL DRAWER
          ===================================================== -->
 
-    <aside class="channel-sidebar">
+    <aside
+        id="channelSidebar"
+        class="channel-sidebar"
+        aria-label="Community channels"
+    >
+
+
+        <!-- Community identity -->
 
         <header class="community-header">
 
@@ -133,6 +158,7 @@
                 class="icon-button"
                 type="button"
                 title="Community options"
+                aria-label="Community options"
             >
                 ⋮
             </button>
@@ -140,21 +166,20 @@
         </header>
 
 
-        <!-- =================================================
-             COURSE CONTEXT
-             ================================================= -->
+
+        <!-- Course context -->
 
         <div
-            class="community-course-banner"
             id="communityCourseBanner"
+            class="community-course-banner"
         >
 
-            <span class="course-banner-icon">
+            <div class="course-banner-icon">
                 📚
-            </span>
+            </div>
 
 
-            <div>
+            <div class="course-banner-content">
 
                 <strong id="communityCourseName">
                     General Community
@@ -169,25 +194,32 @@
         </div>
 
 
-        <!-- =================================================
-             CHANNEL SEARCH
-             ================================================= -->
+
+        <!-- Channel search -->
 
         <div class="channel-search-wrapper">
 
-            <input
-                id="channelSearchInput"
-                type="search"
-                placeholder="Search channels..."
-                autocomplete="off"
-            >
+            <div class="search-field">
+
+                <span class="search-field-icon">
+                    🔎
+                </span>
+
+
+                <input
+                    id="channelSearchInput"
+                    type="search"
+                    placeholder="Find a channel..."
+                    autocomplete="off"
+                >
+
+            </div>
 
         </div>
 
 
-        <!-- =================================================
-             CHANNEL LIST
-             ================================================= -->
+
+        <!-- Channel navigation -->
 
         <div
             id="channelList"
@@ -201,11 +233,10 @@
         </div>
 
 
-        <!-- =================================================
-             CHANNEL FOOTER
-             ================================================= -->
 
-        <div class="channel-sidebar-footer">
+        <!-- Channel footer -->
+
+        <footer class="channel-sidebar-footer">
 
             <button
                 id="createChannelButton"
@@ -213,8 +244,8 @@
                 type="button"
             >
 
-                <span>
-                    ＋
+                <span class="create-channel-icon">
+                    +
                 </span>
 
                 <span>
@@ -223,58 +254,105 @@
 
             </button>
 
-        </div>
+        </footer>
 
     </aside>
 
 
+
     <!-- =====================================================
-         MAIN CHAT
+         MAIN WORKSPACE
          ===================================================== -->
 
     <main class="chat-main">
 
+
+        <!-- =================================================
+             CHAT HEADER
+             ================================================= -->
+
         <header class="chat-header">
 
-            <div class="chat-channel-title">
 
-                <div class="channel-title-icon">
-                    #
-                </div>
+            <div class="chat-header-left">
 
 
-                <div>
+                <!-- Mobile / drawer channel toggle -->
 
-                    <h2 id="activeChannelName">
-                        general
-                    </h2>
+                <button
+                    id="channelToggleButton"
+                    class="header-action-button channel-toggle-button"
+                    type="button"
+                    title="Channels"
+                    aria-label="Open channels"
+                >
+                    ☰
+                </button>
 
-                    <p id="activeChannelDescription">
-                        Welcome to the community.
-                    </p>
+
+                <div class="chat-channel-title">
+
+                    <div class="channel-title-icon">
+                        #
+                    </div>
+
+
+                    <div class="chat-channel-title-text">
+
+                        <div class="channel-name-row">
+
+                            <h2 id="activeChannelName">
+                                general
+                            </h2>
+
+                            <span
+                                id="activeRoleBadge"
+                                class="role-badge"
+                            >
+                                Student
+                            </span>
+
+                        </div>
+
+
+                        <p id="activeChannelDescription">
+                            Welcome to the community.
+                        </p>
+
+                    </div>
 
                 </div>
 
             </div>
 
 
+
+            <!-- Header actions -->
+
             <div class="chat-header-actions">
 
-                <div
-                    id="activeRoleBadge"
-                    class="role-badge"
+
+                <!-- Future voice/video area -->
+
+                <button
+                    id="voiceCallButton"
+                    class="header-action-button future-call-button"
+                    type="button"
+                    title="Voice"
+                    aria-label="Voice"
                 >
-                    Student
-                </div>
+                    🎧
+                </button>
 
 
                 <button
-                    id="memberToggleButton"
-                    class="header-action-button"
+                    id="videoCallButton"
+                    class="header-action-button future-call-button"
                     type="button"
-                    title="Members"
+                    title="Video"
+                    aria-label="Video"
                 >
-                    👥
+                    📹
                 </button>
 
 
@@ -283,13 +361,26 @@
                     class="header-action-button"
                     type="button"
                     title="Search messages"
+                    aria-label="Search messages"
                 >
                     🔎
+                </button>
+
+
+                <button
+                    id="memberToggleButton"
+                    class="header-action-button"
+                    type="button"
+                    title="Members"
+                    aria-label="Members"
+                >
+                    👥
                 </button>
 
             </div>
 
         </header>
+
 
 
         <!-- =================================================
@@ -301,27 +392,38 @@
             class="message-search-panel hidden"
         >
 
-            <input
-                id="messageSearchInput"
-                type="search"
-                placeholder="Search messages in this channel..."
-                autocomplete="off"
-            >
+            <div class="message-search-inner">
+
+                <span>
+                    🔎
+                </span>
 
 
-            <button
-                id="closeMessageSearchButton"
-                type="button"
-                title="Close search"
-            >
-                ✕
-            </button>
+                <input
+                    id="messageSearchInput"
+                    type="search"
+                    placeholder="Search messages in this channel..."
+                    autocomplete="off"
+                >
+
+
+                <button
+                    id="closeMessageSearchButton"
+                    type="button"
+                    title="Close search"
+                    aria-label="Close search"
+                >
+                    ✕
+                </button>
+
+            </div>
 
         </div>
 
 
+
         <!-- =================================================
-             MESSAGE LIST
+             CHAT CONTENT
              ================================================= -->
 
         <section
@@ -336,34 +438,67 @@
                     #
                 </div>
 
+
                 <h2>
                     Welcome to the channel
                 </h2>
 
+
                 <p>
-                    Select a channel to start learning
-                    and connecting with other
-                    Mwaniki Scholars students.
+                    Select a channel to start learning,
+                    discussing and connecting with
+                    other Mwaniki Scholars.
                 </p>
+
+
+                <div class="welcome-features">
+
+                    <div class="welcome-feature">
+                        <span>💬</span>
+                        <strong>Discuss</strong>
+                    </div>
+
+
+                    <div class="welcome-feature">
+                        <span>📚</span>
+                        <strong>Learn</strong>
+                    </div>
+
+
+                    <div class="welcome-feature">
+                        <span>👥</span>
+                        <strong>Collaborate</strong>
+                    </div>
+
+
+                    <div class="welcome-feature">
+                        <span>🎓</span>
+                        <strong>Study</strong>
+                    </div>
+
+                </div>
 
             </div>
 
         </section>
 
 
+
         <!-- =================================================
-             MESSAGE COMPOSER
+             REPLY PREVIEW
              ================================================= -->
 
-        <footer class="message-composer-area">
+        <div
+            id="replyPreview"
+            class="reply-preview hidden"
+        >
 
+            <div class="reply-preview-content">
 
-            <!-- Reply preview -->
+                <span class="reply-preview-icon">
+                    ↩
+                </span>
 
-            <div
-                id="replyPreview"
-                class="reply-preview hidden"
-            >
 
                 <div>
 
@@ -375,57 +510,89 @@
 
                 </div>
 
-
-                <button
-                    id="cancelReplyButton"
-                    type="button"
-                    title="Cancel reply"
-                >
-                    ✕
-                </button>
-
             </div>
 
 
-            <!-- Composer -->
+            <button
+                id="cancelReplyButton"
+                type="button"
+                title="Cancel reply"
+                aria-label="Cancel reply"
+            >
+                ✕
+            </button>
+
+        </div>
+
+
+
+        <!-- =================================================
+             MESSAGE COMPOSER
+             ================================================= -->
+
+        <footer class="message-composer-area">
+
 
             <form
                 id="messageForm"
                 class="message-composer"
             >
 
+
                 <button
                     id="attachmentButton"
                     class="composer-button"
                     type="button"
-                    title="Attachments"
+                    title="Add attachment"
+                    aria-label="Add attachment"
                 >
-                    ＋
+                    +
                 </button>
 
 
-                <textarea
-                    id="messageInput"
-                    rows="1"
-                    placeholder="Message #general"
-                    maxlength="5000"
-                    autocomplete="off"
-                ></textarea>
+                <div class="composer-input-wrap">
+
+                    <textarea
+                        id="messageInput"
+                        rows="1"
+                        placeholder="Message #general"
+                        maxlength="5000"
+                        autocomplete="off"
+                    ></textarea>
+
+
+                    <div class="composer-tools">
+
+                        <span class="composer-character-count">
+                            5000 max
+                        </span>
+
+                    </div>
+
+                </div>
 
 
                 <button
                     id="sendMessageButton"
                     class="send-button"
                     type="submit"
+                    title="Send message"
+                    aria-label="Send message"
                 >
-                    Send
+                    <span>
+                        ➤
+                    </span>
                 </button>
 
             </form>
 
 
             <div class="composer-hint">
-                Be respectful, helpful and professional.
+
+                <span>
+                    Respectful discussion • Medical learning • Student collaboration
+                </span>
+
             </div>
 
         </footer>
@@ -433,13 +600,15 @@
     </main>
 
 
+
     <!-- =====================================================
-         MEMBER SIDEBAR
+         MEMBER DRAWER
          ===================================================== -->
 
     <aside
         id="memberSidebar"
         class="member-sidebar"
+        aria-label="Community members"
     >
 
         <header class="member-sidebar-header">
@@ -462,6 +631,7 @@
                 class="icon-button"
                 type="button"
                 title="Close members"
+                aria-label="Close members"
             >
                 ✕
             </button>
@@ -469,16 +639,27 @@
         </header>
 
 
+
         <div class="member-search">
 
-            <input
-                id="memberSearchInput"
-                type="search"
-                placeholder="Search members..."
-                autocomplete="off"
-            >
+            <div class="search-field">
+
+                <span class="search-field-icon">
+                    🔎
+                </span>
+
+
+                <input
+                    id="memberSearchInput"
+                    type="search"
+                    placeholder="Find a member..."
+                    autocomplete="off"
+                >
+
+            </div>
 
         </div>
+
 
 
         <div
@@ -497,6 +678,18 @@
 </div>
 
 
+
+<!-- =========================================================
+     MOBILE OVERLAY
+     ========================================================= -->
+
+<div
+    id="communityDrawerOverlay"
+    class="community-drawer-overlay hidden"
+></div>
+
+
+
 <!-- =========================================================
      CREATE COMMUNITY MODAL
      ========================================================= -->
@@ -506,18 +699,29 @@
     class="modal-overlay hidden"
 >
 
-    <div class="modal-card">
+    <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="communityModalTitle"
+    >
 
         <header class="modal-header">
 
             <div>
 
-                <h2>
+                <span class="modal-eyebrow">
+                    COMMUNITY
+                </span>
+
+
+                <h2 id="communityModalTitle">
                     Create Community
                 </h2>
 
+
                 <p>
-                    Create a new learning community.
+                    Build a dedicated learning space for students.
                 </p>
 
             </div>
@@ -527,6 +731,7 @@
                 id="closeCommunityModalButton"
                 class="modal-close"
                 type="button"
+                aria-label="Close"
             >
                 ✕
             </button>
@@ -536,9 +741,13 @@
 
         <form id="communityForm">
 
+
             <label>
 
-                Community Name
+                <span>
+                    Community Name
+                </span>
+
 
                 <input
                     id="communityNameInput"
@@ -551,9 +760,13 @@
             </label>
 
 
+
             <label>
 
-                Description
+                <span>
+                    Description
+                </span>
+
 
                 <textarea
                     id="communityDescriptionInput"
@@ -565,9 +778,13 @@
             </label>
 
 
+
             <label>
 
-                Link to Course
+                <span>
+                    Link to Course
+                </span>
+
 
                 <select id="communityCourseSelect">
 
@@ -580,9 +797,13 @@
             </label>
 
 
+
             <label>
 
-                Community Icon
+                <span>
+                    Community Icon
+                </span>
+
 
                 <input
                     id="communityIconInput"
@@ -594,10 +815,12 @@
             </label>
 
 
+
             <div
                 id="communityFormMessage"
                 class="form-message"
             ></div>
+
 
 
             <div class="modal-actions">
@@ -627,6 +850,7 @@
 </div>
 
 
+
 <!-- =========================================================
      CREATE CHANNEL MODAL
      ========================================================= -->
@@ -636,18 +860,29 @@
     class="modal-overlay hidden"
 >
 
-    <div class="modal-card">
+    <div
+        class="modal-card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="channelModalTitle"
+    >
 
         <header class="modal-header">
 
             <div>
 
-                <h2>
+                <span class="modal-eyebrow">
+                    CHANNEL
+                </span>
+
+
+                <h2 id="channelModalTitle">
                     Create Channel
                 </h2>
 
+
                 <p>
-                    Add a discussion space to this community.
+                    Add a focused discussion space.
                 </p>
 
             </div>
@@ -657,6 +892,7 @@
                 id="closeChannelModalButton"
                 class="modal-close"
                 type="button"
+                aria-label="Close"
             >
                 ✕
             </button>
@@ -666,9 +902,13 @@
 
         <form id="channelForm">
 
+
             <label>
 
-                Channel Name
+                <span>
+                    Channel Name
+                </span>
+
 
                 <input
                     id="channelNameInput"
@@ -681,9 +921,13 @@
             </label>
 
 
+
             <label>
 
-                Description
+                <span>
+                    Description
+                </span>
+
 
                 <input
                     id="channelDescriptionInput"
@@ -695,9 +939,13 @@
             </label>
 
 
+
             <label>
 
-                Category
+                <span>
+                    Category
+                </span>
+
 
                 <input
                     id="channelCategoryInput"
@@ -709,9 +957,13 @@
             </label>
 
 
+
             <label>
 
-                Channel Visibility
+                <span>
+                    Channel Visibility
+                </span>
+
 
                 <select id="channelVisibilitySelect">
 
@@ -728,9 +980,13 @@
             </label>
 
 
+
             <label>
 
-                Course Discussion
+                <span>
+                    Course Discussion
+                </span>
+
 
                 <select id="channelCourseSelect">
 
@@ -743,10 +999,12 @@
             </label>
 
 
+
             <div
                 id="channelFormMessage"
                 class="form-message"
             ></div>
+
 
 
             <div class="modal-actions">
@@ -774,6 +1032,7 @@
     </div>
 
 </div>
+
 
 
 <!-- =========================================================
@@ -811,22 +1070,22 @@
 </div>
 
 
+
 <!-- =========================================================
-     TOAST
+     COMMUNITY TOAST
      ========================================================= -->
 
 <div
     id="communityToast"
     class="community-toast"
+    role="status"
+    aria-live="polite"
 ></div>
+
 
 
 <!-- =========================================================
      COMMUNITY ENGINE
-     
-     IMPORTANT:
-     community.js is an ES module because it imports
-     supabase.js.
      ========================================================= -->
 
 <script
