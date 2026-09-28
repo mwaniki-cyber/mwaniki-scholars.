@@ -1,3878 +1,4649 @@
-/* ============================================================
-   MWANIKI SCHOLARS
-   COMMUNITY — PHASE 2 ENGINE
-   Discord-style academic community
-============================================================ */
+/* =========================================================
+   MWANIKI COMMUNITY
+   PHASE 3
+   COMMUNITIES + COURSE COMMUNITIES + CHANNELS + PERMISSIONS
+========================================================= */
 
 "use strict";
 
-console.log("🚀 Mwaniki Community Phase 2 engine loaded.");
+console.log("🚀 Mwaniki Community Phase 3 loaded");
 
-/* ============================================================
+
+/* =========================================================
    SUPABASE
-============================================================ */
+========================================================= */
 
 const communitySupabase =
-  window.supabaseClient ||
-  window.supabase ||
-  null;
+    window.supabaseClient ||
+    window.supabase ||
+    null;
 
 if (!communitySupabase) {
-  console.error("❌ Supabase client was not found.");
+    console.error(
+        "❌ Supabase client was not found. Check supabase.js."
+    );
 }
 
 
-/* ============================================================
+/* =========================================================
    STATE
-============================================================ */
+========================================================= */
 
-const CommunityState = {
+const communityState = {
 
-  user: null,
+    user: null,
 
-  student: null,
+    profile: null,
 
-  communities: [],
+    communities: [],
 
-  channels: [],
+    courses: [],
 
-  members: [],
+    channels: [],
 
-  messages: [],
+    members: [],
 
-  notifications: [],
+    presence: {},
 
-  presence: [],
+    messages: [],
 
-  activeCommunityId: null,
+    reactions: [],
 
-  activeChannelId: null,
+    activeCommunity: null,
 
-  activeMessageId: null,
+    activeChannel: null,
 
-  replyingTo: null,
+    activeRole: "student",
 
-  searchTerm: "",
+    activeReplyMessage: null,
 
-  selectedAttachments: [],
+    subscriptions: [],
 
-  realtimeChannels: [],
+    channelSubscription: null,
 
-  initialized: false
+    presenceSubscription: null,
+
+    messageSearchTerm: "",
+
+    memberSearchTerm: "",
+
+    channelSearchTerm: ""
 
 };
 
 
-/* ============================================================
-   DOM HELPER
-============================================================ */
+/* =========================================================
+   ROLE HIERARCHY
+========================================================= */
 
-function $(id) {
-  return document.getElementById(id);
+const ROLE_LEVELS = {
+    student: 10,
+    tutor: 20,
+    moderator: 30,
+    admin: 40,
+    "super-admin": 50,
+    super_admin: 50
+};
+
+
+/* =========================================================
+   DOM
+========================================================= */
+
+const $ = (selector) =>
+    document.querySelector(selector);
+
+const $$ = (selector) =>
+    Array.from(document.querySelectorAll(selector));
+
+
+/* =========================================================
+   UTILITY
+========================================================= */
+
+function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
 }
 
 
-/* ============================================================
-   SAFE TEXT
-============================================================ */
+function normalizeRole(role) {
 
-function escapeHtml(value) {
+    const value =
+        String(role || "student")
+            .trim()
+            .toLowerCase()
+            .replaceAll("_", "-")
+            .replaceAll(" ", "-");
 
-  if (value === null || value === undefined) {
-    return "";
-  }
+    if (value === "superadmin") {
+        return "super-admin";
+    }
 
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    if (
+        [
+            "student",
+            "tutor",
+            "moderator",
+            "admin",
+            "super-admin"
+        ].includes(value)
+    ) {
+        return value;
+    }
+
+    return "student";
 }
 
 
-/* ============================================================
-   INITIALS
-============================================================ */
+function roleLevel(role) {
+    return ROLE_LEVELS[normalizeRole(role)] || 10;
+}
+
+
+function canManageCommunity() {
+
+    return roleLevel(
+        communityState.activeRole
+    ) >= ROLE_LEVELS.admin;
+}
+
+
+function canCreateCommunity() {
+
+    return roleLevel(
+        communityState.activeRole
+    ) >= ROLE_LEVELS.admin;
+}
+
+
+function canCreateChannel() {
+
+    return roleLevel(
+        communityState.activeRole
+    ) >= ROLE_LEVELS.moderator;
+}
+
+
+function canModerateMessages() {
+
+    return roleLevel(
+        communityState.activeRole
+    ) >= ROLE_LEVELS.moderator;
+}
+
+
+function canSendMessages() {
+
+    if (!communityState.activeChannel) {
+        return false;
+    }
+
+    return true;
+}
+
 
 function getInitials(name) {
 
-  const value =
-    String(name || "Student")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
+    const clean =
+        String(name || "Student").trim();
 
-  if (!value.length) {
-    return "S";
-  }
-
-  if (value.length === 1) {
-    return value[0].substring(0, 2).toUpperCase();
-  }
-
-  return (
-    value[0][0] +
-    value[value.length - 1][0]
-  ).toUpperCase();
-}
-
-
-/* ============================================================
-   DATE
-============================================================ */
-
-function formatMessageTime(dateValue) {
-
-  if (!dateValue) {
-    return "";
-  }
-
-  const date = new Date(dateValue);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  return date.toLocaleString([], {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-
-
-/* ============================================================
-   TOAST
-============================================================ */
-
-let toastTimer = null;
-
-function showToast(message, type = "success") {
-
-  const toast = $("communityToast");
-
-  if (!toast) {
-    return;
-  }
-
-  toast.textContent = message;
-
-  toast.className =
-    `community-toast ${type}`;
-
-  clearTimeout(toastTimer);
-
-  toastTimer = setTimeout(() => {
-    toast.classList.add("hidden");
-  }, 3200);
-}
-
-
-/* ============================================================
-   AUTH
-============================================================ */
-
-async function getCurrentUser() {
-
-  if (!communitySupabase) {
-    return null;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase.auth.getUser();
-
-    if (error) {
-      console.error(
-        "❌ Community auth error:",
-        error
-      );
-
-      return null;
+    if (!clean) {
+        return "S";
     }
 
-    CommunityState.user =
-      data?.user || null;
+    const parts =
+        clean.split(/\s+/).filter(Boolean);
 
-    return CommunityState.user;
-
-  } catch (error) {
-
-    console.error(
-      "❌ Unable to retrieve user:",
-      error
-    );
-
-    return null;
-  }
-}
-
-
-/* ============================================================
-   STUDENT PROFILE
-============================================================ */
-
-async function loadStudentProfile() {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("students")
-      .select("*")
-      .eq("id", CommunityState.user.id)
-      .maybeSingle();
-
-    if (error) {
-      console.warn(
-        "⚠️ Student profile could not be loaded:",
-        error.message
-      );
-
-      return;
+    if (parts.length === 1) {
+        return parts[0]
+            .substring(0, 2)
+            .toUpperCase();
     }
 
-    CommunityState.student = data || null;
-
-    renderCurrentUser();
-
-  } catch (error) {
-
-    console.error(
-      "❌ Profile error:",
-      error
-    );
-  }
+    return (
+        parts[0][0] +
+        parts[parts.length - 1][0]
+    ).toUpperCase();
 }
 
 
-/* ============================================================
-   CURRENT USER
-============================================================ */
+function formatTime(dateValue) {
 
-function renderCurrentUser() {
-
-  const user =
-    CommunityState.user;
-
-  const student =
-    CommunityState.student;
-
-  const name =
-    student?.full_name ||
-    student?.name ||
-    user?.user_metadata?.full_name ||
-    user?.user_metadata?.name ||
-    user?.email?.split("@")[0] ||
-    "Student";
-
-  const photo =
-    student?.photo_url ||
-    user?.user_metadata?.avatar_url ||
-    "";
-
-  if ($("sidebarUserName")) {
-    $("sidebarUserName").textContent =
-      name;
-  }
-
-  if ($("sidebarUserInitial")) {
-    $("sidebarUserInitial").textContent =
-      getInitials(name);
-  }
-
-  if ($("sidebarUserAvatar")) {
-
-    if (photo) {
-
-      $("sidebarUserAvatar").src =
-        photo;
-
-      $("sidebarUserAvatar").style.display =
-        "block";
-
-      if ($("sidebarUserInitial")) {
-        $("sidebarUserInitial").style.display =
-          "none";
-      }
-
-    } else {
-
-      $("sidebarUserAvatar").removeAttribute("src");
-
-      $("sidebarUserAvatar").style.display =
-        "none";
-
-      if ($("sidebarUserInitial")) {
-        $("sidebarUserInitial").style.display =
-          "flex";
-      }
+    if (!dateValue) {
+        return "";
     }
-  }
-}
-
-
-/* ============================================================
-   LOAD COMMUNITIES
-============================================================ */
-
-async function loadCommunities() {
-
-  const list =
-    $("communityList");
-
-  if (list) {
-    list.innerHTML =
-      `<div class="sidebar-loading">Loading communities...</div>`;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_communities")
-      .select("*")
-      .order("created_at", {
-        ascending: true
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    CommunityState.communities =
-      data || [];
-
-    renderCommunities();
-
-    if (!CommunityState.activeCommunityId &&
-        CommunityState.communities.length) {
-
-      await selectCommunity(
-        CommunityState.communities[0].id
-      );
-
-    } else if (
-      CommunityState.activeCommunityId
-    ) {
-
-      await selectCommunity(
-        CommunityState.activeCommunityId,
-        false
-      );
-    }
-
-  } catch (error) {
-
-    console.error(
-      "❌ Communities failed:",
-      error
-    );
-
-    if (list) {
-      list.innerHTML =
-        `<div class="sidebar-loading">Unable to load communities.</div>`;
-    }
-
-    showToast(
-      "Unable to load communities.",
-      "error"
-    );
-  }
-}
-
-
-/* ============================================================
-   RENDER COMMUNITIES
-============================================================ */
-
-function renderCommunities() {
-
-  const list =
-    $("communityList");
-
-  if (!list) {
-    return;
-  }
-
-  if (!CommunityState.communities.length) {
-
-    list.innerHTML =
-      `<div class="sidebar-loading">No communities available.</div>`;
-
-    return;
-  }
-
-  list.innerHTML =
-    CommunityState.communities
-      .map(community => {
-
-        const active =
-          String(community.id) ===
-          String(CommunityState.activeCommunityId);
-
-        return `
-          <button
-            class="community-item ${active ? "active" : ""}"
-            type="button"
-            data-community-id="${escapeHtml(community.id)}"
-          >
-
-            <span class="community-item-icon">
-              ${escapeHtml(
-                getInitials(
-                  community.name ||
-                  community.title ||
-                  "MC"
-                )
-              )}
-            </span>
-
-            <span class="community-item-content">
-
-              <span class="community-item-name">
-                ${escapeHtml(
-                  community.name ||
-                  community.title ||
-                  "Community"
-                )}
-              </span>
-
-              <span class="community-item-description">
-                ${escapeHtml(
-                  community.description ||
-                  "Mwaniki Scholars Community"
-                )}
-              </span>
-
-            </span>
-
-          </button>
-        `;
-      })
-      .join("");
-
-  list
-    .querySelectorAll("[data-community-id]")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          selectCommunity(
-            button.dataset.communityId
-          );
-
-        }
-      );
-
-    });
-}
-
-
-/* ============================================================
-   SELECT COMMUNITY
-============================================================ */
-
-async function selectCommunity(
-  communityId,
-  reload = true
-) {
-
-  CommunityState.activeCommunityId =
-    communityId;
-
-  renderCommunities();
-
-  await loadChannels(
-    communityId
-  );
-
-  if (reload) {
-    closeMobileSidebar();
-  }
-}
-
-
-/* ============================================================
-   LOAD CHANNELS
-============================================================ */
-
-async function loadChannels(
-  communityId
-) {
-
-  const list =
-    $("channelList");
-
-  if (list) {
-    list.innerHTML =
-      `<div class="sidebar-loading">Loading channels...</div>`;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_channels")
-      .select("*")
-      .eq("community_id", communityId)
-      .order("created_at", {
-        ascending: true
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    CommunityState.channels =
-      data || [];
-
-    renderChannels();
-
-    if (!CommunityState.activeChannelId ||
-        !CommunityState.channels.some(
-          channel =>
-            String(channel.id) ===
-            String(CommunityState.activeChannelId)
-        )) {
-
-      if (CommunityState.channels.length) {
-
-        await selectChannel(
-          CommunityState.channels[0].id
-        );
-
-      } else {
-
-        clearChannel();
-      }
-
-    } else {
-
-      await selectChannel(
-        CommunityState.activeChannelId,
-        false
-      );
-    }
-
-  } catch (error) {
-
-    console.error(
-      "❌ Channels failed:",
-      error
-    );
-
-    if (list) {
-      list.innerHTML =
-        `<div class="sidebar-loading">Unable to load channels.</div>`;
-    }
-
-    showToast(
-      "Unable to load channels.",
-      "error"
-    );
-  }
-}
-
-
-/* ============================================================
-   RENDER CHANNELS
-============================================================ */
-
-function renderChannels() {
-
-  const list =
-    $("channelList");
-
-  if (!list) {
-    return;
-  }
-
-  if (!CommunityState.channels.length) {
-
-    list.innerHTML =
-      `<div class="sidebar-loading">No channels yet.</div>`;
-
-    return;
-  }
-
-  const categories = {};
-
-  CommunityState.channels.forEach(channel => {
-
-    const category =
-      channel.category ||
-      "Channels";
-
-    if (!categories[category]) {
-      categories[category] = [];
-    }
-
-    categories[category].push(channel);
-  });
-
-  list.innerHTML =
-    Object.entries(categories)
-      .map(([category, channels]) => {
-
-        return `
-          <div class="channel-category">
-            ${escapeHtml(category)}
-          </div>
-
-          ${channels
-            .map(channel => {
-
-              const active =
-                String(channel.id) ===
-                String(CommunityState.activeChannelId);
-
-              const channelName =
-                channel.name ||
-                channel.title ||
-                "channel";
-
-              return `
-                <button
-                  class="channel-item ${active ? "active" : ""}"
-                  type="button"
-                  data-channel-id="${escapeHtml(channel.id)}"
-                >
-
-                  <span class="channel-symbol">
-                    ${channel.is_private ? "🔒" : "#"}
-                  </span>
-
-                  <span class="channel-name">
-                    ${escapeHtml(channelName)}
-                  </span>
-
-                </button>
-              `;
-
-            })
-            .join("")}
-        `;
-
-      })
-      .join("");
-
-  list
-    .querySelectorAll("[data-channel-id]")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          selectChannel(
-            button.dataset.channelId
-          );
-
-        }
-      );
-
-    });
-}
-
-
-/* ============================================================
-   SELECT CHANNEL
-============================================================ */
-
-async function selectChannel(
-  channelId,
-  reload = true
-) {
-
-  CommunityState.activeChannelId =
-    channelId;
-
-  const channel =
-    CommunityState.channels.find(
-      item =>
-        String(item.id) ===
-        String(channelId)
-    );
-
-  renderChannels();
-
-  if (!channel) {
-    return;
-  }
-
-  const channelName =
-    channel.name ||
-    channel.title ||
-    "channel";
-
-  if ($("activeChannelName")) {
-    $("activeChannelName").textContent =
-      channelName;
-  }
-
-  if ($("welcomeChannelName")) {
-    $("welcomeChannelName").textContent =
-      `Welcome to #${channelName}`;
-  }
-
-  if ($("activeChannelDescription")) {
-    $("activeChannelDescription").textContent =
-      channel.description ||
-      "Join the discussion and learn together.";
-  }
-
-  if ($("welcomeChannelDescription")) {
-    $("welcomeChannelDescription").textContent =
-      channel.description ||
-      "Join the discussion and learn together.";
-  }
-
-  if ($("channelPrivateBadge")) {
-
-    $("channelPrivateBadge")
-      .classList.toggle(
-        "hidden",
-        !channel.is_private
-      );
-  }
-
-  if ($("messageInput")) {
-
-    $("messageInput").placeholder =
-      `Message #${channelName}`;
-  }
-
-  CommunityState.messages = [];
-
-  await loadMessages(channelId);
-
-  await loadMembers();
-
-  await loadReadStatus();
-
-  subscribeToChannel(channelId);
-
-  if (reload) {
-    closeMobileSidebar();
-  }
-}
-
-
-/* ============================================================
-   CLEAR CHANNEL
-============================================================ */
-
-function clearChannel() {
-
-  CommunityState.activeChannelId =
-    null;
-
-  if ($("activeChannelName")) {
-    $("activeChannelName").textContent =
-      "Select a channel";
-  }
-
-  if ($("activeChannelDescription")) {
-    $("activeChannelDescription").textContent =
-      "Welcome to Mwaniki Community.";
-  }
-
-  if ($("messageList")) {
-    $("messageList").innerHTML = "";
-  }
-
-  if ($("channelWelcome")) {
-    $("channelWelcome").classList.remove("hidden");
-  }
-}
-
-
-/* ============================================================
-   LOAD MESSAGES
-============================================================ */
-
-async function loadMessages(
-  channelId
-) {
-
-  const messageList =
-    $("messageList");
-
-  if (!messageList) {
-    return;
-  }
-
-  messageList.innerHTML =
-    `<div class="empty-state">Loading messages...</div>`;
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_messages")
-      .select("*")
-      .eq("channel_id", channelId)
-      .order("created_at", {
-        ascending: true
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    CommunityState.messages =
-      data || [];
-
-    await enrichMessageUsers();
-
-    renderMessages();
-
-  } catch (error) {
-
-    console.error(
-      "❌ Messages failed:",
-      error
-    );
-
-    messageList.innerHTML =
-      `<div class="empty-state">Unable to load messages.</div>`;
-  }
-}
-
-
-/* ============================================================
-   ENRICH MESSAGE USERS
-============================================================ */
-
-async function enrichMessageUsers() {
-
-  const userIds =
-    [
-      ...new Set(
-        CommunityState.messages
-          .map(message =>
-            message.user_id ||
-            message.sender_id ||
-            message.author_id
-          )
-          .filter(Boolean)
-      )
-    ];
-
-  if (!userIds.length) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("students")
-      .select("id,full_name,name,photo_url")
-      .in("id", userIds);
-
-    if (error) {
-      console.warn(
-        "⚠️ Message student profiles unavailable:",
-        error.message
-      );
-
-      return;
-    }
-
-    const profiles =
-      new Map(
-        (data || [])
-          .map(student => [
-            String(student.id),
-            student
-          ])
-      );
-
-    CommunityState.messages =
-      CommunityState.messages.map(
-        message => {
-
-          const id =
-            message.user_id ||
-            message.sender_id ||
-            message.author_id;
-
-          return {
-            ...message,
-            _student:
-              profiles.get(String(id)) ||
-              null
-          };
-        }
-      );
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Message enrichment failed:",
-      error
-    );
-  }
-}
-
-
-/* ============================================================
-   RENDER MESSAGES
-============================================================ */
-
-function renderMessages() {
-
-  const list =
-    $("messageList");
-
-  if (!list) {
-    return;
-  }
-
-  const messages =
-    CommunityState.searchTerm
-      ? CommunityState.messages.filter(
-          message =>
-            String(
-              message.content ||
-              message.message ||
-              ""
-            )
-              .toLowerCase()
-              .includes(
-                CommunityState.searchTerm
-                  .toLowerCase()
-              )
-        )
-      : CommunityState.messages;
-
-  if (!messages.length) {
-
-    list.innerHTML =
-      `
-        <div class="empty-state">
-          ${
-            CommunityState.searchTerm
-              ? "No messages match your search."
-              : "No messages yet. Start the conversation."
-          }
-        </div>
-      `;
-
-    return;
-  }
-
-  if ($("channelWelcome")) {
-    $("channelWelcome").classList.add("hidden");
-  }
-
-  let lastDate = "";
-
-  const html = [];
-
-  messages.forEach(message => {
 
     const date =
-      new Date(
-        message.created_at
-      );
+        new Date(dateValue);
 
-    const dateLabel =
-      Number.isNaN(date.getTime())
-        ? ""
-        : date.toLocaleDateString([], {
-            weekday: "long",
-            month: "short",
-            day: "numeric"
-          });
-
-    if (
-      dateLabel &&
-      dateLabel !== lastDate
-    ) {
-
-      html.push(`
-        <div class="date-divider">
-          ${escapeHtml(dateLabel)}
-        </div>
-      `);
-
-      lastDate = dateLabel;
+    if (Number.isNaN(date.getTime())) {
+        return "";
     }
 
-    html.push(
-      renderMessage(message)
+    return date.toLocaleTimeString(
+        [],
+        {
+            hour: "numeric",
+            minute: "2-digit"
+        }
     );
-  });
-
-  list.innerHTML =
-    html.join("");
-
-  attachMessageEvents();
-
-  requestAnimationFrame(() => {
-
-    list.scrollTop =
-      list.scrollHeight;
-
-  });
 }
 
 
-/* ============================================================
-   RENDER MESSAGE
-============================================================ */
+function formatDateTime(dateValue) {
 
-function renderMessage(message) {
-
-  const student =
-    message._student;
-
-  const author =
-    student?.full_name ||
-    student?.name ||
-    message.author_name ||
-    message.username ||
-    "Student";
-
-  const photo =
-    student?.photo_url ||
-    message.author_photo ||
-    "";
-
-  const userId =
-    message.user_id ||
-    message.sender_id ||
-    message.author_id ||
-    "";
-
-  const content =
-    message.content ||
-    message.message ||
-    "";
-
-  const messageId =
-    message.id;
-
-  const isOwn =
-    CommunityState.user &&
-    String(userId) ===
-    String(CommunityState.user.id);
-
-  const formattedContent =
-    formatMessageContent(content);
-
-  const reactions =
-    message.reactions ||
-    [];
-
-  return `
-    <article
-      class="message"
-      data-message-id="${escapeHtml(messageId)}"
-    >
-
-      <div class="message-avatar">
-
-        ${
-          photo
-            ? `<img
-                 src="${escapeHtml(photo)}"
-                 alt="${escapeHtml(author)}"
-               />`
-            : escapeHtml(
-                getInitials(author)
-              )
-        }
-
-      </div>
-
-      <div class="message-content">
-
-        <div class="message-meta">
-
-          <span class="message-author">
-            ${escapeHtml(author)}
-          </span>
-
-          ${
-            isOwn
-              ? `<span class="message-role">You</span>`
-              : ""
-          }
-
-          <span class="message-time">
-            ${escapeHtml(
-              formatMessageTime(
-                message.created_at
-              )
-            )}
-          </span>
-
-        </div>
-
-        ${
-          message.reply_to_id
-            ? `
-              <div class="reply-reference">
-                ↳ Reply
-              </div>
-            `
-            : ""
-        }
-
-        <div class="message-body">
-          ${formattedContent}
-        </div>
-
-        ${
-          reactions.length
-            ? `
-              <div class="message-reactions">
-                ${renderReactions(reactions)}
-              </div>
-            `
-            : ""
-        }
-
-      </div>
-
-      <div class="message-actions">
-
-        <button
-          class="message-action"
-          type="button"
-          data-message-action="reply"
-          data-message-id="${escapeHtml(messageId)}"
-          title="Reply"
-        >
-          ↩
-        </button>
-
-        <button
-          class="message-action"
-          type="button"
-          data-message-action="react"
-          data-message-id="${escapeHtml(messageId)}"
-          title="React"
-        >
-          ☺
-        </button>
-
-        <button
-          class="message-action"
-          type="button"
-          data-message-action="copy"
-          data-message-id="${escapeHtml(messageId)}"
-          title="Copy"
-        >
-          ⧉
-        </button>
-
-        ${
-          isOwn
-            ? `
-              <button
-                class="message-action danger"
-                type="button"
-                data-message-action="delete"
-                data-message-id="${escapeHtml(messageId)}"
-                title="Delete"
-              >
-                🗑
-              </button>
-            `
-            : ""
-        }
-
-      </div>
-
-    </article>
-  `;
-}
-
-
-/* ============================================================
-   FORMAT MESSAGE
-============================================================ */
-
-function formatMessageContent(content) {
-
-  let value =
-    escapeHtml(content);
-
-  value =
-    value.replace(
-      /@([A-Za-z0-9_.-]+)/g,
-      '<strong>@$1</strong>'
-    );
-
-  value =
-    value.replace(
-      /\*\*(.*?)\*\*/g,
-      "<strong>$1</strong>"
-    );
-
-  value =
-    value.replace(
-      /\n/g,
-      "<br>"
-    );
-
-  return value;
-}
-
-
-/* ============================================================
-   REACTIONS
-============================================================ */
-
-function renderReactions(reactions) {
-
-  if (!Array.isArray(reactions)) {
-    return "";
-  }
-
-  const grouped = {};
-
-  reactions.forEach(reaction => {
-
-    const emoji =
-      reaction.emoji ||
-      reaction.reaction ||
-      "👍";
-
-    if (!grouped[emoji]) {
-      grouped[emoji] = {
-        count: 0,
-        mine: false
-      };
+    if (!dateValue) {
+        return "";
     }
 
-    grouped[emoji].count++;
+    const date =
+        new Date(dateValue);
 
-    const reactor =
-      reaction.user_id ||
-      reaction.student_id;
-
-    if (
-      CommunityState.user &&
-      String(reactor) ===
-      String(CommunityState.user.id)
-    ) {
-      grouped[emoji].mine = true;
+    if (Number.isNaN(date.getTime())) {
+        return "";
     }
 
-  });
-
-  return Object.entries(grouped)
-    .map(([emoji, item]) => {
-
-      return `
-        <button
-          class="reaction ${item.mine ? "active" : ""}"
-          type="button"
-          data-reaction="${escapeHtml(emoji)}"
-        >
-          ${escapeHtml(emoji)}
-          <span>${item.count}</span>
-        </button>
-      `;
-
-    })
-    .join("");
-}
-
-
-/* ============================================================
-   ATTACH MESSAGE EVENTS
-============================================================ */
-
-function attachMessageEvents() {
-
-  document
-    .querySelectorAll("[data-message-action]")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        event => {
-
-          const action =
-            event.currentTarget.dataset.messageAction;
-
-          const messageId =
-            event.currentTarget.dataset.messageId;
-
-          handleMessageAction(
-            action,
-            messageId
-          );
-
+    return date.toLocaleString(
+        [],
+        {
+            dateStyle: "medium",
+            timeStyle: "short"
         }
-      );
-
-    });
-
-  document
-    .querySelectorAll("[data-reaction]")
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        event => {
-
-          const messageElement =
-            event.currentTarget.closest(
-              ".message"
-            );
-
-          if (!messageElement) {
-            return;
-          }
-
-          toggleReaction(
-            messageElement.dataset.messageId,
-            event.currentTarget.dataset.reaction
-          );
-
-        }
-      );
-
-    });
-
-}
-
-
-/* ============================================================
-   MESSAGE ACTIONS
-============================================================ */
-
-async function handleMessageAction(
-  action,
-  messageId
-) {
-
-  const message =
-    CommunityState.messages.find(
-      item =>
-        String(item.id) ===
-        String(messageId)
     );
+}
 
-  if (!message) {
-    return;
-  }
 
-  switch (action) {
+function normalizeName(item, fallback = "Student") {
 
-    case "reply":
+    return (
+        item?.display_name ||
+        item?.full_name ||
+        item?.name ||
+        item?.username ||
+        item?.student_name ||
+        item?.email ||
+        fallback
+    );
+}
 
-      startReply(message);
 
-      break;
+function getCommunityCourseId(community) {
 
-    case "react":
+    return (
+        community?.course_id ??
+        community?.linked_course_id ??
+        null
+    );
+}
 
-      await toggleReaction(
-        messageId,
-        "👍"
-      );
 
-      break;
+function getChannelCourseId(channel) {
 
-    case "copy":
+    return (
+        channel?.course_id ??
+        channel?.linked_course_id ??
+        null
+    );
+}
 
-      await copyMessage(
-        message.content ||
-        message.message ||
+
+function getChannelCategory(channel) {
+
+    return (
+        channel?.category ||
+        channel?.channel_category ||
+        "General"
+    );
+}
+
+
+function getChannelVisibility(channel) {
+
+    return (
+        channel?.visibility ||
+        channel?.channel_visibility ||
+        "public"
+    ).toLowerCase();
+}
+
+
+function getMessageSenderId(message) {
+
+    return (
+        message?.sender_id ||
+        message?.user_id ||
+        message?.author_id ||
+        message?.created_by ||
+        null
+    );
+}
+
+
+function getMessageContent(message) {
+
+    return (
+        message?.content ??
+        message?.message ??
+        message?.text ??
         ""
-      );
-
-      break;
-
-    case "delete":
-
-      await deleteMessage(
-        messageId
-      );
-
-      break;
-
-    default:
-      break;
-  }
+    );
 }
 
 
-/* ============================================================
-   REPLY
-============================================================ */
+/* =========================================================
+   TOAST
+========================================================= */
 
-function startReply(message) {
+function showToast(message, type = "") {
 
-  CommunityState.replyingTo =
-    message;
+    const toast =
+        $("#communityToast");
 
-  const author =
-    message._student?.full_name ||
-    message._student?.name ||
-    message.author_name ||
-    "Student";
-
-  const content =
-    message.content ||
-    message.message ||
-    "";
-
-  if ($("replyAuthor")) {
-    $("replyAuthor").textContent =
-      `Replying to ${author}`;
-  }
-
-  if ($("replyMessage")) {
-    $("replyMessage").textContent =
-      content;
-  }
-
-  if ($("replyPreview")) {
-    $("replyPreview")
-      .classList.remove("hidden");
-  }
-
-  if ($("messageInput")) {
-    $("messageInput").focus();
-  }
-}
-
-
-/* ============================================================
-   CANCEL REPLY
-============================================================ */
-
-function cancelReply() {
-
-  CommunityState.replyingTo =
-    null;
-
-  if ($("replyPreview")) {
-    $("replyPreview")
-      .classList.add("hidden");
-  }
-}
-
-
-/* ============================================================
-   COPY
-============================================================ */
-
-async function copyMessage(content) {
-
-  try {
-
-    await navigator.clipboard.writeText(
-      content
-    );
-
-    showToast(
-      "Message copied.",
-      "success"
-    );
-
-  } catch (error) {
-
-    showToast(
-      "Could not copy message.",
-      "error"
-    );
-  }
-}
-
-
-/* ============================================================
-   DELETE MESSAGE
-============================================================ */
-
-async function deleteMessage(
-  messageId
-) {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  const message =
-    CommunityState.messages.find(
-      item =>
-        String(item.id) ===
-        String(messageId)
-    );
-
-  if (!message) {
-    return;
-  }
-
-  const owner =
-    message.user_id ||
-    message.sender_id ||
-    message.author_id;
-
-  if (
-    String(owner) !==
-    String(CommunityState.user.id)
-  ) {
-
-    showToast(
-      "You can only delete your own messages.",
-      "error"
-    );
-
-    return;
-  }
-
-  const confirmed =
-    window.confirm(
-      "Delete this message?"
-    );
-
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-
-    const {
-      error
-    } = await communitySupabase
-      .from("chat_messages")
-      .delete()
-      .eq("id", messageId)
-      .eq(
-        "user_id",
-        CommunityState.user.id
-      );
-
-    if (error) {
-      throw error;
+    if (!toast) {
+        return;
     }
 
-    CommunityState.messages =
-      CommunityState.messages.filter(
-        item =>
-          String(item.id) !==
-          String(messageId)
-      );
+    toast.textContent =
+        message;
 
-    renderMessages();
+    toast.className =
+        "community-toast " +
+        type;
 
-    showToast(
-      "Message deleted.",
-      "success"
+    toast.hidden = false;
+
+    clearTimeout(
+        showToast.timeout
     );
 
-  } catch (error) {
-
-    console.error(
-      "❌ Delete message failed:",
-      error
-    );
-
-    showToast(
-      "Message could not be deleted.",
-      "error"
-    );
-  }
+    showToast.timeout =
+        setTimeout(() => {
+            toast.hidden = true;
+        }, 3500);
 }
 
 
-/* ============================================================
-   SEND MESSAGE
-============================================================ */
-
-async function sendMessage() {
-
-  if (!CommunityState.user) {
-
-    showToast(
-      "Please sign in first.",
-      "error"
-    );
-
-    return;
-  }
-
-  if (!CommunityState.activeChannelId) {
-
-    showToast(
-      "Select a channel first.",
-      "error"
-    );
-
-    return;
-  }
-
-  const input =
-    $("messageInput");
-
-  if (!input) {
-    return;
-  }
-
-  const content =
-    input.value.trim();
-
-  if (!content) {
-    return;
-  }
-
-  const button =
-    $("sendMessageBtn");
-
-  if (button) {
-    button.disabled = true;
-  }
-
-  try {
-
-    const payload = {
-      channel_id:
-        CommunityState.activeChannelId,
-
-      user_id:
-        CommunityState.user.id,
-
-      content
-    };
-
-    if (CommunityState.replyingTo) {
-
-      payload.reply_to_id =
-        CommunityState.replyingTo.id;
-    }
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_messages")
-      .insert(payload)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    input.value = "";
-
-    autoResizeTextarea();
-
-    cancelReply();
-
-    if (data) {
-
-      CommunityState.messages.push(
-        data
-      );
-
-      await enrichSingleMessage(
-        data
-      );
-
-      renderMessages();
-    }
-
-  } catch (error) {
-
-    console.error(
-      "❌ Send message failed:",
-      error
-    );
-
-    showToast(
-      "Message could not be sent. Check your community permissions.",
-      "error"
-    );
-
-  } finally {
-
-    if (button) {
-      button.disabled = false;
-    }
-
-    input.focus();
-  }
-}
-
-
-/* ============================================================
-   ENRICH SINGLE MESSAGE
-============================================================ */
-
-async function enrichSingleMessage(
-  message
-) {
-
-  const id =
-    message.user_id ||
-    message.sender_id ||
-    message.author_id;
-
-  if (!id) {
-    return;
-  }
-
-  try {
-
-    const {
-      data
-    } = await communitySupabase
-      .from("students")
-      .select("id,full_name,name,photo_url")
-      .eq("id", id)
-      .maybeSingle();
-
-    message._student =
-      data || null;
-
-  } catch (error) {
-    console.warn(
-      "⚠️ Could not enrich new message."
-    );
-  }
-}
-
-
-/* ============================================================
-   REACTION
-============================================================ */
-
-async function toggleReaction(
-  messageId,
-  emoji
-) {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  try {
-
-    const {
-      data: existing,
-      error: lookupError
-    } = await communitySupabase
-      .from("chat_message_reactions")
-      .select("*")
-      .eq("message_id", messageId)
-      .eq(
-        "user_id",
-        CommunityState.user.id
-      )
-      .eq("emoji", emoji)
-      .maybeSingle();
-
-    if (lookupError) {
-      throw lookupError;
-    }
-
-    if (existing) {
-
-      const {
-        error
-      } = await communitySupabase
-        .from("chat_message_reactions")
-        .delete()
-        .eq("id", existing.id);
-
-      if (error) {
-        throw error;
-      }
-
-    } else {
-
-      const {
-        error
-      } = await communitySupabase
-        .from("chat_message_reactions")
-        .insert({
-          message_id:
-            messageId,
-
-          user_id:
-            CommunityState.user.id,
-
-          emoji
-        });
-
-      if (error) {
-        throw error;
-      }
-    }
-
-    await loadMessages(
-      CommunityState.activeChannelId
-    );
-
-  } catch (error) {
-
-    console.error(
-      "❌ Reaction failed:",
-      error
-    );
-
-    showToast(
-      "Reaction could not be updated.",
-      "error"
-    );
-  }
-}
-
-
-/* ============================================================
-   LOAD REACTIONS
-============================================================ */
-
-async function loadMessageReactions() {
-
-  if (!CommunityState.messages.length) {
-    return;
-  }
-
-  const ids =
-    CommunityState.messages
-      .map(message => message.id)
-      .filter(Boolean);
-
-  if (!ids.length) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_message_reactions")
-      .select("*")
-      .in("message_id", ids);
-
-    if (error) {
-      throw error;
-    }
-
-    const grouped =
-      new Map();
-
-    (data || []).forEach(reaction => {
-
-      const id =
-        String(reaction.message_id);
-
-      if (!grouped.has(id)) {
-        grouped.set(id, []);
-      }
-
-      grouped
-        .get(id)
-        .push(reaction);
-    });
-
-    CommunityState.messages =
-      CommunityState.messages.map(
-        message => ({
-          ...message,
-          reactions:
-            grouped.get(
-              String(message.id)
-            ) || []
-        })
-      );
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Reaction loading failed:",
-      error
-    );
-  }
-}
-
-
-/* ============================================================
-   MEMBERS
-============================================================ */
-
-async function loadMembers() {
-
-  const communityId =
-    CommunityState.activeCommunityId;
-
-  if (!communityId) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_community_members")
-      .select("*")
-      .eq("community_id", communityId);
-
-    if (error) {
-      throw error;
-    }
-
-    CommunityState.members =
-      data || [];
-
-    await enrichMembers();
-
-    renderMembers();
-
-  } catch (error) {
-
-    console.error(
-      "❌ Members failed:",
-      error
-    );
-
-    renderMembers();
-  }
-}
-
-
-/* ============================================================
-   ENRICH MEMBERS
-============================================================ */
-
-async function enrichMembers() {
-
-  const ids =
-    CommunityState.members
-      .map(member =>
-        member.user_id ||
-        member.student_id
-      )
-      .filter(Boolean);
-
-  if (!ids.length) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("students")
-      .select("id,full_name,name,photo_url")
-      .in("id", ids);
-
-    if (error) {
-      return;
-    }
-
-    const profiles =
-      new Map(
-        (data || [])
-          .map(student => [
-            String(student.id),
-            student
-          ])
-      );
-
-    CommunityState.members =
-      CommunityState.members.map(
-        member => {
-
-          const id =
-            member.user_id ||
-            member.student_id;
-
-          return {
-            ...member,
-            _student:
-              profiles.get(
-                String(id)
-              ) || null
-          };
-        }
-      );
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Member enrichment failed."
-    );
-  }
-}
-
-
-/* ============================================================
-   PRESENCE
-============================================================ */
-
-function memberIsOnline(member) {
-
-  const id =
-    member.user_id ||
-    member.student_id;
-
-  return CommunityState.presence.some(
-    presence =>
-      String(
-        presence.user_id ||
-        presence.student_id
-      ) ===
-      String(id)
-  );
-}
-
-
-/* ============================================================
-   RENDER MEMBERS
-============================================================ */
-
-function renderMembers() {
-
-  const onlineList =
-    $("onlineMemberList");
-
-  const offlineList =
-    $("offlineMemberList");
-
-  if (!onlineList || !offlineList) {
-    return;
-  }
-
-  const search =
-    ($("memberSearchInput")?.value || "")
-      .trim()
-      .toLowerCase();
-
-  let members =
-    [...CommunityState.members];
-
-  if (search) {
-
-    members =
-      members.filter(member => {
-
-        const name =
-          member._student?.full_name ||
-          member._student?.name ||
-          member.username ||
-          "";
-
-        return String(name)
-          .toLowerCase()
-          .includes(search);
-      });
-  }
-
-  const online =
-    members.filter(
-      member =>
-        memberIsOnline(member)
-    );
-
-  const offline =
-    members.filter(
-      member =>
-        !memberIsOnline(member)
-    );
-
-  if ($("memberCount")) {
-    $("memberCount").textContent =
-      `${members.length} member${members.length === 1 ? "" : "s"}`;
-  }
-
-  if ($("onlineMemberCount")) {
-    $("onlineMemberCount").textContent =
-      online.length;
-  }
-
-  if ($("offlineMemberCount")) {
-    $("offlineMemberCount").textContent =
-      offline.length;
-  }
-
-  onlineList.innerHTML =
-    online.length
-      ? online.map(
-          member =>
-            renderMember(
-              member,
-              true
-            )
-        ).join("")
-      : `<div class="empty-state">No members online.</div>`;
-
-  offlineList.innerHTML =
-    offline.length
-      ? offline.map(
-          member =>
-            renderMember(
-              member,
-              false
-            )
-        ).join("")
-      : `<div class="empty-state">No other members.</div>`;
-}
-
-
-/* ============================================================
-   RENDER MEMBER
-============================================================ */
-
-function renderMember(
-  member,
-  online
-) {
-
-  const student =
-    member._student;
-
-  const name =
-    student?.full_name ||
-    student?.name ||
-    member.username ||
-    "Student";
-
-  const photo =
-    student?.photo_url ||
-    "";
-
-  const role =
-    member.role ||
-    "Student";
-
-  return `
-    <div class="member-item">
-
-      <div class="member-avatar">
-
-        ${
-          photo
-            ? `<img
-                 src="${escapeHtml(photo)}"
-                 alt="${escapeHtml(name)}"
-               />`
-            : escapeHtml(
-                getInitials(name)
-              )
-        }
-
-        <span
-          class="presence-dot ${online ? "online" : ""}"
-        ></span>
-
-      </div>
-
-      <div class="member-info">
-
-        <span class="member-name">
-          ${escapeHtml(name)}
-        </span>
-
-        <span class="member-role">
-          ${escapeHtml(role)}
-        </span>
-
-      </div>
-
-    </div>
-  `;
-}
-
-
-/* ============================================================
-   LOAD PRESENCE
-============================================================ */
-
-async function loadPresence() {
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_presence")
-      .select("*");
-
-    if (error) {
-      throw error;
-    }
-
-    CommunityState.presence =
-      data || [];
-
-    renderMembers();
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Presence loading failed:",
-      error.message
-    );
-  }
-}
-
-
-/* ============================================================
-   UPDATE OWN PRESENCE
-============================================================ */
-
-async function updateOwnPresence() {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  try {
-
-    const payload = {
-      user_id:
-        CommunityState.user.id,
-
-      last_seen:
-        new Date().toISOString(),
-
-      online:
-        true
-    };
-
-    const {
-      error
-    } = await communitySupabase
-      .from("chat_presence")
-      .upsert(
-        payload,
-        {
-          onConflict: "user_id"
-        }
-      );
-
-    if (error) {
-      console.warn(
-        "⚠️ Presence update:",
-        error.message
-      );
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Presence error:",
-      error
-    );
-  }
-}
-
-
-/* ============================================================
-   READ STATUS
-============================================================ */
-
-async function loadReadStatus() {
-
-  if (
-    !CommunityState.user ||
-    !CommunityState.activeChannelId
-  ) {
-    return;
-  }
-
-  try {
-
-    const {
-      data
-    } = await communitySupabase
-      .from("chat_read_status")
-      .select("*")
-      .eq(
-        "channel_id",
-        CommunityState.activeChannelId
-      )
-      .eq(
-        "user_id",
-        CommunityState.user.id
-      )
-      .maybeSingle();
-
-    if (!data) {
-      return;
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Read status unavailable."
-    );
-  }
-}
-
-
-/* ============================================================
-   MARK CHANNEL READ
-============================================================ */
-
-async function markChannelRead() {
-
-  if (
-    !CommunityState.user ||
-    !CommunityState.activeChannelId
-  ) {
-    return;
-  }
-
-  try {
-
-    const payload = {
-      channel_id:
-        CommunityState.activeChannelId,
-
-      user_id:
-        CommunityState.user.id,
-
-      last_read_at:
-        new Date().toISOString()
-    };
-
-    const {
-      error
-    } = await communitySupabase
-      .from("chat_read_status")
-      .upsert(
-        payload,
-        {
-          onConflict:
-            "channel_id,user_id"
-        }
-      );
-
-    if (error) {
-      console.warn(
-        "⚠️ Mark read failed:",
-        error.message
-      );
-    }
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Mark read error."
-    );
-  }
-}
-
-
-/* ============================================================
-   REALTIME
-============================================================ */
-
-function removeRealtimeSubscriptions() {
-
-  if (!communitySupabase) {
-    return;
-  }
-
-  CommunityState.realtimeChannels
-    .forEach(channel => {
-
-      try {
-        communitySupabase
-          .removeChannel(channel);
-      } catch (_) {}
-
-    });
-
-  CommunityState.realtimeChannels =
-    [];
-}
-
-
-/* ============================================================
-   SUBSCRIBE CHANNEL
-============================================================ */
-
-function subscribeToChannel(
-  channelId
-) {
-
-  removeRealtimeSubscriptions();
-
-  if (!communitySupabase) {
-    return;
-  }
-
-  const channel =
-    communitySupabase
-      .channel(
-        `mwaniki-community-${channelId}`
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages",
-          filter:
-            `channel_id=eq.${channelId}`
-        },
-        async payload => {
-
-          await handleRealtimeMessage(
-            payload.new
-          );
-
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "DELETE",
-          schema: "public",
-          table: "chat_messages",
-          filter:
-            `channel_id=eq.${channelId}`
-        },
-        payload => {
-
-          CommunityState.messages =
-            CommunityState.messages.filter(
-              message =>
-                String(message.id) !==
-                String(payload.old.id)
-            );
-
-          renderMessages();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "chat_message_reactions"
-        },
-        async () => {
-
-          await loadMessages(
-            CommunityState.activeChannelId
-          );
-
-          await loadMessageReactions();
-
-          renderMessages();
-        }
-      )
-      .subscribe();
-
-  CommunityState.realtimeChannels.push(
-    channel
-  );
-}
-
-
-/* ============================================================
-   REALTIME MESSAGE
-============================================================ */
-
-async function handleRealtimeMessage(
-  message
-) {
-
-  if (
-    CommunityState.messages.some(
-      item =>
-        String(item.id) ===
-        String(message.id)
-    )
-  ) {
-    return;
-  }
-
-  await enrichSingleMessage(
-    message
-  );
-
-  CommunityState.messages.push(
-    message
-  );
-
-  CommunityState.messages.sort(
-    (a, b) =>
-      new Date(a.created_at) -
-      new Date(b.created_at)
-  );
-
-  renderMessages();
-
-  const sender =
-    message.user_id ||
-    message.sender_id ||
-    message.author_id;
-
-  if (
-    CommunityState.user &&
-    String(sender) !==
-    String(CommunityState.user.id)
-  ) {
-
-    if (
-      document.hidden ||
-      CommunityState.activeChannelId
-    ) {
-
-      showToast(
-        "New community message.",
-        "success"
-      );
-    }
-  }
-
-  markChannelRead();
-}
-
-
-/* ============================================================
-   NOTIFICATIONS
-============================================================ */
-
-async function loadNotifications() {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_notifications")
-      .select("*")
-      .eq(
-        "user_id",
-        CommunityState.user.id
-      )
-      .order("created_at", {
-        ascending: false
-      })
-      .limit(50);
-
-    if (error) {
-      throw error;
-    }
-
-    CommunityState.notifications =
-      data || [];
-
-    renderNotifications();
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Notifications unavailable:",
-      error.message
-    );
-
-    CommunityState.notifications =
-      [];
-
-    renderNotifications();
-  }
-}
-
-
-/* ============================================================
-   RENDER NOTIFICATIONS
-============================================================ */
-
-function renderNotifications() {
-
-  const list =
-    $("notificationList");
-
-  if (!list) {
-    return;
-  }
-
-  const unread =
-    CommunityState.notifications
-      .filter(
-        notification =>
-          !notification.read &&
-          !notification.is_read
-      )
-      .length;
-
-  updateNotificationBadge(
-    unread
-  );
-
-  if (!CommunityState.notifications.length) {
-
-    list.innerHTML =
-      `
-        <div class="empty-state">
-          You have no community notifications.
-        </div>
-      `;
-
-    return;
-  }
-
-  list.innerHTML =
-    CommunityState.notifications
-      .map(notification => {
-
-        const isRead =
-          notification.read ||
-          notification.is_read;
-
-        return `
-          <article
-            class="notification-item ${!isRead ? "unread" : ""}"
-            data-notification-id="${escapeHtml(notification.id)}"
-          >
-
-            <div class="notification-title">
-              ${escapeHtml(
-                notification.title ||
-                notification.type ||
-                "Community notification"
-              )}
-            </div>
-
-            <div class="notification-text">
-              ${escapeHtml(
-                notification.message ||
-                notification.content ||
-                "You have a new community notification."
-              )}
-            </div>
-
-            <div class="notification-time">
-              ${escapeHtml(
-                formatMessageTime(
-                  notification.created_at
-                )
-              )}
-            </div>
-
-          </article>
-        `;
-
-      })
-      .join("");
-}
-
-
-/* ============================================================
-   BADGE
-============================================================ */
-
-function updateNotificationBadge(
-  count
-) {
-
-  const badge =
-    $("communityNotificationBadge");
-
-  if (!badge) {
-    return;
-  }
-
-  if (!count) {
-
-    badge.classList.add(
-      "hidden"
-    );
-
-    badge.textContent =
-      "0";
-
-    return;
-  }
-
-  badge.classList.remove(
-    "hidden"
-  );
-
-  badge.textContent =
-    count > 99
-      ? "99+"
-      : String(count);
-}
-
-
-/* ============================================================
-   MARK NOTIFICATIONS READ
-============================================================ */
-
-async function markNotificationsRead() {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  const unread =
-    CommunityState.notifications
-      .filter(
-        notification =>
-          !notification.read &&
-          !notification.is_read
-      );
-
-  if (!unread.length) {
-    return;
-  }
-
-  try {
-
-    const ids =
-      unread
-        .map(
-          notification =>
-            notification.id
-        )
-        .filter(Boolean);
-
-    if (!ids.length) {
-      return;
-    }
-
-    const {
-      error
-    } = await communitySupabase
-      .from("chat_notifications")
-      .update({
-        read: true,
-        is_read: true
-      })
-      .in(
-        "id",
-        ids
-      );
-
-    if (error) {
-      console.warn(
-        "⚠️ Could not mark notifications read:",
-        error.message
-      );
-
-      return;
-    }
-
-    CommunityState.notifications =
-      CommunityState.notifications.map(
-        notification =>
-          ids.includes(notification.id)
-            ? {
-                ...notification,
-                read: true,
-                is_read: true
-              }
-            : notification
-      );
-
-    renderNotifications();
-
-  } catch (error) {
-
-    console.warn(
-      "⚠️ Notification read update failed."
-    );
-  }
-}
-
-
-/* ============================================================
-   SEARCH
-============================================================ */
-
-function openSearchModal() {
-
-  const modal =
-    $("searchModal");
-
-  if (!modal) {
-    return;
-  }
-
-  modal.classList.remove(
-    "hidden"
-  );
-
-  setTimeout(() => {
-
-    $("globalSearchInput")?.focus();
-
-  }, 50);
-}
-
-
-/* ============================================================
-   SEARCH DATABASE
-============================================================ */
-
-async function searchMessages(
-  term
-) {
-
-  const results =
-    $("searchResults");
-
-  if (!results) {
-    return;
-  }
-
-  term =
-    term.trim();
-
-  if (!term) {
-
-    results.innerHTML =
-      "Enter a search term to begin.";
-
-    return;
-  }
-
-  results.innerHTML =
-    `<div class="empty-state">Searching...</div>`;
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_messages")
-      .select("*")
-      .ilike(
-        "content",
-        `%${term}%`
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
-      )
-      .limit(50);
-
-    if (error) {
-      throw error;
-    }
-
-    if (!data?.length) {
-
-      results.innerHTML =
-        `
-          <div class="empty-state">
-            No messages found.
-          </div>
-        `;
-
-      return;
-    }
-
-    results.innerHTML =
-      data.map(message => {
-
-        const channel =
-          CommunityState.channels.find(
-            item =>
-              String(item.id) ===
-              String(message.channel_id)
-          );
-
-        return `
-          <article
-            class="search-result"
-            data-search-message-id="${escapeHtml(message.id)}"
-            data-search-channel-id="${escapeHtml(message.channel_id)}"
-          >
-
-            <div class="search-result-channel">
-              #${escapeHtml(
-                channel?.name ||
-                channel?.title ||
-                "channel"
-              )}
-            </div>
-
-            <div class="search-result-author">
-              Student
-            </div>
-
-            <div class="search-result-text">
-              ${escapeHtml(
-                message.content ||
-                ""
-              )}
-            </div>
-
-          </article>
-        `;
-
-      }).join("");
-
-    document
-      .querySelectorAll(
-        "[data-search-message-id]"
-      )
-      .forEach(item => {
-
-        item.addEventListener(
-          "click",
-          async () => {
-
-            const channelId =
-              item.dataset.searchChannelId;
-
-            const messageId =
-              item.dataset.searchMessageId;
-
-            await selectChannel(
-              channelId
-            );
-
-            closeModal(
-              "searchModal"
-            );
-
-            setTimeout(() => {
-
-              highlightMessage(
-                messageId
-              );
-
-            }, 250);
-
-          }
-        );
-
-      });
-
-  } catch (error) {
-
-    console.error(
-      "❌ Search failed:",
-      error
-    );
-
-    results.innerHTML =
-      `
-        <div class="empty-state">
-          Search could not be completed.
-        </div>
-      `;
-  }
-}
-
-
-/* ============================================================
-   HIGHLIGHT MESSAGE
-============================================================ */
-
-function highlightMessage(
-  messageId
-) {
-
-  const element =
-    document.querySelector(
-      `[data-message-id="${CSS.escape(String(messageId))}"]`
-    );
-
-  if (!element) {
-    return;
-  }
-
-  element.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
-  });
-
-  element.classList.add(
-    "highlighted"
-  );
-
-  setTimeout(() => {
-
-    element.classList.remove(
-      "highlighted"
-    );
-
-  }, 2500);
-}
-
-
-/* ============================================================
-   CREATE CHANNEL
-============================================================ */
-
-async function createChannel(
-  event
-) {
-
-  event.preventDefault();
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  if (!CommunityState.activeCommunityId) {
-
-    showToast(
-      "Select a community first.",
-      "error"
-    );
-
-    return;
-  }
-
-  const name =
-    $("channelNameInput")
-      ?.value
-      .trim();
-
-  const description =
-    $("channelDescriptionInput")
-      ?.value
-      .trim();
-
-  const isPrivate =
-    Boolean(
-      $("channelPrivateInput")
-        ?.checked
-    );
-
-  if (!name) {
-    return;
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } = await communitySupabase
-      .from("chat_channels")
-      .insert({
-        community_id:
-          CommunityState.activeCommunityId,
-
-        name,
-
-        description:
-          description || null,
-
-        is_private:
-          isPrivate,
-
-        created_by:
-          CommunityState.user.id
-      })
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (data) {
-
-      CommunityState.channels.push(
-        data
-      );
-
-      renderChannels();
-
-      await selectChannel(
-        data.id
-      );
-    }
-
-    closeModal(
-      "channelModal"
-    );
-
-    $("channelForm")?.reset();
-
-    showToast(
-      "Channel created.",
-      "success"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "❌ Channel creation failed:",
-      error
-    );
-
-    showToast(
-      "Channel could not be created. Your account may not have permission.",
-      "error"
-    );
-  }
-}
-
-
-/* ============================================================
+/* =========================================================
    MODALS
-============================================================ */
+========================================================= */
 
-function openModal(
-  id
-) {
+function openModal(id) {
 
-  $(id)?.classList.remove(
-    "hidden"
-  );
+    const modal = document.getElementById(id);
+
+    if (modal) {
+        modal.hidden = false;
+    }
 }
 
 
-function closeModal(
-  id
-) {
+function closeModal(id) {
 
-  $(id)?.classList.add(
-    "hidden"
-  );
+    const modal = document.getElementById(id);
+
+    if (modal) {
+        modal.hidden = true;
+    }
 }
 
 
 function closeAllModals() {
 
-  document
-    .querySelectorAll(".modal")
-    .forEach(modal => {
-
-      modal.classList.add(
-        "hidden"
-      );
-
-    });
-
-  $("messageContextMenu")
-    ?.classList.add(
-      "hidden"
+    $$(".modal-backdrop").forEach(
+        modal => {
+            modal.hidden = true;
+        }
     );
 }
 
 
-/* ============================================================
-   SIDEBAR MOBILE
-============================================================ */
+/* =========================================================
+   AUTHENTICATION
+========================================================= */
+
+async function loadAuthenticatedUser() {
+
+    if (!communitySupabase) {
+        throw new Error(
+            "Supabase is unavailable."
+        );
+    }
+
+    const {
+        data,
+        error
+    } =
+        await communitySupabase.auth.getUser();
+
+    if (error) {
+        throw error;
+    }
+
+    if (!data?.user) {
+
+        window.location.href =
+            "index.html";
+
+        return null;
+    }
+
+    communityState.user =
+        data.user;
+
+    return data.user;
+}
+
+
+/* =========================================================
+   PROFILE
+========================================================= */
+
+async function loadCurrentProfile() {
+
+    if (!communityState.user) {
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("students")
+                .select("*")
+                .eq(
+                    "id",
+                    communityState.user.id
+                )
+                .maybeSingle();
+
+        if (error) {
+            console.warn(
+                "⚠️ Student profile lookup:",
+                error.message
+            );
+        }
+
+        communityState.profile =
+            data || null;
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Could not load student profile:",
+            error
+        );
+
+    }
+
+    renderCurrentUser();
+}
+
+
+function renderCurrentUser() {
+
+    const name =
+        normalizeName(
+            communityState.profile,
+            communityState.user?.email ||
+            "Student"
+        );
+
+    const role =
+        normalizeRole(
+            communityState.profile?.role ||
+            communityState.profile?.user_role ||
+            communityState.profile?.account_role ||
+            "student"
+        );
+
+    communityState.activeRole =
+        role;
+
+    const avatar =
+        $("#currentUserAvatar");
+
+    if (avatar) {
+        avatar.textContent =
+            getInitials(name);
+    }
+
+    const nameElement =
+        $("#currentUserName");
+
+    if (nameElement) {
+        nameElement.textContent =
+            name;
+    }
+
+    const roleElement =
+        $("#currentUserRole");
+
+    if (roleElement) {
+        roleElement.textContent =
+            displayRole(role);
+    }
+
+    updatePermissionUI();
+}
+
+
+function displayRole(role) {
+
+    const normalized =
+        normalizeRole(role);
+
+    const labels = {
+        "student": "Student",
+        "tutor": "Tutor",
+        "moderator": "Moderator",
+        "admin": "Admin",
+        "super-admin": "Super Admin"
+    };
+
+    return labels[normalized] ||
+        "Student";
+}
+
+
+/* =========================================================
+   LOAD COURSES
+========================================================= */
+
+async function loadCourses() {
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("courses")
+                .select("*")
+                .order("title", {
+                    ascending: true
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        communityState.courses =
+            data || [];
+
+        populateCourseSelectors();
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Course loading failed:",
+            error.message
+        );
+
+    }
+}
+
+
+function populateCourseSelectors() {
+
+    const selectors = [
+        $("#communityCourseInput"),
+        $("#channelCourseInput")
+    ];
+
+    selectors.forEach(
+        select => {
+
+            if (!select) {
+                return;
+            }
+
+            const current =
+                select.value;
+
+            select.innerHTML = `
+                <option value="">
+                    Select a course
+                </option>
+            `;
+
+            communityState.courses
+                .forEach(course => {
+
+                    const option =
+                        document.createElement("option");
+
+                    option.value =
+                        course.id;
+
+                    option.textContent =
+                        course.title ||
+                        `Course ${course.id}`;
+
+                    select.appendChild(option);
+
+                });
+
+            select.value =
+                current;
+
+        }
+    );
+}
+
+
+/* =========================================================
+   LOAD COMMUNITIES
+========================================================= */
+
+async function loadCommunities() {
+
+    const userId =
+        communityState.user?.id;
+
+    if (!userId) {
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("chat_communities")
+                .select("*")
+                .order("created_at", {
+                    ascending: true
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        let communities =
+            data || [];
+
+        /*
+         * If membership records exist, use them
+         * to determine the user's community role.
+         */
+
+        const {
+            data: memberships,
+            error: membershipError
+        } =
+            await communitySupabase
+                .from("chat_community_members")
+                .select("*")
+                .eq(
+                    "user_id",
+                    userId
+                );
+
+        if (!membershipError &&
+            Array.isArray(memberships)) {
+
+            const membershipMap =
+                new Map();
+
+            memberships.forEach(member => {
+
+                const communityId =
+                    member.community_id;
+
+                membershipMap.set(
+                    String(communityId),
+                    member
+                );
+
+            });
+
+            communities =
+                communities
+                    .filter(community => {
+
+                        /*
+                         * Super Admin/Admin may see
+                         * all communities.
+                         */
+
+                        if (
+                            roleLevel(
+                                communityState.activeRole
+                            ) >= ROLE_LEVELS.admin
+                        ) {
+                            return true;
+                        }
+
+                        return membershipMap.has(
+                            String(community.id)
+                        );
+
+                    })
+                    .map(community => {
+
+                        const membership =
+                            membershipMap.get(
+                                String(community.id)
+                            );
+
+                        return {
+                            ...community,
+
+                            membership_role:
+                                membership?.role ||
+                                community.membership_role ||
+                                "student"
+                        };
+
+                    });
+
+        }
+
+        communityState.communities =
+            communities;
+
+        renderCommunityRail();
+        renderCommunitySwitcher();
+
+        if (
+            !communityState.activeCommunity &&
+            communities.length
+        ) {
+
+            selectCommunity(
+                communities[0].id
+            );
+
+        } else if (
+            communityState.activeCommunity
+        ) {
+
+            const stillExists =
+                communities.some(
+                    community =>
+                        String(community.id) ===
+                        String(
+                            communityState
+                                .activeCommunity
+                                .id
+                        )
+                );
+
+            if (!stillExists) {
+
+                selectCommunity(
+                    communities[0]?.id
+                );
+
+            }
+
+        }
+
+        updatePermissionUI();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Community loading failed:",
+            error
+        );
+
+        showToast(
+            "Unable to load communities.",
+            "error"
+        );
+
+    }
+}
+
+
+/* =========================================================
+   COMMUNITY RAIL
+========================================================= */
+
+function renderCommunityRail() {
+
+    const container =
+        $("#communityRailList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    communityState.communities
+        .forEach(community => {
+
+            const wrapper =
+                document.createElement("div");
+
+            wrapper.className =
+                "rail-community";
+
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+
+            button.className =
+                "rail-button rail-community-button";
+
+            if (
+                communityState.activeCommunity &&
+                String(community.id) ===
+                String(
+                    communityState
+                        .activeCommunity
+                        .id
+                )
+            ) {
+                button.classList.add("active");
+            }
+
+            const icon =
+                document.createElement("div");
+
+            icon.className =
+                "community-icon";
+
+            icon.textContent =
+                getInitials(
+                    community.name ||
+                    community.title ||
+                    "Community"
+                );
+
+            button.appendChild(icon);
+
+            button.title =
+                community.name ||
+                community.title ||
+                "Community";
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    selectCommunity(
+                        community.id
+                    );
+
+                }
+            );
+
+            wrapper.appendChild(button);
+
+            /*
+             * Future unread badge.
+             */
+
+            const unread =
+                Number(
+                    community.unread_count || 0
+                );
+
+            if (unread > 0) {
+
+                const badge =
+                    document.createElement("span");
+
+                badge.className =
+                    "rail-community-unread";
+
+                badge.textContent =
+                    unread > 99
+                        ? "99+"
+                        : unread;
+
+                wrapper.appendChild(badge);
+
+            }
+
+            container.appendChild(wrapper);
+
+        });
+}
+
+
+/* =========================================================
+   COMMUNITY SWITCHER
+========================================================= */
+
+function renderCommunitySwitcher() {
+
+    const container =
+        $("#communitySwitcherList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    if (!communityState.communities.length) {
+
+        container.innerHTML = `
+            <div class="channel-loading">
+                No communities available.
+            </div>
+        `;
+
+        return;
+    }
+
+    communityState.communities
+        .forEach(community => {
+
+            const button =
+                document.createElement("button");
+
+            button.type = "button";
+
+            button.className =
+                "community-switch-item";
+
+            if (
+                communityState.activeCommunity &&
+                String(community.id) ===
+                String(
+                    communityState
+                        .activeCommunity
+                        .id
+                )
+            ) {
+                button.classList.add("active");
+            }
+
+            const icon =
+                document.createElement("div");
+
+            icon.className =
+                "community-icon";
+
+            icon.textContent =
+                getInitials(
+                    community.name ||
+                    community.title ||
+                    "Community"
+                );
+
+            icon.style.width = "30px";
+            icon.style.height = "30px";
+            icon.style.borderRadius = "9px";
+            icon.style.fontSize = "8px";
+
+            const name =
+                document.createElement("span");
+
+            name.className =
+                "community-switch-name";
+
+            name.textContent =
+                community.name ||
+                community.title ||
+                "Community";
+
+            const role =
+                document.createElement("span");
+
+            role.className =
+                "community-switch-role";
+
+            role.textContent =
+                displayRole(
+                    community.membership_role ||
+                    "student"
+                );
+
+            button.append(
+                icon,
+                name,
+                role
+            );
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    selectCommunity(
+                        community.id
+                    );
+
+                    $("#communitySelectorMenu")
+                        .hidden = true;
+
+                }
+            );
+
+            container.appendChild(button);
+
+        });
+}
+
+
+/* =========================================================
+   SELECT COMMUNITY
+========================================================= */
+
+async function selectCommunity(
+    communityId
+) {
+
+    const community =
+        communityState.communities
+            .find(
+                item =>
+                    String(item.id) ===
+                    String(communityId)
+            );
+
+    if (!community) {
+        return;
+    }
+
+    communityState.activeCommunity =
+        community;
+
+    communityState.activeRole =
+        normalizeRole(
+            community.membership_role ||
+            communityState.profile?.role ||
+            "student"
+        );
+
+    updateCommunityHeader();
+
+    renderCommunityRail();
+    renderCommunitySwitcher();
+
+    await loadCommunityChannels();
+
+    await loadCommunityMembers();
+
+    subscribeToCommunity();
+
+    updatePermissionUI();
+
+    closeMobileSidebar();
+}
+
+
+function updateCommunityHeader() {
+
+    const community =
+        communityState.activeCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    const name =
+        community.name ||
+        community.title ||
+        "Community";
+
+    const description =
+        community.description ||
+        "Medical learning community";
+
+    const icon =
+        $("#activeCommunityIcon");
+
+    if (icon) {
+        icon.textContent =
+            getInitials(name);
+    }
+
+    const nameElement =
+        $("#activeCommunityName");
+
+    if (nameElement) {
+        nameElement.textContent =
+            name;
+    }
+
+    const descriptionElement =
+        $("#activeCommunityDescription");
+
+    if (descriptionElement) {
+        descriptionElement.textContent =
+            description;
+    }
+
+    const selectorName =
+        $("#selectorCommunityName");
+
+    if (selectorName) {
+        selectorName.textContent =
+            name;
+    }
+
+    const settingsName =
+        $("#settingsCommunityName");
+
+    if (settingsName) {
+        settingsName.textContent =
+            name;
+    }
+
+    const settingsInput =
+        $("#settingsCommunityNameInput");
+
+    if (settingsInput) {
+        settingsInput.value =
+            name;
+    }
+
+    const settingsDescription =
+        $("#settingsCommunityDescriptionInput");
+
+    if (settingsDescription) {
+        settingsDescription.value =
+            description;
+    }
+}
+
+
+/* =========================================================
+   LOAD CHANNELS
+========================================================= */
+
+async function loadCommunityChannels() {
+
+    const community =
+        communityState.activeCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    const list =
+        $("#channelList");
+
+    if (list) {
+
+        list.innerHTML = `
+            <div class="channel-loading">
+                Loading channels...
+            </div>
+        `;
+
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("chat_channels")
+                .select("*")
+                .eq(
+                    "community_id",
+                    community.id
+                )
+                .order("position", {
+                    ascending: true,
+                    nullsFirst: false
+                })
+                .order("created_at", {
+                    ascending: true
+                });
+
+        if (error) {
+            throw error;
+        }
+
+        let channels =
+            data || [];
+
+        /*
+         * Private channels require membership.
+         */
+
+        const privateChannels =
+            channels.filter(
+                channel =>
+                    getChannelVisibility(channel) ===
+                    "private"
+            );
+
+        if (privateChannels.length) {
+
+            const {
+                data: memberships,
+                error: membershipError
+            } =
+                await communitySupabase
+                    .from("chat_channel_members")
+                    .select("*")
+                    .eq(
+                        "user_id",
+                        communityState.user.id
+                    );
+
+            if (!membershipError &&
+                memberships) {
+
+                const allowed =
+                    new Set(
+                        memberships.map(
+                            item =>
+                                String(
+                                    item.channel_id
+                                )
+                        )
+                    );
+
+                channels =
+                    channels.filter(
+                        channel => {
+
+                            if (
+                                getChannelVisibility(
+                                    channel
+                                ) !== "private"
+                            ) {
+                                return true;
+                            }
+
+                            return (
+                                allowed.has(
+                                    String(channel.id)
+                                ) ||
+                                canManageCommunity()
+                            );
+
+                        }
+                    );
+
+            }
+
+        }
+
+        communityState.channels =
+            channels;
+
+        renderChannels();
+
+        if (!channels.length) {
+
+            clearChannel();
+
+            return;
+        }
+
+        if (
+            !communityState.activeChannel ||
+            !channels.some(
+                channel =>
+                    String(channel.id) ===
+                    String(
+                        communityState
+                            .activeChannel
+                            .id
+                    )
+            )
+        ) {
+
+            await selectChannel(
+                channels[0].id
+            );
+
+        } else {
+
+            await selectChannel(
+                communityState
+                    .activeChannel
+                    .id
+            );
+
+        }
+
+    } catch (error) {
+
+        console.error(
+            "❌ Channel loading failed:",
+            error
+        );
+
+        if (list) {
+
+            list.innerHTML = `
+                <div class="channel-loading">
+                    Unable to load channels.
+                </div>
+            `;
+
+        }
+
+    }
+}
+
+
+/* =========================================================
+   RENDER CHANNELS
+========================================================= */
+
+function renderChannels() {
+
+    const container =
+        $("#channelList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    const search =
+        communityState.channelSearchTerm
+            .trim()
+            .toLowerCase();
+
+    const filtered =
+        communityState.channels
+            .filter(channel => {
+
+                if (!search) {
+                    return true;
+                }
+
+                const name =
+                    String(
+                        channel.name ||
+                        channel.title ||
+                        ""
+                    ).toLowerCase();
+
+                return name.includes(search);
+
+            });
+
+    const categories = {};
+
+    filtered.forEach(channel => {
+
+        const category =
+            getChannelCategory(channel);
+
+        if (!categories[category]) {
+            categories[category] = [];
+        }
+
+        categories[category].push(channel);
+
+    });
+
+    Object.entries(categories)
+        .forEach(
+            ([categoryName, channels]) => {
+
+                const category =
+                    document.createElement("div");
+
+                category.className =
+                    "channel-category";
+
+                const header =
+                    document.createElement("div");
+
+                header.className =
+                    "channel-category-header";
+
+                const title =
+                    document.createElement("div");
+
+                title.className =
+                    "channel-category-title";
+
+                title.innerHTML = `
+                    <span>⌄</span>
+                    <span>
+                        ${escapeHTML(categoryName)}
+                    </span>
+                `;
+
+                header.appendChild(title);
+
+                if (canCreateChannel()) {
+
+                    const add =
+                        document.createElement("button");
+
+                    add.type = "button";
+
+                    add.className =
+                        "channel-add-button";
+
+                    add.textContent = "+";
+
+                    add.title =
+                        "Create channel";
+
+                    add.addEventListener(
+                        "click",
+                        event => {
+
+                            event.stopPropagation();
+
+                            openCreateChannel();
+
+                        }
+                    );
+
+                    header.appendChild(add);
+
+                }
+
+                category.appendChild(header);
+
+
+                channels.forEach(channel => {
+
+                    const button =
+                        document.createElement("button");
+
+                    button.type = "button";
+
+                    button.className =
+                        "channel-item";
+
+                    if (
+                        communityState.activeChannel &&
+                        String(channel.id) ===
+                        String(
+                            communityState
+                                .activeChannel
+                                .id
+                        )
+                    ) {
+                        button.classList.add("active");
+                    }
+
+                    const visibility =
+                        getChannelVisibility(
+                            channel
+                        );
+
+                    button.innerHTML = `
+                        <span class="channel-symbol">
+                            ${visibility === "private" ? "🔒" : "#"}
+                        </span>
+
+                        <span class="channel-name">
+                            ${escapeHTML(
+                                channel.name ||
+                                channel.title ||
+                                "channel"
+                            )}
+                        </span>
+                    `;
+
+                    const unread =
+                        Number(
+                            channel.unread_count || 0
+                        );
+
+                    if (unread > 0) {
+
+                        const badge =
+                            document.createElement("span");
+
+                        badge.className =
+                            "channel-unread";
+
+                        badge.textContent =
+                            unread > 99
+                                ? "99+"
+                                : unread;
+
+                        button.appendChild(
+                            badge
+                        );
+
+                    }
+
+                    button.addEventListener(
+                        "click",
+                        () => {
+
+                            selectChannel(
+                                channel.id
+                            );
+
+                        }
+                    );
+
+                    category.appendChild(
+                        button
+                    );
+
+                });
+
+                container.appendChild(
+                    category
+                );
+
+            }
+        );
+
+    if (!filtered.length) {
+
+        container.innerHTML = `
+            <div class="channel-loading">
+                No channels found.
+            </div>
+        `;
+
+    }
+}
+
+
+/* =========================================================
+   SELECT CHANNEL
+========================================================= */
+
+async function selectChannel(
+    channelId
+) {
+
+    const channel =
+        communityState.channels
+            .find(
+                item =>
+                    String(item.id) ===
+                    String(channelId)
+            );
+
+    if (!channel) {
+        return;
+    }
+
+    communityState.activeChannel =
+        channel;
+
+    updateChannelHeader();
+
+    renderChannels();
+
+    await loadMessages();
+
+    await loadChannelReactions();
+
+    subscribeToChannel();
+
+    await markChannelRead();
+
+    updateCourseBanner();
+
+    updateComposer();
+
+    closeMobileSidebar();
+}
+
+
+function updateChannelHeader() {
+
+    const channel =
+        communityState.activeChannel;
+
+    if (!channel) {
+        return;
+    }
+
+    const name =
+        channel.name ||
+        channel.title ||
+        "channel";
+
+    const description =
+        channel.description ||
+        "Community discussion";
+
+    const nameElement =
+        $("#activeChannelName");
+
+    if (nameElement) {
+        nameElement.textContent =
+            name;
+    }
+
+    const descriptionElement =
+        $("#activeChannelDescription");
+
+    if (descriptionElement) {
+        descriptionElement.textContent =
+            description;
+    }
+
+    const welcomeName =
+        $("#welcomeChannelName");
+
+    if (welcomeName) {
+        welcomeName.textContent =
+            name;
+    }
+
+    const input =
+        $("#messageInput");
+
+    if (input) {
+
+        input.placeholder =
+            `Message #${name}`;
+
+    }
+}
+
+
+/* =========================================================
+   COURSE-LINKED CHANNEL
+========================================================= */
+
+function updateCourseBanner() {
+
+    const banner =
+        $("#courseCommunityBanner");
+
+    const channel =
+        communityState.activeChannel;
+
+    if (!banner || !channel) {
+        return;
+    }
+
+    const courseId =
+        getChannelCourseId(channel) ||
+        getCommunityCourseId(
+            communityState.activeCommunity
+        );
+
+    if (!courseId) {
+
+        banner.hidden = true;
+
+        return;
+    }
+
+    const course =
+        communityState.courses
+            .find(
+                item =>
+                    String(item.id) ===
+                    String(courseId)
+            );
+
+    banner.hidden = false;
+
+    const title =
+        $("#courseCommunityTitle");
+
+    const description =
+        $("#courseCommunityDescription");
+
+    if (title) {
+
+        title.textContent =
+            course?.title
+                ? `${course.title} Discussion`
+                : "Course Discussion";
+
+    }
+
+    if (description) {
+
+        description.textContent =
+            "Discuss this course with other students and tutors.";
+
+    }
+}
+
+
+/* =========================================================
+   CLEAR CHANNEL
+========================================================= */
+
+function clearChannel() {
+
+    communityState.activeChannel =
+        null;
+
+    const list =
+        $("#messageList");
+
+    if (list) {
+        list.innerHTML = "";
+    }
+
+    const input =
+        $("#messageInput");
+
+    if (input) {
+        input.disabled = true;
+    }
+
+    const send =
+        $("#sendMessageButton");
+
+    if (send) {
+        send.disabled = true;
+    }
+
+    const notice =
+        $("#composerPermissionNotice");
+
+    if (notice) {
+
+        notice.hidden = false;
+
+        notice.textContent =
+            "There are no available channels in this community.";
+
+    }
+
+}
+
+
+/* =========================================================
+   LOAD MESSAGES
+========================================================= */
+
+async function loadMessages() {
+
+    const channel =
+        communityState.activeChannel;
+
+    if (!channel) {
+        return;
+    }
+
+    const messageList =
+        $("#messageList");
+
+    if (messageList) {
+
+        messageList.innerHTML = `
+            <div class="channel-loading">
+                Loading messages...
+            </div>
+        `;
+
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("chat_messages")
+                .select("*")
+                .eq(
+                    "channel_id",
+                    channel.id
+                )
+                .order("created_at", {
+                    ascending: true
+                })
+                .limit(500);
+
+        if (error) {
+            throw error;
+        }
+
+        communityState.messages =
+            data || [];
+
+        renderMessages();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Message loading failed:",
+            error
+        );
+
+        if (messageList) {
+
+            messageList.innerHTML = `
+                <div class="channel-loading">
+                    Unable to load messages.
+                </div>
+            `;
+
+        }
+
+    }
+}
+
+
+/* =========================================================
+   RENDER MESSAGES
+========================================================= */
+
+function renderMessages() {
+
+    const list =
+        $("#messageList");
+
+    if (!list) {
+        return;
+    }
+
+    list.innerHTML = "";
+
+    const search =
+        communityState.messageSearchTerm
+            .trim()
+            .toLowerCase();
+
+    const messages =
+        communityState.messages
+            .filter(message => {
+
+                if (!search) {
+                    return true;
+                }
+
+                return getMessageContent(message)
+                    .toLowerCase()
+                    .includes(search);
+
+            });
+
+    if (!messages.length) {
+
+        const empty =
+            document.createElement("div");
+
+        empty.className =
+            "channel-loading";
+
+        empty.textContent =
+            search
+                ? "No messages match your search."
+                : "No messages yet. Start the conversation.";
+
+        list.appendChild(empty);
+
+        return;
+    }
+
+
+    messages.forEach(
+        (message, index) => {
+
+            const previous =
+                messages[index - 1];
+
+            const currentSender =
+                getMessageSenderId(message);
+
+            const previousSender =
+                previous
+                    ? getMessageSenderId(previous)
+                    : null;
+
+            const sameSender =
+                currentSender &&
+                previousSender &&
+                String(currentSender) ===
+                String(previousSender);
+
+            const group =
+                document.createElement("article");
+
+            group.className =
+                "message-group";
+
+            if (sameSender) {
+                group.classList.add(
+                    "continuation"
+                );
+            }
+
+            const sender =
+                getMemberById(
+                    currentSender
+                );
+
+            const senderName =
+                normalizeName(
+                    sender,
+                    message?.sender_name ||
+                    message?.author_name ||
+                    "Student"
+                );
+
+            const senderRole =
+                normalizeRole(
+                    sender?.role ||
+                    sender?.user_role ||
+                    message?.sender_role ||
+                    "student"
+                );
+
+
+            if (!sameSender) {
+
+                const avatar =
+                    document.createElement("div");
+
+                avatar.className =
+                    "message-avatar";
+
+                avatar.textContent =
+                    getInitials(senderName);
+
+                group.appendChild(
+                    avatar
+                );
+
+            } else {
+
+                const spacer =
+                    document.createElement("div");
+
+                spacer.style.width = "36px";
+                spacer.style.flexShrink = "0";
+
+                group.appendChild(
+                    spacer
+                );
+
+            }
+
+
+            const content =
+                document.createElement("div");
+
+            content.className =
+                "message-content";
+
+
+            if (!sameSender) {
+
+                const meta =
+                    document.createElement("div");
+
+                meta.className =
+                    "message-meta";
+
+                meta.innerHTML = `
+                    <span class="message-author">
+                        ${escapeHTML(senderName)}
+                    </span>
+
+                    <span class="message-role">
+                        ${escapeHTML(
+                            displayRole(senderRole)
+                        )}
+                    </span>
+
+                    <span
+                        class="message-time"
+                        title="${escapeHTML(
+                            formatDateTime(
+                                message.created_at
+                            )
+                        )}"
+                    >
+                        ${escapeHTML(
+                            formatTime(
+                                message.created_at
+                            )
+                        )}
+                    </span>
+                `;
+
+                content.appendChild(
+                    meta
+                );
+
+            }
+
+
+            const text =
+                document.createElement("div");
+
+            text.className =
+                "message-text";
+
+            text.innerHTML =
+                escapeHTML(
+                    getMessageContent(message)
+                );
+
+            content.appendChild(
+                text
+            );
+
+
+            const reactions =
+                renderMessageReactions(
+                    message.id
+                );
+
+            if (reactions) {
+
+                content.appendChild(
+                    reactions
+                );
+
+            }
+
+
+            const actions =
+                document.createElement("div");
+
+            actions.className =
+                "message-actions";
+
+            actions.innerHTML = `
+                <button
+                    class="message-action"
+                    title="Reply"
+                    data-action="reply"
+                    data-message-id="${message.id}"
+                >
+                    ↩
+                </button>
+
+                <button
+                    class="message-action"
+                    title="React"
+                    data-action="react"
+                    data-message-id="${message.id}"
+                >
+                    ☺
+                </button>
+
+                <button
+                    class="message-action"
+                    title="Copy"
+                    data-action="copy"
+                    data-message-id="${message.id}"
+                >
+                    ⧉
+                </button>
+
+                ${
+                    canModerateMessages()
+                        ? `
+                            <button
+                                class="message-action"
+                                title="Delete"
+                                data-action="delete"
+                                data-message-id="${message.id}"
+                            >
+                                🗑
+                            </button>
+                        `
+                        : ""
+                }
+            `;
+
+            content.appendChild(
+                actions
+            );
+
+            group.appendChild(
+                content
+            );
+
+            list.appendChild(
+                group
+            );
+
+        }
+    );
+
+    scrollMessagesToBottom();
+}
+
+
+/* =========================================================
+   MEMBER HELPERS
+========================================================= */
+
+function getMemberById(id) {
+
+    if (!id) {
+        return null;
+    }
+
+    return communityState.members
+        .find(member => {
+
+            const memberId =
+                member.user_id ||
+                member.id ||
+                member.student_id;
+
+            return String(memberId) ===
+                String(id);
+
+        }) || null;
+}
+
+
+/* =========================================================
+   LOAD REACTIONS
+========================================================= */
+
+async function loadChannelReactions() {
+
+    const channel =
+        communityState.activeChannel;
+
+    if (!channel) {
+        return;
+    }
+
+    try {
+
+        const messageIds =
+            communityState.messages
+                .map(
+                    message => message.id
+                )
+                .filter(Boolean);
+
+        if (!messageIds.length) {
+
+            communityState.reactions = [];
+
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("chat_message_reactions")
+                .select("*")
+                .in(
+                    "message_id",
+                    messageIds
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        communityState.reactions =
+            data || [];
+
+        renderMessages();
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Reactions loading failed:",
+            error.message
+        );
+
+    }
+}
+
+
+function renderMessageReactions(
+    messageId
+) {
+
+    const reactions =
+        communityState.reactions
+            .filter(
+                reaction =>
+                    String(
+                        reaction.message_id
+                    ) ===
+                    String(messageId)
+            );
+
+    if (!reactions.length) {
+        return null;
+    }
+
+    const container =
+        document.createElement("div");
+
+    container.className =
+        "message-reactions";
+
+    const groups = {};
+
+    reactions.forEach(
+        reaction => {
+
+            const emoji =
+                reaction.reaction ||
+                reaction.emoji ||
+                "👍";
+
+            if (!groups[emoji]) {
+                groups[emoji] = [];
+            }
+
+            groups[emoji].push(
+                reaction
+            );
+
+        }
+    );
+
+    Object.entries(groups)
+        .forEach(
+            ([emoji, items]) => {
+
+                const button =
+                    document.createElement("button");
+
+                button.type = "button";
+
+                button.className =
+                    "reaction-chip";
+
+                const mine =
+                    items.some(
+                        item =>
+                            String(
+                                item.user_id
+                            ) ===
+                            String(
+                                communityState
+                                    .user
+                                    .id
+                            )
+                    );
+
+                if (mine) {
+                    button.classList.add(
+                        "active"
+                    );
+                }
+
+                button.innerHTML =
+                    `${escapeHTML(emoji)}
+                     <span>${items.length}</span>`;
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        toggleReaction(
+                            messageId,
+                            emoji
+                        );
+
+                    }
+                );
+
+                container.appendChild(
+                    button
+                );
+
+            }
+        );
+
+    return container;
+}
+
+
+/* =========================================================
+   SEND MESSAGE
+========================================================= */
+
+async function sendMessage() {
+
+    const channel =
+        communityState.activeChannel;
+
+    const input =
+        $("#messageInput");
+
+    if (!channel || !input) {
+        return;
+    }
+
+    const content =
+        input.value.trim();
+
+    if (!content) {
+        return;
+    }
+
+    if (!canSendMessages()) {
+
+        showToast(
+            "You cannot send messages here.",
+            "error"
+        );
+
+        return;
+    }
+
+    input.disabled = true;
+
+    try {
+
+        /*
+         * Keep insert compatible with the Phase 1
+         * message schema.
+         */
+
+        const payload = {
+            channel_id: channel.id,
+            sender_id: communityState.user.id,
+            content: content
+        };
+
+        const {
+            error
+        } =
+            await communitySupabase
+                .from("chat_messages")
+                .insert(payload);
+
+        if (error) {
+            throw error;
+        }
+
+        input.value = "";
+
+        resizeMessageInput();
+
+        communityState.activeReplyMessage =
+            null;
+
+        $("#replyPreview").hidden =
+            true;
+
+        await loadMessages();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Message sending failed:",
+            error
+        );
+
+        showToast(
+            "Message could not be sent.",
+            "error"
+        );
+
+    } finally {
+
+        input.disabled = false;
+
+        input.focus();
+
+    }
+}
+
+
+/* =========================================================
+   REACTIONS
+========================================================= */
+
+async function toggleReaction(
+    messageId,
+    emoji
+) {
+
+    const userId =
+        communityState.user.id;
+
+    try {
+
+        const existing =
+            communityState.reactions
+                .find(
+                    reaction =>
+                        String(
+                            reaction.message_id
+                        ) ===
+                        String(messageId) &&
+                        String(
+                            reaction.user_id
+                        ) ===
+                        String(userId) &&
+                        (
+                            reaction.reaction ||
+                            reaction.emoji
+                        ) === emoji
+                );
+
+        if (existing) {
+
+            const {
+                error
+            } =
+                await communitySupabase
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        existing.id
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+        } else {
+
+            const {
+                error
+            } =
+                await communitySupabase
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .insert({
+                        message_id: messageId,
+                        user_id: userId,
+                        reaction: emoji
+                    });
+
+            if (error) {
+                throw error;
+            }
+
+        }
+
+        await loadChannelReactions();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Reaction error:",
+            error
+        );
+
+        showToast(
+            "Reaction could not be updated.",
+            "error"
+        );
+
+    }
+}
+
+
+/* =========================================================
+   MESSAGE ACTIONS
+========================================================= */
+
+async function handleMessageAction(
+    action,
+    messageId
+) {
+
+    const message =
+        communityState.messages
+            .find(
+                item =>
+                    String(item.id) ===
+                    String(messageId)
+            );
+
+    if (!message) {
+        return;
+    }
+
+    if (action === "reply") {
+
+        const sender =
+            getMemberById(
+                getMessageSenderId(message)
+            );
+
+        communityState.activeReplyMessage =
+            message;
+
+        $("#replyPreviewAuthor")
+            .textContent =
+                normalizeName(
+                    sender,
+                    "Student"
+                );
+
+        $("#replyPreview").hidden =
+            false;
+
+        $("#messageInput").focus();
+
+        return;
+    }
+
+
+    if (action === "copy") {
+
+        try {
+
+            await navigator.clipboard.writeText(
+                getMessageContent(message)
+            );
+
+            showToast(
+                "Message copied.",
+                "success"
+            );
+
+        } catch {
+
+            showToast(
+                "Could not copy message.",
+                "error"
+            );
+
+        }
+
+        return;
+    }
+
+
+    if (action === "react") {
+
+        await toggleReaction(
+            message.id,
+            "👍"
+        );
+
+        return;
+    }
+
+
+    if (action === "delete") {
+
+        if (!canModerateMessages()) {
+
+            showToast(
+                "You do not have permission to delete messages.",
+                "error"
+            );
+
+            return;
+        }
+
+        const confirmed =
+            window.confirm(
+                "Delete this message?"
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            const {
+                error
+            } =
+                await communitySupabase
+                    .from("chat_messages")
+                    .delete()
+                    .eq(
+                        "id",
+                        message.id
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            await loadMessages();
+
+            showToast(
+                "Message deleted.",
+                "success"
+            );
+
+        } catch (error) {
+
+            console.error(
+                "❌ Delete failed:",
+                error
+            );
+
+            showToast(
+                "Message could not be deleted.",
+                "error"
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   LOAD COMMUNITY MEMBERS
+========================================================= */
+
+async function loadCommunityMembers() {
+
+    const community =
+        communityState.activeCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("chat_community_members")
+                .select("*")
+                .eq(
+                    "community_id",
+                    community.id
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        communityState.members =
+            data || [];
+
+        /*
+         * Try to enrich member records with
+         * student profiles.
+         */
+
+        const userIds =
+            communityState.members
+                .map(
+                    member =>
+                        member.user_id
+                )
+                .filter(Boolean);
+
+        if (userIds.length) {
+
+            try {
+
+                const {
+                    data: students
+                } =
+                    await communitySupabase
+                        .from("students")
+                        .select("*")
+                        .in(
+                            "id",
+                            userIds
+                        );
+
+                if (students?.length) {
+
+                    const profileMap =
+                        new Map();
+
+                    students.forEach(
+                        student => {
+
+                            profileMap.set(
+                                String(student.id),
+                                student
+                            );
+
+                        }
+                    );
+
+                    communityState.members =
+                        communityState.members
+                            .map(member => {
+
+                                const profile =
+                                    profileMap.get(
+                                        String(
+                                            member.user_id
+                                        )
+                                    );
+
+                                return {
+                                    ...member,
+
+                                    ...(profile || {})
+                                };
+
+                            });
+
+                }
+
+            } catch (profileError) {
+
+                console.warn(
+                    "⚠️ Member profiles unavailable:",
+                    profileError.message
+                );
+
+            }
+
+        }
+
+        renderMembers();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Member loading failed:",
+            error
+        );
+
+        $("#memberList").innerHTML = `
+            <div class="member-loading">
+                Unable to load members.
+            </div>
+        `;
+
+    }
+}
+
+
+/* =========================================================
+   RENDER MEMBERS
+========================================================= */
+
+function renderMembers() {
+
+    const container =
+        $("#memberList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    const search =
+        communityState.memberSearchTerm
+            .trim()
+            .toLowerCase();
+
+    const members =
+        communityState.members
+            .filter(member => {
+
+                const name =
+                    normalizeName(
+                        member,
+                        ""
+                    ).toLowerCase();
+
+                return !search ||
+                    name.includes(search);
+
+            })
+            .sort(
+                (a, b) => {
+
+                    const aOnline =
+                        isMemberOnline(
+                            a.user_id
+                        );
+
+                    const bOnline =
+                        isMemberOnline(
+                            b.user_id
+                        );
+
+                    if (aOnline !== bOnline) {
+                        return bOnline - aOnline;
+                    }
+
+                    return normalizeName(a)
+                        .localeCompare(
+                            normalizeName(b)
+                        );
+
+                }
+            );
+
+    const online =
+        members.filter(
+            member =>
+                isMemberOnline(
+                    member.user_id
+                )
+        );
+
+    const offline =
+        members.filter(
+            member =>
+                !isMemberOnline(
+                    member.user_id
+                )
+        );
+
+    renderMemberGroup(
+        container,
+        "Online",
+        online
+    );
+
+    renderMemberGroup(
+        container,
+        "Offline",
+        offline
+    );
+
+    updateOnlineCount(
+        online.length
+    );
+
+}
+
+
+function renderMemberGroup(
+    container,
+    title,
+    members
+) {
+
+    if (!members.length) {
+        return;
+    }
+
+    const heading =
+        document.createElement("div");
+
+    heading.className =
+        "member-group-title";
+
+    heading.textContent =
+        `${title} — ${members.length}`;
+
+    container.appendChild(
+        heading
+    );
+
+    members.forEach(member => {
+
+        const name =
+            normalizeName(
+                member,
+                "Student"
+            );
+
+        const role =
+            normalizeRole(
+                member.role ||
+                member.user_role ||
+                "student"
+            );
+
+        const userId =
+            member.user_id;
+
+        const item =
+            document.createElement("div");
+
+        item.className =
+            "member-item";
+
+        const avatarWrapper =
+            document.createElement("div");
+
+        avatarWrapper.className =
+            "member-avatar-wrapper";
+
+        const avatar =
+            document.createElement("div");
+
+        avatar.className =
+            "member-avatar";
+
+        avatar.textContent =
+            getInitials(name);
+
+        const dot =
+            document.createElement("span");
+
+        dot.className =
+            "presence-dot";
+
+        if (
+            isMemberOnline(userId)
+        ) {
+            dot.classList.add("online");
+        }
+
+        avatarWrapper.append(
+            avatar,
+            dot
+        );
+
+        const info =
+            document.createElement("div");
+
+        info.className =
+            "member-info";
+
+        info.innerHTML = `
+            <span class="member-name">
+                ${escapeHTML(name)}
+            </span>
+
+            <span class="member-role ${escapeHTML(role)}">
+                ${escapeHTML(
+                    displayRole(role)
+                )}
+            </span>
+        `;
+
+        item.append(
+            avatarWrapper,
+            info
+        );
+
+        container.appendChild(
+            item
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   PRESENCE
+========================================================= */
+
+function isMemberOnline(userId) {
+
+    if (!userId) {
+        return false;
+    }
+
+    const presence =
+        communityState.presence[
+            String(userId)
+        ];
+
+    if (!presence) {
+        return false;
+    }
+
+    if (
+        presence.status &&
+        presence.status !== "online"
+    ) {
+        return false;
+    }
+
+    if (presence.last_seen) {
+
+        const age =
+            Date.now() -
+            new Date(
+                presence.last_seen
+            ).getTime();
+
+        if (
+            Number.isFinite(age) &&
+            age > 5 * 60 * 1000
+        ) {
+            return false;
+        }
+
+    }
+
+    return true;
+}
+
+
+function updateOnlineCount(
+    count
+) {
+
+    const element =
+        $("#onlineMemberCount");
+
+    if (element) {
+        element.textContent =
+            count;
+    }
+}
+
+
+async function updateOwnPresence() {
+
+    if (!communityState.user) {
+        return;
+    }
+
+    try {
+
+        const {
+            data
+        } =
+            await communitySupabase
+                .from("chat_presence")
+                .select("*")
+                .eq(
+                    "user_id",
+                    communityState.user.id
+                )
+                .maybeSingle();
+
+        if (data) {
+
+            communityState.presence[
+                String(
+                    communityState.user.id
+                )
+            ] = data;
+
+            renderMembers();
+
+            return;
+        }
+
+        await communitySupabase
+            .from("chat_presence")
+            .insert({
+                user_id:
+                    communityState.user.id,
+                status: "online",
+                last_seen:
+                    new Date().toISOString()
+            });
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Presence update:",
+            error.message
+        );
+
+    }
+}
+
+
+/* =========================================================
+   REALTIME COMMUNITY
+========================================================= */
+
+function unsubscribeCommunity() {
+
+    if (
+        communityState.subscriptions
+            .length
+    ) {
+
+        communityState.subscriptions
+            .forEach(
+                subscription => {
+
+                    try {
+
+                        communitySupabase
+                            .removeChannel(
+                                subscription
+                            );
+
+                    } catch {}
+
+                }
+            );
+
+    }
+
+    communityState.subscriptions =
+        [];
+}
+
+
+function subscribeToCommunity() {
+
+    unsubscribeCommunity();
+
+    const community =
+        communityState.activeCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    const channel =
+        communitySupabase
+            .channel(
+                `community-${community.id}`
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_community_members",
+                    filter:
+                        `community_id=eq.${community.id}`
+                },
+                async () => {
+
+                    await loadCommunityMembers();
+
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_presence"
+                },
+                payload => {
+
+                    updatePresenceFromPayload(
+                        payload
+                    );
+
+                }
+            )
+            .subscribe();
+
+    communityState.subscriptions
+        .push(channel);
+
+}
+
+
+function updatePresenceFromPayload(
+    payload
+) {
+
+    const record =
+        payload.new ||
+        payload.old;
+
+    if (!record) {
+        return;
+    }
+
+    const userId =
+        record.user_id;
+
+    if (!userId) {
+        return;
+    }
+
+    communityState.presence[
+        String(userId)
+    ] = record;
+
+    renderMembers();
+
+}
+
+
+/* =========================================================
+   REALTIME CHANNEL
+========================================================= */
+
+function unsubscribeChannel() {
+
+    if (
+        communityState.channelSubscription
+    ) {
+
+        try {
+
+            communitySupabase
+                .removeChannel(
+                    communityState
+                        .channelSubscription
+                );
+
+        } catch {}
+
+        communityState.channelSubscription =
+            null;
+
+    }
+
+}
+
+
+function subscribeToChannel() {
+
+    unsubscribeChannel();
+
+    const channel =
+        communityState.activeChannel;
+
+    if (!channel) {
+        return;
+    }
+
+    const realtime =
+        communitySupabase
+            .channel(
+                `chat-${channel.id}`
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "INSERT",
+                    schema: "public",
+                    table: "chat_messages",
+                    filter:
+                        `channel_id=eq.${channel.id}`
+                },
+                async payload => {
+
+                    const exists =
+                        communityState.messages
+                            .some(
+                                message =>
+                                    String(
+                                        message.id
+                                    ) ===
+                                    String(
+                                        payload.new.id
+                                    )
+                            );
+
+                    if (!exists) {
+
+                        communityState.messages
+                            .push(
+                                payload.new
+                            );
+
+                        renderMessages();
+
+                    }
+
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "DELETE",
+                    schema: "public",
+                    table: "chat_messages",
+                    filter:
+                        `channel_id=eq.${channel.id}`
+                },
+                async () => {
+
+                    await loadMessages();
+
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_message_reactions"
+                },
+                async payload => {
+
+                    const messageId =
+                        payload.new?.message_id ||
+                        payload.old?.message_id;
+
+                    const belongs =
+                        communityState.messages
+                            .some(
+                                message =>
+                                    String(
+                                        message.id
+                                    ) ===
+                                    String(
+                                        messageId
+                                    )
+                            );
+
+                    if (belongs) {
+                        await loadChannelReactions();
+                    }
+
+                }
+            )
+            .subscribe();
+
+    communityState.channelSubscription =
+        realtime;
+
+}
+
+
+/* =========================================================
+   READ STATUS
+========================================================= */
+
+async function markChannelRead() {
+
+    const channel =
+        communityState.activeChannel;
+
+    const user =
+        communityState.user;
+
+    if (!channel || !user) {
+        return;
+    }
+
+    try {
+
+        const latest =
+            communityState.messages
+                .at(-1);
+
+        const payload = {
+            channel_id:
+                channel.id,
+
+            user_id:
+                user.id,
+
+            last_read_at:
+                new Date().toISOString()
+        };
+
+        /*
+         * message_id is added only when a latest
+         * message is available. This is useful if
+         * the Phase 1 schema contains it.
+         */
+
+        if (latest?.id) {
+            payload.last_read_message_id =
+                latest.id;
+        }
+
+        const {
+            error
+        } =
+            await communitySupabase
+                .from("chat_read_status")
+                .upsert(
+                    payload,
+                    {
+                        onConflict:
+                            "channel_id,user_id"
+                    }
+                );
+
+        if (error) {
+
+            /*
+             * Do not break chat if an older Phase 1
+             * read-status schema differs.
+             */
+
+            console.warn(
+                "⚠️ Read status:",
+                error.message
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "⚠️ Read status update:",
+            error.message
+        );
+
+    }
+}
+
+
+/* =========================================================
+   PERMISSION UI
+========================================================= */
+
+function updatePermissionUI() {
+
+    const createCommunity =
+        $("#createCommunityRailButton");
+
+    if (createCommunity) {
+
+        createCommunity.hidden =
+            !canCreateCommunity();
+
+    }
+
+
+    const settings =
+        $("#communitySettingsButton");
+
+    if (settings) {
+
+        settings.hidden =
+            !canManageCommunity();
+
+    }
+
+
+    const input =
+        $("#messageInput");
+
+    const send =
+        $("#sendMessageButton");
+
+    const notice =
+        $("#composerPermissionNotice");
+
+    const allowed =
+        Boolean(
+            communityState.activeChannel &&
+            canSendMessages()
+        );
+
+    if (input) {
+        input.disabled =
+            !allowed;
+
+        if (communityState.activeChannel) {
+
+            input.placeholder =
+                `Message #${
+                    communityState
+                        .activeChannel
+                        .name ||
+                    "channel"
+                }`;
+
+        }
+
+    }
+
+    if (send) {
+        send.disabled =
+            !allowed;
+    }
+
+    if (notice) {
+        notice.hidden =
+            allowed;
+
+        if (!allowed) {
+
+            notice.textContent =
+                communityState.activeChannel
+                    ? "You cannot send messages in this channel."
+                    : "Select a channel to begin.";
+
+        }
+
+    }
+
+    renderChannels();
+
+}
+
+
+/* =========================================================
+   COMMUNITY CREATION
+========================================================= */
+
+function openCreateCommunity() {
+
+    if (!canCreateCommunity()) {
+
+        showToast(
+            "You do not have permission to create communities.",
+            "error"
+        );
+
+        return;
+    }
+
+    $("#communityNameInput").value = "";
+    $("#communityDescriptionInput").value = "";
+    $("#communityTypeInput").value = "general";
+    $("#communityCourseInput").value = "";
+
+    $("#communityCourseWrapper").hidden =
+        true;
+
+    openModal(
+        "communityModal"
+    );
+
+}
+
+
+async function createCommunity(
+    event
+) {
+
+    event.preventDefault();
+
+    if (!canCreateCommunity()) {
+
+        showToast(
+            "You do not have permission to create communities.",
+            "error"
+        );
+
+        return;
+    }
+
+    const name =
+        $("#communityNameInput")
+            .value.trim();
+
+    const description =
+        $("#communityDescriptionInput")
+            .value.trim();
+
+    const type =
+        $("#communityTypeInput")
+            .value;
+
+    const courseId =
+        $("#communityCourseInput")
+            .value || null;
+
+    if (!name) {
+        return;
+    }
+
+    try {
+
+        /*
+         * Core fields only.
+         */
+
+        const payload = {
+            name,
+            description
+        };
+
+        /*
+         * Course-linked communities use course_id
+         * where the schema supports it.
+         */
+
+        if (courseId) {
+            payload.course_id =
+                Number(courseId);
+        }
+
+        const {
+            data,
+            error
+        } =
+            await communitySupabase
+                .from("chat_communities")
+                .insert(payload)
+                .select("*")
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        /*
+         * Add creator as Super Admin/Admin depending
+         * on their existing account authority.
+         */
+
+        const creatorRole =
+            normalizeRole(
+                communityState.activeRole
+            );
+
+        const memberRole =
+            creatorRole === "super-admin"
+                ? "super-admin"
+                : "admin";
+
+        const {
+            error: memberError
+        } =
+            await communitySupabase
+                .from("chat_community_members")
+                .insert({
+                    community_id:
+                        data.id,
+
+                    user_id:
+                        communityState.user.id,
+
+                    role:
+                        memberRole
+                });
+
+        if (memberError) {
+
+            console.warn(
+                "⚠️ Community creator membership:",
+                memberError.message
+            );
+
+        }
+
+        /*
+         * Automatically create a general channel.
+         */
+
+        const channelPayload = {
+            community_id:
+                data.id,
+
+            name:
+                "general-chat",
+
+            description:
+                "General community discussion",
+
+            category:
+                "Community",
+
+            visibility:
+                "public"
+        };
+
+        const {
+            error: channelError
+        } =
+            await communitySupabase
+                .from("chat_channels")
+                .insert(channelPayload);
+
+        if (channelError) {
+
+            console.warn(
+                "⚠️ Default channel creation:",
+                channelError.message
+            );
+
+        }
+
+        closeModal(
+            "communityModal"
+        );
+
+        showToast(
+            "Community created successfully.",
+            "success"
+        );
+
+        await loadCommunities();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Community creation failed:",
+            error
+        );
+
+        showToast(
+            "Community could not be created.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   CHANNEL CREATION
+========================================================= */
+
+function openCreateChannel() {
+
+    if (!canCreateChannel()) {
+
+        showToast(
+            "You do not have permission to create channels.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!communityState.activeCommunity) {
+
+        showToast(
+            "Select a community first.",
+            "error"
+        );
+
+        return;
+    }
+
+    $("#channelNameInput").value = "";
+    $("#channelDescriptionInput").value = "";
+    $("#channelCategoryInput").value = "General";
+    $("#channelVisibilityInput").value = "public";
+    $("#courseLinkedChannelCheckbox").checked =
+        false;
+    $("#channelCourseInput").value = "";
+
+    $("#channelCourseWrapper").hidden =
+        true;
+
+    openModal(
+        "channelModal"
+    );
+
+}
+
+
+async function createChannel(
+    event
+) {
+
+    event.preventDefault();
+
+    if (!canCreateChannel()) {
+
+        showToast(
+            "You do not have permission to create channels.",
+            "error"
+        );
+
+        return;
+    }
+
+    const community =
+        communityState.activeCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    const name =
+        $("#channelNameInput")
+            .value
+            .trim()
+            .toLowerCase()
+            .replace(/\s+/g, "-");
+
+    const description =
+        $("#channelDescriptionInput")
+            .value.trim();
+
+    const category =
+        $("#channelCategoryInput")
+            .value;
+
+    const visibility =
+        $("#channelVisibilityInput")
+            .value;
+
+    const linked =
+        $("#courseLinkedChannelCheckbox")
+            .checked;
+
+    const courseId =
+        $("#channelCourseInput")
+            .value || null;
+
+    if (!name) {
+        return;
+    }
+
+    try {
+
+        const payload = {
+            community_id:
+                community.id,
+
+            name,
+
+            description,
+
+            category,
+
+            visibility
+        };
+
+        if (linked && courseId) {
+
+            payload.course_id =
+                Number(courseId);
+
+        }
+
+        const {
+            error
+        } =
+            await communitySupabase
+                .from("chat_channels")
+                .insert(payload);
+
+        if (error) {
+            throw error;
+        }
+
+        closeModal(
+            "channelModal"
+        );
+
+        showToast(
+            "Channel created successfully.",
+            "success"
+        );
+
+        await loadCommunityChannels();
+
+    } catch (error) {
+
+        console.error(
+            "❌ Channel creation failed:",
+            error
+        );
+
+        showToast(
+            "Channel could not be created.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   COMMUNITY SETTINGS
+========================================================= */
+
+function openCommunitySettings() {
+
+    if (!canManageCommunity()) {
+
+        showToast(
+            "You do not have permission to manage this community.",
+            "error"
+        );
+
+        return;
+    }
+
+    updateCommunityHeader();
+
+    openModal(
+        "communitySettingsModal"
+    );
+
+}
+
+
+async function saveCommunitySettings() {
+
+    if (!canManageCommunity()) {
+
+        showToast(
+            "You do not have permission to update this community.",
+            "error"
+        );
+
+        return;
+    }
+
+    const community =
+        communityState.activeCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    const name =
+        $("#settingsCommunityNameInput")
+            .value.trim();
+
+    const description =
+        $("#settingsCommunityDescriptionInput")
+            .value.trim();
+
+    if (!name) {
+        return;
+    }
+
+    try {
+
+        const {
+            error
+        } =
+            await communitySupabase
+                .from("chat_communities")
+                .update({
+                    name,
+                    description
+                })
+                .eq(
+                    "id",
+                    community.id
+                );
+
+        if (error) {
+            throw error;
+        }
+
+        community.name =
+            name;
+
+        community.title =
+            name;
+
+        community.description =
+            description;
+
+        updateCommunityHeader();
+
+        renderCommunityRail();
+        renderCommunitySwitcher();
+
+        closeModal(
+            "communitySettingsModal"
+        );
+
+        showToast(
+            "Community settings saved.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Community settings failed:",
+            error
+        );
+
+        showToast(
+            "Community settings could not be saved.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   COMPOSER
+========================================================= */
+
+function updateComposer() {
+
+    const input =
+        $("#messageInput");
+
+    const send =
+        $("#sendMessageButton");
+
+    if (!communityState.activeChannel) {
+
+        if (input) {
+            input.disabled = true;
+        }
+
+        if (send) {
+            send.disabled = true;
+        }
+
+        return;
+    }
+
+    const allowed =
+        canSendMessages();
+
+    if (input) {
+        input.disabled =
+            !allowed;
+    }
+
+    if (send) {
+        send.disabled =
+            !allowed;
+    }
+
+}
+
+
+function resizeMessageInput() {
+
+    const input =
+        $("#messageInput");
+
+    if (!input) {
+        return;
+    }
+
+    input.style.height =
+        "auto";
+
+    input.style.height =
+        Math.min(
+            input.scrollHeight,
+            130
+        ) + "px";
+}
+
+
+function scrollMessagesToBottom() {
+
+    const area =
+        $("#messageArea");
+
+    if (!area) {
+        return;
+    }
+
+    requestAnimationFrame(
+        () => {
+
+            area.scrollTop =
+                area.scrollHeight;
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   SEARCH
+========================================================= */
+
+function setupSearch() {
+
+    const channelSearch =
+        $("#channelSearchInput");
+
+    channelSearch?.addEventListener(
+        "input",
+        event => {
+
+            communityState.channelSearchTerm =
+                event.target.value;
+
+            renderChannels();
+
+        }
+    );
+
+
+    const memberSearch =
+        $("#memberSearchInput");
+
+    memberSearch?.addEventListener(
+        "input",
+        event => {
+
+            communityState.memberSearchTerm =
+                event.target.value;
+
+            renderMembers();
+
+        }
+    );
+
+
+    const messageSearch =
+        $("#messageSearchInput");
+
+    messageSearch?.addEventListener(
+        "input",
+        event => {
+
+            communityState.messageSearchTerm =
+                event.target.value;
+
+            renderMessages();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   EVENT LISTENERS
+========================================================= */
+
+function setupEvents() {
+
+    $("#messageComposer")
+        ?.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                sendMessage();
+
+            }
+        );
+
+
+    $("#messageInput")
+        ?.addEventListener(
+            "input",
+            resizeMessageInput
+        );
+
+
+    $("#messageInput")
+        ?.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    sendMessage();
+
+                }
+
+            }
+        );
+
+
+    $("#cancelReplyButton")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                communityState.activeReplyMessage =
+                    null;
+
+                $("#replyPreview").hidden =
+                    true;
+
+            }
+        );
+
+
+    $("#createCommunityRailButton")
+        ?.addEventListener(
+            "click",
+            openCreateCommunity
+        );
+
+
+    $("#communitySettingsButton")
+        ?.addEventListener(
+            "click",
+            openCommunitySettings
+        );
+
+
+    $("#saveCommunitySettingsButton")
+        ?.addEventListener(
+            "click",
+            saveCommunitySettings
+        );
+
+
+    $("#openCreateChannelFromSettings")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                closeModal(
+                    "communitySettingsModal"
+                );
+
+                openCreateChannel();
+
+            }
+        );
+
+
+    $("#communityForm")
+        ?.addEventListener(
+            "submit",
+            createCommunity
+        );
+
+
+    $("#channelForm")
+        ?.addEventListener(
+            "submit",
+            createChannel
+        );
+
+
+    $("#communityTypeInput")
+        ?.addEventListener(
+            "change",
+            event => {
+
+                $("#communityCourseWrapper")
+                    .hidden =
+                    event.target.value !==
+                    "course";
+
+            }
+        );
+
+
+    $("#courseLinkedChannelCheckbox")
+        ?.addEventListener(
+            "change",
+            event => {
+
+                $("#channelCourseWrapper")
+                    .hidden =
+                    !event.target.checked;
+
+            }
+        );
+
+
+    $("#communitySelectorButton")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const menu =
+                    $("#communitySelectorMenu");
+
+                menu.hidden =
+                    !menu.hidden;
+
+            }
+        );
+
+
+    $("#homeCommunityButton")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    communityState
+                        .communities
+                        .length
+                ) {
+
+                    selectCommunity(
+                        communityState
+                            .communities[0]
+                            .id
+                    );
+
+                }
+
+            }
+        );
+
+
+    $("#memberToggleButton")
+        ?.addEventListener(
+            "click",
+            toggleMemberSidebar
+        );
+
+
+    $("#closeMemberSidebarButton")
+        ?.addEventListener(
+            "click",
+            closeMemberSidebar
+        );
+
+
+    $("#mobileChannelButton")
+        ?.addEventListener(
+            "click",
+            openMobileSidebar
+        );
+
+
+    $("#mobileOverlay")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                closeMobileSidebar();
+                closeMemberSidebar();
+
+            }
+        );
+
+
+    $("#messageSearchButton")
+        ?.addEventListener(
+            "click",
+            () => {
+
+                const panel =
+                    $("#messageSearchPanel");
+
+                panel.hidden =
+                    !panel.hidden;
+
+                if (!panel.hidden) {
+                    $("#messageSearchInput")
+                        ?.focus();
+                }
+
+            }
+        );
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            const actionButton =
+                event.target.closest(
+                    "[data-action]"
+                );
+
+            if (actionButton) {
+
+                handleMessageAction(
+                    actionButton.dataset.action,
+                    actionButton.dataset.messageId
+                );
+
+                return;
+            }
+
+            const closeModalButton =
+                event.target.closest(
+                    "[data-close-modal]"
+                );
+
+            if (closeModalButton) {
+
+                closeModal(
+                    closeModalButton.dataset.closeModal
+                );
+
+            }
+
+        }
+    );
+
+
+    document.addEventListener(
+        "click",
+        event => {
+
+            const selector =
+                $("#communitySelectorMenu");
+
+            const wrapper =
+                $(".community-selector-wrapper");
+
+            if (
+                selector &&
+                wrapper &&
+                !wrapper.contains(event.target)
+            ) {
+
+                selector.hidden = true;
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
 
 function openMobileSidebar() {
 
-  $("communitySidebar")
-    ?.classList.add("open");
+    const sidebar =
+        $(".channel-sidebar");
 
-  $("mobileOverlay")
-    ?.classList.add("open");
+    const overlay =
+        $("#mobileOverlay");
+
+    sidebar?.classList.add("open");
+
+    if (overlay) {
+        overlay.hidden = false;
+    }
+
 }
 
 
 function closeMobileSidebar() {
 
-  $("communitySidebar")
-    ?.classList.remove("open");
+    const sidebar =
+        $(".channel-sidebar");
 
-  $("mobileOverlay")
-    ?.classList.remove("open");
-}
+    const overlay =
+        $("#mobileOverlay");
 
+    sidebar?.classList.remove("open");
 
-/* ============================================================
-   MEMBER PANEL
-============================================================ */
+    if (
+        !$("#memberSidebar")
+            ?.classList.contains("open")
+    ) {
 
-function toggleMemberPanel() {
-
-  $("memberPanel")
-    ?.classList.toggle("open");
-}
-
-
-function closeMemberPanel() {
-
-  $("memberPanel")
-    ?.classList.remove("open");
-}
-
-
-/* ============================================================
-   TEXTAREA
-============================================================ */
-
-function autoResizeTextarea() {
-
-  const textarea =
-    $("messageInput");
-
-  if (!textarea) {
-    return;
-  }
-
-  textarea.style.height =
-    "auto";
-
-  textarea.style.height =
-    `${Math.min(
-      textarea.scrollHeight,
-      150
-    )}px`;
-}
-
-
-/* ============================================================
-   ATTACHMENT UI
-============================================================ */
-
-function handleAttachments(
-  event
-) {
-
-  const files =
-    [...(
-      event.target.files ||
-      []
-    )];
-
-  CommunityState.selectedAttachments =
-    files;
-
-  const preview =
-    $("attachmentPreview");
-
-  if (!preview) {
-    return;
-  }
-
-  if (!files.length) {
-
-    preview.classList.add(
-      "hidden"
-    );
-
-    preview.innerHTML =
-      "";
-
-    return;
-  }
-
-  preview.classList.remove(
-    "hidden"
-  );
-
-  preview.innerHTML =
-    files.map(file => `
-      <span class="attachment-chip">
-        📎 ${escapeHtml(file.name)}
-      </span>
-    `).join("");
-}
-
-
-/* ============================================================
-   KEYBOARD
-============================================================ */
-
-function handleMessageKeydown(
-  event
-) {
-
-  if (
-    event.key === "Enter" &&
-    !event.shiftKey
-  ) {
-
-    event.preventDefault();
-
-    sendMessage();
-  }
-}
-
-
-/* ============================================================
-   GLOBAL SEARCH SHORTCUT
-============================================================ */
-
-function handleGlobalKeyboard(
-  event
-) {
-
-  if (
-    (event.ctrlKey || event.metaKey) &&
-    event.key.toLowerCase() === "k"
-  ) {
-
-    event.preventDefault();
-
-    openSearchModal();
-  }
-
-  if (
-    event.key === "Escape"
-  ) {
-
-    closeAllModals();
-  }
-}
-
-
-/* ============================================================
-   EVENT LISTENERS
-============================================================ */
-
-function setupEventListeners() {
-
-  $("messageForm")
-    ?.addEventListener(
-      "submit",
-      event => {
-
-        event.preventDefault();
-
-        sendMessage();
-
-      }
-    );
-
-  $("messageInput")
-    ?.addEventListener(
-      "keydown",
-      handleMessageKeydown
-    );
-
-  $("messageInput")
-    ?.addEventListener(
-      "input",
-      autoResizeTextarea
-    );
-
-  $("attachmentBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        $("attachmentInput")
-          ?.click();
-
-      }
-    );
-
-  $("attachmentInput")
-    ?.addEventListener(
-      "change",
-      handleAttachments
-    );
-
-  $("cancelReplyBtn")
-    ?.addEventListener(
-      "click",
-      cancelReply
-    );
-
-  $("openSidebarBtn")
-    ?.addEventListener(
-      "click",
-      openMobileSidebar
-    );
-
-  $("closeSidebarBtn")
-    ?.addEventListener(
-      "click",
-      closeMobileSidebar
-    );
-
-  $("mobileOverlay")
-    ?.addEventListener(
-      "click",
-      closeMobileSidebar
-    );
-
-  $("membersToggleBtn")
-    ?.addEventListener(
-      "click",
-      toggleMemberPanel
-    );
-
-  $("closeMembersBtn")
-    ?.addEventListener(
-      "click",
-      closeMemberPanel
-    );
-
-  $("notificationBtn")
-    ?.addEventListener(
-      "click",
-      async () => {
-
-        openModal(
-          "notificationModal"
-        );
-
-        await loadNotifications();
-
-        await markNotificationsRead();
-
-      }
-    );
-
-  $("searchMessagesBtn")
-    ?.addEventListener(
-      "click",
-      openSearchModal
-    );
-
-  $("globalSearchInput")
-    ?.addEventListener(
-      "input",
-      event => {
-
-        searchMessages(
-          event.target.value
-        );
-
-      }
-    );
-
-  $("messageSearchInput")
-    ?.addEventListener(
-      "input",
-      event => {
-
-        CommunityState.searchTerm =
-          event.target.value.trim();
-
-        if ($("clearSearchBtn")) {
-
-          $("clearSearchBtn")
-            .classList.toggle(
-              "hidden",
-              !CommunityState.searchTerm
-            );
+        if (overlay) {
+            overlay.hidden = true;
         }
-
-        renderMessages();
-
-      }
-    );
-
-  $("clearSearchBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        $("messageSearchInput").value =
-          "";
-
-        CommunityState.searchTerm =
-          "";
-
-        $("clearSearchBtn")
-          .classList.add(
-            "hidden"
-          );
-
-        renderMessages();
-
-      }
-    );
-
-  $("memberSearchInput")
-    ?.addEventListener(
-      "input",
-      renderMembers
-    );
-
-  $("refreshCommunitiesBtn")
-    ?.addEventListener(
-      "click",
-      loadCommunities
-    );
-
-  $("addChannelBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        if (!CommunityState.activeCommunityId) {
-
-          showToast(
-            "Select a community first.",
-            "error"
-          );
-
-          return;
-        }
-
-        openModal(
-          "channelModal"
-        );
-
-      }
-    );
-
-  $("channelForm")
-    ?.addEventListener(
-      "submit",
-      createChannel
-    );
-
-  document
-    .querySelectorAll(
-      "[data-close-modal]"
-    )
-    .forEach(button => {
-
-      button.addEventListener(
-        "click",
-        () => {
-
-          closeModal(
-            button.dataset.closeModal
-          );
-
-        }
-      );
-
-    });
-
-  document
-    .querySelectorAll(
-      ".modal-backdrop"
-    )
-    .forEach(backdrop => {
-
-      backdrop.addEventListener(
-        "click",
-        event => {
-
-          const modal =
-            event.currentTarget
-              .closest(".modal");
-
-          if (modal) {
-            modal.classList.add(
-              "hidden"
-            );
-          }
-
-        }
-      );
-
-    });
-
-  $("communitySettingsBtn")
-    ?.addEventListener(
-      "click",
-      () => {
-
-        showToast(
-          "Community settings will be available in the administration phase.",
-          "success"
-        );
-
-      }
-    );
-
-  document.addEventListener(
-    "keydown",
-    handleGlobalKeyboard
-  );
-
-  document.addEventListener(
-    "click",
-    event => {
-
-      const contextMenu =
-        $("messageContextMenu");
-
-      if (
-        contextMenu &&
-        !contextMenu.contains(
-          event.target
-        )
-      ) {
-
-        contextMenu.classList.add(
-          "hidden"
-        );
-      }
 
     }
-  );
 
-  window.addEventListener(
-    "beforeunload",
-    () => {
+}
 
-      setOfflinePresence();
+
+function toggleMemberSidebar() {
+
+    const sidebar =
+        $("#memberSidebar");
+
+    const overlay =
+        $("#mobileOverlay");
+
+    if (!sidebar) {
+        return;
+    }
+
+    const open =
+        sidebar.classList.toggle(
+            "open"
+        );
+
+    if (overlay) {
+        overlay.hidden =
+            !open;
+    }
+
+}
+
+
+function closeMemberSidebar() {
+
+    const sidebar =
+        $("#memberSidebar");
+
+    const overlay =
+        $("#mobileOverlay");
+
+    sidebar?.classList.remove("open");
+
+    if (
+        !$(".channel-sidebar")
+            ?.classList.contains("open")
+    ) {
+
+        if (overlay) {
+            overlay.hidden = true;
+        }
 
     }
-  );
 
-  document.addEventListener(
-    "visibilitychange",
-    () => {
-
-      if (!document.hidden) {
-
-        updateOwnPresence();
-
-        loadPresence();
-
-      }
-
-    }
-  );
 }
 
 
-/* ============================================================
-   OFFLINE PRESENCE
-============================================================ */
-
-async function setOfflinePresence() {
-
-  if (!CommunityState.user) {
-    return;
-  }
-
-  try {
-
-    await communitySupabase
-      .from("chat_presence")
-      .update({
-        online: false,
-        last_seen:
-          new Date().toISOString()
-      })
-      .eq(
-        "user_id",
-        CommunityState.user.id
-      );
-
-  } catch (_) {}
-}
-
-
-/* ============================================================
-   PERIODIC PRESENCE
-============================================================ */
-
-function startPresenceHeartbeat() {
-
-  updateOwnPresence();
-
-  setInterval(
-    updateOwnPresence,
-    30000
-  );
-
-  setInterval(
-    loadPresence,
-    30000
-  );
-}
-
-
-/* ============================================================
+/* =========================================================
    AUTH STATE
-============================================================ */
+========================================================= */
 
 function setupAuthListener() {
 
-  if (!communitySupabase) {
-    return;
-  }
+    if (!communitySupabase) {
+        return;
+    }
 
-  communitySupabase.auth
-    .onAuthStateChange(
-      async (
-        event,
-        session
-      ) => {
+    communitySupabase.auth
+        .onAuthStateChange(
+            async (
+                event,
+                session
+            ) => {
 
-        console.log(
-          "🔐 Community auth state:",
-          event
+                if (
+                    event ===
+                        "SIGNED_OUT" ||
+                    !session?.user
+                ) {
+
+                    window.location.href =
+                        "index.html";
+
+                    return;
+                }
+
+            }
         );
 
-        if (
-          session?.user
-        ) {
-
-          CommunityState.user =
-            session.user;
-
-          await loadStudentProfile();
-
-        } else {
-
-          CommunityState.user =
-            null;
-
-          showToast(
-            "Please sign in to use Mwaniki Community.",
-            "error"
-          );
-
-        }
-
-      }
-    );
 }
 
 
-/* ============================================================
-   INITIALIZE
-============================================================ */
+/* =========================================================
+   CLEANUP
+========================================================= */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        unsubscribeChannel();
+        unsubscribeCommunity();
+
+    }
+);
+
+
+/* =========================================================
+   INITIALIZATION
+========================================================= */
 
 async function initializeCommunity() {
 
-  if (
-    CommunityState.initialized
-  ) {
-    return;
-  }
-
-  CommunityState.initialized =
-    true;
-
-  console.log(
-    "🚀 Initializing Mwaniki Community..."
-  );
-
-  setupEventListeners();
-
-  const user =
-    await getCurrentUser();
-
-  if (!user) {
-
-    console.warn(
-      "⚠️ No authenticated community user."
+    console.log(
+        "🚀 Initializing Mwaniki Community Phase 3..."
     );
 
-    showToast(
-      "Please sign in to access Mwaniki Community.",
-      "error"
-    );
+    try {
 
-    return;
-  }
+        if (!communitySupabase) {
+            throw new Error(
+                "Supabase client unavailable."
+            );
+        }
 
-  await loadStudentProfile();
+        await loadAuthenticatedUser();
 
-  await loadCommunities();
+        if (!communityState.user) {
+            return;
+        }
 
-  await loadNotifications();
+        await loadCurrentProfile();
 
-  await loadPresence();
+        await loadCourses();
 
-  startPresenceHeartbeat();
+        await loadCommunities();
 
-  console.log(
-    "✅ Mwaniki Community ready."
-  );
+        await updateOwnPresence();
+
+        setupEvents();
+
+        setupSearch();
+
+        setupAuthListener();
+
+        /*
+         * Keep presence fresh while the page remains open.
+         */
+
+        setInterval(
+            updateOwnPresence,
+            60 * 1000
+        );
+
+        console.log(
+            "✅ Mwaniki Community Phase 3 ready."
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Mwaniki Community initialization failed:",
+            error
+        );
+
+        showToast(
+            "Community could not be initialized.",
+            "error"
+        );
+
+    }
+
 }
 
 
-/* ============================================================
-   START
-============================================================ */
-
 if (
-  document.readyState ===
-  "loading"
+    document.readyState ===
+    "loading"
 ) {
 
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializeCommunity
-  );
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeCommunity
+    );
 
 } else {
 
-  initializeCommunity();
+    initializeCommunity();
+
 }
-
-
-/* ============================================================
-   GLOBAL DEBUG ACCESS
-============================================================ */
-
-window.MwanikiCommunity =
-  {
-    state:
-      CommunityState,
-
-    reloadCommunities:
-      loadCommunities,
-
-    reloadChannels:
-      () =>
-        CommunityState.activeCommunityId
-          ? loadChannels(
-              CommunityState.activeCommunityId
-            )
-          : null,
-
-    reloadMessages:
-      () =>
-        CommunityState.activeChannelId
-          ? loadMessages(
-              CommunityState.activeChannelId
-            )
-          : null,
-
-    reloadMembers:
-      loadMembers,
-
-    reloadNotifications:
-      loadNotifications
-  };
-
-console.log(
-  "✅ Mwaniki Community Phase 2 JavaScript loaded."
-);
