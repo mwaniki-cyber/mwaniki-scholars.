@@ -798,168 +798,274 @@ function getStudentFirstName() {
     );
 }
 
+
 /* =========================================================
    PROFILE AVATAR
+   ---------------------------------------------------------
+   IMPORTANT:
+   The student's personal photo comes ONLY from:
+
+   students.photo_url
+
+   Supabase Storage bucket:
+
+   student-profiles
+
+   The favicon is NEVER used as a profile photo.
 ========================================================= */
 
-function createInitialsAvatar(
-    name
-) {
+function createInitialsAvatar(name) {
 
     const safeName =
         String(
             name || "Student"
         ).trim();
 
-    const parts =
+    const initials =
         safeName
             .split(/\s+/)
-            .filter(Boolean);
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(
+                word =>
+                    word
+                        .charAt(0)
+                        .toUpperCase()
+            )
+            .join("");
 
-    let initials =
-        "S";
-
-    if (parts.length >= 2) {
-
-        initials =
-            (
-                parts[0][0] +
-                parts[parts.length - 1][0]
-            ).toUpperCase();
-
-    } else if (parts.length === 1) {
-
-        initials =
-            parts[0]
-                .slice(0, 2)
-                .toUpperCase();
-    }
-
-    return `
-        <span
-            class="avatar-initials"
-            aria-hidden="true"
+    const svg = `
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="160"
+            height="160"
+            viewBox="0 0 160 160"
         >
-            ${escapeHTML(initials)}
-        </span>
+
+            <rect
+                width="160"
+                height="160"
+                rx="80"
+                fill="#087f73"
+            />
+
+            <text
+                x="80"
+                y="96"
+                text-anchor="middle"
+                font-size="54"
+                font-family="Arial, sans-serif"
+                font-weight="700"
+                fill="#ffffff"
+            >
+                ${escapeHTML(initials || "S")}
+            </text>
+
+        </svg>
     `;
-}
-
-function getPossibleProfileImage() {
-
-    const candidates = [
-
-        currentStudent?.photo_url,
-
-        currentStudent?.avatar_url,
-
-        currentStudent?.profile_image,
-
-        currentStudent?.profile_photo,
-
-        currentUser?.user_metadata?.photo_url,
-
-        currentUser?.user_metadata?.avatar_url,
-
-        currentUser?.user_metadata?.profile_image,
-
-        currentUser?.user_metadata?.picture
-
-    ];
 
     return (
-        candidates
-            .map(
-                value =>
-                    String(
-                        value || ""
-                    ).trim()
-            )
-            .find(Boolean) ||
-        ""
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(svg)
     );
 }
 
+
+/* =========================================================
+   GET THE AUTHENTIC STUDENT PHOTO
+========================================================= */
+
+function getStudentPhotoURL() {
+
+    const photoURL =
+        String(
+            currentStudent?.photo_url || ""
+        ).trim();
+
+    if (!photoURL) {
+
+        console.log(
+            "ℹ️ This student has no saved photo_url."
+        );
+
+        return "";
+    }
+
+    console.log(
+        "🖼️ Student photo_url found:",
+        photoURL
+    );
+
+    return photoURL;
+}
+
+
+/* =========================================================
+   APPLY AVATAR
+========================================================= */
+
 function setAvatar(
-    element,
-    imageURL,
+    selector,
+    photoURL,
     name
 ) {
 
+    const element =
+        $(selector);
+
     if (!element) {
-        return;
-    }
 
-    const fallback =
-        createInitialsAvatar(
-            name
+        console.warn(
+            `⚠️ Avatar element not found: ${selector}`
         );
-
-    if (!imageURL) {
-
-        element.innerHTML =
-            fallback;
 
         return;
     }
 
-    element.innerHTML = `
-        <img
-            src="${escapeHTML(imageURL)}"
-            alt="${escapeHTML(name || "Student")}"
-            loading="lazy"
-            referrerpolicy="no-referrer"
-        >
-    `;
+    const fallbackURL =
+        createInitialsAvatar(name);
 
-    const image =
-        element.querySelector(
-            "img"
-        );
 
-    if (image) {
+    /*
+        Always start with the initials avatar.
 
-        image.addEventListener(
-            "error",
-            () => {
+        This prevents the favicon from appearing
+        while the real Supabase image loads.
+    */
 
-                element.innerHTML =
-                    fallback;
-            },
-            {
-                once: true
-            }
-        );
+    element.src =
+        fallbackURL;
+
+    element.alt =
+        `${name} profile photo`;
+
+    element.style.display =
+        "block";
+
+    element.style.visibility =
+        "visible";
+
+    element.style.opacity =
+        "1";
+
+
+    /*
+        No personal photo exists.
+    */
+
+    if (!photoURL) {
+
+        return;
     }
+
+
+    /*
+        Load the real personal photo.
+
+        We create a separate Image object first.
+        This prevents a broken Supabase URL from
+        replacing the working avatar.
+    */
+
+    const testImage =
+        new Image();
+
+    testImage.onload =
+        function () {
+
+            element.src =
+                photoURL;
+
+            element.alt =
+                `${name} profile photo`;
+
+            element.style.display =
+                "block";
+
+            element.style.visibility =
+                "visible";
+
+            element.style.opacity =
+                "1";
+
+            console.log(
+                `✅ Personal profile photo loaded: ${selector}`
+            );
+        };
+
+
+    testImage.onerror =
+        function () {
+
+            console.error(
+                `❌ Personal profile photo could not be loaded: ${photoURL}`
+            );
+
+            /*
+                Keep initials avatar.
+            */
+
+            element.src =
+                fallbackURL;
+        };
+
+
+    /*
+        Force the browser to fetch the actual
+        Supabase image rather than relying on an
+        old cached image.
+    */
+
+    const separator =
+        photoURL.includes("?")
+            ? "&"
+            : "?";
+
+    testImage.src =
+        `${photoURL}${separator}profile_load=${Date.now()}`;
 }
+
+
+/* =========================================================
+   DISPLAY STUDENT PROFILE IMAGE
+========================================================= */
 
 function displayProfileImage() {
 
-    const imageURL =
-        getPossibleProfileImage();
-
-    const name =
+    const displayName =
         getStudentDisplayName();
 
-    setAvatar(
-        $("#headerProfileAvatar"),
-        imageURL,
-        name
-    );
+    const imageURL =
+        getStudentPhotoURL();
+
 
     setAvatar(
-        $("#profileLargeAvatar"),
+        "#headerProfileAvatar",
         imageURL,
-        name
+        displayName
     );
 
-    console.log(
-        imageURL
-            ? "🖼️ Student profile image displayed."
-            : "ℹ️ Student profile image not available; initials displayed."
+
+    setAvatar(
+        "#profileLargeAvatar",
+        imageURL,
+        displayName
     );
+
+
+    if (imageURL) {
+
+        console.log(
+            "🖼️ Loading student's personal Supabase profile photo."
+        );
+
+    } else {
+
+        console.log(
+            "ℹ️ No personal profile photo saved. Using initials avatar."
+        );
+    }
 }
-
 /* =========================================================
    PROFILE RENDERING
 ========================================================= */
@@ -1031,8 +1137,80 @@ function renderStudentProfile() {
 
 function setPanelOpen(
     panel,
-    open
+    shouldOpen
 ) {
+
+    if (!panel) {
+        return;
+    }
+
+
+    if (shouldOpen) {
+
+        panel.classList.add(
+            "active"
+        );
+
+        panel.classList.add(
+            "open"
+        );
+
+        panel.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        panel.hidden =
+            false;
+
+        panel.style.display =
+            "flex";
+
+        panel.style.visibility =
+            "visible";
+
+        panel.style.opacity =
+            "1";
+
+        panel.style.pointerEvents =
+            "auto";
+
+        panel.style.zIndex =
+            "10000";
+
+
+    } else {
+
+        panel.classList.remove(
+            "active"
+        );
+
+        panel.classList.remove(
+            "open"
+        );
+
+        panel.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        panel.hidden =
+            true;
+
+        panel.style.display =
+            "none";
+
+        panel.style.visibility =
+            "hidden";
+
+        panel.style.opacity =
+            "0";
+
+        panel.style.pointerEvents =
+            "none";
+    }
+}
+
 
     if (!panel) {
         return;
@@ -2435,19 +2613,40 @@ function markAllNotificationsRead() {
 
 function openNotificationPanel() {
 
+    const panel =
+        $("#notificationPanel");
+
+    if (!panel) {
+
+        console.warn(
+            "⚠️ #notificationPanel was not found."
+        );
+
+        return;
+    }
+
     setPanelOpen(
-        $("#notificationPanel"),
+        panel,
         true
     );
 }
 
+
 function closeNotificationPanel() {
 
+    const panel =
+        $("#notificationPanel");
+
+    if (!panel) {
+        return;
+    }
+
     setPanelOpen(
-        $("#notificationPanel"),
+        panel,
         false
     );
 }
+
 
 function setupNotificationPanel() {
 
@@ -2460,62 +2659,140 @@ function setupNotificationPanel() {
     const panel =
         $("#notificationPanel");
 
+
+    /* =====================================================
+       REQUIRED ELEMENT CHECKS
+    ===================================================== */
+
     if (!button) {
 
-        console.warn(
-            "⚠️ #notificationButton was not found."
+        console.error(
+            "❌ #notificationButton was not found."
         );
 
-    } else {
-
-        button.onclick =
-            function (event) {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-                if (!panel) {
-                    return;
-                }
-
-                const isOpen =
-                    panel.classList
-                        .contains("active");
-
-                if (isOpen) {
-
-                    closeNotificationPanel();
-
-                } else {
-
-                    renderNotifications();
-
-                    openNotificationPanel();
-                }
-            };
+        return;
     }
+
+
+    if (!panel) {
+
+        console.error(
+            "❌ #notificationPanel was not found."
+        );
+
+        return;
+    }
+
+
+    /* =====================================================
+       PREVENT DUPLICATE EVENT LISTENERS
+    ===================================================== */
+
+    if (
+        button.dataset.notificationReady === "true"
+    ) {
+
+        console.log(
+            "🔔 Notification panel is already initialized."
+        );
+
+        return;
+    }
+
+
+    button.dataset.notificationReady =
+        "true";
+
+
+    /* =====================================================
+       START CLOSED
+    ===================================================== */
+
+    setPanelOpen(
+        panel,
+        false
+    );
+
+
+    /* =====================================================
+       NOTIFICATION BUTTON
+    ===================================================== */
+
+    button.addEventListener(
+        "click",
+        function (event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+
+            const isOpen =
+                panel.classList.contains("active") ||
+                panel.getAttribute("aria-hidden") === "false";
+
+
+            if (isOpen) {
+
+                closeNotificationPanel();
+
+                return;
+            }
+
+
+            /* =============================================
+               REFRESH NOTIFICATIONS BEFORE OPENING
+            ============================================= */
+
+            renderNotifications();
+
+
+            /* =============================================
+               OPEN PANEL
+            ============================================= */
+
+            openNotificationPanel();
+
+        }
+    );
+
+
+    /* =====================================================
+       CLOSE BUTTON
+    ===================================================== */
 
     if (closeButton) {
 
-        closeButton.onclick =
+        closeButton.addEventListener(
+            "click",
             function (event) {
 
                 event.preventDefault();
                 event.stopPropagation();
 
                 closeNotificationPanel();
-            };
-    }
 
-    if (panel) {
-
-        setPanelOpen(
-            panel,
-            false
+            }
         );
+
+    } else {
+
+        console.warn(
+            "⚠️ #closeNotificationPanel was not found."
+        );
+
     }
+
+
+    /* =====================================================
+       INITIAL BADGE UPDATE
+    ===================================================== */
 
     updateNotificationBadge();
+
+
+    console.log(
+        "🔔 Notification system ready."
+    );
 }
 
 /* =========================================================
