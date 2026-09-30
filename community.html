@@ -45,7 +45,19 @@
     class="community-app"
 >
 
+<!-- =========================================================
+     GENERAL CALL BUTTON
+     ========================================================= -->
 
+<button
+    id="generalCallButton"
+    class="general-call-launcher"
+    type="button"
+    title="Start General Call"
+>
+    <span class="general-call-icon">📞</span>
+    <span class="general-call-text">General Call</span>
+</button>
     <!-- =====================================================
          LEFT COMMUNITY RAIL
          ===================================================== -->
@@ -1092,7 +1104,322 @@
     type="module"
     src="./community.js"
 ></script>
+<!-- =========================================================
+     CALL SYSTEM
+     ========================================================= -->
 
+<div
+    id="callOverlay"
+    class="call-overlay hidden"
+>
+
+    <div class="call-window">
+
+        <header class="call-window-header">
+
+            <div class="call-title-area">
+
+                <div
+                    id="callTypeIcon"
+                    class="call-type-icon"
+                >
+                    📞
+                </div>
+
+                <div>
+
+                    <strong id="callTitle">
+                        Call
+                    </strong>
+
+                    <span id="callSubtitle">
+                        Connecting...
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="call-header-right">
+
+                <span id="callDuration">
+                    00:00
+                </span>
+
+                <button
+                    id="minimizeCallButton"
+                    class="call-icon-button"
+                    type="button"
+                    title="Minimize"
+                >
+                    ─
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- =================================================
+             VIDEO AREA
+             ================================================= -->
+
+        <section
+            id="callVideoGrid"
+            class="call-video-grid"
+        >
+
+            <div
+                id="localVideoTile"
+                class="video-tile local-video-tile"
+            >
+
+                <video
+                    id="localVideo"
+                    autoplay
+                    muted
+                    playsinline
+                ></video>
+
+                <div class="video-name">
+                    You
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             VOICE PARTICIPANTS
+             ================================================= -->
+
+        <section
+            id="callParticipants"
+            class="call-participants"
+        ></section>
+
+
+        <!-- =================================================
+             CALL CONTROLS
+             ================================================= -->
+
+        <footer class="call-controls">
+
+            <button
+                id="toggleMicrophoneButton"
+                class="call-control"
+                type="button"
+                title="Mute microphone"
+            >
+                🎙️
+            </button>
+
+
+            <button
+                id="toggleCameraButton"
+                class="call-control"
+                type="button"
+                title="Camera"
+            >
+                📹
+            </button>
+
+
+            <button
+                id="shareScreenButton"
+                class="call-control"
+                type="button"
+                title="Share screen"
+            >
+                🖥️
+            </button>
+
+
+            <button
+                id="leaveCallButton"
+                class="call-control leave-call"
+                type="button"
+                title="Leave call"
+            >
+                ☎
+            </button>
+
+        </footer>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     GENERAL CALL MODAL
+     ========================================================= -->
+
+<div
+    id="generalCallModal"
+    class="modal-overlay hidden"
+>
+
+    <div class="modal-card general-call-card">
+
+        <header class="modal-header">
+
+            <div>
+
+                <h2>
+                    📞 General Call
+                </h2>
+
+                <p>
+                    Start a call independent of any community.
+                </p>
+
+            </div>
+
+
+            <button
+                id="closeGeneralCallModalButton"
+                class="modal-close"
+                type="button"
+            >
+                ✕
+            </button>
+
+        </header>
+
+
+        <div class="general-call-mode">
+
+            <button
+                id="generalVoiceCallButton"
+                class="general-mode-button active"
+                type="button"
+            >
+                🎙️
+                <span>Voice Call</span>
+            </button>
+
+
+            <button
+                id="generalVideoCallButton"
+                class="general-mode-button"
+                type="button"
+            >
+                🎥
+                <span>Video Call</span>
+            </button>
+
+        </div>
+
+
+        <label class="general-call-input-label">
+
+            Invite user
+
+            <input
+                id="generalCallUserInput"
+                type="text"
+                placeholder="Enter user UUID"
+                autocomplete="off"
+            >
+
+        </label>
+
+
+        <p class="general-call-note">
+            Enter the authenticated user's UUID you want to call.
+        </p>
+
+
+        <div
+            id="generalCallMessage"
+            class="form-message"
+        ></div>
+
+
+        <div class="modal-actions">
+
+            <button
+                id="cancelGeneralCallButton"
+                class="secondary-button"
+                type="button"
+            >
+                Cancel
+            </button>
+
+
+            <button
+                id="startGeneralCallButton"
+                class="primary-button"
+                type="button"
+            >
+                Start Call
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     INCOMING CALL
+     ========================================================= -->
+
+<div
+    id="incomingCallToast"
+    class="incoming-call-toast hidden"
+>
+
+    <div class="incoming-call-icon">
+        📞
+    </div>
+
+
+    <div class="incoming-call-info">
+
+        <strong id="incomingCallTitle">
+            Incoming Call
+        </strong>
+
+        <span id="incomingCallText">
+            Someone is calling you
+        </span>
+
+    </div>
+
+
+    <div class="incoming-call-actions">
+
+        <button
+            id="acceptCallButton"
+            class="accept-call"
+            type="button"
+        >
+            ✓
+        </button>
+
+
+        <button
+            id="declineCallButton"
+            class="decline-call"
+            type="button"
+        >
+            ✕
+        </button>
+
+    </div>
+
+</div>
+
+
+<script
+    type="module"
+    src="./community-calls.js"
+></script>
 </body>
 
 </html>
