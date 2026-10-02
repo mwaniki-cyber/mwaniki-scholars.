@@ -1,258 +1,398 @@
-
-/* ============================================================
+/* =========================================================
    MWANIKI SCHOLARS
-   COMMUNITY.JS
-   REAL CALLING ENGINE — PART 1
-   ============================================================
+   COMMUNITY ENGINE
+   community.js — PART 1 OF 2
 
-   PART 1 FEATURES
-   ------------------------------------------------------------
-   ✓ Supabase connection
-   ✓ Authentication detection
-   ✓ General Calls
-   ✓ Community Calls
-   ✓ Independent call rooms
-   ✓ Multiple simultaneous community calls
-   ✓ Room creation
-   ✓ Room joining
-   ✓ Incoming call detection
-   ✓ Participant registration
-   ✓ WebRTC peer connection setup
-   ✓ Supabase Realtime signaling
-   ✓ Offer / Answer
-   ✓ ICE candidates
-   ✓ Join / Leave signaling
-   ✓ Call state management
+   Includes:
+   - Supabase authentication
+   - Student profile
+   - Courses
+   - Communities
+   - Community rail
+   - Channels
+   - Channel categories
+   - Course-linked channels
+   - Channel selection
+   - Messages
+   - Message rendering
+   - Replies
+   - Search
+   - Members
+   - Realtime foundation
 
-   DATABASE TABLES
-   ------------------------------------------------------------
-   chat_call_rooms
-   chat_call_participants
-   chat_call_signals
-
-   IMPORTANT
-   ------------------------------------------------------------
-   community_id = UUID
-   room_id      = UUID
-   user_id      = UUID
-
-   General Call:
-       community_id = null
-
-   Community Call:
-       community_id = actual community UUID
-
-   Part 2 will add:
-       microphone
-       camera
-       screen sharing
-       participant tiles
-       mute/camera/screen buttons
-       leave/end call
-       cleanup
-   ============================================================ */
-
-
-/* ============================================================
-   1. SUPABASE
-   ============================================================ */
+   PART 2 continues directly underneath this file.
+   ========================================================= */
 
 import { supabase } from "./supabase.js";
 
+(() => {
 
-/* ============================================================
-   2. GLOBAL CALL STATE
-   ============================================================ */
+    "use strict";
 
-const CallState = {
 
-    initialized: false,
+    console.log(
+        "🚀 Mwaniki Scholars Community Engine starting..."
+    );
 
-    currentUser: null,
 
-    currentRoom: null,
+    /* =====================================================
+       1. SUPABASE
+       ===================================================== */
 
-    currentParticipant: null,
+    const db = supabase;
 
-    currentCommunityId: null,
+    if (!db) {
 
-    currentCommunityName: null,
+        console.error(
+            "❌ Supabase client is unavailable."
+        );
 
-    currentCallScope: null,
-
-    currentCallType: null,
-
-    isCaller: false,
-
-    isInCall: false,
-
-    isEndingCall: false,
-
-    localStream: null,
-
-    peerConnections: new Map(),
-
-    remoteStreams: new Map(),
-
-    signalChannel: null,
-
-    roomChannel: null,
-
-    incomingCallSubscription: null,
-
-    participantSubscription: null,
-
-    signalSubscription: null,
-
-    reconnectTimer: null,
-
-    pendingOffers: new Map(),
-
-    pendingIceCandidates: new Map(),
-
-    initializedPeerUsers: new Set(),
-
-    configuration: {
-
-        iceServers: [
-
-            {
-                urls: [
-                    "stun:stun.l.google.com:19302",
-                    "stun:stun1.l.google.com:19302"
-                ]
-            }
-
-        ]
+        return;
 
     }
 
-};
+
+    /* =====================================================
+       2. APPLICATION STATE
+       ===================================================== */
+
+    const state = {
+
+        user: null,
+
+        profile: null,
+
+        courses: [],
+
+        communities: [],
+
+        channels: [],
+
+        members: [],
+
+        messages: [],
+
+        reactions: [],
+
+        currentCommunity: null,
+
+        currentChannel: null,
+
+        currentCourse: null,
+
+        currentRole: "student",
+
+        currentReply: null,
+
+        channelSearch: "",
+
+        memberSearch: "",
+
+        messageSearch: "",
+
+        realtimeChannels: [],
+
+        presenceTimer: null,
+
+        initialized: false,
+
+        loadingMessages: false,
+
+        sendingMessage: false,
+
+        loadingChannels: false,
+
+        loadingCommunities: false
+
+    };
 
 
-/* ============================================================
-   3. CONSTANTS
-   ============================================================ */
+    /* =====================================================
+       3. STORAGE KEYS
+       ===================================================== */
 
-const CALL_SCOPE = {
+    const STORAGE = {
 
-    GENERAL: "general",
+        communityId:
+            "mwanikiCommunityId",
 
-    COMMUNITY: "community"
+        communityName:
+            "mwanikiCommunityName",
 
-};
+        courseId:
+            "communityCourseId",
 
+        courseName:
+            "communityCourseName",
 
-const CALL_TYPE = {
+        channelId:
+            "mwanikiChannelId"
 
-    VOICE: "voice",
-
-    VIDEO: "video"
-
-};
-
-
-const CALL_STATUS = {
-
-    WAITING: "waiting",
-
-    ACTIVE: "active",
-
-    ENDED: "ended"
-
-};
+    };
 
 
-const PARTICIPANT_STATUS = {
+    /* =====================================================
+       4. DOM HELPERS
+       ===================================================== */
 
-    INVITED: "invited",
+    function byId(id) {
 
-    RINGING: "ringing",
+        return document.getElementById(id);
 
-    JOINED: "joined",
-
-    LEFT: "left",
-
-    DECLINED: "declined"
-
-};
+    }
 
 
-/* ============================================================
-   4. BASIC LOGGING
-   ============================================================ */
+    function query(selector, parent = document) {
 
-function callLog(...args) {
+        return parent.querySelector(selector);
 
-    console.log(
-        "[Mwaniki Calls]",
-        ...args
-    );
-
-}
+    }
 
 
-function callWarn(...args) {
+    function queryAll(selector, parent = document) {
 
-    console.warn(
-        "[Mwaniki Calls]",
-        ...args
-    );
+        return Array.from(
+            parent.querySelectorAll(selector)
+        );
 
-}
-
-
-function callError(...args) {
-
-    console.error(
-        "[Mwaniki Calls]",
-        ...args
-    );
-
-}
+    }
 
 
-/* ============================================================
-   5. GENERATE ROOM CODE
-   ============================================================ */
+    function setText(id, value) {
 
-function generateRoomCode() {
+        const element =
+            byId(id);
 
-    const timestamp =
-        Date.now().toString(36);
+        if (!element) return;
 
-    const random =
-        Math.random()
-            .toString(36)
-            .substring(2, 10);
+        element.textContent =
+            value === null ||
+            value === undefined
+                ? ""
+                : String(value);
 
-    return (
-        "mw-" +
-        timestamp +
-        "-" +
-        random
-    );
-
-}
+    }
 
 
-/* ============================================================
-   6. GET CURRENT USER
-   ============================================================ */
+    /* =====================================================
+       5. HTML SAFETY
+       ===================================================== */
 
-async function getCurrentUser() {
+    function escapeHTML(value) {
 
-    try {
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
 
-        const {
-            data,
-            error
-        } = await supabase.auth.getUser();
+    }
 
-        if (error) {
 
-            callError(
-                "Unable to get current user:",
+    function escapeAttribute(value) {
+
+        return escapeHTML(value);
+
+    }
+
+
+    function initials(name) {
+
+        const clean =
+            String(
+                name ||
+                "Student"
+            )
+                .trim()
+                .replace(
+                    /\s+/g,
+                    " "
+                );
+
+        if (!clean) {
+
+            return "MS";
+
+        }
+
+
+        const parts =
+            clean
+                .split(" ")
+                .filter(Boolean);
+
+
+        if (parts.length === 1) {
+
+            return parts[0]
+                .slice(0, 2)
+                .toUpperCase();
+
+        }
+
+
+        return (
+            parts[0][0] +
+            parts[parts.length - 1][0]
+        ).toUpperCase();
+
+    }
+
+
+    function slugify(value) {
+
+        return String(
+            value || ""
+        )
+            .toLowerCase()
+            .trim()
+            .replace(
+                /[^a-z0-9]+/g,
+                "-"
+            )
+            .replace(
+                /^-+|-+$/g,
+                ""
+            )
+            .slice(
+                0,
+                80
+            );
+
+    }
+
+
+    /* =====================================================
+       6. TOAST
+       ===================================================== */
+
+    let toastTimer = null;
+
+
+    function toast(
+        message,
+        type = "normal"
+    ) {
+
+        const element =
+            byId(
+                "communityToast"
+            );
+
+
+        if (!element) {
+
+            console.log(
+                `[Community ${type}]`,
+                message
+            );
+
+            return;
+
+        }
+
+
+        element.textContent =
+            message || "";
+
+
+        element.classList.add(
+            "show"
+        );
+
+        element.classList.add(
+            "visible"
+        );
+
+        element.classList.add(
+            "active"
+        );
+
+
+        if (
+            type === "error"
+        ) {
+
+            element.style.borderColor =
+                "rgba(239,102,113,.35)";
+
+        } else if (
+            type === "success"
+        ) {
+
+            element.style.borderColor =
+                "rgba(66,211,146,.30)";
+
+        } else {
+
+            element.style.borderColor =
+                "";
+
+        }
+
+
+        clearTimeout(
+            toastTimer
+        );
+
+
+        toastTimer =
+            setTimeout(
+                () => {
+
+                    element.classList.remove(
+                        "show"
+                    );
+
+                    element.classList.remove(
+                        "visible"
+                    );
+
+                    element.classList.remove(
+                        "active"
+                    );
+
+                },
+                3200
+            );
+
+    }
+
+
+    /* =====================================================
+       7. STORAGE
+       ===================================================== */
+
+    function storageGet(key) {
+
+        try {
+
+            return localStorage.getItem(
+                key
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Storage read failed:",
                 error
             );
 
@@ -260,1622 +400,4093 @@ async function getCurrentUser() {
 
         }
 
-        if (!data || !data.user) {
+    }
 
-            callWarn(
-                "No authenticated user."
+
+    function storageSet(
+        key,
+        value
+    ) {
+
+        try {
+
+            localStorage.setItem(
+                key,
+                String(value)
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Storage write failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    function storageRemove(key) {
+
+        try {
+
+            localStorage.removeItem(
+                key
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Storage remove failed:",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       8. DATE / TIME
+       ===================================================== */
+
+    function formatMessageTime(value) {
+
+        if (!value) return "";
+
+        const date =
+            new Date(value);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "";
+
+        }
+
+
+        return new Intl.DateTimeFormat(
+            undefined,
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        ).format(date);
+
+    }
+
+
+    function formatMessageDate(value) {
+
+        if (!value) return "";
+
+        const date =
+            new Date(value);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "";
+
+        }
+
+
+        const now =
+            new Date();
+
+
+        if (
+            date.getFullYear() ===
+                now.getFullYear() &&
+            date.getMonth() ===
+                now.getMonth() &&
+            date.getDate() ===
+                now.getDate()
+        ) {
+
+            return formatMessageTime(
+                value
+            );
+
+        }
+
+
+        return new Intl.DateTimeFormat(
+            undefined,
+            {
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        ).format(date);
+
+    }
+
+
+    /* =====================================================
+       9. URL / COURSE CONTEXT
+       ===================================================== */
+
+    function getURLParams() {
+
+        return new URLSearchParams(
+            window.location.search
+        );
+
+    }
+
+
+    function getURLCourseId() {
+
+        const raw =
+            getURLParams()
+                .get("course_id");
+
+
+        if (!raw) return null;
+
+
+        const id =
+            Number(raw);
+
+
+        return Number.isFinite(id)
+            ? id
+            : null;
+
+    }
+
+
+    function getURLCourseName() {
+
+        return getURLParams()
+            .get("course_name");
+
+    }
+
+
+    function getStoredCourseId() {
+
+        const raw =
+            storageGet(
+                STORAGE.courseId
+            );
+
+
+        if (!raw) return null;
+
+
+        const id =
+            Number(raw);
+
+
+        return Number.isFinite(id)
+            ? id
+            : null;
+
+    }
+
+
+    /* =====================================================
+       10. AUTHENTICATION
+       ===================================================== */
+
+    async function loadAuthenticatedUser() {
+
+        const {
+            data,
+            error
+        } =
+            await db.auth.getUser();
+
+
+        if (error) {
+
+            console.error(
+                "❌ Auth user error:",
+                error
             );
 
             return null;
 
         }
 
-        CallState.currentUser =
-            data.user;
 
-        return data.user;
+        return data?.user || null;
 
     }
 
-    catch (error) {
 
-        callError(
-            "getCurrentUser failed:",
-            error
+    async function requireAuthentication() {
+
+        state.user =
+            await loadAuthenticatedUser();
+
+
+        if (state.user) {
+
+            console.log(
+                "✅ Authenticated:",
+                state.user.id
+            );
+
+            return true;
+
+        }
+
+
+        console.warn(
+            "⚠️ No authenticated user."
         );
 
-        return null;
 
-    }
+        window.location.href =
+            "./index.html";
 
-}
-
-
-/* ============================================================
-   7. INITIALIZE CALLING SYSTEM
-   ============================================================ */
-
-export async function initializeCallingSystem() {
-
-    if (CallState.initialized) {
-
-        callLog(
-            "Calling system already initialized."
-        );
-
-        return true;
-
-    }
-
-    callLog(
-        "Initializing real calling system..."
-    );
-
-
-    const user =
-        await getCurrentUser();
-
-
-    if (!user) {
-
-        callWarn(
-            "Calling system waiting for authentication."
-        );
 
         return false;
 
     }
 
 
-    CallState.initialized =
-        true;
+    function setupAuthListener() {
+
+        db.auth.onAuthStateChange(
+            (
+                event,
+                session
+            ) => {
+
+                console.log(
+                    "🔐 Community auth:",
+                    event
+                );
 
 
-    await subscribeToIncomingCalls();
+                if (
+                    event ===
+                    "SIGNED_OUT"
+                ) {
+
+                    cleanupRealtime();
+
+                    window.location.href =
+                        "./index.html";
+
+                    return;
+
+                }
 
 
-    callLog(
-        "Real calling system initialized.",
-        user.id
-    );
+                if (
+                    session?.user
+                ) {
 
+                    state.user =
+                        session.user;
 
-    return true;
-
-}
-
-
-/* ============================================================
-   8. AUTH STATE LISTENER
-   ============================================================ */
-
-supabase.auth.onAuthStateChange(
-    async (
-        event,
-        session
-    ) => {
-
-        callLog(
-            "Auth state:",
-            event
-        );
-
-
-        if (
-            session &&
-            session.user
-        ) {
-
-            CallState.currentUser =
-                session.user;
-
-
-            if (
-                !CallState.initialized
-            ) {
-
-                await initializeCallingSystem();
+                }
 
             }
-
-        }
-
-        else {
-
-            await cleanupCallState();
-
-        }
-
-    }
-);
-
-
-/* ============================================================
-   9. CREATE GENERAL CALL
-   ============================================================ */
-
-export async function startGeneralCall(
-    callType = CALL_TYPE.VIDEO
-) {
-
-    return await createCallRoom({
-
-        scope:
-            CALL_SCOPE.GENERAL,
-
-        communityId:
-            null,
-
-        callType
-
-    });
-
-}
-
-
-/* ============================================================
-   10. CREATE COMMUNITY CALL
-   ============================================================ */
-
-export async function startCommunityCall(
-    communityId,
-    communityName = "",
-    callType = CALL_TYPE.VIDEO
-) {
-
-    if (!communityId) {
-
-        callError(
-            "Cannot start community call without community ID."
         );
 
-        return null;
-
     }
 
 
-    CallState.currentCommunityId =
-        communityId;
+    /* =====================================================
+       11. STUDENT PROFILE
+       ===================================================== */
 
-    CallState.currentCommunityName =
-        communityName;
+    async function loadStudentProfile() {
 
+        if (!state.user?.id) {
 
-    return await createCallRoom({
-
-        scope:
-            CALL_SCOPE.COMMUNITY,
-
-        communityId,
-
-        callType
-
-    });
-
-}
-
-
-/* ============================================================
-   11. CREATE CALL ROOM
-   ============================================================ */
-
-async function createCallRoom({
-    scope,
-    communityId,
-    callType
-}) {
-
-    try {
-
-        const user =
-            CallState.currentUser ||
-            await getCurrentUser();
-
-
-        if (!user) {
-
-            throw new Error(
-                "You must be signed in before starting a call."
-            );
+            return null;
 
         }
 
 
-        if (
-            scope === CALL_SCOPE.COMMUNITY &&
-            !communityId
-        ) {
-
-            throw new Error(
-                "Community call requires a community ID."
-            );
-
-        }
-
-
-        const roomCode =
-            generateRoomCode();
-
+        /*
+         * We deliberately keep this tolerant.
+         * If the students table is unavailable,
+         * the community still loads.
+         */
 
         const {
-            data: room,
-            error: roomError
-        } = await supabase
-
-            .from(
-                "chat_call_rooms"
-            )
-
-            .insert({
-
-                room_code:
-                    roomCode,
-
-                call_scope:
-                    scope,
-
-                call_type:
-                    callType,
-
-                community_id:
-                    communityId,
-
-                created_by:
-                    user.id,
-
-                status:
-                    CALL_STATUS.WAITING
-
-            })
-
-            .select("*")
-
-            .single();
-
-
-        if (roomError) {
-
-            throw roomError;
-
-        }
-
-
-        CallState.currentRoom =
-            room;
-
-        CallState.currentCallScope =
-            scope;
-
-        CallState.currentCallType =
-            callType;
-
-        CallState.isCaller =
-            true;
-
-
-        callLog(
-            "Call room created:",
-            room
-        );
-
-
-        await joinCallRoom(
-            room.id
-        );
-
-
-        return room;
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Unable to create call:",
+            data,
             error
-        );
-
-        showCallError(
-            error.message ||
-            "Unable to start call."
-        );
-
-        return null;
-
-    }
-
-}
-
-
-/* ============================================================
-   12. JOIN CALL ROOM
-   ============================================================ */
-
-export async function joinCallRoom(
-    roomId
-) {
-
-    try {
-
-        const user =
-            CallState.currentUser ||
-            await getCurrentUser();
-
-
-        if (!user) {
-
-            throw new Error(
-                "You must be signed in to join a call."
-            );
-
-        }
-
-
-        if (!roomId) {
-
-            throw new Error(
-                "Call room ID is missing."
-            );
-
-        }
-
-
-        /*
-         * Retrieve room.
-         */
-
-        const {
-            data: room,
-            error: roomError
-        } = await supabase
-
-            .from(
-                "chat_call_rooms"
-            )
-
-            .select("*")
-
-            .eq(
-                "id",
-                roomId
-            )
-
-            .maybeSingle();
-
-
-        if (roomError) {
-
-            throw roomError;
-
-        }
-
-
-        if (!room) {
-
-            throw new Error(
-                "Call room no longer exists."
-            );
-
-        }
-
-
-        if (
-            room.status ===
-            CALL_STATUS.ENDED
-        ) {
-
-            throw new Error(
-                "This call has already ended."
-            );
-
-        }
-
-
-        CallState.currentRoom =
-            room;
-
-        CallState.currentCallScope =
-            room.call_scope;
-
-        CallState.currentCallType =
-            room.call_type;
-
-        CallState.currentCommunityId =
-            room.community_id;
-
-
-        /*
-         * Check existing participant.
-         */
-
-        const {
-            data: existingParticipant,
-            error:
-                participantLookupError
-        } = await supabase
-
-            .from(
-                "chat_call_participants"
-            )
-
-            .select("*")
-
-            .eq(
-                "room_id",
-                room.id
-            )
-
-            .eq(
-                "user_id",
-                user.id
-            )
-
-            .maybeSingle();
-
-
-        if (participantLookupError) {
-
-            throw participantLookupError;
-
-        }
-
-
-        let participant =
-            existingParticipant;
-
-
-        if (!participant) {
-
-            const {
-                data: newParticipant,
-                error:
-                    participantError
-            } = await supabase
-
-                .from(
-                    "chat_call_participants"
-                )
-
-                .insert({
-
-                    room_id:
-                        room.id,
-
-                    user_id:
-                        user.id,
-
-                    status:
-                        PARTICIPANT_STATUS.JOINED,
-
-                    joined_at:
-                        new Date()
-                            .toISOString()
-
-                })
-
+        } =
+            await db
+                .from("students")
                 .select("*")
-
-                .single();
-
-
-            if (participantError) {
-
-                throw participantError;
-
-            }
-
-
-            participant =
-                newParticipant;
-
-        }
-
-        else {
-
-            const {
-                data: updatedParticipant,
-                error:
-                    participantUpdateError
-            } = await supabase
-
-                .from(
-                    "chat_call_participants"
-                )
-
-                .update({
-
-                    status:
-                        PARTICIPANT_STATUS.JOINED,
-
-                    joined_at:
-                        existingParticipant.joined_at ||
-                        new Date().toISOString(),
-
-                    left_at:
-                        null
-
-                })
-
                 .eq(
                     "id",
-                    existingParticipant.id
+                    state.user.id
                 )
-
-                .select("*")
-
-                .single();
+                .maybeSingle();
 
 
-            if (participantUpdateError) {
+        if (error) {
 
-                throw participantUpdateError;
-
-            }
-
-
-            participant =
-                updatedParticipant;
-
-        }
-
-
-        CallState.currentParticipant =
-            participant;
-
-        CallState.isInCall =
-            true;
-
-        CallState.isEndingCall =
-            false;
-
-
-        /*
-         * Mark room active.
-         */
-
-        await supabase
-
-            .from(
-                "chat_call_rooms"
-            )
-
-            .update({
-
-                status:
-                    CALL_STATUS.ACTIVE,
-
-                started_at:
-                    room.started_at ||
-                    new Date().toISOString()
-
-            })
-
-            .eq(
-                "id",
-                room.id
+            console.warn(
+                "⚠️ Student profile unavailable:",
+                error.message
             );
 
+            state.profile =
+                null;
 
-        /*
-         * Subscribe to room.
-         */
-
-        await subscribeToCallRoom(
-            room.id
-        );
-
-
-        /*
-         * Load existing participants.
-         */
-
-        await loadExistingParticipants(
-            room.id
-        );
-
-
-        /*
-         * Tell other participants that
-         * we joined.
-         */
-
-        await sendSignal({
-
-            roomId:
-                room.id,
-
-            receiverId:
-                null,
-
-            signalType:
-                "join",
-
-            payload: {
-
-                userId:
-                    user.id,
-
-                timestamp:
-                    Date.now()
-
-            }
-
-        });
-
-
-        callLog(
-            "Joined call room:",
-            room.id
-        );
-
-
-        showCallPanel(
-            room
-        );
-
-
-        return room;
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Unable to join call:",
-            error
-        );
-
-        showCallError(
-            error.message ||
-            "Unable to join call."
-        );
-
-        return null;
-
-    }
-
-}
-
-
-/* ============================================================
-   13. LOAD EXISTING PARTICIPANTS
-   ============================================================ */
-
-async function loadExistingParticipants(
-    roomId
-) {
-
-    const user =
-        CallState.currentUser ||
-        await getCurrentUser();
-
-
-    if (!user) {
-
-        return;
-
-    }
-
-
-    const {
-        data: participants,
-        error
-    } = await supabase
-
-        .from(
-            "chat_call_participants"
-        )
-
-        .select("*")
-
-        .eq(
-            "room_id",
-            roomId
-        )
-
-        .eq(
-            "status",
-            PARTICIPANT_STATUS.JOINED
-        );
-
-
-    if (error) {
-
-        callError(
-            "Unable to load participants:",
-            error
-        );
-
-        return;
-
-    }
-
-
-    for (
-        const participant
-        of participants || []
-    ) {
-
-        if (
-            participant.user_id ===
-            user.id
-        ) {
-
-            continue;
+            return null;
 
         }
 
 
-        /*
-         * Create a peer connection for
-         * each existing participant.
-         *
-         * The existing caller creates
-         * the offer.
-         */
-
-        await createPeerConnection(
-            participant.user_id,
-            true
-        );
-
-    }
-
-}
+        state.profile =
+            data || null;
 
 
-/* ============================================================
-   14. SUBSCRIBE TO A CALL ROOM
-   ============================================================ */
-
-async function subscribeToCallRoom(
-    roomId
-) {
-
-    await removeCallRoomSubscription();
-
-
-    const channelName =
-        `mwaniki-call-${roomId}`;
-
-
-    CallState.roomChannel =
-        supabase.channel(
-            channelName
-        );
-
-
-    /*
-     * Participant changes.
-     */
-
-    CallState.roomChannel
-        .on(
-            "postgres_changes",
-            {
-                event: "*",
-                schema: "public",
-                table:
-                    "chat_call_participants",
-                filter:
-                    `room_id=eq.${roomId}`
-            },
-            async payload => {
-
-                callLog(
-                    "Participant event:",
-                    payload
-                );
-
-
-                await handleParticipantChange(
-                    payload
-                );
-
-            }
-        );
-
-
-    /*
-     * WebRTC signals.
-     */
-
-    CallState.roomChannel
-        .on(
-            "postgres_changes",
-            {
-                event: "INSERT",
-                schema: "public",
-                table:
-                    "chat_call_signals",
-                filter:
-                    `room_id=eq.${roomId}`
-            },
-            async payload => {
-
-                await handleIncomingSignal(
-                    payload.new
-                );
-
-            }
-        );
-
-
-    const status =
-        await CallState.roomChannel.subscribe();
-
-
-    callLog(
-        "Call room subscription:",
-        status
-    );
-
-}
-
-
-/* ============================================================
-   15. REMOVE CALL ROOM SUBSCRIPTION
-   ============================================================ */
-
-async function removeCallRoomSubscription() {
-
-    if (
-        !CallState.roomChannel
-    ) {
-
-        return;
+        return state.profile;
 
     }
 
 
-    try {
+    function getCurrentDisplayName() {
 
-        await supabase.removeChannel(
-            CallState.roomChannel
+        const profile =
+            state.profile || {};
+
+
+        return (
+            profile.full_name ||
+            profile.name ||
+            profile.student_name ||
+            state.user?.user_metadata?.full_name ||
+            state.user?.user_metadata?.name ||
+            state.user?.email?.split("@")[0] ||
+            "Student"
         );
 
     }
 
-    catch (error) {
 
-        callWarn(
-            "Unable to remove room channel:",
+    /* =====================================================
+       12. COURSES
+       ===================================================== */
+
+    async function loadCourses() {
+
+        const {
+            data,
             error
-        );
+        } =
+            await db
+                .from("courses")
+                .select(
+                    "id,title,description,image,created_at"
+                )
+                .order(
+                    "title",
+                    {
+                        ascending: true
+                    }
+                );
+
+
+        if (error) {
+
+            console.warn(
+                "⚠️ Course loading failed:",
+                error.message
+            );
+
+            state.courses =
+                [];
+
+            return [];
+
+        }
+
+
+        state.courses =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        populateCourseSelects();
+
+
+        return state.courses;
 
     }
 
 
-    CallState.roomChannel =
-        null;
+    function populateCourseSelects() {
 
-}
+        const selects = [
 
+            byId(
+                "communityCourseSelect"
+            ),
 
-/* ============================================================
-   16. INCOMING CALL SUBSCRIPTION
-   ============================================================ */
-
-async function subscribeToIncomingCalls() {
-
-    const user =
-        CallState.currentUser ||
-        await getCurrentUser();
-
-
-    if (!user) {
-
-        return;
-
-    }
-
-
-    if (
-        CallState.incomingCallSubscription
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Watch participant invitations.
-     *
-     * This allows the UI to display an
-     * incoming-call screen when another
-     * user creates a participant row.
-     */
-
-    CallState.incomingCallSubscription =
-        supabase
-
-            .channel(
-                `mwaniki-incoming-calls-${user.id}`
+            byId(
+                "channelCourseSelect"
             )
 
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table:
-                        "chat_call_participants",
-                    filter:
-                        `user_id=eq.${user.id}`
-                },
-                async payload => {
+        ];
 
-                    await handleIncomingParticipant(
-                        payload.new
+
+        selects.forEach(
+            select => {
+
+                if (!select) return;
+
+
+                const oldValue =
+                    select.value;
+
+
+                const first =
+                    select.options[0];
+
+
+                select.innerHTML =
+                    "";
+
+
+                if (first) {
+
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value =
+                        first.value;
+
+                    option.textContent =
+                        first.textContent;
+
+                    select.appendChild(
+                        option
                     );
 
                 }
+
+
+                state.courses.forEach(
+                    course => {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+
+                        option.value =
+                            String(
+                                course.id
+                            );
+
+
+                        option.textContent =
+                            course.title ||
+                            `Course ${course.id}`;
+
+
+                        select.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+
+                if (
+                    oldValue &&
+                    Array.from(
+                        select.options
+                    ).some(
+                        option =>
+                            option.value ===
+                            oldValue
+                    )
+                ) {
+
+                    select.value =
+                        oldValue;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    function findCourseById(
+        courseId
+    ) {
+
+        if (
+            courseId === null ||
+            courseId === undefined
+        ) {
+
+            return null;
+
+        }
+
+
+        return (
+            state.courses.find(
+                course =>
+                    String(course.id) ===
+                    String(courseId)
+            ) ||
+            null
+        );
+
+    }
+
+
+    /* =====================================================
+       13. COMMUNITIES
+       ===================================================== */
+
+    async function loadCommunities() {
+
+        console.log(
+            "🌐 Loading communities..."
+        );
+
+
+        state.loadingCommunities =
+            true;
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Only columns that were confirmed
+         * in our community schema are used here.
+         *
+         * This avoids the previous problem where
+         * banner_url / updated_at / other columns
+         * could stop the whole query.
+         */
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_communities"
+                )
+                .select(
+                    `
+                    id,
+                    name,
+                    slug,
+                    description,
+                    icon_url,
+                    is_public,
+                    is_active
+                    `
+                )
+                .eq(
+                    "is_active",
+                    true
+                )
+                .order(
+                    "name",
+                    {
+                        ascending: true
+                    }
+                );
+
+
+        state.loadingCommunities =
+            false;
+
+
+        if (error) {
+
+            console.error(
+                "❌ COMMUNITY LOAD ERROR:",
+                error
+            );
+
+
+            state.communities =
+                [];
+
+
+            renderCommunityRail();
+
+
+            toast(
+                "Communities could not be loaded.",
+                "error"
+            );
+
+
+            return [];
+
+        }
+
+
+        state.communities =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        console.log(
+            "✅ Communities loaded:",
+            state.communities.length,
+            state.communities
+        );
+
+
+        renderCommunityRail();
+
+
+        return state.communities;
+
+    }
+
+
+    /* =====================================================
+       14. COMMUNITY RAIL
+       ===================================================== */
+
+    function renderCommunityRail() {
+
+        const rail =
+            byId(
+                "communityRail"
+            );
+
+
+        if (!rail) {
+
+            console.warn(
+                "⚠️ #communityRail not found."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !state.communities.length
+        ) {
+
+            rail.innerHTML = `
+                <div class="channel-loading">
+                    No communities
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        rail.innerHTML =
+            state.communities
+                .map(
+                    community => {
+
+                        const active =
+                            state.currentCommunity &&
+                            String(
+                                community.id
+                            ) ===
+                            String(
+                                state.currentCommunity.id
+                            );
+
+
+                        const icon =
+                            community.icon_url ||
+                            initials(
+                                community.name
+                            );
+
+
+                        const isImage =
+                            /^https?:\/\//i
+                                .test(
+                                    String(icon)
+                                );
+
+
+                        return `
+                            <button
+                                type="button"
+                                class="
+                                    community-rail-item
+                                    ${active ? "active" : ""}
+                                "
+                                data-community-id="${escapeAttribute(community.id)}"
+                                title="${escapeAttribute(community.name)}"
+                            >
+
+                                ${
+                                    isImage
+                                        ? `
+                                            <img
+                                                src="${escapeAttribute(icon)}"
+                                                alt=""
+                                                class="community-rail-image"
+                                            >
+                                        `
+                                        : `
+                                            <span class="community-rail-initials">
+                                                ${escapeHTML(icon)}
+                                            </span>
+                                        `
+                                }
+
+                            </button>
+                        `;
+
+                    }
+                )
+                .join("");
+
+
+        queryAll(
+            "[data-community-id]",
+            rail
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        const id =
+                            button.dataset
+                                .communityId;
+
+
+                        const community =
+                            state.communities
+                                .find(
+                                    item =>
+                                        String(
+                                            item.id
+                                        ) ===
+                                        String(id)
+                                );
+
+
+                        if (
+                            community
+                        ) {
+
+                            await selectCommunity(
+                                community
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       15. COMMUNITY ROLE
+       ===================================================== */
+
+    async function loadCommunityRole(
+        communityId
+    ) {
+
+        state.currentRole =
+            "student";
+
+
+        if (
+            !communityId ||
+            !state.user?.id
+        ) {
+
+            updateRoleBadge();
+
+            return "student";
+
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select(
+                    "role,is_muted,is_banned"
+                )
+                .eq(
+                    "community_id",
+                    communityId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
+
+
+        if (error) {
+
+            console.warn(
+                "⚠️ Role lookup failed:",
+                error.message
+            );
+
+            updateRoleBadge();
+
+            return "student";
+
+        }
+
+
+        if (
+            data?.is_banned
+        ) {
+
+            toast(
+                "You are banned from this community.",
+                "error"
+            );
+
+        }
+
+
+        state.currentRole =
+            data?.role ||
+            "student";
+
+
+        updateRoleBadge();
+
+
+        return state.currentRole;
+
+    }
+
+
+    function updateRoleBadge() {
+
+        const badge =
+            byId(
+                "currentRoleBadge"
+            );
+
+
+        if (!badge) return;
+
+
+        badge.textContent =
+            String(
+                state.currentRole ||
+                "student"
+            )
+                .replace(
+                    /_/g,
+                    " "
+                )
+                .replace(
+                    /\b\w/g,
+                    letter =>
+                        letter.toUpperCase()
+                );
+
+    }
+
+
+    /* =====================================================
+       16. JOIN COMMUNITY IF NECESSARY
+       ===================================================== */
+
+    async function ensureCommunityMembership(
+        communityId
+    ) {
+
+        if (
+            !communityId ||
+            !state.user?.id
+        ) {
+
+            return null;
+
+        }
+
+
+        const {
+            data: existing,
+            error
+        } =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select(
+                    `
+                    id,
+                    community_id,
+                    user_id,
+                    role,
+                    is_muted,
+                    is_banned
+                    `
+                )
+                .eq(
+                    "community_id",
+                    communityId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
+
+
+        if (
+            error &&
+            error.code !== "PGRST116"
+        ) {
+
+            console.warn(
+                "⚠️ Membership lookup:",
+                error.message
+            );
+
+        }
+
+
+        if (existing) {
+
+            return existing;
+
+        }
+
+
+        /*
+         * Public communities:
+         * automatically create student membership.
+         */
+
+        const community =
+            state.communities.find(
+                item =>
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        communityId
+                    )
+            );
+
+
+        if (
+            community &&
+            community.is_public === false
+        ) {
+
+            return null;
+
+        }
+
+
+        const {
+            data: created,
+            error: createError
+        } =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .insert({
+                    community_id:
+                        communityId,
+
+                    user_id:
+                        state.user.id,
+
+                    role:
+                        "student"
+                })
+                .select()
+                .single();
+
+
+        if (createError) {
+
+            console.warn(
+                "⚠️ Could not create community membership:",
+                createError.message
+            );
+
+            return null;
+
+        }
+
+
+        return created;
+
+    }
+
+
+    /* =====================================================
+       17. COMMUNITY HEADER
+       ===================================================== */
+
+    function renderActiveCommunity() {
+
+        const community =
+            state.currentCommunity;
+
+
+        if (!community) return;
+
+
+        setText(
+            "activeCommunityName",
+            community.name ||
+            "Mwaniki Community"
+        );
+
+
+        setText(
+            "activeCommunityDescription",
+            community.description ||
+            "Medical learning community"
+        );
+
+
+        const icon =
+            byId(
+                "activeCommunityIcon"
+            );
+
+
+        if (icon) {
+
+            if (
+                community.icon_url
+            ) {
+
+                icon.innerHTML = `
+                    <img
+                        src="${escapeAttribute(community.icon_url)}"
+                        alt=""
+                    >
+                `;
+
+            } else {
+
+                icon.textContent =
+                    initials(
+                        community.name
+                    );
+
+            }
+
+        }
+
+
+        const courseId =
+            getURLCourseId() ||
+            getStoredCourseId();
+
+
+        const course =
+            findCourseById(
+                courseId
+            );
+
+
+        state.currentCourse =
+            course || null;
+
+
+        const banner =
+            byId(
+                "communityCourseBanner"
+            );
+
+
+        if (banner) {
+
+            if (course) {
+
+                showElement(
+                    banner
+                );
+
+            }
+
+        }
+
+
+        setText(
+            "communityCourseName",
+            course?.title ||
+            getURLCourseName() ||
+            "General Community"
+        );
+
+
+        setText(
+            "communityCourseLabel",
+            course
+                ? "Course Community"
+                : "Community"
+        );
+
+    }
+
+
+    /* =====================================================
+       18. CHANNEL LOADING
+       ===================================================== */
+
+    async function loadChannels() {
+
+        const communityId =
+            state.currentCommunity?.id;
+
+
+        console.log(
+            "📡 Loading channels for:",
+            communityId
+        );
+
+
+        if (!communityId) {
+
+            state.channels =
+                [];
+
+            renderChannels();
+
+            return [];
+
+        }
+
+
+        state.loadingChannels =
+            true;
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_channels"
+                )
+                .select(
+                    `
+                    id,
+                    community_id,
+                    name,
+                    slug,
+                    description,
+                    channel_type,
+                    icon,
+                    position,
+                    is_private,
+                    is_archived,
+                    is_active,
+                    course_id,
+                    unit_id,
+                    created_by,
+                    created_at
+                    `
+                )
+                .eq(
+                    "community_id",
+                    communityId
+                )
+                .eq(
+                    "is_active",
+                    true
+                )
+                .eq(
+                    "is_archived",
+                    false
+                )
+                .order(
+                    "position",
+                    {
+                        ascending: true
+                    }
+                );
+
+
+        state.loadingChannels =
+            false;
+
+
+        if (error) {
+
+            console.error(
+                "❌ CHANNEL LOAD ERROR:",
+                error
+            );
+
+
+            state.channels =
+                [];
+
+
+            renderChannels();
+
+
+            toast(
+                "Channels could not be loaded.",
+                "error"
+            );
+
+
+            return [];
+
+        }
+
+
+        const channels =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        const publicChannels =
+            channels.filter(
+                channel =>
+                    !channel.is_private
+            );
+
+
+        const privateChannels =
+            channels.filter(
+                channel =>
+                    channel.is_private
+            );
+
+
+        let allowedPrivateIds =
+            new Set();
+
+
+        if (
+            privateChannels.length &&
+            state.user?.id
+        ) {
+
+            const {
+                data: memberships,
+                error: membershipError
+            } =
+                await db
+                    .from(
+                        "chat_channel_members"
+                    )
+                    .select(
+                        "channel_id"
+                    )
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    )
+                    .in(
+                        "channel_id",
+                        privateChannels.map(
+                            channel =>
+                                channel.id
+                        )
+                    );
+
+
+            if (membershipError) {
+
+                console.warn(
+                    "⚠️ Private channel membership:",
+                    membershipError.message
+                );
+
+            } else {
+
+                allowedPrivateIds =
+                    new Set(
+                        (
+                            memberships ||
+                            []
+                        ).map(
+                            item =>
+                                item.channel_id
+                        )
+                    );
+
+            }
+
+        }
+
+
+        state.channels = [
+
+            ...publicChannels,
+
+            ...privateChannels.filter(
+                channel =>
+                    allowedPrivateIds.has(
+                        channel.id
+                    )
             )
 
+        ].sort(
+            (
+                a,
+                b
+            ) =>
+                (
+                    Number(
+                        a.position
+                    ) || 0
+                ) -
+                (
+                    Number(
+                        b.position
+                    ) || 0
+                )
+        );
+
+
+        console.log(
+            "✅ Channels loaded:",
+            state.channels.length,
+            state.channels
+        );
+
+
+        renderChannels();
+
+
+        return state.channels;
+
+    }
+
+
+    /* =====================================================
+       19. CHANNEL CATEGORY
+       ===================================================== */
+
+    function getChannelCategory(
+        channel
+    ) {
+
+        if (
+            channel.course_id !== null &&
+            channel.course_id !== undefined
+        ) {
+
+            return "Course Discussions";
+
+        }
+
+
+        switch (
+            channel.channel_type
+        ) {
+
+            case "announcement":
+
+                return "Information";
+
+
+            case "study":
+
+                return "Study";
+
+
+            case "voice":
+
+                return "Voice";
+
+
+            case "course":
+
+                return "Course Discussions";
+
+
+            default:
+
+                return "Community";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       20. CHANNEL RENDERING
+       ===================================================== */
+
+    function renderChannels() {
+
+        const list =
+            byId(
+                "channelList"
+            );
+
+
+        if (!list) {
+
+            console.warn(
+                "⚠️ #channelList not found."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            state.loadingChannels
+        ) {
+
+            list.innerHTML = `
+                <div class="channel-loading">
+                    Loading channels...
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        if (
+            !state.channels.length
+        ) {
+
+            list.innerHTML = `
+                <div class="empty-state">
+                    No channels are available.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        const search =
+            state.channelSearch
+                .trim()
+                .toLowerCase();
+
+
+        const filtered =
+            search
+                ? state.channels.filter(
+                    channel => {
+
+                        const text =
+                            [
+                                channel.name,
+                                channel.description,
+                                getChannelCategory(
+                                    channel
+                                )
+                            ]
+                                .filter(Boolean)
+                                .join(" ")
+                                .toLowerCase();
+
+
+                        return text.includes(
+                            search
+                        );
+
+                    }
+                )
+                : state.channels;
+
+
+        if (
+            !filtered.length
+        ) {
+
+            list.innerHTML = `
+                <div class="empty-state">
+                    No matching channels.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        const groups =
+            new Map();
+
+
+        filtered.forEach(
+            channel => {
+
+                const category =
+                    getChannelCategory(
+                        channel
+                    );
+
+
+                if (
+                    !groups.has(
+                        category
+                    )
+                ) {
+
+                    groups.set(
+                        category,
+                        []
+                    );
+
+                }
+
+
+                groups
+                    .get(category)
+                    .push(channel);
+
+            }
+        );
+
+
+        let html = "";
+
+
+        groups.forEach(
+            (
+                channels,
+                category
+            ) => {
+
+                html += `
+                    <div class="channel-category">
+                        ${escapeHTML(category)}
+                    </div>
+                `;
+
+
+                channels.forEach(
+                    channel => {
+
+                        const active =
+                            state.currentChannel &&
+                            String(
+                                state.currentChannel.id
+                            ) ===
+                            String(
+                                channel.id
+                            );
+
+
+                        const icon =
+                            channel.icon ||
+                            (
+                                channel.channel_type ===
+                                "voice"
+                                    ? "🔊"
+                                    : "#"
+                            );
+
+
+                        html += `
+                            <button
+                                type="button"
+                                class="
+                                    channel-item
+                                    ${active ? "active" : ""}
+                                "
+                                data-channel-id="${escapeAttribute(channel.id)}"
+                                title="${escapeAttribute(channel.description || channel.name || "")}"
+                            >
+
+                                <span class="channel-icon">
+                                    ${escapeHTML(icon)}
+                                </span>
+
+                                <span class="channel-name">
+                                    ${escapeHTML(
+                                        channel.name
+                                    )}
+                                </span>
+
+                                ${
+                                    channel.is_private
+                                        ? `
+                                            <span
+                                                class="channel-private-icon"
+                                                title="Private channel"
+                                            >
+                                                🔒
+                                            </span>
+                                        `
+                                        : ""
+                                }
+
+                            </button>
+                        `;
+
+                    }
+                );
+
+            }
+        );
+
+
+        list.innerHTML =
+            html;
+
+
+        queryAll(
+            "[data-channel-id]",
+            list
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        const id =
+                            button.dataset
+                                .channelId;
+
+
+                        const channel =
+                            state.channels.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(id)
+                            );
+
+
+                        if (
+                            channel
+                        ) {
+
+                            await selectChannel(
+                                channel
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       21. SELECT COMMUNITY
+       ===================================================== */
+
+    async function selectCommunity(
+        community
+    ) {
+
+        if (!community) {
+
+            return;
+
+        }
+
+
+        console.log(
+            "🏠 Selecting community:",
+            community.name,
+            community.id
+        );
+
+
+        state.currentCommunity =
+            community;
+
+
+        state.currentChannel =
+            null;
+
+
+        state.messages =
+            [];
+
+
+        storageSet(
+            STORAGE.communityId,
+            community.id
+        );
+
+
+        storageSet(
+            STORAGE.communityName,
+            community.name
+        );
+
+
+        renderCommunityRail();
+
+
+        renderActiveCommunity();
+
+
+        await ensureCommunityMembership(
+            community.id
+        );
+
+
+        await loadCommunityRole(
+            community.id
+        );
+
+
+        await loadChannels();
+
+
+        const initialChannel =
+            chooseInitialChannel();
+
+
+        if (
+            initialChannel
+        ) {
+
+            await selectChannel(
+                initialChannel
+            );
+
+        }
+
+
+        setupCommunityRealtime(
+            community.id
+        );
+
+
+        startPresence();
+
+
+        return community;
+
+    }
+
+
+    function chooseInitialCommunity() {
+
+        if (
+            !state.communities.length
+        ) {
+
+            return null;
+
+        }
+
+
+        const urlCommunity =
+            getURLParams()
+                .get(
+                    "community_id"
+                );
+
+
+        const stored =
+            storageGet(
+                STORAGE.communityId
+            );
+
+
+        return (
+            state.communities.find(
+                community =>
+                    String(
+                        community.id
+                    ) ===
+                    String(
+                        urlCommunity
+                    )
+            ) ||
+
+            state.communities.find(
+                community =>
+                    String(
+                        community.id
+                    ) ===
+                    String(
+                        stored
+                    )
+            ) ||
+
+            state.communities[0]
+        );
+
+    }
+
+
+    function chooseInitialChannel() {
+
+        if (
+            !state.channels.length
+        ) {
+
+            return null;
+
+        }
+
+
+        const stored =
+            storageGet(
+                STORAGE.channelId
+            );
+
+
+        const courseId =
+            getURLCourseId() ||
+            getStoredCourseId();
+
+
+        if (courseId) {
+
+            const courseChannel =
+                state.channels.find(
+                    channel =>
+                        String(
+                            channel.course_id
+                        ) ===
+                        String(
+                            courseId
+                        )
+                );
+
+
+            if (
+                courseChannel
+            ) {
+
+                return courseChannel;
+
+            }
+
+        }
+
+
+        return (
+            state.channels.find(
+                channel =>
+                    String(
+                        channel.id
+                    ) ===
+                    String(stored)
+            ) ||
+
+            state.channels[0]
+        );
+
+    }
+
+
+    /* =====================================================
+       22. ACTIVE CHANNEL HEADER
+       ===================================================== */
+
+    function renderActiveChannel() {
+
+        const channel =
+            state.currentChannel;
+
+
+        if (!channel) {
+
+            setText(
+                "activeChannelName",
+                "Select a channel"
+            );
+
+            return;
+
+        }
+
+
+        setText(
+            "activeChannelName",
+            channel.name ||
+            "Channel"
+        );
+
+
+        setText(
+            "activeChannelDescription",
+            channel.description ||
+            ""
+        );
+
+
+        const channelIcon =
+            byId(
+                "activeChannelIcon"
+            );
+
+
+        if (channelIcon) {
+
+            channelIcon.textContent =
+                channel.icon ||
+                "#";
+
+        }
+
+    }
+
+
+    /* =====================================================
+       23. SELECT CHANNEL
+       ===================================================== */
+
+    async function selectChannel(
+        channel
+    ) {
+
+        if (!channel) {
+
+            return;
+
+        }
+
+
+        console.log(
+            "📂 Selecting channel:",
+            channel.name,
+            channel.id
+        );
+
+
+        state.currentChannel =
+            channel;
+
+
+        storageSet(
+            STORAGE.channelId,
+            channel.id
+        );
+
+
+        renderChannels();
+
+
+        renderActiveChannel();
+
+
+        await loadMessages(
+            channel.id
+        );
+
+
+        await loadChannelMembers(
+            channel.id
+        );
+
+
+        setupChannelRealtime(
+            channel.id
+        );
+
+
+        scrollMessagesToBottom();
+
+
+        return channel;
+
+    }
+
+
+    /* =====================================================
+       24. MESSAGES
+       ===================================================== */
+
+    async function loadMessages(
+        channelId
+    ) {
+
+        if (!channelId) {
+
+            return [];
+
+        }
+
+
+        state.loadingMessages =
+            true;
+
+
+        renderMessages();
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_messages"
+                )
+                .select("*")
+                .eq(
+                    "channel_id",
+                    channelId
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                )
+                .limit(
+                    200
+                );
+
+
+        state.loadingMessages =
+            false;
+
+
+        if (error) {
+
+            console.error(
+                "❌ Message loading failed:",
+                error
+            );
+
+
+            state.messages =
+                [];
+
+
+            renderMessages();
+
+
+            return [];
+
+        }
+
+
+        state.messages =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        await enrichMessageProfiles();
+
+
+        renderMessages();
+
+
+        return state.messages;
+
+    }
+
+
+    async function enrichMessageProfiles() {
+
+        /*
+         * Messages remain usable even when
+         * profile lookup is unavailable.
+         */
+
+        return true;
+
+    }
+
+
+    function getMessageAuthorName(
+        message
+    ) {
+
+        if (
+            String(
+                message.user_id
+            ) ===
+            String(
+                state.user?.id
+            )
+        ) {
+
+            return "You";
+
+        }
+
+
+        return (
+            message.author_name ||
+            message.full_name ||
+            message.username ||
+            "Student"
+        );
+
+    }
+
+
+    function renderMessages() {
+
+        const container =
+            byId(
+                "messageList"
+            );
+
+
+        if (!container) {
+
+            return;
+
+        }
+
+
+        if (
+            state.loadingMessages
+        ) {
+
+            container.innerHTML = `
+                <div class="message-loading">
+                    Loading messages...
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        if (
+            !state.messages.length
+        ) {
+
+            container.innerHTML = `
+                <div class="message-empty">
+                    <div class="message-empty-icon">
+                        💬
+                    </div>
+
+                    <strong>
+                        No messages yet
+                    </strong>
+
+                    <span>
+                        Start the discussion in this channel.
+                    </span>
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        const search =
+            state.messageSearch
+                .trim()
+                .toLowerCase();
+
+
+        const messages =
+            search
+                ? state.messages.filter(
+                    message =>
+                        String(
+                            message.content ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                search
+                            )
+                )
+                : state.messages;
+
+
+        container.innerHTML =
+            messages
+                .map(
+                    message =>
+                        createMessageHTML(
+                            message
+                        )
+                )
+                .join("");
+
+
+        bindMessageActions();
+
+    }
+
+
+    function createMessageHTML(
+        message
+    ) {
+
+        const own =
+            String(
+                message.user_id
+            ) ===
+            String(
+                state.user?.id
+            );
+
+
+        const author =
+            getMessageAuthorName(
+                message
+            );
+
+
+        const content =
+            message.content ||
+            "";
+
+
+        const created =
+            formatMessageDate(
+                message.created_at
+            );
+
+
+        return `
+            <article
+                class="
+                    community-message
+                    ${own ? "own-message" : ""}
+                "
+                data-message-id="${escapeAttribute(message.id)}"
+            >
+
+                <div class="message-avatar">
+                    ${escapeHTML(
+                        initials(author)
+                    )}
+                </div>
+
+
+                <div class="message-main">
+
+                    <div class="message-meta">
+
+                        <strong>
+                            ${escapeHTML(author)}
+                        </strong>
+
+                        <time>
+                            ${escapeHTML(created)}
+                        </time>
+
+                    </div>
+
+
+                    <div class="message-content">
+                        ${escapeHTML(content)}
+                    </div>
+
+
+                    <div class="message-actions">
+
+                        <button
+                            type="button"
+                            data-reply-message="${escapeAttribute(message.id)}"
+                        >
+                            Reply
+                        </button>
+
+                        <button
+                            type="button"
+                            data-react-message="${escapeAttribute(message.id)}"
+                        >
+                            ❤️
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </article>
+        `;
+
+    }
+
+
+    function bindMessageActions() {
+
+        queryAll(
+            "[data-reply-message]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const id =
+                            button.dataset
+                                .replyMessage;
+
+
+                        const message =
+                            state.messages.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(id)
+                            );
+
+
+                        if (
+                            message
+                        ) {
+
+                            state.currentReply =
+                                message;
+
+                            updateReplyUI();
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+
+        queryAll(
+            "[data-react-message]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        await toggleReaction(
+                            button.dataset
+                                .reactMessage
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       25. REPLY UI
+       ===================================================== */
+
+    function updateReplyUI() {
+
+        const reply =
+            byId(
+                "replyPreview"
+            );
+
+
+        if (!reply) return;
+
+
+        if (
+            !state.currentReply
+        ) {
+
+            reply.innerHTML =
+                "";
+
+            reply.classList.remove(
+                "active"
+            );
+
+            return;
+
+        }
+
+
+        reply.classList.add(
+            "active"
+        );
+
+
+        reply.innerHTML = `
+            <div>
+                Replying to
+                <strong>
+                    ${escapeHTML(
+                        getMessageAuthorName(
+                            state.currentReply
+                        )
+                    )}
+                </strong>
+
+                <span>
+                    ${escapeHTML(
+                        state.currentReply.content ||
+                        ""
+                    )}
+                </span>
+            </div>
+
+            <button
+                type="button"
+                id="cancelReplyButton"
+            >
+                ×
+            </button>
+        `;
+
+
+        const cancel =
+            byId(
+                "cancelReplyButton"
+            );
+
+
+        if (cancel) {
+
+            cancel.addEventListener(
+                "click",
+                cancelReply
+            );
+
+        }
+
+    }
+
+
+    function cancelReply() {
+
+        state.currentReply =
+            null;
+
+        updateReplyUI();
+
+    }
+
+
+    /* =====================================================
+       26. REACTIONS
+       ===================================================== */
+
+    async function toggleReaction(
+        messageId
+    ) {
+
+        if (
+            !messageId ||
+            !state.user?.id
+        ) {
+
+            return;
+
+        }
+
+
+        const {
+            data: existing,
+            error: lookupError
+        } =
+            await db
+                .from(
+                    "chat_message_reactions"
+                )
+                .select("id")
+                .eq(
+                    "message_id",
+                    messageId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
+
+
+        if (
+            lookupError &&
+            lookupError.code !==
+                "PGRST116"
+        ) {
+
+            console.warn(
+                "Reaction lookup failed:",
+                lookupError
+            );
+
+            return;
+
+        }
+
+
+        if (existing) {
+
+            await db
+                .from(
+                    "chat_message_reactions"
+                )
+                .delete()
+                .eq(
+                    "id",
+                    existing.id
+                );
+
+        } else {
+
+            await db
+                .from(
+                    "chat_message_reactions"
+                )
+                .insert({
+                    message_id:
+                        messageId,
+
+                    user_id:
+                        state.user.id,
+
+                    reaction:
+                        "❤️"
+                });
+
+        }
+
+    }
+
+
+    /* =====================================================
+       27. SEND MESSAGE
+       ===================================================== */
+
+    async function sendMessage() {
+
+        if (
+            state.sendingMessage
+        ) {
+
+            return;
+
+        }
+
+
+        const input =
+            byId(
+                "messageInput"
+            );
+
+
+        if (!input) {
+
+            return;
+
+        }
+
+
+        const content =
+            input.value.trim();
+
+
+        if (
+            !content
+        ) {
+
+            return;
+
+        }
+
+
+        if (
+            !state.currentChannel?.id
+        ) {
+
+            toast(
+                "Select a channel first.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !state.user?.id
+        ) {
+
+            toast(
+                "You are not signed in.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        state.sendingMessage =
+            true;
+
+
+        input.disabled =
+            true;
+
+
+        const payload = {
+
+            channel_id:
+                state.currentChannel.id,
+
+            user_id:
+                state.user.id,
+
+            content:
+                content
+
+        };
+
+
+        if (
+            state.currentReply?.id
+        ) {
+
+            /*
+             * Only add reply_to if the database
+             * has that column. Our engine first
+             * attempts the normal message.
+             */
+
+            payload.reply_to =
+                state.currentReply.id;
+
+        }
+
+
+        let result =
+            await db
+                .from(
+                    "chat_messages"
+                )
+                .insert(
+                    payload
+                )
+                .select()
+                .single();
+
+
+        /*
+         * If reply_to is not part of the
+         * existing schema, retry without it.
+         */
+
+        if (
+            result.error &&
+            state.currentReply?.id &&
+            /reply_to/i.test(
+                result.error.message ||
+                ""
+            )
+        ) {
+
+            delete payload.reply_to;
+
+
+            result =
+                await db
+                    .from(
+                        "chat_messages"
+                    )
+                    .insert(
+                        payload
+                    )
+                    .select()
+                    .single();
+
+        }
+
+
+        state.sendingMessage =
+            false;
+
+
+        input.disabled =
+            false;
+
+
+        if (
+            result.error
+        ) {
+
+            console.error(
+                "❌ Message send failed:",
+                result.error
+            );
+
+
+            toast(
+                "Message could not be sent.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        input.value =
+            "";
+
+
+        cancelReply();
+
+
+        /*
+         * Realtime normally adds the message.
+         * We also add it immediately so the sender
+         * sees it even if Realtime is delayed.
+         */
+
+        if (
+            result.data
+        ) {
+
+            const exists =
+                state.messages.some(
+                    item =>
+                        String(
+                            item.id
+                        ) ===
+                        String(
+                            result.data.id
+                        )
+                );
+
+
+            if (!exists) {
+
+                state.messages.push(
+                    result.data
+                );
+
+                renderMessages();
+
+            }
+
+        }
+
+
+        scrollMessagesToBottom();
+
+    }
+
+
+    function scrollMessagesToBottom() {
+
+        const container =
+            byId(
+                "messageList"
+            );
+
+
+        if (!container) return;
+
+
+        requestAnimationFrame(
+            () => {
+
+                container.scrollTop =
+                    container.scrollHeight;
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       28. CHANNEL MEMBERS
+       ===================================================== */
+
+    async function loadChannelMembers(
+        channelId
+    ) {
+
+        if (!channelId) {
+
+            state.members =
+                [];
+
+            renderMembers();
+
+            return [];
+
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_channel_members"
+                )
+                .select("*")
+                .eq(
+                    "channel_id",
+                    channelId
+                );
+
+
+        if (error) {
+
+            console.warn(
+                "⚠️ Channel members unavailable:",
+                error.message
+            );
+
+            state.members =
+                [];
+
+            renderMembers();
+
+            return [];
+
+        }
+
+
+        state.members =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        renderMembers();
+
+
+        return state.members;
+
+    }
+
+
+    async function loadCommunityMembers() {
+
+        const communityId =
+            state.currentCommunity?.id;
+
+
+        if (!communityId) {
+
+            state.members =
+                [];
+
+            renderMembers();
+
+            return [];
+
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select("*")
+                .eq(
+                    "community_id",
+                    communityId
+                );
+
+
+        if (error) {
+
+            console.warn(
+                "⚠️ Community members unavailable:",
+                error.message
+            );
+
+            return [];
+
+        }
+
+
+        state.members =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        renderMembers();
+
+
+        return state.members;
+
+    }
+
+
+    function renderMembers() {
+
+        const list =
+            byId(
+                "memberList"
+            );
+
+
+        if (!list) return;
+
+
+        if (
+            !state.members.length
+        ) {
+
+            list.innerHTML = `
+                <div class="empty-state">
+                    No members to display.
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        list.innerHTML =
+            state.members
+                .map(
+                    member => {
+
+                        const name =
+                            member.nickname ||
+                            member.full_name ||
+                            member.username ||
+                            (
+                                String(
+                                    member.user_id
+                                ) ===
+                                String(
+                                    state.user?.id
+                                )
+                                    ? "You"
+                                    : "Student"
+                            );
+
+
+                        return `
+                            <div
+                                class="member-item"
+                                data-member-id="${escapeAttribute(member.user_id || member.id)}"
+                            >
+
+                                <div class="member-avatar">
+                                    ${escapeHTML(
+                                        initials(name)
+                                    )}
+                                </div>
+
+                                <div class="member-info">
+
+                                    <strong>
+                                        ${escapeHTML(name)}
+                                    </strong>
+
+                                    <small>
+                                        ${escapeHTML(
+                                            member.role ||
+                                            "student"
+                                        )}
+                                    </small>
+
+                                </div>
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+    }
+
+
+    /* =====================================================
+       29. REALTIME CLEANUP
+       ===================================================== */
+
+    function cleanupRealtime() {
+
+        state.realtimeChannels
+            .forEach(
+                channel => {
+
+                    try {
+
+                        db.removeChannel(
+                            channel
+                        );
+
+                    } catch (error) {
+
+                        console.warn(
+                            "Realtime cleanup:",
+                            error
+                        );
+
+                    }
+
+                }
+            );
+
+
+        state.realtimeChannels =
+            [];
+
+
+        if (
+            state.presenceTimer
+        ) {
+
+            clearInterval(
+                state.presenceTimer
+            );
+
+            state.presenceTimer =
+                null;
+
+        }
+
+    }
+
+
+    /* =====================================================
+       30. COMMUNITY REALTIME
+       ===================================================== */
+
+    function setupCommunityRealtime(
+        communityId
+    ) {
+
+        cleanupRealtime();
+
+
+        if (!communityId) return;
+
+
+        const channel =
+            db.channel(
+                `mwaniki-community-${communityId}`
+            );
+
+
+        channel
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_messages"
+                },
+                payload => {
+
+                    const message =
+                        payload.new;
+
+
+                    if (
+                        message?.channel_id !==
+                        state.currentChannel?.id
+                    ) {
+
+                        return;
+
+                    }
+
+
+                    if (
+                        payload.eventType ===
+                        "INSERT"
+                    ) {
+
+                        const exists =
+                            state.messages.some(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        message.id
+                                    )
+                            );
+
+
+                        if (!exists) {
+
+                            state.messages.push(
+                                message
+                            );
+
+                            renderMessages();
+
+                            scrollMessagesToBottom();
+
+                        }
+
+                    }
+
+
+                    if (
+                        payload.eventType ===
+                        "UPDATE"
+                    ) {
+
+                        state.messages =
+                            state.messages.map(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        message.id
+                                    )
+                                        ? message
+                                        : item
+                            );
+
+                        renderMessages();
+
+                    }
+
+
+                    if (
+                        payload.eventType ===
+                        "DELETE"
+                    ) {
+
+                        state.messages =
+                            state.messages.filter(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) !==
+                                    String(
+                                        message.id
+                                    )
+                            );
+
+                        renderMessages();
+
+                    }
+
+                }
+            )
             .subscribe(
                 status => {
 
-                    callLog(
-                        "Incoming call subscription:",
+                    console.log(
+                        "📡 Community realtime:",
                         status
                     );
 
                 }
             );
 
-}
 
-
-/* ============================================================
-   17. HANDLE INCOMING PARTICIPANT
-   ============================================================ */
-
-async function handleIncomingParticipant(
-    participant
-) {
-
-    if (!participant) {
-
-        return;
-
-    }
-
-
-    if (
-        participant.user_id !==
-        CallState.currentUser?.id
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        participant.status ===
-        PARTICIPANT_STATUS.LEFT
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Do not interrupt an existing call.
-     */
-
-    if (
-        CallState.isInCall &&
-        CallState.currentRoom &&
-        CallState.currentRoom.id !==
-            participant.room_id
-    ) {
-
-        callWarn(
-            "Incoming call while already in another call."
+        state.realtimeChannels.push(
+            channel
         );
 
-        return;
-
     }
 
 
-    const {
-        data: room,
-        error
-    } = await supabase
+    /* =====================================================
+       31. CHANNEL REALTIME
+       ===================================================== */
 
-        .from(
-            "chat_call_rooms"
-        )
-
-        .select("*")
-
-        .eq(
-            "id",
-            participant.room_id
-        )
-
-        .maybeSingle();
-
-
-    if (error || !room) {
-
-        callWarn(
-            "Incoming call room unavailable."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        room.status ===
-        CALL_STATUS.ENDED
+    function setupChannelRealtime(
+        channelId
     ) {
 
-        return;
+        if (!channelId) return;
+
+
+        const channel =
+            db.channel(
+                `mwaniki-channel-${channelId}`
+            );
+
+
+        channel
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_messages",
+                    filter:
+                        `channel_id=eq.${channelId}`
+                },
+                payload => {
+
+                    const message =
+                        payload.new;
+
+
+                    if (
+                        payload.eventType ===
+                        "INSERT"
+                    ) {
+
+                        const exists =
+                            state.messages.some(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        message.id
+                                    )
+                            );
+
+
+                        if (!exists) {
+
+                            state.messages.push(
+                                message
+                            );
+
+                            renderMessages();
+
+                            scrollMessagesToBottom();
+
+                        }
+
+                    }
+
+                }
+            )
+            .subscribe();
+
+
+        state.realtimeChannels.push(
+            channel
+        );
 
     }
 
 
-    showIncomingCall(
-        room,
-        participant
-    );
+    /* =====================================================
+       32. PRESENCE
+       ===================================================== */
 
-}
+    async function updatePresence() {
 
+        if (
+            !state.user?.id
+        ) {
 
-/* ============================================================
-   18. ACCEPT INCOMING CALL
-   ============================================================ */
+            return;
 
-export async function acceptIncomingCall(
-    roomId
-) {
-
-    hideIncomingCall();
+        }
 
 
-    CallState.isCaller =
-        false;
+        if (
+            !state.currentCommunity?.id
+        ) {
+
+            return;
+
+        }
 
 
-    return await joinCallRoom(
-        roomId
-    );
+        const payload = {
 
-}
+            user_id:
+                state.user.id,
 
+            community_id:
+                state.currentCommunity.id,
 
-/* ============================================================
-   19. DECLINE INCOMING CALL
-   ============================================================ */
-
-export async function declineIncomingCall(
-    participantId
-) {
-
-    if (!participantId) {
-
-        hideIncomingCall();
-
-        return;
-
-    }
-
-
-    const {
-        error
-    } = await supabase
-
-        .from(
-            "chat_call_participants"
-        )
-
-        .update({
-
-            status:
-                PARTICIPANT_STATUS.DECLINED,
-
-            left_at:
+            last_seen_at:
                 new Date()
                     .toISOString()
 
-        })
+        };
 
-        .eq(
-            "id",
-            participantId
+
+        const {
+            error
+        } =
+            await db
+                .from(
+                    "chat_presence"
+                )
+                .upsert(
+                    payload,
+                    {
+                        onConflict:
+                            "user_id,community_id"
+                    }
+                );
+
+
+        if (error) {
+
+            /*
+             * Presence must never break
+             * the community page.
+             */
+
+            console.debug(
+                "Presence update:",
+                error.message
+            );
+
+        }
+
+    }
+
+
+    function startPresence() {
+
+        if (
+            state.presenceTimer
+        ) {
+
+            clearInterval(
+                state.presenceTimer
+            );
+
+        }
+
+
+        updatePresence();
+
+
+        state.presenceTimer =
+            setInterval(
+                updatePresence,
+                60000
+            );
+
+    }
+
+
+    /* =====================================================
+       PART 2 STARTS DIRECTLY BELOW
+       ===================================================== */
+ /* =========================================================
+   MWANIKI SCHOLARS
+   COMMUNITY ENGINE
+   community.js — PART 2 OF 2
+
+   Continues Part 1.
+
+   Includes:
+   - Event system
+   - Community/channel search
+   - Message composer
+   - Community creation
+   - Channel creation
+   - Call system
+   - General calls
+   - Community calls
+   - Voice
+   - Video
+   - Screen sharing
+   - Mute
+   - Camera
+   - WebRTC
+   - Supabase call signaling
+   - Incoming calls
+   - Call cleanup
+   - Initialization
+   ========================================================= */
+
+
+/* =========================================================
+   33. COMMUNITY SEARCH
+   ========================================================= */
+
+function setupSearchEvents() {
+
+    const channelSearch =
+        byId(
+            "channelSearchInput"
         );
+
+
+    if (channelSearch) {
+
+        channelSearch.addEventListener(
+            "input",
+            () => {
+
+                state.channelSearch =
+                    channelSearch.value;
+
+                renderChannels();
+
+            }
+        );
+
+    }
+
+
+    const memberSearch =
+        byId(
+            "memberSearchInput"
+        );
+
+
+    if (memberSearch) {
+
+        memberSearch.addEventListener(
+            "input",
+            () => {
+
+                state.memberSearch =
+                    memberSearch.value;
+
+                renderMembers();
+
+            }
+        );
+
+    }
+
+
+    const messageSearch =
+        byId(
+            "messageSearchInput"
+        );
+
+
+    if (messageSearch) {
+
+        messageSearch.addEventListener(
+            "input",
+            () => {
+
+                state.messageSearch =
+                    messageSearch.value;
+
+                renderMessages();
+
+            }
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   34. MESSAGE COMPOSER EVENTS
+   ========================================================= */
+
+function setupMessageComposer() {
+
+    const input =
+        byId(
+            "messageInput"
+        );
+
+
+    if (!input) {
+
+        console.warn(
+            "⚠️ #messageInput not found."
+        );
+
+        return;
+
+    }
+
+
+    input.addEventListener(
+        "keydown",
+        async event => {
+
+            if (
+                event.key ===
+                "Enter" &&
+                !event.shiftKey
+            ) {
+
+                event.preventDefault();
+
+                await sendMessage();
+
+            }
+
+        }
+    );
+
+
+    const sendButton =
+        byId(
+            "sendMessageButton"
+        );
+
+
+    if (sendButton) {
+
+        sendButton.addEventListener(
+            "click",
+            sendMessage
+        );
+
+    }
+
+
+    const cancelReplyButton =
+        byId(
+            "cancelReplyButton"
+        );
+
+
+    if (cancelReplyButton) {
+
+        cancelReplyButton.addEventListener(
+            "click",
+            cancelReply
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   35. COMMUNITY CREATION
+   ========================================================= */
+
+function canManageCommunity() {
+
+    return [
+        "admin",
+        "super_admin"
+    ].includes(
+        state.currentRole
+    );
+
+}
+
+
+async function createCommunity() {
+
+    if (
+        !state.user?.id
+    ) {
+
+        toast(
+            "Please sign in first.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const name =
+        window.prompt(
+            "Community name:"
+        );
+
+
+    if (!name?.trim()) {
+
+        return;
+
+    }
+
+
+    const cleanName =
+        name.trim();
+
+
+    const description =
+        window.prompt(
+            "Community description:"
+        ) ||
+        "";
+
+
+    const slug =
+        slugify(
+            cleanName
+        );
+
+
+    const {
+        data,
+        error
+    } =
+        await db
+            .from(
+                "chat_communities"
+            )
+            .insert({
+                name:
+                    cleanName,
+
+                slug:
+                    slug,
+
+                description:
+                    description.trim(),
+
+                is_public:
+                    true,
+
+                is_active:
+                    true,
+
+                created_by:
+                    state.user.id
+            })
+            .select()
+            .single();
 
 
     if (error) {
 
-        callError(
-            "Unable to decline call:",
+        console.error(
+            "❌ Community creation failed:",
             error
         );
+
+
+        toast(
+            error.message ||
+            "Community could not be created.",
+            "error"
+        );
+
+        return;
 
     }
 
 
-    hideIncomingCall();
+    toast(
+        "Community created.",
+        "success"
+    );
+
+
+    await loadCommunities();
+
+
+    if (data) {
+
+        await selectCommunity(
+            data
+        );
+
+    }
 
 }
 
 
-/* ============================================================
-   20. CREATE PEER CONNECTION
-   ============================================================ */
+/* =========================================================
+   36. CHANNEL CREATION
+   ========================================================= */
 
-async function createPeerConnection(
-    remoteUserId,
-    createOffer = false
-) {
-
-    if (!remoteUserId) {
-
-        return null;
-
-    }
-
+async function createChannel() {
 
     if (
-        remoteUserId ===
-        CallState.currentUser?.id
+        !state.currentCommunity?.id
     ) {
 
-        return null;
+        toast(
+            "Select a community first.",
+            "error"
+        );
+
+        return;
 
     }
 
 
-    /*
-     * Reuse existing peer.
-     */
+    const name =
+        window.prompt(
+            "Channel name:"
+        );
 
-    if (
-        CallState.peerConnections.has(
-            remoteUserId
+
+    if (!name?.trim()) {
+
+        return;
+
+    }
+
+
+    const cleanName =
+        name.trim();
+
+
+    const description =
+        window.prompt(
+            "Channel description:"
+        ) ||
+        "";
+
+
+    const typeInput =
+        window.prompt(
+            "Channel type: text / study / announcement / voice",
+            "text"
+        );
+
+
+    const channelType =
+        (
+            typeInput ||
+            "text"
         )
-    ) {
+            .trim()
+            .toLowerCase();
 
-        return (
-            CallState.peerConnections.get(
-                remoteUserId
-            )
+
+    const slug =
+        slugify(
+            cleanName
         );
+
+
+    const {
+        data,
+        error
+    } =
+        await db
+            .from(
+                "chat_channels"
+            )
+            .insert({
+                community_id:
+                    state.currentCommunity.id,
+
+                name:
+                    cleanName,
+
+                slug:
+                    slug,
+
+                description:
+                    description.trim(),
+
+                channel_type:
+                    channelType,
+
+                position:
+                    state.channels.length,
+
+                is_private:
+                    false,
+
+                is_archived:
+                    false,
+
+                is_active:
+                    true,
+
+                created_by:
+                    state.user.id
+            })
+            .select()
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "❌ Channel creation failed:",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Channel could not be created.",
+            "error"
+        );
+
+        return;
 
     }
 
 
-    const peerConnection =
-        new RTCPeerConnection(
-            CallState.configuration
-        );
-
-
-    CallState.peerConnections.set(
-        remoteUserId,
-        peerConnection
+    toast(
+        "Channel created.",
+        "success"
     );
 
 
+    await loadChannels();
+
+
+    if (data) {
+
+        await selectChannel(
+            data
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   37. EVENT SYSTEM
+   ========================================================= */
+
+function setupCommunityEvents() {
+
+    const createCommunityButton =
+        byId(
+            "createCommunityButton"
+        );
+
+
+    if (
+        createCommunityButton
+    ) {
+
+        createCommunityButton.addEventListener(
+            "click",
+            createCommunity
+        );
+
+    }
+
+
+    const createChannelButton =
+        byId(
+            "createChannelButton"
+        );
+
+
+    if (
+        createChannelButton
+    ) {
+
+        createChannelButton.addEventListener(
+            "click",
+            createChannel
+        );
+
+    }
+
+
     /*
-     * Local media will be added by Part 2.
+     * Optional refresh buttons.
+     */
+
+    queryAll(
+        "[data-community-refresh]"
+    ).forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    await loadCommunities();
+
+                    const selected =
+                        chooseInitialCommunity();
+
+                    if (selected) {
+
+                        await selectCommunity(
+                            selected
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   38. CALL CONFIGURATION
+   ========================================================= */
+
+const CALLING = {
+
+    tables: {
+
+        rooms:
+            "chat_call_rooms",
+
+        participants:
+            "chat_call_participants",
+
+        signals:
+            "chat_call_signals"
+
+    },
+
+
+    /*
+     * Google public STUN servers.
      *
-     * If localStream already exists,
-     * add its tracks now.
+     * STUN helps establish peer-to-peer
+     * connections.
+     *
+     * Production reliability eventually
+     * requires TURN as well.
      */
 
-    if (
-        CallState.localStream
-    ) {
+    iceServers: [
 
-        for (
-            const track
-            of CallState.localStream.getTracks()
-        ) {
+        {
+            urls:
+                "stun:stun.l.google.com:19302"
+        },
 
-            peerConnection.addTrack(
-                track,
-                CallState.localStream
-            );
-
+        {
+            urls:
+                "stun:stun1.l.google.com:19302"
         }
 
-    }
+    ]
 
+};
 
-    /*
-     * Remote track.
-     */
 
-    peerConnection.ontrack =
-        event => {
+/* =========================================================
+   39. CALL STATE
+   ========================================================= */
 
-            callLog(
-                "Remote track received:",
-                remoteUserId
-            );
+const callState = {
 
+    active:
+        false,
 
-            const [
-                remoteStream
-            ] = event.streams;
+    room:
+        null,
 
+    roomId:
+        null,
 
-            if (!remoteStream) {
+    roomType:
+        null,
 
-                return;
+    communityId:
+        null,
 
-            }
+    mode:
+        "voice",
 
+    localStream:
+        null,
 
-            CallState.remoteStreams.set(
-                remoteUserId,
-                remoteStream
-            );
+    screenStream:
+        null,
 
+    peers:
+        new Map(),
 
-            handleRemoteStream(
-                remoteUserId,
-                remoteStream
-            );
+    remoteStreams:
+        new Map(),
 
-        };
+    signalChannel:
+        null,
 
+    participantChannel:
+        null,
 
-    /*
-     * ICE candidate.
-     */
+    participantIds:
+        new Set(),
 
-    peerConnection.onicecandidate =
-        async event => {
+    muted:
+        false,
 
-            if (
-                !event.candidate
-            ) {
+    cameraEnabled:
+        false,
 
-                return;
+    screenSharing:
+        false,
 
-            }
+    joining:
+        false,
 
+    leaving:
+        false,
 
-            await sendSignal({
+    startedAt:
+        null,
 
-                roomId:
-                    CallState.currentRoom?.id,
+    timer:
+        null
 
-                receiverId:
-                    remoteUserId,
+};
 
-                signalType:
-                    "ice-candidate",
 
-                payload:
-                    event.candidate.toJSON()
+/* =========================================================
+   40. CALL UI
+   ========================================================= */
 
-            });
-
-        };
-
-
-    /*
-     * Connection state.
-     */
-
-    peerConnection.onconnectionstatechange =
-        () => {
-
-            callLog(
-                "Peer connection:",
-                remoteUserId,
-                peerConnection.connectionState
-            );
-
-
-            if (
-                peerConnection.connectionState ===
-                    "failed"
-            ) {
-
-                callWarn(
-                    "Peer connection failed:",
-                    remoteUserId
-                );
-
-            }
-
-
-            if (
-                peerConnection.connectionState ===
-                    "disconnected"
-            ) {
-
-                callWarn(
-                    "Peer disconnected:",
-                    remoteUserId
-                );
-
-            }
-
-
-            if (
-                peerConnection.connectionState ===
-                    "closed"
-            ) {
-
-                removePeerConnection(
-                    remoteUserId
-                );
-
-            }
-
-        };
-
-
-    /*
-     * Signaling state.
-     */
-
-    peerConnection.onsignalingstatechange =
-        () => {
-
-            callLog(
-                "Signaling state:",
-                remoteUserId,
-                peerConnection.signalingState
-            );
-
-        };
-
-
-    /*
-     * Caller creates offer.
-     */
-
-    if (createOffer) {
-
-        try {
-
-            const offer =
-                await peerConnection.createOffer({
-
-                    offerToReceiveAudio:
-                        true,
-
-                    offerToReceiveVideo:
-                        true
-
-                });
-
-
-            await peerConnection.setLocalDescription(
-                offer
-            );
-
-
-            await sendSignal({
-
-                roomId:
-                    CallState.currentRoom?.id,
-
-                receiverId:
-                    remoteUserId,
-
-                signalType:
-                    "offer",
-
-                payload:
-                    offer
-
-            });
-
-        }
-
-        catch (error) {
-
-            callError(
-                "Unable to create WebRTC offer:",
-                error
-            );
-
-        }
-
-    }
-
-
-    return peerConnection;
-
-}
-
-
-/* ============================================================
-   21. HANDLE INCOMING WEBRTC SIGNAL
-   ============================================================ */
-
-async function handleIncomingSignal(
-    signal
-) {
-
-    if (!signal) {
-
-        return;
-
-    }
-
-
-    const currentUserId =
-        CallState.currentUser?.id;
-
-
-    if (!currentUserId) {
-
-        return;
-
-    }
-
-
-    /*
-     * Ignore our own signals.
-     */
+function ensureCallUI() {
 
     if (
-        signal.sender_id ===
-        currentUserId
-    ) {
-
-        return;
-
-    }
-
-
-    /*
-     * Ignore signals intended for
-     * somebody else.
-     */
-
-    if (
-        signal.receiver_id &&
-        signal.receiver_id !==
-            currentUserId
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        !CallState.currentRoom ||
-        signal.room_id !==
-            CallState.currentRoom.id
-    ) {
-
-        return;
-
-    }
-
-
-    const remoteUserId =
-        signal.sender_id;
-
-
-    try {
-
-        switch (
-            signal.signal_type
-        ) {
-
-            case "join":
-
-                await handleRemoteJoin(
-                    remoteUserId
-                );
-
-                break;
-
-
-            case "offer":
-
-                await handleOffer(
-                    remoteUserId,
-                    signal.payload
-                );
-
-                break;
-
-
-            case "answer":
-
-                await handleAnswer(
-                    remoteUserId,
-                    signal.payload
-                );
-
-                break;
-
-
-            case "ice-candidate":
-
-                await handleIceCandidate(
-                    remoteUserId,
-                    signal.payload
-                );
-
-                break;
-
-
-            case "leave":
-
-                await handleRemoteLeave(
-                    remoteUserId
-                );
-
-                break;
-
-
-            case "renegotiate":
-
-                await handleRenegotiation(
-                    remoteUserId,
-                    signal.payload
-                );
-
-                break;
-
-
-            default:
-
-                callWarn(
-                    "Unknown call signal:",
-                    signal.signal_type
-                );
-
-        }
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Signal handling error:",
-            error
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   22. REMOTE USER JOINED
-   ============================================================ */
-
-async function handleRemoteJoin(
-    remoteUserId
-) {
-
-    if (!remoteUserId) {
-
-        return;
-
-    }
-
-
-    /*
-     * Existing participants create offers.
-     */
-
-    if (
-        CallState.initializedPeerUsers.has(
-            remoteUserId
+        byId(
+            "mwanikiCallOverlay"
         )
     ) {
 
@@ -1884,152 +4495,397 @@ async function handleRemoteJoin(
     }
 
 
-    CallState.initializedPeerUsers.add(
-        remoteUserId
+    const overlay =
+        document.createElement(
+            "section"
+        );
+
+
+    overlay.id =
+        "mwanikiCallOverlay";
+
+
+    overlay.innerHTML = `
+
+        <div
+            class="mwaniki-call-backdrop"
+        ></div>
+
+
+        <div
+            class="mwaniki-call-window"
+        >
+
+            <header
+                class="mwaniki-call-header"
+            >
+
+                <div>
+
+                    <strong
+                        id="mwanikiCallTitle"
+                    >
+                        Mwaniki Call
+                    </strong>
+
+                    <span
+                        id="mwanikiCallTimer"
+                    >
+                        00:00
+                    </span>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="mwanikiCallClose"
+                >
+                    ×
+                </button>
+
+            </header>
+
+
+            <div
+                id="mwanikiCallParticipants"
+                class="mwaniki-call-participants"
+            ></div>
+
+
+            <footer
+                class="mwaniki-call-controls"
+            >
+
+                <button
+                    type="button"
+                    id="mwanikiMuteButton"
+                >
+                    🎙️ Mute
+                </button>
+
+
+                <button
+                    type="button"
+                    id="mwanikiCameraButton"
+                >
+                    📷 Camera
+                </button>
+
+
+                <button
+                    type="button"
+                    id="mwanikiScreenButton"
+                >
+                    🖥️ Screen
+                </button>
+
+
+                <button
+                    type="button"
+                    id="mwanikiLeaveButton"
+                    class="danger"
+                >
+                    ☎ Leave
+                </button>
+
+            </footer>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        overlay
     );
 
 
-    await createPeerConnection(
-        remoteUserId,
-        true
-    );
+    bindCallUI();
 
 }
 
 
-/* ============================================================
-   23. HANDLE OFFER
-   ============================================================ */
+/* =========================================================
+   41. CALL UI EVENTS
+   ========================================================= */
 
-async function handleOffer(
-    remoteUserId,
-    offer
-) {
+function bindCallUI() {
 
-    if (
-        !remoteUserId ||
-        !offer
-    ) {
-
-        return;
-
-    }
-
-
-    const peerConnection =
-        await createPeerConnection(
-            remoteUserId,
-            false
+    const mute =
+        byId(
+            "mwanikiMuteButton"
         );
 
 
-    if (!peerConnection) {
+    if (mute) {
 
-        return;
+        mute.addEventListener(
+            "click",
+            toggleMute
+        );
 
     }
+
+
+    const camera =
+        byId(
+            "mwanikiCameraButton"
+        );
+
+
+    if (camera) {
+
+        camera.addEventListener(
+            "click",
+            toggleCamera
+        );
+
+    }
+
+
+    const screen =
+        byId(
+            "mwanikiScreenButton"
+        );
+
+
+    if (screen) {
+
+        screen.addEventListener(
+            "click",
+            toggleScreenShare
+        );
+
+    }
+
+
+    const leave =
+        byId(
+            "mwanikiLeaveButton"
+        );
+
+
+    if (leave) {
+
+        leave.addEventListener(
+            "click",
+            leaveCall
+        );
+
+    }
+
+
+    const close =
+        byId(
+            "mwanikiCallClose"
+        );
+
+
+    if (close) {
+
+        close.addEventListener(
+            "click",
+            leaveCall
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   42. CALL UI VISIBILITY
+   ========================================================= */
+
+function showCallUI(
+    title
+) {
+
+    ensureCallUI();
+
+
+    const overlay =
+        byId(
+            "mwanikiCallOverlay"
+        );
+
+
+    if (!overlay) return;
+
+
+    overlay.classList.add(
+        "active"
+    );
+
+
+    setText(
+        "mwanikiCallTitle",
+        title ||
+        "Mwaniki Call"
+    );
+
+
+    updateCallControls();
+
+
+    startCallTimer();
+
+}
+
+
+function hideCallUI() {
+
+    const overlay =
+        byId(
+            "mwanikiCallOverlay"
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
+            "active"
+        );
+
+    }
+
+
+    stopCallTimer();
+
+}
+
+
+/* =========================================================
+   43. CALL TIMER
+   ========================================================= */
+
+function startCallTimer() {
+
+    stopCallTimer();
+
+
+    callState.startedAt =
+        Date.now();
+
+
+    callState.timer =
+        setInterval(
+            () => {
+
+                if (
+                    !callState.startedAt
+                ) {
+
+                    return;
+
+                }
+
+
+                const seconds =
+                    Math.floor(
+                        (
+                            Date.now() -
+                            callState.startedAt
+                        ) / 1000
+                    );
+
+
+                const minutes =
+                    Math.floor(
+                        seconds / 60
+                    );
+
+
+                const remaining =
+                    seconds % 60;
+
+
+                setText(
+                    "mwanikiCallTimer",
+                    `${String(minutes).padStart(2, "0")}:${String(remaining).padStart(2, "0")}`
+                );
+
+            },
+            1000
+        );
+
+}
+
+
+function stopCallTimer() {
+
+    if (
+        callState.timer
+    ) {
+
+        clearInterval(
+            callState.timer
+        );
+
+        callState.timer =
+            null;
+
+    }
+
+}
+
+
+/* =========================================================
+   44. LOCAL MEDIA
+   ========================================================= */
+
+async function requestLocalMedia(
+    mode
+) {
+
+    if (
+        callState.localStream
+    ) {
+
+        return callState.localStream;
+
+    }
+
+
+    const constraints = {
+
+        audio:
+            true,
+
+        video:
+            mode ===
+            "video"
+
+    };
 
 
     try {
 
-        await peerConnection.setRemoteDescription(
-            new RTCSessionDescription(
-                offer
-            )
-        );
+        callState.localStream =
+            await navigator.mediaDevices
+                .getUserMedia(
+                    constraints
+                );
 
 
-        await flushPendingIceCandidates(
-            remoteUserId
-        );
+        callState.cameraEnabled =
+            mode ===
+            "video";
 
 
-        const answer =
-            await peerConnection.createAnswer();
+        return callState.localStream;
 
+    } catch (error) {
 
-        await peerConnection.setLocalDescription(
-            answer
-        );
-
-
-        await sendSignal({
-
-            roomId:
-                CallState.currentRoom?.id,
-
-            receiverId:
-                remoteUserId,
-
-            signalType:
-                "answer",
-
-            payload:
-                answer
-
-        });
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Offer handling failed:",
+        console.error(
+            "❌ Microphone/camera error:",
             error
         );
 
-    }
 
-}
-
-
-/* ============================================================
-   24. HANDLE ANSWER
-   ============================================================ */
-
-async function handleAnswer(
-    remoteUserId,
-    answer
-) {
-
-    const peerConnection =
-        CallState.peerConnections.get(
-            remoteUserId
-        );
-
-
-    if (!peerConnection) {
-
-        callWarn(
-            "No peer connection for answer:",
-            remoteUserId
-        );
-
-        return;
-
-    }
-
-
-    try {
-
-        await peerConnection.setRemoteDescription(
-            new RTCSessionDescription(
-                answer
-            )
-        );
-
-
-        await flushPendingIceCandidates(
-            remoteUserId
-        );
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Answer handling failed:",
-            error
+        throw new Error(
+            "Microphone or camera permission was denied."
         );
 
     }
@@ -2037,257 +4893,40 @@ async function handleAnswer(
 }
 
 
-/* ============================================================
-   25. HANDLE ICE CANDIDATE
-   ============================================================ */
+/* =========================================================
+   45. CREATE ROOM
+   ========================================================= */
 
-async function handleIceCandidate(
-    remoteUserId,
-    candidate
+async function createCallRoom(
+    type,
+    communityId = null
 ) {
+
+    const payload = {
+
+        room_type:
+            type,
+
+        created_by:
+            state.user.id,
+
+        is_active:
+            true
+
+    };
+
+
+    /*
+     * General calls have no community_id.
+     * Community calls receive the UUID community ID.
+     */
 
     if (
-        !remoteUserId ||
-        !candidate
+        communityId
     ) {
 
-        return;
-
-    }
-
-
-    const peerConnection =
-        CallState.peerConnections.get(
-            remoteUserId
-        );
-
-
-    if (
-        !peerConnection ||
-        !peerConnection.remoteDescription
-    ) {
-
-        if (
-            !CallState.pendingIceCandidates.has(
-                remoteUserId
-            )
-        ) {
-
-            CallState.pendingIceCandidates.set(
-                remoteUserId,
-                []
-            );
-
-        }
-
-
-        CallState.pendingIceCandidates
-            .get(remoteUserId)
-            .push(candidate);
-
-
-        return;
-
-    }
-
-
-    try {
-
-        await peerConnection.addIceCandidate(
-            new RTCIceCandidate(
-                candidate
-            )
-        );
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Unable to add ICE candidate:",
-            error
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   26. FLUSH PENDING ICE
-   ============================================================ */
-
-async function flushPendingIceCandidates(
-    remoteUserId
-) {
-
-    const candidates =
-        CallState.pendingIceCandidates.get(
-            remoteUserId
-        );
-
-
-    if (!candidates) {
-
-        return;
-
-    }
-
-
-    const peerConnection =
-        CallState.peerConnections.get(
-            remoteUserId
-        );
-
-
-    if (!peerConnection) {
-
-        return;
-
-    }
-
-
-    for (
-        const candidate
-        of candidates
-    ) {
-
-        try {
-
-            await peerConnection.addIceCandidate(
-                new RTCIceCandidate(
-                    candidate
-                )
-            );
-
-        }
-
-        catch (error) {
-
-            callWarn(
-                "Pending ICE candidate failed:",
-                error
-            );
-
-        }
-
-    }
-
-
-    CallState.pendingIceCandidates.delete(
-        remoteUserId
-    );
-
-}
-
-
-/* ============================================================
-   27. REMOTE LEAVE
-   ============================================================ */
-
-async function handleRemoteLeave(
-    remoteUserId
-) {
-
-    callLog(
-        "Remote user left:",
-        remoteUserId
-    );
-
-
-    removePeerConnection(
-        remoteUserId
-    );
-
-
-    CallState.remoteStreams.delete(
-        remoteUserId
-    );
-
-
-    handleRemoteStreamRemoved(
-        remoteUserId
-    );
-
-}
-
-
-/* ============================================================
-   28. PARTICIPANT CHANGE
-   ============================================================ */
-
-async function handleParticipantChange(
-    payload
-) {
-
-    const participant =
-        payload.new ||
-        payload.old;
-
-
-    if (!participant) {
-
-        return;
-
-    }
-
-
-    if (
-        participant.user_id ===
-        CallState.currentUser?.id
-    ) {
-
-        return;
-
-    }
-
-
-    if (
-        participant.status ===
-        PARTICIPANT_STATUS.LEFT ||
-        participant.status ===
-        PARTICIPANT_STATUS.DECLINED
-    ) {
-
-        await handleRemoteLeave(
-            participant.user_id
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   29. SEND SIGNAL
-   ============================================================ */
-
-async function sendSignal({
-    roomId,
-    receiverId,
-    signalType,
-    payload
-}) {
-
-    const user =
-        CallState.currentUser ||
-        await getCurrentUser();
-
-
-    if (!user) {
-
-        return null;
-
-    }
-
-
-    if (!roomId) {
-
-        callWarn(
-            "Cannot send signal without room ID."
-        );
-
-        return null;
+        payload.community_id =
+            communityId;
 
     }
 
@@ -2295,44 +4934,26 @@ async function sendSignal({
     const {
         data,
         error
-    } = await supabase
-
-        .from(
-            "chat_call_signals"
-        )
-
-        .insert({
-
-            room_id:
-                roomId,
-
-            sender_id:
-                user.id,
-
-            receiver_id:
-                receiverId,
-
-            signal_type:
-                signalType,
-
-            payload:
-                payload || {}
-
-        })
-
-        .select("*")
-
-        .single();
+    } =
+        await db
+            .from(
+                CALLING.tables.rooms
+            )
+            .insert(
+                payload
+            )
+            .select()
+            .single();
 
 
     if (error) {
 
-        callError(
-            "Unable to send call signal:",
+        console.error(
+            "❌ Call room creation failed:",
             error
         );
 
-        return null;
+        throw error;
 
     }
 
@@ -2342,361 +4963,69 @@ async function sendSignal({
 }
 
 
-/* ============================================================
-   30. REMOVE PEER CONNECTION
-   ============================================================ */
+/* =========================================================
+   46. ADD PARTICIPANT
+   ========================================================= */
 
-function removePeerConnection(
-    remoteUserId
+async function addCallParticipant(
+    roomId
 ) {
 
-    const peerConnection =
-        CallState.peerConnections.get(
-            remoteUserId
+    const {
+        data,
+        error
+    } =
+        await db
+            .from(
+                CALLING.tables.participants
+            )
+            .insert({
+
+                room_id:
+                    roomId,
+
+                user_id:
+                    state.user.id,
+
+                joined_at:
+                    new Date()
+                        .toISOString(),
+
+                is_active:
+                    true
+
+            })
+            .select()
+            .single();
+
+
+    if (error) {
+
+        console.error(
+            "❌ Call participant error:",
+            error
         );
 
-
-    if (peerConnection) {
-
-        try {
-
-            peerConnection.close();
-
-        }
-
-        catch (error) {
-
-            callWarn(
-                "Peer close error:",
-                error
-            );
-
-        }
+        throw error;
 
     }
 
 
-    CallState.peerConnections.delete(
-        remoteUserId
-    );
-
-
-    CallState.initializedPeerUsers.delete(
-        remoteUserId
-    );
-
-
-    CallState.remoteStreams.delete(
-        remoteUserId
-    );
-
-
-    CallState.pendingIceCandidates.delete(
-        remoteUserId
-    );
-
-
-    handleRemoteStreamRemoved(
-        remoteUserId
-    );
+    return data;
 
 }
 
 
-/* ============================================================
-   31. REMOTE STREAM CALLBACK
-   ============================================================ */
+/* =========================================================
+   47. JOIN EXISTING ROOM
+   ========================================================= */
 
-function handleRemoteStream(
-    remoteUserId,
-    remoteStream
-) {
-
-    callLog(
-        "Remote stream ready:",
-        remoteUserId
-    );
-
-
-    /*
-     * Part 2 will connect this to
-     * participant video tiles.
-     */
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "mwaniki:remote-stream",
-            {
-                detail: {
-
-                    userId:
-                        remoteUserId,
-
-                    stream:
-                        remoteStream
-
-                }
-
-            }
-        )
-    );
-
-}
-
-
-/* ============================================================
-   32. REMOTE STREAM REMOVED
-   ============================================================ */
-
-function handleRemoteStreamRemoved(
-    remoteUserId
-) {
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "mwaniki:remote-stream-removed",
-            {
-                detail: {
-
-                    userId:
-                        remoteUserId
-
-                }
-
-            }
-        )
-    );
-
-}
-
-
-/* ============================================================
-   33. ACCEPTED ROOM / UI HOOK
-   ============================================================ */
-
-function showCallPanel(
+async function joinCallRoom(
     room
 ) {
 
-    window.dispatchEvent(
-        new CustomEvent(
-            "mwaniki:call-started",
-            {
-                detail: {
-                    room
-                }
-            }
-        )
-    );
-
-
-    /*
-     * If Part 2 UI exists already,
-     * activate it.
-     */
-
-    const panel =
-        document.querySelector(
-            "#callPanel"
-        );
-
-
-    if (panel) {
-
-        panel.classList.add(
-            "active"
-        );
-
-        panel.removeAttribute(
-            "hidden"
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   34. INCOMING CALL UI HOOK
-   ============================================================ */
-
-function showIncomingCall(
-    room,
-    participant
-) {
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "mwaniki:incoming-call",
-            {
-                detail: {
-
-                    room,
-
-                    participant
-
-                }
-
-            }
-        )
-    );
-
-
-    const incoming =
-        document.querySelector(
-            "#incomingCallPanel"
-        );
-
-
-    if (incoming) {
-
-        incoming.dataset.roomId =
-            room.id;
-
-        incoming.dataset.participantId =
-            participant.id;
-
-        incoming.classList.add(
-            "active"
-        );
-
-        incoming.removeAttribute(
-            "hidden"
-        );
-
-    }
-
-
-    callLog(
-        "Incoming call:",
-        room.id
-    );
-
-}
-
-
-/* ============================================================
-   35. HIDE INCOMING CALL
-   ============================================================ */
-
-function hideIncomingCall() {
-
-    const incoming =
-        document.querySelector(
-            "#incomingCallPanel"
-        );
-
-
-    if (!incoming) {
-
-        return;
-
-    }
-
-
-    incoming.classList.remove(
-        "active"
-    );
-
-    incoming.setAttribute(
-        "hidden",
-        "hidden"
-    );
-
-}
-
-
-/* ============================================================
-   36. CALL ERROR
-   ============================================================ */
-
-function showCallError(
-    message
-) {
-
-    window.dispatchEvent(
-        new CustomEvent(
-            "mwaniki:call-error",
-            {
-                detail: {
-                    message
-                }
-            }
-        )
-    );
-
-
-    const errorElement =
-        document.querySelector(
-            "#callError"
-        );
-
-
-    if (errorElement) {
-
-        errorElement.textContent =
-            message;
-
-        errorElement.classList.add(
-            "active"
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   37. HANDLE RENEGOTIATION
-   ============================================================ */
-
-async function handleRenegotiation(
-    remoteUserId,
-    payload
-) {
-
-    if (!payload) {
-
-        return;
-
-    }
-
-
-    const peerConnection =
-        CallState.peerConnections.get(
-            remoteUserId
-        );
-
-
-    if (!peerConnection) {
-
-        return;
-
-    }
-
-
     if (
-        payload.type === "offer"
-    ) {
-
-        await handleOffer(
-            remoteUserId,
-            payload
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   38. LEAVE CURRENT CALL
-   ============================================================ */
-
-export async function leaveCurrentCall() {
-
-    if (
-        !CallState.currentRoom
+        !room?.id
     ) {
 
         return;
@@ -2705,1463 +5034,407 @@ export async function leaveCurrentCall() {
 
 
     if (
-        CallState.isEndingCall
+        callState.active
     ) {
+
+        toast(
+            "You are already in a call.",
+            "error"
+        );
 
         return;
 
     }
 
 
-    CallState.isEndingCall =
+    callState.joining =
         true;
 
 
-    const roomId =
-        CallState.currentRoom.id;
-
-
-    const userId =
-        CallState.currentUser?.id;
-
-
     try {
 
-        /*
-         * Tell peers.
-         */
+        callState.room =
+            room;
 
-        await sendSignal({
+        callState.roomId =
+            room.id;
 
-            roomId,
+        callState.roomType =
+            room.room_type ||
+            "community";
 
-            receiverId:
-                null,
-
-            signalType:
-                "leave",
-
-            payload: {
-
-                userId,
-
-                timestamp:
-                    Date.now()
-
-            }
-
-        });
-
-
-        /*
-         * Mark ourselves as left.
-         */
-
-        if (userId) {
-
-            await supabase
-
-                .from(
-                    "chat_call_participants"
-                )
-
-                .update({
-
-                    status:
-                        PARTICIPANT_STATUS.LEFT,
-
-                    left_at:
-                        new Date()
-                            .toISOString()
-
-                })
-
-                .eq(
-                    "room_id",
-                    roomId
-                )
-
-                .eq(
-                    "user_id",
-                    userId
-                );
-
-        }
-
-
-        /*
-         * Close peer connections.
-         */
-
-        for (
-            const remoteUserId
-            of CallState.peerConnections.keys()
-        ) {
-
-            removePeerConnection(
-                remoteUserId
-            );
-
-        }
-
-
-        /*
-         * Remove room subscription.
-         */
-
-        await removeCallRoomSubscription();
-
-
-        CallState.isInCall =
-            false;
-
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "mwaniki:call-left",
-                {
-                    detail: {
-                        roomId
-                    }
-                }
-            )
-        );
-
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Error leaving call:",
-            error
-        );
-
-    }
-
-    finally {
-
-        CallState.currentRoom =
+        callState.communityId =
+            room.community_id ||
             null;
 
-        CallState.currentParticipant =
-            null;
 
-        CallState.currentCommunityId =
-            null;
+        callState.mode =
+            room.mode ||
+            "voice";
 
-        CallState.currentCallScope =
-            null;
-
-        CallState.currentCallType =
-            null;
-
-        CallState.isCaller =
-            false;
-
-        CallState.isInCall =
-            false;
-
-        CallState.isEndingCall =
-            false;
-
-    }
-
-}
-
-
-/* ============================================================
-   39. END CALL
-   ============================================================ */
-
-export async function endCurrentCall() {
-
-    const room =
-        CallState.currentRoom;
-
-
-    if (!room) {
-
-        return;
-
-    }
-
-
-    try {
-
-        await leaveCurrentCall();
-
-
-        await supabase
-
-            .from(
-                "chat_call_rooms"
-            )
-
-            .update({
-
-                status:
-                    CALL_STATUS.ENDED,
-
-                ended_at:
-                    new Date()
-                        .toISOString()
-
-            })
-
-            .eq(
-                "id",
-                room.id
-            );
-
-
-    }
-
-    catch (error) {
-
-        callError(
-            "Unable to end call:",
-            error
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   40. CLEANUP CALL STATE
-   ============================================================ */
-
-async function cleanupCallState() {
-
-    try {
-
-        await removeCallRoomSubscription();
-
-
-        if (
-            CallState.incomingCallSubscription
-        ) {
-
-            await supabase.removeChannel(
-                CallState.incomingCallSubscription
-            );
-
-        }
-
-    }
-
-    catch (error) {
-
-        callWarn(
-            "Call cleanup subscription error:",
-            error
-        );
-
-    }
-
-
-    CallState.incomingCallSubscription =
-        null;
-
-
-    for (
-        const remoteUserId
-        of CallState.peerConnections.keys()
-    ) {
-
-        removePeerConnection(
-            remoteUserId
-        );
-
-    }
-
-
-    if (
-        CallState.localStream
-    ) {
-
-        for (
-            const track
-            of CallState.localStream.getTracks()
-        ) {
-
-            track.stop();
-
-        }
-
-    }
-
-
-    CallState.localStream =
-        null;
-
-    CallState.currentRoom =
-        null;
-
-    CallState.currentParticipant =
-        null;
-
-    CallState.isInCall =
-        false;
-
-    CallState.initializedPeerUsers.clear();
-
-    CallState.pendingIceCandidates.clear();
-
-}
-
-
-/* ============================================================
-   41. PUBLIC API
-   ============================================================ */
-
-window.MwanikiCalls = {
-
-    startGeneralCall,
-
-    startCommunityCall,
-
-    joinCallRoom,
-
-    acceptIncomingCall,
-
-    declineIncomingCall,
-
-    leaveCurrentCall,
-
-    endCurrentCall,
-
-    initializeCallingSystem,
-
-    getState: () => CallState
-
-};
-
-
-/* ============================================================
-   42. AUTO INITIALIZATION
-   ============================================================ */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        callLog(
-            "Community calling module loaded."
-        );
-
-
-        /*
-         * Wait briefly for Supabase/auth
-         * initialization from the main app.
-         */
-
-        setTimeout(
-            async () => {
-
-                await initializeCallingSystem();
-
-            },
-            300
-        );
-
-    }
-);
-
-
-/* ============================================================
-   END PART 1
-   ============================================================ */
-
-/* ============================================================
-   MWANIKI SCHOLARS
-   COMMUNITY.JS
-   REAL CALLING ENGINE — PART 2
-   ============================================================
-
-   PART 2 COMPLETES:
-
-   ✓ Microphone
-   ✓ Camera
-   ✓ Screen sharing
-   ✓ Local video
-   ✓ Remote participant tiles
-   ✓ Remote audio
-   ✓ Mute
-   ✓ Camera toggle
-   ✓ Screen-share toggle
-   ✓ Call controls
-   ✓ Incoming-call controls
-   ✓ General Call button
-   ✓ Community Voice button
-   ✓ Community Video button
-   ✓ Participant status
-   ✓ Peer renegotiation
-   ✓ Call cleanup
-   ✓ Room cleanup
-   ✓ Browser unload cleanup
-
-   REQUIRES PART 1 ABOVE THIS CODE.
-   ============================================================ */
-
-
-/* ============================================================
-   43. CALL UI STATE
-   ============================================================ */
-
-const CallUIState = {
-
-    root: null,
-
-    incomingPanel: null,
-
-    activePanel: null,
-
-    stage: null,
-
-    localTile: null,
-
-    participantsContainer: null,
-
-    statusElement: null,
-
-    titleElement: null,
-
-    timerElement: null,
-
-    muteButton: null,
-
-    cameraButton: null,
-
-    screenButton: null,
-
-    leaveButton: null,
-
-    endButton: null,
-
-    generalButton: null,
-
-    voiceButton: null,
-
-    videoButton: null,
-
-    incomingAcceptButton: null,
-
-    incomingDeclineButton: null,
-
-    timerInterval: null,
-
-    callStartedAt: null
-
-};
-
-
-/* ============================================================
-   44. CREATE CALL INTERFACE
-   ============================================================ */
-
-function ensureCallInterface() {
-
-    /*
-     * If the page already has the interface,
-     * use it.
-     */
-
-    let root =
-        document.querySelector(
-            "#mwanikiCallInterface"
-        );
-
-
-    if (!root) {
-
-        root =
-            document.createElement(
-                "div"
-            );
-
-        root.id =
-            "mwanikiCallInterface";
-
-        root.innerHTML = `
-            <div
-                id="mwanikiCallBackdrop"
-                class="mwaniki-call-backdrop"
-                hidden
-            ></div>
-
-            <section
-                id="incomingCallPanel"
-                class="mwaniki-incoming-call"
-                hidden
-                aria-live="polite"
-            >
-
-                <div class="mwaniki-incoming-icon">
-                    📞
-                </div>
-
-                <div class="mwaniki-incoming-content">
-
-                    <strong
-                        id="incomingCallTitle"
-                    >
-                        Incoming call
-                    </strong>
-
-                    <span
-                        id="incomingCallSubtitle"
-                    >
-                        Someone is calling you
-                    </span>
-
-                </div>
-
-                <div class="mwaniki-incoming-actions">
-
-                    <button
-                        id="acceptIncomingCallButton"
-                        type="button"
-                    >
-                        Accept
-                    </button>
-
-                    <button
-                        id="declineIncomingCallButton"
-                        type="button"
-                    >
-                        Decline
-                    </button>
-
-                </div>
-
-            </section>
-
-
-            <section
-                id="callPanel"
-                class="mwaniki-call-panel"
-                hidden
-                aria-label="Active call"
-            >
-
-                <header
-                    class="mwaniki-call-header"
-                >
-
-                    <div>
-
-                        <strong
-                            id="callTitle"
-                        >
-                            Mwaniki Call
-                        </strong>
-
-                        <span
-                            id="callStatus"
-                        >
-                            Connecting...
-                        </span>
-
-                    </div>
-
-                    <div
-                        id="callTimer"
-                    >
-                        00:00
-                    </div>
-
-                </header>
-
-
-                <main
-                    id="callStage"
-                    class="mwaniki-call-stage"
-                >
-
-                    <div
-                        id="callParticipants"
-                        class="mwaniki-call-participants"
-                    ></div>
-
-                </main>
-
-
-                <footer
-                    class="mwaniki-call-controls"
-                >
-
-                    <button
-                        id="callMuteButton"
-                        type="button"
-                        title="Mute microphone"
-                    >
-                        🎤
-                        <span>Mute</span>
-                    </button>
-
-                    <button
-                        id="callCameraButton"
-                        type="button"
-                        title="Turn camera on"
-                    >
-                        📹
-                        <span>Camera</span>
-                    </button>
-
-                    <button
-                        id="callScreenButton"
-                        type="button"
-                        title="Share screen"
-                    >
-                        🖥️
-                        <span>Share</span>
-                    </button>
-
-                    <button
-                        id="callLeaveButton"
-                        type="button"
-                        title="Leave call"
-                    >
-                        🚪
-                        <span>Leave</span>
-                    </button>
-
-                    <button
-                        id="callEndButton"
-                        type="button"
-                        title="End call"
-                    >
-                        ☎️
-                        <span>End</span>
-                    </button>
-
-                </footer>
-
-            </section>
-
-
-            <button
-                id="generalCallButton"
-                class="mwaniki-general-call-button"
-                type="button"
-                title="Start General Call"
-            >
-                📞
-                <span>General Call</span>
-            </button>
-
-        `;
-
-        document.body.appendChild(
-            root
-        );
-
-    }
-
-
-    CallUIState.root =
-        root;
-
-
-    CallUIState.incomingPanel =
-        root.querySelector(
-            "#incomingCallPanel"
-        );
-
-
-    CallUIState.activePanel =
-        root.querySelector(
-            "#callPanel"
-        );
-
-
-    CallUIState.stage =
-        root.querySelector(
-            "#callStage"
-        );
-
-
-    CallUIState.participantsContainer =
-        root.querySelector(
-            "#callParticipants"
-        );
-
-
-    CallUIState.statusElement =
-        root.querySelector(
-            "#callStatus"
-        );
-
-
-    CallUIState.titleElement =
-        root.querySelector(
-            "#callTitle"
-        );
-
-
-    CallUIState.timerElement =
-        root.querySelector(
-            "#callTimer"
-        );
-
-
-    CallUIState.muteButton =
-        root.querySelector(
-            "#callMuteButton"
-        );
-
-
-    CallUIState.cameraButton =
-        root.querySelector(
-            "#callCameraButton"
-        );
-
-
-    CallUIState.screenButton =
-        root.querySelector(
-            "#callScreenButton"
-        );
-
-
-    CallUIState.leaveButton =
-        root.querySelector(
-            "#callLeaveButton"
-        );
-
-
-    CallUIState.endButton =
-        root.querySelector(
-            "#callEndButton"
-        );
-
-
-    CallUIState.generalButton =
-        root.querySelector(
-            "#generalCallButton"
-        );
-
-
-    CallUIState.incomingAcceptButton =
-        root.querySelector(
-            "#acceptIncomingCallButton"
-        );
-
-
-    CallUIState.incomingDeclineButton =
-        root.querySelector(
-            "#declineIncomingCallButton"
-        );
-
-
-    bindCallUIEvents();
-
-}
-
-
-/* ============================================================
-   45. BIND CALL UI EVENTS
-   ============================================================ */
-
-function bindCallUIEvents() {
-
-    if (
-        CallUIState.muteButton
-    ) {
-
-        CallUIState.muteButton.onclick =
-            toggleCallMute;
-
-    }
-
-
-    if (
-        CallUIState.cameraButton
-    ) {
-
-        CallUIState.cameraButton.onclick =
-            toggleCallCamera;
-
-    }
-
-
-    if (
-        CallUIState.screenButton
-    ) {
-
-        CallUIState.screenButton.onclick =
-            toggleCallScreen;
-
-    }
-
-
-    if (
-        CallUIState.leaveButton
-    ) {
-
-        CallUIState.leaveButton.onclick =
-            async () => {
-
-                await leaveCallAndCloseUI();
-
-            };
-
-    }
-
-
-    if (
-        CallUIState.endButton
-    ) {
-
-        CallUIState.endButton.onclick =
-            async () => {
-
-                await endCallAndCloseUI();
-
-            };
-
-    }
-
-
-    if (
-        CallUIState.generalButton
-    ) {
-
-        CallUIState.generalButton.onclick =
-            async () => {
-
-                await startGeneralCall(
-                    CALL_TYPE.VIDEO
-                );
-
-            };
-
-    }
-
-
-    if (
-        CallUIState.incomingAcceptButton
-    ) {
-
-        CallUIState.incomingAcceptButton.onclick =
-            async () => {
-
-                const roomId =
-                    CallUIState.incomingPanel
-                        ?.dataset
-                        ?.roomId;
-
-
-                if (!roomId) {
-
-                    return;
-
-                }
-
-
-                await acceptIncomingCall(
-                    roomId
-                );
-
-            };
-
-    }
-
-
-    if (
-        CallUIState.incomingDeclineButton
-    ) {
-
-        CallUIState.incomingDeclineButton.onclick =
-            async () => {
-
-                const participantId =
-                    CallUIState.incomingPanel
-                        ?.dataset
-                        ?.participantId;
-
-
-                await declineIncomingCall(
-                    participantId
-                );
-
-            };
-
-    }
-
-
-    /*
-     * Existing community buttons.
-     */
-
-    const voiceButtons =
-        document.querySelectorAll(
-            "#voiceCallButton, [data-call-type='voice']"
-        );
-
-
-    voiceButtons.forEach(
-        button => {
-
-            if (
-                button.dataset
-                    .mwanikiCallBound
-            ) {
-
-                return;
-
-            }
-
-
-            button.dataset
-                .mwanikiCallBound =
-                "true";
-
-
-            button.addEventListener(
-                "click",
-                async event => {
-
-                    event.preventDefault();
-
-
-                    const communityId =
-                        getCurrentCommunityIdFromPage();
-
-
-                    if (!communityId) {
-
-                        showCallError(
-                            "Select a community before starting a community call."
-                        );
-
-                        return;
-
-                    }
-
-
-                    await startCommunityCall(
-                        communityId,
-                        getCurrentCommunityNameFromPage(),
-                        CALL_TYPE.VOICE
-                    );
-
-                }
-            );
-
-        }
-    );
-
-
-    const videoButtons =
-        document.querySelectorAll(
-            "#videoCallButton, [data-call-type='video']"
-        );
-
-
-    videoButtons.forEach(
-        button => {
-
-            if (
-                button.dataset
-                    .mwanikiCallBound
-            ) {
-
-                return;
-
-            }
-
-
-            button.dataset
-                .mwanikiCallBound =
-                "true";
-
-
-            button.addEventListener(
-                "click",
-                async event => {
-
-                    event.preventDefault();
-
-
-                    const communityId =
-                        getCurrentCommunityIdFromPage();
-
-
-                    if (!communityId) {
-
-                        showCallError(
-                            "Select a community before starting a community call."
-                        );
-
-                        return;
-
-                    }
-
-
-                    await startCommunityCall(
-                        communityId,
-                        getCurrentCommunityNameFromPage(),
-                        CALL_TYPE.VIDEO
-                    );
-
-                }
-            );
-
-        }
-    );
-
-}
-
-
-/* ============================================================
-   46. FIND CURRENT COMMUNITY
-   ============================================================ */
-
-function getCurrentCommunityIdFromPage() {
-
-    /*
-     * First use calling state.
-     */
-
-    if (
-        CallState.currentCommunityId
-    ) {
-
-        return CallState.currentCommunityId;
-
-    }
-
-
-    /*
-     * Try common DOM locations.
-     */
-
-    const elements = [
-
-        "#communityId",
-
-        "#currentCommunityId",
-
-        "[data-community-id]",
-
-        "[data-current-community-id]"
-
-    ];
-
-
-    for (
-        const selector
-        of elements
-    ) {
-
-        const element =
-            document.querySelector(
-                selector
-            );
-
-
-        if (!element) {
-
-            continue;
-
-        }
-
-
-        const value =
-            element.dataset.communityId ||
-            element.dataset.currentCommunityId ||
-            element.value ||
-            element.textContent?.trim();
-
-
-        if (value) {
-
-            return value;
-
-        }
-
-    }
-
-
-    /*
-     * Try existing global community state.
-     */
-
-    if (
-        window.mwanikiCommunity?.state
-            ?.currentCommunity?.id
-    ) {
-
-        return (
-            window.mwanikiCommunity
-                .state
-                .currentCommunity
-                .id
-        );
-
-    }
-
-
-    return null;
-
-}
-
-
-/* ============================================================
-   47. FIND CURRENT COMMUNITY NAME
-   ============================================================ */
-
-function getCurrentCommunityNameFromPage() {
-
-    if (
-        CallState.currentCommunityName
-    ) {
-
-        return CallState.currentCommunityName;
-
-    }
-
-
-    if (
-        window.mwanikiCommunity?.state
-            ?.currentCommunity?.name
-    ) {
-
-        return (
-            window.mwanikiCommunity
-                .state
-                .currentCommunity
-                .name
-        );
-
-    }
-
-
-    const element =
-        document.querySelector(
-            "#communityName, [data-community-name]"
-        );
-
-
-    if (element) {
-
-        return (
-            element.dataset.communityName ||
-            element.textContent?.trim() ||
-            ""
-        );
-
-    }
-
-
-    return "Mwaniki Scholars Community";
-
-}
-
-
-/* ============================================================
-   48. REQUEST LOCAL MEDIA
-   ============================================================ */
-
-async function requestLocalMedia(
-    callType
-) {
-
-    /*
-     * Reuse existing stream.
-     */
-
-    if (
-        CallState.localStream
-    ) {
-
-        return CallState.localStream;
-
-    }
-
-
-    if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices.getUserMedia
-    ) {
-
-        throw new Error(
-            "Your browser does not support microphone/camera access."
-        );
-
-    }
-
-
-    let stream;
-
-
-    if (
-        callType ===
-        CALL_TYPE.VOICE
-    ) {
-
-        stream =
-            await navigator.mediaDevices
-                .getUserMedia({
-
-                    audio: true,
-
-                    video: false
-
-                });
-
-    }
-
-    else {
-
-        stream =
-            await navigator.mediaDevices
-                .getUserMedia({
-
-                    audio: true,
-
-                    video: true
-
-                });
-
-    }
-
-
-    CallState.localStream =
-        stream;
-
-
-    /*
-     * Update participant status.
-     */
-
-    if (
-        CallState.currentParticipant
-    ) {
-
-        await updateOwnParticipant({
-
-            isMuted:
-                false,
-
-            isCameraOn:
-                stream
-                    .getVideoTracks()
-                    .some(
-                        track =>
-                            track.enabled
-                    )
-
-        });
-
-    }
-
-
-    /*
-     * Add tracks to all current peers.
-     */
-
-    await addLocalTracksToPeers();
-
-
-    return stream;
-
-}
-
-
-/* ============================================================
-   49. ADD LOCAL TRACKS TO PEERS
-   ============================================================ */
-
-async function addLocalTracksToPeers() {
-
-    if (
-        !CallState.localStream
-    ) {
-
-        return;
-
-    }
-
-
-    for (
-        const [
-            remoteUserId,
-            peerConnection
-        ]
-        of CallState.peerConnections
-    ) {
-
-        const senders =
-            peerConnection.getSenders();
-
-
-        for (
-            const track
-            of CallState.localStream.getTracks()
-        ) {
-
-            const existingSender =
-                senders.find(
-                    sender =>
-                        sender.track?.kind ===
-                        track.kind
-                );
-
-
-            if (
-                existingSender
-            ) {
-
-                try {
-
-                    await existingSender.replaceTrack(
-                        track
-                    );
-
-                }
-
-                catch (error) {
-
-                    callWarn(
-                        "Unable to replace track:",
-                        error
-                    );
-
-                }
-
-            }
-
-            else {
-
-                peerConnection.addTrack(
-                    track,
-                    CallState.localStream
-                );
-
-            }
-
-        }
-
-
-        /*
-         * Renegotiate after adding tracks.
-         */
-
-        await renegotiatePeer(
-            remoteUserId
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   50. START MEDIA FOR CURRENT CALL
-   ============================================================ */
-
-async function startCallMedia() {
-
-    if (
-        !CallState.currentRoom
-    ) {
-
-        return;
-
-    }
-
-
-    try {
 
         await requestLocalMedia(
-            CallState.currentRoom.call_type
+            callState.mode
         );
 
 
-        attachLocalVideo();
-
-
-        updateCallStatus(
-            "Connected"
+        await addCallParticipant(
+            room.id
         );
 
-    }
 
-    catch (error) {
+        callState.active =
+            true;
 
-        callError(
-            "Media access failed:",
-            error
+
+        showCallUI(
+            callState.roomType ===
+            "general"
+                ? "Mwaniki General Call"
+                : (
+                    state.currentCommunity?.name ||
+                    "Community Call"
+                )
+        );
+
+
+        setupCallRealtime(
+            room.id
+        );
+
+
+        await loadCallParticipants(
+            room.id
         );
 
 
         /*
-         * A voice call may continue if
-         * camera access was denied.
+         * Existing participants receive
+         * our offer through signaling.
          */
 
-        if (
-            CallState.currentRoom.call_type ===
-            CALL_TYPE.VOICE
+        for (
+            const userId of
+            callState.participantIds
         ) {
 
-            try {
+            if (
+                String(userId) ===
+                String(state.user.id)
+            ) {
 
-                CallState.localStream =
-                    await navigator.mediaDevices
-                        .getUserMedia({
-
-                            audio: true,
-
-                            video: false
-
-                        });
-
-
-                await addLocalTracksToPeers();
-
-
-                updateCallStatus(
-                    "Connected — audio only"
-                );
+                continue;
 
             }
 
-            catch (voiceError) {
 
-                showCallError(
-                    "Microphone access was denied."
-                );
-
-            }
-
-        }
-
-        else {
-
-            showCallError(
-                "Camera or microphone access was denied."
+            await createPeerConnection(
+                userId,
+                true
             );
 
         }
+
+    } finally {
+
+        callState.joining =
+            false;
 
     }
 
 }
 
 
-/* ============================================================
-   51. ATTACH LOCAL VIDEO
-   ============================================================ */
+/* =========================================================
+   48. START COMMUNITY CALL
+   ========================================================= */
 
-function attachLocalVideo() {
+async function startCommunityCall(
+    mode = "voice"
+) {
 
     if (
-        !CallUIState.participantsContainer
+        !state.currentCommunity?.id
+    ) {
+
+        toast(
+            "Select a community first.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        callState.active
+    ) {
+
+        toast(
+            "You are already in a call.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const room =
+            await createCallRoom(
+                "community",
+                state.currentCommunity.id
+            );
+
+
+        room.mode =
+            mode;
+
+
+        await joinCallRoom(
+            room
+        );
+
+
+        toast(
+            `${mode === "video" ? "Video" : "Voice"} community call started.`,
+            "success"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ Community call failed:",
+            error
+        );
+
+
+        toast(
+            "Unable to start community call.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   49. START GENERAL CALL
+   ========================================================= */
+
+async function startGeneralCall(
+    mode = "voice"
+) {
+
+    if (
+        callState.active
+    ) {
+
+        toast(
+            "You are already in a call.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    try {
+
+        const room =
+            await createCallRoom(
+                "general",
+                null
+            );
+
+
+        room.mode =
+            mode;
+
+
+        await joinCallRoom(
+            room
+        );
+
+
+        toast(
+            "General call started.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "❌ General call failed:",
+            error
+        );
+
+
+        toast(
+            "Unable to start general call.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   50. LOAD CALL PARTICIPANTS
+   ========================================================= */
+
+async function loadCallParticipants(
+    roomId
+) {
+
+    const {
+        data,
+        error
+    } =
+        await db
+            .from(
+                CALLING.tables.participants
+            )
+            .select("*")
+            .eq(
+                "room_id",
+                roomId
+            )
+            .eq(
+                "is_active",
+                true
+            );
+
+
+    if (error) {
+
+        console.error(
+            "❌ Call participants:",
+            error
+        );
+
+        return [];
+
+    }
+
+
+    callState.participantIds =
+        new Set(
+            (
+                data ||
+                []
+            ).map(
+                participant =>
+                    participant.user_id
+            )
+        );
+
+
+    renderCallParticipants(
+        data || []
+    );
+
+
+    return data || [];
+
+}
+
+
+/* =========================================================
+   51. RENDER CALL PARTICIPANTS
+   ========================================================= */
+
+function renderCallParticipants(
+    participants
+) {
+
+    const container =
+        byId(
+            "mwanikiCallParticipants"
+        );
+
+
+    if (!container) return;
+
+
+    container.innerHTML =
+        "";
+
+
+    participants.forEach(
+        participant => {
+
+            const tile =
+                document.createElement(
+                    "div"
+                );
+
+
+            tile.className =
+                "mwaniki-call-tile";
+
+
+            tile.dataset.userId =
+                participant.user_id;
+
+
+            tile.innerHTML = `
+
+                <div
+                    class="mwaniki-call-avatar"
+                >
+                    ${escapeHTML(
+                        initials(
+                            String(
+                                participant.user_id
+                            ).slice(0, 8)
+                        )
+                    )}
+                </div>
+
+                <span>
+                    ${String(
+                        participant.user_id
+                    ) ===
+                    String(
+                        state.user?.id
+                    )
+                        ? "You"
+                        : "Participant"}
+                </span>
+
+            `;
+
+
+            container.appendChild(
+                tile
+            );
+
+        }
+    );
+
+
+    attachLocalVideoTile();
+
+}
+
+
+/* =========================================================
+   52. LOCAL VIDEO TILE
+   ========================================================= */
+
+function attachLocalVideoTile() {
+
+    if (
+        !callState.localStream
     ) {
 
         return;
@@ -4169,33 +5442,28 @@ function attachLocalVideo() {
     }
 
 
-    let tile =
-        document.querySelector(
-            "#mwanikiLocalParticipant"
+    if (
+        callState.mode !==
+        "video"
+    ) {
+
+        return;
+
+    }
+
+
+    const container =
+        byId(
+            "mwanikiCallParticipants"
         );
 
 
-    if (!tile) {
-
-        tile =
-            createParticipantTile(
-                "local",
-                "You"
-            );
-
-        tile.id =
-            "mwanikiLocalParticipant";
-
-
-        CallUIState.participantsContainer
-            .prepend(tile);
-
-    }
+    if (!container) return;
 
 
     let video =
-        tile.querySelector(
-            "video"
+        byId(
+            "mwanikiLocalVideo"
         );
 
 
@@ -4206,16 +5474,28 @@ function attachLocalVideo() {
                 "video"
             );
 
+
+        video.id =
+            "mwanikiLocalVideo";
+
+
         video.autoplay =
             true;
 
-        video.playsInline =
-            true;
 
         video.muted =
             true;
 
-        tile.appendChild(
+
+        video.playsInline =
+            true;
+
+
+        video.className =
+            "mwaniki-call-video";
+
+
+        container.prepend(
             video
         );
 
@@ -4223,612 +5503,758 @@ function attachLocalVideo() {
 
 
     video.srcObject =
-        CallState.localStream;
-
-
-    /*
-     * Voice-only call does not need
-     * a visible black video tile.
-     */
-
-    const hasVideo =
-        CallState.localStream
-            ?.getVideoTracks()
-            ?.length > 0;
-
-
-    tile.classList.toggle(
-        "voice-only",
-        !hasVideo
-    );
+        callState.localStream;
 
 }
 
 
-/* ============================================================
-   52. CREATE PARTICIPANT TILE
-   ============================================================ */
+/* =========================================================
+   53. PEER CONNECTION
+   ========================================================= */
 
-function createParticipantTile(
+async function createPeerConnection(
     userId,
-    displayName
-) {
-
-    const tile =
-        document.createElement(
-            "article"
-        );
-
-
-    tile.className =
-        "mwaniki-participant-tile";
-
-
-    tile.dataset.userId =
-        userId;
-
-
-    tile.innerHTML = `
-
-        <div
-            class="mwaniki-participant-media"
-        >
-
-            <video
-                autoplay
-                playsinline
-            ></video>
-
-            <div
-                class="mwaniki-participant-avatar"
-            >
-                ${escapeCallHTML(
-                    getInitials(displayName)
-                )}
-            </div>
-
-        </div>
-
-
-        <div
-            class="mwaniki-participant-footer"
-        >
-
-            <span
-                class="mwaniki-participant-name"
-            >
-                ${escapeCallHTML(displayName)}
-            </span>
-
-            <span
-                class="mwaniki-participant-state"
-            >
-                Connected
-            </span>
-
-        </div>
-
-    `;
-
-
-    return tile;
-
-}
-
-
-/* ============================================================
-   53. REMOTE STREAM UI
-   ============================================================ */
-
-function updateRemoteParticipantTile(
-    userId,
-    stream,
-    displayName = "Participant"
+    initiator = false
 ) {
 
     if (
-        !CallUIState.participantsContainer
+        String(userId) ===
+        String(state.user.id)
     ) {
 
-        return;
+        return null;
 
     }
 
-
-    let tile =
-        CallUIState.participantsContainer
-            .querySelector(
-                `[data-user-id="${CSS.escape(userId)}"]`
-            );
-
-
-    if (!tile) {
-
-        tile =
-            createParticipantTile(
-                userId,
-                displayName
-            );
-
-
-        CallUIState.participantsContainer
-            .appendChild(
-                tile
-            );
-
-    }
-
-
-    const video =
-        tile.querySelector(
-            "video"
-        );
-
-
-    if (video) {
-
-        if (
-            video.srcObject !== stream
-        ) {
-
-            video.srcObject =
-                stream;
-
-        }
-
-
-        /*
-         * Video element can also play
-         * remote audio.
-         */
-
-        video.muted =
-            false;
-
-    }
-
-
-    const hasVideo =
-        stream
-            ?.getVideoTracks()
-            ?.some(
-                track =>
-                    track.enabled
-            );
-
-
-    tile.classList.toggle(
-        "voice-only",
-        !hasVideo
-    );
-
-
-    const avatar =
-        tile.querySelector(
-            ".mwaniki-participant-avatar"
-        );
-
-
-    if (avatar) {
-
-        avatar.style.display =
-            hasVideo
-                ? "none"
-                : "flex";
-
-    }
-
-}
-
-
-/* ============================================================
-   54. OVERRIDE REMOTE STREAM HANDLER
-   ============================================================ */
-
-window.addEventListener(
-    "mwaniki:remote-stream",
-    event => {
-
-        const detail =
-            event.detail || {};
-
-
-        if (
-            !detail.userId ||
-            !detail.stream
-        ) {
-
-            return;
-
-        }
-
-
-        updateRemoteParticipantTile(
-            detail.userId,
-            detail.stream
-        );
-
-    }
-);
-
-
-/* ============================================================
-   55. REMOTE STREAM REMOVAL
-   ============================================================ */
-
-window.addEventListener(
-    "mwaniki:remote-stream-removed",
-    event => {
-
-        const userId =
-            event.detail?.userId;
-
-
-        if (!userId) {
-
-            return;
-
-        }
-
-
-        const tile =
-            CallUIState
-                .participantsContainer
-                ?.querySelector(
-                    `[data-user-id="${CSS.escape(userId)}"]`
-                );
-
-
-        if (tile) {
-
-            tile.remove();
-
-        }
-
-    }
-);
-
-
-/* ============================================================
-   56. TOGGLE MUTE
-   ============================================================ */
-
-async function toggleCallMute() {
 
     if (
-        !CallState.localStream
+        callState.peers.has(
+            String(userId)
+        )
     ) {
 
-        return;
-
-    }
-
-
-    const audioTracks =
-        CallState.localStream
-            .getAudioTracks();
-
-
-    if (!audioTracks.length) {
-
-        return;
-
-    }
-
-
-    const currentlyEnabled =
-        audioTracks.some(
-            track =>
-                track.enabled
+        return callState.peers.get(
+            String(userId)
         );
 
-
-    const newEnabled =
-        !currentlyEnabled;
+    }
 
 
-    audioTracks.forEach(
-        track => {
+    const peer =
+        new RTCPeerConnection({
+            iceServers:
+                CALLING.iceServers
+        });
 
-            track.enabled =
-                newEnabled;
 
-        }
+    callState.peers.set(
+        String(userId),
+        peer
     );
 
-
-    const muted =
-        !newEnabled;
-
-
-    await updateOwnParticipant({
-
-        isMuted:
-            muted
-
-    });
-
-
-    updateMuteButton(
-        muted
-    );
-
-
-    updateCallStatus(
-        muted
-            ? "Microphone muted"
-            : "Microphone active"
-    );
-
-}
-
-
-/* ============================================================
-   57. TOGGLE CAMERA
-   ============================================================ */
-
-async function toggleCallCamera() {
 
     if (
-        !CallState.localStream
+        callState.localStream
     ) {
 
-        /*
-         * If the current call is voice-only,
-         * request camera dynamically.
-         */
+        callState.localStream
+            .getTracks()
+            .forEach(
+                track => {
 
-        try {
+                    peer.addTrack(
+                        track,
+                        callState.localStream
+                    );
 
-            CallState.localStream =
-                await navigator.mediaDevices
-                    .getUserMedia({
-
-                        audio: true,
-
-                        video: true
-
-                    });
-
-
-            await addLocalTracksToPeers();
-
-            attachLocalVideo();
-
-        }
-
-        catch (error) {
-
-            showCallError(
-                "Unable to access the camera."
+                }
             );
-
-            return;
-
-        }
 
     }
 
 
-    const videoTracks =
-        CallState.localStream
-            .getVideoTracks();
+    peer.onicecandidate =
+        event => {
 
+            if (
+                event.candidate
+            ) {
 
-    if (!videoTracks.length) {
+                sendCallSignal({
 
-        try {
+                    type:
+                        "ice-candidate",
 
-            const cameraStream =
-                await navigator.mediaDevices
-                    .getUserMedia({
+                    target_user_id:
+                        userId,
 
-                        video: true
+                    payload:
+                        event.candidate
 
-                    });
-
-
-            const cameraTrack =
-                cameraStream
-                    .getVideoTracks()[0];
-
-
-            if (!cameraTrack) {
-
-                return;
+                });
 
             }
 
+        };
 
-            const existingVideoSender =
-                findVideoSenders();
+
+    peer.ontrack =
+        event => {
+
+            const stream =
+                event.streams?.[0];
+
+
+            if (!stream) return;
+
+
+            callState.remoteStreams.set(
+                String(userId),
+                stream
+            );
+
+
+            attachRemoteVideo(
+                userId,
+                stream
+            );
+
+        };
+
+
+    peer.onconnectionstatechange =
+        () => {
+
+            console.log(
+                "Peer state:",
+                userId,
+                peer.connectionState
+            );
 
 
             if (
-                existingVideoSender.length
+                [
+                    "failed",
+                    "closed",
+                    "disconnected"
+                ].includes(
+                    peer.connectionState
+                )
             ) {
 
-                for (
-                    const sender
-                    of existingVideoSender
-                ) {
-
-                    await sender.replaceTrack(
-                        cameraTrack
-                    );
-
-                }
+                removePeer(
+                    userId
+                );
 
             }
 
-            else {
-
-                for (
-                    const [
-                        remoteUserId,
-                        peerConnection
-                    ]
-                    of CallState.peerConnections
-                ) {
-
-                    peerConnection.addTrack(
-                        cameraTrack,
-                        CallState.localStream
-                    );
+        };
 
 
-                    await renegotiatePeer(
-                        remoteUserId
-                    );
+    if (
+        initiator
+    ) {
 
-                }
+        const offer =
+            await peer.createOffer();
 
-            }
+
+        await peer.setLocalDescription(
+            offer
+        );
 
 
-            CallState.localStream.addTrack(
-                cameraTrack
+        await sendCallSignal({
+
+            type:
+                "offer",
+
+            target_user_id:
+                userId,
+
+            payload:
+                offer
+
+        });
+
+    }
+
+
+    return peer;
+
+}
+
+
+/* =========================================================
+   54. REMOTE VIDEO
+   ========================================================= */
+
+function attachRemoteVideo(
+    userId,
+    stream
+) {
+
+    const container =
+        byId(
+            "mwanikiCallParticipants"
+        );
+
+
+    if (!container) return;
+
+
+    let video =
+        container.querySelector(
+            `[data-remote-user="${CSS.escape(String(userId))}"]`
+        );
+
+
+    if (!video) {
+
+        video =
+            document.createElement(
+                "video"
             );
 
 
-            attachLocalVideo();
+        video.autoplay =
+            true;
 
 
-            await updateOwnParticipant({
+        video.playsInline =
+            true;
 
-                isCameraOn:
-                    true
+
+        video.className =
+            "mwaniki-call-video";
+
+
+        video.dataset.remoteUser =
+            String(userId);
+
+
+        container.appendChild(
+            video
+        );
+
+    }
+
+
+    video.srcObject =
+        stream;
+
+}
+
+
+/* =========================================================
+   55. CALL SIGNALING
+   ========================================================= */
+
+function setupCallRealtime(
+    roomId
+) {
+
+    if (
+        callState.signalChannel
+    ) {
+
+        try {
+
+            db.removeChannel(
+                callState.signalChannel
+            );
+
+        } catch (_) {}
+
+    }
+
+
+    const channel =
+        db.channel(
+            `mwaniki-call-${roomId}`
+        );
+
+
+    channel
+        .on(
+            "postgres_changes",
+            {
+                event: "INSERT",
+                schema: "public",
+                table:
+                    CALLING.tables.signals,
+                filter:
+                    `room_id=eq.${roomId}`
+            },
+            async payload => {
+
+                const signal =
+                    payload.new;
+
+
+                if (
+                    String(
+                        signal.sender_id
+                    ) ===
+                    String(
+                        state.user.id
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                if (
+                    signal.target_user_id &&
+                    String(
+                        signal.target_user_id
+                    ) !==
+                    String(
+                        state.user.id
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                await handleCallSignal(
+                    signal
+                );
+
+            }
+        )
+        .on(
+            "postgres_changes",
+            {
+                event: "*",
+                schema: "public",
+                table:
+                    CALLING.tables.participants,
+                filter:
+                    `room_id=eq.${roomId}`
+            },
+            async () => {
+
+                await loadCallParticipants(
+                    roomId
+                );
+
+            }
+        )
+        .subscribe(
+            status => {
+
+                console.log(
+                    "📡 Call realtime:",
+                    status
+                );
+
+            }
+        );
+
+
+    callState.signalChannel =
+        channel;
+
+
+    callState.participantChannel =
+        channel;
+
+}
+
+
+/* =========================================================
+   56. SEND CALL SIGNAL
+   ========================================================= */
+
+async function sendCallSignal(
+    signal
+) {
+
+    if (
+        !callState.roomId
+    ) {
+
+        return;
+
+    }
+
+
+    const {
+        error
+    } =
+        await db
+            .from(
+                CALLING.tables.signals
+            )
+            .insert({
+
+                room_id:
+                    callState.roomId,
+
+                sender_id:
+                    state.user.id,
+
+                target_user_id:
+                    signal.target_user_id ||
+                    null,
+
+                signal_type:
+                    signal.type,
+
+                payload:
+                    signal.payload
 
             });
 
 
-            updateCameraButton(
-                true
-            );
+    if (error) {
 
-
-            return;
-
-        }
-
-        catch (error) {
-
-            showCallError(
-                "Camera access was denied."
-            );
-
-            return;
-
-        }
-
-    }
-
-
-    const currentlyEnabled =
-        videoTracks.some(
-            track =>
-                track.enabled
-        );
-
-
-    const newEnabled =
-        !currentlyEnabled;
-
-
-    videoTracks.forEach(
-        track => {
-
-            track.enabled =
-                newEnabled;
-
-        }
-    );
-
-
-    await updateOwnParticipant({
-
-        isCameraOn:
-            newEnabled
-
-    });
-
-
-    updateCameraButton(
-        newEnabled
-    );
-
-
-    attachLocalVideo();
-
-}
-
-
-/* ============================================================
-   58. FIND VIDEO SENDERS
-   ============================================================ */
-
-function findVideoSenders() {
-
-    const senders = [];
-
-
-    for (
-        const peerConnection
-        of CallState.peerConnections.values()
-    ) {
-
-        const videoSenders =
-            peerConnection
-                .getSenders()
-                .filter(
-                    sender =>
-                        sender.track?.kind ===
-                        "video"
-                );
-
-
-        senders.push(
-            ...videoSenders
+        console.error(
+            "❌ Call signal error:",
+            error
         );
 
     }
 
-
-    return senders;
-
 }
 
 
-/* ============================================================
-   59. TOGGLE SCREEN SHARING
-   ============================================================ */
+/* =========================================================
+   57. HANDLE CALL SIGNAL
+   ========================================================= */
 
-async function toggleCallScreen() {
+async function handleCallSignal(
+    signal
+) {
+
+    const senderId =
+        signal.sender_id;
+
 
     if (
-        !navigator.mediaDevices ||
-        !navigator.mediaDevices
-            .getDisplayMedia
+        !senderId
     ) {
-
-        showCallError(
-            "Screen sharing is not supported by this browser."
-        );
 
         return;
 
     }
 
 
-    /*
-     * Stop screen sharing if already active.
-     */
+    const type =
+        signal.signal_type;
+
+
+    const payload =
+        signal.payload;
+
+
+    let peer =
+        callState.peers.get(
+            String(senderId)
+        );
+
 
     if (
-        CallState.screenStream
+        !peer
     ) {
 
-        await stopScreenSharing();
+        peer =
+            await createPeerConnection(
+                senderId,
+                false
+            );
+
+    }
+
+
+    if (
+        !peer
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        type ===
+        "offer"
+    ) {
+
+        await peer.setRemoteDescription(
+            new RTCSessionDescription(
+                payload
+            )
+        );
+
+
+        const answer =
+            await peer.createAnswer();
+
+
+        await peer.setLocalDescription(
+            answer
+        );
+
+
+        await sendCallSignal({
+
+            type:
+                "answer",
+
+            target_user_id:
+                senderId,
+
+            payload:
+                answer
+
+        });
+
+        return;
+
+    }
+
+
+    if (
+        type ===
+        "answer"
+    ) {
+
+        if (
+            peer.signalingState !==
+            "stable"
+        ) {
+
+            await peer.setRemoteDescription(
+                new RTCSessionDescription(
+                    payload
+                )
+            );
+
+        }
+
+        return;
+
+    }
+
+
+    if (
+        type ===
+        "ice-candidate"
+    ) {
+
+        try {
+
+            await peer.addIceCandidate(
+                new RTCIceCandidate(
+                    payload
+                )
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "ICE candidate error:",
+                error
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   58. MUTE
+   ========================================================= */
+
+function toggleMute() {
+
+    if (
+        !callState.localStream
+    ) {
+
+        return;
+
+    }
+
+
+    const tracks =
+        callState.localStream
+            .getAudioTracks();
+
+
+    callState.muted =
+        !callState.muted;
+
+
+    tracks.forEach(
+        track => {
+
+            track.enabled =
+                !callState.muted;
+
+        }
+    );
+
+
+    updateCallControls();
+
+}
+
+
+/* =========================================================
+   59. CAMERA
+   ========================================================= */
+
+async function toggleCamera() {
+
+    if (
+        callState.mode !==
+        "video"
+    ) {
+
+        try {
+
+            const camera =
+                await navigator.mediaDevices
+                    .getUserMedia({
+                        video: true
+                    });
+
+
+            if (
+                !callState.localStream
+            ) {
+
+                callState.localStream =
+                    camera;
+
+            } else {
+
+                camera
+                    .getVideoTracks()
+                    .forEach(
+                        track => {
+
+                            callState.localStream
+                                .addTrack(
+                                    track
+                                );
+
+
+                            callState.peers
+                                .forEach(
+                                    peer => {
+
+                                        peer.addTrack(
+                                            track,
+                                            callState.localStream
+                                        );
+
+                                    }
+                                );
+
+                        }
+                    );
+
+            }
+
+
+            callState.mode =
+                "video";
+
+
+            callState.cameraEnabled =
+                true;
+
+
+            attachLocalVideoTile();
+
+
+            updateCallControls();
+
+
+            return;
+
+        } catch (error) {
+
+            toast(
+                "Camera permission was denied.",
+                "error"
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    const tracks =
+        callState.localStream
+            ?.getVideoTracks() ||
+        [];
+
+
+    if (!tracks.length) {
+
+        return;
+
+    }
+
+
+    callState.cameraEnabled =
+        !callState.cameraEnabled;
+
+
+    tracks.forEach(
+        track => {
+
+            track.enabled =
+                callState.cameraEnabled;
+
+        }
+    );
+
+
+    updateCallControls();
+
+}
+
+
+/* =========================================================
+   60. SCREEN SHARING
+   ========================================================= */
+
+async function toggleScreenShare() {
+
+    if (
+        callState.screenSharing
+    ) {
+
+        await stopScreenShare();
+
+        return;
+
+    }
+
+
+    if (
+        !navigator.mediaDevices
+            .getDisplayMedia
+    ) {
+
+        toast(
+            "Screen sharing is not supported by this browser.",
+            "error"
+        );
 
         return;
 
@@ -4837,19 +6263,16 @@ async function toggleCallScreen() {
 
     try {
 
-        const screenStream =
+        callState.screenStream =
             await navigator.mediaDevices
                 .getDisplayMedia({
-
                     video: true,
-
                     audio: false
-
                 });
 
 
         const screenTrack =
-            screenStream
+            callState.screenStream
                 .getVideoTracks()[0];
 
 
@@ -4860,116 +6283,56 @@ async function toggleCallScreen() {
         }
 
 
-        CallState.screenStream =
-            screenStream;
+        callState.peers.forEach(
+            async peer => {
+
+                const sender =
+                    peer
+                        .getSenders()
+                        .find(
+                            item =>
+                                item.track?.kind ===
+                                "video"
+                        );
 
 
-        const videoSenders =
-            findVideoSenders();
+                if (sender) {
 
+                    await sender.replaceTrack(
+                        screenTrack
+                    );
 
-        /*
-         * Replace existing camera track.
-         */
+                } else {
 
-        for (
-            const sender
-            of videoSenders
-        ) {
+                    peer.addTrack(
+                        screenTrack,
+                        callState.screenStream
+                    );
 
-            await sender.replaceTrack(
-                screenTrack
-            );
-
-        }
-
-
-        /*
-         * If no video sender exists,
-         * add screen to every peer.
-         */
-
-        if (
-            videoSenders.length === 0
-        ) {
-
-            for (
-                const [
-                    remoteUserId,
-                    peerConnection
-                ]
-                of CallState.peerConnections
-            ) {
-
-                peerConnection.addTrack(
-                    screenTrack,
-                    screenStream
-                );
-
-
-                await renegotiatePeer(
-                    remoteUserId
-                );
+                }
 
             }
-
-        }
-
-
-        /*
-         * Display our screen locally.
-         */
-
-        const localVideo =
-            document.querySelector(
-                "#mwanikiLocalParticipant video"
-            );
-
-
-        if (localVideo) {
-
-            localVideo.srcObject =
-                screenStream;
-
-        }
-
-
-        await updateOwnParticipant({
-
-            isScreenSharing:
-                true
-
-        });
-
-
-        updateScreenButton(
-            true
         );
 
 
-        /*
-         * Browser fires this when user clicks
-         * "Stop sharing" from the browser UI.
-         */
+        callState.screenSharing =
+            true;
+
 
         screenTrack.onended =
-            async () => {
+            () => {
 
-                await stopScreenSharing();
+                stopScreenShare();
 
             };
 
 
-        updateCallStatus(
-            "You are sharing your screen"
-        );
+        updateCallControls();
 
-    }
+    } catch (error) {
 
-    catch (error) {
-
-        callWarn(
-            "Screen sharing cancelled or failed:",
+        console.warn(
+            "Screen sharing cancelled:",
             error
         );
 
@@ -4978,14 +6341,14 @@ async function toggleCallScreen() {
 }
 
 
-/* ============================================================
-   60. STOP SCREEN SHARING
-   ============================================================ */
+/* =========================================================
+   61. STOP SCREEN SHARE
+   ========================================================= */
 
-async function stopScreenSharing() {
+async function stopScreenShare() {
 
     if (
-        !CallState.screenStream
+        !callState.screenStream
     ) {
 
         return;
@@ -4993,111 +6356,121 @@ async function stopScreenSharing() {
     }
 
 
-    for (
-        const track
-        of CallState.screenStream.getTracks()
-    ) {
-
-        track.stop();
-
-    }
+    callState.screenStream
+        .getTracks()
+        .forEach(
+            track =>
+                track.stop()
+        );
 
 
-    CallState.screenStream =
+    callState.screenStream =
         null;
 
 
-    /*
-     * Restore camera if available.
-     */
-
-    const cameraTrack =
-        CallState.localStream
-            ?.getVideoTracks()
-            ?.find(
-                track =>
-                    track.readyState ===
-                    "live"
-            );
+    callState.screenSharing =
+        false;
 
 
-    const videoSenders =
-        findVideoSenders();
+    updateCallControls();
+
+}
 
 
-    for (
-        const sender
-        of videoSenders
-    ) {
+/* =========================================================
+   62. CALL CONTROLS
+   ========================================================= */
+
+function updateCallControls() {
+
+    setText(
+        "mwanikiMuteButton",
+        callState.muted
+            ? "🔇 Unmute"
+            : "🎙️ Mute"
+    );
+
+
+    setText(
+        "mwanikiCameraButton",
+        callState.cameraEnabled
+            ? "📷 Camera Off"
+            : "📷 Camera"
+    );
+
+
+    setText(
+        "mwanikiScreenButton",
+        callState.screenSharing
+            ? "🖥️ Stop Sharing"
+            : "🖥️ Screen"
+    );
+
+}
+
+
+/* =========================================================
+   63. REMOVE PEER
+   ========================================================= */
+
+function removePeer(
+    userId
+) {
+
+    const key =
+        String(userId);
+
+
+    const peer =
+        callState.peers.get(
+            key
+        );
+
+
+    if (peer) {
 
         try {
 
-            await sender.replaceTrack(
-                cameraTrack || null
-            );
+            peer.close();
 
-        }
-
-        catch (error) {
-
-            callWarn(
-                "Unable to restore camera:",
-                error
-            );
-
-        }
+        } catch (_) {}
 
     }
 
 
-    const localVideo =
+    callState.peers.delete(
+        key
+    );
+
+
+    callState.remoteStreams.delete(
+        key
+    );
+
+
+    const video =
         document.querySelector(
-            "#mwanikiLocalParticipant video"
+            `[data-remote-user="${CSS.escape(key)}"]`
         );
 
 
-    if (
-        localVideo &&
-        CallState.localStream
-    ) {
+    if (video) {
 
-        localVideo.srcObject =
-            CallState.localStream;
+        video.remove();
 
     }
-
-
-    await updateOwnParticipant({
-
-        isScreenSharing:
-            false
-
-    });
-
-
-    updateScreenButton(
-        false
-    );
-
-
-    updateCallStatus(
-        "Screen sharing stopped"
-    );
 
 }
 
 
-/* ============================================================
-   61. UPDATE OWN PARTICIPANT
-   ============================================================ */
+/* =========================================================
+   64. LEAVE CALL
+   ========================================================= */
 
-async function updateOwnParticipant(
-    values
-) {
+async function leaveCall() {
 
     if (
-        !CallState.currentParticipant ||
-        !CallState.currentUser
+        callState.leaving
     ) {
 
         return;
@@ -5105,823 +6478,417 @@ async function updateOwnParticipant(
     }
 
 
-    const {
-        error
-    } = await supabase
-
-        .from(
-            "chat_call_participants"
-        )
-
-        .update(
-            values
-        )
-
-        .eq(
-            "id",
-            CallState.currentParticipant.id
-        );
-
-
-    if (error) {
-
-        callWarn(
-            "Unable to update participant:",
-            error
-        );
-
-        return;
-
-    }
-
-
-    CallState.currentParticipant = {
-
-        ...CallState.currentParticipant,
-
-        ...values
-
-    };
-
-}
-
-
-/* ============================================================
-   62. RENEGOTIATE PEER
-   ============================================================ */
-
-async function renegotiatePeer(
-    remoteUserId
-) {
-
-    const peerConnection =
-        CallState.peerConnections.get(
-            remoteUserId
-        );
-
-
-    if (!peerConnection) {
-
-        return;
-
-    }
-
-
-    /*
-     * Avoid creating offers while another
-     * offer is being negotiated.
-     */
-
-    if (
-        peerConnection.signalingState !==
-        "stable"
-    ) {
-
-        return;
-
-    }
+    callState.leaving =
+        true;
 
 
     try {
 
-        const offer =
-            await peerConnection.createOffer({
-
-                offerToReceiveAudio:
-                    true,
-
-                offerToReceiveVideo:
-                    true
-
-            });
-
-
-        await peerConnection.setLocalDescription(
-            offer
-        );
-
-
-        await sendSignal({
-
-            roomId:
-                CallState.currentRoom?.id,
-
-            receiverId:
-                remoteUserId,
-
-            signalType:
-                "renegotiate",
-
-            payload:
-                offer
-
-        });
-
-    }
-
-    catch (error) {
-
-        callWarn(
-            "Peer renegotiation failed:",
-            error
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   63. UPDATE MUTE BUTTON
-   ============================================================ */
-
-function updateMuteButton(
-    muted
-) {
-
-    const button =
-        CallUIState.muteButton;
-
-
-    if (!button) {
-
-        return;
-
-    }
-
-
-    button.classList.toggle(
-        "active",
-        muted
-    );
-
-
-    button.innerHTML =
-        muted
-            ? "🔇 <span>Unmute</span>"
-            : "🎤 <span>Mute</span>";
-
-
-    button.setAttribute(
-        "aria-label",
-        muted
-            ? "Unmute microphone"
-            : "Mute microphone"
-    );
-
-}
-
-
-/* ============================================================
-   64. UPDATE CAMERA BUTTON
-   ============================================================ */
-
-function updateCameraButton(
-    enabled
-) {
-
-    const button =
-        CallUIState.cameraButton;
-
-
-    if (!button) {
-
-        return;
-
-    }
-
-
-    button.classList.toggle(
-        "active",
-        enabled
-    );
-
-
-    button.innerHTML =
-        enabled
-            ? "📹 <span>Camera On</span>"
-            : "📷 <span>Camera Off</span>";
-
-}
-
-
-/* ============================================================
-   65. UPDATE SCREEN BUTTON
-   ============================================================ */
-
-function updateScreenButton(
-    sharing
-) {
-
-    const button =
-        CallUIState.screenButton;
-
-
-    if (!button) {
-
-        return;
-
-    }
-
-
-    button.classList.toggle(
-        "active",
-        sharing
-    );
-
-
-    button.innerHTML =
-        sharing
-            ? "⏹️ <span>Stop Share</span>"
-            : "🖥️ <span>Share</span>";
-
-}
-
-
-/* ============================================================
-   66. CALL STATUS
-   ============================================================ */
-
-function updateCallStatus(
-    status
-) {
-
-    if (
-        CallUIState.statusElement
-    ) {
-
-        CallUIState.statusElement
-            .textContent =
-            status;
-
-    }
-
-}
-
-
-/* ============================================================
-   67. START CALL TIMER
-   ============================================================ */
-
-function startCallTimer() {
-
-    stopCallTimer();
-
-
-    CallUIState.callStartedAt =
-        Date.now();
-
-
-    CallUIState.timerInterval =
-        setInterval(
-            () => {
-
-                const elapsed =
-                    Math.floor(
-                        (
-                            Date.now() -
-                            CallUIState.callStartedAt
-                        ) / 1000
-                    );
-
-
-                const minutes =
-                    Math.floor(
-                        elapsed / 60
-                    )
-                        .toString()
-                        .padStart(
-                            2,
-                            "0"
-                        );
-
-
-                const seconds =
-                    (
-                        elapsed % 60
-                    )
-                        .toString()
-                        .padStart(
-                            2,
-                            "0"
-                        );
-
-
-                if (
-                    CallUIState.timerElement
-                ) {
-
-                    CallUIState.timerElement
-                        .textContent =
-                        `${minutes}:${seconds}`;
+        if (
+            callState.roomId &&
+            state.user?.id
+        ) {
+
+            await db
+                .from(
+                    CALLING.tables.participants
+                )
+                .update({
+                    is_active:
+                        false,
+
+                    left_at:
+                        new Date()
+                            .toISOString()
+                })
+                .eq(
+                    "room_id",
+                    callState.roomId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
+
+        }
+
+
+        callState.peers
+            .forEach(
+                peer => {
+
+                    try {
+
+                        peer.close();
+
+                    } catch (_) {}
 
                 }
-
-            },
-            1000
-        );
-
-}
-
-
-/* ============================================================
-   68. STOP CALL TIMER
-   ============================================================ */
-
-function stopCallTimer() {
-
-    if (
-        CallUIState.timerInterval
-    ) {
-
-        clearInterval(
-            CallUIState.timerInterval
-        );
-
-    }
-
-
-    CallUIState.timerInterval =
-        null;
-
-    CallUIState.callStartedAt =
-        null;
-
-
-    if (
-        CallUIState.timerElement
-    ) {
-
-        CallUIState.timerElement
-            .textContent =
-            "00:00";
-
-    }
-
-}
-
-
-/* ============================================================
-   69. ACTIVE CALL UI
-   ============================================================ */
-
-function activateCallUI(
-    room
-) {
-
-    ensureCallInterface();
-
-
-    const panel =
-        CallUIState.activePanel;
-
-
-    if (!panel) {
-
-        return;
-
-    }
-
-
-    panel.removeAttribute(
-        "hidden"
-    );
-
-
-    panel.classList.add(
-        "active"
-    );
-
-
-    const title =
-        room.call_scope ===
-            CALL_SCOPE.GENERAL
-
-            ? "Mwaniki General Call"
-
-            : (
-                CallState.currentCommunityName ||
-                "Community Call"
             );
 
 
-    if (
-        CallUIState.titleElement
-    ) {
-
-        CallUIState.titleElement
-            .textContent =
-            title;
-
-    }
-
-
-    updateCallStatus(
-        "Connecting..."
-    );
-
-
-    startCallTimer();
-
-
-    document.body.classList.add(
-        "mwaniki-call-active"
-    );
-
-
-    startCallMedia();
-
-}
-
-
-/* ============================================================
-   70. INCOMING CALL UI
-   ============================================================ */
-
-function activateIncomingCallUI(
-    room,
-    participant
-) {
-
-    ensureCallInterface();
-
-
-    const panel =
-        CallUIState.incomingPanel;
-
-
-    if (!panel) {
-
-        return;
-
-    }
-
-
-    panel.dataset.roomId =
-        room.id;
-
-
-    panel.dataset.participantId =
-        participant.id;
-
-
-    const title =
-        room.call_scope ===
-            CALL_SCOPE.GENERAL
-
-            ? "Incoming General Call"
-
-            : "Incoming Community Call";
-
-
-    const titleElement =
-        panel.querySelector(
-            "#incomingCallTitle"
-        );
-
-
-    const subtitleElement =
-        panel.querySelector(
-            "#incomingCallSubtitle"
-        );
-
-
-    if (titleElement) {
-
-        titleElement.textContent =
-            title;
-
-    }
-
-
-    if (subtitleElement) {
-
-        subtitleElement.textContent =
-            room.call_type ===
-                CALL_TYPE.VOICE
-
-                ? "Incoming voice call"
-
-                : "Incoming video call";
-
-    }
-
-
-    panel.removeAttribute(
-        "hidden"
-    );
-
-
-    panel.classList.add(
-        "active"
-    );
-
-}
-
-
-/* ============================================================
-   71. REPLACE INCOMING UI FUNCTION
-   ============================================================ */
-
-window.addEventListener(
-    "mwaniki:incoming-call",
-    event => {
-
-        const {
-            room,
-            participant
-        } =
-            event.detail || {};
+        callState.peers.clear();
 
 
         if (
-            room &&
-            participant
+            callState.localStream
         ) {
 
-            activateIncomingCallUI(
-                room,
-                participant
-            );
+            callState.localStream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
 
         }
 
-    }
-);
 
-
-/* ============================================================
-   72. REPLACE CALL START UI
-   ============================================================ */
-
-window.addEventListener(
-    "mwaniki:call-started",
-    event => {
-
-        const room =
-            event.detail?.room ||
-            CallState.currentRoom;
-
-
-        if (room) {
-
-            activateCallUI(
-                room
-            );
-
-        }
-
-    }
-);
-
-
-/* ============================================================
-   73. CALL LEFT UI
-   ============================================================ */
-
-window.addEventListener(
-    "mwaniki:call-left",
-    () => {
-
-        closeCallInterface();
-
-    }
-);
-
-
-/* ============================================================
-   74. CLOSE CALL INTERFACE
-   ============================================================ */
-
-function closeCallInterface() {
-
-    stopCallTimer();
-
-
-    if (
-        CallState.localStream
-    ) {
-
-        for (
-            const track
-            of CallState.localStream.getTracks()
+        if (
+            callState.screenStream
         ) {
 
-            track.stop();
+            callState.screenStream
+                .getTracks()
+                .forEach(
+                    track =>
+                        track.stop()
+                );
 
         }
 
-    }
 
-
-    if (
-        CallState.screenStream
-    ) {
-
-        for (
-            const track
-            of CallState.screenStream.getTracks()
+        if (
+            callState.signalChannel
         ) {
 
-            track.stop();
+            try {
+
+                await db.removeChannel(
+                    callState.signalChannel
+                );
+
+            } catch (_) {}
 
         }
 
+
+        callState.active =
+            false;
+
+        callState.room =
+            null;
+
+        callState.roomId =
+            null;
+
+        callState.roomType =
+            null;
+
+        callState.communityId =
+            null;
+
+        callState.localStream =
+            null;
+
+        callState.screenStream =
+            null;
+
+        callState.signalChannel =
+            null;
+
+        callState.participantChannel =
+            null;
+
+        callState.participantIds =
+            new Set();
+
+        callState.remoteStreams.clear();
+
+        callState.muted =
+            false;
+
+        callState.cameraEnabled =
+            false;
+
+        callState.screenSharing =
+            false;
+
+        callState.startedAt =
+            null;
+
+
+        hideCallUI();
+
+
+        toast(
+            "You left the call.",
+            "success"
+        );
+
+    } catch (error) {
+
+        console.error(
+            "❌ Leave call error:",
+            error
+        );
+
+    } finally {
+
+        callState.leaving =
+            false;
+
     }
 
-
-    CallState.localStream =
-        null;
-
-    CallState.screenStream =
-        null;
+}
 
 
-    if (
-        CallUIState.participantsContainer
-    ) {
+/* =========================================================
+   65. LEGACY / EXISTING CALL BUTTONS
+   ========================================================= */
 
-        CallUIState.participantsContainer
-            .innerHTML =
-            "";
+async function handleVoiceButton() {
 
-    }
-
-
-    if (
-        CallUIState.activePanel
-    ) {
-
-        CallUIState.activePanel
-            .classList.remove(
-                "active"
-            );
-
-        CallUIState.activePanel
-            .setAttribute(
-                "hidden",
-                "hidden"
-            );
-
-    }
-
-
-    hideIncomingCall();
-
-
-    document.body.classList.remove(
-        "mwaniki-call-active"
+    await startCommunityCall(
+        "voice"
     );
 
 }
 
 
-/* ============================================================
-   75. LEAVE CALL AND CLOSE UI
-   ============================================================ */
+async function handleVideoButton() {
 
-async function leaveCallAndCloseUI() {
-
-    await leaveCurrentCall();
-
-    closeCallInterface();
+    await startCommunityCall(
+        "video"
+    );
 
 }
 
 
-/* ============================================================
-   76. END CALL AND CLOSE UI
-   ============================================================ */
+/* =========================================================
+   66. GENERAL CALL BUTTONS
+   ========================================================= */
 
-async function endCallAndCloseUI() {
+function setupGeneralCallButtons() {
 
-    await endCurrentCall();
+    const selectors = [
 
-    closeCallInterface();
+        "#generalCallButton",
 
-}
+        "#startGeneralCallButton",
 
+        "[data-general-call]",
 
-/* ============================================================
-   77. ESCAPE HTML
-   ============================================================ */
+        "[data-call-general]"
 
-function escapeCallHTML(
-    value
-) {
-
-    return String(
-        value ?? ""
-    )
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /'/g,
-            "&#039;"
-        );
-
-}
+    ];
 
 
-/* ============================================================
-   78. INITIALS
-   ============================================================ */
-
-function getInitials(
-    name
-) {
-
-    const cleaned =
-        String(
-            name || "Participant"
-        )
-            .trim();
-
-
-    const parts =
-        cleaned.split(
-            /\s+/
+    const elements =
+        queryAll(
+            selectors.join(",")
         );
 
 
-    if (
-        parts.length === 1
-    ) {
+    elements.forEach(
+        button => {
 
-        return parts[0]
-            .substring(
-                0,
-                2
-            )
-            .toUpperCase();
+            if (
+                button.dataset.callBound ===
+                "true"
+            ) {
+
+                return;
+
+            }
+
+
+            button.dataset.callBound =
+                "true";
+
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const mode =
+                        button.dataset.callMode ===
+                        "video"
+                            ? "video"
+                            : "voice";
+
+
+                    await startGeneralCall(
+                        mode
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   67. COMMUNITY CALL BUTTONS
+   ========================================================= */
+
+function setupCommunityCallButtons() {
+
+    const voice =
+        byId(
+            "voiceCallButton"
+        );
+
+
+    if (voice) {
+
+        voice.addEventListener(
+            "click",
+            handleVoiceButton
+        );
 
     }
 
 
-    return (
-        parts[0][0] +
-        parts[parts.length - 1][0]
-    )
-        .toUpperCase();
+    const video =
+        byId(
+            "videoCallButton"
+        );
+
+
+    if (video) {
+
+        video.addEventListener(
+            "click",
+            handleVideoButton
+        );
+
+    }
+
+
+    queryAll(
+        "[data-community-call]"
+    ).forEach(
+        button => {
+
+            if (
+                button.dataset.callBound ===
+                "true"
+            ) {
+
+                return;
+
+            }
+
+
+            button.dataset.callBound =
+                "true";
+
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    const mode =
+                        button.dataset.callMode ===
+                        "video"
+                            ? "video"
+                            : "voice";
+
+
+                    await startCommunityCall(
+                        mode
+                    );
+
+                }
+            );
+
+        }
+    );
 
 }
 
 
-/* ============================================================
-   79. BROWSER UNLOAD CLEANUP
-   ============================================================ */
+/* =========================================================
+   68. INITIAL EVENT SETUP
+   ========================================================= */
+
+function setupEvents() {
+
+    setupSearchEvents();
+
+    setupMessageComposer();
+
+    setupCommunityEvents();
+
+    setupCommunityCallButtons();
+
+    setupGeneralCallButtons();
+
+}
+
+
+/* =========================================================
+   69. BROWSER CLEANUP
+   ========================================================= */
 
 window.addEventListener(
     "beforeunload",
     () => {
 
-        /*
-         * Stop local media immediately.
-         */
-
         if (
-            CallState.localStream
+            callState.active
         ) {
 
-            CallState.localStream
-                .getTracks()
+            /*
+             * Browser unload cannot reliably await
+             * Supabase requests, but stopping local
+             * media is still important.
+             */
+
+            callState.peers
                 .forEach(
-                    track =>
-                        track.stop()
+                    peer => {
+
+                        try {
+
+                            peer.close();
+
+                        } catch (_) {}
+
+                    }
                 );
 
-        }
+
+            if (
+                callState.localStream
+            ) {
+
+                callState.localStream
+                    .getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
+
+            }
 
 
-        if (
-            CallState.screenStream
-        ) {
+            if (
+                callState.screenStream
+            ) {
 
-            CallState.screenStream
-                .getTracks()
-                .forEach(
-                    track =>
-                        track.stop()
-                );
+                callState.screenStream
+                    .getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
+
+            }
 
         }
 
@@ -5929,143 +6896,248 @@ window.addEventListener(
 );
 
 
-/* ============================================================
-   80. INITIALIZE CALL UI
-   ============================================================ */
+/* =========================================================
+   70. PUBLIC API
+   ========================================================= */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    () => {
+window.mwanikiCommunity = {
 
-        ensureCallInterface();
+    state,
 
+    refresh:
+        async () => {
 
-        /*
-         * Existing page controls may already
-         * exist before this module initializes.
-         */
+            await loadCommunities();
 
-        setTimeout(
-            () => {
+            const community =
+                chooseInitialCommunity();
 
-                bindCallUIEvents();
+            if (community) {
 
-            },
-            500
-        );
+                await selectCommunity(
+                    community
+                );
 
-    }
-);
+            }
 
+        },
 
-/* ============================================================
-   81. PUBLIC CALL CONTROLS
-   ============================================================ */
+    selectCommunity,
 
-window.MwanikiCalls = {
+    selectChannel,
 
-    ...(window.MwanikiCalls || {}),
+    sendMessage,
 
-    startGeneralCall,
+    cancelReply,
 
-    startCommunityCall,
+    loadCommunities,
 
-    joinCallRoom,
+    loadChannels,
 
-    acceptIncomingCall,
+    loadMessages,
 
-    declineIncomingCall,
+    startCommunityVoice:
+        () =>
+            startCommunityCall(
+                "voice"
+            ),
 
-    leaveCurrentCall,
+    startCommunityVideo:
+        () =>
+            startCommunityCall(
+                "video"
+            ),
 
-    endCurrentCall,
+    startGeneralVoice:
+        () =>
+            startGeneralCall(
+                "voice"
+            ),
 
-    toggleMute:
-        toggleCallMute,
+    startGeneralVideo:
+        () =>
+            startGeneralCall(
+                "video"
+            ),
 
-    toggleCamera:
-        toggleCallCamera,
+    leaveCall,
 
-    toggleScreenShare:
-        toggleCallScreen,
+    toggleMute,
 
-    getState:
-        () => CallState
+    toggleCamera,
+
+    toggleScreenShare,
+
+    callState
 
 };
 
 
-/* ============================================================
-   82. FINAL CALL INITIALIZATION
-   ============================================================ */
+/* =========================================================
+   71. INITIALIZATION
+   ========================================================= */
 
-setTimeout(
-    () => {
+async function initialize() {
 
-        try {
+    if (
+        state.initialized
+    ) {
 
-            ensureCallInterface();
+        return;
 
-            bindCallUIEvents();
+    }
 
-            callLog(
-                "======================================"
+
+    console.log(
+        "🚀 Initializing Mwaniki Community..."
+    );
+
+
+    const authenticated =
+        await requireAuthentication();
+
+
+    if (!authenticated) {
+
+        return;
+
+    }
+
+
+    /*
+     * Set up UI first so the page is
+     * immediately interactive.
+     */
+
+    setupEvents();
+
+
+    setupAuthListener();
+
+
+    console.log(
+        "🔵 Loading student profile..."
+    );
+
+
+    await loadStudentProfile();
+
+
+    console.log(
+        "🔵 Loading courses..."
+    );
+
+
+    await loadCourses();
+
+
+    console.log(
+        "🔵 Loading communities..."
+    );
+
+
+    await loadCommunities();
+
+
+    console.log(
+        "🔵 Communities loaded:",
+        state.communities.length
+    );
+
+
+    if (
+        !state.communities.length
+    ) {
+
+        const rail =
+            byId(
+                "communityRail"
             );
 
-            callLog(
-                "REAL CALLING UI READY"
-            );
 
-            callLog(
-                "General Call: READY"
-            );
+        if (rail) {
 
-            callLog(
-                "Community Calls: READY"
-            );
-
-            callLog(
-                "Voice: READY"
-            );
-
-            callLog(
-                "Video: READY"
-            );
-
-            callLog(
-                "Screen Share: READY"
-            );
-
-            callLog(
-                "WebRTC: READY"
-            );
-
-            callLog(
-                "Supabase Signaling: READY"
-            );
-
-            callLog(
-                "======================================"
-            );
+            rail.innerHTML = `
+                <div class="channel-loading">
+                    No communities found.
+                </div>
+            `;
 
         }
 
-        catch (error) {
 
-            callError(
-                "Calling UI initialization failed:",
+        const channelList =
+            byId(
+                "channelList"
+            );
+
+
+        if (channelList) {
+
+            channelList.innerHTML = `
+                <div class="empty-state">
+                    No communities have been created yet.
+                </div>
+            `;
+
+        }
+
+
+        state.initialized =
+            true;
+
+
+        return;
+
+    }
+
+
+    const initialCommunity =
+        chooseInitialCommunity();
+
+
+    if (
+        initialCommunity
+    ) {
+
+        await selectCommunity(
+            initialCommunity
+        );
+
+    }
+
+
+    ensureCallUI();
+
+
+    state.initialized =
+        true;
+
+
+    console.log(
+        "✅ Mwaniki Community fully initialized."
+    );
+
+}
+
+
+initialize()
+    .catch(
+        error => {
+
+            console.error(
+                "🔥 Community initialization failed:",
                 error
             );
 
+
+            toast(
+                "Community page failed to initialize.",
+                "error"
+            );
+
         }
-
-    },
-    800
-);
+    );
 
 
-/* ============================================================
-   END CALLING ENGINE — PART 2
-   ============================================================ */
-
-
+})();
