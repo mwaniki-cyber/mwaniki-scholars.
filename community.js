@@ -49,7 +49,7 @@
        CONFIGURATION
        ========================================================= */
 
-    const CONFIG = {
+     CONFIG = {
 
         dashboardUrl:
             "./dashboard.html",
