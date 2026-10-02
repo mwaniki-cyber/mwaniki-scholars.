@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,734 +14,1602 @@
         content="Mwaniki Scholars Community"
     >
 
-    <meta
-        name="theme-color"
-        content="#071a18"
-    >
+    <meta name="theme-color" content="#087f73">
 
-    <title>
-        Community | Mwaniki Scholars
-    </title>
+    <title>Mwaniki Scholars Community</title>
 
-    <link
-        rel="icon"
-        href="./favicon.ico"
-    >
+    <link rel="icon" href="./favicon.ico">
 
-    <link
-        rel="stylesheet"
-        href="./community.css"
-    >
+    <link rel="stylesheet" href="./style.css">
+
+    <style>
+
+        /* =========================================================
+           MWANIKI SCHOLARS COMMUNITY
+           CLEAN UI FOUNDATION
+           ========================================================= */
+
+        :root {
+            --ms-primary: #087f73;
+            --ms-primary-dark: #05665d;
+            --ms-primary-soft: #e8f7f5;
+
+            --ms-bg: #f4f7f9;
+            --ms-panel: #ffffff;
+            --ms-panel-2: #f8fafb;
+
+            --ms-text: #17212b;
+            --ms-muted: #71808f;
+
+            --ms-border: #e4e9ed;
+
+            --ms-danger: #dc3545;
+            --ms-success: #20a464;
+
+            --ms-shadow:
+                0 8px 30px rgba(16, 24, 40, 0.07);
+
+            --ms-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background: var(--ms-bg);
+            color: var(--ms-text);
+            overflow: hidden;
+        }
+
+        button,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* =========================================================
+           APP
+           ========================================================= */
+
+        .community-app {
+            width: 100%;
+            height: 100vh;
+            display: grid;
+
+            grid-template-columns:
+                72px
+                280px
+                minmax(0, 1fr);
+
+            background: var(--ms-bg);
+        }
+
+        /* =========================================================
+           LEFT RAIL
+           ========================================================= */
+
+        .community-rail {
+            background: #092f2b;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            padding: 14px 0;
+
+            gap: 12px;
+
+            border-right: 1px solid rgba(255,255,255,.06);
+        }
+
+        .rail-logo {
+            width: 46px;
+            height: 46px;
+
+            border-radius: 14px;
+
+            display: grid;
+            place-items: center;
+
+            background: white;
+            color: var(--ms-primary);
+
+            font-weight: 900;
+            font-size: 18px;
+
+            box-shadow:
+                0 5px 18px rgba(0,0,0,.18);
+        }
+
+        .rail-divider {
+            width: 34px;
+            height: 1px;
+
+            background: rgba(255,255,255,.14);
+
+            margin: 4px 0;
+        }
+
+        .rail-button {
+            position: relative;
+
+            width: 46px;
+            height: 46px;
+
+            border: 0;
+            border-radius: 14px;
+
+            background: transparent;
+            color: #b7cfcc;
+
+            display: grid;
+            place-items: center;
+
+            transition:
+                background .18s ease,
+                color .18s ease,
+                transform .18s ease;
+        }
+
+        .rail-button:hover {
+            background: rgba(255,255,255,.10);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .rail-button.active {
+            background: var(--ms-primary);
+            color: white;
+        }
+
+        .rail-button svg {
+            width: 22px;
+            height: 22px;
+        }
+
+        .rail-community-icon {
+            width: 46px;
+            height: 46px;
+
+            border-radius: 14px;
+
+            border: 0;
+
+            background: rgba(255,255,255,.08);
+
+            color: white;
+
+            display: grid;
+            place-items: center;
+
+            font-weight: 800;
+
+            overflow: hidden;
+        }
+
+        .rail-community-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .rail-spacer {
+            flex: 1;
+        }
+
+        /* =========================================================
+           COMMUNITY NAVIGATION
+           ========================================================= */
+
+        .community-sidebar {
+            min-width: 0;
+
+            background: var(--ms-panel);
+
+            border-right: 1px solid var(--ms-border);
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            height: 76px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            padding: 0 18px;
+
+            border-bottom: 1px solid var(--ms-border);
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 850;
+            letter-spacing: -.3px;
+        }
+
+        .brand-subtitle {
+            font-size: 11px;
+            color: var(--ms-muted);
+            margin-top: 2px;
+        }
+
+        .sidebar-icon-button {
+            width: 36px;
+            height: 36px;
+
+            border: 1px solid var(--ms-border);
+
+            border-radius: 10px;
+
+            background: white;
+
+            display: grid;
+            place-items: center;
+
+            color: var(--ms-muted);
+        }
+
+        .sidebar-icon-button:hover {
+            background: var(--ms-primary-soft);
+            color: var(--ms-primary);
+        }
+
+        /* =========================================================
+           SEARCH
+           ========================================================= */
+
+        .channel-search {
+            padding: 14px 14px 10px;
+        }
+
+        .search-box {
+            height: 42px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 9px;
+
+            padding: 0 12px;
+
+            background: var(--ms-panel-2);
+
+            border: 1px solid var(--ms-border);
+
+            border-radius: 12px;
+        }
+
+        .search-box svg {
+            width: 18px;
+            color: var(--ms-muted);
+        }
+
+        .search-box input {
+            min-width: 0;
+            flex: 1;
+
+            border: 0;
+            outline: 0;
+
+            background: transparent;
+
+            color: var(--ms-text);
+        }
+
+        /* =========================================================
+           COMMUNITY SELECTOR
+           ========================================================= */
+
+        .community-selector {
+            padding: 8px 14px 12px;
+        }
+
+        .selector-button {
+            width: 100%;
+
+            border: 1px solid var(--ms-border);
+
+            background: white;
+
+            border-radius: 14px;
+
+            padding: 11px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            text-align: left;
+        }
+
+        .selector-button:hover {
+            border-color: #b9dcd8;
+            background: #fbfefe;
+        }
+
+        .selector-icon {
+            width: 38px;
+            height: 38px;
+
+            flex: 0 0 38px;
+
+            border-radius: 11px;
+
+            background: var(--ms-primary-soft);
+
+            color: var(--ms-primary);
+
+            display: grid;
+            place-items: center;
+
+            font-weight: 900;
+
+            overflow: hidden;
+        }
+
+        .selector-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .selector-text {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .selector-title {
+            font-size: 13px;
+            font-weight: 800;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .selector-description {
+            margin-top: 2px;
+
+            color: var(--ms-muted);
+
+            font-size: 11px;
+        }
+
+        /* =========================================================
+           CHANNELS
+           ========================================================= */
+
+        .channel-area {
+            min-height: 0;
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 6px 10px 16px;
+        }
+
+        .channel-section {
+            margin-bottom: 18px;
+        }
+
+        .channel-section-title {
+            padding: 8px 8px 7px;
+
+            color: var(--ms-muted);
+
+            font-size: 10px;
+            font-weight: 900;
+
+            letter-spacing: .08em;
+
+            text-transform: uppercase;
+        }
+
+        .channel-item {
+            width: 100%;
+
+            min-height: 42px;
+
+            border: 0;
+
+            background: transparent;
+
+            border-radius: 11px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+
+            padding: 8px 10px;
+
+            color: #5d6974;
+
+            text-align: left;
+
+            margin-bottom: 2px;
+        }
+
+        .channel-item:hover {
+            background: #f0f5f5;
+            color: var(--ms-text);
+        }
+
+        .channel-item.active {
+            background: var(--ms-primary-soft);
+            color: var(--ms-primary);
+            font-weight: 800;
+        }
+
+        .channel-icon {
+            width: 23px;
+            height: 23px;
+
+            display: grid;
+            place-items: center;
+
+            flex: 0 0 23px;
+        }
+
+        .channel-name {
+            min-width: 0;
+            flex: 1;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .channel-count {
+            font-size: 10px;
+            color: var(--ms-muted);
+        }
+
+        /* =========================================================
+           SIDEBAR FOOTER
+           ========================================================= */
+
+        .sidebar-user {
+            border-top: 1px solid var(--ms-border);
+
+            padding: 12px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            background: #dce9e7;
+
+            flex: 0 0 38px;
+        }
+
+        .sidebar-user-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .sidebar-user-name {
+            font-size: 12px;
+            font-weight: 800;
+
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .sidebar-user-status {
+            font-size: 10px;
+            color: var(--ms-success);
+        }
+
+        /* =========================================================
+           MAIN
+           ========================================================= */
+
+        .community-main {
+            min-width: 0;
+            min-height: 0;
+
+            display: flex;
+            flex-direction: column;
+
+            background: #f8fafb;
+        }
+
+        .main-header {
+            min-height: 76px;
+
+            background: white;
+
+            border-bottom: 1px solid var(--ms-border);
+
+            padding: 12px 22px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 16px;
+        }
+
+        .main-header-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .main-channel-title {
+            display: flex;
+            align-items: center;
+
+            gap: 8px;
+
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .main-channel-description {
+            margin-top: 3px;
+
+            color: var(--ms-muted);
+
+            font-size: 12px;
+
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .main-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-action {
+            height: 38px;
+
+            border: 1px solid var(--ms-border);
+
+            background: white;
+
+            border-radius: 10px;
+
+            padding: 0 12px;
+
+            display: flex;
+            align-items: center;
+
+            gap: 7px;
+
+            color: #53616c;
+
+            font-weight: 700;
+
+            font-size: 12px;
+        }
+
+        .header-action:hover {
+            background: var(--ms-primary-soft);
+            color: var(--ms-primary);
+        }
+
+        .header-action.primary {
+            background: var(--ms-primary);
+            color: white;
+            border-color: var(--ms-primary);
+        }
+
+        .header-action.primary:hover {
+            background: var(--ms-primary-dark);
+        }
+
+        /* =========================================================
+           CHAT
+           ========================================================= */
+
+        .chat-container {
+            min-height: 0;
+            flex: 1;
+
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            min-height: 0;
+            flex: 1;
+
+            overflow-y: auto;
+
+            padding: 24px 26px 18px;
+        }
+
+        .welcome-card {
+            max-width: 720px;
+
+            margin: 28px auto;
+
+            background: white;
+
+            border: 1px solid var(--ms-border);
+
+            border-radius: 22px;
+
+            padding: 34px;
+
+            box-shadow: var(--ms-shadow);
+
+            text-align: center;
+        }
+
+        .welcome-icon {
+            width: 68px;
+            height: 68px;
+
+            border-radius: 20px;
+
+            background: var(--ms-primary-soft);
+            color: var(--ms-primary);
+
+            display: grid;
+            place-items: center;
+
+            margin: 0 auto 18px;
+        }
+
+        .welcome-card h2 {
+            margin: 0;
+
+            font-size: 24px;
+        }
+
+        .welcome-card p {
+            color: var(--ms-muted);
+            line-height: 1.6;
+        }
+
+        .message {
+            display: flex;
+
+            gap: 12px;
+
+            margin-bottom: 19px;
+
+            max-width: 920px;
+        }
+
+        .message-avatar {
+            width: 42px;
+            height: 42px;
+
+            border-radius: 50%;
+
+            object-fit: cover;
+
+            flex: 0 0 42px;
+
+            background: #dfe9e7;
+        }
+
+        .message-content {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: baseline;
+
+            gap: 8px;
+
+            margin-bottom: 4px;
+        }
+
+        .message-author {
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .message-time {
+            color: #9aa5ae;
+            font-size: 10px;
+        }
+
+        .message-text {
+            color: #34414c;
+
+            font-size: 14px;
+
+            line-height: 1.55;
+
+            white-space: pre-wrap;
+
+            word-break: break-word;
+        }
+
+        .message-actions {
+            display: flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            margin-top: 7px;
+        }
+
+        .message-action {
+            border: 0;
+
+            background: transparent;
+
+            color: #87939d;
+
+            font-size: 11px;
+
+            padding: 4px 7px;
+
+            border-radius: 7px;
+        }
+
+        .message-action:hover {
+            background: #edf3f3;
+            color: var(--ms-primary);
+        }
+
+        /* =========================================================
+           COMPOSER
+           ========================================================= */
+
+        .chat-composer {
+            padding: 12px 22px 18px;
+
+            background:
+                linear-gradient(
+                    to bottom,
+                    rgba(248,250,251,0),
+                    #f8fafb 18px
+                );
+        }
+
+        .composer-box {
+            max-width: 1050px;
+
+            margin: 0 auto;
+
+            background: white;
+
+            border: 1px solid var(--ms-border);
+
+            border-radius: 16px;
+
+            box-shadow:
+                0 5px 20px rgba(16,24,40,.05);
+
+            padding: 10px;
+        }
+
+        .composer-toolbar {
+            display: flex;
+            align-items: center;
+
+            gap: 5px;
+
+            margin-bottom: 5px;
+        }
+
+        .composer-tool {
+            width: 34px;
+            height: 30px;
+
+            border: 0;
+
+            background: transparent;
+
+            border-radius: 8px;
+
+            color: #74818c;
+        }
+
+        .composer-tool:hover {
+            background: #f0f5f5;
+            color: var(--ms-primary);
+        }
+
+        .composer-row {
+            display: flex;
+            align-items: flex-end;
+
+            gap: 10px;
+        }
+
+        .composer-row textarea {
+            min-width: 0;
+            flex: 1;
+
+            resize: none;
+
+            min-height: 42px;
+            max-height: 130px;
+
+            border: 0;
+            outline: 0;
+
+            padding: 9px 8px;
+
+            background: transparent;
+
+            line-height: 1.45;
+        }
+
+        .send-button {
+            width: 42px;
+            height: 42px;
+
+            flex: 0 0 42px;
+
+            border: 0;
+
+            border-radius: 12px;
+
+            background: var(--ms-primary);
+
+            color: white;
+
+            display: grid;
+            place-items: center;
+        }
+
+        .send-button:hover {
+            background: var(--ms-primary-dark);
+        }
+
+        /* =========================================================
+           EMPTY / LOADING
+           ========================================================= */
+
+        .center-state {
+            min-height: 280px;
+
+            display: grid;
+            place-items: center;
+
+            text-align: center;
+
+            color: var(--ms-muted);
+        }
+
+        .loader {
+            width: 32px;
+            height: 32px;
+
+            border-radius: 50%;
+
+            border: 3px solid #dcebea;
+            border-top-color: var(--ms-primary);
+
+            animation: spin .8s linear infinite;
+
+            margin: 0 auto 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* =========================================================
+           MODAL
+           ========================================================= */
+
+        .modal {
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 1000;
+
+            background: rgba(6, 20, 19, .48);
+
+            display: none;
+
+            align-items: center;
+            justify-content: center;
+
+            padding: 20px;
+        }
+
+        .modal.open {
+            display: flex;
+        }
+
+        .modal-card {
+            width: min(680px, 100%);
+
+            max-height: 85vh;
+
+            overflow: hidden;
+
+            background: white;
+
+            border-radius: 20px;
+
+            box-shadow:
+                0 25px 70px rgba(0,0,0,.25);
+        }
+
+        .modal-header {
+            padding: 18px 20px;
+
+            border-bottom: 1px solid var(--ms-border);
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 900;
+        }
+
+        .modal-close {
+            width: 34px;
+            height: 34px;
+
+            border: 0;
+
+            background: #f1f4f5;
+
+            border-radius: 9px;
+
+            font-size: 20px;
+        }
+
+        .modal-body {
+            padding: 18px;
+
+            overflow-y: auto;
+
+            max-height: calc(85vh - 72px);
+        }
+
+        .community-choice {
+            width: 100%;
+
+            border: 1px solid var(--ms-border);
+
+            background: white;
+
+            border-radius: 14px;
+
+            padding: 12px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            text-align: left;
+
+            margin-bottom: 8px;
+        }
+
+        .community-choice:hover {
+            border-color: #b8dcd8;
+            background: #f9fdfc;
+        }
+
+        .community-choice-icon {
+            width: 44px;
+            height: 44px;
+
+            border-radius: 13px;
+
+            background: var(--ms-primary-soft);
+
+            color: var(--ms-primary);
+
+            display: grid;
+            place-items: center;
+
+            font-weight: 900;
+
+            overflow: hidden;
+        }
+
+        .community-choice-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .community-choice-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .community-choice-name {
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .community-choice-description {
+            color: var(--ms-muted);
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        /* =========================================================
+           MOBILE
+           ========================================================= */
+
+        @media (max-width: 900px) {
+
+            .community-app {
+                grid-template-columns:
+                    62px
+                    1fr;
+            }
+
+            .community-sidebar {
+                display: none;
+            }
+
+            .community-rail {
+                width: 62px;
+            }
+
+            .main-header {
+                padding: 10px 14px;
+            }
+
+            .chat-messages {
+                padding: 18px 14px;
+            }
+
+            .chat-composer {
+                padding: 10px 12px 14px;
+            }
+
+            .header-action span {
+                display: none;
+            }
+
+            .header-action {
+                width: 38px;
+                padding: 0;
+                justify-content: center;
+            }
+        }
+
+    </style>
 </head>
 
 <body>
 
 <div class="community-app">
 
-    <!-- =========================================================
-         TOP BAR
-         ========================================================= -->
+    <!-- =====================================================
+         LEFT RAIL
+         ===================================================== -->
 
-    <header class="topbar">
+    <aside class="community-rail">
 
-        <div class="brand-area">
-
-            <button
-                class="mobile-menu-btn"
-                id="mobileMenuButton"
-                type="button"
-                aria-label="Open navigation"
-            >
-                ☰
-            </button>
-
-            <div class="brand-mark">
-                🧬
-            </div>
-
-            <div class="brand-text">
-                <strong>
-                    Mwaniki Scholars
-                </strong>
-
-                <span>
-                    Community
-                </span>
-            </div>
-
-        </div>
-
-
-        <div class="global-search">
-
-            <span class="search-icon">
-                ⌕
-            </span>
-
-            <input
-                id="globalSearch"
-                type="search"
-                placeholder="Search communities and channels..."
-                autocomplete="off"
-            >
-
-            <kbd>
-                /
-            </kbd>
-
-        </div>
-
-
-        <div class="top-actions">
-
-            <button
-                id="callButton"
-                class="top-action"
-                type="button"
-                title="Community calls"
-            >
-                📞
-            </button>
-
-            <button
-                id="notificationButton"
-                class="top-action"
-                type="button"
-                title="Notifications"
-            >
-                🔔
-
-                <span
-                    id="notificationBadge"
-                    class="notification-badge hidden"
-                >
-                    0
-                </span>
-            </button>
-
-            <button
-                id="profileButton"
-                class="profile-button"
-                type="button"
-            >
-                <span
-                    id="headerAvatar"
-                    class="avatar avatar-small"
-                >
-                    👤
-                </span>
-
-                <span
-                    id="headerUserName"
-                    class="profile-name"
-                >
-                    Student
-                </span>
-
-                <span>
-                    ▾
-                </span>
-            </button>
-
-        </div>
-
-    </header>
-
-
-    <!-- =========================================================
-         MAIN WORKSPACE
-         ========================================================= -->
-
-    <main class="workspace">
-
-        <!-- =====================================================
-             LEFT: SPACES
-             ===================================================== -->
-
-        <aside
-            id="spacesPanel"
-            class="spaces-panel"
+        <button
+            class="rail-logo"
+            id="homeButton"
+            title="Back to Mwaniki Scholars Dashboard"
+            aria-label="Back to dashboard"
         >
+            MS
+        </button>
 
-            <div class="panel-heading">
+        <div class="rail-divider"></div>
 
-                <div>
-                    <span class="eyebrow">
-                        MWANIKI
-                    </span>
+        <!-- HOME -->
+        <button
+            class="rail-button active"
+            id="railHomeButton"
+            title="Home"
+            aria-label="Home"
+        >
+            <svg viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 10.5 12 3l9 7.5"/>
+                <path d="M5 9.5V21h14V9.5"/>
+                <path d="M9 21v-7h6v7"/>
+            </svg>
+        </button>
 
-                    <h2>
-                        Spaces
-                    </h2>
+        <!-- GENERAL MWANIKI -->
+        <button
+            class="rail-button"
+            id="railGeneralButton"
+            title="Mwaniki Scholars General"
+            aria-label="Mwaniki Scholars General"
+        >
+            <svg viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"/>
+            </svg>
+        </button>
+
+        <div
+            id="communityRailList"
+            style="
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                gap:10px;
+            "
+        ></div>
+
+        <div class="rail-spacer"></div>
+
+        <!-- PROFILE -->
+        <button
+            class="rail-community-icon"
+            id="railProfileButton"
+            title="Profile"
+            aria-label="Profile"
+        >
+            <img
+                id="railProfileAvatar"
+                src=""
+                alt="Profile"
+            >
+        </button>
+
+    </aside>
+
+
+    <!-- =====================================================
+         COMMUNITY SIDEBAR
+         ===================================================== -->
+
+    <aside class="community-sidebar">
+
+        <header class="sidebar-header">
+
+            <div>
+                <div class="brand-title">
+                    Mwaniki Community
                 </div>
 
-                <button
-                    id="createCommunityButton"
-                    class="icon-button"
-                    type="button"
-                    title="Create community"
-                >
-                    +
-                </button>
-
+                <div class="brand-subtitle">
+                    Learn • Discuss • Connect
+                </div>
             </div>
-
 
             <button
-                id="homeSpaceButton"
-                class="space-item active"
-                type="button"
-                data-space-type="home"
+                class="sidebar-icon-button"
+                id="openCommunityButton"
+                title="Choose community"
+                aria-label="Choose community"
             >
-
-                <span class="space-icon home-icon">
-                    🏠
-                </span>
-
-                <span class="space-copy">
-
-                    <strong>
-                        Mwaniki Scholars
-                    </strong>
-
-                    <small>
-                        Main Community
-                    </small>
-
-                </span>
-
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2">
+                    <path d="M12 5v14"/>
+                    <path d="M5 12h14"/>
+                </svg>
             </button>
 
+        </header>
 
-            <div class="spaces-divider">
-                COMMUNITIES
-            </div>
 
+        <!-- SEARCH -->
 
-            <div
-                id="communityList"
-                class="community-list"
-            >
+        <div class="channel-search">
 
-                <div class="loading-space">
-                    <span class="loading-dot"></span>
-                    Loading communities...
-                </div>
+            <label class="search-box">
 
-            </div>
-
-
-            <div class="spaces-footer">
-
-                <button
-                    id="allCommunitiesButton"
-                    class="footer-space-button"
-                    type="button"
-                >
-                    <span>
-                        ◉
-                    </span>
-
-                    <span>
-                        All communities
-                    </span>
-                </button>
-
-                <button
-                    id="settingsButton"
-                    class="footer-space-button"
-                    type="button"
-                >
-                    <span>
-                        ⚙️
-                    </span>
-
-                    <span>
-                        Community settings
-                    </span>
-                </button>
-
-            </div>
-
-        </aside>
-
-
-        <!-- =====================================================
-             MIDDLE: CHANNELS
-             ===================================================== -->
-
-        <aside
-            id="channelsPanel"
-            class="channels-panel"
-        >
-
-            <div class="channel-header">
-
-                <div class="selected-space-heading">
-
-                    <div
-                        id="selectedSpaceIcon"
-                        class="selected-space-icon"
-                    >
-                        🏠
-                    </div>
-
-                    <div>
-
-                        <h2 id="selectedSpaceName">
-                            Mwaniki Scholars
-                        </h2>
-
-                        <p id="selectedSpaceDescription">
-                            Main community
-                        </p>
-
-                    </div>
-
-                </div>
-
-                <button
-                    id="channelPanelClose"
-                    class="mobile-close"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <div class="channel-tools">
-
-                <div class="channel-search">
-
-                    <span>
-                        ⌕
-                    </span>
-
-                    <input
-                        id="channelSearch"
-                        type="search"
-                        placeholder="Find a channel..."
-                    >
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="channelList"
-                class="channel-list"
-            >
-
-                <div class="channel-loading">
-                    Loading channels...
-                </div>
-
-            </div>
-
-
-            <div class="channel-footer">
-
-                <button
-                    id="createChannelButton"
-                    class="create-channel-button"
-                    type="button"
-                >
-                    <span>
-                        +
-                    </span>
-
-                    Create channel
-                </button>
-
-            </div>
-
-        </aside>
-
-
-        <!-- =====================================================
-             RIGHT: CHAT
-             ===================================================== -->
-
-        <section class="chat-panel">
-
-            <header class="chat-header">
-
-                <div class="chat-title-area">
-
-                    <div
-                        id="chatChannelIcon"
-                        class="chat-channel-icon"
-                    >
-                        💬
-                    </div>
-
-                    <div>
-
-                        <div class="breadcrumb">
-
-                            <span id="chatCommunityName">
-                                Mwaniki Scholars
-                            </span>
-
-                            <span>
-                                /
-                            </span>
-
-                            <strong id="chatChannelName">
-                                General
-                            </strong>
-
-                        </div>
-
-                        <p id="chatChannelDescription">
-                            Welcome to Mwaniki Scholars Community.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="chat-actions">
-
-                    <button
-                        id="channelInfoButton"
-                        class="chat-action"
-                        type="button"
-                        title="Channel information"
-                    >
-                        ⓘ
-                    </button>
-
-                    <button
-                        id="membersButton"
-                        class="chat-action"
-                        type="button"
-                        title="Members"
-                    >
-                        👥
-                    </button>
-
-                    <button
-                        id="chatSearchButton"
-                        class="chat-action"
-                        type="button"
-                        title="Search messages"
-                    >
-                        🔍
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <div
-                id="messageSearchBar"
-                class="message-search-bar hidden"
-            >
-
-                <span>
-                    🔍
-                </span>
+                <svg viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor"
+                     stroke-width="2">
+                    <circle cx="11" cy="11" r="7"/>
+                    <path d="m20 20-4-4"/>
+                </svg>
 
                 <input
-                    id="messageSearchInput"
+                    id="channelSearchInput"
                     type="search"
-                    placeholder="Search this conversation..."
+                    placeholder="Search communities & channels..."
+                    autocomplete="off"
                 >
 
-                <button
-                    id="closeMessageSearch"
-                    type="button"
-                >
-                    ×
-                </button>
+            </label>
 
-            </div>
+        </div>
 
 
-            <div
-                id="messagesContainer"
-                class="messages-container"
+        <!-- COMMUNITY SELECTOR -->
+
+        <div class="community-selector">
+
+            <button
+                class="selector-button"
+                id="communitySelectorButton"
             >
 
                 <div
-                    id="welcomeChannel"
-                    class="welcome-channel"
+                    class="selector-icon"
+                    id="selectedCommunityIcon"
                 >
+                    MS
+                </div>
 
-                    <div class="welcome-icon">
-                        💬
+                <div class="selector-text">
+
+                    <div
+                        class="selector-title"
+                        id="selectedCommunityName"
+                    >
+                        Mwaniki Scholars
                     </div>
 
-                    <h1>
-                        Welcome to General
-                    </h1>
+                    <div
+                        class="selector-description"
+                        id="selectedCommunityDescription"
+                    >
+                        Main community
+                    </div>
+
+                </div>
+
+                <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path d="m7 10 5 5 5-5"/>
+                </svg>
+
+            </button>
+
+        </div>
+
+
+        <!-- CHANNELS -->
+
+        <div
+            class="channel-area"
+            id="channelList"
+        >
+
+            <div class="center-state">
+                <div>
+                    <div class="loader"></div>
+                    Loading channels...
+                </div>
+            </div>
+
+        </div>
+
+
+        <!-- CURRENT USER -->
+
+        <footer class="sidebar-user">
+
+            <img
+                id="sidebarProfileAvatar"
+                class="user-avatar"
+                src=""
+                alt="Profile photo"
+            >
+
+            <div class="sidebar-user-info">
+
+                <div
+                    class="sidebar-user-name"
+                    id="sidebarProfileName"
+                >
+                    Loading...
+                </div>
+
+                <div class="sidebar-user-status">
+                    ● Online
+                </div>
+
+            </div>
+
+        </footer>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN CHAT
+         ===================================================== -->
+
+    <main class="community-main">
+
+        <header class="main-header">
+
+            <div class="main-header-info">
+
+                <div
+                    class="main-channel-title"
+                    id="mainChannelTitle"
+                >
+                    # General
+                </div>
+
+                <div
+                    class="main-channel-description"
+                    id="mainChannelDescription"
+                >
+                    Mwaniki Scholars general discussion
+                </div>
+
+            </div>
+
+
+            <div class="main-actions">
+
+                <!-- HOME -->
+                <button
+                    class="header-action"
+                    id="dashboardButton"
+                    title="Back to dashboard"
+                >
+                    <svg width="17" height="17"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path d="M3 10.5 12 3l9 7.5"/>
+                        <path d="M5 9.5V21h14V9.5"/>
+                    </svg>
+
+                    <span>Home</span>
+                </button>
+
+
+                <!-- COMMUNITY -->
+                <button
+                    class="header-action"
+                    id="headerCommunityButton"
+                    title="Choose community"
+                >
+                    <svg width="17" height="17"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <circle cx="9" cy="8" r="3"/>
+                        <circle cx="17" cy="9" r="2"/>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
+                        <path d="M14.5 15c.8-.6 1.7-.9 2.7-.9 2.7 0 4.8 2.1 4.8 4.9"/>
+                    </svg>
+
+                    <span>Communities</span>
+                </button>
+
+
+                <!-- START CONVERSATION -->
+                <button
+                    class="header-action primary"
+                    id="startConversationButton"
+                    title="Start conversation"
+                >
+                    <svg width="17" height="17"
+                         viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                         stroke-width="2">
+                        <path d="M12 20h9"/>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>
+                    </svg>
+
+                    <span>Start Conversation</span>
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- CHAT -->
+
+        <section class="chat-container">
+
+            <div
+                class="chat-messages"
+                id="messageList"
+            >
+
+                <div class="welcome-card">
+
+                    <div class="welcome-icon">
+
+                        <svg width="34"
+                             height="34"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="1.8">
+                            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"/>
+                        </svg>
+
+                    </div>
+
+                    <h2>
+                        Welcome to Mwaniki Scholars
+                    </h2>
 
                     <p>
                         This is the beginning of the conversation.
-                        Start something interesting.
+                        Share ideas, ask questions, discuss medicine,
+                        and learn together.
                     </p>
 
                     <button
-                        id="startConversationButton"
-                        class="start-conversation-button"
-                        type="button"
+                        class="header-action primary"
+                        id="welcomeStartButton"
                     >
-                        ✨ Start a conversation
+                        Start Conversation
                     </button>
 
                 </div>
-
-                <div
-                    id="messageList"
-                    class="message-list"
-                ></div>
 
             </div>
 
 
-            <footer class="composer-area">
+            <!-- COMPOSER -->
 
-                <div
-                    id="replyPreview"
-                    class="reply-preview hidden"
-                >
+            <div class="chat-composer">
 
-                    <div>
+                <div class="composer-box">
 
-                        <span>
-                            Replying to
-                        </span>
+                    <div class="composer-toolbar">
 
-                        <strong id="replyAuthor">
-                            User
-                        </strong>
+                        <button
+                            class="composer-tool"
+                            id="attachButton"
+                            title="Attach"
+                        >
+                            +
+                        </button>
 
-                        <p id="replyText">
-                            Message
-                        </p>
+                        <button
+                            class="composer-tool"
+                            id="emojiButton"
+                            title="Emoji"
+                        >
+                            ☺
+                        </button>
 
                     </div>
 
-                    <button
-                        id="cancelReplyButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
+
+                    <div class="composer-row">
+
+                        <textarea
+                            id="messageInput"
+                            rows="1"
+                            placeholder="Message this channel..."
+                        ></textarea>
+
+                        <button
+                            class="send-button"
+                            id="sendMessageButton"
+                            title="Send message"
+                            aria-label="Send message"
+                        >
+                            <svg width="19"
+                                 height="19"
+                                 viewBox="0 0 24 24"
+                                 fill="none"
+                                 stroke="currentColor"
+                                 stroke-width="2">
+                                <path d="m22 2-7 20-4-9-9-4Z"/>
+                                <path d="M22 2 11 13"/>
+                            </svg>
+                        </button>
+
+                    </div>
 
                 </div>
 
-
-                <div class="composer">
-
-                    <button
-                        id="attachmentButton"
-                        class="composer-button"
-                        type="button"
-                        title="Attach"
-                    >
-                        +
-                    </button>
-
-                    <textarea
-                        id="messageInput"
-                        rows="1"
-                        placeholder="Message #General"
-                    ></textarea>
-
-                    <button
-                        id="emojiButton"
-                        class="composer-button"
-                        type="button"
-                        title="Emoji"
-                    >
-                        😊
-                    </button>
-
-                    <button
-                        id="sendMessageButton"
-                        class="send-button"
-                        type="button"
-                        title="Send message"
-                    >
-                        ➤
-                    </button>
-
-                </div>
-
-                <div class="composer-hint">
-                    Press Enter to send · Shift + Enter for a new line
-                </div>
-
-            </footer>
+            </div>
 
         </section>
 
     </main>
 
-
-    <!-- =========================================================
-         COMMUNITY SEARCH / SELECTOR MODAL
-         ========================================================= -->
-
-    <div
-        id="communityOverlay"
-        class="overlay hidden"
-    >
-
-        <div class="community-modal">
-
-            <header class="modal-header">
-
-                <div>
-                    <span class="eyebrow">
-                        EXPLORE
-                    </span>
-
-                    <h2>
-                        Communities
-                    </h2>
-                </div>
-
-                <button
-                    id="closeCommunityModal"
-                    class="modal-close"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
+</div>
 
 
-            <div class="modal-search">
+<!-- =========================================================
+     COMMUNITY MODAL
+     ========================================================= -->
 
-                <span>
-                    🔍
-                </span>
+<div
+    class="modal"
+    id="communityModal"
+>
 
-                <input
-                    id="communitySearch"
-                    type="search"
-                    placeholder="Search communities..."
-                >
+    <div class="modal-card">
 
+        <header class="modal-header">
+
+            <div class="modal-title">
+                Choose a community
             </div>
 
-
-            <div
-                id="communityModalList"
-                class="community-modal-list"
-            ></div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =========================================================
-         NOTIFICATION PANEL
-         ========================================================= -->
-
-    <div
-        id="notificationPanel"
-        class="floating-panel hidden"
-    >
-
-        <div class="floating-panel-header">
-
-            <strong>
-                Notifications
-            </strong>
-
             <button
-                id="closeNotificationPanel"
-                type="button"
+                class="modal-close"
+                id="closeCommunityModal"
+                aria-label="Close"
             >
                 ×
             </button>
 
-        </div>
+        </header>
 
         <div
-            id="notificationList"
-            class="notification-list"
-        >
-
-            <div class="empty-state-small">
-                No new notifications.
-            </div>
-
-        </div>
+            class="modal-body"
+            id="communityChoiceList"
+        ></div>
 
     </div>
-
-
-    <!-- =========================================================
-         PROFILE PANEL
-         ========================================================= -->
-
-    <div
-        id="profilePanel"
-        class="profile-panel hidden"
-    >
-
-        <div
-            id="profileAvatarLarge"
-            class="avatar avatar-large"
-        >
-            👤
-        </div>
-
-        <strong id="profilePanelName">
-            Student
-        </strong>
-
-        <span id="profilePanelEmail">
-            —
-        </span>
-
-        <button
-            id="profilePageButton"
-            type="button"
-        >
-            👤 Profile
-        </button>
-
-        <button
-            id="logoutButton"
-            type="button"
-            class="danger-button"
-        >
-            ↪ Sign out
-        </button>
-
-    </div>
-
-
-    <!-- =========================================================
-         TOAST
-         ========================================================= -->
-
-    <div
-        id="toastContainer"
-        class="toast-container"
-    ></div>
 
 </div>
 
 
-<!-- Existing Supabase configuration -->
+<!-- =========================================================
+     SUPABASE
+     ========================================================= -->
+
 <script src="./supabase.js"></script>
 
-<!-- Community engine -->
+<!-- =========================================================
+     COMMUNITY ENGINE
+     ========================================================= -->
+
 <script src="./community.js"></script>
 
 </body>
 </html>
+```
