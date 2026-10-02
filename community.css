@@ -1,74 +1,68 @@
-/* =========================================================
+/* ============================================================
    MWANIKI SCHOLARS COMMUNITY
-   Discord-style Academic Community Interface
-   COMPLETE REPLACEMENT CSS
-   ========================================================= */
+   PREMIUM COMMUNITY UI
+   Complete replacement stylesheet
+   ============================================================ */
 
 :root {
+    --mw-bg: #0b1017;
+    --mw-bg-2: #0f1620;
+    --mw-bg-3: #141d28;
+
+    --mw-rail: #081018;
+    --mw-sidebar: #0d151f;
+    --mw-panel: #111b27;
+    --mw-panel-2: #172331;
+
+    --mw-border: rgba(255,255,255,0.08);
+    --mw-border-strong: rgba(255,255,255,0.13);
+
+    --mw-text: #f4f7fa;
+    --mw-text-soft: #b9c4d0;
+    --mw-text-muted: #758293;
+
     --mw-primary: #087f73;
-    --mw-primary-dark: #05665d;
-    --mw-primary-light: #0f9d8d;
+    --mw-primary-light: #11a995;
+    --mw-accent: #0b7285;
 
-    --mw-bg: #0b1117;
-    --mw-bg-2: #101820;
-    --mw-bg-3: #151f29;
-
-    --mw-rail: #081016;
-    --mw-sidebar: #0d151d;
-    --mw-chat: #111a23;
-    --mw-members: #0d151d;
-
-    --mw-border: rgba(255, 255, 255, 0.08);
-    --mw-border-strong: rgba(255, 255, 255, 0.13);
-
-    --mw-text: #f3f7f8;
-    --mw-text-soft: #b7c3c8;
-    --mw-text-muted: #788890;
-
-    --mw-success: #29c779;
-    --mw-warning: #f4b942;
+    --mw-success: #2ecc71;
+    --mw-warning: #f5b942;
     --mw-danger: #ef5350;
-    --mw-blue: #4ea1ff;
 
-    --mw-hover: rgba(255, 255, 255, 0.055);
-    --mw-active: rgba(8, 127, 115, 0.18);
+    --mw-radius-sm: 8px;
+    --mw-radius-md: 12px;
+    --mw-radius-lg: 16px;
 
-    --mw-header-height: 64px;
-    --mw-rail-width: 74px;
-    --mw-sidebar-width: 270px;
-    --mw-members-width: 255px;
+    --mw-shadow:
+        0 12px 35px rgba(0,0,0,0.28);
 
-    --mw-radius: 10px;
-    --mw-radius-small: 7px;
-
-    --mw-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+    --mw-transition:
+        160ms ease;
 }
 
-/* =========================================================
-   RESET
-   ========================================================= */
+
+/* ============================================================
+   GLOBAL RESET
+   ============================================================ */
 
 *,
 *::before,
 *::after {
     box-sizing: border-box;
+
+    filter: none !important;
+    backdrop-filter: none !important;
 }
 
-html {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    background: var(--mw-bg);
-}
-
+html,
 body {
     width: 100%;
-    min-width: 0;
     height: 100%;
-    min-height: 100vh;
+
     margin: 0;
     padding: 0;
+
+    overflow: hidden;
 
     background: var(--mw-bg);
     color: var(--mw-text);
@@ -82,238 +76,157 @@ body {
         "Segoe UI",
         sans-serif;
 
-    overflow: hidden;
-
-    /* IMPORTANT:
-       Never blur the application */
     filter: none !important;
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-
-    opacity: 1 !important;
 }
 
-/* =========================================================
-   IMPORTANT ANTI-BLUR SAFETY
-   ========================================================= */
-
-#communityApp,
-#communityApp *,
-.community-app,
-.community-app *,
-.community-shell,
-.community-shell *,
-.community-main,
-.community-main *,
-.community-content,
-.community-content * {
-    filter: none !important;
-    -webkit-filter: none !important;
-}
-
-#communityApp,
-.community-app {
-    width: 100%;
-    height: 100vh;
-    min-height: 100vh;
-
-    position: relative;
-
-    display: flex;
-    flex-direction: column;
-
-    background: var(--mw-bg);
-
-    opacity: 1 !important;
-
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-
-    isolation: isolate;
-
-    overflow: hidden;
-}
-
-/* =========================================================
-   DO NOT ALLOW HIDDEN PSEUDO ELEMENTS TO COVER THE APP
-   ========================================================= */
-
-#communityApp::before,
-#communityApp::after,
-.community-app::before,
-.community-app::after {
+body::before,
+body::after {
     display: none !important;
     content: none !important;
 }
 
-/* =========================================================
-   GENERAL TOP BAR
-   ========================================================= */
-
-.community-topbar {
-    width: 100%;
-    height: var(--mw-header-height);
-    min-height: var(--mw-header-height);
-
-    display: flex;
-    align-items: center;
-
-    padding: 0 14px;
-
-    background: #0b151c;
-    border-bottom: 1px solid var(--mw-border);
-
-    position: relative;
-    z-index: 50;
-
-    flex-shrink: 0;
+button,
+input,
+textarea,
+select {
+    font: inherit;
 }
 
-.community-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+button {
+    border: 0;
 }
 
-.community-brand-logo {
-    width: 38px;
-    height: 38px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 10px;
-
-    background: var(--mw-primary);
-    color: white;
-
-    font-size: 19px;
-    font-weight: 800;
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--mw-primary-light);
+    outline-offset: 2px;
 }
 
-.community-brand-text {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
 
-.community-brand-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: white;
-}
+/* ============================================================
+   MAIN APPLICATION
+   ============================================================ */
 
-.community-brand-subtitle {
-    font-size: 11px;
-    color: var(--mw-text-muted);
-}
+#communityApp,
+.community-app {
+    position: fixed;
 
-/* =========================================================
-   GENERAL CALL BUTTON
-   ========================================================= */
+    inset: 0;
 
-.general-call-launcher {
-    position: absolute;
-    right: 16px;
-    top: 12px;
+    width: 100vw;
+    height: 100vh;
 
-    height: 40px;
+    display: grid;
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    padding: 0 15px;
-
-    border: 1px solid rgba(8, 127, 115, 0.5);
-    border-radius: 9px;
-
-    background: #087f73;
-    color: white;
-
-    font-size: 13px;
-    font-weight: 700;
-
-    cursor: pointer;
-
-    z-index: 100;
-
-    opacity: 1 !important;
-
-    filter: none !important;
-    backdrop-filter: none !important;
-
-    transition:
-        background 0.18s ease,
-        transform 0.18s ease;
-}
-
-.general-call-launcher:hover {
-    background: #0b9486;
-    transform: translateY(-1px);
-}
-
-.general-call-launcher:active {
-    transform: translateY(0);
-}
-
-/* =========================================================
-   MAIN COMMUNITY SHELL
-   ========================================================= */
-
-.community-layout,
-.community-shell {
-    flex: 1;
-
-    width: 100%;
-    min-width: 0;
-    min-height: 0;
-
-    display: flex;
+    grid-template-columns:
+        78px
+        285px
+        minmax(0, 1fr)
+        285px;
 
     overflow: hidden;
 
     background: var(--mw-bg);
 
+    opacity: 1 !important;
     filter: none !important;
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
 
-    opacity: 1 !important;
+    isolation: isolate;
 }
 
-/* =========================================================
-   COMMUNITY RAIL
-   ========================================================= */
 
-#communityRail,
-.community-rail {
-    width: var(--mw-rail-width);
-    min-width: var(--mw-rail-width);
+/* ============================================================
+   GENERAL CALL BUTTON
+   ============================================================ */
+
+#generalCallButton,
+.general-call-launcher {
+    position: fixed;
+
+    top: 18px;
+    right: 304px;
+
+    z-index: 1000;
+
+    min-height: 42px;
+
+    padding: 0 16px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #087f73,
+            #0b7285
+        );
+
+    color: white;
+
+    font-size: 13px;
+    font-weight: 750;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 24px rgba(8,127,115,0.25);
+
+    transition:
+        transform var(--mw-transition),
+        box-shadow var(--mw-transition);
+}
+
+#generalCallButton:hover,
+.general-call-launcher:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 12px 30px rgba(8,127,115,0.38);
+}
+
+
+/* ============================================================
+   COMMUNITY RAIL
+   ============================================================ */
+
+#communityRail {
+    position: relative;
+
+    z-index: 20;
+
+    width: 78px;
+    min-width: 78px;
 
     height: 100%;
-
-    padding: 12px 8px;
 
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
 
-    background: var(--mw-rail);
+    padding: 14px 10px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #071019 0%,
+            #09131d 100%
+        );
 
     border-right: 1px solid var(--mw-border);
 
     overflow-y: auto;
     overflow-x: hidden;
 
-    z-index: 20;
-
-    filter: none !important;
-    backdrop-filter: none !important;
+    scrollbar-width: thin;
 }
 
 #communityRail::-webkit-scrollbar {
@@ -321,168 +234,271 @@ body {
 }
 
 #communityRail::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
+    background: rgba(255,255,255,0.12);
+    border-radius: 20px;
 }
 
-/* =========================================================
-   COMMUNITY RAIL ITEM
-   ========================================================= */
 
-.community-rail-item {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-    min-height: 48px;
+/* ============================================================
+   BRAND / HOME BUTTON
+   ============================================================ */
 
+.mw-home-button,
+.community-home-button,
+#homeCommunityButton {
     position: relative;
+
+    width: 50px;
+    height: 50px;
+
+    min-width: 50px;
+    min-height: 50px;
+
+    margin-bottom: 15px;
+
+    border-radius: 15px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border-radius: 14px;
+    background:
+        linear-gradient(
+            135deg,
+            #087f73,
+            #0b7285
+        );
 
-    background: #17222b;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: white;
 
-    color: var(--mw-text-soft);
+    font-size: 22px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 8px 24px rgba(8,127,115,0.25);
+
+    transition:
+        border-radius var(--mw-transition),
+        transform var(--mw-transition);
+}
+
+.mw-home-button:hover,
+.community-home-button:hover,
+#homeCommunityButton:hover {
+    border-radius: 18px;
+    transform: translateY(-2px);
+}
+
+.mw-home-button::after,
+.community-home-button::after,
+#homeCommunityButton::after {
+    content: "";
+
+    position: absolute;
+
+    left: -10px;
+
+    width: 4px;
+    height: 0;
+
+    border-radius: 0 5px 5px 0;
+
+    background: var(--mw-primary-light);
+
+    transition: height var(--mw-transition);
+}
+
+.mw-home-button:hover::after,
+.community-home-button:hover::after,
+#homeCommunityButton:hover::after {
+    height: 24px;
+}
+
+
+/* ============================================================
+   COMMUNITY ICON ITEMS
+   ============================================================ */
+
+.community-rail-item,
+.community-item,
+.community-rail-icon {
+    position: relative;
+
+    width: 50px;
+    height: 50px;
+
+    min-width: 50px;
+    min-height: 50px;
+
+    margin-bottom: 10px;
+
+    border-radius: 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: visible;
+
+    cursor: pointer;
+
+    background: #151f2b;
+
+    border: 1px solid rgba(255,255,255,0.05);
+
+    color: white;
+
+    font-size: 23px;
+
+    transition:
+        transform var(--mw-transition),
+        border-radius var(--mw-transition),
+        background var(--mw-transition),
+        box-shadow var(--mw-transition);
+}
+
+.community-rail-item:hover,
+.community-item:hover,
+.community-rail-icon:hover {
+    transform: translateY(-2px);
+
+    border-radius: 17px;
+
+    background: #1c2a38;
+
+    box-shadow:
+        0 8px 24px rgba(0,0,0,0.25);
+}
+
+
+/* active community */
+
+.community-rail-item.active,
+.community-item.active,
+.community-rail-icon.active {
+    border-radius: 17px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(8,127,115,0.95),
+            rgba(11,114,133,0.95)
+        );
+
+    box-shadow:
+        0 8px 24px rgba(8,127,115,0.24);
+}
+
+.community-rail-item.active::before,
+.community-item.active::before,
+.community-rail-icon.active::before {
+    content: "";
+
+    position: absolute;
+
+    left: -11px;
+
+    width: 4px;
+    height: 30px;
+
+    border-radius: 0 6px 6px 0;
+
+    background: var(--mw-primary-light);
+}
+
+
+/* ============================================================
+   COMMUNITY ICON IMAGES
+   ============================================================ */
+
+#communityRail img,
+.community-rail-item img,
+.community-item img,
+.community-rail-icon img,
+.community-avatar {
+    width: 50px !important;
+    height: 50px !important;
+
+    min-width: 50px !important;
+    min-height: 50px !important;
+
+    max-width: 50px !important;
+    max-height: 50px !important;
+
+    object-fit: cover !important;
+
+    border-radius: 15px !important;
+
+    display: block !important;
+}
+
+
+/* ============================================================
+   COMMUNITY ICON EMOJI
+   ============================================================ */
+
+.community-emoji-icon,
+.community-icon-emoji {
+    width: 50px;
+    height: 50px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 24px;
+    line-height: 1;
+
+    border-radius: 15px;
+}
+
+
+/* ============================================================
+   CREATE COMMUNITY
+   ============================================================ */
+
+#createCommunityButton {
+    width: 50px;
+    height: 50px;
+
+    margin-top: 4px;
+
+    border-radius: 15px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #121c27;
+
+    border: 1px dashed rgba(255,255,255,0.18);
+
+    color: #aeb9c6;
+
+    font-size: 23px;
 
     cursor: pointer;
 
     transition:
-        border-radius 0.18s ease,
-        background 0.18s ease,
-        transform 0.18s ease;
-}
-
-.community-rail-item:hover {
-    background: #21303b;
-    border-radius: 12px;
-}
-
-.community-rail-item.active {
-    background: var(--mw-primary);
-    color: white;
-    border-color: transparent;
-    border-radius: 12px;
-}
-
-.community-rail-item.active::before {
-    content: "";
-
-    position: absolute;
-    left: -8px;
-    top: 8px;
-
-    width: 4px;
-    height: 32px;
-
-    background: white;
-    border-radius: 0 5px 5px 0;
-}
-
-/* =========================================================
-   COMMUNITY ICONS
-   ========================================================= */
-
-.community-rail-icon,
-.community-icon {
-    width: 48px;
-    height: 48px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    overflow: hidden;
-
-    border-radius: inherit;
-
-    font-size: 22px;
-    line-height: 1;
-
-    flex-shrink: 0;
-}
-
-.community-rail-icon img,
-.community-icon img,
-.community-icon-image {
-    width: 100% !important;
-    height: 100% !important;
-
-    min-width: 0 !important;
-    min-height: 0 !important;
-
-    max-width: 100% !important;
-    max-height: 100% !important;
-
-    object-fit: cover !important;
-
-    display: block;
-
-    border-radius: inherit;
-
-    filter: none !important;
-}
-
-.community-icon-emoji,
-.community-icon-fallback {
-    width: 100%;
-    height: 100%;
-
-    display: flex !important;
-
-    align-items: center;
-    justify-content: center;
-
-    font-size: 23px;
-
-    line-height: 1;
-
-    overflow: hidden;
-}
-
-/* =========================================================
-   ADD COMMUNITY
-   ========================================================= */
-
-#createCommunityButton {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-top: 4px;
-
-    border: 1px dashed rgba(255, 255, 255, 0.18);
-    border-radius: 14px;
-
-    background: transparent;
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-
-    font-size: 22px;
+        background var(--mw-transition),
+        color var(--mw-transition),
+        transform var(--mw-transition);
 }
 
 #createCommunityButton:hover {
-    background: var(--mw-hover);
-    color: white;
-    border-color: var(--mw-primary);
+    background: rgba(8,127,115,0.15);
+    color: var(--mw-primary-light);
+    transform: translateY(-2px);
 }
 
-/* =========================================================
-   CHANNEL SIDEBAR
-   ========================================================= */
 
-#channelSidebar,
-.channel-sidebar {
-    width: var(--mw-sidebar-width);
-    min-width: var(--mw-sidebar-width);
+/* ============================================================
+   SECOND SIDEBAR
+   ============================================================ */
+
+#channelSidebar {
+    min-width: 0;
 
     height: 100%;
 
@@ -494,306 +510,264 @@ body {
     border-right: 1px solid var(--mw-border);
 
     overflow: hidden;
-
-    z-index: 15;
-
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
 }
 
+
+/* community header */
+
 .community-sidebar-header {
-    min-height: 70px;
+    min-height: 78px;
+
+    padding: 14px 16px;
 
     display: flex;
     align-items: center;
-
-    padding: 12px 14px;
+    gap: 12px;
 
     border-bottom: 1px solid var(--mw-border);
+
+    background:
+        linear-gradient(
+            180deg,
+            rgba(255,255,255,0.025),
+            transparent
+        );
 }
 
-.community-sidebar-header-content {
-    min-width: 0;
-}
 
-.community-sidebar-title {
-    font-size: 15px;
-    font-weight: 800;
-
-    color: white;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.community-sidebar-description {
-    margin-top: 3px;
-
-    font-size: 11px;
-
-    color: var(--mw-text-muted);
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* =========================================================
-   ACTIVE COMMUNITY
-   ========================================================= */
+/* active icon */
 
 #activeCommunityIcon {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
 
-    min-width: 40px;
+    min-width: 46px;
+    min-height: 46px;
 
-    margin-right: 10px;
+    border-radius: 13px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
+    background: var(--mw-panel-2);
+
     overflow: hidden;
 
-    border-radius: 10px;
-
-    background: #18252e;
-
-    font-size: 20px;
+    font-size: 22px;
 }
 
 #activeCommunityIcon img {
-    width: 100% !important;
-    height: 100% !important;
+    width: 46px !important;
+    height: 46px !important;
+
+    max-width: 46px !important;
+    max-height: 46px !important;
 
     object-fit: cover !important;
 
-    max-width: 100% !important;
-    max-height: 100% !important;
+    border-radius: 13px !important;
 }
 
-/* =========================================================
+
+/* active community name */
+
+#activeCommunityName {
+    margin: 0;
+
+    font-size: 15px;
+    font-weight: 800;
+
+    color: var(--mw-text);
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#activeCommunityDescription {
+    margin: 3px 0 0;
+
+    color: var(--mw-text-muted);
+
+    font-size: 11px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+/* ============================================================
    COURSE BANNER
-   ========================================================= */
+   ============================================================ */
 
 #communityCourseBanner {
     margin: 12px;
 
-    padding: 10px 11px;
+    padding: 11px 12px;
 
-    border-radius: 9px;
+    border-radius: 11px;
 
-    background: rgba(8, 127, 115, 0.10);
-    border: 1px solid rgba(8, 127, 115, 0.22);
-}
+    background:
+        linear-gradient(
+            135deg,
+            rgba(8,127,115,0.13),
+            rgba(11,114,133,0.08)
+        );
 
-#communityCourseLabel {
-    font-size: 9px;
-
-    font-weight: 800;
-
-    letter-spacing: 0.08em;
-
-    text-transform: uppercase;
-
-    color: var(--mw-primary-light);
+    border: 1px solid rgba(8,127,115,0.18);
 }
 
 #communityCourseName {
-    margin-top: 4px;
-
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 750;
 
-    color: white;
+    color: #d7f8f3;
 }
 
-/* =========================================================
-   SEARCH
-   ========================================================= */
+#communityCourseLabel {
+    font-size: 10px;
+
+    color: var(--mw-text-muted);
+}
+
+
+/* ============================================================
+   CHANNEL SEARCH
+   ============================================================ */
 
 #channelSearchInput,
 #memberSearchInput,
 #messageSearchInput {
     width: calc(100% - 24px);
 
-    height: 36px;
+    margin: 0 12px 12px;
 
-    margin: 0 12px 10px;
+    height: 38px;
 
-    padding: 0 11px;
+    padding: 0 12px;
+
+    border-radius: 10px;
 
     border: 1px solid var(--mw-border);
-    border-radius: 8px;
 
-    outline: none;
+    background: #0a121b;
 
-    background: #121d25;
-    color: white;
+    color: var(--mw-text);
 
     font-size: 12px;
 
-    filter: none !important;
-}
-
-#channelSearchInput::placeholder,
-#memberSearchInput::placeholder,
-#messageSearchInput::placeholder {
-    color: #65747c;
+    outline: none;
 }
 
 #channelSearchInput:focus,
 #memberSearchInput:focus,
 #messageSearchInput:focus {
-    border-color: rgba(8, 127, 115, 0.7);
-    box-shadow: 0 0 0 2px rgba(8, 127, 115, 0.10);
+    border-color: rgba(17,169,149,0.55);
+
+    background: #0c1621;
 }
 
-/* =========================================================
+
+/* ============================================================
    CHANNEL LIST
-   ========================================================= */
+   ============================================================ */
 
 #channelList {
     flex: 1;
 
     min-height: 0;
 
+    padding: 4px 10px 16px;
+
     overflow-y: auto;
 
-    padding: 4px 8px 12px;
+    scrollbar-width: thin;
 }
 
-#channelList::-webkit-scrollbar {
+#channelList::-webkit-scrollbar,
+#messageList::-webkit-scrollbar,
+#memberList::-webkit-scrollbar {
     width: 5px;
 }
 
-#channelList::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.09);
-    border-radius: 10px;
+#channelList::-webkit-scrollbar-thumb,
+#messageList::-webkit-scrollbar-thumb,
+#memberList::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.11);
+    border-radius: 20px;
 }
 
-.channel-category {
-    margin-top: 12px;
-}
 
-.channel-category-title {
-    padding: 6px 8px;
+/* channel category */
 
-    color: var(--mw-text-muted);
+.channel-category,
+.channel-section-title {
+    padding: 13px 8px 6px;
+
+    color: #718093;
 
     font-size: 10px;
+
     font-weight: 800;
 
-    letter-spacing: 0.08em;
-
     text-transform: uppercase;
+
+    letter-spacing: 0.08em;
 }
 
-.channel-item {
-    width: 100%;
 
+/* channel */
+
+.channel-item,
+.channel-list-item {
     min-height: 38px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 0 9px;
 
     margin-bottom: 2px;
 
-    border-radius: 7px;
+    padding: 0 10px;
 
-    color: var(--mw-text-soft);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    border-radius: 9px;
+
+    color: #9eabba;
 
     cursor: pointer;
-
-    font-size: 13px;
 
     transition:
-        background 0.15s ease,
-        color 0.15s ease;
+        background var(--mw-transition),
+        color var(--mw-transition);
 }
 
-.channel-item:hover {
-    background: var(--mw-hover);
-    color: white;
+.channel-item:hover,
+.channel-list-item:hover {
+    background: rgba(255,255,255,0.045);
+    color: var(--mw-text);
 }
 
-.channel-item.active {
-    background: rgba(8, 127, 115, 0.17);
-    color: white;
-}
+.channel-item.active,
+.channel-list-item.active {
+    background: rgba(8,127,115,0.15);
 
-.channel-item-icon {
-    width: 20px;
-    min-width: 20px;
+    color: #e9fffb;
 
-    margin-right: 7px;
-
-    text-align: center;
-
-    color: var(--mw-text-muted);
-}
-
-.channel-item-name {
-    min-width: 0;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.channel-loading,
-.loading {
-    padding: 20px;
-
-    text-align: center;
-
-    color: var(--mw-text-muted);
-
-    font-size: 12px;
-}
-
-/* =========================================================
-   CREATE CHANNEL
-   ========================================================= */
-
-#createChannelButton {
-    margin: 10px 12px 12px;
-
-    height: 38px;
-
-    border: 1px solid var(--mw-border);
-    border-radius: 8px;
-
-    background: #131f28;
-    color: var(--mw-text-soft);
-
-    cursor: pointer;
-
-    font-size: 12px;
     font-weight: 700;
 }
 
-#createChannelButton:hover {
-    background: var(--mw-primary);
-    color: white;
-    border-color: var(--mw-primary);
-}
 
-/* =========================================================
-   MAIN CHAT
-   ========================================================= */
+/* ============================================================
+   MAIN CHAT AREA
+   ============================================================ */
 
 #communityMain,
 .community-main,
-.chat-main {
-    flex: 1;
+.community-chat {
+    position: relative;
 
-    width: auto;
     min-width: 0;
     min-height: 0;
 
@@ -802,253 +776,187 @@ body {
     display: flex;
     flex-direction: column;
 
-    background: var(--mw-chat);
-
-    position: relative;
+    background:
+        radial-gradient(
+            circle at top right,
+            rgba(11,114,133,0.07),
+            transparent 30%
+        ),
+        var(--mw-bg-2);
 
     overflow: hidden;
-
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-
-    opacity: 1 !important;
 }
 
-/* =========================================================
+
+/* ============================================================
    CHAT HEADER
-   ========================================================= */
+   ============================================================ */
 
 .chat-header,
+#chatHeader,
 .community-chat-header {
-    height: 62px;
-    min-height: 62px;
+    min-height: 72px;
+    height: 72px;
+
+    flex: 0 0 72px;
+
+    padding: 0 18px;
 
     display: flex;
     align-items: center;
 
-    padding: 0 14px;
+    gap: 12px;
+
+    background:
+        rgba(14,22,32,0.98);
 
     border-bottom: 1px solid var(--mw-border);
-
-    background: #101922;
-
-    position: relative;
-
-    z-index: 10;
-
-    flex-shrink: 0;
-}
-
-#channelToggleButton,
-#memberToggleButton,
-#chatSearchButton {
-    width: 34px;
-    height: 34px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 0;
-    border-radius: 7px;
-
-    background: transparent;
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-
-    font-size: 16px;
-}
-
-#channelToggleButton:hover,
-#memberToggleButton:hover,
-#chatSearchButton:hover {
-    background: var(--mw-hover);
-    color: white;
-}
-
-.chat-header-title {
-    min-width: 0;
-
-    flex: 1;
-
-    margin-left: 7px;
 }
 
 #activeChannelName {
-    color: white;
+    margin: 0;
 
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 800;
 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--mw-text);
 }
 
 #activeChannelDescription {
-    margin-top: 2px;
+    margin: 3px 0 0;
 
     color: var(--mw-text-muted);
 
-    font-size: 10px;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 11px;
 }
 
+
+/* channel title area */
+
+.channel-title-area {
+    min-width: 0;
+    flex: 1;
+}
+
+
+/* role badge */
+
 #activeRoleBadge {
-    margin-left: 8px;
+    padding: 5px 8px;
 
-    padding: 4px 7px;
+    border-radius: 7px;
 
-    border-radius: 6px;
+    background: rgba(8,127,115,0.12);
 
-    background: rgba(8, 127, 115, 0.15);
-
-    color: #50d5c5;
+    color: #65d8c8;
 
     font-size: 9px;
+
     font-weight: 800;
 
     text-transform: uppercase;
 }
 
-/* =========================================================
-   CALL BUTTONS
-   ========================================================= */
+
+/* header buttons */
 
 #voiceCallButton,
-#videoCallButton {
-    width: 35px;
-    height: 35px;
+#videoCallButton,
+#chatSearchButton,
+#memberToggleButton,
+#channelToggleButton {
+    width: 36px;
+    height: 36px;
 
-    margin-left: 5px;
+    border-radius: 9px;
 
-    border: 0;
-    border-radius: 7px;
-
-    background: transparent;
-
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 16px;
+    background: transparent;
+
+    color: #9ba8b6;
+
+    cursor: pointer;
+
+    transition:
+        background var(--mw-transition),
+        color var(--mw-transition),
+        transform var(--mw-transition);
 }
 
 #voiceCallButton:hover,
-#videoCallButton:hover {
-    background: rgba(8, 127, 115, 0.16);
-    color: #53d8c7;
+#videoCallButton:hover,
+#chatSearchButton:hover,
+#memberToggleButton:hover,
+#channelToggleButton:hover {
+    background: rgba(255,255,255,0.06);
+
+    color: white;
+
+    transform: translateY(-1px);
 }
 
-/* =========================================================
-   MESSAGE SEARCH
-   ========================================================= */
 
-#messageSearchPanel {
-    padding: 10px;
+/* ============================================================
+   MESSAGE AREA
+   ============================================================ */
 
-    background: #0d161e;
-
-    border-bottom: 1px solid var(--mw-border);
-
-    position: relative;
-
-    z-index: 15;
-}
-
-#messageSearchPanel button {
-    position: absolute;
-
-    right: 20px;
-    top: 17px;
-
-    border: 0;
-
-    background: transparent;
-
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-}
-
-/* =========================================================
-   MESSAGE LIST
-   ========================================================= */
-
-#messageList,
-.message-list {
+#messageList {
     flex: 1;
 
     min-height: 0;
 
+    padding: 20px 24px 12px;
+
     overflow-y: auto;
+
     overflow-x: hidden;
-
-    padding: 18px 16px 24px;
-
-    background: var(--mw-chat);
-
-    scroll-behavior: smooth;
-
-    filter: none !important;
 }
 
-#messageList::-webkit-scrollbar {
-    width: 7px;
-}
 
-#messageList::-webkit-scrollbar-track {
-    background: transparent;
-}
+/* message row */
 
-#messageList::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.10);
-    border-radius: 10px;
-}
-
-/* =========================================================
-   MESSAGE
-   ========================================================= */
-
+.message-row,
 .chat-message,
-.message-row {
+.message-item {
     width: 100%;
 
     display: flex;
+
     align-items: flex-start;
 
-    gap: 10px;
+    gap: 12px;
 
     padding: 7px 8px;
 
-    border-radius: 8px;
+    border-radius: 10px;
 
-    position: relative;
-
-    transition: background 0.12s ease;
+    transition:
+        background var(--mw-transition);
 }
 
+.message-row:hover,
 .chat-message:hover,
-.message-row:hover {
-    background: rgba(255, 255, 255, 0.025);
+.message-item:hover {
+    background: rgba(255,255,255,0.025);
 }
 
-/* =========================================================
-   MESSAGE AVATAR
-   ========================================================= */
 
+/* ============================================================
+   MESSAGE AVATARS
+   ============================================================ */
+
+.mwaniki-user-avatar,
 .chat-message-avatar,
+.community-member-avatar,
+.general-call-user-avatar,
 .message-avatar,
-.mw-message-avatar {
+.member-avatar,
+.mw-message-avatar,
+.mw-member-avatar,
+.mw-picker-avatar {
     width: 38px !important;
     height: 38px !important;
 
@@ -1058,142 +966,85 @@ body {
     max-width: 38px !important;
     max-height: 38px !important;
 
-    flex: 0 0 38px !important;
+    flex: 0 0 38px;
+
+    display: block !important;
 
     border-radius: 50% !important;
-
-    overflow: hidden !important;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    background: #25343d;
-
-    color: white;
-
-    font-size: 12px;
-    font-weight: 800;
-
-    object-fit: cover;
-
-    filter: none !important;
-}
-
-.chat-message-avatar img,
-.message-avatar img,
-.mw-message-avatar img {
-    width: 38px !important;
-    height: 38px !important;
-
-    min-width: 38px !important;
-    min-height: 38px !important;
-
-    max-width: 38px !important;
-    max-height: 38px !important;
 
     object-fit: cover !important;
 
-    border-radius: 50% !important;
+    overflow: hidden !important;
 
-    display: block;
-
-    filter: none !important;
+    background: #1a2633;
 }
 
-/* =========================================================
-   MESSAGE CONTENT
-   ========================================================= */
 
-.message-content {
+/* message avatar wrapper */
+
+.message-avatar-wrapper,
+.message-user-avatar {
+    width: 38px;
+
+    min-width: 38px;
+}
+
+
+/* message content */
+
+.message-content,
+.chat-message-content {
     min-width: 0;
 
     flex: 1;
 }
 
-.message-author {
-    display: inline-flex;
-    align-items: center;
+.message-author,
+.chat-message-author {
+    margin-right: 7px;
 
-    gap: 6px;
-
-    color: white;
+    color: #eef5fa;
 
     font-size: 12px;
-    font-weight: 800;
+
+    font-weight: 750;
 }
 
-.message-time {
-    color: var(--mw-text-muted);
+.message-time,
+.chat-message-time {
+    color: #667484;
 
     font-size: 9px;
-    font-weight: 400;
 }
 
-.message-text {
+.message-text,
+.chat-message-text {
     margin-top: 3px;
 
-    color: #d5dee2;
+    color: #c6d0da;
 
     font-size: 13px;
 
     line-height: 1.55;
 
-    white-space: pre-wrap;
-    word-break: break-word;
-
     overflow-wrap: anywhere;
 }
 
-.message-actions {
-    position: absolute;
 
-    right: 8px;
-    top: -10px;
-
-    display: none;
-
-    padding: 3px;
-
-    border: 1px solid var(--mw-border);
-
-    border-radius: 7px;
-
-    background: #18232c;
-
-    box-shadow: var(--mw-shadow);
-}
-
-.chat-message:hover .message-actions,
-.message-row:hover .message-actions {
-    display: flex;
-}
-
-/* =========================================================
-   MESSAGE FORM
-   ========================================================= */
-
-#messageForm {
-    width: 100%;
-
-    padding: 10px 14px 14px;
-
-    background: var(--mw-chat);
-
-    flex-shrink: 0;
-}
+/* ============================================================
+   REPLY PREVIEW
+   ============================================================ */
 
 #replyPreview {
-    margin-bottom: 8px;
+    margin: 0 16px 8px;
 
-    padding: 8px 10px;
+    padding: 9px 12px;
 
     border-left: 3px solid var(--mw-primary);
 
-    border-radius: 6px;
+    border-radius: 8px;
 
-    background: #18242d;
+    background: #101b26;
 }
 
 #replyPreviewText {
@@ -1202,35 +1053,31 @@ body {
     font-size: 11px;
 }
 
-#cancelReplyButton {
-    margin-top: 4px;
 
-    border: 0;
+/* ============================================================
+   MESSAGE COMPOSER
+   ============================================================ */
 
-    background: transparent;
+#messageForm {
+    margin: 0 16px 16px;
 
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-
-    font-size: 10px;
-}
-
-.message-composer {
-    min-height: 46px;
+    min-height: 54px;
 
     display: flex;
-    align-items: center;
+    align-items: flex-end;
 
-    gap: 7px;
+    gap: 8px;
 
-    padding: 5px 6px 5px 10px;
+    padding: 8px;
 
-    border: 1px solid var(--mw-border-strong);
+    border-radius: 14px;
 
-    border-radius: 10px;
+    background: #111b26;
 
-    background: #18232c;
+    border: 1px solid var(--mw-border);
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,0.15);
 }
 
 #messageInput {
@@ -1238,19 +1085,19 @@ body {
 
     min-width: 0;
 
-    min-height: 32px;
+    min-height: 36px;
     max-height: 130px;
 
     resize: none;
 
     border: 0;
-    outline: none;
+    outline: 0;
 
     background: transparent;
 
-    color: white;
+    color: var(--mw-text);
 
-    font-family: inherit;
+    padding: 9px 10px;
 
     font-size: 13px;
 
@@ -1258,108 +1105,113 @@ body {
 }
 
 #messageInput::placeholder {
-    color: #68777e;
+    color: #657383;
 }
 
 #attachmentButton,
 #sendMessageButton {
-    width: 34px;
-    height: 34px;
+    width: 38px;
+    height: 38px;
 
-    flex: 0 0 34px;
+    flex: 0 0 38px;
 
-    border: 0;
-    border-radius: 7px;
+    border-radius: 10px;
 
-    background: transparent;
-
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    font-size: 16px;
+    cursor: pointer;
+
+    transition:
+        transform var(--mw-transition),
+        background var(--mw-transition);
 }
 
-#sendMessageButton {
-    background: var(--mw-primary);
-    color: white;
+#attachmentButton {
+    background: transparent;
+
+    color: #8795a5;
 }
 
 #attachmentButton:hover {
-    background: var(--mw-hover);
+    background: rgba(255,255,255,0.06);
+    color: white;
+}
+
+#sendMessageButton {
+    background:
+        linear-gradient(
+            135deg,
+            var(--mw-primary),
+            var(--mw-accent)
+        );
+
     color: white;
 }
 
 #sendMessageButton:hover {
-    background: var(--mw-primary-light);
+    transform: translateY(-1px);
 }
 
-/* =========================================================
-   MEMBER SIDEBAR
-   ========================================================= */
 
-#memberSidebar,
-.member-sidebar {
-    width: var(--mw-members-width);
-    min-width: var(--mw-members-width);
+/* ============================================================
+   MEMBER SIDEBAR
+   ============================================================ */
+
+#memberSidebar {
+    min-width: 0;
 
     height: 100%;
 
     display: flex;
     flex-direction: column;
 
-    background: var(--mw-members);
+    background: var(--mw-sidebar);
 
     border-left: 1px solid var(--mw-border);
 
     overflow: hidden;
-
-    z-index: 20;
-
-    filter: none !important;
-    backdrop-filter: none !important;
 }
 
 .member-sidebar-header {
-    min-height: 62px;
+    min-height: 72px;
+
+    padding: 0 16px;
 
     display: flex;
     align-items: center;
-
-    padding: 0 12px;
+    justify-content: space-between;
 
     border-bottom: 1px solid var(--mw-border);
 }
 
-#memberCount {
-    flex: 1;
-
-    color: white;
-
+.member-sidebar-title {
     font-size: 13px;
     font-weight: 800;
+}
+
+#memberCount {
+    color: var(--mw-text-muted);
+
+    font-size: 10px;
 }
 
 #closeMemberSidebarButton {
     width: 32px;
     height: 32px;
 
-    border: 0;
-    border-radius: 7px;
+    border-radius: 8px;
 
     background: transparent;
 
-    color: var(--mw-text-muted);
+    color: #82909f;
 
     cursor: pointer;
 }
 
 #closeMemberSidebarButton:hover {
-    background: var(--mw-hover);
+    background: rgba(255,255,255,0.06);
     color: white;
 }
 
@@ -1368,89 +1220,35 @@ body {
 
     min-height: 0;
 
-    overflow-y: auto;
-
     padding: 8px;
+
+    overflow-y: auto;
 }
 
-.community-member,
-.member-item {
-    width: 100%;
 
-    min-height: 50px;
+/* member */
 
+.member-item,
+.community-member-item {
     display: flex;
+
     align-items: center;
 
-    gap: 9px;
+    gap: 10px;
 
-    padding: 6px 8px;
+    padding: 9px;
 
-    border-radius: 8px;
+    border-radius: 10px;
 
     cursor: pointer;
+
+    transition:
+        background var(--mw-transition);
 }
 
-.community-member:hover,
-.member-item:hover {
-    background: var(--mw-hover);
-}
-
-/* =========================================================
-   MEMBER AVATARS
-   ========================================================= */
-
-.community-member-avatar,
-.member-avatar,
-.mw-member-avatar {
-    width: 38px !important;
-    height: 38px !important;
-
-    min-width: 38px !important;
-    min-height: 38px !important;
-
-    max-width: 38px !important;
-    max-height: 38px !important;
-
-    flex: 0 0 38px !important;
-
-    border-radius: 50% !important;
-
-    overflow: hidden !important;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background: #263640;
-
-    color: white;
-
-    font-size: 11px;
-    font-weight: 800;
-
-    filter: none !important;
-}
-
-.community-member-avatar img,
-.member-avatar img,
-.mw-member-avatar img {
-    width: 38px !important;
-    height: 38px !important;
-
-    min-width: 38px !important;
-    min-height: 38px !important;
-
-    max-width: 38px !important;
-    max-height: 38px !important;
-
-    object-fit: cover !important;
-
-    border-radius: 50% !important;
-
-    display: block;
-
-    filter: none !important;
+.member-item:hover,
+.community-member-item:hover {
+    background: rgba(255,255,255,0.04);
 }
 
 .member-info {
@@ -1460,886 +1258,767 @@ body {
 }
 
 .member-name {
-    color: #eaf0f2;
+    color: #e4ebf1;
 
     font-size: 12px;
+
     font-weight: 700;
 
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 }
 
-.member-role {
-    margin-top: 2px;
-
-    color: var(--mw-text-muted);
+.member-status {
+    color: #657383;
 
     font-size: 9px;
 }
 
-/* =========================================================
-   ONLINE INDICATOR
-   ========================================================= */
 
-.member-status-dot {
+/* online indicator */
+
+.member-online-indicator {
     width: 9px;
     height: 9px;
 
-    min-width: 9px;
-
     border-radius: 50%;
 
-    background: #55636a;
-
-    border: 2px solid var(--mw-members);
-}
-
-.member-status-dot.online {
     background: var(--mw-success);
+
+    box-shadow:
+        0 0 0 3px rgba(46,204,113,0.08);
 }
 
-/* =========================================================
-   MODAL BACKDROP
-   ========================================================= */
 
-#communityDrawerOverlay {
-    position: fixed;
-
-    inset: 0;
-
-    display: none;
-
-    background: rgba(0, 0, 0, 0.62);
-
-    z-index: 900;
-
-    /* NO BLUR */
-    filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-}
-
-#communityDrawerOverlay.active,
-#communityDrawerOverlay.open,
-#communityDrawerOverlay.visible {
-    display: block;
-}
-
-/* =========================================================
+/* ============================================================
    MODALS
-   ========================================================= */
+   ============================================================ */
 
 #communityModal,
 #channelModal,
 #generalCallModal {
     position: fixed;
 
-    left: 50%;
-    top: 50%;
+    inset: 0;
 
-    transform: translate(-50%, -50%);
+    z-index: 3000;
 
-    width: min(520px, calc(100vw - 30px));
+    display: none;
 
-    max-height: calc(100vh - 30px);
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(3,7,12,0.78);
+
+    filter: none !important;
+
+    backdrop-filter: none !important;
+}
+
+#communityModal.active,
+#channelModal.active,
+#generalCallModal.active,
+.modal.active {
+    display: flex;
+}
+
+
+/* modal card */
+
+.modal-content,
+.community-modal-card,
+.channel-modal-card,
+.general-call-modal-card {
+    width: min(520px, 100%);
+
+    max-height: calc(100vh - 40px);
 
     overflow-y: auto;
 
-    padding: 0;
+    padding: 24px;
+
+    border-radius: 18px;
+
+    background: #121c27;
 
     border: 1px solid var(--mw-border-strong);
 
-    border-radius: 14px;
-
-    background: #121c24;
-
-    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
-
-    z-index: 1000;
+    box-shadow:
+        0 30px 90px rgba(0,0,0,0.55);
 
     filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
-
-    opacity: 1 !important;
 }
 
-.modal-header {
-    min-height: 58px;
 
-    display: flex;
-    align-items: center;
+/* modal headings */
 
-    padding: 0 16px;
-
-    border-bottom: 1px solid var(--mw-border);
-}
-
-.modal-title {
-    flex: 1;
+.modal-content h2,
+.modal-content h3 {
+    margin-top: 0;
 
     color: white;
 
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 18px;
 }
 
-.modal-close {
-    width: 32px;
-    height: 32px;
 
-    border: 0;
-    border-radius: 7px;
+/* inputs */
 
-    background: transparent;
-
-    color: var(--mw-text-muted);
-
-    cursor: pointer;
-}
-
-.modal-close:hover {
-    background: var(--mw-hover);
-    color: white;
-}
-
-/* =========================================================
-   FORMS
-   ========================================================= */
-
-#communityForm,
-#channelForm {
-    padding: 16px;
-}
-
-.form-group {
-    margin-bottom: 13px;
-}
-
-.form-group label {
-    display: block;
-
-    margin-bottom: 6px;
-
-    color: var(--mw-text-soft);
-
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select {
+#communityModal input,
+#communityModal textarea,
+#communityModal select,
+#channelModal input,
+#channelModal textarea,
+#channelModal select,
+#generalCallModal input,
+#generalCallModal textarea,
+#generalCallModal select {
     width: 100%;
 
-    padding: 10px 11px;
+    min-height: 42px;
 
-    border: 1px solid var(--mw-border-strong);
-    border-radius: 8px;
+    margin-bottom: 12px;
+
+    padding: 10px 12px;
+
+    border-radius: 10px;
+
+    border: 1px solid var(--mw-border);
+
+    background: #09121b;
+
+    color: var(--mw-text);
 
     outline: none;
-
-    background: #0d161e;
-
-    color: white;
-
-    font-family: inherit;
-
-    font-size: 12px;
 }
 
-.form-group textarea {
-    min-height: 90px;
+#communityModal textarea,
+#channelModal textarea {
+    min-height: 100px;
 
     resize: vertical;
 }
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-    border-color: var(--mw-primary);
+#communityModal input:focus,
+#communityModal textarea:focus,
+#communityModal select:focus,
+#channelModal input:focus,
+#channelModal textarea:focus,
+#channelModal select:focus,
+#generalCallModal input:focus {
+    border-color: rgba(17,169,149,0.55);
 }
 
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
 
-    gap: 8px;
-
-    margin-top: 18px;
-}
-
-.form-actions button {
-    min-height: 36px;
-
-    padding: 0 14px;
-
-    border-radius: 7px;
-
-    cursor: pointer;
-
-    font-size: 11px;
-    font-weight: 700;
-}
-
-.cancel-button {
-    border: 1px solid var(--mw-border);
-
-    background: transparent;
-
-    color: var(--mw-text-soft);
-}
-
-.primary-button {
-    border: 0;
-
-    background: var(--mw-primary);
-
-    color: white;
-}
-
-.primary-button:hover {
-    background: var(--mw-primary-light);
-}
-
-/* =========================================================
-   COMMUNITY MENU
-   ========================================================= */
-
-#communityMenu {
-    position: fixed;
-
-    min-width: 190px;
-
-    padding: 6px;
-
-    border: 1px solid var(--mw-border-strong);
-    border-radius: 9px;
-
-    background: #17222b;
-
-    box-shadow: var(--mw-shadow);
-
-    z-index: 1100;
-
-    filter: none !important;
-}
-
-#communityMenu button {
-    width: 100%;
-
-    min-height: 35px;
-
-    padding: 0 10px;
-
-    border: 0;
-    border-radius: 6px;
-
-    background: transparent;
-
-    color: var(--mw-text-soft);
-
-    text-align: left;
-
-    cursor: pointer;
-
-    font-size: 11px;
-}
-
-#communityMenu button:hover {
-    background: var(--mw-hover);
-    color: white;
-}
-
-/* =========================================================
-   TOAST
-   ========================================================= */
-
-#communityToast {
-    position: fixed;
-
-    left: 50%;
-    bottom: 24px;
-
-    transform: translateX(-50%);
-
-    max-width: min(440px, calc(100vw - 30px));
-
-    padding: 11px 15px;
-
-    border: 1px solid var(--mw-border-strong);
-    border-radius: 9px;
-
-    background: #17242d;
-
-    color: white;
-
-    font-size: 12px;
-
-    box-shadow: var(--mw-shadow);
-
-    z-index: 3000;
-
-    filter: none !important;
-}
-
-/* =========================================================
+/* ============================================================
    GENERAL CALL USER PICKER
-   ========================================================= */
+   ============================================================ */
 
 #generalCallUserList {
-    max-height: 320px;
-
-    overflow-y: auto;
+    max-height: 280px;
 
     margin: 10px 0;
+
+    overflow-y: auto;
 
     padding: 4px;
 }
 
 .general-call-user,
-.call-user-option {
-    width: 100%;
-
-    min-height: 54px;
-
+.general-call-user-item {
     display: flex;
+
     align-items: center;
 
     gap: 10px;
 
-    padding: 7px 9px;
+    padding: 10px;
 
-    margin-bottom: 3px;
+    margin-bottom: 4px;
 
-    border: 1px solid transparent;
-    border-radius: 8px;
+    border-radius: 10px;
+
+    cursor: pointer;
 
     background: transparent;
 
-    color: white;
-
-    cursor: pointer;
+    transition:
+        background var(--mw-transition);
 }
 
 .general-call-user:hover,
-.call-user-option:hover {
-    background: var(--mw-hover);
+.general-call-user-item:hover {
+    background: rgba(255,255,255,0.05);
 }
 
 .general-call-user.selected,
-.call-user-option.selected {
-    background: rgba(8, 127, 115, 0.16);
-    border-color: rgba(8, 127, 115, 0.35);
+.general-call-user-item.selected {
+    background: rgba(8,127,115,0.15);
+
+    border: 1px solid rgba(8,127,115,0.25);
 }
 
-.general-call-user-avatar,
-.mw-picker-avatar {
-    width: 40px !important;
-    height: 40px !important;
+.general-call-user-avatar {
+    width: 36px !important;
+    height: 36px !important;
 
-    min-width: 40px !important;
-    min-height: 40px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
 
-    max-width: 40px !important;
-    max-height: 40px !important;
-
-    flex: 0 0 40px !important;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    overflow: hidden !important;
-
-    border-radius: 50% !important;
-
-    background: #273741;
-
-    color: white;
-
-    font-size: 11px;
-    font-weight: 800;
+    max-width: 36px !important;
+    max-height: 36px !important;
 }
 
-.general-call-user-avatar img,
-.mw-picker-avatar img {
-    width: 40px !important;
-    height: 40px !important;
 
-    min-width: 40px !important;
-    min-height: 40px !important;
-
-    max-width: 40px !important;
-    max-height: 40px !important;
-
-    object-fit: cover !important;
-
-    border-radius: 50% !important;
-
-    display: block;
-}
-
-/* =========================================================
+/* ============================================================
    CALL OVERLAY
-   ========================================================= */
+   ============================================================ */
 
 #callOverlay {
     position: fixed;
 
     inset: 0;
 
+    z-index: 5000;
+
     display: none;
 
     flex-direction: column;
 
-    background: #070b0f;
+    background: #050a0f;
 
     color: white;
 
-    z-index: 5000;
-
     filter: none !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
 
-    opacity: 1 !important;
+    backdrop-filter: none !important;
 }
 
 #callOverlay.active,
-#callOverlay.open,
-#callOverlay.visible {
+#callOverlay.show,
+#callOverlay[aria-hidden="false"] {
     display: flex;
 }
 
-/* =========================================================
-   CALL HEADER
-   ========================================================= */
+
+/* call topbar */
 
 .call-header {
-    height: 64px;
+    min-height: 68px;
 
-    min-height: 64px;
+    padding: 0 20px;
 
     display: flex;
+
     align-items: center;
 
-    padding: 0 16px;
+    gap: 12px;
 
-    background: #0d151c;
+    background: #0b131c;
 
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-
-    z-index: 10;
+    border-bottom: 1px solid var(--mw-border);
 }
 
 #callTitle {
-    font-size: 14px;
     font-weight: 800;
 }
 
 #callSubtitle {
-    margin-left: 8px;
-
-    color: var(--mw-text-muted);
+    color: #8794a3;
 
     font-size: 11px;
 }
 
 #callDuration {
-    margin-left: 14px;
+    margin-left: auto;
 
-    color: #65d8c9;
+    color: #8d9aaa;
 
-    font-size: 11px;
+    font-size: 12px;
 }
 
-/* =========================================================
-   CALL VIDEO GRID
-   ========================================================= */
+
+/* video grid */
 
 #callVideoGrid {
     flex: 1;
 
     min-height: 0;
 
+    padding: 16px;
+
     display: grid;
 
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(260px, 1fr)
+        );
 
-    gap: 10px;
+    gap: 14px;
 
-    padding: 14px;
-
-    overflow: auto;
-
-    background: #070b0f;
+    overflow-y: auto;
 }
 
-.call-video-tile {
-    min-width: 0;
+.call-video-tile,
+.video-tile {
+    position: relative;
+
     min-height: 220px;
 
-    position: relative;
+    border-radius: 16px;
 
     overflow: hidden;
 
-    border-radius: 12px;
+    background: #101820;
 
-    background: #111920;
-
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--mw-border);
 }
 
-.call-video-tile video {
-    width: 100%;
-    height: 100%;
-
-    object-fit: cover;
-
-    display: block;
-
-    filter: none !important;
-}
-
-/* =========================================================
-   LOCAL VIDEO
-   ========================================================= */
-
-#localVideoTile {
-    position: relative;
-}
-
+.call-video-tile video,
+.video-tile video,
 #localVideo {
     width: 100%;
     height: 100%;
 
+    min-height: 220px;
+
     object-fit: cover;
 
-    background: #101820;
-
     display: block;
-
-    filter: none !important;
 }
 
-/* =========================================================
-   CALL CONTROLS
-   ========================================================= */
+
+/* call controls */
 
 .call-controls {
-    min-height: 76px;
+    min-height: 78px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
-    gap: 10px;
+    gap: 12px;
 
     padding: 12px;
 
-    background: #0d151c;
+    background: #0b131c;
 
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid var(--mw-border);
 }
 
 #toggleMicrophoneButton,
 #toggleCameraButton,
 #shareScreenButton,
-#minimizeCallButton,
-#leaveCallButton {
+#leaveCallButton,
+#minimizeCallButton {
     width: 46px;
     height: 46px;
 
-    display: inline-flex;
+    border-radius: 50%;
+
+    display: flex;
     align-items: center;
     justify-content: center;
 
-    border: 0;
-    border-radius: 50%;
+    cursor: pointer;
 
-    background: #1d2a33;
+    background: #1a2632;
 
     color: white;
 
-    cursor: pointer;
-
-    font-size: 17px;
+    transition:
+        transform var(--mw-transition),
+        background var(--mw-transition);
 }
 
 #toggleMicrophoneButton:hover,
 #toggleCameraButton:hover,
 #shareScreenButton:hover,
 #minimizeCallButton:hover {
-    background: #2b3a45;
+    transform: translateY(-2px);
+
+    background: #263646;
 }
 
 #leaveCallButton {
-    background: var(--mw-danger);
+    background: #d93d45;
 }
 
 #leaveCallButton:hover {
-    background: #ff6460;
+    background: #ef4d55;
 }
 
-/* =========================================================
+
+/* ============================================================
    INCOMING CALL
-   ========================================================= */
+   ============================================================ */
 
 #incomingCallToast {
     position: fixed;
 
-    right: 18px;
-    bottom: 18px;
-
-    width: min(360px, calc(100vw - 30px));
-
-    padding: 15px;
-
-    border: 1px solid rgba(8, 127, 115, 0.35);
-    border-radius: 12px;
-
-    background: #17232b;
-
-    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+    right: 20px;
+    bottom: 20px;
 
     z-index: 6000;
 
-    filter: none !important;
+    width: min(370px, calc(100vw - 40px));
+
+    padding: 16px;
+
+    border-radius: 16px;
+
+    background: #121d28;
+
+    border: 1px solid rgba(17,169,149,0.25);
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,0.45);
+
+    display: none;
+}
+
+#incomingCallToast.active,
+#incomingCallToast.show {
+    display: block;
 }
 
 #incomingCallTitle {
+    margin: 0 0 5px;
+
     color: white;
 
     font-size: 14px;
+
     font-weight: 800;
 }
 
 #incomingCallText {
-    margin-top: 4px;
+    margin: 0 0 14px;
 
-    color: var(--mw-text-soft);
+    color: #9caab8;
 
     font-size: 11px;
 }
 
-.incoming-call-actions {
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+#communityToast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 28px;
+
+    z-index: 7000;
+
+    transform: translateX(-50%);
+
+    min-width: 240px;
+    max-width: 420px;
+
+    padding: 11px 16px;
+
+    border-radius: 11px;
+
+    background: #15212d;
+
+    border: 1px solid var(--mw-border-strong);
+
+    color: white;
+
+    font-size: 12px;
+
+    text-align: center;
+
+    box-shadow:
+        0 15px 45px rgba(0,0,0,0.4);
+}
+
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+
+.channel-loading,
+.loading-state,
+.empty-state {
+    padding: 30px 15px;
+
+    text-align: center;
+
+    color: #697787;
+
+    font-size: 11px;
+}
+
+
+/* ============================================================
+   DRAWER OVERLAY
+   ============================================================ */
+
+#communityDrawerOverlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 1500;
+
+    display: none;
+
+    background: rgba(0,0,0,0.58);
+
+    filter: none !important;
+    backdrop-filter: none !important;
+}
+
+#communityDrawerOverlay.active {
+    display: block;
+}
+
+
+/* ============================================================
+   COMMUNITY MENU
+   ============================================================ */
+
+#communityMenu {
+    position: fixed;
+
+    z-index: 4000;
+
+    min-width: 190px;
+
+    padding: 7px;
+
+    border-radius: 12px;
+
+    background: #131e29;
+
+    border: 1px solid var(--mw-border-strong);
+
+    box-shadow:
+        0 20px 55px rgba(0,0,0,0.45);
+
+    display: none;
+}
+
+#communityMenu.active,
+#communityMenu.show {
+    display: block;
+}
+
+#communityMenu button {
+    width: 100%;
+
+    min-height: 36px;
+
+    padding: 0 10px;
+
     display: flex;
 
-    gap: 8px;
+    align-items: center;
 
-    margin-top: 12px;
-}
+    border-radius: 8px;
 
-#acceptCallButton,
-#declineCallButton {
-    flex: 1;
+    background: transparent;
 
-    height: 36px;
+    color: #b6c1cc;
 
-    border-radius: 7px;
-
-    border: 0;
+    text-align: left;
 
     cursor: pointer;
-
-    font-size: 11px;
-    font-weight: 800;
 }
 
-#acceptCallButton {
-    background: var(--mw-success);
+#communityMenu button:hover {
+    background: rgba(255,255,255,0.05);
+
     color: white;
 }
 
-#declineCallButton {
-    background: var(--mw-danger);
-    color: white;
-}
 
-/* =========================================================
-   SCROLLBARS
-   ========================================================= */
-
-* {
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
-}
-
-/* =========================================================
-   HIDDEN UTILITY
-   ========================================================= */
-
-.hidden {
-    display: none !important;
-}
-
-.is-hidden {
-    display: none !important;
-}
-
-/* =========================================================
-   IMPORTANT IMAGE SAFETY
-   Prevent arbitrary profile images from expanding
-   ========================================================= */
+/* ============================================================
+   ACCESSIBILITY / SAFETY
+   ============================================================ */
 
 img {
     max-width: 100%;
 }
 
-#messageList img:not(.chat-message-avatar img):not(.message-avatar img),
-#memberList img:not(.community-member-avatar img):not(.member-avatar img) {
-    max-width: 100%;
+img:not(
+    .mwaniki-user-avatar,
+    .chat-message-avatar,
+    .community-member-avatar,
+    .general-call-user-avatar,
+    .message-avatar,
+    .member-avatar,
+    .mw-message-avatar,
+    .mw-member-avatar,
+    .mw-picker-avatar
+) {
+    height: auto;
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
 
-@media (max-width: 1100px) {
-    :root {
-        --mw-members-width: 220px;
-        --mw-sidebar-width: 245px;
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 1150px) {
+
+    #communityApp,
+    .community-app {
+        grid-template-columns:
+            72px
+            260px
+            minmax(0,1fr);
     }
-}
 
-@media (max-width: 850px) {
-    :root {
-        --mw-members-width: 0px;
-    }
-
-    #memberSidebar,
-    .member-sidebar {
+    #memberSidebar {
         display: none;
     }
 
-    #channelSidebar,
-    .channel-sidebar {
-        width: 230px;
-        min-width: 230px;
+    #generalCallButton,
+    .general-call-launcher {
+        right: 18px;
     }
 }
 
-@media (max-width: 680px) {
-    :root {
-        --mw-rail-width: 62px;
-        --mw-sidebar-width: 220px;
+
+@media (max-width: 800px) {
+
+    #communityApp,
+    .community-app {
+        grid-template-columns:
+            64px
+            minmax(0,1fr);
+    }
+
+    #channelSidebar {
+        display: none;
+    }
+
+    #communityRail {
+        width: 64px;
+        min-width: 64px;
     }
 
     .community-rail-item,
-    #createCommunityButton {
-        width: 42px;
-        height: 42px;
-        min-width: 42px;
-        min-height: 42px;
-    }
-
+    .community-item,
     .community-rail-icon,
-    .community-icon {
-        width: 42px;
-        height: 42px;
+    .mw-home-button,
+    .community-home-button,
+    #homeCommunityButton,
+    #createCommunityButton {
+        width: 44px;
+        height: 44px;
+
+        min-width: 44px;
+        min-height: 44px;
     }
 
-    .general-call-launcher {
-        right: 8px;
+    .community-rail-item img,
+    .community-item img,
+    .community-rail-icon img,
+    .community-emoji-icon,
+    .community-icon-emoji {
+        width: 44px !important;
+        height: 44px !important;
 
-        padding: 0 10px;
+        min-width: 44px !important;
+        min-height: 44px !important;
 
-        font-size: 11px;
-    }
-
-    #voiceCallButton,
-    #videoCallButton {
-        display: none;
-    }
-
-    .chat-header {
-        padding: 0 8px;
+        max-width: 44px !important;
+        max-height: 44px !important;
     }
 
     #messageList {
-        padding-left: 8px;
-        padding-right: 8px;
-    }
-}
-
-@media (max-width: 560px) {
-    #channelSidebar,
-    .channel-sidebar {
-        position: absolute;
-
-        left: 0;
-        top: 0;
-        bottom: 0;
-
-        width: 245px;
-        min-width: 245px;
-
-        z-index: 100;
-
-        box-shadow: 18px 0 45px rgba(0, 0, 0, 0.35);
+        padding-left: 10px;
+        padding-right: 10px;
     }
 
-    .community-brand-text {
-        display: none;
-    }
-
+    #generalCallButton,
     .general-call-launcher {
-        width: 42px;
+        top: 10px;
+        right: 10px;
 
-        padding: 0;
+        min-width: 40px;
+
+        padding: 0 11px;
 
         font-size: 0;
     }
 
+    #generalCallButton::before,
     .general-call-launcher::before {
-        content: "📞";
+        content: "☎";
 
         font-size: 16px;
+    }
+}
+
+
+@media (max-width: 520px) {
+
+    #messageForm {
+        margin: 0 8px 8px;
+    }
+
+    .message-row,
+    .chat-message,
+    .message-item {
+        padding-left: 2px;
+        padding-right: 2px;
     }
 
     #callVideoGrid {
         grid-template-columns: 1fr;
     }
+
+    .call-video-tile,
+    .video-tile {
+        min-height: 190px;
+    }
 }
 
-/* =========================================================
-   FINAL BLUR KILL SWITCH
-   ========================================================= */
+
+/* ============================================================
+   IMPORTANT: NO BLUR
+   ============================================================ */
 
 html,
 body,
 #communityApp,
 #communityApp *,
-.community-app,
-.community-app *,
-.community-layout,
-.community-layout *,
-.community-shell,
-.community-shell *,
-.community-main,
-.community-main *,
-.chat-main,
-.chat-main *,
-#messageList,
-#channelSidebar,
 #communityRail,
+#channelSidebar,
+#communityMain,
 #memberSidebar,
+#callOverlay,
 #communityModal,
 #channelModal,
-#generalCallModal,
-#callOverlay {
+#generalCallModal {
     filter: none !important;
-    -webkit-filter: none !important;
     backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
 }
 
-/* Absolutely no accidental transparency on the main application */
-#communityApp,
-.community-app,
-.community-layout,
-.community-shell {
-    opacity: 1 !important;
+#communityApp::before,
+#communityApp::after,
+#communityRail::before,
+#communityRail::after,
+#channelSidebar::before,
+#channelSidebar::after,
+#communityMain::before,
+#communityMain::after {
+    display: none !important;
+
+    content: none !important;
 }
