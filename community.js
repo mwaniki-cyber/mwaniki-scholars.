@@ -1,61 +1,23 @@
-/* ============================================================
+/* =========================================================
    MWANIKI SCHOLARS COMMUNITY
-   BRAND NEW COMMUNITY ENGINE
-   ============================================================
-
-   Works with:
-   - community.html
-   - supabase.js
-   - chat_communities
-   - chat_community_members
-   - chat_channels
-   - chat_channel_members
-   - chat_messages
-   - chat_message_reactions
-   - chat_attachments
-   - chat_presence
-   - chat_read_status
-   - chat_notifications
-   - chat_call_rooms
-   - chat_call_participants
-   - chat_call_signals
-
-   ============================================================ */
+   CLEAN COMMUNITY ENGINE
+   ========================================================= */
 
 (() => {
     "use strict";
 
-    /* ========================================================
-       CONFIGURATION
-       ======================================================== */
+    console.log("🚀 Mwaniki Scholars Community starting...");
+
+    /* =====================================================
+       CONFIG
+       ===================================================== */
 
     const CONFIG = {
-        messageLimit: 100,
-        callSignalPollMs: 1200,
-        presenceIntervalMs: 30000,
+        homeUrl: "./dashboard.html",
 
-        /*
-         * Change this ONLY if your Supabase Storage bucket
-         * has another name.
-         */
         attachmentBucket: "chat-attachments",
 
-        maxFileSize: 25 * 1024 * 1024,
-
-        allowedFileTypes: [
-            "image/jpeg",
-            "image/png",
-            "image/gif",
-            "image/webp",
-            "application/pdf",
-            "text/plain",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "application/vnd.ms-powerpoint",
-            "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        ],
+        maxFileSize: 20 * 1024 * 1024,
 
         rtcConfiguration: {
             iceServers: [
@@ -70,149 +32,175 @@
     };
 
 
-    /* ========================================================
+    /* =====================================================
        STATE
-       ======================================================== */
+       ===================================================== */
 
     const state = {
+
         supabase: null,
+
         user: null,
 
-        profile: {
-            name: "Student",
-            avatar: ""
-        },
+        profile: null,
 
         communities: [],
-        selectedCommunity: null,
 
         channels: [],
-        selectedChannel: null,
+
+        currentCommunity: null,
+
+        currentChannel: null,
 
         messages: [],
-        messageUsers: new Map(),
 
-        realtimeChannels: [],
+        selectedCallUsers: new Set(),
 
-        editingMessageId: null,
-        replyingToMessageId: null,
-
-        attachment: null,
-
-        emojiOpen: false,
-
-        presenceTimer: null,
-
-        call: {
-            active: false,
-            room: null,
-            participantId: null,
+        currentCall: {
+            roomId: null,
+            roomCode: null,
+            communityId: null,
+            scope: null,
+            type: "video",
 
             localStream: null,
-            screenStream: null,
 
             peers: new Map(),
 
-            signalSubscription: null,
-            signalPollTimer: null,
-            processedSignals: new Set(),
-
-            muted: false,
-            cameraOn: false,
-            screenSharing: false,
+            screenStream: null,
 
             startedAt: null,
+
             durationTimer: null,
 
-            minimized: false
-        }
+            signalChannel: null,
+
+            participantsChannel: null
+        },
+
+        realtimeChannels: [],
+
+        emojiPanel: null,
+
+        attachmentInput: null,
+
+        sendingMessage: false,
+
+        loadingMessages: false
     };
 
 
-    /* ========================================================
+    /* =====================================================
        DOM HELPER
-       ======================================================== */
+       ===================================================== */
 
     const $ = (id) => document.getElementById(id);
 
 
-    /* ========================================================
-       IMPORTANT:
-       supabase.js is loaded as a module while this file is
-       currently loaded as a normal script.
+    /* =====================================================
+       ELEMENTS
+       ===================================================== */
 
-       Therefore we wait until window.supabase exists.
-       ======================================================== */
+    const DOM = {};
 
-    function waitForSupabase() {
-        return new Promise((resolve, reject) => {
 
-            if (window.supabase) {
-                resolve(window.supabase);
-                return;
-            }
+    function cacheDOM() {
 
-            let attempts = 0;
+        const ids = [
 
-            const timer = setInterval(() => {
+            "communityApp",
 
-                attempts++;
+            "homeButton",
+            "railHomeButton",
+            "railGeneralButton",
+            "communityRailList",
+            "railProfileButton",
+            "railProfileAvatar",
 
-                if (window.supabase) {
-                    clearInterval(timer);
-                    resolve(window.supabase);
-                    return;
-                }
+            "communityBrandTitle",
+            "communityBrandSubtitle",
 
-                if (attempts >= 100) {
-                    clearInterval(timer);
-                    reject(
-                        new Error(
-                            "Supabase client was not available."
-                        )
-                    );
-                }
+            "openCommunityButton",
 
-            }, 100);
+            "channelSearchInput",
+
+            "communitySelectorButton",
+            "selectedCommunityIcon",
+            "selectedCommunityName",
+            "selectedCommunityDescription",
+
+            "channelList",
+
+            "sidebarProfileButton",
+            "sidebarProfileAvatar",
+            "sidebarProfileName",
+
+            "dashboardButton",
+            "headerCommunityButton",
+
+            "generalCallButton",
+
+            "startConversationButton",
+            "welcomeStartButton",
+
+            "mainChannelTitle",
+            "mainChannelDescription",
+
+            "messageList",
+            "messageForm",
+            "messageInput",
+            "sendMessageButton",
+
+            "attachButton",
+            "emojiButton",
+
+            "communityModal",
+            "closeCommunityModal",
+            "communityModalSearch",
+            "communityChoiceList",
+
+            "generalCallModal",
+            "closeGeneralCallModalButton",
+            "generalCallUserList",
+            "generalCallUserStatus",
+            "generalCallSelectionCount",
+            "generalCallMessage",
+            "cancelGeneralCallButton",
+            "startGeneralCallButton",
+
+            "callOverlay",
+            "callTitle",
+            "callSubtitle",
+            "callDuration",
+            "callVideoGrid",
+            "localVideo",
+            "callParticipants",
+
+            "toggleMicrophoneButton",
+            "toggleCameraButton",
+            "shareScreenButton",
+            "minimizeCallButton",
+            "leaveCallButton",
+
+            "incomingCallToast",
+            "incomingCallTitle",
+            "incomingCallText",
+            "acceptCallButton",
+            "declineCallButton",
+
+            "communityStatus",
+            "accessibilityAnnouncer"
+        ];
+
+        ids.forEach(id => {
+            DOM[id] = $(id);
         });
     }
 
 
-    /* ========================================================
-       STATUS / ACCESSIBILITY
-       ======================================================== */
-
-    function announce(message) {
-
-        const announcer = $("accessibilityAnnouncer");
-
-        if (announcer) {
-            announcer.textContent = "";
-            setTimeout(() => {
-                announcer.textContent = message;
-            }, 20);
-        }
-
-        const status = $("communityStatus");
-
-        if (status) {
-            status.textContent = message;
-        }
-    }
-
-
-    function showMessage(message, type = "info") {
-
-        const element = $("communityStatus");
-
-        if (element) {
-            element.dataset.type = type;
-            element.textContent = message;
-        }
-
-        announce(message);
-    }
-
+    /* =====================================================
+       SAFE TEXT
+       ===================================================== */
 
     function escapeHTML(value) {
 
@@ -221,84 +209,69 @@
         }
 
         return String(value)
-            .replaceAll("&", "&amp;")
-            .replaceAll("<", "&lt;")
-            .replaceAll(">", "&gt;")
-            .replaceAll('"', "&quot;")
-            .replaceAll("'", "&#039;");
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     }
 
 
-    function escapeAttribute(value) {
-        return escapeHTML(value);
+    /* =====================================================
+       STATUS
+       ===================================================== */
+
+    function announce(message) {
+
+        if (DOM.accessibilityAnnouncer) {
+            DOM.accessibilityAnnouncer.textContent = message;
+        }
+
+        if (DOM.communityStatus) {
+            DOM.communityStatus.textContent = message;
+        }
     }
 
 
-    function initials(name) {
+    function setCallMessage(message) {
 
-        const text = String(name || "Student").trim();
-
-        if (!text) {
-            return "S";
+        if (DOM.generalCallMessage) {
+            DOM.generalCallMessage.textContent = message || "";
         }
-
-        const parts = text.split(/\s+/);
-
-        if (parts.length === 1) {
-            return parts[0].substring(0, 2).toUpperCase();
-        }
-
-        return (
-            parts[0][0] +
-            parts[parts.length - 1][0]
-        ).toUpperCase();
     }
 
 
-    function formatTime(dateString) {
+    /* =====================================================
+       WAIT FOR SUPABASE
+       ===================================================== */
 
-        if (!dateString) {
-            return "";
+    async function waitForSupabase() {
+
+        for (let i = 0; i < 100; i++) {
+
+            if (window.supabase) {
+
+                state.supabase = window.supabase;
+
+                console.log("✅ Supabase client ready");
+
+                return state.supabase;
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
 
-        const date = new Date(dateString);
-
-        if (Number.isNaN(date.getTime())) {
-            return "";
-        }
-
-        return date.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+        throw new Error(
+            "Supabase client was not found. Check supabase.js."
+        );
     }
 
 
-    function formatDate(dateString) {
+    /* =====================================================
+       AUTH
+       ===================================================== */
 
-        if (!dateString) {
-            return "";
-        }
-
-        const date = new Date(dateString);
-
-        if (Number.isNaN(date.getTime())) {
-            return "";
-        }
-
-        return date.toLocaleDateString([], {
-            day: "numeric",
-            month: "short",
-            year: "numeric"
-        });
-    }
-
-
-    /* ========================================================
-       AUTHENTICATION
-       ======================================================== */
-
-    async function loadUser() {
+    async function loadCurrentUser() {
 
         const {
             data,
@@ -309,32 +282,105 @@
             throw error;
         }
 
-        if (!data || !data.user) {
+        if (!data?.user) {
 
-            showMessage(
-                "Please sign in to use the community.",
-                "error"
-            );
+            console.warn("⚠️ No authenticated user");
 
-            setTimeout(() => {
-                window.location.href = "./index.html";
-            }, 1000);
+            window.location.href = "./studentLogin.html";
 
-            throw new Error("No authenticated user.");
+            return null;
         }
 
         state.user = data.user;
 
-        state.profile.name =
-            data.user.user_metadata?.full_name ||
-            data.user.user_metadata?.name ||
-            data.user.email?.split("@")[0] ||
-            "Student";
+        console.log(
+            "✅ Authenticated as:",
+            state.user.id
+        );
 
-        state.profile.avatar =
-            data.user.user_metadata?.avatar_url ||
-            data.user.user_metadata?.picture ||
-            "";
+        return state.user;
+    }
+
+
+    /* =====================================================
+       PROFILE
+       ===================================================== */
+
+    async function loadProfile() {
+
+        const user = state.user;
+
+        if (!user) {
+            return;
+        }
+
+        const metadata = user.user_metadata || {};
+
+        state.profile = {
+
+            name:
+                metadata.full_name ||
+                metadata.name ||
+                metadata.display_name ||
+                metadata.username ||
+                user.email?.split("@")[0] ||
+                "Student",
+
+            avatar:
+                metadata.avatar_url ||
+                metadata.picture ||
+                ""
+        };
+
+
+        /*
+         * Try common Mwaniki profile table.
+         * Failure is intentionally ignored because
+         * authentication metadata is sufficient.
+         */
+
+        const possibleTables = [
+            "profiles",
+            "student_profiles"
+        ];
+
+
+        for (const table of possibleTables) {
+
+            try {
+
+                const result =
+                    await state.supabase
+                        .from(table)
+                        .select("*")
+                        .eq("id", user.id)
+                        .maybeSingle();
+
+
+                if (!result.error && result.data) {
+
+                    const p = result.data;
+
+                    state.profile.name =
+                        p.full_name ||
+                        p.name ||
+                        p.display_name ||
+                        p.username ||
+                        state.profile.name;
+
+                    state.profile.avatar =
+                        p.avatar_url ||
+                        p.profile_image ||
+                        p.photo_url ||
+                        p.avatar ||
+                        state.profile.avatar;
+
+                    break;
+                }
+
+            } catch (_) {}
+        }
+
 
         updateProfileUI();
     }
@@ -342,26 +388,20 @@
 
     function updateProfileUI() {
 
-        const name = state.profile.name;
-        const avatar = state.profile.avatar;
+        const name = state.profile?.name || "Student";
 
-        const nameElements = [
-            $("sidebarProfileName")
-        ];
+        const avatar = state.profile?.avatar || "";
 
-        nameElements.forEach(element => {
 
-            if (element) {
-                element.textContent = name;
-            }
-        });
+        if (DOM.sidebarProfileName) {
+            DOM.sidebarProfileName.textContent = name;
+        }
 
-        const avatars = [
-            $("railProfileAvatar"),
-            $("sidebarProfileAvatar")
-        ];
 
-        avatars.forEach(img => {
+        [
+            DOM.railProfileAvatar,
+            DOM.sidebarProfileAvatar
+        ].forEach(img => {
 
             if (!img) {
                 return;
@@ -369,88 +409,18 @@
 
             if (avatar) {
                 img.src = avatar;
-                img.alt = `${name} profile photo`;
+                img.style.display = "";
             } else {
                 img.removeAttribute("src");
-                img.alt = `${name} profile`;
+                img.style.display = "none";
             }
         });
     }
 
 
-    /* ========================================================
-       NAVIGATION
-       ======================================================== */
-
-    function goHome() {
-        window.location.href = "./dashboard.html";
-    }
-
-
-    function setupNavigation() {
-
-        [
-            $("homeButton"),
-            $("railHomeButton"),
-            $("dashboardButton")
-        ].forEach(button => {
-
-            if (button) {
-                button.addEventListener("click", goHome);
-            }
-
-        });
-
-
-        [
-            $("railProfileButton"),
-            $("sidebarProfileButton")
-        ].forEach(button => {
-
-            if (button) {
-
-                button.addEventListener("click", () => {
-
-                    /*
-                     * Use the dashboard profile if available.
-                     */
-                    window.location.href =
-                        "./dashboard.html#profile";
-                });
-
-            }
-
-        });
-
-
-        const startButtons = [
-            $("startConversationButton"),
-            $("welcomeStartButton")
-        ];
-
-        startButtons.forEach(button => {
-
-            if (button) {
-
-                button.addEventListener("click", () => {
-
-                    const input = $("messageInput");
-
-                    if (input) {
-                        input.focus();
-                    }
-
-                });
-
-            }
-
-        });
-    }
-
-
-    /* ========================================================
-       COMMUNITIES
-       ======================================================== */
+    /* =====================================================
+       LOAD COMMUNITIES
+       ===================================================== */
 
     async function loadCommunities() {
 
@@ -465,62 +435,64 @@
                 ascending: true
             });
 
+
         if (error) {
+            console.error(
+                "❌ Failed loading communities:",
+                error
+            );
+
             throw error;
         }
+
 
         state.communities = data || [];
 
         renderCommunityRail();
+
         renderCommunityModal();
 
-        if (!state.communities.length) {
 
-            showMessage(
-                "No active communities were found.",
-                "error"
-            );
-
-            return;
-        }
+        /*
+         * Restore previous community.
+         */
 
         const savedId =
             localStorage.getItem(
                 "mwanikiSelectedCommunity"
             );
 
-        let community =
+
+        let selected =
             state.communities.find(
-                item => item.id === savedId
+                community =>
+                    community.id === savedId
             );
 
-        if (!community) {
 
-            community =
-                state.communities.find(
-                    item =>
-                        item.slug === "general" ||
-                        item.slug === "mwaniki-scholars"
-                );
+        if (!selected) {
+            selected = state.communities[0];
         }
 
-        if (!community) {
-            community = state.communities[0];
-        }
 
-        await selectCommunity(community);
+        if (selected) {
+            await selectCommunity(selected);
+        }
     }
 
 
+    /* =====================================================
+       COMMUNITY RAIL
+       ===================================================== */
+
     function renderCommunityRail() {
 
-        const rail = $("communityRailList");
-
-        if (!rail) {
+        if (!DOM.communityRailList) {
             return;
         }
 
-        rail.innerHTML = "";
+        DOM.communityRailList.innerHTML = "";
+
 
         state.communities.forEach(community => {
 
@@ -528,7 +500,9 @@
                 document.createElement("button");
 
             button.type = "button";
-            button.className = "rail-button community-rail-community";
+
+            button.className =
+                "rail-community-icon";
 
             button.dataset.communityId =
                 community.id;
@@ -541,133 +515,77 @@
                 community.name
             );
 
-            const icon =
-                community.icon_url
-                    ? `<img src="${escapeAttribute(
-                        community.icon_url
-                    )}" alt="">`
-                    : escapeHTML(
-                        initials(community.name)
+
+            if (community.icon_url) {
+
+                const img =
+                    document.createElement("img");
+
+                img.src = community.icon_url;
+
+                img.alt = "";
+
+                button.appendChild(img);
+
+            } else {
+
+                const span =
+                    document.createElement("span");
+
+                span.textContent =
+                    getCommunityInitials(
+                        community.name
                     );
 
-            button.innerHTML = `
-                <span class="community-rail-avatar">
-                    ${icon}
-                </span>
-            `;
+                button.appendChild(span);
+            }
+
 
             button.addEventListener(
                 "click",
                 () => selectCommunity(community)
             );
 
-            rail.appendChild(button);
+
+            DOM.communityRailList.appendChild(button);
         });
+
+
+        updateActiveCommunityRail();
     }
 
 
-    function renderCommunityModal(search = "") {
+    function updateActiveCommunityRail() {
 
-        const list = $("communityChoiceList");
+        document
+            .querySelectorAll(
+                ".rail-community-icon"
+            )
+            .forEach(button => {
 
-        if (!list) {
-            return;
-        }
-
-        const query =
-            String(search || "")
-                .trim()
-                .toLowerCase();
-
-        const communities =
-            state.communities.filter(community => {
-
-                if (!query) {
-                    return true;
-                }
-
-                return (
-                    String(community.name || "")
-                        .toLowerCase()
-                        .includes(query) ||
-                    String(community.description || "")
-                        .toLowerCase()
-                        .includes(query)
+                button.classList.toggle(
+                    "active",
+                    button.dataset.communityId ===
+                    state.currentCommunity?.id
                 );
             });
-
-        if (!communities.length) {
-
-            list.innerHTML = `
-                <div class="center-state">
-                    No communities found.
-                </div>
-            `;
-
-            return;
-        }
-
-        list.innerHTML = "";
-
-        communities.forEach(community => {
-
-            const button =
-                document.createElement("button");
-
-            button.type = "button";
-
-            button.className =
-                "community-choice";
-
-            button.setAttribute(
-                "role",
-                "option"
-            );
-
-            button.dataset.communityId =
-                community.id;
-
-            const icon =
-                community.icon_url
-                    ? `<img src="${escapeAttribute(
-                        community.icon_url
-                    )}" alt="">`
-                    : `<span>${escapeHTML(
-                        initials(community.name)
-                    )}</span>`;
-
-            button.innerHTML = `
-                <div class="community-choice-icon">
-                    ${icon}
-                </div>
-
-                <div class="community-choice-text">
-                    <strong>
-                        ${escapeHTML(community.name)}
-                    </strong>
-
-                    <span>
-                        ${escapeHTML(
-                            community.description || ""
-                        )}
-                    </span>
-                </div>
-            `;
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    await selectCommunity(community);
-                    closeCommunityModal();
-
-                }
-            );
-
-            list.appendChild(button);
-        });
     }
 
+
+    function getCommunityInitials(name) {
+
+        return String(name || "MS")
+            .split(/\s+/)
+            .slice(0, 2)
+            .map(word => word[0])
+            .join("")
+            .toUpperCase();
+    }
+
+
+    /* =====================================================
+       SELECT COMMUNITY
+       ===================================================== */
 
     async function selectCommunity(community) {
 
@@ -675,208 +593,108 @@
             return;
         }
 
-        state.selectedCommunity = community;
+
+        state.currentCommunity = community;
+
 
         localStorage.setItem(
             "mwanikiSelectedCommunity",
             community.id
         );
 
-        updateSelectedCommunityUI();
 
-        renderCommunityRail();
+        updateCommunityUI();
 
-        await ensureCommunityMembership();
+        updateActiveCommunityRail();
+
+        closeCommunityModal();
+
 
         await loadChannels();
-
-        await setupCommunityRealtime();
-
-        announce(
-            `Opened ${community.name}`
-        );
     }
 
 
-    function updateSelectedCommunityUI() {
+    function updateCommunityUI() {
 
         const community =
-            state.selectedCommunity;
+            state.currentCommunity;
 
         if (!community) {
             return;
         }
 
-        const name = $("selectedCommunityName");
 
-        if (name) {
-            name.textContent =
+        if (DOM.communityBrandTitle) {
+            DOM.communityBrandTitle.textContent =
                 community.name;
         }
 
-        const description =
-            $("selectedCommunityDescription");
 
-        if (description) {
-            description.textContent =
-                community.description ||
-                "Community";
-        }
+        if (DOM.communityBrandSubtitle) {
 
-        const brand =
-            $("communityBrandTitle");
-
-        if (brand) {
-            brand.textContent =
-                community.name;
-        }
-
-        const subtitle =
-            $("communityBrandSubtitle");
-
-        if (subtitle) {
-            subtitle.textContent =
+            DOM.communityBrandSubtitle.textContent =
                 community.description ||
                 "Learn • Discuss • Connect";
         }
 
-        const icon =
-            $("selectedCommunityIcon");
 
-        if (icon) {
+        if (DOM.selectedCommunityName) {
+            DOM.selectedCommunityName.textContent =
+                community.name;
+        }
+
+
+        if (DOM.selectedCommunityDescription) {
+
+            DOM.selectedCommunityDescription.textContent =
+                community.description ||
+                "Community";
+        }
+
+
+        if (DOM.selectedCommunityIcon) {
 
             if (community.icon_url) {
 
-                icon.innerHTML = `
-                    <img
-                        src="${escapeAttribute(
-                            community.icon_url
-                        )}"
-                        alt=""
-                    >
-                `;
+                DOM.selectedCommunityIcon.innerHTML =
+                    `<img src="${escapeHTML(
+                        community.icon_url
+                    )}" alt="">`;
 
             } else {
 
-                icon.textContent =
-                    initials(community.name);
-            }
-        }
-
-        document
-            .querySelectorAll(
-                ".community-rail-community"
-            )
-            .forEach(button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.communityId ===
-                    community.id
-                );
-
-            });
-    }
-
-
-    async function ensureCommunityMembership() {
-
-        if (!state.user ||
-            !state.selectedCommunity) {
-            return;
-        }
-
-        const communityId =
-            state.selectedCommunity.id;
-
-        const {
-            data,
-            error
-        } = await state.supabase
-            .from("chat_community_members")
-            .select("id")
-            .eq(
-                "community_id",
-                communityId
-            )
-            .eq(
-                "user_id",
-                state.user.id
-            )
-            .maybeSingle();
-
-        if (error) {
-            console.warn(
-                "Membership lookup:",
-                error
-            );
-            return;
-        }
-
-        if (data) {
-            return;
-        }
-
-        /*
-         * Public communities can be joined automatically.
-         */
-        if (
-            state.selectedCommunity.is_public === true
-        ) {
-
-            const {
-                error: insertError
-            } = await state.supabase
-                .from("chat_community_members")
-                .insert({
-                    community_id:
-                        communityId,
-
-                    user_id:
-                        state.user.id,
-
-                    role:
-                        "student"
-                });
-
-            if (insertError) {
-
-                console.warn(
-                    "Could not create membership:",
-                    insertError
-                );
+                DOM.selectedCommunityIcon.textContent =
+                    getCommunityInitials(
+                        community.name
+                    );
             }
         }
     }
 
 
-    /* ========================================================
-       CHANNELS
-       ======================================================== */
+    /* =====================================================
+       LOAD CHANNELS
+       ===================================================== */
 
     async function loadChannels() {
 
-        const list = $("channelList");
+        if (!state.currentCommunity) {
+            return;
+        }
 
-        if (list) {
 
-            list.innerHTML = `
+        if (DOM.channelList) {
+
+            DOM.channelList.innerHTML = `
                 <div class="center-state">
                     <div>
-                        <div
-                            class="loader"
-                            aria-hidden="true"
-                        ></div>
-
+                        <div class="loader"></div>
                         Loading channels...
                     </div>
                 </div>
             `;
         }
 
-        if (!state.selectedCommunity) {
-            return;
-        }
 
         const {
             data,
@@ -886,170 +704,242 @@
             .select("*")
             .eq(
                 "community_id",
-                state.selectedCommunity.id
+                state.currentCommunity.id
             )
-            .eq(
-                "is_active",
-                true
-            )
-            .eq(
-                "is_archived",
-                false
-            )
-            .order(
-                "position",
-                {
-                    ascending: true
-                }
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: true
-                }
-            );
+            .eq("is_active", true)
+            .eq("is_archived", false)
+            .order("position", {
+                ascending: true
+            });
+
 
         if (error) {
-            throw error;
+
+            console.error(
+                "❌ Channel loading failed:",
+                error
+            );
+
+            renderChannelError(error.message);
+
+            return;
         }
+
 
         state.channels = data || [];
 
         renderChannels();
 
-        const savedChannel =
+
+        const savedChannelId =
             localStorage.getItem(
-                "mwanikiSelectedChannel"
+                `mwanikiChannel_${state.currentCommunity.id}`
             );
+
 
         let channel =
             state.channels.find(
-                item => item.id === savedChannel
+                item =>
+                    item.id === savedChannelId
             );
 
-        if (!channel) {
-
-            channel =
-                state.channels.find(
-                    item =>
-                        item.slug === "general"
-                );
-        }
 
         if (!channel) {
             channel = state.channels[0];
         }
 
+
         if (channel) {
             await selectChannel(channel);
+        } else {
+
+            clearCurrentChannel();
+
+            renderEmptyChannelState();
         }
     }
 
 
-    function renderChannels(search = "") {
+    /* =====================================================
+       RENDER CHANNELS
+       ===================================================== */
 
-        const list = $("channelList");
+    function renderChannels() {
 
-        if (!list) {
+        if (!DOM.channelList) {
             return;
         }
 
-        const query =
-            String(search || "")
-                .trim()
-                .toLowerCase();
 
-        const filtered =
-            state.channels.filter(channel => {
+        if (!state.channels.length) {
 
-                if (!query) {
-                    return true;
-                }
-
-                return (
-                    String(channel.name || "")
-                        .toLowerCase()
-                        .includes(query) ||
-                    String(channel.description || "")
-                        .toLowerCase()
-                        .includes(query)
-                );
-            });
-
-        if (!filtered.length) {
-
-            list.innerHTML = `
+            DOM.channelList.innerHTML = `
                 <div class="center-state">
-                    No channels found.
+                    <div>
+                        No channels available.
+                    </div>
                 </div>
             `;
 
             return;
         }
 
-        list.innerHTML = "";
 
-        filtered.forEach(channel => {
+        DOM.channelList.innerHTML = "";
 
-            const button =
-                document.createElement("button");
 
-            button.type = "button";
+        const groups = {};
 
-            button.className =
-                "channel-button";
 
-            button.dataset.channelId =
-                channel.id;
+        state.channels.forEach(channel => {
 
-            const icon =
-                channel.icon ||
-                (
-                    channel.channel_type === "voice"
-                        ? "🔊"
-                        : "#"
-                );
+            const category =
+                channel.channel_type === "voice"
+                    ? "Voice"
+                    : "Channels";
 
-            button.innerHTML = `
-                <span class="channel-icon">
-                    ${escapeHTML(icon)}
-                </span>
 
-                <span class="channel-name">
-                    ${escapeHTML(channel.name)}
-                </span>
-            `;
+            if (!groups[category]) {
+                groups[category] = [];
+            }
 
-            button.addEventListener(
-                "click",
-                () => selectChannel(channel)
-            );
-
-            list.appendChild(button);
+            groups[category].push(channel);
         });
 
-        updateChannelSelection();
-    }
 
+        Object.entries(groups)
+            .forEach(([category, channels]) => {
 
-    function updateChannelSelection() {
+                const heading =
+                    document.createElement("div");
 
-        document
-            .querySelectorAll(
-                ".channel-button"
-            )
-            .forEach(button => {
+                heading.className =
+                    "channel-category";
 
-                button.classList.toggle(
-                    "active",
-                    state.selectedChannel &&
-                    button.dataset.channelId ===
-                    state.selectedChannel.id
+                heading.textContent =
+                    category;
+
+                DOM.channelList.appendChild(
+                    heading
                 );
 
+
+                channels.forEach(channel => {
+
+                    const button =
+                        document.createElement("button");
+
+                    button.type = "button";
+
+                    button.className =
+                        "channel-item";
+
+                    button.dataset.channelId =
+                        channel.id;
+
+                    button.dataset.searchName =
+                        channel.name.toLowerCase();
+
+
+                    button.innerHTML = `
+                        <span class="channel-item-icon">
+                            ${escapeHTML(
+                                channel.icon ||
+                                "#"
+                            )}
+                        </span>
+
+                        <span class="channel-item-name">
+                            ${escapeHTML(
+                                channel.name
+                            )}
+                        </span>
+                    `;
+
+
+                    button.addEventListener(
+                        "click",
+                        () => selectChannel(channel)
+                    );
+
+
+                    DOM.channelList.appendChild(
+                        button
+                    );
+                });
             });
+
+
+        updateActiveChannel();
     }
 
+
+    /* =====================================================
+       CHANNEL SEARCH
+       ===================================================== */
+
+    function setupChannelSearch() {
+
+        if (!DOM.channelSearchInput) {
+            return;
+        }
+
+
+        DOM.channelSearchInput
+            .addEventListener(
+                "input",
+                () => {
+
+                    const query =
+                        DOM.channelSearchInput.value
+                            .trim()
+                            .toLowerCase();
+
+
+                    document
+                        .querySelectorAll(
+                            ".channel-item"
+                        )
+                        .forEach(item => {
+
+                            const name =
+                                item.dataset.searchName ||
+                                "";
+
+                            item.style.display =
+                                !query ||
+                                name.includes(query)
+                                    ? ""
+                                    : "none";
+                        });
+                }
+            );
+
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "/" &&
+                    document.activeElement?.tagName !==
+                    "INPUT" &&
+                    document.activeElement?.tagName !==
+                    "TEXTAREA"
+                ) {
+
+                    event.preventDefault();
+
+                    DOM.channelSearchInput.focus();
+                }
+            }
+        );
+    }
+
+
+    /* =====================================================
+       SELECT CHANNEL
+       ===================================================== */
 
     async function selectChannel(channel) {
 
@@ -1057,82 +947,112 @@
             return;
         }
 
-        state.selectedChannel = channel;
+
+        state.currentChannel = channel;
+
 
         localStorage.setItem(
-            "mwanikiSelectedChannel",
+            `mwanikiChannel_${state.currentCommunity.id}`,
             channel.id
         );
 
-        updateChannelSelection();
 
-        const title =
-            $("mainChannelTitle");
+        updateChannelUI();
 
-        if (title) {
-            title.textContent =
-                `${channel.icon || "#"} ${channel.name}`;
-        }
-
-        const description =
-            $("mainChannelDescription");
-
-        if (description) {
-            description.textContent =
-                channel.description ||
-                `${channel.name} discussion`;
-        }
-
-        const input =
-            $("messageInput");
-
-        if (input) {
-
-            input.placeholder =
-                `Message #${channel.name}...`;
-        }
+        updateActiveChannel();
 
         await loadMessages();
 
-        await markChannelRead();
+        subscribeToCurrentChannel();
 
-        announce(
-            `Opened channel ${channel.name}`
-        );
+        markChannelRead();
     }
 
 
-    /* ========================================================
-       MESSAGES
-       ======================================================== */
+    function updateChannelUI() {
+
+        const channel =
+            state.currentChannel;
+
+        if (!channel) {
+            return;
+        }
+
+
+        if (DOM.mainChannelTitle) {
+
+            DOM.mainChannelTitle.textContent =
+                `# ${channel.name}`;
+        }
+
+
+        if (DOM.mainChannelDescription) {
+
+            DOM.mainChannelDescription.textContent =
+                channel.description ||
+                "Channel discussion";
+        }
+
+
+        if (DOM.messageInput) {
+
+            DOM.messageInput.placeholder =
+                `Message #${channel.name}...`;
+        }
+    }
+
+
+    function updateActiveChannel() {
+
+        document
+            .querySelectorAll(
+                ".channel-item"
+            )
+            .forEach(button => {
+
+                button.classList.toggle(
+                    "active",
+                    button.dataset.channelId ===
+                    state.currentChannel?.id
+                );
+            });
+    }
+
+
+    function clearCurrentChannel() {
+
+        state.currentChannel = null;
+
+        if (DOM.mainChannelTitle) {
+            DOM.mainChannelTitle.textContent =
+                "# General";
+        }
+    }
+
+
+    /* =====================================================
+       LOAD MESSAGES
+       ===================================================== */
 
     async function loadMessages() {
 
-        const list = $("messageList");
-
-        if (!list) {
+        if (!state.currentChannel) {
             return;
         }
 
-        if (!state.selectedChannel) {
 
-            renderWelcome();
+        state.loadingMessages = true;
 
-            return;
-        }
 
-        list.innerHTML = `
+        DOM.messageList.innerHTML = `
             <div class="center-state">
                 <div>
-                    <div
-                        class="loader"
-                        aria-hidden="true"
-                    ></div>
-
+                    <div class="loader"></div>
                     Loading messages...
                 </div>
             </div>
         `;
+
 
         const {
             data,
@@ -1142,233 +1062,126 @@
             .select("*")
             .eq(
                 "channel_id",
-                state.selectedChannel.id
+                state.currentChannel.id
             )
-            .order(
-                "created_at",
-                {
-                    ascending: true
-                }
-            )
-            .limit(
-                CONFIG.messageLimit
-            );
+            .order("created_at", {
+                ascending: true
+            })
+            .limit(500);
+
+
+        state.loadingMessages = false;
+
 
         if (error) {
-            throw error;
-        }
 
-        state.messages = data || [];
-
-        await loadMessageUsers();
-
-        await loadReactions();
-
-        renderMessages();
-    }
-
-
-    async function loadMessageUsers() {
-
-        state.messageUsers.clear();
-
-        const ids = [
-            ...new Set(
-                state.messages
-                    .map(message => message.user_id)
-                    .filter(Boolean)
-            )
-        ];
-
-        if (!ids.length) {
-            return;
-        }
-
-        /*
-         * There is no user/profile table in the supplied
-         * schema. We therefore use community membership
-         * nickname where available.
-         */
-        const {
-            data,
-            error
-        } = await state.supabase
-            .from("chat_community_members")
-            .select(
-                "user_id,nickname,role"
-            )
-            .eq(
-                "community_id",
-                state.selectedCommunity.id
-            )
-            .in(
-                "user_id",
-                ids
-            );
-
-        if (error) {
-            console.warn(
-                "Could not load message users:",
+            console.error(
+                "❌ Message loading failed:",
                 error
             );
-            return;
-        }
 
-        (data || []).forEach(member => {
-
-            state.messageUsers.set(
-                member.user_id,
-                {
-                    name:
-                        member.nickname ||
-                        "Student",
-
-                    role:
-                        member.role ||
-                        "student"
-                }
-            );
-
-        });
-    }
-
-
-    const reactionsByMessage =
-        new Map();
-
-
-    async function loadReactions() {
-
-        reactionsByMessage.clear();
-
-        const ids =
-            state.messages.map(
-                message => message.id
-            );
-
-        if (!ids.length) {
-            return;
-        }
-
-        const {
-            data,
-            error
-        } = await state.supabase
-            .from("chat_message_reactions")
-            .select("*")
-            .in(
-                "message_id",
-                ids
-            );
-
-        if (error) {
-            console.warn(
-                "Could not load reactions:",
-                error
-            );
-            return;
-        }
-
-        (data || []).forEach(reaction => {
-
-            if (
-                !reactionsByMessage.has(
-                    reaction.message_id
-                )
-            ) {
-
-                reactionsByMessage.set(
-                    reaction.message_id,
-                    []
-                );
-            }
-
-            reactionsByMessage
-                .get(reaction.message_id)
-                .push(reaction);
-        });
-    }
-
-
-    function renderWelcome() {
-
-        const list = $("messageList");
-
-        if (!list) {
-            return;
-        }
-
-        list.innerHTML = `
-            <div class="welcome-card">
-
-                <div
-                    class="welcome-icon"
-                    aria-hidden="true"
-                >
-                    💬
-                </div>
-
-                <h2>
-                    Welcome to Mwaniki Scholars
-                </h2>
-
-                <p>
-                    Choose a community and channel,
-                    then start learning and discussing
-                    with other students.
-                </p>
-
-            </div>
-        `;
-    }
-
-
-    function renderMessages() {
-
-        const list = $("messageList");
-
-        if (!list) {
-            return;
-        }
-
-        if (!state.messages.length) {
-
-            list.innerHTML = `
-                <div class="welcome-card">
-
-                    <div
-                        class="welcome-icon"
-                        aria-hidden="true"
-                    >
-                        💬
-                    </div>
-
-                    <h2>
-                        Start the conversation
-                    </h2>
-
-                    <p>
-                        Be the first to send a message
-                        in this channel.
-                    </p>
-
+            DOM.messageList.innerHTML = `
+                <div class="center-state">
+                    Unable to load messages.
                 </div>
             `;
 
             return;
         }
 
-        list.innerHTML = "";
 
-        state.messages.forEach(message => {
+        state.messages = data || [];
 
-            list.appendChild(
-                createMessageElement(message)
-            );
+        renderMessages();
+    }
 
-        });
+
+    /* =====================================================
+       RENDER MESSAGES
+       ===================================================== */
+
+    function renderMessages() {
+
+        if (!DOM.messageList) {
+            return;
+        }
+
+
+        if (!state.messages.length) {
+
+            renderEmptyChannelState();
+
+            return;
+        }
+
+
+        DOM.messageList.innerHTML = "";
+
+
+        state.messages.forEach(
+            message => {
+
+                DOM.messageList.appendChild(
+                    createMessageElement(
+                        message
+                    )
+                );
+            }
+        );
+
 
         scrollMessagesToBottom();
+    }
+
+
+    function renderEmptyChannelState() {
+
+        DOM.messageList.innerHTML = `
+            <div class="welcome-card">
+
+                <div class="welcome-icon">
+                    💬
+                </div>
+
+                <h2>
+                    Welcome to #${escapeHTML(
+                        state.currentChannel?.name ||
+                        "this channel"
+                    )}
+                </h2>
+
+                <p>
+                    Start the conversation.
+                </p>
+
+                <button
+                    type="button"
+                    class="header-action primary"
+                    id="dynamicStartConversation"
+                >
+                    Start Conversation
+                </button>
+
+            </div>
+        `;
+
+
+        const button =
+            document.getElementById(
+                "dynamicStartConversation"
+            );
+
+
+        if (button) {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    DOM.messageInput?.focus();
+                }
+            );
+        }
     }
 
 
@@ -1377,178 +1190,89 @@
         const wrapper =
             document.createElement("article");
 
+
         wrapper.className =
             "chat-message";
+
 
         wrapper.dataset.messageId =
             message.id;
 
-        const isOwn =
-            message.user_id ===
-            state.user?.id;
 
-        const user =
-            state.messageUsers.get(
-                message.user_id
-            ) || {};
+        const own =
+            message.user_id === state.user.id;
 
-        const name =
-            isOwn
+
+        const displayName =
+            own
                 ? state.profile.name
-                : user.name || "Student";
+                : "Student";
 
-        const role =
-            user.role || "student";
 
-        const reactions =
-            reactionsByMessage.get(
-                message.id
-            ) || [];
+        const content =
+            message.is_deleted
+                ? "Message deleted"
+                : message.content || "";
 
-        if (message.is_deleted) {
-
-            wrapper.innerHTML = `
-                <div class="message-avatar">
-                    ${escapeHTML(initials(name))}
-                </div>
-
-                <div class="message-content">
-                    <div class="message-meta">
-                        <strong>
-                            ${escapeHTML(name)}
-                        </strong>
-                    </div>
-
-                    <div class="deleted-message">
-                        This message was deleted.
-                    </div>
-                </div>
-            `;
-
-            return wrapper;
-        }
-
-        const attachment =
-            getAttachmentForMessage(
-                message.id
-            );
 
         wrapper.innerHTML = `
+
             <div class="message-avatar">
-                ${state.profile.avatar && isOwn
-                    ? `
-                        <img
-                            src="${escapeAttribute(
-                                state.profile.avatar
-                            )}"
-                            alt=""
-                        >
-                    `
-                    : escapeHTML(
-                        initials(name)
+                ${escapeHTML(
+                    getInitial(
+                        displayName
                     )
-                }
+                )}
             </div>
 
-            <div class="message-content">
+            <div class="message-body">
 
                 <div class="message-meta">
 
                     <strong>
-                        ${escapeHTML(name)}
+                        ${escapeHTML(
+                            displayName
+                        )}
                     </strong>
 
-                    ${
-                        role !== "student"
-                            ? `
-                                <span class="message-role">
-                                    ${escapeHTML(role)}
-                                </span>
-                            `
-                            : ""
-                    }
-
                     <time>
-                        ${formatTime(
+                        ${formatMessageTime(
                             message.created_at
                         )}
                     </time>
 
-                    ${
-                        message.is_edited
-                            ? `
-                                <span>
-                                    (edited)
-                                </span>
-                            `
-                            : ""
-                    }
-
                 </div>
 
-                ${
-                    message.parent_message_id
-                        ? `
-                            <div class="reply-reference">
-                                ↪ Reply
-                            </div>
-                        `
+                <div class="message-content ${
+                    message.is_deleted
+                        ? "deleted"
                         : ""
-                }
-
-                <div class="message-body">
-                    ${formatMessageContent(
-                        message.content
-                    )}
+                }">
+                    ${escapeHTML(content)}
                 </div>
-
-                ${
-                    attachment
-                        ? renderAttachment(
-                            attachment
-                        )
-                        : ""
-                }
 
                 <div class="message-actions">
 
                     <button
                         type="button"
-                        data-action="react"
+                        class="message-reaction-button"
                         data-message-id="${message.id}"
                         title="React"
                     >
                         😊
                     </button>
 
-                    <button
-                        type="button"
-                        data-action="reply"
-                        data-message-id="${message.id}"
-                        title="Reply"
-                    >
-                        ↩
-                    </button>
-
                     ${
-                        isOwn
+                        own &&
+                        !message.is_deleted
                             ? `
                                 <button
                                     type="button"
-                                    data-action="edit"
+                                    class="message-delete-button"
                                     data-message-id="${message.id}"
-                                    title="Edit"
+                                    title="Delete message"
                                 >
-                                    ✎
-                                </button>
-
-                                <button
-                                    type="button"
-                                    data-action="delete"
-                                    data-message-id="${message.id}"
-                                    title="Delete"
-                                >
-                                    🗑
+                                    Delete
                                 </button>
                             `
                             : ""
@@ -1556,576 +1280,216 @@
 
                 </div>
 
-                ${
-                    renderReactions(
-                        reactions,
-                        message.id
-                    )
-                }
-
             </div>
         `;
 
-        attachMessageActionListeners(
-            wrapper
-        );
+
+        const deleteButton =
+            wrapper.querySelector(
+                ".message-delete-button"
+            );
+
+
+        if (deleteButton) {
+
+            deleteButton.addEventListener(
+                "click",
+                () =>
+                    deleteMessage(
+                        message.id
+                    )
+            );
+        }
+
+
+        const reactionButton =
+            wrapper.querySelector(
+                ".message-reaction-button"
+            );
+
+
+        if (reactionButton) {
+
+            reactionButton.addEventListener(
+                "click",
+                event =>
+                    openMessageReactionPicker(
+                        event,
+                        message.id
+                    )
+            );
+        }
+
 
         return wrapper;
     }
 
 
-    function formatMessageContent(content) {
+    function getInitial(name) {
 
-        if (!content) {
-            return "";
-        }
-
-        return escapeHTML(content)
-            .replace(/\n/g, "<br>");
+        return String(name || "S")
+            .trim()
+            .charAt(0)
+            .toUpperCase();
     }
 
 
-    function renderAttachment(attachment) {
+    function formatMessageTime(date) {
 
-        const url =
-            attachment.file_url ||
-            "";
-
-        if (!url) {
+        if (!date) {
             return "";
         }
 
-        const mime =
-            attachment.mime_type || "";
-
-        const name =
-            attachment.file_name ||
-            "Attachment";
-
-        if (
-            mime.startsWith("image/")
-        ) {
-
-            return `
-                <div class="message-attachment image-attachment">
-
-                    <a
-                        href="${escapeAttribute(url)}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <img
-                            src="${escapeAttribute(url)}"
-                            alt="${escapeAttribute(name)}"
-                        >
-                    </a>
-
-                </div>
-            `;
-        }
-
-        return `
-            <div class="message-attachment file-attachment">
-
-                <a
-                    href="${escapeAttribute(url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download
-                >
-
-                    <span
-                        class="attachment-icon"
-                        aria-hidden="true"
-                    >
-                        📄
-                    </span>
-
-                    <span>
-                        ${escapeHTML(name)}
-                    </span>
-
-                </a>
-
-            </div>
-        `;
-    }
-
-
-    let attachmentsByMessage =
-        new Map();
-
-
-    async function loadAttachments() {
-
-        attachmentsByMessage.clear();
-
-        const ids =
-            state.messages.map(
-                message => message.id
+        return new Date(date)
+            .toLocaleTimeString(
+                [],
+                {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
             );
+    }
 
-        if (!ids.length) {
+
+    function scrollMessagesToBottom() {
+
+        requestAnimationFrame(() => {
+
+            DOM.messageList.scrollTop =
+                DOM.messageList.scrollHeight;
+        });
+    }
+
+
+    /* =====================================================
+       SEND MESSAGE
+       ===================================================== */
+
+    async function sendMessage() {
+
+        if (state.sendingMessage) {
             return;
         }
+
+
+        if (!state.currentChannel) {
+
+            announce(
+                "Select a channel first."
+            );
+
+            return;
+        }
+
+
+        const content =
+            DOM.messageInput.value.trim();
+
+
+        if (!content) {
+            return;
+        }
+
+
+        state.sendingMessage = true;
+
+
+        DOM.sendMessageButton.disabled = true;
+
 
         const {
             data,
             error
         } = await state.supabase
-            .from("chat_attachments")
-            .select("*")
-            .in(
-                "message_id",
-                ids
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: true
-                }
-            );
-
-        if (error) {
-            console.warn(
-                "Attachment loading:",
-                error
-            );
-            return;
-        }
-
-        (data || []).forEach(attachment => {
-
-            if (
-                !attachmentsByMessage.has(
-                    attachment.message_id
-                )
-            ) {
-
-                attachmentsByMessage.set(
-                    attachment.message_id,
-                    []
-                );
-            }
-
-            attachmentsByMessage
-                .get(attachment.message_id)
-                .push(attachment);
-        });
-    }
-
-
-    function getAttachmentForMessage(messageId) {
-
-        const list =
-            attachmentsByMessage.get(
-                messageId
-            );
-
-        return list?.[0] || null;
-    }
-
-
-    function renderReactions(
-        reactions,
-        messageId
-    ) {
-
-        if (!reactions.length) {
-            return "";
-        }
-
-        const counts = new Map();
-
-        reactions.forEach(reaction => {
-
-            counts.set(
-                reaction.reaction,
-                (counts.get(
-                    reaction.reaction
-                ) || 0) + 1
-            );
-
-        });
-
-        return `
-            <div class="message-reactions">
-
-                ${[...counts.entries()]
-                    .map(
-                        ([emoji, count]) => `
-                            <button
-                                type="button"
-                                class="reaction-chip"
-                                data-action="react"
-                                data-message-id="${messageId}"
-                                data-reaction="${escapeAttribute(
-                                    emoji
-                                )}"
-                            >
-                                ${escapeHTML(emoji)}
-                                ${count}
-                            </button>
-                        `
-                    )
-                    .join("")
-                }
-
-            </div>
-        `;
-    }
-
-
-    function attachMessageActionListeners(
-        wrapper
-    ) {
-
-        wrapper
-            .querySelectorAll(
-                "[data-action]"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    async event => {
-
-                        const action =
-                            event.currentTarget
-                                .dataset.action;
-
-                        const messageId =
-                            event.currentTarget
-                                .dataset.messageId;
-
-                        if (
-                            action === "delete"
-                        ) {
-
-                            await deleteMessage(
-                                messageId
-                            );
-
-                        } else if (
-                            action === "edit"
-                        ) {
-
-                            startEditingMessage(
-                                messageId
-                            );
-
-                        } else if (
-                            action === "reply"
-                        ) {
-
-                            startReply(
-                                messageId
-                            );
-
-                        } else if (
-                            action === "react"
-                        ) {
-
-                            const emoji =
-                                event.currentTarget
-                                    .dataset.reaction ||
-                                "👍";
-
-                            await toggleReaction(
-                                messageId,
-                                emoji
-                            );
-
-                        }
-
-                    }
-                );
-
-            });
-    }
-
-
-    /* ========================================================
-       SEND MESSAGE
-       ======================================================== */
-
-    async function sendMessage() {
-
-        if (!state.user) {
-            return;
-        }
-
-        if (!state.selectedChannel) {
-
-            showMessage(
-                "Choose a channel first.",
-                "error"
-            );
-
-            return;
-        }
-
-        const input =
-            $("messageInput");
-
-        if (!input) {
-            return;
-        }
-
-        const content =
-            input.value.trim();
-
-        if (
-            !content &&
-            !state.attachment
-        ) {
-
-            return;
-        }
-
-        const button =
-            $("sendMessageButton");
-
-        if (button) {
-            button.disabled = true;
-        }
-
-        try {
-
-            const payload = {
+            .from("chat_messages")
+            .insert({
                 channel_id:
-                    state.selectedChannel.id,
+                    state.currentChannel.id,
 
                 user_id:
                     state.user.id,
 
-                content:
-                    content || null,
-
-                message_type:
-                    state.attachment
-                        ? "file"
-                        : "text"
-            };
-
-            if (state.replyingToMessageId) {
-
-                payload.parent_message_id =
-                    state.replyingToMessageId;
-            }
-
-            const {
-                data,
-                error
-            } = await state.supabase
-                .from("chat_messages")
-                .insert(payload)
-                .select()
-                .single();
-
-            if (error) {
-                throw error;
-            }
-
-            if (
-                state.attachment &&
-                data
-            ) {
-
-                await uploadAttachment(
-                    data.id,
-                    state.attachment
-                );
-            }
-
-            input.value = "";
-
-            resetComposerState();
-
-            await loadMessages();
-
-            showMessage(
-                "Message sent.",
-                "success"
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Send message failed:",
-                error
-            );
-
-            showMessage(
-                error.message ||
-                "Could not send message.",
-                "error"
-            );
-
-        } finally {
-
-            if (button) {
-                button.disabled = false;
-            }
-        }
-    }
-
-
-    /* ========================================================
-       EDIT MESSAGE
-       ======================================================== */
-
-    function startEditingMessage(
-        messageId
-    ) {
-
-        const message =
-            state.messages.find(
-                item => item.id === messageId
-            );
-
-        if (!message) {
-            return;
-        }
-
-        if (
-            message.user_id !==
-            state.user?.id
-        ) {
-
-            return;
-        }
-
-        state.editingMessageId =
-            messageId;
-
-        state.replyingToMessageId =
-            null;
-
-        const input =
-            $("messageInput");
-
-        if (!input) {
-            return;
-        }
-
-        input.value =
-            message.content || "";
-
-        input.focus();
-
-        input.setSelectionRange(
-            input.value.length,
-            input.value.length
-        );
-
-        showComposerEditingState();
-    }
-
-
-    async function saveEditedMessage() {
-
-        if (!state.editingMessageId) {
-            return;
-        }
-
-        const input =
-            $("messageInput");
-
-        if (!input) {
-            return;
-        }
-
-        const content =
-            input.value.trim();
-
-        if (!content) {
-            return;
-        }
-
-        const {
-            error
-        } = await state.supabase
-            .from("chat_messages")
-            .update({
                 content,
-                is_edited: true,
-                edited_at: new Date().toISOString()
+
+                message_type: "text"
             })
-            .eq(
-                "id",
-                state.editingMessageId
-            )
-            .eq(
-                "user_id",
-                state.user.id
-            );
+            .select()
+            .single();
+
+
+        state.sendingMessage = false;
+
+
+        DOM.sendMessageButton.disabled = false;
+
 
         if (error) {
-            throw error;
+
+            console.error(
+                "❌ Send message failed:",
+                error
+            );
+
+            announce(
+                "Unable to send message."
+            );
+
+            return;
         }
 
-        resetComposerState();
 
-        await loadMessages();
+        DOM.messageInput.value = "";
 
-        showMessage(
-            "Message updated.",
-            "success"
-        );
+        autoResizeTextarea();
+
+
+        /*
+         * Realtime normally inserts this.
+         * Add immediately if it has not appeared.
+         */
+
+        if (
+            !state.messages.some(
+                item => item.id === data.id
+            )
+        ) {
+
+            state.messages.push(data);
+
+            renderMessages();
+        }
     }
 
 
-    function showComposerEditingState() {
-
-        const button =
-            $("sendMessageButton");
-
-        if (button) {
-            button.textContent = "✓";
-            button.title = "Save edit";
-        }
-    }
-
-
-    /* ========================================================
+    /* =====================================================
        DELETE MESSAGE
-       ======================================================== */
+       ===================================================== */
 
-    async function deleteMessage(
-        messageId
-    ) {
+    async function deleteMessage(messageId) {
 
         const message =
             state.messages.find(
                 item => item.id === messageId
             );
 
+
         if (!message) {
             return;
         }
 
+
         if (
             message.user_id !==
-            state.user?.id
+            state.user.id
         ) {
 
-            showMessage(
-                "You can only delete your own messages.",
-                "error"
+            announce(
+                "You can only delete your own messages."
             );
 
             return;
         }
 
-        const confirmed =
-            window.confirm(
-                "Delete this message?"
-            );
-
-        if (!confirmed) {
-            return;
-        }
 
         const {
             error
@@ -2133,94 +1497,548 @@
             .from("chat_messages")
             .update({
                 is_deleted: true,
-                deleted_at:
-                    new Date().toISOString(),
-                content: null
+                deleted_at: new Date().toISOString(),
+                content: "Message deleted"
             })
-            .eq(
-                "id",
-                messageId
-            )
-            .eq(
-                "user_id",
-                state.user.id
-            );
+            .eq("id", messageId)
+            .eq("user_id", state.user.id);
+
 
         if (error) {
+
             console.error(
-                "Delete failed:",
+                "❌ Delete failed:",
                 error
             );
 
-            showMessage(
-                error.message ||
-                "Could not delete message.",
-                "error"
+            announce(
+                "Unable to delete message."
             );
 
             return;
         }
 
-        await loadMessages();
 
-        showMessage(
-            "Message deleted.",
-            "success"
-        );
+        const index =
+            state.messages.findIndex(
+                item =>
+                    item.id === messageId
+            );
+
+
+        if (index !== -1) {
+
+            state.messages[index] = {
+                ...state.messages[index],
+                is_deleted: true,
+                deleted_at:
+                    new Date().toISOString(),
+                content: "Message deleted"
+            };
+        }
+
+
+        renderMessages();
+
+        announce("Message deleted.");
     }
 
 
-    /* ========================================================
-       REPLY
-       ======================================================== */
+    /* =====================================================
+       REALTIME MESSAGES
+       ===================================================== */
 
-    function startReply(messageId) {
+    function subscribeToCurrentChannel() {
 
-        const message =
-            state.messages.find(
-                item => item.id === messageId
-            );
-
-        if (!message) {
+        if (!state.currentChannel) {
             return;
         }
 
-        state.replyingToMessageId =
-            messageId;
 
-        state.editingMessageId =
-            null;
+        cleanupMessageRealtime();
 
-        const input =
-            $("messageInput");
 
-        if (input) {
-            input.focus();
-        }
+        const channelName =
+            `community-messages-${state.currentChannel.id}`;
 
-        showMessage(
-            "Replying to message.",
-            "info"
+
+        const realtime =
+            state.supabase
+                .channel(channelName)
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "*",
+                        schema: "public",
+                        table: "chat_messages",
+                        filter:
+                            `channel_id=eq.${state.currentChannel.id}`
+                    },
+                    payload =>
+                        handleMessageRealtime(
+                            payload
+                        )
+                )
+                .subscribe(
+                    status => {
+
+                        if (status === "SUBSCRIBED") {
+
+                            console.log(
+                                "Community realtime: SUBSCRIBED"
+                            );
+                        }
+                    }
+                );
+
+
+        state.realtimeChannels.push(
+            realtime
         );
     }
 
 
-    /* ========================================================
-       REACTIONS
-       ======================================================== */
+    function handleMessageRealtime(payload) {
+
+        if (payload.eventType === "INSERT") {
+
+            if (
+                !state.messages.some(
+                    item =>
+                        item.id ===
+                        payload.new.id
+                )
+            ) {
+
+                state.messages.push(
+                    payload.new
+                );
+
+                renderMessages();
+            }
+
+            return;
+        }
+
+
+        if (payload.eventType === "UPDATE") {
+
+            const index =
+                state.messages.findIndex(
+                    item =>
+                        item.id ===
+                        payload.new.id
+                );
+
+
+            if (index !== -1) {
+
+                state.messages[index] =
+                    payload.new;
+
+                renderMessages();
+            }
+        }
+
+
+        if (payload.eventType === "DELETE") {
+
+            state.messages =
+                state.messages.filter(
+                    item =>
+                        item.id !==
+                        payload.old.id
+                );
+
+            renderMessages();
+        }
+    }
+
+
+    function cleanupMessageRealtime() {
+
+        state.realtimeChannels
+            .forEach(channel => {
+
+                try {
+                    state.supabase.removeChannel(
+                        channel
+                    );
+                } catch (_) {}
+            });
+
+
+        state.realtimeChannels = [];
+    }
+
+
+    /* =====================================================
+       MARK READ
+       ===================================================== */
+
+    async function markChannelRead() {
+
+        if (
+            !state.currentChannel ||
+            !state.user
+        ) {
+            return;
+        }
+
+
+        const last =
+            state.messages[
+                state.messages.length - 1
+            ];
+
+
+        const payload = {
+
+            channel_id:
+                state.currentChannel.id,
+
+            user_id:
+                state.user.id,
+
+            last_read_message_id:
+                last?.id || null,
+
+            last_read_at:
+                new Date().toISOString()
+        };
+
+
+        const {
+            error
+        } = await state.supabase
+            .from("chat_read_status")
+            .upsert(
+                payload,
+                {
+                    onConflict:
+                        "channel_id,user_id"
+                }
+            );
+
+
+        if (error) {
+            console.debug(
+                "Read status:",
+                error.message
+            );
+        }
+    }
+
+
+    /* =====================================================
+       EMOJI
+       ===================================================== */
+
+    function setupEmojiButton() {
+
+        if (!DOM.emojiButton) {
+            return;
+        }
+
+
+        DOM.emojiButton.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+
+                toggleEmojiPicker(
+                    DOM.emojiButton
+                );
+            }
+        );
+
+
+        document.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    state.emojiPanel &&
+                    !state.emojiPanel.contains(
+                        event.target
+                    ) &&
+                    event.target !==
+                    DOM.emojiButton
+                ) {
+
+                    closeEmojiPicker();
+                }
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "Escape") {
+
+                    closeEmojiPicker();
+                }
+            }
+        );
+    }
+
+
+    function toggleEmojiPicker(anchor) {
+
+        if (state.emojiPanel) {
+
+            closeEmojiPicker();
+
+            return;
+        }
+
+
+        const panel =
+            document.createElement("div");
+
+
+        panel.className =
+            "mwaniki-emoji-panel";
+
+
+        panel.innerHTML = `
+
+            <div class="emoji-grid">
+
+                ${[
+                    "😀",
+                    "😂",
+                    "🤣",
+                    "😊",
+                    "😍",
+                    "🥰",
+                    "😎",
+                    "🤔",
+                    "😮",
+                    "😢",
+                    "😭",
+                    "😡",
+                    "👍",
+                    "👎",
+                    "👏",
+                    "🙌",
+                    "❤️",
+                    "🔥",
+                    "🎉",
+                    "💯",
+                    "📚",
+                    "🧠",
+                    "🩺",
+                    "💊",
+                    "🔬",
+                    "🧪",
+                    "🦠",
+                    "🩸",
+                    "😂",
+                    "🙏"
+                ]
+                    .map(
+                        emoji =>
+                            `<button type="button">${emoji}</button>`
+                    )
+                    .join("")}
+
+            </div>
+        `;
+
+
+        document.body.appendChild(panel);
+
+
+        const rect =
+            anchor.getBoundingClientRect();
+
+
+        panel.style.position =
+            "fixed";
+
+        panel.style.left =
+            `${Math.max(
+                10,
+                rect.left
+            )}px`;
+
+        panel.style.bottom =
+            `${window.innerHeight - rect.top + 8}px`;
+
+        panel.style.zIndex =
+            "99999";
+
+
+        panel.querySelectorAll(
+            "button"
+        ).forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    DOM.messageInput.value +=
+                        button.textContent;
+
+                    DOM.messageInput.focus();
+
+                    autoResizeTextarea();
+
+                    closeEmojiPicker();
+                }
+            );
+        });
+
+
+        state.emojiPanel = panel;
+
+        DOM.emojiButton.setAttribute(
+            "aria-expanded",
+            "true"
+        );
+    }
+
+
+    function closeEmojiPicker() {
+
+        if (state.emojiPanel) {
+
+            state.emojiPanel.remove();
+
+            state.emojiPanel = null;
+        }
+
+
+        if (DOM.emojiButton) {
+
+            DOM.emojiButton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+        }
+    }
+
+
+    /* =====================================================
+       MESSAGE REACTION PICKER
+       ===================================================== */
+
+    function openMessageReactionPicker(
+        event,
+        messageId
+    ) {
+
+        const old =
+            document.querySelector(
+                ".message-reaction-picker"
+            );
+
+
+        if (old) {
+            old.remove();
+        }
+
+
+        const picker =
+            document.createElement("div");
+
+
+        picker.className =
+            "message-reaction-picker";
+
+
+        picker.innerHTML = [
+            "👍",
+            "❤️",
+            "😂",
+            "🔥",
+            "👏",
+            "🎉",
+            "🧠"
+        ]
+            .map(
+                emoji =>
+                    `<button type="button">${emoji}</button>`
+            )
+            .join("");
+
+
+        document.body.appendChild(picker);
+
+
+        const rect =
+            event.currentTarget
+                .getBoundingClientRect();
+
+
+        picker.style.position = "fixed";
+
+        picker.style.left =
+            `${rect.left}px`;
+
+        picker.style.top =
+            `${rect.bottom + 5}px`;
+
+        picker.style.zIndex =
+            "99999";
+
+
+        picker.querySelectorAll(
+            "button"
+        ).forEach(button => {
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    await toggleReaction(
+                        messageId,
+                        button.textContent
+                    );
+
+                    picker.remove();
+                }
+            );
+        });
+
+
+        setTimeout(() => {
+
+            document.addEventListener(
+                "click",
+                function close(event) {
+
+                    if (
+                        !picker.contains(
+                            event.target
+                        )
+                    ) {
+
+                        picker.remove();
+
+                        document.removeEventListener(
+                            "click",
+                            close
+                        );
+                    }
+                }
+            );
+
+        }, 0);
+    }
+
 
     async function toggleReaction(
         messageId,
-        emoji
+        reaction
     ) {
 
-        if (!state.user) {
-            return;
-        }
-
         const {
-            data,
-            error
+            data: existing
         } = await state.supabase
             .from("chat_message_reactions")
             .select("id")
@@ -2234,43 +2052,29 @@
             )
             .eq(
                 "reaction",
-                emoji
+                reaction
             )
             .maybeSingle();
 
-        if (error) {
-            console.error(
-                "Reaction lookup:",
-                error
-            );
-            return;
-        }
 
-        if (data) {
+        if (existing) {
 
-            const {
-                error: deleteError
-            } = await state.supabase
-                .from("chat_message_reactions")
+            await state.supabase
+                .from(
+                    "chat_message_reactions"
+                )
                 .delete()
                 .eq(
                     "id",
-                    data.id
+                    existing.id
                 );
-
-            if (deleteError) {
-                console.error(
-                    deleteError
-                );
-                return;
-            }
 
         } else {
 
-            const {
-                error: insertError
-            } = await state.supabase
-                .from("chat_message_reactions")
+            await state.supabase
+                .from(
+                    "chat_message_reactions"
+                )
                 .insert({
                     message_id:
                         messageId,
@@ -2278,1607 +2082,909 @@
                     user_id:
                         state.user.id,
 
-                    reaction:
-                        emoji
+                    reaction
                 });
+        }
+    }
 
-            if (insertError) {
-                console.error(
-                    insertError
-                );
-                return;
+
+    /* =====================================================
+       TEXTAREA
+       ===================================================== */
+
+    function setupMessageComposer() {
+
+        DOM.messageForm?.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                sendMessage();
             }
-        }
-
-        await loadMessages();
-    }
+        );
 
 
-    /* ========================================================
-       COMPOSER
-       ======================================================== */
+        DOM.messageInput?.addEventListener(
+            "keydown",
+            event => {
 
-    function resetComposerState() {
-
-        state.editingMessageId = null;
-        state.replyingToMessageId = null;
-        state.attachment = null;
-
-        const input =
-            $("messageInput");
-
-        if (input) {
-            input.value = "";
-        }
-
-        const button =
-            $("sendMessageButton");
-
-        if (button) {
-            button.textContent = "➤";
-            button.title = "Send message";
-        }
-
-        removeAttachmentPreview();
-    }
-
-
-    function setupComposer() {
-
-        const form =
-            $("messageForm");
-
-        if (form) {
-
-            form.addEventListener(
-                "submit",
-                async event => {
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
 
                     event.preventDefault();
 
-                    if (
-                        state.editingMessageId
-                    ) {
-
-                        try {
-                            await saveEditedMessage();
-                        } catch (error) {
-
-                            console.error(error);
-
-                            showMessage(
-                                error.message ||
-                                "Could not edit message.",
-                                "error"
-                            );
-                        }
-
-                        return;
-                    }
-
-                    await sendMessage();
+                    sendMessage();
                 }
-            );
-        }
+            }
+        );
 
 
-        const input =
-            $("messageInput");
-
-        if (input) {
-
-            input.addEventListener(
-                "keydown",
-                event => {
-
-                    if (
-                        event.key === "Enter" &&
-                        !event.shiftKey
-                    ) {
-
-                        event.preventDefault();
-
-                        const form =
-                            $("messageForm");
-
-                        form?.requestSubmit();
-                    }
-
-                }
-            );
-
-            input.addEventListener(
-                "input",
-                autoResizeTextarea
-            );
-        }
+        DOM.messageInput?.addEventListener(
+            "input",
+            autoResizeTextarea
+        );
     }
 
 
     function autoResizeTextarea() {
 
-        const input =
-            $("messageInput");
-
-        if (!input) {
+        if (!DOM.messageInput) {
             return;
         }
 
-        input.style.height = "auto";
 
-        input.style.height =
-            Math.min(
-                input.scrollHeight,
-                180
-            ) + "px";
+        DOM.messageInput.style.height =
+            "auto";
+
+
+        DOM.messageInput.style.height =
+            `${Math.min(
+                DOM.messageInput.scrollHeight,
+                160
+            )}px`;
     }
 
 
-    /* ========================================================
+    /* =====================================================
        ATTACHMENTS
-       ======================================================== */
+       ===================================================== */
 
     function setupAttachments() {
 
-        const button =
-            $("attachButton");
-
-        if (!button) {
+        if (!DOM.attachButton) {
             return;
         }
 
-        const fileInput =
-            document.createElement("input");
 
-        fileInput.type = "file";
-        fileInput.hidden = true;
-
-        fileInput.accept =
-            CONFIG.allowedFileTypes.join(",");
-
-        document.body.appendChild(
-            fileInput
-        );
-
-        button.addEventListener(
+        DOM.attachButton.addEventListener(
             "click",
-            () => fileInput.click()
-        );
-
-        fileInput.addEventListener(
-            "change",
             () => {
 
-                const file =
-                    fileInput.files?.[0];
+                if (!state.currentChannel) {
 
-                if (!file) {
-                    return;
-                }
-
-                if (
-                    file.size >
-                    CONFIG.maxFileSize
-                ) {
-
-                    showMessage(
-                        "File is larger than 25 MB.",
-                        "error"
+                    announce(
+                        "Select a channel first."
                     );
 
-                    fileInput.value = "";
                     return;
                 }
 
-                if (
-                    !CONFIG.allowedFileTypes
-                        .includes(file.type)
-                ) {
 
-                    showMessage(
-                        "This file type is not supported.",
-                        "error"
-                    );
+                if (!state.attachmentInput) {
 
-                    fileInput.value = "";
-                    return;
+                    state.attachmentInput =
+                        document.createElement(
+                            "input"
+                        );
+
+                    state.attachmentInput.type =
+                        "file";
+
+                    state.attachmentInput.multiple =
+                        true;
+
+                    state.attachmentInput.accept =
+                        "image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip";
                 }
 
-                state.attachment =
-                    file;
 
-                showAttachmentPreview(
-                    file
-                );
+                state.attachmentInput.value = "";
 
-                fileInput.value = "";
+                state.attachmentInput.click();
             }
         );
-    }
 
-
-    function showAttachmentPreview(file) {
-
-        removeAttachmentPreview();
-
-        const composer =
-            document.querySelector(
-                ".composer-box"
-            );
-
-        if (!composer) {
-            return;
-        }
-
-        const preview =
-            document.createElement("div");
-
-        preview.id =
-            "attachmentPreview";
-
-        preview.className =
-            "attachment-preview";
-
-        preview.innerHTML = `
-            <span>
-                ${
-                    file.type.startsWith("image/")
-                        ? "📷"
-                        : "📄"
-                }
-            </span>
-
-            <span>
-                ${escapeHTML(file.name)}
-            </span>
-
-            <button
-                type="button"
-                id="removeAttachmentButton"
-                title="Remove attachment"
-                aria-label="Remove attachment"
-            >
-                ×
-            </button>
-        `;
-
-        composer.prepend(preview);
-
-        $("removeAttachmentButton")
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    state.attachment = null;
-
-                    removeAttachmentPreview();
-                }
-            );
-    }
-
-
-    function removeAttachmentPreview() {
-
-        $("attachmentPreview")?.remove();
-    }
-
-
-    async function uploadAttachment(
-        messageId,
-        file
-    ) {
-
-        const safeName =
-            file.name
-                .replace(
-                    /[^a-zA-Z0-9._-]/g,
-                    "_"
-                );
-
-        const path =
-            `${state.user.id}/` +
-            `${messageId}/` +
-            `${Date.now()}-${safeName}`;
-
-        const {
-            error: uploadError
-        } = await state.supabase
-            .storage
-            .from(
-                CONFIG.attachmentBucket
-            )
-            .upload(
-                path,
-                file,
-                {
-                    cacheControl: "3600",
-                    upsert: false
-                }
-            );
-
-        if (uploadError) {
-            throw uploadError;
-        }
-
-        const {
-            data: urlData
-        } = state.supabase
-            .storage
-            .from(
-                CONFIG.attachmentBucket
-            )
-            .getPublicUrl(path);
-
-        const publicUrl =
-            urlData?.publicUrl || null;
-
-        const {
-            error: attachmentError
-        } = await state.supabase
-            .from("chat_attachments")
-            .insert({
-                message_id:
-                    messageId,
-
-                uploaded_by:
-                    state.user.id,
-
-                file_name:
-                    file.name,
-
-                file_path:
-                    path,
-
-                file_url:
-                    publicUrl,
-
-                mime_type:
-                    file.type,
-
-                file_size:
-                    file.size
-            });
-
-        if (attachmentError) {
-            throw attachmentError;
-        }
-    }
-
-
-    /* ========================================================
-       EMOJI PICKER
-       ======================================================== */
-
-    function setupEmojiPicker() {
-
-        const button =
-            $("emojiButton");
-
-        if (!button) {
-            return;
-        }
-
-        createEmojiPicker();
-
-        button.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-                toggleEmojiPicker();
-            }
-        );
 
         document.addEventListener(
-            "click",
+            "change",
             event => {
 
-                const picker =
-                    $("mwanikiEmojiPicker");
-
-                if (!picker) {
+                if (
+                    event.target !==
+                    state.attachmentInput
+                ) {
                     return;
                 }
 
+
+                const files =
+                    Array.from(
+                        event.target.files || []
+                    );
+
+
+                uploadAttachments(files);
+            }
+        );
+    }
+
+
+    async function uploadAttachments(files) {
+
+        if (!files.length) {
+            return;
+        }
+
+
+        for (const file of files) {
+
+            if (
+                file.size >
+                CONFIG.maxFileSize
+            ) {
+
+                announce(
+                    `${file.name} is larger than 20 MB.`
+                );
+
+                continue;
+            }
+
+
+            try {
+
+                announce(
+                    `Uploading ${file.name}...`
+                );
+
+
+                const safeName =
+                    file.name
+                        .replace(
+                            /[^a-zA-Z0-9._-]/g,
+                            "_"
+                        );
+
+
+                const path =
+                    `${state.user.id}/${Date.now()}_${safeName}`;
+
+
+                const {
+                    error:
+                    uploadError
+                } = await state.supabase
+                    .storage
+                    .from(
+                        CONFIG.attachmentBucket
+                    )
+                    .upload(
+                        path,
+                        file,
+                        {
+                            upsert: false
+                        }
+                    );
+
+
+                if (uploadError) {
+
+                    throw uploadError;
+                }
+
+
+                const {
+                    data:
+                    publicData
+                } = state.supabase
+                    .storage
+                    .from(
+                        CONFIG.attachmentBucket
+                    )
+                    .getPublicUrl(path);
+
+
+                const fileUrl =
+                    publicData?.publicUrl ||
+                    null;
+
+
+                const {
+                    data: message,
+                    error:
+                    messageError
+                } = await state.supabase
+                    .from("chat_messages")
+                    .insert({
+                        channel_id:
+                            state.currentChannel.id,
+
+                        user_id:
+                            state.user.id,
+
+                        content:
+                            `📎 ${file.name}`,
+
+                        message_type:
+                            "file"
+                    })
+                    .select()
+                    .single();
+
+
+                if (messageError) {
+                    throw messageError;
+                }
+
+
+                const {
+                    error:
+                    attachmentError
+                } = await state.supabase
+                    .from(
+                        "chat_attachments"
+                    )
+                    .insert({
+                        message_id:
+                            message.id,
+
+                        uploaded_by:
+                            state.user.id,
+
+                        file_name:
+                            file.name,
+
+                        file_path:
+                            path,
+
+                        file_url:
+                            fileUrl,
+
+                        mime_type:
+                            file.type ||
+                            "application/octet-stream",
+
+                        file_size:
+                            file.size
+                    });
+
+
+                if (attachmentError) {
+
+                    console.error(
+                        "Attachment record error:",
+                        attachmentError
+                    );
+                }
+
+
+                announce(
+                    `${file.name} uploaded.`
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "❌ Upload failed:",
+                    error
+                );
+
+                announce(
+                    `Unable to upload ${file.name}.`
+                );
+            }
+        }
+    }
+
+
+    /* =====================================================
+       COMMUNITY MODAL
+       ===================================================== */
+
+    function setupCommunityModal() {
+
+        [
+            DOM.openCommunityButton,
+            DOM.communitySelectorButton,
+            DOM.headerCommunityButton
+        ].forEach(button => {
+
+            button?.addEventListener(
+                "click",
+                openCommunityModal
+            );
+        });
+
+
+        DOM.closeCommunityModal?.addEventListener(
+            "click",
+            closeCommunityModal
+        );
+
+
+        DOM.communityModal?.addEventListener(
+            "click",
+            event => {
+
                 if (
-                    !picker.contains(
-                        event.target
-                    ) &&
-                    event.target !== button
+                    event.target ===
+                    DOM.communityModal
                 ) {
 
-                    closeEmojiPicker();
+                    closeCommunityModal();
                 }
             }
         );
+
+
+        DOM.communityModalSearch
+            ?.addEventListener(
+                "input",
+                renderCommunityModal
+            );
+
 
         document.addEventListener(
             "keydown",
             event => {
 
                 if (event.key === "Escape") {
-                    closeEmojiPicker();
+
                     closeCommunityModal();
-                    closeGeneralCallModal();
                 }
-
             }
         );
-    }
-
-
-    function createEmojiPicker() {
-
-        if ($("mwanikiEmojiPicker")) {
-            return;
-        }
-
-        const picker =
-            document.createElement("div");
-
-        picker.id =
-            "mwanikiEmojiPicker";
-
-        picker.className =
-            "emoji-picker";
-
-        picker.setAttribute(
-            "role",
-            "dialog"
-        );
-
-        const emojis = [
-            "😀",
-            "😂",
-            "🤣",
-            "😊",
-            "😍",
-            "🥰",
-            "😎",
-            "🤔",
-            "😮",
-            "😢",
-            "😡",
-            "👍",
-            "👎",
-            "👏",
-            "🙌",
-            "🙏",
-            "❤️",
-            "🔥",
-            "🎉",
-            "💯",
-            "✅",
-            "❌",
-            "💡",
-            "📚",
-            "🧪",
-            "🩺",
-            "💊",
-            "🧠",
-            "🔬",
-            "😂"
-        ];
-
-        picker.innerHTML = `
-            <div class="emoji-picker-grid">
-                ${emojis.map(
-                    emoji => `
-                        <button
-                            type="button"
-                            class="emoji-item"
-                            data-emoji="${emoji}"
-                            aria-label="Insert ${emoji}"
-                        >
-                            ${emoji}
-                        </button>
-                    `
-                ).join("")}
-            </div>
-        `;
-
-        document.body.appendChild(
-            picker
-        );
-
-        picker
-            .querySelectorAll(
-                ".emoji-item"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        insertEmoji(
-                            button.dataset.emoji
-                        );
-
-                    }
-                );
-
-            });
-    }
-
-
-    function toggleEmojiPicker() {
-
-        const picker =
-            $("mwanikiEmojiPicker");
-
-        const button =
-            $("emojiButton");
-
-        if (!picker) {
-            return;
-        }
-
-        if (state.emojiOpen) {
-            closeEmojiPicker();
-            return;
-        }
-
-        positionEmojiPicker();
-
-        picker.classList.add("open");
-
-        state.emojiOpen = true;
-
-        button?.setAttribute(
-            "aria-expanded",
-            "true"
-        );
-    }
-
-
-    function closeEmojiPicker() {
-
-        const picker =
-            $("mwanikiEmojiPicker");
-
-        const button =
-            $("emojiButton");
-
-        picker?.classList.remove(
-            "open"
-        );
-
-        state.emojiOpen = false;
-
-        button?.setAttribute(
-            "aria-expanded",
-            "false"
-        );
-    }
-
-
-    function positionEmojiPicker() {
-
-        const picker =
-            $("mwanikiEmojiPicker");
-
-        const button =
-            $("emojiButton");
-
-        if (!picker || !button) {
-            return;
-        }
-
-        const rect =
-            button.getBoundingClientRect();
-
-        picker.style.position =
-            "fixed";
-
-        picker.style.left =
-            `${Math.max(
-                10,
-                rect.left
-            )}px`;
-
-        picker.style.bottom =
-            `${Math.max(
-                10,
-                window.innerHeight -
-                rect.top +
-                8
-            )}px`;
-    }
-
-
-    function insertEmoji(emoji) {
-
-        const input =
-            $("messageInput");
-
-        if (!input) {
-            return;
-        }
-
-        const start =
-            input.selectionStart ??
-            input.value.length;
-
-        const end =
-            input.selectionEnd ??
-            input.value.length;
-
-        input.value =
-            input.value.substring(
-                0,
-                start
-            ) +
-            emoji +
-            input.value.substring(
-                end
-            );
-
-        input.focus();
-
-        const cursor =
-            start +
-            emoji.length;
-
-        input.setSelectionRange(
-            cursor,
-            cursor
-        );
-
-        autoResizeTextarea();
-
-        closeEmojiPicker();
-    }
-
-
-    /* ========================================================
-       COMMUNITY MODAL
-       ======================================================== */
-
-    function setupCommunityModal() {
-
-        const openButtons = [
-            $("openCommunityButton"),
-            $("communitySelectorButton"),
-            $("headerCommunityButton"),
-            $("railGeneralButton")
-        ];
-
-        openButtons.forEach(button => {
-
-            if (!button) {
-                return;
-            }
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    /*
-                     * railGeneralButton opens the General
-                     * community if one exists.
-                     */
-                    if (
-                        button.id ===
-                        "railGeneralButton"
-                    ) {
-
-                        const general =
-                            state.communities.find(
-                                community =>
-                                    community.slug ===
-                                    "general"
-                            );
-
-                        if (general) {
-                            selectCommunity(
-                                general
-                            );
-                            return;
-                        }
-                    }
-
-                    openCommunityModal();
-                }
-            );
-        });
-
-
-        $("closeCommunityModal")
-            ?.addEventListener(
-                "click",
-                closeCommunityModal
-            );
-
-
-        const search =
-            $("communityModalSearch");
-
-        search?.addEventListener(
-            "input",
-            () => {
-
-                renderCommunityModal(
-                    search.value
-                );
-
-            }
-        );
-
-
-        $("communityModal")
-            ?.addEventListener(
-                "click",
-                event => {
-
-                    if (
-                        event.target.id ===
-                        "communityModal"
-                    ) {
-
-                        closeCommunityModal();
-                    }
-
-                }
-            );
     }
 
 
     function openCommunityModal() {
 
-        const modal =
-            $("communityModal");
-
-        if (!modal) {
+        if (!DOM.communityModal) {
             return;
         }
 
-        modal.classList.add("open");
 
-        modal.setAttribute(
+        renderCommunityModal();
+
+
+        DOM.communityModal.classList.add(
+            "open"
+        );
+
+
+        DOM.communityModal.setAttribute(
             "aria-hidden",
             "false"
         );
 
-        $("openCommunityButton")
-            ?.setAttribute(
+
+        [
+            DOM.openCommunityButton,
+            DOM.communitySelectorButton,
+            DOM.headerCommunityButton
+        ].forEach(button => {
+
+            button?.setAttribute(
                 "aria-expanded",
                 "true"
             );
+        });
 
-        $("communitySelectorButton")
-            ?.setAttribute(
-                "aria-expanded",
-                "true"
-            );
 
-        $("headerCommunityButton")
-            ?.setAttribute(
-                "aria-expanded",
-                "true"
-            );
-
-        $("communityModalSearch")
-            ?.focus();
+        DOM.communityModalSearch?.focus();
     }
 
 
     function closeCommunityModal() {
 
-        const modal =
-            $("communityModal");
-
-        if (!modal) {
+        if (!DOM.communityModal) {
             return;
         }
 
-        modal.classList.remove(
+
+        DOM.communityModal.classList.remove(
             "open"
         );
 
-        modal.setAttribute(
+
+        DOM.communityModal.setAttribute(
             "aria-hidden",
             "true"
         );
 
+
         [
-            $("openCommunityButton"),
-            $("communitySelectorButton"),
-            $("headerCommunityButton")
+            DOM.openCommunityButton,
+            DOM.communitySelectorButton,
+            DOM.headerCommunityButton
         ].forEach(button => {
 
             button?.setAttribute(
                 "aria-expanded",
                 "false"
             );
-
         });
     }
 
 
-    /* ========================================================
-       CHANNEL SEARCH
-       ======================================================== */
+    function renderCommunityModal() {
 
-    function setupChannelSearch() {
-
-        const input =
-            $("channelSearchInput");
-
-        if (!input) {
+        if (!DOM.communityChoiceList) {
             return;
         }
 
-        input.addEventListener(
-            "input",
-            () => {
 
-                renderChannels(
-                    input.value
+        const query =
+            (
+                DOM.communityModalSearch
+                    ?.value ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const filtered =
+            state.communities.filter(
+                community => {
+
+                    return (
+                        !query ||
+                        community.name
+                            .toLowerCase()
+                            .includes(query) ||
+                        (
+                            community.description ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .includes(query)
+                    );
+                }
+            );
+
+
+        DOM.communityChoiceList.innerHTML =
+            filtered.length
+                ? ""
+                : `
+                    <div class="center-state">
+                        No communities found.
+                    </div>
+                `;
+
+
+        filtered.forEach(
+            community => {
+
+                const button =
+                    document.createElement(
+                        "button"
+                    );
+
+
+                button.type = "button";
+
+                button.className =
+                    "community-choice";
+
+
+                button.setAttribute(
+                    "role",
+                    "option"
                 );
 
-            }
-        );
 
+                button.innerHTML = `
 
-        document.addEventListener(
-            "keydown",
-            event => {
+                    <div class="community-choice-icon">
+
+                        ${
+                            community.icon_url
+                                ? `
+                                    <img
+                                        src="${escapeHTML(
+                                            community.icon_url
+                                        )}"
+                                        alt=""
+                                    >
+                                `
+                                : escapeHTML(
+                                    getCommunityInitials(
+                                        community.name
+                                    )
+                                )
+                        }
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(
+                                community.name
+                            )}
+                        </strong>
+
+                        <small>
+                            ${escapeHTML(
+                                community.description ||
+                                "Community"
+                            )}
+                        </small>
+
+                    </div>
+                `;
+
 
                 if (
-                    event.key === "/" &&
-                    document.activeElement !== input &&
-                    document.activeElement !==
-                        $("messageInput")
+                    community.id ===
+                    state.currentCommunity?.id
                 ) {
 
-                    event.preventDefault();
-
-                    input.focus();
+                    button.classList.add(
+                        "selected"
+                    );
                 }
 
+
+                button.addEventListener(
+                    "click",
+                    () =>
+                        selectCommunity(
+                            community
+                        )
+                );
+
+
+                DOM.communityChoiceList
+                    .appendChild(button);
             }
         );
     }
 
 
-    /* ========================================================
-       REALTIME
-       ======================================================== */
+    /* =====================================================
+       GENERAL CALL MODAL
+       ===================================================== */
 
-    async function setupCommunityRealtime() {
+    function setupCallButtons() {
 
-        cleanupRealtime();
-
-        if (!state.selectedCommunity) {
-            return;
-        }
-
-        const channelName =
-            `community-${state.selectedCommunity.id}`;
-
-        const channel =
-            state.supabase
-                .channel(channelName)
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "chat_messages"
-                    },
-                    payload => {
-
-                        const message =
-                            payload.new ||
-                            payload.old;
-
-                        if (
-                            message?.channel_id ===
-                            state.selectedChannel?.id
-                        ) {
-
-                            loadMessages()
-                                .catch(console.error);
-                        }
-
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "chat_message_reactions"
-                    },
-                    () => {
-
-                        loadMessages()
-                            .catch(console.error);
-
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "chat_attachments"
-                    },
-                    payload => {
-
-                        if (
-                            payload.new?.message_id
-                        ) {
-
-                            loadMessages()
-                                .catch(console.error);
-                        }
-
-                    }
-                )
-                .subscribe(
-                    status => {
-
-                        console.log(
-                            "Community realtime:",
-                            status
-                        );
-
-                    }
-                );
-
-        state.realtimeChannels.push(
-            channel
+        DOM.generalCallButton?.addEventListener(
+            "click",
+            openGeneralCallModal
         );
+
+
+        DOM.closeGeneralCallModalButton
+            ?.addEventListener(
+                "click",
+                closeGeneralCallModal
+            );
+
+
+        DOM.cancelGeneralCallButton
+            ?.addEventListener(
+                "click",
+                closeGeneralCallModal
+            );
+
+
+        DOM.startGeneralCallButton
+            ?.addEventListener(
+                "click",
+                startGeneralCall
+            );
+
+
+        DOM.acceptCallButton
+            ?.addEventListener(
+                "click",
+                acceptIncomingCall
+            );
+
+
+        DOM.declineCallButton
+            ?.addEventListener(
+                "click",
+                declineIncomingCall
+            );
+
+
+        DOM.leaveCallButton
+            ?.addEventListener(
+                "click",
+                leaveCall
+            );
+
+
+        DOM.toggleMicrophoneButton
+            ?.addEventListener(
+                "click",
+                toggleMicrophone
+            );
+
+
+        DOM.toggleCameraButton
+            ?.addEventListener(
+                "click",
+                toggleCamera
+            );
+
+
+        DOM.shareScreenButton
+            ?.addEventListener(
+                "click",
+                shareScreen
+            );
+
+
+        DOM.minimizeCallButton
+            ?.addEventListener(
+                "click",
+                minimizeCall
+            );
     }
 
 
-    function cleanupRealtime() {
+    /* =====================================================
+       OPEN GENERAL CALL
+       ===================================================== */
 
-        state.realtimeChannels
-            .forEach(channel => {
-
-                try {
-                    state.supabase
-                        .removeChannel(
-                            channel
-                        );
-                } catch (error) {
-                    console.warn(error);
-                }
-
-            });
-
-        state.realtimeChannels = [];
-    }
-
-
-    /* ========================================================
-       PRESENCE
-       ======================================================== */
-
-    async function updatePresence(
-        status = "online"
-    ) {
+    async function openGeneralCallModal() {
 
         if (!state.user) {
             return;
         }
 
-        const now =
-            new Date().toISOString();
 
-        const {
-            error
-        } = await state.supabase
-            .from("chat_presence")
-            .upsert(
-                {
-                    user_id:
-                        state.user.id,
-
-                    status,
-
-                    last_seen_at:
-                        now,
-
-                    updated_at:
-                        now
-                },
-                {
-                    onConflict:
-                        "user_id"
-                }
-            );
-
-        if (error) {
-            console.warn(
-                "Presence:",
-                error
-            );
-        }
-    }
-
-
-    function setupPresence() {
-
-        updatePresence(
-            "online"
-        ).catch(console.warn);
-
-        state.presenceTimer =
-            setInterval(
-                () => {
-
-                    updatePresence(
-                        "online"
-                    ).catch(console.warn);
-
-                },
-                CONFIG.presenceIntervalMs
-            );
-
-        window.addEventListener(
-            "beforeunload",
-            () => {
-
-                /*
-                 * Best effort only.
-                 */
-                updatePresence(
-                    "offline"
-                ).catch(() => {});
-
-            }
-        );
-    }
-
-
-    /* ========================================================
-       READ STATUS
-       ======================================================== */
-
-    async function markChannelRead() {
-
-        if (
-            !state.user ||
-            !state.selectedChannel
-        ) {
-            return;
-        }
-
-        const lastMessage =
-            state.messages[
-                state.messages.length - 1
-            ];
-
-        const payload = {
-            channel_id:
-                state.selectedChannel.id,
-
-            user_id:
-                state.user.id,
-
-            last_read_message_id:
-                lastMessage?.id || null,
-
-            last_read_at:
-                new Date().toISOString()
-        };
-
-        const {
-            data
-        } = await state.supabase
-            .from("chat_read_status")
-            .select("id")
-            .eq(
-                "channel_id",
-                state.selectedChannel.id
-            )
-            .eq(
-                "user_id",
-                state.user.id
-            )
-            .maybeSingle();
-
-        if (data) {
-
-            await state.supabase
-                .from("chat_read_status")
-                .update(payload)
-                .eq(
-                    "id",
-                    data.id
-                );
-
-        } else {
-
-            await state.supabase
-                .from("chat_read_status")
-                .insert(payload);
-        }
-    }
-
-
-    /* ========================================================
-       NOTIFICATIONS
-       ======================================================== */
-
-    async function createNotification({
-        userId,
-        communityId = null,
-        channelId = null,
-        messageId = null,
-        type,
-        title,
-        body = null
-    }) {
-
-        if (!userId) {
-            return;
-        }
-
-        const {
-            error
-        } = await state.supabase
-            .from("chat_notifications")
-            .insert({
-                user_id:
-                    userId,
-
-                community_id:
-                    communityId,
-
-                channel_id:
-                    channelId,
-
-                message_id:
-                    messageId,
-
-                notification_type:
-                    type,
-
-                title,
-
-                body
-            });
-
-        if (error) {
-            console.warn(
-                "Notification:",
-                error
-            );
-        }
-    }
-
-
-    /* ========================================================
-       DYNAMIC COMMUNITY CALL BUTTON
-       ======================================================== */
-
-    function createCommunityCallButton() {
-
-        const actions =
-            document.querySelector(
-                ".main-actions"
-            );
-
-        if (!actions) {
-            return;
-        }
-
-        if (
-            $("communityCallButton")
-        ) {
-            return;
-        }
-
-        const button =
-            document.createElement("button");
-
-        button.type = "button";
-
-        button.className =
-            "header-action call-action";
-
-        button.id =
-            "communityCallButton";
-
-        button.title =
-            "Start a call in this community";
-
-        button.setAttribute(
-            "aria-label",
-            "Start a community call"
+        DOM.generalCallModal?.classList.add(
+            "open"
         );
 
-        button.innerHTML = `
-            <span aria-hidden="true">
-                📞
-            </span>
 
-            <span>
-                Community Call
-            </span>
-        `;
-
-        const general =
-            $("generalCallButton");
-
-        if (general) {
-            general.after(button);
-        } else {
-            actions.appendChild(button);
-        }
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                openCallStart(
-                    "community"
-                );
-
-            }
-        );
-    }
-
-
-    /* ========================================================
-       GENERAL CALL
-       ======================================================== */
-
-    function setupGeneralCall() {
-
-        $("generalCallButton")
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    openCallStart(
-                        "general"
-                    );
-
-                }
-            );
-
-
-        $("closeGeneralCallModalButton")
-            ?.addEventListener(
-                "click",
-                closeGeneralCallModal
-            );
-
-
-        $("cancelGeneralCallButton")
-            ?.addEventListener(
-                "click",
-                closeGeneralCallModal
-            );
-
-
-        $("startGeneralCallButton")
-            ?.addEventListener(
-                "click",
-                async () => {
-
-                    await createCallRoom(
-                        "general"
-                    );
-
-                }
-            );
-    }
-
-
-    function openCallStart(
-        scope
-    ) {
-
-        const modal =
-            $("generalCallModal");
-
-        if (!modal) {
-            return;
-        }
-
-        modal.dataset.callScope =
-            scope;
-
-        const title =
-            $("generalCallTitle");
-
-        if (title) {
-
-            title.textContent =
-                scope === "general"
-                    ? "General Call"
-                    : `${state.selectedCommunity?.name || "Community"} Call`;
-        }
-
-        const description =
-            modal.querySelector(
-                ".modal-description"
-            );
-
-        if (description) {
-
-            description.textContent =
-                scope === "general"
-                    ? "Choose who you want to call."
-                    : "Choose participants for this community call.";
-        }
-
-        loadCallUsers(scope)
-            .catch(error => {
-
-                console.error(error);
-
-                setCallMessage(
-                    error.message ||
-                    "Could not load call participants."
-                );
-
-            });
-
-        modal.classList.add("open");
-
-        modal.setAttribute(
+        DOM.generalCallModal?.setAttribute(
             "aria-hidden",
             "false"
         );
+
+
+        state.selectedCallUsers.clear();
+
+        updateCallSelectionCount();
+
+
+        await loadCallUsers();
     }
 
 
     function closeGeneralCallModal() {
 
-        const modal =
-            $("generalCallModal");
-
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.remove(
+        DOM.generalCallModal?.classList.remove(
             "open"
         );
 
-        modal.setAttribute(
+
+        DOM.generalCallModal?.setAttribute(
             "aria-hidden",
             "true"
         );
+
+
+        setCallMessage("");
     }
 
 
-    async function loadCallUsers(
-        scope
-    ) {
+    /* =====================================================
+       LOAD CALL USERS
+       ===================================================== */
 
-        const list =
-            $("generalCallUserList");
+    async function loadCallUsers() {
 
-        if (!list) {
-            return;
-        }
-
-        list.innerHTML = `
+        DOM.generalCallUserList.innerHTML = `
             <div class="center-state">
-                Loading students...
+                Loading online students...
             </div>
         `;
 
-        let query =
-            state.supabase
-                .from("chat_community_members")
-                .select(
-                    "user_id,nickname,role,community_id"
-                );
 
-        if (
-            scope === "community" &&
-            state.selectedCommunity
-        ) {
-
-            query =
-                query.eq(
-                    "community_id",
-                    state.selectedCommunity.id
-                );
-        }
+        /*
+         * Community members are used as the source
+         * of callable users.
+         */
 
         const {
             data,
             error
-        } = await query;
+        } = await state.supabase
+            .from("chat_community_members")
+            .select(
+                "user_id, nickname, role, is_banned"
+            )
+            .eq(
+                "community_id",
+                state.currentCommunity?.id
+            )
+            .eq(
+                "is_banned",
+                false
+            );
+
 
         if (error) {
-            throw error;
-        }
 
-        const users =
-            new Map();
+            console.error(
+                "❌ Call users:",
+                error
+            );
 
-        (data || []).forEach(member => {
-
-            if (
-                member.user_id ===
-                state.user.id
-            ) {
-                return;
-            }
-
-            if (!users.has(member.user_id)) {
-
-                users.set(
-                    member.user_id,
-                    member
-                );
-            }
-
-        });
-
-        list.innerHTML = "";
-
-        if (!users.size) {
-
-            list.innerHTML = `
+            DOM.generalCallUserList.innerHTML = `
                 <div class="center-state">
-                    No other students are available.
+                    Unable to load students.
                 </div>
             `;
 
             return;
         }
 
+
+        const users =
+            (data || [])
+                .filter(
+                    member =>
+                        member.user_id !==
+                        state.user.id
+                );
+
+
+        DOM.generalCallUserStatus.textContent =
+            `${users.length} students available`;
+
+
+        DOM.generalCallUserList.innerHTML = "";
+
+
+        if (!users.length) {
+
+            DOM.generalCallUserList.innerHTML = `
+                <div class="center-state">
+                    No other students available.
+                </div>
+            `;
+
+            return;
+        }
+
+
         users.forEach(member => {
 
-            const label =
-                member.nickname ||
-                `Student ${member.user_id.slice(
-                    0,
-                    6
-                )}`;
+            const button =
+                document.createElement(
+                    "button"
+                );
 
-            const row =
-                document.createElement("label");
 
-            row.className =
-                "call-user-row";
+            button.type = "button";
 
-            row.innerHTML = `
-                <input
-                    type="checkbox"
-                    class="call-user-checkbox"
-                    value="${escapeAttribute(
-                        member.user_id
-                    )}"
-                >
+            button.className =
+                "call-user-option";
+
+
+            button.dataset.userId =
+                member.user_id;
+
+
+            button.innerHTML = `
 
                 <span class="call-user-avatar">
                     ${escapeHTML(
-                        initials(label)
+                        getInitial(
+                            member.nickname ||
+                            "Student"
+                        )
                     )}
                 </span>
 
-                <span class="call-user-details">
+                <span class="call-user-name">
+                    ${escapeHTML(
+                        member.nickname ||
+                        "Student"
+                    )}
+                </span>
 
-                    <strong>
-                        ${escapeHTML(label)}
-                    </strong>
-
-                    <small>
-                        ${escapeHTML(
-                            member.role ||
-                            "student"
-                        )}
-                    </small>
-
+                <span class="call-user-check">
+                    ✓
                 </span>
             `;
 
-            list.appendChild(row);
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    if (
+                        state.selectedCallUsers
+                            .has(
+                                member.user_id
+                            )
+                    ) {
+
+                        state.selectedCallUsers
+                            .delete(
+                                member.user_id
+                            );
+
+                        button.classList.remove(
+                            "selected"
+                        );
+
+                    } else {
+
+                        state.selectedCallUsers
+                            .add(
+                                member.user_id
+                            );
+
+                        button.classList.add(
+                            "selected"
+                        );
+                    }
+
+
+                    updateCallSelectionCount();
+                }
+            );
+
+
+            DOM.generalCallUserList
+                .appendChild(button);
         });
-
-        list
-            .querySelectorAll(
-                ".call-user-checkbox"
-            )
-            .forEach(input => {
-
-                input.addEventListener(
-                    "change",
-                    updateCallSelectionCount
-                );
-
-            });
-
-        updateCallSelectionCount();
     }
 
 
     function updateCallSelectionCount() {
 
-        const selected =
-            document.querySelectorAll(
-                ".call-user-checkbox:checked"
-            ).length;
-
         const count =
-            $("generalCallSelectionCount");
+            state.selectedCallUsers.size;
 
-        if (count) {
 
-            count.textContent =
-                `${selected} selected`;
+        if (DOM.generalCallSelectionCount) {
+
+            DOM.generalCallSelectionCount.textContent =
+                `${count} selected`;
+        }
+
+
+        if (DOM.startGeneralCallButton) {
+
+            DOM.startGeneralCallButton.disabled =
+                count === 0;
         }
     }
 
 
-    function getSelectedCallUsers() {
+    /* =====================================================
+       START GENERAL CALL
+       ===================================================== */
 
-        return [
-            ...document.querySelectorAll(
-                ".call-user-checkbox:checked"
-            )
-        ].map(
-            input => input.value
-        );
-    }
-
-
-    function setCallMessage(
-        message
-    ) {
-
-        const element =
-            $("generalCallMessage");
-
-        if (element) {
-            element.textContent =
-                message;
-        }
-    }
-
-
-    /* ========================================================
-       CALL ROOM CREATION
-       ======================================================== */
-
-    async function createCallRoom(
-        requestedScope
-    ) {
-
-        const modal =
-            $("generalCallModal");
-
-        const scope =
-            requestedScope ||
-            modal?.dataset.callScope ||
-            "general";
-
-        const communityId =
-            scope === "community"
-                ? state.selectedCommunity?.id
-                : null;
+    async function startGeneralCall() {
 
         if (
-            scope === "community" &&
-            !communityId
+            state.selectedCallUsers.size === 0
         ) {
-
-            setCallMessage(
-                "Choose a community first."
-            );
-
-            return;
-        }
-
-        const selectedUsers =
-            getSelectedCallUsers();
-
-        if (!selectedUsers.length) {
 
             setCallMessage(
                 "Select at least one student."
@@ -3887,267 +2993,352 @@
             return;
         }
 
-        const startButton =
-            $("startGeneralCallButton");
 
-        if (startButton) {
-            startButton.disabled = true;
-        }
+        setCallMessage(
+            "Creating call..."
+        );
 
-        try {
 
-            const roomCode =
-                createRoomCode();
-
-            const {
-                data: room,
-                error
-            } = await state.supabase
-                .from("chat_call_rooms")
-                .insert({
-                    community_id:
-                        communityId,
-
-                    room_code:
-                        roomCode,
-
-                    call_scope:
-                        scope,
-
-                    call_type:
-                        "video",
-
-                    status:
-                        "waiting",
-
-                    created_by:
-                        state.user.id
-                })
-                .select()
-                .single();
-
-            if (error) {
-                throw error;
-            }
-
-            const participants = [
-                state.user.id,
-                ...selectedUsers
-            ];
-
-            const rows =
-                participants.map(
-                    userId => ({
-                        room_id:
-                            room.id,
-
-                        user_id:
-                            userId,
-
-                        status:
-                            userId ===
-                            state.user.id
-                                ? "joined"
-                                : "invited",
-
-                        is_muted:
-                            false,
-
-                        is_camera_on:
-                            false,
-
-                        is_screen_sharing:
-                            false,
-
-                        joined_at:
-                            userId ===
-                            state.user.id
-                                ? new Date()
-                                    .toISOString()
-                                : null
-                    })
-                );
-
-            const {
-                error:
-                    participantError
-            } = await state.supabase
-                .from(
-                    "chat_call_participants"
-                )
-                .insert(rows);
-
-            if (participantError) {
-                throw participantError;
-            }
-
-            /*
-             * Create call notifications for invitees.
-             */
-            for (
-                const userId
-                of selectedUsers
-            ) {
-
-                await createNotification({
-                    userId,
-
-                    communityId,
-
-                    type:
-                        "call",
-
-                    title:
-                        scope === "community"
-                            ? "Community call"
-                            : "General call",
-
-                    body:
-                        `${state.profile.name} invited you to a call.`
-                });
-            }
-
-            closeGeneralCallModal();
-
-            await joinCall(
-                room
+        const room =
+            await createCallRoom(
+                null,
+                "general"
             );
 
-        } catch (error) {
-
-            console.error(
-                "Create call failed:",
-                error
-            );
-
-            setCallMessage(
-                error.message ||
-                "Could not start the call."
-            );
-
-        } finally {
-
-            if (startButton) {
-                startButton.disabled = false;
-            }
-        }
-    }
-
-
-    function createRoomCode() {
-
-        const random =
-            crypto.randomUUID()
-                .replaceAll("-", "")
-                .slice(0, 12)
-                .toUpperCase();
-
-        return `MS-${random}`;
-    }
-
-
-    /* ========================================================
-       JOIN CALL
-       ======================================================== */
-
-    async function joinCall(
-        room
-    ) {
 
         if (!room) {
             return;
         }
 
-        if (state.call.active) {
 
-            showMessage(
-                "You are already in a call.",
-                "error"
+        const users =
+            Array.from(
+                state.selectedCallUsers
             );
 
+
+        await createCallParticipants(
+            room.id,
+            users
+        );
+
+
+        closeGeneralCallModal();
+
+
+        await enterCall(
+            room,
+            true
+        );
+    }
+
+
+    /* =====================================================
+       CREATE COMMUNITY CALL
+       ===================================================== */
+
+    async function startCommunityCall() {
+
+        if (!state.currentCommunity) {
             return;
         }
 
-        state.call.active = true;
-        state.call.room = room;
-        state.call.startedAt =
-            Date.now();
 
-        showCallOverlay();
+        const room =
+            await createCallRoom(
+                state.currentCommunity.id,
+                "community"
+            );
 
-        updateCallHeader(
-            room
+
+        if (!room) {
+            return;
+        }
+
+
+        const members =
+            await getCommunityMembers();
+
+
+        const otherUsers =
+            members.filter(
+                id =>
+                    id !== state.user.id
+            );
+
+
+        await createCallParticipants(
+            room.id,
+            otherUsers
         );
 
-        try {
 
-            await startLocalMedia();
+        await enterCall(
+            room,
+            true
+        );
+    }
 
-            await updateParticipant(
-                room.id,
-                {
-                    status:
-                        "joined",
 
-                    joined_at:
-                        new Date()
-                            .toISOString(),
+    /* =====================================================
+       CREATE CALL ROOM
+       ===================================================== */
 
-                    is_camera_on:
-                        state.call.cameraOn,
+    async function createCallRoom(
+        communityId,
+        scope
+    ) {
 
-                    is_muted:
-                        state.call.muted
-                }
-            );
+        const roomCode =
+            createRoomCode();
 
-            await updateRoomStatus(
-                room.id,
-                "active"
-            );
 
-            await setupCallSignaling();
+        const {
+            data,
+            error
+        } = await state.supabase
+            .from("chat_call_rooms")
+            .insert({
 
-            startCallDuration();
+                community_id:
+                    communityId,
 
-            showCallStatus(
-                "Connected"
-            );
+                room_code:
+                    roomCode,
 
-        } catch (error) {
+                call_scope:
+                    scope,
+
+                call_type:
+                    "video",
+
+                status:
+                    "waiting",
+
+                created_by:
+                    state.user.id
+            })
+            .select()
+            .single();
+
+
+        if (error) {
 
             console.error(
-                "Call setup failed:",
+                "❌ Call room creation failed:",
                 error
             );
 
-            showCallStatus(
-                "Could not access camera/microphone."
+            announce(
+                "Unable to create call."
             );
 
-            /*
-             * Keep the overlay open so the user can
-             * still leave the room cleanly.
-             */
+            return null;
+        }
+
+
+        return data;
+    }
+
+
+    function createRoomCode() {
+
+        return (
+            "MS-" +
+            Math.random()
+                .toString(36)
+                .substring(2, 10)
+                .toUpperCase()
+        );
+    }
+
+
+    /* =====================================================
+       CALL PARTICIPANTS
+       ===================================================== */
+
+    async function createCallParticipants(
+        roomId,
+        userIds
+    ) {
+
+        const rows = [
+            state.user.id,
+            ...userIds
+        ]
+            .filter(
+                (id, index, array) =>
+                    array.indexOf(id) ===
+                    index
+            )
+            .map(userId => ({
+
+                room_id:
+                    roomId,
+
+                user_id:
+                    userId,
+
+                status:
+                    userId ===
+                    state.user.id
+                        ? "joined"
+                        : "invited",
+
+                joined_at:
+                    userId ===
+                    state.user.id
+                        ? new Date().toISOString()
+                        : null
+            }));
+
+
+        const {
+            error
+        } = await state.supabase
+            .from(
+                "chat_call_participants"
+            )
+            .insert(rows);
+
+
+        if (error) {
+
+            console.error(
+                "❌ Call participants:",
+                error
+            );
         }
     }
 
 
-    /* ========================================================
-       LOCAL MEDIA
-       ======================================================== */
+    async function getCommunityMembers() {
 
-    async function startLocalMedia() {
+        if (!state.currentCommunity) {
+            return [];
+        }
 
-        if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
-        ) {
 
-            throw new Error(
-                "Camera and microphone are not available in this browser."
+        const {
+            data
+        } = await state.supabase
+            .from(
+                "chat_community_members"
+            )
+            .select("user_id")
+            .eq(
+                "community_id",
+                state.currentCommunity.id
+            )
+            .eq(
+                "is_banned",
+                false
+            );
+
+
+        return (data || [])
+            .map(item => item.user_id);
+    }
+
+
+    /* =====================================================
+       ENTER CALL
+       ===================================================== */
+
+    async function enterCall(
+        room,
+        isCaller
+    ) {
+
+        state.currentCall.roomId =
+            room.id;
+
+        state.currentCall.roomCode =
+            room.room_code;
+
+        state.currentCall.communityId =
+            room.community_id;
+
+        state.currentCall.scope =
+            room.call_scope;
+
+        state.currentCall.startedAt =
+            Date.now();
+
+
+        showCallOverlay();
+
+
+        try {
+
+            await acquireLocalMedia();
+
+        } catch (error) {
+
+            console.error(
+                "❌ Media error:",
+                error
+            );
+
+            updateCallSubtitle(
+                "Camera/microphone unavailable"
             );
         }
+
+
+        await state.supabase
+            .from("chat_call_rooms")
+            .update({
+                status: "active",
+                started_at:
+                    new Date().toISOString()
+            })
+            .eq(
+                "id",
+                room.id
+            );
+
+
+        await updateOwnCallParticipant(
+            "joined"
+        );
+
+
+        subscribeToCall(room.id);
+
+
+        startCallTimer();
+
+
+        /*
+         * If caller, look for invited participants
+         * and initiate WebRTC offers.
+         */
+
+        if (isCaller) {
+
+            setTimeout(
+                () =>
+                    initiateExistingParticipants(),
+                1000
+            );
+        }
+    }
+
+
+    /* =====================================================
+       LOCAL MEDIA
+       ===================================================== */
+
+    async function acquireLocalMedia() {
+
+        if (!navigator.mediaDevices) {
+
+            throw new Error(
+                "Media devices are unavailable."
+            );
+        }
+
 
         const stream =
             await navigator.mediaDevices
@@ -4156,56 +3347,153 @@
                     video: true
                 });
 
-        state.call.localStream =
+
+        state.currentCall.localStream =
             stream;
 
-        state.call.cameraOn =
-            stream
-                .getVideoTracks()
-                .some(
-                    track => track.enabled
-                );
 
-        state.call.muted = false;
+        if (DOM.localVideo) {
 
-        const video =
-            $("localVideo");
-
-        if (video) {
-
-            video.srcObject =
+            DOM.localVideo.srcObject =
                 stream;
-
-            video.muted = true;
-
-            await video.play()
-                .catch(() => {});
         }
-
-        updateCallControls();
     }
 
 
-    /* ========================================================
-       CALL SIGNALING
-       ======================================================== */
+    /* =====================================================
+       CALL OVERLAY
+       ===================================================== */
 
-    async function setupCallSignaling() {
+    function showCallOverlay() {
 
-        const room =
-            state.call.room;
+        DOM.callOverlay?.classList.add(
+            "open"
+        );
 
-        if (!room) {
-            return;
+
+        DOM.callOverlay?.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+
+        if (DOM.callTitle) {
+
+            DOM.callTitle.textContent =
+                state.currentCall.scope ===
+                "general"
+                    ? "Mwaniki General Call"
+                    : "Community Call";
         }
 
-        /*
-         * Realtime signal subscription.
-         */
+
+        updateCallSubtitle(
+            "Connected"
+        );
+    }
+
+
+    function hideCallOverlay() {
+
+        DOM.callOverlay?.classList.remove(
+            "open"
+        );
+
+
+        DOM.callOverlay?.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+    }
+
+
+    function updateCallSubtitle(text) {
+
+        if (DOM.callSubtitle) {
+            DOM.callSubtitle.textContent =
+                text;
+        }
+    }
+
+
+    /* =====================================================
+       CALL TIMER
+       ===================================================== */
+
+    function startCallTimer() {
+
+        clearInterval(
+            state.currentCall.durationTimer
+        );
+
+
+        state.currentCall.durationTimer =
+            setInterval(() => {
+
+                const elapsed =
+                    Math.floor(
+                        (
+                            Date.now() -
+                            state.currentCall.startedAt
+                        ) / 1000
+                    );
+
+
+                const minutes =
+                    String(
+                        Math.floor(
+                            elapsed / 60
+                        )
+                    ).padStart(
+                        2,
+                        "0"
+                    );
+
+
+                const seconds =
+                    String(
+                        elapsed % 60
+                    ).padStart(
+                        2,
+                        "0"
+                    );
+
+
+                if (DOM.callDuration) {
+
+                    DOM.callDuration.textContent =
+                        `${minutes}:${seconds}`;
+                }
+
+            }, 1000);
+    }
+
+
+    /* =====================================================
+       CALL REALTIME
+       ===================================================== */
+
+    function subscribeToCall(roomId) {
+
+        if (
+            state.currentCall.signalChannel
+        ) {
+
+            try {
+
+                state.supabase.removeChannel(
+                    state.currentCall
+                        .signalChannel
+                );
+
+            } catch (_) {}
+        }
+
+
         const channel =
             state.supabase
                 .channel(
-                    `call-signals-${room.id}`
+                    `call-signals-${roomId}`
                 )
                 .on(
                     "postgres_changes",
@@ -4214,128 +3502,34 @@
                         schema: "public",
                         table: "chat_call_signals",
                         filter:
-                            `room_id=eq.${room.id}`
+                            `room_id=eq.${roomId}`
                     },
-                    payload => {
-
-                        handleIncomingSignal(
+                    payload =>
+                        handleCallSignal(
                             payload.new
-                        ).catch(console.error);
-
-                    }
+                        )
                 )
                 .subscribe(
                     status => {
 
                         console.log(
-                            "Call signaling:",
+                            "Call realtime:",
                             status
                         );
-
                     }
                 );
 
-        state.call.signalSubscription =
+
+        state.currentCall.signalChannel =
             channel;
-
-
-        /*
-         * Polling fallback.
-
-         * This makes the system less dependent on
-         * realtime configuration.
-         */
-        state.call.signalPollTimer =
-            setInterval(
-                () => {
-
-                    pollCallSignals()
-                        .catch(console.error);
-
-                },
-                CONFIG.callSignalPollMs
-            );
-
-        await createOffersForExistingParticipants();
     }
 
 
-    async function pollCallSignals() {
+    /* =====================================================
+       INITIATE EXISTING PARTICIPANTS
+       ===================================================== */
 
-        if (
-            !state.call.active ||
-            !state.call.room
-        ) {
-            return;
-        }
-
-        const {
-            data,
-            error
-        } = await state.supabase
-            .from("chat_call_signals")
-            .select("*")
-            .eq(
-                "room_id",
-                state.call.room.id
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: true
-                }
-            )
-            .limit(200);
-
-        if (error) {
-            return;
-        }
-
-        for (
-            const signal
-            of data || []
-        ) {
-
-            if (
-                state.call.processedSignals
-                    .has(signal.id)
-            ) {
-                continue;
-            }
-
-            state.call.processedSignals
-                .add(signal.id);
-
-            if (
-                signal.sender_id ===
-                state.user.id
-            ) {
-                continue;
-            }
-
-            if (
-                signal.receiver_id &&
-                signal.receiver_id !==
-                state.user.id
-            ) {
-                continue;
-            }
-
-            await handleIncomingSignal(
-                signal
-            );
-        }
-    }
-
-
-    async function createOffersForExistingParticipants() {
-
-        if (
-            !state.call.room ||
-            !state.user
-        ) {
-            return;
-        }
+    async function initiateExistingParticipants() {
 
         const {
             data,
@@ -4344,23 +3538,19 @@
             .from(
                 "chat_call_participants"
             )
-            .select(
-                "user_id,status"
-            )
+            .select("user_id,status")
             .eq(
                 "room_id",
-                state.call.room.id
+                state.currentCall.roomId
             );
 
+
         if (error) {
-            console.error(error);
             return;
         }
 
-        for (
-            const participant
-            of data || []
-        ) {
+
+        for (const participant of data || []) {
 
             if (
                 participant.user_id ===
@@ -4369,13 +3559,10 @@
                 continue;
             }
 
-            /*
-             * The lower UUID string acts as a deterministic
-             * initiator to reduce offer collisions.
-             */
+
             if (
-                String(state.user.id) <
-                String(participant.user_id)
+                participant.status ===
+                "invited"
             ) {
 
                 await createPeerConnection(
@@ -4387,128 +3574,122 @@
     }
 
 
+    /* =====================================================
+       PEER CONNECTION
+       ===================================================== */
+
     async function createPeerConnection(
         remoteUserId,
-        createOffer = false
+        createOffer
     ) {
 
-        if (!remoteUserId) {
-            return null;
-        }
-
         if (
-            state.call.peers.has(
-                remoteUserId
-            )
+            state.currentCall.peers
+                .has(remoteUserId)
         ) {
 
-            return state.call.peers.get(
-                remoteUserId
-            );
+            return state.currentCall.peers
+                .get(remoteUserId);
         }
+
 
         const pc =
             new RTCPeerConnection(
                 CONFIG.rtcConfiguration
             );
 
-        state.call.peers.set(
+
+        state.currentCall.peers.set(
             remoteUserId,
             pc
         );
 
 
         /*
-         * Add local media.
+         * Local tracks
          */
-        if (state.call.localStream) {
 
-            state.call.localStream
+        if (
+            state.currentCall.localStream
+        ) {
+
+            state.currentCall
+                .localStream
                 .getTracks()
                 .forEach(track => {
 
                     pc.addTrack(
                         track,
-                        state.call.localStream
+                        state.currentCall
+                            .localStream
                     );
-
                 });
         }
 
 
         /*
-         * Remote stream.
+         * Remote stream
          */
-        pc.addEventListener(
-            "track",
-            event => {
 
-                const stream =
-                    event.streams?.[0];
+        pc.ontrack = event => {
 
-                if (!stream) {
-                    return;
-                }
+            const stream =
+                event.streams[0];
 
-                createRemoteVideoTile(
-                    remoteUserId,
-                    stream
-                );
+
+            if (!stream) {
+                return;
             }
-        );
+
+
+            addRemoteVideo(
+                remoteUserId,
+                stream
+            );
+        };
 
 
         /*
-         * ICE candidates.
+         * ICE candidates
          */
-        pc.addEventListener(
-            "icecandidate",
-            event => {
 
-                if (
-                    event.candidate
-                ) {
+        pc.onicecandidate =
+            async event => {
 
-                    sendCallSignal(
-                        remoteUserId,
-                        "ice-candidate",
-                        event.candidate
-                    ).catch(
-                        console.error
-                    );
+                if (!event.candidate) {
+                    return;
                 }
 
-            }
-        );
+
+                await sendSignal(
+                    remoteUserId,
+                    "ice-candidate",
+                    event.candidate
+                );
+            };
 
 
-        pc.addEventListener(
-            "connectionstatechange",
+        pc.onconnectionstatechange =
             () => {
 
                 const status =
                     pc.connectionState;
 
-                console.log(
-                    `Call peer ${remoteUserId}:`,
-                    status
-                );
 
                 if (
                     status ===
-                        "failed" ||
+                    "failed" ||
                     status ===
-                        "closed"
+                    "disconnected" ||
+                    status ===
+                    "closed"
                 ) {
 
-                    removeRemoteVideoTile(
+                    removePeer(
                         remoteUserId
                     );
-
                 }
-
-            }
-        );
+            };
 
 
         if (createOffer) {
@@ -4516,170 +3697,44 @@
             const offer =
                 await pc.createOffer();
 
+
             await pc.setLocalDescription(
                 offer
             );
 
-            await sendCallSignal(
+
+            await sendSignal(
                 remoteUserId,
                 "offer",
-                pc.localDescription
+                offer
             );
         }
+
 
         return pc;
     }
 
 
-    async function handleIncomingSignal(
-        signal
-    ) {
+    /* =====================================================
+       SEND CALL SIGNAL
+       ===================================================== */
 
-        if (!signal) {
-            return;
-        }
-
-        if (
-            signal.sender_id ===
-            state.user.id
-        ) {
-            return;
-        }
-
-        if (
-            signal.receiver_id &&
-            signal.receiver_id !==
-            state.user.id
-        ) {
-            return;
-        }
-
-        const senderId =
-            signal.sender_id;
-
-        const payload =
-            signal.payload;
-
-        if (!senderId || !payload) {
-            return;
-        }
-
-        if (
-            signal.signal_type ===
-            "offer"
-        ) {
-
-            const pc =
-                await createPeerConnection(
-                    senderId,
-                    false
-                );
-
-            await pc.setRemoteDescription(
-                payload
-            );
-
-            const answer =
-                await pc.createAnswer();
-
-            await pc.setLocalDescription(
-                answer
-            );
-
-            await sendCallSignal(
-                senderId,
-                "answer",
-                pc.localDescription
-            );
-
-        } else if (
-            signal.signal_type ===
-            "answer"
-        ) {
-
-            const pc =
-                state.call.peers.get(
-                    senderId
-                );
-
-            if (!pc) {
-                return;
-            }
-
-            await pc.setRemoteDescription(
-                payload
-            );
-
-        } else if (
-            signal.signal_type ===
-            "ice-candidate"
-        ) {
-
-            const pc =
-                state.call.peers.get(
-                    senderId
-                );
-
-            if (!pc) {
-                return;
-            }
-
-            try {
-
-                await pc.addIceCandidate(
-                    payload
-                );
-
-            } catch (error) {
-
-                console.warn(
-                    "ICE candidate:",
-                    error
-                );
-            }
-
-        } else if (
-            signal.signal_type ===
-            "leave"
-        ) {
-
-            removePeer(
-                senderId
-            );
-
-        } else if (
-            signal.signal_type ===
-            "media-state"
-        ) {
-
-            updateRemoteParticipantState(
-                senderId,
-                payload
-            );
-        }
-    }
-
-
-    async function sendCallSignal(
+    async function sendSignal(
         receiverId,
         signalType,
         payload
     ) {
 
-        if (
-            !state.call.room ||
-            !state.user
-        ) {
-            return;
-        }
-
         const {
             error
         } = await state.supabase
-            .from("chat_call_signals")
+            .from(
+                "chat_call_signals"
+            )
             .insert({
+
                 room_id:
-                    state.call.room.id,
+                    state.currentCall.roomId,
 
                 sender_id:
                     state.user.id,
@@ -4690,37 +3745,145 @@
                 signal_type:
                     signalType,
 
-                payload
+                payload:
+                    payload
             });
 
+
         if (error) {
-            throw error;
+
+            console.error(
+                "Signal error:",
+                error
+            );
         }
     }
 
 
-    /* ========================================================
-       REMOTE VIDEO
-       ======================================================== */
+    /* =====================================================
+       HANDLE SIGNAL
+       ===================================================== */
 
-    function createRemoteVideoTile(
+    async function handleCallSignal(
+        signal
+    ) {
+
+        if (
+            signal.receiver_id &&
+            signal.receiver_id !==
+            state.user.id
+        ) {
+            return;
+        }
+
+
+        if (
+            signal.sender_id ===
+            state.user.id
+        ) {
+            return;
+        }
+
+
+        const senderId =
+            signal.sender_id;
+
+
+        const pc =
+            await createPeerConnection(
+                senderId,
+                false
+            );
+
+
+        try {
+
+            if (
+                signal.signal_type ===
+                "offer"
+            ) {
+
+                await pc.setRemoteDescription(
+                    new RTCSessionDescription(
+                        signal.payload
+                    )
+                );
+
+
+                const answer =
+                    await pc.createAnswer();
+
+
+                await pc.setLocalDescription(
+                    answer
+                );
+
+
+                await sendSignal(
+                    senderId,
+                    "answer",
+                    answer
+                );
+
+
+                return;
+            }
+
+
+            if (
+                signal.signal_type ===
+                "answer"
+            ) {
+
+                await pc.setRemoteDescription(
+                    new RTCSessionDescription(
+                        signal.payload
+                    )
+                );
+
+
+                return;
+            }
+
+
+            if (
+                signal.signal_type ===
+                "ice-candidate"
+            ) {
+
+                await pc.addIceCandidate(
+                    new RTCIceCandidate(
+                        signal.payload
+                    )
+                );
+            }
+
+        } catch (error) {
+
+            console.error(
+                "WebRTC signal error:",
+                error
+            );
+        }
+    }
+
+
+    /* =====================================================
+       REMOTE VIDEO
+       ===================================================== */
+
+    function addRemoteVideo(
         userId,
         stream
     ) {
 
-        const grid =
-            $("callVideoGrid");
+        const id =
+            `remote-video-${userId}`;
 
-        if (!grid) {
-            return;
-        }
 
         let tile =
-            document.querySelector(
-                `[data-remote-user="${CSS.escape(
-                    userId
-                )}"]`
-            );
+            document.getElementById(id);
+
 
         if (!tile) {
 
@@ -4729,112 +3892,429 @@
                     "div"
                 );
 
+
             tile.className =
                 "remote-video-tile";
 
-            tile.dataset.remoteUser =
-                userId;
+
+            tile.id = id;
+
 
             tile.innerHTML = `
+
                 <video
                     autoplay
                     playsinline
                 ></video>
 
                 <span>
-                    ${escapeHTML(
-                        `Student ${userId.slice(
-                            0,
-                            6
-                        )}`
-                    )}
+                    Participant
                 </span>
             `;
 
-            grid.appendChild(
-                tile
-            );
+
+            DOM.callVideoGrid
+                ?.appendChild(tile);
         }
+
 
         const video =
             tile.querySelector(
                 "video"
             );
 
+
         if (video) {
 
             video.srcObject =
                 stream;
-
-            video.play()
-                .catch(() => {});
         }
     }
 
 
-    function removeRemoteVideoTile(
-        userId
-    ) {
+    function removePeer(userId) {
+
+        const peer =
+            state.currentCall.peers
+                .get(userId);
+
+
+        if (peer) {
+
+            try {
+                peer.close();
+            } catch (_) {}
+        }
+
+
+        state.currentCall.peers.delete(
+            userId
+        );
+
 
         document
-            .querySelector(
-                `[data-remote-user="${CSS.escape(
-                    userId
-                )}"]`
+            .getElementById(
+                `remote-video-${userId}`
             )
             ?.remove();
     }
 
 
-    function updateRemoteParticipantState(
-        userId,
-        stateData
-    ) {
+    /* =====================================================
+       MICROPHONE
+       ===================================================== */
 
-        const tile =
-            document.querySelector(
-                `[data-remote-user="${CSS.escape(
-                    userId
-                )}"]`
-            );
+    async function toggleMicrophone() {
 
-        if (!tile) {
+        const stream =
+            state.currentCall.localStream;
+
+
+        if (!stream) {
             return;
         }
 
-        tile.dataset.muted =
-            stateData.muted
-                ? "true"
-                : "false";
 
-        tile.dataset.camera =
-            stateData.cameraOn
-                ? "on"
-                : "off";
+        const track =
+            stream.getAudioTracks()[0];
+
+
+        if (!track) {
+            return;
+        }
+
+
+        track.enabled =
+            !track.enabled;
+
+
+        if (DOM.toggleMicrophoneButton) {
+
+            DOM.toggleMicrophoneButton.textContent =
+                track.enabled
+                    ? "🎙️"
+                    : "🔇";
+
+            DOM.toggleMicrophoneButton
+                .setAttribute(
+                    "aria-label",
+                    track.enabled
+                        ? "Mute microphone"
+                        : "Unmute microphone"
+                );
+        }
+
+
+        await updateCallParticipantState();
     }
 
 
-    /* ========================================================
-       CALL PARTICIPANT DATABASE STATE
-       ======================================================== */
+    /* =====================================================
+       CAMERA
+       ===================================================== */
 
-    async function updateParticipant(
-        roomId,
-        updates
-    ) {
+    async function toggleCamera() {
 
-        if (!state.user) {
+        const stream =
+            state.currentCall.localStream;
+
+
+        if (!stream) {
             return;
         }
 
-        const {
-            error
-        } = await state.supabase
+
+        const track =
+            stream.getVideoTracks()[0];
+
+
+        if (!track) {
+            return;
+        }
+
+
+        track.enabled =
+            !track.enabled;
+
+
+        if (DOM.toggleCameraButton) {
+
+            DOM.toggleCameraButton.textContent =
+                track.enabled
+                    ? "📹"
+                    : "🚫";
+
+            DOM.toggleCameraButton
+                .setAttribute(
+                    "aria-label",
+                    track.enabled
+                        ? "Turn camera off"
+                        : "Turn camera on"
+                );
+        }
+
+
+        await updateCallParticipantState();
+    }
+
+
+    /* =====================================================
+       SCREEN SHARE
+       ===================================================== */
+
+    async function shareScreen() {
+
+        if (
+            !navigator.mediaDevices
+                ?.getDisplayMedia
+        ) {
+
+            announce(
+                "Screen sharing is not supported."
+            );
+
+            return;
+        }
+
+
+        try {
+
+            const screenStream =
+                await navigator.mediaDevices
+                    .getDisplayMedia({
+                        video: true
+                    });
+
+
+            state.currentCall.screenStream =
+                screenStream;
+
+
+            const screenTrack =
+                screenStream.getVideoTracks()[0];
+
+
+            for (
+                const pc
+                of state.currentCall.peers.values()
+            ) {
+
+                const sender =
+                    pc.getSenders()
+                        .find(
+                            item =>
+                                item.track?.kind ===
+                                "video"
+                        );
+
+
+                if (sender) {
+
+                    await sender.replaceTrack(
+                        screenTrack
+                    );
+                }
+            }
+
+
+            if (DOM.localVideo) {
+
+                DOM.localVideo.srcObject =
+                    screenStream;
+            }
+
+
+            screenTrack.onended =
+                () =>
+                    stopScreenShare();
+
+
+            await updateCallParticipantState();
+
+        } catch (error) {
+
+            console.error(
+                "Screen share:",
+                error
+            );
+        }
+    }
+
+
+    async function stopScreenShare() {
+
+        const stream =
+            state.currentCall.localStream;
+
+
+        const cameraTrack =
+            stream?.getVideoTracks()[0];
+
+
+        if (cameraTrack) {
+
+            for (
+                const pc
+                of state.currentCall.peers.values()
+            ) {
+
+                const sender =
+                    pc.getSenders()
+                        .find(
+                            item =>
+                                item.track?.kind ===
+                                "video"
+                        );
+
+
+                if (sender) {
+
+                    await sender.replaceTrack(
+                        cameraTrack
+                    );
+                }
+            }
+        }
+
+
+        state.currentCall
+            .screenStream
+            ?.getTracks()
+            .forEach(
+                track =>
+                    track.stop()
+            );
+
+
+        state.currentCall.screenStream =
+            null;
+
+
+        if (DOM.localVideo) {
+
+            DOM.localVideo.srcObject =
+                state.currentCall.localStream;
+        }
+    }
+
+
+    /* =====================================================
+       CALL PARTICIPANT STATE
+       ===================================================== */
+
+    async function updateCallParticipantState() {
+
+        const stream =
+            state.currentCall.localStream;
+
+
+        const micOn =
+            !!stream
+                ?.getAudioTracks()
+                .some(
+                    track => track.enabled
+                );
+
+
+        const cameraOn =
+            !!stream
+                ?.getVideoTracks()
+                .some(
+                    track => track.enabled
+                );
+
+
+        const screenOn =
+            !!state.currentCall.screenStream;
+
+
+        await state.supabase
             .from(
                 "chat_call_participants"
             )
             .update({
-                ...updates,
+
+                is_muted:
+                    !micOn,
+
+                is_camera_on:
+                    cameraOn,
+
+                is_screen_sharing:
+                    screenOn,
+
+                updated_at:
+                    new Date().toISOString()
+            })
+            .eq(
+                "room_id",
+                state.currentCall.roomId
+            )
+            .eq(
+                "user_id",
+                state.user.id
+            );
+    }
+
+
+    async function updateOwnCallParticipant(
+        status
+    ) {
+
+        await state.supabase
+            .from(
+                "chat_call_participants"
+            )
+            .update({
+
+                status,
+
+                joined_at:
+                    status === "joined"
+                        ? new Date().toISOString()
+                        : undefined,
+
+                updated_at:
+                    new Date().toISOString()
+            })
+            .eq(
+                "room_id",
+                state.currentCall.roomId
+            )
+            .eq(
+                "user_id",
+                state.user.id
+            );
+    }
+
+
+    /* =====================================================
+       LEAVE CALL
+       ===================================================== */
+
+    async function leaveCall() {
+
+        const roomId =
+            state.currentCall.roomId;
+
+
+        if (!roomId) {
+            hideCallOverlay();
+            return;
+        }
+
+
+        await state.supabase
+            .from(
+                "chat_call_participants"
+            )
+            .update({
+
+                status: "left",
+
+                left_at:
+                    new Date().toISOString(),
+
                 updated_at:
                     new Date().toISOString()
             })
@@ -4847,1497 +4327,662 @@
                 state.user.id
             );
 
-        if (error) {
-            console.warn(
-                "Participant update:",
-                error
-            );
-        }
-    }
 
+        /*
+         * Stop local media.
+         */
 
-    async function updateRoomStatus(
-        roomId,
-        status
-    ) {
-
-        const updates = {
-            status
-        };
-
-        if (status === "active") {
-
-            updates.started_at =
-                new Date()
-                    .toISOString();
-        }
-
-        if (status === "ended") {
-
-            updates.ended_at =
-                new Date()
-                    .toISOString();
-        }
-
-        const {
-            error
-        } = await state.supabase
-            .from("chat_call_rooms")
-            .update(updates)
-            .eq(
-                "id",
-                roomId
-            );
-
-        if (error) {
-            console.warn(
-                "Room status:",
-                error
-            );
-        }
-    }
-
-
-    /* ========================================================
-       CALL UI
-       ======================================================== */
-
-    function showCallOverlay() {
-
-        const overlay =
-            $("callOverlay");
-
-        if (!overlay) {
-            return;
-        }
-
-        overlay.classList.add(
-            "open"
-        );
-
-        overlay.setAttribute(
-            "aria-hidden",
-            "false"
-        );
-    }
-
-
-    function hideCallOverlay() {
-
-        const overlay =
-            $("callOverlay");
-
-        if (!overlay) {
-            return;
-        }
-
-        overlay.classList.remove(
-            "open"
-        );
-
-        overlay.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-    }
-
-
-    function updateCallHeader(room) {
-
-        const title =
-            $("callTitle");
-
-        const subtitle =
-            $("callSubtitle");
-
-        if (title) {
-
-            title.textContent =
-                room.call_scope === "community"
-                    ? `${state.selectedCommunity?.name || "Community"} Call`
-                    : "Mwaniki General Call";
-        }
-
-        if (subtitle) {
-
-            subtitle.textContent =
-                `Room ${room.room_code}`;
-        }
-    }
-
-
-    function showCallStatus(
-        message
-    ) {
-
-        const subtitle =
-            $("callSubtitle");
-
-        if (subtitle) {
-            subtitle.textContent =
-                message;
-        }
-    }
-
-
-    function startCallDuration() {
-
-        stopCallDuration();
-
-        state.call.startedAt =
-            Date.now();
-
-        const update = () => {
-
-            const elapsed =
-                Math.floor(
-                    (
-                        Date.now() -
-                        state.call.startedAt
-                    ) / 1000
-                );
-
-            const minutes =
-                String(
-                    Math.floor(
-                        elapsed / 60
-                    )
-                ).padStart(2, "0");
-
-            const seconds =
-                String(
-                    elapsed % 60
-                ).padStart(2, "0");
-
-            const duration =
-                $("callDuration");
-
-            if (duration) {
-
-                duration.textContent =
-                    `${minutes}:${seconds}`;
-            }
-        };
-
-        update();
-
-        state.call.durationTimer =
-            setInterval(
-                update,
-                1000
-            );
-    }
-
-
-    function stopCallDuration() {
-
-        if (
-            state.call.durationTimer
-        ) {
-
-            clearInterval(
-                state.call.durationTimer
-            );
-
-            state.call.durationTimer =
-                null;
-        }
-    }
-
-
-    function updateCallControls() {
-
-        const mic =
-            $("toggleMicrophoneButton");
-
-        const camera =
-            $("toggleCameraButton");
-
-        const screen =
-            $("shareScreenButton");
-
-        if (mic) {
-
-            mic.textContent =
-                state.call.muted
-                    ? "🔇"
-                    : "🎙️";
-
-            mic.setAttribute(
-                "aria-label",
-                state.call.muted
-                    ? "Unmute microphone"
-                    : "Mute microphone"
-            );
-        }
-
-        if (camera) {
-
-            camera.textContent =
-                state.call.cameraOn
-                    ? "📹"
-                    : "🚫";
-
-            camera.setAttribute(
-                "aria-label",
-                state.call.cameraOn
-                    ? "Turn camera off"
-                    : "Turn camera on"
-            );
-        }
-
-        if (screen) {
-
-            screen.classList.toggle(
-                "active",
-                state.call.screenSharing
-            );
-        }
-    }
-
-
-    /* ========================================================
-       CALL CONTROLS
-       ======================================================== */
-
-    function setupCallControls() {
-
-        $("toggleMicrophoneButton")
-            ?.addEventListener(
-                "click",
-                toggleMicrophone
-            );
-
-        $("toggleCameraButton")
-            ?.addEventListener(
-                "click",
-                toggleCamera
-            );
-
-        $("shareScreenButton")
-            ?.addEventListener(
-                "click",
-                toggleScreenShare
-            );
-
-        $("leaveCallButton")
-            ?.addEventListener(
-                "click",
-                leaveCall
-            );
-
-        $("minimizeCallButton")
-            ?.addEventListener(
-                "click",
-                toggleMinimizeCall
-            );
-
-        $("acceptCallButton")
-            ?.addEventListener(
-                "click",
-                acceptIncomingCall
-            );
-
-        $("declineCallButton")
-            ?.addEventListener(
-                "click",
-                declineIncomingCall
-            );
-    }
-
-
-    function toggleMicrophone() {
-
-        const stream =
-            state.call.localStream;
-
-        if (!stream) {
-            return;
-        }
-
-        const tracks =
-            stream.getAudioTracks();
-
-        if (!tracks.length) {
-            return;
-        }
-
-        state.call.muted =
-            !state.call.muted;
-
-        tracks.forEach(
-            track => {
-                track.enabled =
-                    !state.call.muted;
-            }
-        );
-
-        updateCallControls();
-
-        broadcastMediaState();
-    }
-
-
-    function toggleCamera() {
-
-        const stream =
-            state.call.localStream;
-
-        if (!stream) {
-            return;
-        }
-
-        const tracks =
-            stream.getVideoTracks();
-
-        if (!tracks.length) {
-            return;
-        }
-
-        state.call.cameraOn =
-            !state.call.cameraOn;
-
-        tracks.forEach(
-            track => {
-                track.enabled =
-                    state.call.cameraOn;
-            }
-        );
-
-        updateCallControls();
-
-        broadcastMediaState();
-    }
-
-
-    async function broadcastMediaState() {
-
-        for (
-            const userId
-            of state.call.peers.keys()
-        ) {
-
-            try {
-
-                await sendCallSignal(
-                    userId,
-                    "media-state",
-                    {
-                        muted:
-                            state.call.muted,
-
-                        cameraOn:
-                            state.call.cameraOn,
-
-                        screenSharing:
-                            state.call.screenSharing
-                    }
-                );
-
-            } catch (error) {
-                console.warn(error);
-            }
-        }
-
-        if (state.call.room) {
-
-            await updateParticipant(
-                state.call.room.id,
-                {
-                    is_muted:
-                        state.call.muted,
-
-                    is_camera_on:
-                        state.call.cameraOn,
-
-                    is_screen_sharing:
-                        state.call.screenSharing
-                }
-            );
-        }
-    }
-
-
-    async function toggleScreenShare() {
-
-        if (
-            !navigator.mediaDevices
-                ?.getDisplayMedia
-        ) {
-
-            showCallStatus(
-                "Screen sharing is not supported here."
-            );
-
-            return;
-        }
-
-        if (
-            state.call.screenSharing
-        ) {
-
-            stopScreenShare();
-
-            return;
-        }
-
-        try {
-
-            const screenStream =
-                await navigator.mediaDevices
-                    .getDisplayMedia({
-                        video: true
-                    });
-
-            state.call.screenStream =
-                screenStream;
-
-            const screenTrack =
-                screenStream.getVideoTracks()[0];
-
-            for (
-                const pc
-                of state.call.peers.values()
-            ) {
-
-                const sender =
-                    pc.getSenders()
-                        .find(
-                            item =>
-                                item.track?.kind ===
-                                "video"
-                        );
-
-                if (sender) {
-
-                    await sender.replaceTrack(
-                        screenTrack
-                    );
-                }
-            }
-
-            state.call.screenSharing =
-                true;
-
-            screenTrack.addEventListener(
-                "ended",
-                () => {
-                    stopScreenShare();
-                }
-            );
-
-            updateCallControls();
-
-            await broadcastMediaState();
-
-        } catch (error) {
-
-            console.warn(
-                "Screen sharing:",
-                error
-            );
-        }
-    }
-
-
-    async function stopScreenShare() {
-
-        if (
-            state.call.screenStream
-        ) {
-
-            state.call.screenStream
-                .getTracks()
-                .forEach(
-                    track => track.stop()
-                );
-        }
-
-        const cameraTrack =
-            state.call.localStream
-                ?.getVideoTracks()
-                ?.[0];
-
-        for (
-            const pc
-            of state.call.peers.values()
-        ) {
-
-            const sender =
-                pc.getSenders()
-                    .find(
-                        item =>
-                            item.track?.kind ===
-                            "video"
-                    );
-
-            if (sender) {
-
-                await sender.replaceTrack(
-                    cameraTrack || null
-                );
-            }
-        }
-
-        state.call.screenStream =
-            null;
-
-        state.call.screenSharing =
-            false;
-
-        updateCallControls();
-
-        await broadcastMediaState();
-    }
-
-
-    function toggleMinimizeCall() {
-
-        const overlay =
-            $("callOverlay");
-
-        if (!overlay) {
-            return;
-        }
-
-        state.call.minimized =
-            !state.call.minimized;
-
-        overlay.classList.toggle(
-            "minimized",
-            state.call.minimized
-        );
-    }
-
-
-    /* ========================================================
-       LEAVE CALL
-       ======================================================== */
-
-    async function leaveCall() {
-
-        if (!state.call.active) {
-            return;
-        }
-
-        const room =
-            state.call.room;
-
-        try {
-
-            /*
-             * Tell peers we are leaving.
-             */
-            for (
-                const userId
-                of state.call.peers.keys()
-            ) {
-
-                try {
-
-                    await sendCallSignal(
-                        userId,
-                        "leave",
-                        {
-                            userId:
-                                state.user.id
-                        }
-                    );
-
-                } catch (error) {
-                    console.warn(error);
-                }
-            }
-
-
-            if (room) {
-
-                await updateParticipant(
-                    room.id,
-                    {
-                        status:
-                            "left",
-
-                        left_at:
-                            new Date()
-                                .toISOString()
-                    }
-                );
-
-            }
-
-        } finally {
-
-            cleanupCall();
-
-            hideCallOverlay();
-
-            showMessage(
-                "You left the call.",
-                "info"
-            );
-        }
-    }
-
-
-    function cleanupCall() {
-
-        stopCallDuration();
-
-        if (
-            state.call.signalSubscription
-        ) {
-
-            try {
-
-                state.supabase
-                    .removeChannel(
-                        state.call
-                            .signalSubscription
-                    );
-
-            } catch (error) {
-                console.warn(error);
-            }
-        }
-
-        state.call.signalSubscription =
-            null;
-
-        if (
-            state.call.signalPollTimer
-        ) {
-
-            clearInterval(
-                state.call.signalPollTimer
-            );
-
-            state.call.signalPollTimer =
-                null;
-        }
-
-        state.call.peers
+        state.currentCall
+            .localStream
+            ?.getTracks()
             .forEach(
-                pc => {
+                track =>
+                    track.stop()
+            );
+
+
+        state.currentCall
+            .screenStream
+            ?.getTracks()
+            .forEach(
+                track =>
+                    track.stop()
+            );
+
+
+        /*
+         * Close peers.
+         */
+
+        state.currentCall.peers
+            .forEach(
+                peer => {
+
                     try {
-                        pc.close();
-                    } catch {}
+                        peer.close();
+                    } catch (_) {}
                 }
             );
 
-        state.call.peers.clear();
+
+        state.currentCall.peers.clear();
+
+
+        /*
+         * Stop timer.
+         */
+
+        clearInterval(
+            state.currentCall.durationTimer
+        );
+
+
+        /*
+         * Remove realtime channel.
+         */
 
         if (
-            state.call.localStream
+            state.currentCall.signalChannel
         ) {
-
-            state.call.localStream
-                .getTracks()
-                .forEach(
-                    track => track.stop()
-                );
-        }
-
-        if (
-            state.call.screenStream
-        ) {
-
-            state.call.screenStream
-                .getTracks()
-                .forEach(
-                    track => track.stop()
-                );
-        }
-
-        state.call.localStream =
-            null;
-
-        state.call.screenStream =
-            null;
-
-        state.call.processedSignals
-            .clear();
-
-        state.call.active =
-            false;
-
-        state.call.room =
-            null;
-
-        state.call.participantId =
-            null;
-
-        state.call.muted =
-            false;
-
-        state.call.cameraOn =
-            false;
-
-        state.call.screenSharing =
-            false;
-
-        state.call.minimized =
-            false;
-
-        const video =
-            $("localVideo");
-
-        if (video) {
-            video.srcObject = null;
-        }
-
-        document
-            .querySelectorAll(
-                ".remote-video-tile"
-            )
-            .forEach(
-                tile => tile.remove()
-            );
-    }
-
-
-    function removePeer(
-        userId
-    ) {
-
-        const pc =
-            state.call.peers.get(
-                userId
-            );
-
-        if (pc) {
 
             try {
-                pc.close();
-            } catch {}
+
+                state.supabase.removeChannel(
+                    state.currentCall
+                        .signalChannel
+                );
+
+            } catch (_) {}
         }
 
-        state.call.peers.delete(
-            userId
-        );
 
-        removeRemoteVideoTile(
-            userId
-        );
-    }
-
-
-    /* ========================================================
-       INCOMING CALLS
-       ======================================================== */
-
-    let incomingCall = null;
-
-
-    async function checkIncomingCalls() {
-
-        if (!state.user) {
-            return;
-        }
+        /*
+         * End room only if nobody remains.
+         */
 
         const {
-            data,
-            error
+            data: activeParticipants
         } = await state.supabase
             .from(
                 "chat_call_participants"
             )
-            .select(
-                "id,room_id,status"
-            )
+            .select("user_id")
             .eq(
-                "user_id",
-                state.user.id
+                "room_id",
+                roomId
             )
             .eq(
                 "status",
-                "invited"
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: false
-                }
-            )
-            .limit(1);
+                "joined"
+            );
 
-        if (error || !data?.length) {
+
+        if (
+            !activeParticipants?.length
+        ) {
+
+            await state.supabase
+                .from(
+                    "chat_call_rooms"
+                )
+                .update({
+
+                    status: "ended",
+
+                    ended_at:
+                        new Date().toISOString(),
+
+                    updated_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    roomId
+                );
+        }
+
+
+        resetCallState();
+
+        hideCallOverlay();
+    }
+
+
+    function resetCallState() {
+
+        state.currentCall = {
+
+            roomId: null,
+
+            roomCode: null,
+
+            communityId: null,
+
+            scope: null,
+
+            type: "video",
+
+            localStream: null,
+
+            peers: new Map(),
+
+            screenStream: null,
+
+            startedAt: null,
+
+            durationTimer: null,
+
+            signalChannel: null,
+
+            participantsChannel: null
+        };
+    }
+
+
+    /* =====================================================
+       MINIMIZE CALL
+       ===================================================== */
+
+    function minimizeCall() {
+
+        DOM.callOverlay
+            ?.classList.toggle(
+                "minimized"
+            );
+    }
+
+
+    /* =====================================================
+       INCOMING CALLS
+       ===================================================== */
+
+    function subscribeToIncomingCalls() {
+
+        const channel =
+            state.supabase
+                .channel(
+                    `incoming-calls-${state.user.id}`
+                )
+                .on(
+                    "postgres_changes",
+                    {
+                        event: "INSERT",
+                        schema: "public",
+                        table:
+                            "chat_call_participants",
+                        filter:
+                            `user_id=eq.${state.user.id}`
+                    },
+                    payload =>
+                        handleIncomingCall(
+                            payload.new
+                        )
+                )
+                .subscribe(
+                    status => {
+
+                        console.log(
+                            "Incoming calls:",
+                            status
+                        );
+                    }
+                );
+
+
+        state.realtimeChannels.push(
+            channel
+        );
+    }
+
+
+    async function handleIncomingCall(
+        participant
+    ) {
+
+        if (
+            participant.user_id !==
+            state.user.id
+        ) {
             return;
         }
 
-        const participant =
-            data[0];
+
+        if (
+            participant.status !==
+            "invited"
+        ) {
+            return;
+        }
+
 
         const {
-            data: room,
-            error: roomError
+            data: room
         } = await state.supabase
-            .from("chat_call_rooms")
+            .from(
+                "chat_call_rooms"
+            )
             .select("*")
             .eq(
                 "id",
                 participant.room_id
             )
-            .in(
-                "status",
-                ["waiting", "active"]
-            )
             .maybeSingle();
 
-        if (
-            roomError ||
-            !room
-        ) {
+
+        if (!room) {
             return;
         }
 
-        if (
-            incomingCall?.room.id ===
-            room.id
-        ) {
+
+        if (state.currentCall.roomId) {
             return;
         }
 
-        incomingCall = {
-            room,
-            participant
-        };
 
-        showIncomingCall(
-            room
-        );
+        showIncomingCall(room);
     }
 
 
-    function showIncomingCall(
-        room
-    ) {
+    function showIncomingCall(room) {
 
-        const toast =
-            $("incomingCallToast");
+        DOM.incomingCallToast
+            ?.classList.add(
+                "open"
+            );
 
-        if (!toast) {
-            return;
-        }
 
-        const title =
-            $("incomingCallTitle");
+        DOM.incomingCallToast
+            ?.setAttribute(
+                "aria-hidden",
+                "false"
+            );
 
-        const text =
-            $("incomingCallText");
 
-        if (title) {
+        DOM.incomingCallTitle.textContent =
+            room.call_scope ===
+            "general"
+                ? "Incoming General Call"
+                : "Incoming Community Call";
 
-            title.textContent =
-                room.call_scope ===
-                    "community"
-                    ? "Community call"
-                    : "General call";
-        }
 
-        if (text) {
+        DOM.incomingCallText.textContent =
+            "Someone is inviting you to join a call.";
 
-            text.textContent =
-                `${state.profile.name === ""
-                    ? "Someone"
-                    : "You have"
-                } an incoming call.`;
-        }
 
-        toast.classList.add(
-            "open"
-        );
-
-        toast.setAttribute(
-            "aria-hidden",
-            "false"
-        );
+        DOM.incomingCallToast.dataset.roomId =
+            room.id;
     }
 
 
     async function acceptIncomingCall() {
 
-        if (!incomingCall) {
+        const roomId =
+            DOM.incomingCallToast
+                ?.dataset
+                .roomId;
+
+
+        if (!roomId) {
             return;
         }
 
-        const room =
-            incomingCall.room;
-
-        const participant =
-            incomingCall.participant;
-
-        incomingCall = null;
-
-        hideIncomingCall();
 
         const {
-            error
+            data: room
         } = await state.supabase
             .from(
-                "chat_call_participants"
+                "chat_call_rooms"
             )
-            .update({
-                status:
-                    "joined",
-
-                joined_at:
-                    new Date()
-                        .toISOString()
-            })
+            .select("*")
             .eq(
                 "id",
-                participant.id
+                roomId
             )
-            .eq(
-                "user_id",
-                state.user.id
-            );
+            .single();
 
-        if (error) {
 
-            showMessage(
-                error.message ||
-                "Could not accept the call.",
-                "error"
-            );
-
+        if (!room) {
             return;
         }
 
-        await joinCall(
-            room
-        );
-    }
-
-
-    async function declineIncomingCall() {
-
-        if (!incomingCall) {
-            return;
-        }
-
-        const participant =
-            incomingCall.participant;
-
-        incomingCall = null;
-
-        hideIncomingCall();
 
         await state.supabase
             .from(
                 "chat_call_participants"
             )
             .update({
-                status:
-                    "declined",
 
-                left_at:
-                    new Date()
-                        .toISOString()
+                status: "joined",
+
+                joined_at:
+                    new Date().toISOString()
             })
             .eq(
-                "id",
-                participant.id
+                "room_id",
+                room.id
             )
             .eq(
                 "user_id",
                 state.user.id
             );
+
+
+        hideIncomingCall();
+
+
+        await enterCall(
+            room,
+            false
+        );
+    }
+
+
+    async function declineIncomingCall() {
+
+        const roomId =
+            DOM.incomingCallToast
+                ?.dataset
+                .roomId;
+
+
+        if (roomId) {
+
+            await state.supabase
+                .from(
+                    "chat_call_participants"
+                )
+                .update({
+                    status: "declined"
+                })
+                .eq(
+                    "room_id",
+                    roomId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
+        }
+
+
+        hideIncomingCall();
     }
 
 
     function hideIncomingCall() {
 
-        const toast =
-            $("incomingCallToast");
+        DOM.incomingCallToast
+            ?.classList.remove(
+                "open"
+            );
 
-        if (!toast) {
-            return;
-        }
 
-        toast.classList.remove(
-            "open"
-        );
-
-        toast.setAttribute(
-            "aria-hidden",
-            "true"
-        );
+        DOM.incomingCallToast
+            ?.setAttribute(
+                "aria-hidden",
+                "true"
+            );
     }
 
 
-    function setupIncomingCallPolling() {
+    /* =====================================================
+       NAVIGATION
+       ===================================================== */
 
-        checkIncomingCalls()
-            .catch(console.warn);
+    function setupNavigation() {
 
-        setInterval(
-            () => {
+        [
+            DOM.homeButton,
+            DOM.railHomeButton,
+            DOM.dashboardButton
+        ].forEach(button => {
 
-                if (
-                    !state.call.active
-                ) {
+            button?.addEventListener(
+                "click",
+                () => {
 
-                    checkIncomingCalls()
-                        .catch(console.warn);
+                    window.location.href =
+                        CONFIG.homeUrl;
                 }
-
-            },
-            2500
-        );
-    }
+            );
+        });
 
 
-    /* ========================================================
-       ATTACHMENT LOAD FIX
-       ======================================================== */
+        DOM.railGeneralButton
+            ?.addEventListener(
+                "click",
+                () => {
 
-    async function reloadMessagesWithAttachments() {
-
-        await loadMessages();
-
-        await loadAttachments();
-
-        renderMessages();
-    }
-
-
-    /*
-     * Replace the normal loadMessages function behavior
-     * for attachment support.
-     */
-    const originalLoadMessages =
-        loadMessages;
-
-    /*
-     * We cannot reassign a function declaration cleanly
-     * in all browsers here, so realtime/message loading
-     * explicitly calls the attachment-aware version below.
-     */
+                    const general =
+                        state.communities.find(
+                            community =>
+                                (
+                                    community.slug ||
+                                    ""
+                                ).toLowerCase() ===
+                                "general"
+                        );
 
 
-    /* ========================================================
-       CLEANUP / PAGE VISIBILITY
-       ======================================================== */
-
-    function setupVisibilityHandling() {
-
-        document.addEventListener(
-            "visibilitychange",
-            () => {
-
-                if (
-                    document.visibilityState ===
-                    "visible"
-                ) {
-
-                    updatePresence(
-                        "online"
-                    ).catch(() => {});
-
-                    if (
-                        state.selectedChannel
+                    if (general) {
+                        selectCommunity(
+                            general
+                        );
+                    } else if (
+                        state.communities[0]
                     ) {
 
-                        loadMessages()
-                            .then(
-                                () =>
-                                    loadAttachments()
-                            )
-                            .then(
-                                renderMessages
-                            )
-                            .catch(
-                                console.error
-                            );
+                        selectCommunity(
+                            state.communities[0]
+                        );
                     }
-
                 }
-
-            }
-        );
-    }
-
-
-    /* ========================================================
-       DATABASE HELPERS
-       ======================================================== */
-
-    async function safeLoadMessages() {
-
-        const list =
-            $("messageList");
-
-        if (!state.selectedChannel) {
-
-            renderWelcome();
-            return;
-        }
-
-        const {
-            data,
-            error
-        } = await state.supabase
-            .from("chat_messages")
-            .select("*")
-            .eq(
-                "channel_id",
-                state.selectedChannel.id
-            )
-            .order(
-                "created_at",
-                {
-                    ascending: true
-                }
-            )
-            .limit(
-                CONFIG.messageLimit
             );
 
-        if (error) {
-            throw error;
-        }
 
-        state.messages =
-            data || [];
+        [
+            DOM.sidebarProfileButton,
+            DOM.railProfileButton
+        ].forEach(button => {
 
-        await loadMessageUsers();
-        await loadAttachments();
-        await loadReactions();
+            button?.addEventListener(
+                "click",
+                () => {
 
-        renderMessages();
-
-        if (list) {
-            scrollMessagesToBottom();
-        }
-    }
-
-
-    function scrollMessagesToBottom() {
-
-        const list =
-            $("messageList");
-
-        if (!list) {
-            return;
-        }
-
-        requestAnimationFrame(
-            () => {
-
-                list.scrollTop =
-                    list.scrollHeight;
-
-            }
-        );
-    }
-
-
-    /* ========================================================
-       PATCH REALTIME LOADER
-       ======================================================== */
-
-    async function refreshCurrentMessages() {
-
-        try {
-
-            await safeLoadMessages();
-
-        } catch (error) {
-
-            console.error(
-                "Message refresh:",
-                error
+                    window.location.href =
+                        "./profile.html";
+                }
             );
-        }
+        });
+
+
+        [
+            DOM.startConversationButton,
+            DOM.welcomeStartButton
+        ].forEach(button => {
+
+            button?.addEventListener(
+                "click",
+                () => {
+
+                    DOM.messageInput?.focus();
+                }
+            );
+        });
     }
 
 
-    /* ========================================================
-       CHANNEL REALTIME OVERRIDE HELPER
-       ======================================================== */
+    /* =====================================================
+       COMMUNITY CALL FROM HEADER
+       ===================================================== */
 
-    async function setupMessageRealtime() {
+    function setupCommunityCallShortcut() {
 
         /*
-         * A separate channel makes it easier to clean up
-         * without affecting call signaling.
+         * Double-clicking the community header call
+         * is NOT used.
+         *
+         * The existing General Call button remains
+         * the general-call entry point.
+         *
+         * Community calls can be exposed through
+         * a channel/button later without changing
+         * the general call architecture.
          */
-
-        if (!state.selectedChannel) {
-            return;
-        }
-
-        const channel =
-            state.supabase
-                .channel(
-                    `messages-${state.selectedChannel.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table: "chat_messages",
-                        filter:
-                            `channel_id=eq.${state.selectedChannel.id}`
-                    },
-                    () => {
-                        refreshCurrentMessages();
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table:
-                            "chat_message_reactions"
-                    },
-                    () => {
-                        refreshCurrentMessages();
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table:
-                            "chat_attachments"
-                    },
-                    () => {
-                        refreshCurrentMessages();
-                    }
-                )
-                .subscribe();
-
-        state.realtimeChannels.push(
-            channel
-        );
     }
 
 
-    /* ========================================================
-       REINITIALIZE MESSAGE REALTIME WHEN CHANNEL CHANGES
-       ======================================================== */
+    /* =====================================================
+       RENDER CHANNEL ERROR
+       ===================================================== */
 
-    async function refreshRealtimeForChannel() {
+    function renderChannelError(message) {
 
-        /*
-         * Keep community realtime simple and use polling/
-         * channel-specific realtime.
-         */
+        if (!DOM.channelList) {
+            return;
+        }
 
-        const channelRealtime =
-            state.realtimeChannels.filter(
-                item =>
-                    item.__mwanikiMessageChannel
-            );
 
-        for (
-            const channel
-            of channelRealtime
-        ) {
+        DOM.channelList.innerHTML = `
+            <div class="center-state">
+                <div>
+                    Unable to load channels.
+                    <br>
+                    <small>
+                        ${escapeHTML(
+                            message || ""
+                        )}
+                    </small>
+                </div>
+            </div>
+        `;
+    }
 
-            try {
-                await state.supabase
-                    .removeChannel(
-                        channel
+
+    /* =====================================================
+       AUTH STATE
+       ===================================================== */
+
+    function subscribeToAuthChanges() {
+
+        state.supabase.auth
+            .onAuthStateChange(
+                (event, session) => {
+
+                    console.log(
+                        "🔐 Auth state:",
+                        event
                     );
-            } catch {}
-        }
-
-        state.realtimeChannels =
-            state.realtimeChannels.filter(
-                item =>
-                    !item.__mwanikiMessageChannel
-            );
-
-        if (!state.selectedChannel) {
-            return;
-        }
-
-        const channel =
-            state.supabase
-                .channel(
-                    `message-channel-${state.selectedChannel.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event: "*",
-                        schema: "public",
-                        table:
-                            "chat_messages",
-                        filter:
-                            `channel_id=eq.${state.selectedChannel.id}`
-                    },
-                    refreshCurrentMessages
-                )
-                .subscribe();
-
-        channel.__mwanikiMessageChannel =
-            true;
-
-        state.realtimeChannels.push(
-            channel
-        );
-    }
 
 
-    /* ========================================================
-       OVERRIDE SELECT CHANNEL WITH REALTIME REFRESH
-       ======================================================== */
+                    if (
+                        event ===
+                        "SIGNED_OUT"
+                    ) {
 
-    async function finalizeChannelRealtime() {
-
-        try {
-            await refreshRealtimeForChannel();
-        } catch (error) {
-            console.warn(error);
-        }
-    }
-
-
-    /* ========================================================
-       GENERAL CALL MODAL BACKDROP
-       ======================================================== */
-
-    function setupGeneralCallModalBackdrop() {
-
-        const modal =
-            $("generalCallModal");
-
-        modal?.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target === modal
-                ) {
-
-                    closeGeneralCallModal();
+                        window.location.href =
+                            "./studentLogin.html";
+                    }
                 }
-
-            }
-        );
+            );
     }
 
 
-    /* ========================================================
-       HANDLE WINDOW UNLOAD
-       ======================================================== */
+    /* =====================================================
+       CLEANUP
+       ===================================================== */
 
     window.addEventListener(
         "beforeunload",
         () => {
 
-            if (
-                state.call.active &&
-                state.call.room
-            ) {
+            try {
 
-                updateParticipant(
-                    state.call.room.id,
-                    {
-                        status:
-                            "left",
+                state.currentCall
+                    .localStream
+                    ?.getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
 
-                        left_at:
-                            new Date()
-                                .toISOString()
-                    }
-                ).catch(() => {});
-            }
 
+                state.currentCall
+                    .screenStream
+                    ?.getTracks()
+                    .forEach(
+                        track =>
+                            track.stop()
+                    );
+
+
+                state.realtimeChannels
+                    .forEach(
+                        channel =>
+                            state.supabase
+                                ?.removeChannel(
+                                    channel
+                                )
+                    );
+
+            } catch (_) {}
         }
     );
 
 
-    /* ========================================================
-       MAIN INITIALIZATION
-       ======================================================== */
+    /* =====================================================
+       INITIALIZATION
+       ===================================================== */
 
     async function init() {
 
-        console.log(
-            "🚀 Mwaniki Scholars Community starting..."
-        );
+        cacheDOM();
+
 
         try {
 
-            state.supabase =
-                await waitForSupabase();
+            await waitForSupabase();
 
-            console.log(
-                "✅ Supabase client ready"
-            );
+            await loadCurrentUser();
+
+            if (!state.user) {
+                return;
+            }
 
 
-            await loadUser();
-
-            console.log(
-                "✅ Authenticated as:",
-                state.user.id
-            );
+            await loadProfile();
 
 
             setupNavigation();
 
-            setupComposer();
+            setupChannelSearch();
+
+            setupMessageComposer();
+
+            setupEmojiButton();
 
             setupAttachments();
 
-            setupEmojiPicker();
-
             setupCommunityModal();
 
-            setupChannelSearch();
+            setupCallButtons();
 
-            setupGeneralCall();
-
-            setupGeneralCallModalBackdrop();
-
-            setupCallControls();
-
-            setupPresence();
-
-            setupVisibilityHandling();
-
-            createCommunityCallButton();
-
-            setupIncomingCallPolling();
+            setupCommunityCallShortcut();
 
 
-            /*
-             * Load communities after all UI handlers
-             * are ready.
-             */
             await loadCommunities();
 
 
-            /*
-             * Ensure attachments are displayed on the
-             * initially selected channel.
-             */
-            if (state.selectedChannel) {
-
-                await loadAttachments();
-
-                renderMessages();
-
-                await finalizeChannelRealtime();
-            }
+            subscribeToIncomingCalls();
 
 
             console.log(
                 "✅ Mwaniki Scholars Community loaded"
             );
 
+
             announce(
-                "Community loaded successfully."
+                "Community loaded."
             );
 
         } catch (error) {
@@ -6347,54 +4992,17 @@
                 error
             );
 
-            showMessage(
-                error.message ||
-                "Community failed to load.",
-                "error"
+
+            announce(
+                "Community failed to load."
             );
         }
     }
 
 
-    /* ========================================================
-       EXPOSE DEBUG API
-       ======================================================== */
-
-    window.MwanikiCommunity = {
-        state,
-
-        reload: init,
-
-        loadCommunities,
-
-        loadChannels,
-
-        loadMessages:
-            safeLoadMessages,
-
-        selectCommunity,
-
-        selectChannel,
-
-        sendMessage,
-
-        deleteMessage,
-
-        openCommunityModal,
-
-        closeCommunityModal,
-
-        openCallStart,
-
-        joinCall,
-
-        leaveCall
-    };
-
-
-    /* ========================================================
+    /* =====================================================
        START
-       ======================================================== */
+       ===================================================== */
 
     if (
         document.readyState ===
@@ -6413,5 +5021,50 @@
 
         init();
     }
+
+
+    /* =====================================================
+       PUBLIC API
+       Useful for debugging and future buttons.
+       ===================================================== */
+
+    window.MwanikiCommunity = {
+
+        state,
+
+        loadCommunities,
+
+        loadChannels,
+
+        loadMessages,
+
+        selectCommunity,
+
+        selectChannel,
+
+        sendMessage,
+
+        deleteMessage,
+
+        openCommunityModal,
+
+        closeCommunityModal,
+
+        openGeneralCallModal,
+
+        closeGeneralCallModal,
+
+        startGeneralCall,
+
+        startCommunityCall,
+
+        leaveCall,
+
+        toggleMicrophone,
+
+        toggleCamera,
+
+        shareScreen
+    };
 
 })();
