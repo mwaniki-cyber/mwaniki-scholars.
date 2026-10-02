@@ -1,8 +1,46 @@
-/* ============================================================
+/* =========================================================
    MWANIKI SCHOLARS COMMUNITY
-   community.js
-   Complete Community + Messaging + Presence + Calling Engine
-   ============================================================ */
+   COMPLETE CLEAN COMMUNITY ENGINE
+
+   FIXED:
+   1. Frozen voice/video call button
+   2. WebRTC signaling race
+   3. ICE candidate race
+   4. Emoji picker closes by:
+        - emoji button
+        - X button
+        - clicking outside
+        - Escape
+   5. Photo uploads
+   6. Document uploads
+   7. Gaming community icon
+   8. Memes community icon
+   9. Own-message deletion
+   10. Realtime message updates
+   11. Realtime call invitations
+   12. Independent community calls
+   13. Independent general calls
+   14. Screen sharing
+   15. Microphone/camera controls
+   16. Message search
+   17. Reply support
+   18. Presence heartbeat
+   19. Community switching
+   20. Channel switching
+
+   DATABASE RELATIONSHIPS:
+
+   chat_messages.user_id
+          ↓
+   students.id
+
+   chat_presence.user_id
+          ↓
+   students.id
+
+   IMPORTANT:
+   Do NOT use students.user_id.
+   ========================================================= */
 
 (() => {
     "use strict";
@@ -12,90 +50,192 @@
        ========================================================= */
 
     const CONFIG = {
-        dashboardUrl: "./dashboard.html",
-        profileUrl: "./studentProfile.html",
 
-        defaultAvatar:
-            "https://ui-avatars.com/api/?name=Student&background=087f73&color=ffffff",
+        dashboardUrl:
+            "./dashboard.html",
 
-        presenceInterval: 30000,
-        onlineWindow: 90000,
+        profileUrl:
+            "./profile.html",
+
+        messageLimit:
+            500,
+
+        presenceHeartbeat:
+            30000,
+
+        onlineWindowMs:
+            90000,
+
+        attachmentBucket:
+            "community-attachments",
+
+        maxAttachmentBytes:
+            25 * 1024 * 1024,
 
         rtcConfiguration: {
+
             iceServers: [
+
                 {
                     urls: [
                         "stun:stun.l.google.com:19302",
                         "stun:stun1.l.google.com:19302"
                     ]
                 }
+
             ]
         },
 
-        messagePageSize: 100,
-        channelPageSize: 200
+        defaultAvatar:
+            "data:image/svg+xml;charset=UTF-8," +
+            encodeURIComponent(`
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="96"
+                    height="96"
+                    viewBox="0 0 96 96"
+                >
+                    <rect
+                        width="96"
+                        height="96"
+                        rx="48"
+                        fill="#087f73"
+                    />
+
+                    <circle
+                        cx="48"
+                        cy="35"
+                        r="17"
+                        fill="#ffffff"
+                    />
+
+                    <path
+                        d="M18 82c4-18 16-27 30-27s26 9 30 27"
+                        fill="#ffffff"
+                    />
+                </svg>
+            `)
     };
 
 
     /* =========================================================
-       STATE
+       APPLICATION STATE
        ========================================================= */
 
     const state = {
-        initialized: false,
 
-        supabase: null,
+        supabase:
+            null,
 
-        user: null,
-        profile: null,
+        user:
+            null,
 
-        communities: [],
-        channels: [],
-        messages: [],
+        profile:
+            null,
 
-        selectedCommunity: null,
-        selectedChannel: null,
+        communities:
+            [],
 
-        communityModalOpen: false,
-        emojiPickerOpen: false,
+        channels:
+            [],
 
-        pendingGeneralCallType: "video",
+        messages:
+            [],
 
-        presenceTimer: null,
+        selectedCommunity:
+            null,
 
-        realtimeChannels: [],
+        selectedChannel:
+            null,
 
-        communityRealtimeChannel: null,
+        searchTerm:
+            "",
+
+        initialized:
+            false,
+
+        messageSending:
+            false,
+
+        communityModalOpen:
+            false,
+
+        emojiPickerOpen:
+            false,
+
+        presenceTimer:
+            null,
+
+        realtimeChannels:
+            [],
+
+        pendingGeneralCallType:
+            "video",
+
+        incomingCall:
+            null,
+
+        replyMessage:
+            null,
 
         call: {
-            active: false,
 
-            incoming: null,
+            active:
+                false,
 
-            roomId: null,
-            roomCode: null,
+            connecting:
+                false,
 
-            callType: null,
-            scope: null,
-            communityId: null,
-            channelId: null,
+            roomId:
+                null,
 
-            startedAt: null,
-            timer: null,
+            roomCode:
+                null,
 
-            localStream: null,
-            screenStream: null,
+            callType:
+                null,
 
-            microphoneEnabled: true,
-            cameraEnabled: true,
-            screenSharing: false,
+            scope:
+                null,
 
-            peerConnections: new Map(),
+            communityId:
+                null,
 
-            pendingIceCandidates: new Map(),
+            startedAt:
+                null,
 
-            roomChannel: null,
-            participantChannel: null
+            timer:
+                null,
+
+            localStream:
+                null,
+
+            screenStream:
+                null,
+
+            microphoneEnabled:
+                true,
+
+            cameraEnabled:
+                true,
+
+            screenSharing:
+                false,
+
+            peerConnections:
+                new Map(),
+
+            pendingIce:
+                new Map(),
+
+            remoteStreams:
+                new Map(),
+
+            roomChannel:
+                null,
+
+            participantChannel:
+                null
         }
     };
 
@@ -106,124 +246,523 @@
 
     const dom = {};
 
+    const IDS = [
 
-    function cacheDom() {
-        const ids = [
-            "communityApp",
+        "communityApp",
 
-            "homeButton",
-            "railHomeButton",
-            "railGeneralButton",
-            "communityRailList",
-            "railProfileButton",
+        "homeButton",
+        "railHomeButton",
+        "railGeneralButton",
 
-            "openCommunityButton",
-            "channelSearchInput",
-            "channelList",
+        "communityRailList",
+        "communityRail",
 
-            "communitySelectorButton",
-            "selectedCommunityIcon",
-            "selectedCommunityName",
-            "selectedCommunityDescription",
+        "railProfileButton",
+        "railProfileAvatar",
 
-            "sidebarProfileAvatar",
-            "sidebarProfileName",
+        "openCommunityButton",
 
-            "dashboardButton",
-            "headerCommunityButton",
+        "channelSearchInput",
+        "channelList",
 
-            "mainChannelTitle",
-            "mainChannelDescription",
-            "messageList",
-            "messageInput",
-            "sendMessageButton",
-            "attachButton",
-            "emojiButton",
+        "communitySelectorButton",
 
-            "startConversationButton",
-            "welcomeStartButton",
+        "selectedCommunityIcon",
+        "selectedCommunityName",
+        "selectedCommunityDescription",
 
-            "communityModal",
-            "closeCommunityModal",
-            "communityChoiceList",
-            "communityModalSearch",
+        "sidebarProfileAvatar",
+        "sidebarProfileName",
 
-            "accessibilityAnnouncer",
-            "communityStatus",
+        "dashboardButton",
+        "headerCommunityButton",
 
-            "messageForm",
-            "channelLoadingState",
+        "mainChannelTitle",
+        "mainChannelDescription",
 
-            "sidebarProfileButton",
-            "communityBrandTitle",
-            "communityBrandSubtitle",
+        "messageList",
+        "messageInput",
+        "sendMessageButton",
 
-            "generalCallButton",
+        "attachButton",
+        "emojiButton",
+        "attachmentInput",
 
-            "communityRail",
-            "createCommunityButton",
+        "startConversationButton",
+        "welcomeStartButton",
 
-            "channelSidebar",
-            "activeCommunityIcon",
-            "activeCommunityName",
-            "activeCommunityDescription",
-            "communityCourseBanner",
-            "communityCourseName",
-            "communityCourseLabel",
+        "communityModal",
+        "closeCommunityModal",
+        "communityChoiceList",
+        "communityModalSearch",
 
-            "createChannelButton",
-            "communityMain",
-            "channelToggleButton",
+        "accessibilityAnnouncer",
+        "communityStatus",
 
-            "activeChannelName",
-            "activeRoleBadge",
-            "activeChannelDescription",
+        "messageForm",
+        "channelLoadingState",
 
-            "voiceCallButton",
-            "videoCallButton",
-            "chatSearchButton",
-            "memberToggleButton",
+        "sidebarProfileButton",
 
-            "callOverlay",
-            "callTypeIcon",
-            "callTitle",
-            "callSubtitle",
-            "callDuration",
-            "minimizeCallButton",
+        "communityBrandTitle",
+        "communityBrandSubtitle",
 
-            "callVideoGrid",
-            "localVideoTile",
-            "localVideo",
-            "callParticipants",
+        "generalCallButton",
 
-            "toggleMicrophoneButton",
-            "toggleCameraButton",
-            "shareScreenButton",
-            "leaveCallButton",
+        "createCommunityButton",
 
-            "generalCallModal",
-            "closeGeneralCallModalButton",
-            "generalVoiceCallButton",
-            "generalVideoCallButton",
-            "generalCallUserInput",
-            "generalCallMessage",
-            "cancelGeneralCallButton",
-            "startGeneralCallButton",
-            "generalCallUserList",
-            "generalCallUserStatus",
-            "generalCallSelectionCount",
+        "channelSidebar",
 
-            "incomingCallToast",
-            "incomingCallTitle",
-            "incomingCallText",
-            "acceptCallButton",
-            "declineCallButton"
-        ];
+        "activeCommunityIcon",
+        "activeCommunityName",
+        "activeCommunityDescription",
 
-        ids.forEach(id => {
+        "communityCourseBanner",
+        "communityCourseName",
+        "communityCourseLabel",
+
+        "createChannelButton",
+
+        "communityMain",
+
+        "channelToggleButton",
+
+        "activeChannelName",
+        "activeRoleBadge",
+        "activeChannelDescription",
+
+        "voiceCallButton",
+        "videoCallButton",
+
+        "chatSearchButton",
+        "memberToggleButton",
+
+        "callOverlay",
+        "callTypeIcon",
+        "callTitle",
+        "callSubtitle",
+        "callDuration",
+
+        "minimizeCallButton",
+
+        "callVideoGrid",
+        "localVideoTile",
+        "localVideo",
+
+        "callParticipants",
+
+        "toggleMicrophoneButton",
+        "toggleCameraButton",
+        "shareScreenButton",
+        "leaveCallButton",
+
+        "generalCallModal",
+        "closeGeneralCallModalButton",
+
+        "generalVoiceCallButton",
+        "generalVideoCallButton",
+
+        "generalCallMessage",
+
+        "cancelGeneralCallButton",
+        "startGeneralCallButton",
+
+        "generalCallUserList",
+        "generalCallUserStatus",
+        "generalCallSelectionCount",
+
+        "incomingCallToast",
+        "incomingCallTitle",
+        "incomingCallText",
+
+        "acceptCallButton",
+        "declineCallButton",
+
+        "replyPreview",
+        "replyPreviewText",
+        "cancelReplyButton",
+
+        "communityToast",
+
+        "messageSearchPanel",
+        "messageSearchInput",
+        "closeMessageSearchButton",
+
+        "memberSidebar",
+        "communityDrawerOverlay",
+
+        "memberSearchInput",
+        "memberList"
+    ];
+
+
+    IDS.forEach(
+        id => {
             dom[id] =
-                document.getElementById(id);
-        });
+                document.getElementById(
+                    id
+                );
+        }
+    );
+
+
+    /* =========================================================
+       UTILITIES
+       ========================================================= */
+
+    function escapeHtml(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+
+    function safeUrl(
+        value
+    ) {
+
+        const url =
+            String(
+                value || ""
+            ).trim();
+
+        if (
+            /^(https?:\/\/|data:image\/)/i
+                .test(url)
+        ) {
+            return url;
+        }
+
+        return CONFIG.defaultAvatar;
+    }
+
+
+    function initials(
+        name
+    ) {
+
+        const parts =
+            String(
+                name ||
+                "Student"
+            )
+                .trim()
+                .split(
+                    /\s+/
+                )
+                .filter(
+                    Boolean
+                );
+
+        if (
+            !parts.length
+        ) {
+            return "MS";
+        }
+
+        if (
+            parts.length === 1
+        ) {
+            return parts[0]
+                .slice(
+                    0,
+                    2
+                )
+                .toUpperCase();
+        }
+
+        return (
+            parts[0][0] +
+            parts[
+                parts.length - 1
+            ][0]
+        ).toUpperCase();
+    }
+
+
+    function formatTime(
+        value
+    ) {
+
+        if (!value) {
+            return "";
+        }
+
+        const date =
+            new Date(
+                value
+            );
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "";
+        }
+
+        return date.toLocaleTimeString(
+            [],
+            {
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit"
+            }
+        );
+    }
+
+
+    function formatDate(
+        value
+    ) {
+
+        if (!value) {
+            return "";
+        }
+
+        const date =
+            new Date(
+                value
+            );
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+            return "";
+        }
+
+        return date.toLocaleDateString(
+            [],
+            {
+                day:
+                    "numeric",
+
+                month:
+                    "short",
+
+                year:
+                    "numeric"
+            }
+        );
+    }
+
+
+    function storageGet(
+        key
+    ) {
+
+        try {
+
+            return localStorage.getItem(
+                key
+            );
+
+        } catch {
+
+            return null;
+        }
+    }
+
+
+    function storageSet(
+        key,
+        value
+    ) {
+
+        try {
+
+            localStorage.setItem(
+                key,
+                String(
+                    value
+                )
+            );
+
+        } catch {}
+    }
+
+
+    function normalizeProfile(
+        profile
+    ) {
+
+        if (!profile) {
+            return null;
+        }
+
+        return {
+
+            id:
+                profile.id ||
+                null,
+
+            full_name:
+                profile.full_name ||
+                "Student",
+
+            photo_url:
+                profile.photo_url ||
+                ""
+        };
+    }
+
+
+    function setAvatar(
+        image,
+        url,
+        name
+    ) {
+
+        if (!image) {
+            return;
+        }
+
+        image.src =
+            safeUrl(
+                url
+            );
+
+        image.alt =
+            `${name || "Student"} profile photo`;
+
+        image.onerror =
+            () => {
+
+                image.onerror =
+                    null;
+
+                image.src =
+                    CONFIG.defaultAvatar;
+            };
+    }
+
+
+    function announce(
+        message
+    ) {
+
+        if (
+            !dom.accessibilityAnnouncer
+        ) {
+            return;
+        }
+
+        dom.accessibilityAnnouncer.textContent =
+            "";
+
+        setTimeout(
+            () => {
+
+                if (
+                    dom.accessibilityAnnouncer
+                ) {
+
+                    dom.accessibilityAnnouncer.textContent =
+                        message ||
+                        "";
+                }
+
+            },
+            10
+        );
+    }
+
+
+    function setStatus(
+        message
+    ) {
+
+        if (
+            dom.communityStatus
+        ) {
+
+            dom.communityStatus.textContent =
+                message ||
+                "";
+        }
+
+        announce(
+            message
+        );
+    }
+
+
+    let toastTimer =
+        null;
+
+
+    function toast(
+        message,
+        type = "normal"
+    ) {
+
+        const element =
+            dom.communityToast;
+
+        if (!element) {
+
+            console.log(
+                `[Community ${type}]`,
+                message
+            );
+
+            return;
+        }
+
+        element.textContent =
+            message ||
+            "";
+
+        element.classList.add(
+            "show",
+            "visible",
+            "active"
+        );
+
+        clearTimeout(
+            toastTimer
+        );
+
+        toastTimer =
+            setTimeout(
+                () => {
+
+                    element.classList.remove(
+                        "show",
+                        "visible",
+                        "active"
+                    );
+
+                },
+                3200
+            );
     }
 
 
@@ -231,20 +770,10 @@
        SUPABASE
        ========================================================= */
 
-    function getExistingSupabaseClient() {
-        return (
-            window.supabaseClient ||
-            window.sb ||
-            window.mwanikiSupabase ||
-            window.supabase ||
-            null
-        );
-    }
-
-
     async function waitForSupabase(
-        timeout = 10000
+        timeout = 15000
     ) {
+
         const started =
             Date.now();
 
@@ -253,10 +782,20 @@
                 started <
             timeout
         ) {
-            const client =
-                getExistingSupabaseClient();
 
-            if (client) {
+            const client =
+                window.supabaseClient ||
+                window.mwanikiSupabase ||
+                window.sb ||
+                window.supabase;
+
+            if (
+                client &&
+                typeof client.from ===
+                    "function" &&
+                client.auth
+            ) {
+
                 state.supabase =
                     client;
 
@@ -273,380 +812,41 @@
         }
 
         throw new Error(
-            "Supabase client could not be found. Make sure supabase.js loads before community.js."
+            "Supabase client was not found. Check supabase.js before community.js."
         );
     }
 
 
     /* =========================================================
-       UTILITIES
-       ========================================================= */
-
-    function escapeHtml(value) {
-        return String(
-            value ?? ""
-        )
-            .replaceAll(
-                "&",
-                "&amp;"
-            )
-            .replaceAll(
-                "<",
-                "&lt;"
-            )
-            .replaceAll(
-                ">",
-                "&gt;"
-            )
-            .replaceAll(
-                '"',
-                "&quot;"
-            )
-            .replaceAll(
-                "'",
-                "&#039;"
-            );
-    }
-
-
-    function safeUrl(url) {
-        if (
-            typeof url !==
-            "string"
-        ) {
-            return CONFIG.defaultAvatar;
-        }
-
-        const value =
-            url.trim();
-
-        if (
-            !value
-        ) {
-            return CONFIG.defaultAvatar;
-        }
-
-        if (
-            value.startsWith(
-                "https://"
-            ) ||
-            value.startsWith(
-                "http://"
-            )
-        ) {
-            return value;
-        }
-
-        return CONFIG.defaultAvatar;
-    }
-
-
-    function formatMessageTime(
-        value
-    ) {
-        if (!value) {
-            return "";
-        }
-
-        const date =
-            new Date(value);
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "";
-        }
-
-        return date.toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
-    }
-
-
-    function formatDateTime(
-        value
-    ) {
-        if (!value) {
-            return "";
-        }
-
-        const date =
-            new Date(value);
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "";
-        }
-
-        return date.toLocaleString();
-    }
-
-
-    function generateRoomCode() {
-        const timestamp =
-            Date.now().toString(36);
-
-        const random =
-            Math.random()
-                .toString(36)
-                .slice(2, 9);
-
-        return (
-            "MW-" +
-            timestamp +
-            "-" +
-            random
-        ).toUpperCase();
-    }
-
-
-    function isRecentlyOnline(
-        timestamp
-    ) {
-        if (!timestamp) {
-            return true;
-        }
-
-        const time =
-            new Date(
-                timestamp
-            ).getTime();
-
-        if (
-            Number.isNaN(time)
-        ) {
-            return false;
-        }
-
-        return (
-            Date.now() -
-                time <=
-            CONFIG.onlineWindow
-        );
-    }
-
-
-    function announce(
-        message
-    ) {
-        if (
-            dom.accessibilityAnnouncer
-        ) {
-            dom.accessibilityAnnouncer.textContent =
-                message;
-        }
-    }
-
-
-    function setStatus(
-        message
-    ) {
-        if (
-            dom.communityStatus
-        ) {
-            dom.communityStatus.textContent =
-                message;
-            dom.communityStatus.hidden =
-                false;
-
-            clearTimeout(
-                dom.communityStatus
-                    ._hideTimer
-            );
-
-            dom.communityStatus._hideTimer =
-                setTimeout(
-                    () => {
-                        if (
-                            dom.communityStatus
-                        ) {
-                            dom.communityStatus.hidden =
-                                true;
-                        }
-                    },
-                    4500
-                );
-        }
-
-        console.log(
-            "Mwaniki Community:",
-            message
-        );
-    }
-
-
-    function getCommunityIcon(
-        community
-    ) {
-        if (
-            community?.icon_url
-        ) {
-            return community.icon_url;
-        }
-
-        const name =
-            String(
-                community?.name ||
-                    ""
-            ).toLowerCase();
-
-        if (
-            name.includes(
-                "gaming"
-            ) ||
-            name.includes(
-                "game"
-            )
-        ) {
-            return "🎮";
-        }
-
-        if (
-            name.includes(
-                "meme"
-            )
-        ) {
-            return "😂";
-        }
-
-        if (
-            name.includes(
-                "general"
-            )
-        ) {
-            return "💬";
-        }
-
-        if (
-            name.includes(
-                "mwaniki"
-            )
-        ) {
-            return "🎓";
-        }
-
-        return "🏫";
-    }
-
-
-    function normalizeProfile(
-        profile
-    ) {
-        return {
-            id:
-                profile?.id ||
-                null,
-
-            full_name:
-                profile?.full_name ||
-                "Student",
-
-            photo_url:
-                profile?.photo_url ||
-                CONFIG.defaultAvatar,
-
-            email:
-                profile?.email ||
-                "",
-
-            course:
-                profile?.course ||
-                "",
-
-            level:
-                profile?.level ||
-                ""
-        };
-    }
-
-
-    function getProfileName() {
-        return (
-            state.profile?.full_name ||
-            state.user?.email?.split(
-                "@"
-            )[0] ||
-            "Student"
-        );
-    }
-
-
-    function getProfilePhoto() {
-        return safeUrl(
-            state.profile?.photo_url
-        );
-    }
-
-
-    function removeRealtimeChannel(
-        channel
-    ) {
-        if (!channel) {
-            return;
-        }
-
-        try {
-            state.supabase.removeChannel(
-                channel
-            );
-        } catch (error) {
-            console.warn(
-                "Could not remove realtime channel:",
-                error
-            );
-        }
-
-        const index =
-            state.realtimeChannels.indexOf(
-                channel
-            );
-
-        if (index !== -1) {
-            state.realtimeChannels.splice(
-                index,
-                1
-            );
-        }
-    }
-
-
-    /* =========================================================
-       AUTHENTICATED USER
+       AUTHENTICATION
        ========================================================= */
 
     async function loadAuthenticatedUser() {
+
         const {
             data,
             error
         } =
-            await state.supabase.auth.getUser();
+            await state.supabase
+                .auth
+                .getUser();
 
         if (error) {
             throw error;
         }
 
-        if (!data?.user) {
+        if (
+            !data ||
+            !data.user
+        ) {
+
             throw new Error(
-                "Please log in before opening the community."
+                "No authenticated student was found."
             );
         }
 
         state.user =
             data.user;
-
-        console.log(
-            "Community user:",
-            state.user.id
-        );
     }
 
 
@@ -655,9 +855,6 @@
        ========================================================= */
 
     async function loadProfile() {
-        if (!state.user) {
-            return;
-        }
 
         const {
             data,
@@ -668,7 +865,7 @@
                     "students"
                 )
                 .select(
-                    "id, full_name, email, phone, course, level, photo_url, created_at"
+                    "id, full_name, photo_url"
                 )
                 .eq(
                     "id",
@@ -677,147 +874,190 @@
                 .maybeSingle();
 
         if (error) {
+
             console.warn(
-                "Student profile query failed:",
+                "Profile lookup failed:",
                 error
             );
         }
 
         state.profile =
             normalizeProfile(
-                data || {
-                    id:
-                        state.user.id,
+                data
+            ) || {
 
-                    full_name:
-                        state.user.user_metadata
-                            ?.full_name ||
-                        state.user.email?.split(
-                            "@"
-                        )[0] ||
-                        "Student",
+                id:
+                    state.user.id,
 
-                    photo_url:
-                        state.user.user_metadata
-                            ?.photo_url ||
-                        CONFIG.defaultAvatar
-                }
-            );
+                full_name:
+                    "Student",
 
-        renderProfile();
-    }
+                photo_url:
+                    ""
+            };
 
-
-    function renderProfile() {
-        const name =
-            getProfileName();
-
-        const photo =
-            getProfilePhoto();
 
         [
             dom.sidebarProfileAvatar,
             dom.railProfileAvatar
         ].forEach(
-            avatar => {
-                if (!avatar) {
-                    return;
-                }
+            image => {
 
-                avatar.src =
-                    photo;
-
-                avatar.alt =
-                    name;
-
-                avatar.onerror =
-                    () => {
-                        avatar.onerror =
-                            null;
-
-                        avatar.src =
-                            CONFIG.defaultAvatar;
-                    };
+                setAvatar(
+                    image,
+                    state.profile.photo_url,
+                    getProfileName()
+                );
             }
         );
+
 
         if (
             dom.sidebarProfileName
         ) {
+
             dom.sidebarProfileName.textContent =
-                name;
+                getProfileName();
         }
+    }
+
+
+    function getProfileName() {
+
+        return (
+            state.profile?.full_name ||
+            state.user?.user_metadata?.full_name ||
+            "Student"
+        );
+    }
+
+
+    function getProfilePhoto() {
+
+        return safeUrl(
+            state.profile?.photo_url
+        );
     }
 
 
     /* =========================================================
-       PRESENCE
+       COMMUNITY ICONS
        ========================================================= */
 
-    async function updatePresence() {
+    function communityIcon(
+        community
+    ) {
+
+        const text =
+            `${community?.name || ""} ${community?.slug || ""}`
+                .toLowerCase();
+
+        /*
+         * IMPORTANT:
+         * Gaming and Memes NEVER use icon_url.
+         * This fixes them displaying student/avatar images.
+         */
+
         if (
-            !state.user ||
-            !state.supabase
+            text.includes(
+                "gaming"
+            ) ||
+            text.includes(
+                "game"
+            )
         ) {
-            return;
+
+            return "🎮";
         }
 
-        const now =
-            new Date()
-                .toISOString();
 
-        const {
-            error
-        } =
-            await state.supabase
-                .from(
-                    "chat_presence"
-                )
-                .upsert(
-                    {
-                        user_id:
-                            state.user.id,
+        if (
+            text.includes(
+                "meme"
+            )
+        ) {
 
-                        status:
-                            "online",
-
-                        last_seen_at:
-                            now,
-
-                        updated_at:
-                            now
-                    },
-                    {
-                        onConflict:
-                            "user_id"
-                    }
-                );
-
-        if (error) {
-            console.warn(
-                "Presence update failed:",
-                error
-            );
+            return "😂";
         }
+
+
+        if (
+            text.includes(
+                "general"
+            )
+        ) {
+
+            return "💬";
+        }
+
+
+        if (
+            text.includes(
+                "mwaniki"
+            ) ||
+            text.includes(
+                "medical"
+            )
+        ) {
+
+            return "🎓";
+        }
+
+
+        return "🏫";
     }
 
 
-    function startPresenceHeartbeat() {
-        if (
-            state.presenceTimer
-        ) {
-            clearInterval(
-                state.presenceTimer
+    function iconMarkup(
+        community
+    ) {
+
+        const text =
+            `${community?.name || ""} ${community?.slug || ""}`
+                .toLowerCase();
+
+        const special =
+            text.includes(
+                "gaming"
+            ) ||
+            text.includes(
+                "game"
+            ) ||
+            text.includes(
+                "meme"
             );
+
+
+        if (
+            special ||
+            !community?.icon_url
+        ) {
+
+            return `
+                <span
+                    class="community-symbol"
+                    aria-hidden="true"
+                >
+                    ${escapeHtml(
+                        communityIcon(
+                            community
+                        )
+                    )}
+                </span>
+            `;
         }
 
-        updatePresence();
 
-        state.presenceTimer =
-            setInterval(
-                updatePresence,
-                CONFIG.presenceInterval
-            );
+        return `
+            <img
+                src="${safeUrl(
+                    community.icon_url
+                )}"
+                alt=""
+                aria-hidden="true"
+                class="community-icon-image"
+            >
+        `;
     }
 
 
@@ -826,6 +1066,7 @@
        ========================================================= */
 
     async function loadCommunities() {
+
         const {
             data,
             error
@@ -835,7 +1076,19 @@
                     "chat_communities"
                 )
                 .select(
-                    "*"
+                    `
+                    id,
+                    name,
+                    slug,
+                    description,
+                    icon_url,
+                    banner_url,
+                    is_public,
+                    is_active,
+                    created_by,
+                    created_at,
+                    updated_at
+                    `
                 )
                 .eq(
                     "is_active",
@@ -856,38 +1109,26 @@
         state.communities =
             data || [];
 
-        ensureRequiredCommunityIcons();
-
         renderCommunityRail();
-
-        console.log(
-            "Communities loaded:",
-            state.communities.length
-        );
-    }
-
-
-    function ensureRequiredCommunityIcons() {
-        /*
-         * Icons are generated from names when icon_url
-         * isn't provided. This ensures Gaming, Memes,
-         * Mwaniki and General remain visually distinct.
-         */
     }
 
 
     function renderCommunityRail() {
-        if (
-            !dom.communityRailList
-        ) {
+
+        const container =
+            dom.communityRailList ||
+            dom.communityRail;
+
+        if (!container) {
             return;
         }
 
-        dom.communityRailList.innerHTML =
+        container.innerHTML =
             "";
 
         state.communities.forEach(
             community => {
+
                 const button =
                     document.createElement(
                         "button"
@@ -897,13 +1138,18 @@
                     "button";
 
                 button.className =
-                    "community-rail-community";
+                    "community-rail-item";
 
                 if (
-                    state.selectedCommunity
-                        ?.id ===
-                    community.id
+                    state.selectedCommunity &&
+                    String(
+                        state.selectedCommunity.id
+                    ) ===
+                        String(
+                            community.id
+                        )
                 ) {
+
                     button.classList.add(
                         "active"
                     );
@@ -913,67 +1159,29 @@
                     community.id;
 
                 button.title =
-                    community.name;
+                    community.name ||
+                    "Community";
 
                 button.setAttribute(
                     "aria-label",
-                    `Open ${community.name}`
+                    community.name ||
+                        "Community"
                 );
 
-                const icon =
-                    getCommunityIcon(
+                button.innerHTML =
+                    iconMarkup(
                         community
                     );
 
-                if (
-                    icon.startsWith(
-                        "http://"
-                    ) ||
-                    icon.startsWith(
-                        "https://"
-                    )
-                ) {
-                    const image =
-                        document.createElement(
-                            "img"
-                        );
-
-                    image.src =
-                        icon;
-
-                    image.alt =
-                        "";
-
-                    image.style.width =
-                        "26px";
-
-                    image.style.height =
-                        "26px";
-
-                    image.style.objectFit =
-                        "cover";
-
-                    image.style.borderRadius =
-                        "7px";
-
-                    button.appendChild(
-                        image
-                    );
-                } else {
-                    button.textContent =
-                        icon;
-                }
-
                 button.addEventListener(
                     "click",
-                    () => {
+                    () =>
                         selectCommunity(
                             community.id
-                        );
-                    }
+                        )
                 );
 
-                dom.communityRailList.appendChild(
+                container.appendChild(
                     button
                 );
             }
@@ -981,115 +1189,10 @@
     }
 
 
-    function renderCommunityHeader() {
-        const community =
-            state.selectedCommunity;
-
-        if (!community) {
-            return;
-        }
-
-        const icon =
-            getCommunityIcon(
-                community
-            );
-
-        if (
-            dom.selectedCommunityIcon
-        ) {
-            dom.selectedCommunityIcon.textContent =
-                icon.startsWith(
-                    "http"
-                )
-                    ? "🏫"
-                    : icon;
-        }
-
-        if (
-            dom.selectedCommunityName
-        ) {
-            dom.selectedCommunityName.textContent =
-                community.name;
-        }
-
-        if (
-            dom.selectedCommunityDescription
-        ) {
-            dom.selectedCommunityDescription.textContent =
-                community.description ||
-                "Community discussion";
-        }
-
-        if (
-            dom.activeCommunityIcon
-        ) {
-            dom.activeCommunityIcon.textContent =
-                icon.startsWith(
-                    "http"
-                )
-                    ? "🏫"
-                    : icon;
-        }
-
-        if (
-            dom.activeCommunityName
-        ) {
-            dom.activeCommunityName.textContent =
-                community.name;
-        }
-
-        if (
-            dom.activeCommunityDescription
-        ) {
-            dom.activeCommunityDescription.textContent =
-                community.description ||
-                "Community discussion";
-        }
-
-        renderCourseBanner(
-            community
-        );
-    }
-
-
-    function renderCourseBanner(
-        community
-    ) {
-        if (
-            !dom.communityCourseBanner
-        ) {
-            return;
-        }
-
-        if (
-            community.course_id
-        ) {
-            dom.communityCourseBanner.hidden =
-                false;
-
-            if (
-                dom.communityCourseLabel
-            ) {
-                dom.communityCourseLabel.textContent =
-                    "Course Community";
-            }
-
-            if (
-                dom.communityCourseName
-            ) {
-                dom.communityCourseName.textContent =
-                    `Course #${community.course_id}`;
-            }
-        } else {
-            dom.communityCourseBanner.hidden =
-                true;
-        }
-    }
-
-
     async function selectCommunity(
         communityId
     ) {
+
         const community =
             state.communities.find(
                 item =>
@@ -1108,200 +1211,182 @@
         state.selectedCommunity =
             community;
 
+        state.selectedChannel =
+            null;
+
+        state.messages =
+            [];
+
+        storageSet(
+            "mwanikiCommunityId",
+            community.id
+        );
+
         renderCommunityRail();
 
-        renderCommunityHeader();
+        renderSelectedCommunity();
 
         await loadChannels(
             community.id
         );
 
-        if (
+
+        const general =
+            state.channels.find(
+                channel =>
+                    String(
+                        channel.name ||
+                            ""
+                    )
+                        .trim()
+                        .toLowerCase() ===
+                    "general"
+            );
+
+
+        if (general) {
+
+            await selectChannel(
+                general.id
+            );
+
+        } else if (
             state.channels.length
         ) {
+
             await selectChannel(
                 state.channels[0].id
             );
+
         } else {
-            state.selectedChannel =
-                null;
-
-            state.messages =
-                [];
-
-            renderChannelList();
 
             renderMessageArea();
         }
 
-        announce(
-            `Opened ${community.name}`
-        );
+
+        resetCommunityRealtime();
     }
 
 
-    /* =========================================================
-       COMMUNITY MODAL
-       ========================================================= */
+    function renderSelectedCommunity() {
 
-    function openCommunityModal() {
-        if (
-            !dom.communityModal
-        ) {
+        const community =
+            state.selectedCommunity;
+
+        if (!community) {
             return;
         }
 
-        state.communityModalOpen =
-            true;
+        const name =
+            community.name ||
+            "Community";
 
-        dom.communityModal.hidden =
-            false;
 
         if (
-            dom.communityModalSearch
+            dom.selectedCommunityName
         ) {
-            dom.communityModalSearch.value =
+
+            dom.selectedCommunityName.textContent =
+                name;
+        }
+
+
+        if (
+            dom.activeCommunityName
+        ) {
+
+            dom.activeCommunityName.textContent =
+                name;
+        }
+
+
+        if (
+            dom.communityBrandTitle
+        ) {
+
+            dom.communityBrandTitle.textContent =
+                name;
+        }
+
+
+        if (
+            dom.selectedCommunityDescription
+        ) {
+
+            dom.selectedCommunityDescription.textContent =
+                community.description ||
                 "";
-
-            dom.communityModalSearch.focus();
         }
 
-        renderCommunityChoices();
-    }
 
-
-    function closeCommunityModal() {
         if (
-            !dom.communityModal
+            dom.activeCommunityDescription
         ) {
-            return;
+
+            dom.activeCommunityDescription.textContent =
+                community.description ||
+                "";
         }
 
-        state.communityModalOpen =
-            false;
 
-        dom.communityModal.hidden =
-            true;
-    }
+        [
+            dom.selectedCommunityIcon,
+            dom.activeCommunityIcon
+        ].forEach(
+            element => {
+
+                if (!element) {
+                    return;
+                }
+
+                const text =
+                    `${community.name || ""} ${community.slug || ""}`
+                        .toLowerCase();
+
+                const special =
+                    text.includes(
+                        "gaming"
+                    ) ||
+                    text.includes(
+                        "game"
+                    ) ||
+                    text.includes(
+                        "meme"
+                    );
 
 
-    function renderCommunityChoices(
-        searchTerm = ""
-    ) {
-        if (
-            !dom.communityChoiceList
-        ) {
-            return;
-        }
+                if (
+                    special
+                ) {
 
-        const term =
-            String(
-                searchTerm ||
-                    ""
-            )
-                .trim()
-                .toLowerCase();
+                    element.hidden =
+                        true;
 
-        const communities =
-            state.communities.filter(
-                community => {
-                    if (!term) {
-                        return true;
-                    }
+                    element.removeAttribute(
+                        "src"
+                    );
 
-                    return (
-                        String(
-                            community.name ||
-                                ""
-                        )
-                            .toLowerCase()
-                            .includes(
-                                term
-                            ) ||
-                        String(
-                            community.description ||
-                                ""
-                        )
-                            .toLowerCase()
-                            .includes(
-                                term
-                            )
+                } else if (
+                    community.icon_url
+                ) {
+
+                    element.hidden =
+                        false;
+
+                    element.src =
+                        safeUrl(
+                            community.icon_url
+                        );
+
+                } else {
+
+                    element.hidden =
+                        true;
+
+                    element.removeAttribute(
+                        "src"
                     );
                 }
-            );
-
-        dom.communityChoiceList.innerHTML =
-            "";
-
-        if (!communities.length) {
-            dom.communityChoiceList.innerHTML = `
-                <div class="community-empty-messages">
-                    No communities found.
-                </div>
-            `;
-
-            return;
-        }
-
-        communities.forEach(
-            community => {
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-                button.type =
-                    "button";
-
-                button.className =
-                    "community-choice";
-
-                const icon =
-                    getCommunityIcon(
-                        community
-                    );
-
-                button.innerHTML = `
-                    <span class="community-choice-icon">
-                        ${escapeHtml(
-                            icon.startsWith(
-                                "http"
-                            )
-                                ? "🏫"
-                                : icon
-                        )}
-                    </span>
-
-                    <span>
-                        <span class="community-choice-name">
-                            ${escapeHtml(
-                                community.name
-                            )}
-                        </span>
-
-                        <span class="community-choice-description">
-                            ${escapeHtml(
-                                community.description ||
-                                    "Community"
-                            )}
-                        </span>
-                    </span>
-                `;
-
-                button.addEventListener(
-                    "click",
-                    async () => {
-                        closeCommunityModal();
-
-                        await selectCommunity(
-                            community.id
-                        );
-                    }
-                );
-
-                dom.communityChoiceList.appendChild(
-                    button
-                );
             }
         );
     }
@@ -1314,21 +1399,17 @@
     async function loadChannels(
         communityId
     ) {
+
         if (!communityId) {
+
             state.channels =
                 [];
 
-            renderChannelList();
+            renderChannels();
 
-            return [];
+            return;
         }
 
-        if (
-            dom.channelLoadingState
-        ) {
-            dom.channelLoadingState.hidden =
-                false;
-        }
 
         const {
             data,
@@ -1339,7 +1420,24 @@
                     "chat_channels"
                 )
                 .select(
-                    "*"
+                    `
+                    id,
+                    community_id,
+                    name,
+                    slug,
+                    description,
+                    channel_type,
+                    icon,
+                    position,
+                    is_private,
+                    is_archived,
+                    is_active,
+                    course_id,
+                    unit_id,
+                    created_by,
+                    created_at,
+                    updated_at
+                    `
                 )
                 .eq(
                     "community_id",
@@ -1359,58 +1457,51 @@
                         ascending:
                             true
                     }
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending:
+                            true
+                    }
                 );
 
-        if (
-            dom.channelLoadingState
-        ) {
-            dom.channelLoadingState.hidden =
-                true;
-        }
-
         if (error) {
-            console.error(
-                "Channels could not load:",
-                error
-            );
-
             throw error;
         }
 
         state.channels =
             data || [];
 
-        renderChannelList();
-
-        console.log(
-            "Channels loaded:",
-            state.channels.length
-        );
-
-        return state.channels;
+        renderChannels();
     }
 
 
-    function renderChannelList(
-        filter = ""
-    ) {
-        if (
-            !dom.channelList
-        ) {
+    function renderChannels() {
+
+        const list =
+            dom.channelList;
+
+        if (!list) {
             return;
         }
 
+        list.innerHTML =
+            "";
+
         const term =
             String(
-                filter ||
+                state.searchTerm ||
                     ""
             )
-                .trim()
-                .toLowerCase();
+                .toLowerCase()
+                .trim();
+
 
         const channels =
             state.channels.filter(
                 channel => {
+
                     if (!term) {
                         return true;
                     }
@@ -1436,46 +1527,21 @@
                 }
             );
 
-        dom.channelList.innerHTML =
-            "";
 
-        let currentCategory =
-            null;
+        if (!channels.length) {
+
+            list.innerHTML = `
+                <div class="community-empty-state">
+                    No channels found.
+                </div>
+            `;
+
+            return;
+        }
+
 
         channels.forEach(
             channel => {
-                const category =
-                    channel.category ||
-                    channel.channel_category ||
-                    (
-                        channel.channel_type ===
-                        "voice"
-                            ? "Voice"
-                            : "Channels"
-                    );
-
-                if (
-                    category !==
-                    currentCategory
-                ) {
-                    currentCategory =
-                        category;
-
-                    const heading =
-                        document.createElement(
-                            "div"
-                        );
-
-                    heading.className =
-                        "channel-category";
-
-                    heading.textContent =
-                        category;
-
-                    dom.channelList.appendChild(
-                        heading
-                    );
-                }
 
                 const button =
                     document.createElement(
@@ -1488,15 +1554,26 @@
                 button.className =
                     "channel-item";
 
+
                 if (
-                    state.selectedChannel
-                        ?.id ===
-                    channel.id
+                    state.selectedChannel &&
+                    String(
+                        state.selectedChannel.id
+                    ) ===
+                        String(
+                            channel.id
+                        )
                 ) {
+
                     button.classList.add(
                         "active"
                     );
                 }
+
+
+                button.dataset.channelId =
+                    channel.id;
+
 
                 const icon =
                     channel.icon ||
@@ -1504,64 +1581,43 @@
                         channel.channel_type ===
                         "voice"
                             ? "🔊"
-                            : "💬"
+                            : "#"
                     );
 
+
                 button.innerHTML = `
-                    <span class="channel-icon">
+                    <span
+                        class="channel-item-icon"
+                    >
                         ${escapeHtml(
                             icon
                         )}
                     </span>
 
-                    <span class="channel-name">
+                    <span
+                        class="channel-item-text"
+                    >
                         ${escapeHtml(
                             channel.name ||
-                                "Channel"
+                                "channel"
                         )}
                     </span>
-
-                    ${
-                        channel.is_private
-                            ? `
-                                <span class="channel-lock">
-                                    🔒
-                                </span>
-                            `
-                            : ""
-                    }
                 `;
+
 
                 button.addEventListener(
                     "click",
-                    () => {
+                    () =>
                         selectChannel(
                             channel.id
-                        );
-                    }
+                        )
                 );
 
-                dom.channelList.appendChild(
+
+                list.appendChild(
                     button
                 );
             }
-        );
-
-        if (!channels.length) {
-            dom.channelList.innerHTML = `
-                <div class="community-empty-messages">
-                    No channels found.
-                </div>
-            `;
-        }
-    }
-
-
-    function handleChannelSearch(
-        event
-    ) {
-        renderChannelList(
-            event.target.value
         );
     }
 
@@ -1569,6 +1625,7 @@
     async function selectChannel(
         channelId
     ) {
+
         const channel =
             state.channels.find(
                 item =>
@@ -1587,289 +1644,563 @@
         state.selectedChannel =
             channel;
 
-        renderChannelList(
-            dom.channelSearchInput
-                ?.value ||
-                ""
-        );
+        state.messages =
+            [];
 
-        renderActiveChannel();
+        renderChannels();
 
-        await loadMessages(
-            channel.id
-        );
-
-        announce(
-            `Opened channel ${channel.name}`
-        );
-    }
-
-
-    function renderActiveChannel() {
-        const channel =
-            state.selectedChannel;
-
-        if (!channel) {
-            return;
-        }
-
-        const title =
-            channel.name ||
-            "Channel";
-
-        if (
-            dom.activeChannelName
-        ) {
-            dom.activeChannelName.textContent =
-                title;
-        }
 
         if (
             dom.mainChannelTitle
         ) {
+
             dom.mainChannelTitle.textContent =
-                title;
+                channel.name ||
+                "Channel";
         }
 
+
         if (
-            dom.activeChannelDescription
+            dom.activeChannelName
         ) {
-            dom.activeChannelDescription.textContent =
-                channel.description ||
-                "";
+
+            dom.activeChannelName.textContent =
+                channel.name ||
+                "Channel";
         }
+
 
         if (
             dom.mainChannelDescription
         ) {
+
             dom.mainChannelDescription.textContent =
                 channel.description ||
                 "";
         }
 
+
+        if (
+            dom.activeChannelDescription
+        ) {
+
+            dom.activeChannelDescription.textContent =
+                channel.description ||
+                "";
+        }
+
+
         if (
             dom.activeRoleBadge
         ) {
+
             dom.activeRoleBadge.textContent =
                 "Student";
         }
+
+
+        if (
+            dom.messageInput
+        ) {
+
+            dom.messageInput.placeholder =
+                `Message #${
+                    channel.name ||
+                    "channel"
+                }`;
+        }
+
+
+        await loadMessages(
+            channel.id
+        );
+
+        subscribeToMessageRealtime(
+            channel.id
+        );
+
+        markChannelRead(
+            channel.id
+        );
     }
 
 
     /* =========================================================
-       MESSAGES
+       MESSAGE PROFILES
+       ========================================================= */
+
+    async function attachProfiles(
+        messages
+    ) {
+
+        const ids = [
+            ...new Set(
+                messages
+                    .map(
+                        message =>
+                            message.user_id
+                    )
+                    .filter(
+                        Boolean
+                    )
+            )
+        ];
+
+
+        const profileMap =
+            new Map();
+
+
+        if (
+            state.user &&
+            state.profile
+        ) {
+
+            profileMap.set(
+                state.user.id,
+                normalizeProfile(
+                    state.profile
+                )
+            );
+        }
+
+
+        const missing =
+            ids.filter(
+                id =>
+                    !profileMap.has(
+                        id
+                    )
+            );
+
+
+        if (
+            missing.length
+        ) {
+
+            const {
+                data
+            } =
+                await state.supabase
+                    .from(
+                        "students"
+                    )
+                    .select(
+                        "id, full_name, photo_url"
+                    )
+                    .in(
+                        "id",
+                        missing
+                    );
+
+
+            (
+                data ||
+                []
+            ).forEach(
+                profile => {
+
+                    profileMap.set(
+                        profile.id,
+                        normalizeProfile(
+                            profile
+                        )
+                    );
+                }
+            );
+        }
+
+
+        return messages.map(
+            message => ({
+
+                ...message,
+
+                profile:
+                    profileMap.get(
+                        message.user_id
+                    ) ||
+                    null
+            })
+        );
+    }
+
+
+    /* =========================================================
+       MESSAGE LOADING
        ========================================================= */
 
     async function loadMessages(
         channelId
     ) {
-        if (!channelId) {
+
+        if (
+            !channelId ||
+            !dom.messageList
+        ) {
+            return;
+        }
+
+
+        if (
+            dom.channelLoadingState
+        ) {
+
+            dom.channelLoadingState.hidden =
+                false;
+        }
+
+
+        try {
+
+            const {
+                data,
+                error
+            } =
+                await state.supabase
+                    .from(
+                        "chat_messages"
+                    )
+                    .select(
+                        `
+                        id,
+                        channel_id,
+                        user_id,
+                        parent_message_id,
+                        content,
+                        message_type,
+                        is_edited,
+                        is_deleted,
+                        is_pinned,
+                        edited_at,
+                        deleted_at,
+                        created_at,
+                        updated_at
+                        `
+                    )
+                    .eq(
+                        "channel_id",
+                        channelId
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending:
+                                true
+                        }
+                    )
+                    .limit(
+                        CONFIG.messageLimit
+                    );
+
+
+            if (error) {
+                throw error;
+            }
+
+
             state.messages =
-                [];
+                await attachProfiles(
+                    data ||
+                        []
+                );
+
+
+            await loadAttachmentsForMessages();
 
             renderMessages();
 
-            return [];
-        }
+        } catch (error) {
 
-        renderLoadingMessages();
-
-        const {
-            data,
-            error
-        } =
-            await state.supabase
-                .from(
-                    "chat_messages"
-                )
-                .select(
-                    "*"
-                )
-                .eq(
-                    "channel_id",
-                    channelId
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending:
-                            true
-                    }
-                )
-                .limit(
-                    CONFIG.messagePageSize
-                );
-
-        if (error) {
             console.error(
-                "Messages could not load:",
+                "Message load failed:",
                 error
             );
 
             state.messages =
                 [];
 
-            renderMessageError(
-                error
+            renderMessageArea();
+
+            setStatus(
+                "Messages could not be loaded."
             );
 
-            return [];
+        } finally {
+
+            if (
+                dom.channelLoadingState
+            ) {
+
+                dom.channelLoadingState.hidden =
+                    true;
+            }
         }
-
-        state.messages =
-            data || [];
-
-        await hydrateMessageProfiles();
-
-        renderMessages();
-
-        return state.messages;
     }
 
 
-    async function hydrateMessageProfiles() {
-        const ids = [
-            ...new Set(
-                state.messages
-                    .map(
-                        message =>
-                            message.user_id
-                    )
-                    .filter(Boolean)
-            )
-        ];
+    /* =========================================================
+       ATTACHMENT LOADING
+       ========================================================= */
+
+    async function loadAttachmentsForMessages() {
+
+        const ids =
+            state.messages
+                .map(
+                    message =>
+                        message.id
+                )
+                .filter(
+                    Boolean
+                );
+
 
         if (!ids.length) {
             return;
         }
 
+
         const {
             data,
             error
         } =
             await state.supabase
                 .from(
-                    "students"
+                    "chat_attachments"
                 )
                 .select(
-                    "id, full_name, photo_url"
+                    "*"
                 )
                 .in(
-                    "id",
+                    "message_id",
                     ids
                 );
 
+
         if (error) {
+
             console.warn(
-                "Message profiles could not load:",
+                "Attachment lookup failed:",
                 error
             );
 
             return;
         }
 
-        const profiles =
-            new Map(
-                (
-                    data ||
-                    []
-                ).map(
-                    student => [
-                        student.id,
-                        normalizeProfile(
-                            student
-                        )
-                    ]
-                )
-            );
+
+        const attachmentMap =
+            new Map();
+
+
+        (
+            data ||
+            []
+        ).forEach(
+            attachment => {
+
+                const key =
+                    String(
+                        attachment.message_id
+                    );
+
+                if (
+                    !attachmentMap.has(
+                        key
+                    )
+                ) {
+
+                    attachmentMap.set(
+                        key,
+                        []
+                    );
+                }
+
+                attachmentMap
+                    .get(
+                        key
+                    )
+                    .push(
+                        attachment
+                    );
+            }
+        );
+
 
         state.messages =
             state.messages.map(
                 message => ({
+
                     ...message,
 
-                    _profile:
-                        profiles.get(
-                            message.user_id
+                    attachments:
+                        attachmentMap.get(
+                            String(
+                                message.id
+                            )
                         ) ||
-                        null
+                        []
                 })
             );
     }
 
 
-    function renderLoadingMessages() {
-        if (
-            !dom.messageList
-        ) {
-            return;
-        }
+    /* =========================================================
+       MESSAGE RENDERING
+       ========================================================= */
 
-        dom.messageList.innerHTML = `
-            <div class="community-loading-messages">
-                Loading messages...
-            </div>
-        `;
+    function renderMessageArea() {
+
+        if (
+            dom.messageList
+        ) {
+
+            renderMessages();
+        }
     }
 
 
-    function renderMessageError(
-        error
+    function formatContent(
+        text
     ) {
-        if (
-            !dom.messageList
-        ) {
-            return;
-        }
 
-        dom.messageList.innerHTML = `
-            <div class="community-empty-messages">
-                Unable to load messages.
-            </div>
-        `;
+        return escapeHtml(
+            text ||
+                ""
+        )
+            .replace(
+                /\n/g,
+                "<br>"
+            )
+            .replace(
+                /(^|[\s])@([a-zA-Z0-9._-]+)/g,
+                '$1<span class="mention">@$2</span>'
+            );
+    }
 
-        setStatus(
-            error?.message ||
-                "Messages could not be loaded."
+
+    function attachmentMarkup(
+        attachments = []
+    ) {
+
+        return attachments
+            .map(
+                attachment => {
+
+                    const url =
+                        attachment.file_url ||
+                        attachment.public_url ||
+                        attachment.url ||
+                        "";
+
+                    const name =
+                        attachment.file_name ||
+                        attachment.name ||
+                        "Attachment";
+
+                    const type =
+                        attachment.mime_type ||
+                        attachment.file_type ||
+                        "";
+
+
+                    if (!url) {
+                        return "";
+                    }
+
+
+                    if (
+                        type.startsWith(
+                            "image/"
+                        )
+                    ) {
+
+                        return `
+                            <a
+                                class="message-attachment image-attachment"
+                                href="${escapeHtml(
+                                    url
+                                )}"
+                                target="_blank"
+                                rel="noopener"
+                            >
+                                <img
+                                    src="${escapeHtml(
+                                        url
+                                    )}"
+                                    alt="${escapeHtml(
+                                        name
+                                    )}"
+                                    loading="lazy"
+                                >
+                            </a>
+                        `;
+                    }
+
+
+                    return `
+                        <a
+                            class="message-attachment file-attachment"
+                            href="${escapeHtml(
+                                url
+                            )}"
+                            target="_blank"
+                            rel="noopener"
+                        >
+                            <span>
+                                📎
+                            </span>
+
+                            <span>
+                                <strong>
+                                    ${escapeHtml(
+                                        name
+                                    )}
+                                </strong>
+
+                                <small>
+                                    ${escapeHtml(
+                                        type ||
+                                            "File"
+                                    )}
+                                </small>
+                            </span>
+                        </a>
+                    `;
+                }
+            )
+            .join("");
+    }
+
+
+    function canDelete(
+        message
+    ) {
+
+        return Boolean(
+            state.user &&
+            String(
+                message.user_id
+            ) ===
+                String(
+                    state.user.id
+                )
         );
     }
 
 
-    function renderMessages() {
-        if (
-            !dom.messageList
-        ) {
-            return;
-        }
+    function canPin() {
 
-        dom.messageList.innerHTML =
-            "";
-
-        if (!state.messages.length) {
-            dom.messageList.innerHTML = `
-                <div class="community-empty-messages">
-                    No messages yet. Start the discussion.
-                </div>
-            `;
-
-            return;
-        }
-
-        state.messages.forEach(
-            message => {
-                dom.messageList.appendChild(
-                    createMessageElement(
-                        message
-                    )
-                );
-            }
-        );
-
-        requestAnimationFrame(
-            () => {
-                dom.messageList.scrollTop =
-                    dom.messageList.scrollHeight;
-            }
+        return [
+            "moderator",
+            "admin",
+            "super_admin",
+            "tutor"
+        ].includes(
+            String(
+                state.currentRole ||
+                    "student"
+            ).toLowerCase()
         );
     }
 
@@ -1877,28 +2208,6 @@
     function createMessageElement(
         message
     ) {
-        const profile =
-            message._profile;
-
-        const name =
-            profile?.full_name ||
-            (
-                message.user_id ===
-                state.user?.id
-                    ? getProfileName()
-                    : "Student"
-            );
-
-        const photo =
-            safeUrl(
-                profile?.photo_url ||
-                    (
-                        message.user_id ===
-                        state.user?.id
-                            ? getProfilePhoto()
-                            : CONFIG.defaultAvatar
-                    )
-            );
 
         const article =
             document.createElement(
@@ -1908,107 +2217,503 @@
         article.className =
             "community-message";
 
+
+        if (
+            canDelete(
+                message
+            )
+        ) {
+
+            article.classList.add(
+                "own-message"
+            );
+        }
+
+
         article.dataset.messageId =
-            message.id || "";
+            message.id;
+
+
+        const profile =
+            message.profile ||
+            {};
+
+
+        const senderName =
+            profile.full_name ||
+            "Unknown member";
+
+
+        const senderAvatar =
+            safeUrl(
+                profile.photo_url
+            );
+
+
+        const deleted =
+            Boolean(
+                message.is_deleted
+            );
+
+
+        let actions =
+            "";
+
+
+        if (!deleted) {
+
+            actions = `
+
+                <div
+                    class="message-actions"
+                >
+
+                    <button
+                        type="button"
+                        data-message-action="reply"
+                        data-message-id="${escapeHtml(
+                            message.id
+                        )}"
+                        title="Reply"
+                    >
+                        ↩
+                    </button>
+
+                    ${
+                        canPin()
+                            ? `
+                                <button
+                                    type="button"
+                                    data-message-action="pin"
+                                    data-message-id="${escapeHtml(
+                                        message.id
+                                    )}"
+                                    title="${
+                                        message.is_pinned
+                                            ? "Unpin"
+                                            : "Pin"
+                                    }"
+                                >
+                                    ${
+                                        message.is_pinned
+                                            ? "📌"
+                                            : "📍"
+                                    }
+                                </button>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        canDelete(
+                            message
+                        )
+                            ? `
+                                <button
+                                    type="button"
+                                    data-message-action="delete"
+                                    data-message-id="${escapeHtml(
+                                        message.id
+                                    )}"
+                                    title="Delete"
+                                >
+                                    🗑
+                                </button>
+                            `
+                            : ""
+                    }
+
+                </div>
+            `;
+        }
+
 
         article.innerHTML = `
+
             <img
-                class="community-message-avatar"
-                src="${photo}"
+                class="message-avatar"
+                src="${senderAvatar}"
                 alt="${escapeHtml(
-                    name
-                )}"
+                    senderName
+                )} profile photo"
             >
 
-            <div class="community-message-body">
+            <div
+                class="message-body"
+            >
 
-                <div class="community-message-meta">
+                <div
+                    class="message-header"
+                >
 
-                    <span class="community-message-author">
-                        ${escapeHtml(
-                            name
-                        )}
-                    </span>
-
-                    <time
-                        class="community-message-time"
-                        datetime="${escapeHtml(
-                            message.created_at ||
-                                ""
-                        )}"
+                    <strong
+                        class="message-author"
                     >
                         ${escapeHtml(
-                            formatMessageTime(
+                            senderName
+                        )}
+                    </strong>
+
+                    <time
+                        class="message-time"
+                    >
+                        ${escapeHtml(
+                            formatTime(
                                 message.created_at
                             )
                         )}
                     </time>
 
+                    ${
+                        message.is_pinned
+                            ? `
+                                <span
+                                    class="message-pin"
+                                >
+                                    📌
+                                </span>
+                            `
+                            : ""
+                    }
+
                 </div>
 
-                <div class="community-message-content">
-                    ${escapeHtml(
-                        message.content ||
-                            ""
-                    )}
-                </div>
+
+                ${
+                    deleted
+                        ? `
+                            <div
+                                class="message-content deleted-message"
+                            >
+                                This message was deleted.
+                            </div>
+                        `
+                        : `
+                            <div
+                                class="message-content"
+                            >
+                                ${formatContent(
+                                    message.content
+                                )}
+                            </div>
+
+                            ${attachmentMarkup(
+                                message.attachments
+                            )}
+                        `
+                }
+
+
+                ${actions}
 
             </div>
         `;
 
-        const avatar =
+
+        const image =
             article.querySelector(
-                ".community-message-avatar"
+                ".message-avatar"
             );
 
-        if (avatar) {
-            avatar.onerror =
+
+        if (image) {
+
+            image.onerror =
                 () => {
-                    avatar.onerror =
+
+                    image.onerror =
                         null;
 
-                    avatar.src =
+                    image.src =
                         CONFIG.defaultAvatar;
                 };
         }
+
 
         return article;
     }
 
 
-    async function sendMessage(
-        event
-    ) {
-        if (event) {
-            event.preventDefault();
-        }
+    function renderMessages() {
 
         if (
-            !state.user ||
-            !state.selectedChannel
+            !dom.messageList
         ) {
             return;
         }
 
+
+        const searchTerm =
+            String(
+                dom.messageSearchInput?.value ||
+                    ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const messages =
+            searchTerm
+                ? state.messages.filter(
+                    message =>
+                        String(
+                            message.content ||
+                                ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                searchTerm
+                            )
+                )
+                : state.messages;
+
+
+        dom.messageList.innerHTML =
+            "";
+
+
+        if (
+            !state.selectedChannel
+        ) {
+
+            dom.messageList.innerHTML = `
+
+                <div
+                    class="community-welcome"
+                >
+
+                    <div
+                        class="welcome-icon"
+                    >
+                        🎓
+                    </div>
+
+                    <h2>
+                        Welcome to Mwaniki Community
+                    </h2>
+
+                    <p>
+                        Select a channel to start
+                        learning, discussing and
+                        collaborating.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        if (!messages.length) {
+
+            dom.messageList.innerHTML = `
+
+                <div
+                    class="community-empty-messages"
+                >
+
+                    <div
+                        class="empty-message-icon"
+                    >
+                        💬
+                    </div>
+
+                    <h3>
+                        No messages yet
+                    </h3>
+
+                    <p>
+                        Be the first to post
+                        in this channel.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+        }
+
+
+        let previousDate =
+            "";
+
+
+        messages.forEach(
+            message => {
+
+                const messageDate =
+                    formatDate(
+                        message.created_at
+                    );
+
+
+                if (
+                    messageDate &&
+                    messageDate !==
+                        previousDate
+                ) {
+
+                    const divider =
+                        document.createElement(
+                            "div"
+                        );
+
+                    divider.className =
+                        "message-date-divider";
+
+                    divider.innerHTML = `
+                        <span>
+                            ${escapeHtml(
+                                messageDate
+                            )}
+                        </span>
+                    `;
+
+                    dom.messageList.appendChild(
+                        divider
+                    );
+
+                    previousDate =
+                        messageDate;
+                }
+
+
+                dom.messageList.appendChild(
+                    createMessageElement(
+                        message
+                    )
+                );
+            }
+        );
+
+
+        requestAnimationFrame(
+            () => {
+
+                dom.messageList.scrollTop =
+                    dom.messageList.scrollHeight;
+            }
+        );
+    }
+
+
+    /* =========================================================
+       SEND MESSAGE
+       ========================================================= */
+
+    async function sendMessage(
+        event
+    ) {
+
+        if (event) {
+            event.preventDefault();
+        }
+
+
+        if (
+            state.messageSending
+        ) {
+            return;
+        }
+
+
+        if (!state.user) {
+
+            setStatus(
+                "Please sign in before sending a message."
+            );
+
+            return;
+        }
+
+
+        if (
+            !state.selectedChannel
+        ) {
+
+            setStatus(
+                "Select a channel first."
+            );
+
+            return;
+        }
+
+
+        const input =
+            dom.messageInput;
+
+
+        if (!input) {
+            return;
+        }
+
+
         const content =
             String(
-                dom.messageInput
-                    ?.value ||
+                input.value ||
                     ""
             ).trim();
+
 
         if (!content) {
             return;
         }
 
+
+        if (
+            content.length >
+            5000
+        ) {
+
+            toast(
+                "Message is too long.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        state.messageSending =
+            true;
+
+
         if (
             dom.sendMessageButton
         ) {
+
             dom.sendMessageButton.disabled =
                 true;
         }
 
+
         try {
+
+            const payload = {
+
+                channel_id:
+                    state.selectedChannel.id,
+
+                user_id:
+                    state.user.id,
+
+                content,
+
+                message_type:
+                    "text"
+            };
+
+
+            if (
+                state.replyMessage?.id
+            ) {
+
+                payload.parent_message_id =
+                    state.replyMessage.id;
+            }
+
+
             const {
                 data,
                 error
@@ -2017,55 +2722,76 @@
                     .from(
                         "chat_messages"
                     )
-                    .insert({
-                        channel_id:
-                            state.selectedChannel.id,
-
-                        user_id:
-                            state.user.id,
-
-                        content
-                    })
+                    .insert(
+                        payload
+                    )
                     .select(
                         "*"
                     )
                     .single();
 
+
             if (error) {
                 throw error;
             }
 
+
+            input.value =
+                "";
+
+            cancelReply();
+
+
             if (
-                dom.messageInput
+                !state.messages.some(
+                    message =>
+                        String(
+                            message.id
+                        ) ===
+                        String(
+                            data.id
+                        )
+                )
             ) {
-                dom.messageInput.value =
-                    "";
-            }
 
-            if (data) {
-                data._profile =
-                    state.profile;
+                state.messages.push({
 
-                state.messages.push(
-                    data
-                );
+                    ...data,
+
+                    profile:
+                        normalizeProfile(
+                            state.profile
+                        ),
+
+                    attachments:
+                        []
+                });
 
                 renderMessages();
             }
+
         } catch (error) {
+
             console.error(
-                "Message send failed:",
+                "Send message failed:",
                 error
             );
 
-            setStatus(
+            toast(
                 error.message ||
-                    "Message could not be sent."
+                    "Message could not be sent.",
+                "error"
             );
+
         } finally {
+
+            state.messageSending =
+                false;
+
             if (
                 dom.sendMessageButton
             ) {
+
                 dom.sendMessageButton.disabled =
                     false;
             }
@@ -2074,97 +2800,799 @@
 
 
     /* =========================================================
-       MESSAGE SEARCH
+       DELETE MESSAGE
        ========================================================= */
 
-    function searchMessages() {
+    async function deleteMessage(
+        message
+    ) {
+
+        if (
+            !message?.id ||
+            !state.user
+        ) {
+            return;
+        }
+
+
+        /*
+         * Students can delete their own messages.
+         */
+
+        if (
+            String(
+                message.user_id
+            ) !==
+            String(
+                state.user.id
+            )
+        ) {
+
+            toast(
+                "You can only delete your own messages.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const confirmed =
+            window.confirm(
+                "Delete this message?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        const now =
+            new Date()
+                .toISOString();
+
+
+        /*
+         * First try soft delete.
+         */
+
+        let result =
+            await state.supabase
+                .from(
+                    "chat_messages"
+                )
+                .update({
+
+                    is_deleted:
+                        true,
+
+                    deleted_at:
+                        now,
+
+                    updated_at:
+                        now
+
+                })
+                .eq(
+                    "id",
+                    message.id
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
+
+
+        /*
+         * If soft delete is blocked,
+         * try actual DELETE.
+         */
+
+        if (
+            result.error
+        ) {
+
+            console.warn(
+                "Soft delete failed. Trying hard delete:",
+                result.error
+            );
+
+
+            result =
+                await state.supabase
+                    .from(
+                        "chat_messages"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        message.id
+                    )
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    );
+        }
+
+
+        if (
+            result.error
+        ) {
+
+            console.error(
+                "Message deletion failed:",
+                result.error
+            );
+
+            toast(
+                "Unable to delete. Check the chat_messages RLS policy.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        state.messages =
+            state.messages.filter(
+                item =>
+                    String(
+                        item.id
+                    ) !==
+                    String(
+                        message.id
+                    )
+            );
+
+
+        renderMessages();
+
+
+        toast(
+            "Message deleted.",
+            "success"
+        );
+    }
+
+
+    /* =========================================================
+       PIN MESSAGE
+       ========================================================= */
+
+    async function togglePin(
+        message
+    ) {
+
+        if (!canPin()) {
+
+            toast(
+                "Only moderators, tutors and administrators can pin messages.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        const {
+            error
+        } =
+            await state.supabase
+                .from(
+                    "chat_messages"
+                )
+                .update({
+
+                    is_pinned:
+                        !message.is_pinned,
+
+                    updated_at:
+                        new Date()
+                            .toISOString()
+
+                })
+                .eq(
+                    "id",
+                    message.id
+                );
+
+
+        if (error) {
+
+            toast(
+                "Unable to update pinned status.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        message.is_pinned =
+            !message.is_pinned;
+
+
+        renderMessages();
+    }
+
+
+    /* =========================================================
+       REPLY
+       ========================================================= */
+
+    function startReply(
+        message
+    ) {
+
+        state.replyMessage =
+            message;
+
+
+        if (
+            dom.replyPreview
+        ) {
+
+            dom.replyPreview.classList.remove(
+                "hidden"
+            );
+        }
+
+
+        if (
+            dom.replyPreviewText
+        ) {
+
+            dom.replyPreviewText.textContent =
+                String(
+                    message.content ||
+                        ""
+                ).slice(
+                    0,
+                    160
+                );
+        }
+
+
+        dom.messageInput?.focus();
+    }
+
+
+    function cancelReply() {
+
+        state.replyMessage =
+            null;
+
+
+        if (
+            dom.replyPreview
+        ) {
+
+            dom.replyPreview.classList.add(
+                "hidden"
+            );
+        }
+    }
+
+
+    /* =========================================================
+       MESSAGE ACTIONS
+       ========================================================= */
+
+    function bindMessageActionEvents() {
+
         if (
             !dom.messageList
         ) {
             return;
         }
 
-        const query =
-            prompt(
-                "Search messages in this channel:"
-            );
 
-        if (query === null) {
-            return;
-        }
+        dom.messageList.addEventListener(
+            "click",
+            async event => {
 
-        const term =
-            query
-                .trim()
-                .toLowerCase();
+                const button =
+                    event.target.closest(
+                        "[data-message-action]"
+                    );
 
-        if (!term) {
-            renderMessages();
-            return;
-        }
 
-        const matches =
-            state.messages.filter(
-                message =>
-                    String(
-                        message.content ||
-                            ""
-                    )
-                        .toLowerCase()
-                        .includes(
-                            term
-                        )
-            );
+                if (!button) {
+                    return;
+                }
 
-        dom.messageList.innerHTML =
-            "";
 
-        if (!matches.length) {
-            dom.messageList.innerHTML = `
-                <div class="community-empty-messages">
-                    No matching messages found.
-                </div>
-            `;
+                const message =
+                    state.messages.find(
+                        item =>
+                            String(
+                                item.id
+                            ) ===
+                            String(
+                                button.dataset.messageId
+                            )
+                    );
 
-            return;
-        }
 
-        matches.forEach(
-            message => {
-                dom.messageList.appendChild(
-                    createMessageElement(
+                if (!message) {
+                    return;
+                }
+
+
+                event.preventDefault();
+
+                event.stopPropagation();
+
+
+                const action =
+                    button.dataset.messageAction;
+
+
+                if (
+                    action ===
+                    "delete"
+                ) {
+
+                    await deleteMessage(
                         message
-                    )
-                );
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    action ===
+                    "pin"
+                ) {
+
+                    await togglePin(
+                        message
+                    );
+
+                    return;
+                }
+
+
+                if (
+                    action ===
+                    "reply"
+                ) {
+
+                    startReply(
+                        message
+                    );
+                }
             }
         );
     }
 
 
     /* =========================================================
-       MESSAGE AREA
+       ATTACHMENT INPUT
        ========================================================= */
 
-    function renderMessageArea() {
+    function ensureAttachmentInput() {
+
         if (
-            !dom.messageList
+            dom.attachmentInput
         ) {
+
+            return dom.attachmentInput;
+        }
+
+
+        const input =
+            document.createElement(
+                "input"
+            );
+
+
+        input.type =
+            "file";
+
+
+        input.id =
+            "attachmentInput";
+
+
+        input.hidden =
+            true;
+
+
+        input.multiple =
+            true;
+
+
+        input.accept =
+            [
+                "image/*",
+                ".pdf",
+                ".doc",
+                ".docx",
+                ".xls",
+                ".xlsx",
+                ".ppt",
+                ".pptx",
+                ".txt",
+                ".csv",
+                ".zip"
+            ].join(",");
+
+
+        document.body.appendChild(
+            input
+        );
+
+
+        dom.attachmentInput =
+            input;
+
+
+        input.addEventListener(
+            "change",
+            () =>
+                handleAttachmentFiles(
+                    [
+                        ...input.files
+                    ]
+                )
+        );
+
+
+        return input;
+    }
+
+
+    /* =========================================================
+       ATTACHMENT UPLOAD
+       ========================================================= */
+
+    async function handleAttachmentFiles(
+        files
+    ) {
+
+        if (!files.length) {
             return;
         }
 
+
         if (
+            !state.user ||
             !state.selectedChannel
         ) {
-            dom.messageList.innerHTML = `
-                <div class="community-empty-messages">
-                    Select a channel to begin.
-                </div>
-            `;
+
+            toast(
+                "Select a channel first.",
+                "error"
+            );
 
             return;
         }
 
-        renderMessages();
+
+        for (
+            const file of files
+        ) {
+
+            if (
+                file.size >
+                CONFIG.maxAttachmentBytes
+            ) {
+
+                toast(
+                    `${file.name} is larger than 25 MB.`,
+                    "error"
+                );
+
+                continue;
+            }
+
+
+            try {
+
+                toast(
+                    `Uploading ${file.name}...`
+                );
+
+
+                const safeName =
+                    file.name.replace(
+                        /[^a-zA-Z0-9._-]/g,
+                        "_"
+                    );
+
+
+                const randomId =
+                    crypto.randomUUID
+                        ? crypto.randomUUID()
+                        : Math.random()
+                            .toString(
+                                36
+                            )
+                            .slice(
+                                2
+                            );
+
+
+                const path =
+                    `${state.user.id}/${state.selectedChannel.id}/${Date.now()}-${randomId}-${safeName}`;
+
+
+                /*
+                 * Upload to Supabase Storage.
+                 */
+
+                const upload =
+                    await state.supabase
+                        .storage
+                        .from(
+                            CONFIG.attachmentBucket
+                        )
+                        .upload(
+                            path,
+                            file,
+                            {
+
+                                upsert:
+                                    false,
+
+                                contentType:
+                                    file.type ||
+                                    "application/octet-stream"
+                            }
+                        );
+
+
+                if (
+                    upload.error
+                ) {
+
+                    throw upload.error;
+                }
+
+
+                const {
+                    data:
+                        publicData
+                } =
+                    state.supabase
+                        .storage
+                        .from(
+                            CONFIG.attachmentBucket
+                        )
+                        .getPublicUrl(
+                            path
+                        );
+
+
+                const fileUrl =
+                    publicData?.publicUrl;
+
+
+                /*
+                 * Create a chat message
+                 * representing the attachment.
+                 */
+
+                const {
+                    data:
+                        message,
+                    error:
+                        messageError
+                } =
+                    await state.supabase
+                        .from(
+                            "chat_messages"
+                        )
+                        .insert({
+
+                            channel_id:
+                                state.selectedChannel.id,
+
+                            user_id:
+                                state.user.id,
+
+                            content:
+                                file.name,
+
+                            message_type:
+                                "file"
+
+                        })
+                        .select(
+                            "*"
+                        )
+                        .single();
+
+
+                if (
+                    messageError
+                ) {
+
+                    throw messageError;
+                }
+
+
+                /*
+                 * Different versions of the
+                 * community schema may use
+                 * uploaded_by or user_id.
+                 *
+                 * Try the known variants.
+                 */
+
+                const attachmentPayloads = [
+
+                    {
+                        message_id:
+                            message.id,
+
+                        uploaded_by:
+                            state.user.id,
+
+                        file_name:
+                            file.name,
+
+                        file_url:
+                            fileUrl,
+
+                        mime_type:
+                            file.type ||
+                            "application/octet-stream",
+
+                        file_size:
+                            file.size,
+
+                        storage_path:
+                            path
+                    },
+
+                    {
+                        message_id:
+                            message.id,
+
+                        user_id:
+                            state.user.id,
+
+                        file_name:
+                            file.name,
+
+                        file_url:
+                            fileUrl,
+
+                        mime_type:
+                            file.type ||
+                            "application/octet-stream",
+
+                        file_size:
+                            file.size,
+
+                        storage_path:
+                            path
+                    },
+
+                    {
+                        message_id:
+                            message.id,
+
+                        uploaded_by:
+                            state.user.id,
+
+                        file_name:
+                            file.name,
+
+                        file_url:
+                            fileUrl,
+
+                        file_type:
+                            file.type ||
+                            "application/octet-stream",
+
+                        file_size:
+                            file.size
+                    }
+                ];
+
+
+                let attachmentError =
+                    null;
+
+
+                for (
+                    const payload of
+                        attachmentPayloads
+                ) {
+
+                    const result =
+                        await state.supabase
+                            .from(
+                                "chat_attachments"
+                            )
+                            .insert(
+                                payload
+                            );
+
+
+                    if (
+                        !result.error
+                    ) {
+
+                        attachmentError =
+                            null;
+
+                        break;
+                    }
+
+
+                    attachmentError =
+                        result.error;
+                }
+
+
+                if (
+                    attachmentError
+                ) {
+
+                    throw attachmentError;
+                }
+
+
+                state.messages.push({
+
+                    ...message,
+
+                    profile:
+                        normalizeProfile(
+                            state.profile
+                        ),
+
+                    attachments: [
+
+                        {
+
+                            file_name:
+                                file.name,
+
+                            file_url:
+                                fileUrl,
+
+                            mime_type:
+                                file.type,
+
+                            file_size:
+                                file.size
+                        }
+                    ]
+                });
+
+
+                renderMessages();
+
+
+                toast(
+                    `${file.name} uploaded.`,
+                    "success"
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Attachment upload failed:",
+                    error
+                );
+
+                toast(
+                    `Could not upload ${file.name}. Check the Storage bucket and RLS policies.`,
+                    "error"
+                );
+            }
+        }
+
+
+        ensureAttachmentInput().value =
+            "";
     }
 
 
@@ -2172,98 +3600,187 @@
        EMOJI PICKER
        ========================================================= */
 
+    const EMOJIS = [
+
+        "😀",
+        "😂",
+        "🤣",
+        "😊",
+        "😍",
+        "🥰",
+        "😉",
+        "😎",
+        "🤩",
+        "🥳",
+
+        "😢",
+        "😭",
+        "😡",
+        "🤯",
+        "😱",
+        "🤔",
+        "🙄",
+        "😴",
+
+        "❤️",
+        "🔥",
+        "👍",
+        "👎",
+        "👏",
+        "🙏",
+        "🎉",
+        "💯",
+        "✨",
+
+        "🧠",
+        "🫀",
+        "🫁",
+        "🩸",
+        "🦠",
+        "🧬",
+        "🔬",
+        "🧪",
+        "💊",
+        "💉",
+        "🩺",
+
+        "📚",
+        "🎓",
+        "🎮",
+        "😂"
+    ];
+
+
     function createEmojiPicker() {
-        let picker =
-            document.getElementById(
-                "mwanikiEmojiPicker"
-            );
 
-        if (!picker) {
-            picker =
-                document.createElement(
-                    "div"
-                );
-
-            picker.id =
-                "mwanikiEmojiPicker";
-
-            picker.hidden =
-                true;
-
-            document.body.appendChild(
-                picker
-            );
+        if (
+            !dom.emojiButton
+        ) {
+            return;
         }
 
-        const emojis = [
-            "😀",
-            "😂",
-            "🤣",
-            "😊",
-            "😍",
-            "😎",
-            "🤔",
-            "😮",
-            "😢",
-            "😡",
-            "👍",
-            "👎",
-            "👏",
-            "🙌",
-            "🙏",
-            "❤️",
-            "🔥",
-            "🎓",
-            "📚",
-            "🧪",
-            "🩺",
-            "💊",
-            "🧬",
-            "🔬",
-            "🎮",
-            "😂",
-            "💡",
-            "✅",
-            "❌",
-            "⭐",
-            "🚀",
-            "💯"
-        ];
 
-        picker.innerHTML =
-            "";
+        if (
+            document.getElementById(
+                "mwanikiEmojiPicker"
+            )
+        ) {
 
-        emojis.forEach(
-            emoji => {
-                const button =
-                    document.createElement(
-                        "button"
+            return;
+        }
+
+
+        const picker =
+            document.createElement(
+                "div"
+            );
+
+
+        picker.id =
+            "mwanikiEmojiPicker";
+
+
+        picker.className =
+            "mwaniki-emoji-picker";
+
+
+        picker.hidden =
+            true;
+
+
+        picker.innerHTML = `
+
+            <div
+                class="emoji-picker-header"
+            >
+
+                <strong>
+                    Emoji
+                </strong>
+
+                <button
+                    type="button"
+                    id="closeEmojiPicker"
+                    aria-label="Close emoji picker"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div
+                class="mwaniki-emoji-grid"
+            ></div>
+        `;
+
+
+        picker.querySelector(
+            ".mwaniki-emoji-grid"
+        ).innerHTML =
+            EMOJIS
+                .map(
+                    emoji => `
+                        <button
+                            type="button"
+                            class="mwaniki-emoji-button"
+                            aria-label="Insert ${emoji}"
+                        >
+                            ${emoji}
+                        </button>
+                    `
+                )
+                .join("");
+
+
+        picker
+            .querySelectorAll(
+                ".mwaniki-emoji-button"
+            )
+            .forEach(
+                button => {
+
+                    button.addEventListener(
+                        "click",
+                        () =>
+                            insertEmoji(
+                                button.textContent
+                            )
                     );
+                }
+            );
 
-                button.type =
-                    "button";
 
-                button.textContent =
-                    emoji;
+        picker
+            .querySelector(
+                "#closeEmojiPicker"
+            )
+            .addEventListener(
+                "click",
+                closeEmojiPicker
+            );
 
-                button.setAttribute(
-                    "aria-label",
-                    `Insert ${emoji}`
-                );
 
-                button.addEventListener(
-                    "click",
-                    () => {
-                        insertEmoji(
-                            emoji
-                        );
-                    }
-                );
+        const parent =
+            dom.emojiButton
+                .parentElement ||
+            document.body;
 
-                picker.appendChild(
-                    button
-                );
-            }
+
+        if (
+            getComputedStyle(
+                parent
+            ).position ===
+            "static"
+        ) {
+
+            parent.style.position =
+                "relative";
+        }
+
+
+        parent.appendChild(
+            picker
         );
     }
 
@@ -2271,22 +3788,24 @@
     function insertEmoji(
         emoji
     ) {
-        if (
-            !dom.messageInput
-        ) {
-            return;
-        }
 
         const input =
             dom.messageInput;
+
+        if (!input) {
+            return;
+        }
+
 
         const start =
             input.selectionStart ??
             input.value.length;
 
+
         const end =
             input.selectionEnd ??
             input.value.length;
+
 
         input.value =
             input.value.slice(
@@ -2298,302 +3817,704 @@
                 end
             );
 
-        input.focus();
 
         const position =
             start +
             emoji.length;
 
+
+        input.focus();
+
+
         input.setSelectionRange(
             position,
             position
         );
-
-        state.emojiPickerOpen =
-            false;
-
-        const picker =
-            document.getElementById(
-                "mwanikiEmojiPicker"
-            );
-
-        if (picker) {
-            picker.hidden =
-                true;
-        }
     }
 
 
-    function toggleEmojiPicker() {
+    function closeEmojiPicker() {
+
         const picker =
             document.getElementById(
                 "mwanikiEmojiPicker"
             );
+
+
+        if (picker) {
+
+            picker.hidden =
+                true;
+        }
+
+
+        state.emojiPickerOpen =
+            false;
+    }
+
+
+    function toggleEmojiPicker(
+        event
+    ) {
+
+        if (event) {
+
+            event.stopPropagation();
+        }
+
+
+        createEmojiPicker();
+
+
+        const picker =
+            document.getElementById(
+                "mwanikiEmojiPicker"
+            );
+
 
         if (!picker) {
             return;
         }
 
+
         state.emojiPickerOpen =
             !state.emojiPickerOpen;
 
+
         picker.hidden =
             !state.emojiPickerOpen;
+
+
+        if (
+            state.emojiPickerOpen
+        ) {
+
+            dom.messageInput?.focus();
+        }
     }
 
 
     /* =========================================================
-       NAVIGATION
+       REALTIME HELPERS
        ========================================================= */
 
-    function goDashboard() {
-        window.location.href =
-            CONFIG.dashboardUrl;
-    }
-
-
-    function goProfile() {
-        window.location.href =
-            CONFIG.profileUrl;
-    }
-
-
-    function bindNavigation() {
-        [
-            dom.homeButton,
-            dom.railHomeButton,
-            dom.dashboardButton
-        ].forEach(
-            button => {
-                if (!button) {
-                    return;
-                }
-
-                button.addEventListener(
-                    "click",
-                    goDashboard
-                );
-            }
-        );
-
-        [
-            dom.railProfileButton,
-            dom.sidebarProfileButton
-        ].forEach(
-            button => {
-                if (!button) {
-                    return;
-                }
-
-                button.addEventListener(
-                    "click",
-                    goProfile
-                );
-            }
-        );
-
-        [
-            dom.openCommunityButton,
-            dom.communitySelectorButton,
-            dom.headerCommunityButton
-        ].forEach(
-            button => {
-                if (!button) {
-                    return;
-                }
-
-                button.addEventListener(
-                    "click",
-                    openCommunityModal
-                );
-            }
-        );
+    function removeRealtimeChannel(
+        channel
+    ) {
 
         if (
-            dom.closeCommunityModal
+            !channel ||
+            !state.supabase
         ) {
-            dom.closeCommunityModal.addEventListener(
-                "click",
-                closeCommunityModal
-            );
+            return;
         }
 
-        if (
-            dom.communityModal
-        ) {
-            dom.communityModal.addEventListener(
-                "click",
-                event => {
+
+        try {
+
+            state.supabase.removeChannel(
+                channel
+            );
+
+        } catch {}
+    }
+
+
+    function resetCommunityRealtime() {
+
+        state.realtimeChannels =
+            state.realtimeChannels.filter(
+                channel => {
+
                     if (
-                        event.target ===
-                        dom.communityModal
+                        channel.__messageChannel ||
+                        channel.__communityChannel
                     ) {
-                        closeCommunityModal();
+
+                        removeRealtimeChannel(
+                            channel
+                        );
+
+                        return false;
                     }
+
+                    return true;
                 }
             );
+
+
+        if (
+            !state.selectedCommunity
+        ) {
+
+            return;
         }
+
+
+        const communityId =
+            state.selectedCommunity.id;
+
+
+        const channel =
+            state.supabase
+                .channel(
+                    `community:${communityId}`
+                )
+                .on(
+                    "postgres_changes",
+                    {
+
+                        event:
+                            "*",
+
+                        schema:
+                            "public",
+
+                        table:
+                            "chat_channels",
+
+                        filter:
+                            `community_id=eq.${communityId}`
+
+                    },
+                    () =>
+                        loadChannels(
+                            communityId
+                        )
+                )
+                .subscribe();
+
+
+        channel.__communityChannel =
+            true;
+
+
+        state.realtimeChannels.push(
+            channel
+        );
+    }
+
+
+    function subscribeToMessageRealtime(
+        channelId
+    ) {
+
+        state.realtimeChannels =
+            state.realtimeChannels.filter(
+                channel => {
+
+                    if (
+                        channel.__messageChannel
+                    ) {
+
+                        removeRealtimeChannel(
+                            channel
+                        );
+
+                        return false;
+                    }
+
+                    return true;
+                }
+            );
+
+
+        const channel =
+            state.supabase
+                .channel(
+                    `messages:${channelId}`
+                )
+
+
+                .on(
+                    "postgres_changes",
+                    {
+
+                        event:
+                            "INSERT",
+
+                        schema:
+                            "public",
+
+                        table:
+                            "chat_messages",
+
+                        filter:
+                            `channel_id=eq.${channelId}`
+
+                    },
+                    async payload => {
+
+                        if (
+                            state.messages.some(
+                                message =>
+                                    String(
+                                        message.id
+                                    ) ===
+                                    String(
+                                        payload.new.id
+                                    )
+                            )
+                        ) {
+
+                            return;
+                        }
+
+
+                        const enriched =
+                            await attachProfiles(
+                                [
+                                    payload.new
+                                ]
+                            );
+
+
+                        state.messages.push({
+
+                            ...(enriched[0] ||
+                                payload.new),
+
+                            attachments:
+                                []
+                        });
+
+
+                        await loadAttachmentsForMessages();
+
+                        renderMessages();
+                    }
+                )
+
+
+                .on(
+                    "postgres_changes",
+                    {
+
+                        event:
+                            "UPDATE",
+
+                        schema:
+                            "public",
+
+                        table:
+                            "chat_messages",
+
+                        filter:
+                            `channel_id=eq.${channelId}`
+
+                    },
+                    async payload => {
+
+                        const index =
+                            state.messages.findIndex(
+                                message =>
+                                    String(
+                                        message.id
+                                    ) ===
+                                    String(
+                                        payload.new.id
+                                    )
+                            );
+
+
+                        if (
+                            index >=
+                            0
+                        ) {
+
+                            state.messages[
+                                index
+                            ] = {
+
+                                ...state.messages[
+                                    index
+                                ],
+
+                                ...payload.new
+                            };
+
+                        } else {
+
+                            const enriched =
+                                await attachProfiles(
+                                    [
+                                        payload.new
+                                    ]
+                                );
+
+                            state.messages.push(
+                                enriched[0]
+                            );
+                        }
+
+
+                        await loadAttachmentsForMessages();
+
+                        renderMessages();
+                    }
+                )
+
+
+                .on(
+                    "postgres_changes",
+                    {
+
+                        event:
+                            "DELETE",
+
+                        schema:
+                            "public",
+
+                        table:
+                            "chat_messages",
+
+                        filter:
+                            `channel_id=eq.${channelId}`
+
+                    },
+                    payload => {
+
+                        state.messages =
+                            state.messages.filter(
+                                message =>
+                                    String(
+                                        message.id
+                                    ) !==
+                                    String(
+                                        payload.old?.id
+                                    )
+                            );
+
+
+                        renderMessages();
+                    }
+                )
+
+
+                .subscribe();
+
+
+        channel.__messageChannel =
+            true;
+
+
+        state.realtimeChannels.push(
+            channel
+        );
+    }
+
+
+    /* =========================================================
+       PRESENCE
+       ========================================================= */
+
+    async function updatePresence() {
+
+        if (!state.user) {
+            return;
+        }
+
+
+        const now =
+            new Date()
+                .toISOString();
+
+
+        const {
+            error
+        } =
+            await state.supabase
+                .from(
+                    "chat_presence"
+                )
+                .upsert(
+                    {
+
+                        user_id:
+                            state.user.id,
+
+                        status:
+                            "online",
+
+                        last_seen_at:
+                            now,
+
+                        updated_at:
+                            now
+
+                    },
+                    {
+
+                        onConflict:
+                            "user_id"
+                    }
+                );
+
+
+        if (error) {
+
+            console.warn(
+                "Presence update failed:",
+                error
+            );
+        }
+    }
+
+
+    function startPresenceHeartbeat() {
+
+        if (
+            state.presenceTimer
+        ) {
+
+            clearInterval(
+                state.presenceTimer
+            );
+        }
+
+
+        updatePresence();
+
+
+        state.presenceTimer =
+            setInterval(
+                updatePresence,
+                CONFIG.presenceHeartbeat
+            );
+    }
+
+
+    /* =========================================================
+       COMMUNITY MODAL
+       ========================================================= */
+
+    function openCommunityModal() {
+
+        if (
+            !dom.communityModal
+        ) {
+            return;
+        }
+
+
+        state.communityModalOpen =
+            true;
+
+
+        dom.communityModal.hidden =
+            false;
+
+
+        renderCommunityChoices();
+
 
         if (
             dom.communityModalSearch
         ) {
-            dom.communityModalSearch.addEventListener(
-                "input",
-                event => {
-                    renderCommunityChoices(
-                        event.target.value
-                    );
-                }
-            );
+
+            dom.communityModalSearch.value =
+                "";
+
+            dom.communityModalSearch.focus();
         }
     }
 
 
-    /* =========================================================
-       REMOVE START CONVERSATION
-       ========================================================= */
+    function closeCommunityModal() {
 
-    function disableStartConversationUI() {
-        [
-            dom.startConversationButton,
-            dom.welcomeStartButton
-        ].forEach(
-            button => {
-                if (!button) {
-                    return;
-                }
+        if (
+            dom.communityModal
+        ) {
 
-                button.hidden =
-                    true;
+            dom.communityModal.hidden =
+                true;
+        }
 
-                button.disabled =
-                    true;
 
-                button.setAttribute(
-                    "aria-hidden",
-                    "true"
-                );
-            }
-        );
+        state.communityModalOpen =
+            false;
     }
 
 
-    /* =========================================================
-       MESSAGE EVENTS
-       ========================================================= */
+    function renderCommunityChoices(
+        search = ""
+    ) {
 
-    function bindMessageEvents() {
         if (
-            dom.messageForm
+            !dom.communityChoiceList
         ) {
-            dom.messageForm.addEventListener(
-                "submit",
-                sendMessage
-            );
+            return;
         }
 
-        if (
-            dom.sendMessageButton &&
-            !dom.messageForm
-        ) {
-            dom.sendMessageButton.addEventListener(
-                "click",
-                sendMessage
-            );
-        }
 
-        if (
-            dom.messageInput
-        ) {
-            dom.messageInput.addEventListener(
-                "keydown",
-                event => {
-                    if (
-                        event.key ===
-                            "Enter" &&
-                        !event.shiftKey
-                    ) {
-                        event.preventDefault();
+        const term =
+            String(
+                search ||
+                    ""
+            )
+                .toLowerCase()
+                .trim();
 
-                        sendMessage(
-                            event
-                        );
+
+        const communities =
+            state.communities.filter(
+                community => {
+
+                    if (!term) {
+                        return true;
                     }
+
+
+                    return (
+                        String(
+                            community.name ||
+                                ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                term
+                            ) ||
+
+                        String(
+                            community.description ||
+                                ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                term
+                            )
+                    );
                 }
             );
-        }
+
+
+        dom.communityChoiceList.innerHTML =
+            communities
+                .map(
+                    community => `
+
+                        <button
+                            type="button"
+                            class="community-choice"
+                            data-community-id="${escapeHtml(
+                                community.id
+                            )}"
+                        >
+
+                            <span
+                                class="community-choice-icon"
+                            >
+                                ${iconMarkup(
+                                    community
+                                )}
+                            </span>
+
+
+                            <span
+                                class="community-choice-content"
+                            >
+
+                                <strong>
+                                    ${escapeHtml(
+                                        community.name
+                                    )}
+                                </strong>
+
+                                <small>
+                                    ${escapeHtml(
+                                        community.description ||
+                                            ""
+                                    )}
+                                </small>
+
+                            </span>
+
+                        </button>
+                    `
+                )
+                .join("");
+
 
         if (
-            dom.channelSearchInput
+            !communities.length
         ) {
-            dom.channelSearchInput.addEventListener(
-                "input",
-                handleChannelSearch
-            );
+
+            dom.communityChoiceList.innerHTML = `
+
+                <div
+                    class="community-empty-state"
+                >
+                    No communities found.
+                </div>
+            `;
         }
 
-        if (
-            dom.emojiButton
-        ) {
-            dom.emojiButton.addEventListener(
-                "click",
-                toggleEmojiPicker
-            );
-        }
 
-        if (
-            dom.chatSearchButton
-        ) {
-            dom.chatSearchButton.addEventListener(
-                "click",
-                searchMessages
+        dom.communityChoiceList
+            .querySelectorAll(
+                "[data-community-id]"
+            )
+            .forEach(
+                button => {
+
+                    button.addEventListener(
+                        "click",
+                        async () => {
+
+                            closeCommunityModal();
+
+                            await selectCommunity(
+                                button.dataset.communityId
+                            );
+                        }
+                    );
+                }
             );
-        }
     }
 
 
     /* =========================================================
-       ACCESSIBILITY
+       MESSAGE SEARCH
        ========================================================= */
 
-    function bindAccessibility() {
-        document.addEventListener(
-            "keydown",
-            event => {
-                if (
-                    event.key !==
-                    "Escape"
-                ) {
-                    return;
-                }
+    function searchMessages() {
 
-                if (
-                    state.communityModalOpen
-                ) {
-                    closeCommunityModal();
-                }
+        if (
+            dom.messageSearchPanel
+        ) {
 
-                const picker =
-                    document.getElementById(
-                        "mwanikiEmojiPicker"
-                    );
+            dom.messageSearchPanel.classList.remove(
+                "hidden"
+            );
+        }
 
-                if (picker) {
-                    picker.hidden =
-                        true;
 
-                    state.emojiPickerOpen =
-                        false;
-                }
+        dom.messageSearchInput?.focus();
+    }
 
-                if (
-                    dom.generalCallModal &&
-                    !dom.generalCallModal.hidden
-                ) {
-                    closeGeneralCallModal();
-                }
-            }
-        );
+
+    function closeMessageSearch() {
+
+        if (
+            dom.messageSearchPanel
+        ) {
+
+            dom.messageSearchPanel.classList.add(
+                "hidden"
+            );
+        }
+
+
+        if (
+            dom.messageSearchInput
+        ) {
+
+            dom.messageSearchInput.value =
+                "";
+        }
+
+
+        renderMessages();
     }
 
 
@@ -2601,318 +4522,296 @@
        GENERAL CALL USERS
        ========================================================= */
 
+    function isRecentlyOnline(
+        lastSeenAt
+    ) {
+
+        const time =
+            new Date(
+                lastSeenAt ||
+                    0
+            ).getTime();
+
+
+        return (
+            Number.isFinite(
+                time
+            ) &&
+            Date.now() -
+                time <=
+                CONFIG.onlineWindowMs
+        );
+    }
+
+
     async function loadOnlineUsers() {
+
         if (
             !dom.generalCallUserList
         ) {
+
             return [];
         }
 
+
         dom.generalCallUserList.innerHTML = `
-            <div class="call-user-loading">
+
+            <div
+                class="call-user-loading"
+            >
                 Loading students...
             </div>
         `;
 
-        if (
-            dom.generalCallUserStatus
-        ) {
-            dom.generalCallUserStatus.textContent =
-                "Checking who is online...";
-        }
 
-        try {
-            await updatePresence();
+        await updatePresence();
 
-            const {
-                data: presenceRows,
-                error: presenceError
-            } =
-                await state.supabase
-                    .from(
-                        "chat_presence"
-                    )
-                    .select(
-                        "user_id, status, custom_status, last_seen_at"
-                    )
-                    .eq(
-                        "status",
-                        "online"
-                    );
 
-            if (presenceError) {
-                throw presenceError;
-            }
-
-            const ids = [
-                ...new Set(
-                    (
-                        presenceRows ||
-                        []
-                    )
-                        .filter(
-                            row =>
-                                row.user_id &&
-                                row.user_id !==
-                                    state.user.id &&
-                                isRecentlyOnline(
-                                    row.last_seen_at
-                                )
-                        )
-                        .map(
-                            row =>
-                                row.user_id
-                        )
+        const {
+            data:
+                rows,
+            error
+        } =
+            await state.supabase
+                .from(
+                    "chat_presence"
                 )
-            ];
-
-            if (!ids.length) {
-                dom.generalCallUserList.innerHTML = `
-                    <div class="call-user-empty">
-                        No other students are currently online.
-                    </div>
-                `;
-
-                if (
-                    dom.generalCallUserStatus
-                ) {
-                    dom.generalCallUserStatus.textContent =
-                        "No other students are currently online.";
-                }
-
-                updateGeneralCallSelectionCount();
-
-                return [];
-            }
-
-            const {
-                data: students,
-                error: studentsError
-            } =
-                await state.supabase
-                    .from(
-                        "students"
-                    )
-                    .select(
-                        "id, full_name, photo_url"
-                    )
-                    .in(
-                        "id",
-                        ids
-                    );
-
-            if (studentsError) {
-                throw studentsError;
-            }
-
-            const studentMap =
-                new Map(
-                    (
-                        students ||
-                        []
-                    ).map(
-                        student => [
-                            student.id,
-                            normalizeProfile(
-                                student
-                            )
-                        ]
-                    )
+                .select(
+                    "user_id,status,last_seen_at"
+                )
+                .eq(
+                    "status",
+                    "online"
                 );
 
-            dom.generalCallUserList.innerHTML =
-                "";
 
-            let rendered =
-                0;
-
-            ids.forEach(
-                userId => {
-                    const profile =
-                        studentMap.get(
-                            userId
-                        );
-
-                    if (!profile) {
-                        return;
-                    }
-
-                    const row =
-                        document.createElement(
-                            "label"
-                        );
-
-                    row.className =
-                        "general-call-user";
-
-                    row.innerHTML = `
-                        <input
-                            type="checkbox"
-                            class="general-call-user-checkbox"
-                            value="${escapeHtml(
-                                userId
-                            )}"
-                        >
-
-                        <img
-                            src="${safeUrl(
-                                profile.photo_url
-                            )}"
-                            alt=""
-                            class="general-call-user-avatar"
-                        >
-
-                        <span class="general-call-user-name">
-                            ${escapeHtml(
-                                profile.full_name
-                            )}
-                        </span>
-                    `;
-
-                    const checkbox =
-                        row.querySelector(
-                            "input"
-                        );
-
-                    if (checkbox) {
-                        checkbox.addEventListener(
-                            "change",
-                            updateGeneralCallSelectionCount
-                        );
-                    }
-
-                    const avatar =
-                        row.querySelector(
-                            ".general-call-user-avatar"
-                        );
-
-                    if (avatar) {
-                        avatar.onerror =
-                            () => {
-                                avatar.onerror =
-                                    null;
-
-                                avatar.src =
-                                    CONFIG.defaultAvatar;
-                            };
-                    }
-
-                    dom.generalCallUserList.appendChild(
-                        row
-                    );
-
-                    rendered++;
-                }
-            );
-
-            if (!rendered) {
-                dom.generalCallUserList.innerHTML = `
-                    <div class="call-user-empty">
-                        Online students were found, but their student profiles could not be loaded.
-                    </div>
-                `;
-            }
-
-            if (
-                dom.generalCallUserStatus
-            ) {
-                dom.generalCallUserStatus.textContent =
-                    `${rendered} online student${
-                        rendered === 1
-                            ? ""
-                            : "s"
-                    } available.`;
-            }
-
-            updateGeneralCallSelectionCount();
-
-            return students || [];
-        } catch (error) {
-            console.error(
-                "Could not load online users:",
-                error
-            );
+        if (error) {
 
             dom.generalCallUserList.innerHTML = `
-                <div class="call-user-error">
+
+                <div
+                    class="call-user-error"
+                >
                     Unable to load online students.
                 </div>
             `;
 
-            if (
-                dom.generalCallUserStatus
-            ) {
-                dom.generalCallUserStatus.textContent =
-                    error?.message ||
-                    "Online student list could not be loaded.";
-            }
+            return [];
+        }
+
+
+        const ids = [
+            ...new Set(
+                (
+                    rows ||
+                    []
+                )
+                    .filter(
+                        row =>
+                            row.user_id &&
+                            row.user_id !==
+                                state.user.id &&
+                            isRecentlyOnline(
+                                row.last_seen_at
+                            )
+                    )
+                    .map(
+                        row =>
+                            row.user_id
+                    )
+            )
+        ];
+
+
+        if (!ids.length) {
+
+            dom.generalCallUserList.innerHTML = `
+
+                <div
+                    class="call-user-empty"
+                >
+                    No other students are currently online.
+                </div>
+            `;
+
+            updateGeneralCallSelectionCount();
 
             return [];
         }
+
+
+        const {
+            data:
+                students
+        } =
+            await state.supabase
+                .from(
+                    "students"
+                )
+                .select(
+                    "id,full_name,photo_url"
+                )
+                .in(
+                    "id",
+                    ids
+                );
+
+
+        dom.generalCallUserList.innerHTML =
+            "";
+
+
+        (
+            students ||
+            []
+        ).forEach(
+            student => {
+
+                const label =
+                    document.createElement(
+                        "label"
+                    );
+
+                label.className =
+                    "general-call-user";
+
+
+                label.innerHTML = `
+
+                    <input
+                        type="checkbox"
+                        class="general-call-user-checkbox"
+                        value="${escapeHtml(
+                            student.id
+                        )}"
+                    >
+
+                    <img
+                        class="general-call-user-avatar"
+                        src="${safeUrl(
+                            student.photo_url
+                        )}"
+                        alt=""
+                    >
+
+                    <span
+                        class="general-call-user-name"
+                    >
+                        ${escapeHtml(
+                            student.full_name ||
+                                "Student"
+                        )}
+                    </span>
+                `;
+
+
+                label
+                    .querySelector(
+                        "input"
+                    )
+                    ?.addEventListener(
+                        "change",
+                        updateGeneralCallSelectionCount
+                    );
+
+
+                dom.generalCallUserList.appendChild(
+                    label
+                );
+            }
+        );
+
+
+        if (
+            dom.generalCallUserStatus
+        ) {
+
+            const count =
+                students?.length ||
+                0;
+
+            dom.generalCallUserStatus.textContent =
+                `${count} online student${
+                    count === 1
+                        ? ""
+                        : "s"
+                } available.`;
+        }
+
+
+        updateGeneralCallSelectionCount();
+
+
+        return (
+            students ||
+            []
+        );
     }
 
 
     function updateGeneralCallSelectionCount() {
-        if (
-            !dom.generalCallUserList
-        ) {
-            return;
-        }
 
-        const selected =
-            dom.generalCallUserList.querySelectorAll(
-                ".general-call-user-checkbox:checked"
-            ).length;
+        const count =
+            dom.generalCallUserList
+                ?.querySelectorAll(
+                    ".general-call-user-checkbox:checked"
+                )
+                .length ||
+            0;
+
 
         if (
             dom.generalCallSelectionCount
         ) {
+
             dom.generalCallSelectionCount.textContent =
-                String(selected);
+                String(
+                    count
+                );
         }
+
 
         if (
             dom.startGeneralCallButton
         ) {
+
             dom.startGeneralCallButton.disabled =
-                selected === 0;
+                count === 0;
         }
     }
 
 
     function openGeneralCallModal() {
+
         if (
             !dom.generalCallModal
         ) {
+
             return;
         }
+
 
         dom.generalCallModal.hidden =
             false;
 
+
         state.pendingGeneralCallType =
             "video";
 
-        if (
-            dom.generalCallMessage
-        ) {
-            dom.generalCallMessage.textContent =
-                "Choose students and select voice or video.";
-        }
 
         loadOnlineUsers();
     }
 
 
     function closeGeneralCallModal() {
-        if (
-            !dom.generalCallModal
-        ) {
-            return;
-        }
 
-        dom.generalCallModal.hidden =
-            true;
+        if (
+            dom.generalCallModal
+        ) {
+
+            dom.generalCallModal.hidden =
+                true;
+        }
     }
 
 
@@ -2920,40 +4819,22 @@
        CALL ROOM CREATION
        ========================================================= */
 
-    async function createCallRoom({
-        communityId = null,
-        callScope = "general",
-        callType = "video"
-    } = {}) {
-        if (!state.user) {
-            throw new Error(
-                "You must be logged in to make a call."
-            );
-        }
+    function generateRoomCode() {
 
-        const roomCode =
-            generateRoomCode();
+        return (
+            `mwaniki-${Date.now()}-` +
+            Math.random()
+                .toString(36)
+                .slice(2, 9)
+        );
+    }
 
-        const payload = {
-            community_id:
-                communityId ||
-                null,
 
-            room_code:
-                roomCode,
-
-            call_scope:
-                callScope,
-
-            call_type:
-                callType,
-
-            status:
-                "waiting",
-
-            created_by:
-                state.user.id
-        };
+    async function createCallRoom(
+        communityId,
+        scope,
+        type
+    ) {
 
         const {
             data,
@@ -2963,37 +4844,49 @@
                 .from(
                     "chat_call_rooms"
                 )
-                .insert(
-                    payload
-                )
+                .insert({
+
+                    community_id:
+                        communityId ||
+                        null,
+
+                    room_code:
+                        generateRoomCode(),
+
+                    call_scope:
+                        scope,
+
+                    call_type:
+                        type,
+
+                    status:
+                        "waiting",
+
+                    created_by:
+                        state.user.id
+
+                })
                 .select(
                     "*"
                 )
                 .single();
 
+
         if (error) {
             throw error;
         }
+
 
         return data;
     }
 
 
-    /* =========================================================
-       CALL PARTICIPANTS
-       ========================================================= */
-
     async function addCallParticipant(
         roomId,
         userId,
-        status = "invited"
+        status =
+            "invited"
     ) {
-        if (
-            !roomId ||
-            !userId
-        ) {
-            return;
-        }
 
         const {
             error
@@ -3004,6 +4897,7 @@
                 )
                 .upsert(
                     {
+
                         room_id:
                             roomId,
 
@@ -3011,14 +4905,18 @@
                             userId,
 
                         status
+
                     },
                     {
+
                         onConflict:
                             "room_id,user_id"
                     }
                 );
 
+
         if (error) {
+
             throw error;
         }
     }
@@ -3027,193 +4925,47 @@
     async function loadCommunityCallUsers(
         communityId
     ) {
-        if (!communityId) {
-            return [];
-        }
 
-        try {
-            const {
-                data,
-                error
-            } =
-                await state.supabase
-                    .from(
-                        "chat_community_members"
-                    )
-                    .select(
-                        "user_id, nickname, is_banned"
-                    )
-                    .eq(
-                        "community_id",
-                        communityId
-                    )
-                    .eq(
-                        "is_banned",
-                        false
-                    );
-
-            if (error) {
-                throw error;
-            }
-
-            return (
-                data || []
-            )
-                .map(
-                    member =>
-                        member.user_id
-                )
-                .filter(
-                    userId =>
-                        userId &&
-                        userId !==
-                            state.user.id
-                );
-        } catch (error) {
-            console.error(
-                "Could not load community call users:",
-                error
-            );
-
-            throw new Error(
-                "The community members could not be loaded for this call."
-            );
-        }
-    }
-
-
-    async function loadRoomParticipants(
-        roomId
-    ) {
         const {
             data,
             error
         } =
             await state.supabase
                 .from(
-                    "chat_call_participants"
+                    "chat_community_members"
                 )
                 .select(
-                    "user_id, status"
+                    "user_id,is_banned"
                 )
                 .eq(
-                    "room_id",
-                    roomId
+                    "community_id",
+                    communityId
+                )
+                .eq(
+                    "is_banned",
+                    false
                 );
+
 
         if (error) {
             throw error;
         }
 
-        return data || [];
-    }
 
-
-    /* =========================================================
-       START GENERAL CALL
-       ========================================================= */
-
-    async function startGeneralCall() {
-        if (!state.user) {
-            return;
-        }
-
-        if (
-            state.call.active
-        ) {
-            setStatus(
-                "You are already in a call."
+        return (
+            data ||
+            []
+        )
+            .map(
+                member =>
+                    member.user_id
+            )
+            .filter(
+                id =>
+                    id &&
+                    id !==
+                        state.user.id
             );
-
-            return;
-        }
-
-        const selected =
-            dom.generalCallUserList
-                ? [
-                    ...dom.generalCallUserList
-                        .querySelectorAll(
-                            ".general-call-user-checkbox:checked"
-                        )
-                ].map(
-                    checkbox =>
-                        checkbox.value
-                )
-                : [];
-
-        if (!selected.length) {
-            if (
-                dom.generalCallMessage
-            ) {
-                dom.generalCallMessage.textContent =
-                    "Select at least one student.";
-            }
-
-            return;
-        }
-
-        const callType =
-            state.pendingGeneralCallType ||
-            "video";
-
-        try {
-            const room =
-                await createCallRoom({
-                    communityId:
-                        null,
-
-                    callScope:
-                        "general",
-
-                    callType
-                });
-
-            await addCallParticipant(
-                room.id,
-                state.user.id,
-                "joined"
-            );
-
-            for (
-                const userId of selected
-            ) {
-                await addCallParticipant(
-                    room.id,
-                    userId,
-                    "invited"
-                );
-            }
-
-            closeGeneralCallModal();
-
-            await startCallInterface({
-                room,
-
-                callType,
-
-                scope:
-                    "general",
-
-                communityId:
-                    null,
-
-                participantIds:
-                    selected
-            });
-        } catch (error) {
-            console.error(
-                "General call could not start:",
-                error
-            );
-
-            if (
-                dom.generalCallMessage
-            ) {
-                dom.generalCallMessage.textContent =
-                    error.message ||
-                    "Unable to start call.";
-            }
-        }
     }
 
 
@@ -3222,11 +4974,13 @@
        ========================================================= */
 
     async function startCommunityCall(
-        callType
+        type
     ) {
+
         if (
             !state.selectedCommunity
         ) {
+
             setStatus(
                 "Select a community first."
             );
@@ -3234,31 +4988,41 @@
             return;
         }
 
-        if (!state.user) {
+
+        if (
+            !state.user
+        ) {
             return;
         }
 
+
         if (
-            state.call.active
+            state.call.active ||
+            state.call.connecting
         ) {
-            setStatus(
-                "You are already in a call."
+
+            toast(
+                "You are already in a call.",
+                "error"
             );
 
             return;
         }
 
+
+        state.call.connecting =
+            true;
+
+
         try {
+
             const room =
-                await createCallRoom({
-                    communityId:
-                        state.selectedCommunity.id,
+                await createCallRoom(
+                    state.selectedCommunity.id,
+                    "community",
+                    type
+                );
 
-                    callScope:
-                        "community",
-
-                    callType
-                });
 
             await addCallParticipant(
                 room.id,
@@ -3266,14 +5030,18 @@
                 "joined"
             );
 
-            const memberIds =
+
+            const members =
                 await loadCommunityCallUsers(
                     state.selectedCommunity.id
                 );
 
+
             for (
-                const userId of memberIds
+                const userId of
+                    members
             ) {
+
                 await addCallParticipant(
                     room.id,
                     userId,
@@ -3281,160 +5049,233 @@
                 );
             }
 
+
             await startCallInterface({
+
                 room,
 
-                callType,
+                callType:
+                    type,
 
                 scope:
                     "community",
 
                 communityId:
-                    state.selectedCommunity.id,
-
-                participantIds:
-                    memberIds
+                    state.selectedCommunity.id
             });
+
         } catch (error) {
+
             console.error(
-                "Community call could not start:",
+                "Community call failed:",
                 error
             );
 
-            setStatus(
+            toast(
                 error.message ||
-                    "Unable to start community call."
+                    "Unable to start community call.",
+                "error"
             );
+
+        } finally {
+
+            state.call.connecting =
+                false;
         }
     }
 
 
     /* =========================================================
-       CALL INTERFACE
+       START GENERAL CALL
        ========================================================= */
 
-    async function startCallInterface({
+    async function startGeneralCall() {
+
+        const selected =
+            [
+                ...(
+                    dom.generalCallUserList
+                        ?.querySelectorAll(
+                            ".general-call-user-checkbox:checked"
+                        ) ||
+                    []
+                )
+            ]
+                .map(
+                    checkbox =>
+                        checkbox.value
+                );
+
+
+        if (
+            !selected.length
+        ) {
+
+            toast(
+                "Select at least one student.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        if (
+            state.call.active ||
+            state.call.connecting
+        ) {
+
+            toast(
+                "You are already in a call.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        state.call.connecting =
+            true;
+
+
+        try {
+
+            const type =
+                state.pendingGeneralCallType ||
+                "video";
+
+
+            const room =
+                await createCallRoom(
+                    null,
+                    "general",
+                    type
+                );
+
+
+            await addCallParticipant(
+                room.id,
+                state.user.id,
+                "joined"
+            );
+
+
+            for (
+                const userId of
+                    selected
+            ) {
+
+                await addCallParticipant(
+                    room.id,
+                    userId,
+                    "invited"
+                );
+            }
+
+
+            closeGeneralCallModal();
+
+
+            await startCallInterface({
+
+                room,
+
+                callType:
+                    type,
+
+                scope:
+                    "general",
+
+                communityId:
+                    null
+            });
+
+        } catch (error) {
+
+            console.error(
+                "General call failed:",
+                error
+            );
+
+            toast(
+                error.message ||
+                    "Unable to start general call.",
+                "error"
+            );
+
+        } finally {
+
+            state.call.connecting =
+                false;
+        }
+    }
+
+
+    /* =========================================================
+       CALL OVERLAY
+       ========================================================= */
+
+    function showCallOverlay(
         room,
-        callType,
-        scope,
-        communityId,
-        participantIds = []
-    }) {
-        state.call.active =
-            true;
-
-        state.call.roomId =
-            room.id;
-
-        state.call.roomCode =
-            room.room_code;
-
-        state.call.callType =
-            callType;
-
-        state.call.scope =
-            scope;
-
-        state.call.communityId =
-            communityId;
-
-        state.call.startedAt =
-            Date.now();
-
-        state.call.microphoneEnabled =
-            true;
-
-        state.call.cameraEnabled =
-            callType === "video";
-
-        state.call.screenSharing =
-            false;
-
-        state.call.pendingIceCandidates.clear();
+        type,
+        scope
+    ) {
 
         if (
             dom.callOverlay
         ) {
+
             dom.callOverlay.hidden =
                 false;
         }
 
+
         if (
             dom.callTypeIcon
         ) {
+
             dom.callTypeIcon.textContent =
-                callType ===
-                "video"
+                type ===
+                    "video"
                     ? "📹"
                     : "📞";
         }
 
+
         if (
             dom.callTitle
         ) {
+
             dom.callTitle.textContent =
                 scope ===
-                    "community" &&
-                state.selectedCommunity
-                    ? state.selectedCommunity.name
+                    "community"
+                    ? (
+                        state.selectedCommunity
+                            ?.name ||
+                        "Community Call"
+                    )
                     : "Mwaniki General Call";
         }
+
 
         if (
             dom.callSubtitle
         ) {
+
             dom.callSubtitle.textContent =
-                callType ===
+                type ===
                     "video"
                     ? "Video call"
                     : "Voice call";
         }
 
+
         if (
             dom.callDuration
         ) {
+
             dom.callDuration.textContent =
                 "00:00";
-        }
-
-        startCallTimer();
-
-        try {
-            await acquireLocalMedia(
-                callType
-            );
-
-            await subscribeToCallRoom(
-                room.id
-            );
-
-            await subscribeToCallParticipants(
-                room.id
-            );
-
-            await markCallRoomStarted(
-                room.id
-            );
-
-            if (
-                participantIds &&
-                participantIds.length
-            ) {
-                await initiateOutgoingConnections(
-                    participantIds
-                );
-            }
-        } catch (error) {
-            console.error(
-                "Call interface initialization failed:",
-                error
-            );
-
-            await leaveCall(
-                true
-            );
-
-            throw error;
         }
     }
 
@@ -3444,50 +5285,56 @@
        ========================================================= */
 
     async function acquireLocalMedia(
-        callType
+        type
     ) {
+
         if (
             !navigator.mediaDevices ||
             !navigator.mediaDevices
                 .getUserMedia
         ) {
+
             throw new Error(
                 "Your browser does not support calls."
             );
         }
 
-        const constraints =
-            callType === "video"
-                ? {
-                    audio:
-                        true,
-
-                    video:
-                        true
-                }
-                : {
-                    audio:
-                        true,
-
-                    video:
-                        false
-                };
 
         try {
+
             const stream =
                 await navigator.mediaDevices
-                    .getUserMedia(
-                        constraints
-                    );
+                    .getUserMedia({
+
+                        audio:
+                            true,
+
+                        video:
+                            type ===
+                            "video"
+                    });
+
 
             state.call.localStream =
                 stream;
 
+
+            state.call.microphoneEnabled =
+                true;
+
+
+            state.call.cameraEnabled =
+                type ===
+                "video";
+
+
             if (
                 dom.localVideo
             ) {
+
                 dom.localVideo.srcObject =
-                    callType === "video"
+                    type ===
+                        "video"
                         ? stream
                         : null;
 
@@ -3500,296 +5347,367 @@
                 dom.localVideo.playsInline =
                     true;
             }
+
         } catch (error) {
+
             console.error(
-                "Could not access microphone/camera:",
+                "Local media error:",
                 error
             );
 
-            if (
-                error?.name ===
-                "NotAllowedError"
-            ) {
-                throw new Error(
-                    "Camera or microphone permission was not granted."
-                );
-            }
-
-            if (
-                error?.name ===
-                "NotFoundError"
-            ) {
-                throw new Error(
-                    "No suitable camera or microphone was found."
-                );
-            }
-
             throw new Error(
-                "Could not access your camera or microphone."
+                "Camera or microphone permission was not granted."
             );
         }
     }
 
 
     /* =========================================================
-       CALL TIMER
+       REALTIME SUBSCRIPTION HELPER
        ========================================================= */
 
-    function startCallTimer() {
-        stopCallTimer();
+    async function subscribeRealtimeChannel(
+        build,
+        assign
+    ) {
 
-        state.call.timer =
-            setInterval(
-                () => {
-                    if (
-                        !state.call.startedAt
-                    ) {
-                        return;
-                    }
+        return new Promise(
+            (
+                resolve,
+                reject
+            ) => {
 
-                    const seconds =
-                        Math.floor(
-                            (
-                                Date.now() -
-                                state.call.startedAt
-                            ) /
-                                1000
-                        );
+                let settled =
+                    false;
 
-                    const minutes =
-                        Math.floor(
-                            seconds / 60
-                        );
-
-                    const remaining =
-                        seconds % 60;
-
-                    if (
-                        dom.callDuration
-                    ) {
-                        dom.callDuration.textContent =
-                            `${String(
-                                minutes
-                            ).padStart(
-                                2,
-                                "0"
-                            )}:${String(
-                                remaining
-                            ).padStart(
-                                2,
-                                "0"
-                            )}`;
-                    }
-                },
-                1000
-            );
-    }
+                let channel;
 
 
-    function stopCallTimer() {
-        if (
-            state.call.timer
-        ) {
-            clearInterval(
-                state.call.timer
-            );
+                const timer =
+                    setTimeout(
+                        () => {
 
-            state.call.timer =
-                null;
-        }
+                            if (
+                                settled
+                            ) {
+
+                                return;
+                            }
+
+                            settled =
+                                true;
+
+                            reject(
+                                new Error(
+                                    "Call realtime subscription timed out. Enable Realtime for the call tables in Supabase."
+                                )
+                            );
+
+                        },
+                        10000
+                    );
+
+
+                channel =
+                    build(
+                        status => {
+
+                            if (
+                                status ===
+                                "SUBSCRIBED" &&
+                                !settled
+                            ) {
+
+                                settled =
+                                    true;
+
+                                clearTimeout(
+                                    timer
+                                );
+
+                                resolve(
+                                    channel
+                                );
+                            }
+
+
+                            if (
+                                (
+                                    status ===
+                                        "CHANNEL_ERROR" ||
+                                    status ===
+                                        "TIMED_OUT"
+                                ) &&
+                                !settled
+                            ) {
+
+                                settled =
+                                    true;
+
+                                clearTimeout(
+                                    timer
+                                );
+
+                                reject(
+                                    new Error(
+                                        `Call realtime status: ${status}`
+                                    )
+                                );
+                            }
+                        }
+                    );
+
+
+                assign(
+                    channel
+                );
+            }
+        );
     }
 
 
     /* =========================================================
-       CALL ROOM REALTIME
+       CALL REALTIME
        ========================================================= */
 
     async function subscribeToCallRoom(
         roomId
     ) {
-        if (!roomId) {
-            return;
-        }
 
         if (
             state.call.roomChannel
         ) {
+
             removeRealtimeChannel(
                 state.call.roomChannel
             );
-
-            state.call.roomChannel =
-                null;
         }
 
-        const channel =
-            state.supabase
-                .channel(
-                    `call-room:${roomId}:${state.user.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "INSERT",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_call_signals",
-
-                        filter:
-                            `room_id=eq.${roomId}`
-                    },
-                    async payload => {
-                        const signal =
-                            payload.new;
-
-                        if (
-                            !signal
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            signal.sender_id ===
-                            state.user.id
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            signal.receiver_id &&
-                            signal.receiver_id !==
-                                state.user.id
-                        ) {
-                            return;
-                        }
-
-                        await handleCallSignal(
-                            signal
-                        );
-                    }
-                )
-                .subscribe(
-                    status => {
-                        console.log(
-                            "Call realtime:",
-                            status
-                        );
-                    }
-                );
-
-        channel.__mwanikiCallRoom =
-            true;
-
-        state.call.roomChannel =
-            channel;
-
-        state.realtimeChannels.push(
-            channel
-        );
-    }
-
-
-    async function subscribeToCallParticipants(
-        roomId
-    ) {
-        if (!roomId) {
-            return;
-        }
 
         if (
             state.call.participantChannel
         ) {
+
             removeRealtimeChannel(
                 state.call.participantChannel
             );
-
-            state.call.participantChannel =
-                null;
         }
 
-        const channel =
-            state.supabase
-                .channel(
-                    `call-participants:${roomId}:${state.user.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "*",
 
-                        schema:
-                            "public",
+        /*
+         * SIGNALING CHANNEL
+         *
+         * We WAIT for SUBSCRIBED.
+         *
+         * This is one of the major fixes
+         * for the frozen call problem.
+         */
 
-                        table:
-                            "chat_call_participants",
+        await subscribeRealtimeChannel(
 
-                        filter:
-                            `room_id=eq.${roomId}`
-                    },
-                    async payload => {
-                        const participant =
-                            payload.new;
+            onStatus =>
+                state.supabase
+                    .channel(
+                        `call-room:${roomId}`
+                    )
+                    .on(
+                        "postgres_changes",
+                        {
 
-                        if (
-                            !participant ||
-                            participant.user_id ===
-                                state.user.id
-                        ) {
-                            return;
-                        }
+                            event:
+                                "INSERT",
 
-                        /*
-                         * When an invited participant becomes
-                         * joined, the caller establishes a
-                         * fresh offer if needed.
-                         */
-                        if (
-                            participant.status ===
-                            "joined"
-                        ) {
-                            if (
-                                !state.call.peerConnections.has(
-                                    participant.user_id
-                                )
-                            ) {
-                                try {
-                                    await createPeerConnection(
+                            schema:
+                                "public",
+
+                            table:
+                                "chat_call_signals",
+
+                            filter:
+                                `room_id=eq.${roomId}`
+
+                        },
+                        payload =>
+                            handleCallSignal(
+                                payload.new
+                            )
+                    )
+                    .subscribe(
+                        onStatus
+                    ),
+
+            channel => {
+
+                state.call.roomChannel =
+                    channel;
+            }
+        );
+
+
+        /*
+         * PARTICIPANT CHANNEL
+         *
+         * When an invited student accepts,
+         * the caller creates a peer connection.
+         */
+
+        try {
+
+            await subscribeRealtimeChannel(
+
+                onStatus =>
+                    state.supabase
+                        .channel(
+                            `call-participants:${roomId}`
+                        )
+                        .on(
+                            "postgres_changes",
+                            {
+
+                                event:
+                                    "UPDATE",
+
+                                schema:
+                                    "public",
+
+                                table:
+                                    "chat_call_participants",
+
+                                filter:
+                                    `room_id=eq.${roomId}`
+
+                            },
+                            payload => {
+
+                                const participant =
+                                    payload.new;
+
+
+                                if (
+                                    participant.status ===
+                                        "joined" &&
+                                    participant.user_id &&
+                                    participant.user_id !==
+                                        state.user.id &&
+                                    state.call.active
+                                ) {
+
+                                    createPeerConnection(
                                         participant.user_id,
                                         true
-                                    );
-                                } catch (error) {
-                                    console.error(
-                                        "Could not connect newly joined participant:",
-                                        error
-                                    );
+                                    )
+                                        .catch(
+                                            console.error
+                                        );
                                 }
                             }
-                        }
-                    }
+                        )
+                        .subscribe(
+                            onStatus
+                        ),
+
+                channel => {
+
+                    state.call.participantChannel =
+                        channel;
+                }
+            );
+
+        } catch (error) {
+
+            /*
+             * Signaling can still work even if
+             * participant realtime is unavailable.
+             */
+
+            console.warn(
+                error.message
+            );
+        }
+
+
+        /*
+         * IMPORTANT:
+         *
+         * If the caller sent an offer before the
+         * invited user finished subscribing,
+         * retrieve the existing offer now.
+         */
+
+        await loadExistingCallSignals(
+            roomId
+        );
+    }
+
+
+    async function loadExistingCallSignals(
+        roomId
+    ) {
+
+        const {
+            data,
+            error
+        } =
+            await state.supabase
+                .from(
+                    "chat_call_signals"
                 )
-                .subscribe(
-                    status => {
-                        console.log(
-                            "Call participant realtime:",
-                            status
-                        );
+                .select(
+                    "*"
+                )
+                .eq(
+                    "room_id",
+                    roomId
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending:
+                            true
                     }
                 );
 
-        channel.__mwanikiCallParticipants =
-            true;
 
-        state.call.participantChannel =
-            channel;
+        if (error) {
 
-        state.realtimeChannels.push(
-            channel
-        );
+            console.warn(
+                "Could not load existing call signals:",
+                error
+            );
+
+            return;
+        }
+
+
+        for (
+            const signal of
+                data ||
+                []
+        ) {
+
+            if (
+                signal.sender_id ===
+                state.user.id
+            ) {
+
+                continue;
+            }
+
+
+            if (
+                signal.receiver_id &&
+                signal.receiver_id !==
+                    state.user.id
+            ) {
+
+                continue;
+            }
+
+
+            await handleCallSignal(
+                signal
+            );
+        }
     }
 
 
@@ -3798,17 +5716,16 @@
        ========================================================= */
 
     async function sendCallSignal({
+
         roomId,
-        receiverId = null,
-        signalType,
+
+        receiverId,
+
+        type,
+
         payload
+
     }) {
-        if (
-            !roomId ||
-            !state.user
-        ) {
-            return;
-        }
 
         const {
             error
@@ -3818,6 +5735,7 @@
                     "chat_call_signals"
                 )
                 .insert({
+
                     room_id:
                         roomId,
 
@@ -3828,64 +5746,94 @@
                         receiverId,
 
                     signal_type:
-                        signalType,
+                        type,
 
                     payload
                 });
 
+
         if (error) {
-            console.error(
-                "Call signal failed:",
-                error
-            );
+
+            throw error;
         }
     }
 
 
     /* =========================================================
-       WEBRTC PEER CONNECTION
+       PEER CONNECTION
        ========================================================= */
 
     async function createPeerConnection(
         remoteUserId,
-        offerer = false
+        offerer =
+            false
     ) {
+
         if (
             !remoteUserId ||
             remoteUserId ===
-                state.user.id
+                state.user.id ||
+            !state.call.active
         ) {
+
             return null;
         }
 
-        if (
-            state.call.peerConnections.has(
-                remoteUserId
-            )
-        ) {
-            return state.call.peerConnections.get(
+
+        let peer =
+            state.call.peerConnections.get(
                 remoteUserId
             );
+
+
+        if (peer) {
+
+            if (
+                offerer &&
+                peer.signalingState ===
+                    "stable"
+            ) {
+
+                await makeOffer(
+                    peer,
+                    remoteUserId
+                );
+            }
+
+            return peer;
         }
 
-        const pc =
+
+        peer =
             new RTCPeerConnection(
                 CONFIG.rtcConfiguration
             );
 
+
         state.call.peerConnections.set(
             remoteUserId,
-            pc
+            peer
         );
+
+
+        state.call.pendingIce.set(
+            remoteUserId,
+            state.call.pendingIce.get(
+                remoteUserId
+            ) || []
+        );
+
 
         if (
             state.call.localStream
         ) {
+
             state.call.localStream
                 .getTracks()
                 .forEach(
                     track => {
-                        pc.addTrack(
+
+                        peer.addTrack(
                             track,
                             state.call.localStream
                         );
@@ -3893,38 +5841,53 @@
                 );
         }
 
-        pc.onicecandidate =
-            async event => {
+
+        peer.onicecandidate =
+            event => {
+
                 if (
                     !event.candidate
                 ) {
+
                     return;
                 }
 
-                await sendCallSignal({
+
+                sendCallSignal({
+
                     roomId:
                         state.call.roomId,
 
                     receiverId:
                         remoteUserId,
 
-                    signalType:
+                    type:
                         "ice-candidate",
 
                     payload:
                         event.candidate.toJSON
                             ? event.candidate.toJSON()
                             : event.candidate
-                });
+
+                })
+                    .catch(
+                        console.error
+                    );
             };
 
-        pc.ontrack =
+
+        peer.ontrack =
             event => {
+
                 const stream =
                     event.streams &&
                     event.streams[0];
 
-                if (stream) {
+
+                if (
+                    stream
+                ) {
+
                     renderRemoteVideo(
                         remoteUserId,
                         stream
@@ -3932,313 +5895,357 @@
                 }
             };
 
-        pc.onconnectionstatechange =
+
+        peer.onconnectionstatechange =
             () => {
-                const connectionState =
-                    pc.connectionState;
 
                 if (
-                    connectionState ===
+                    peer.connectionState ===
                         "failed" ||
-                    connectionState ===
+                    peer.connectionState ===
                         "closed"
                 ) {
+
                     removePeer(
                         remoteUserId
                     );
                 }
             };
 
-        pc.oniceconnectionstatechange =
-            () => {
-                if (
-                    pc.iceConnectionState ===
-                        "failed" ||
-                    pc.iceConnectionState ===
-                        "closed"
-                ) {
-                    removePeer(
-                        remoteUserId
-                    );
-                }
-            };
 
-        if (offerer) {
-            const offer =
-                await pc.createOffer({
-                    offerToReceiveAudio:
-                        true,
+        if (
+            offerer
+        ) {
 
-                    offerToReceiveVideo:
-                        state.call.callType ===
-                        "video"
-                });
-
-            await pc.setLocalDescription(
-                offer
+            await makeOffer(
+                peer,
+                remoteUserId
             );
-
-            await sendCallSignal({
-                roomId:
-                    state.call.roomId,
-
-                receiverId:
-                    remoteUserId,
-
-                signalType:
-                    "offer",
-
-                payload:
-                    pc.localDescription
-            });
         }
 
-        return pc;
+
+        return peer;
     }
 
 
-    async function initiateOutgoingConnections(
-        participantIds
+    async function makeOffer(
+        peer,
+        remoteUserId
     ) {
+
         if (
-            !participantIds ||
-            !participantIds.length
+            peer.signalingState !==
+            "stable"
         ) {
+
             return;
         }
 
-        for (
-            const userId of participantIds
-        ) {
-            if (
-                !userId ||
-                userId ===
-                    state.user.id
-            ) {
-                continue;
-            }
 
-            try {
-                await createPeerConnection(
-                    userId,
-                    true
-                );
-            } catch (error) {
-                console.error(
-                    "Could not create outgoing peer connection:",
-                    userId,
-                    error
-                );
-            }
-        }
-    }
+        const offer =
+            await peer.createOffer();
 
 
-    /* =========================================================
-       ICE QUEUE
-       ========================================================= */
-
-    function queueIceCandidate(
-        userId,
-        candidate
-    ) {
-        if (
-            !state.call.pendingIceCandidates.has(
-                userId
-            )
-        ) {
-            state.call.pendingIceCandidates.set(
-                userId,
-                []
-            );
-        }
-
-        state.call.pendingIceCandidates
-            .get(userId)
-            .push(candidate);
-    }
-
-
-    async function drainIceCandidates(
-        userId,
-        pc
-    ) {
-        const queue =
-            state.call.pendingIceCandidates.get(
-                userId
-            );
-
-        if (
-            !queue ||
-            !queue.length
-        ) {
-            return;
-        }
-
-        state.call.pendingIceCandidates.delete(
-            userId
+        await peer.setLocalDescription(
+            offer
         );
 
-        for (
-            const candidate of queue
-        ) {
-            try {
-                await pc.addIceCandidate(
-                    new RTCIceCandidate(
-                        candidate
-                    )
-                );
-            } catch (error) {
-                console.warn(
-                    "Queued ICE candidate failed:",
-                    error
-                );
-            }
-        }
+
+        await sendCallSignal({
+
+            roomId:
+                state.call.roomId,
+
+            receiverId:
+                remoteUserId,
+
+            type:
+                "offer",
+
+            payload:
+                peer.localDescription
+        });
     }
 
 
     /* =========================================================
-       SIGNAL HANDLER
+       CALL SIGNAL HANDLER
        ========================================================= */
 
     async function handleCallSignal(
         signal
     ) {
-        const remoteUserId =
-            signal.sender_id;
 
-        if (!remoteUserId) {
+        if (
+            !signal ||
+            !state.call.active
+        ) {
+
             return;
         }
 
-        let pc =
-            state.call.peerConnections.get(
-                remoteUserId
-            );
+
+        if (
+            signal.sender_id ===
+            state.user.id
+        ) {
+
+            return;
+        }
+
+
+        if (
+            signal.receiver_id &&
+            signal.receiver_id !==
+                state.user.id
+        ) {
+
+            return;
+        }
+
+
+        const remoteUserId =
+            signal.sender_id;
+
+
+        /*
+         * OFFER
+         */
 
         if (
             signal.signal_type ===
             "offer"
         ) {
-            pc =
+
+            const peer =
                 await createPeerConnection(
                     remoteUserId,
                     false
                 );
 
-            if (!pc) {
+
+            if (!peer) {
                 return;
             }
 
+
             try {
-                await pc.setRemoteDescription(
+
+                await peer.setRemoteDescription(
                     new RTCSessionDescription(
                         signal.payload
                     )
                 );
 
-                await drainIceCandidates(
-                    remoteUserId,
-                    pc
-                );
 
                 const answer =
-                    await pc.createAnswer();
+                    await peer.createAnswer();
 
-                await pc.setLocalDescription(
+
+                await peer.setLocalDescription(
                     answer
                 );
 
+
                 await sendCallSignal({
+
                     roomId:
                         state.call.roomId,
 
                     receiverId:
                         remoteUserId,
 
-                    signalType:
+                    type:
                         "answer",
 
                     payload:
-                        pc.localDescription
+                        peer.localDescription
                 });
+
+
+                await flushIce(
+                    remoteUserId
+                );
+
             } catch (error) {
+
                 console.error(
                     "Offer handling failed:",
                     error
                 );
             }
 
+
             return;
         }
+
+
+        /*
+         * ANSWER
+         */
 
         if (
             signal.signal_type ===
             "answer"
         ) {
-            if (!pc) {
+
+            const peer =
+                state.call.peerConnections.get(
+                    remoteUserId
+                );
+
+
+            if (!peer) {
                 return;
             }
 
+
             try {
-                await pc.setRemoteDescription(
-                    new RTCSessionDescription(
-                        signal.payload
-                    )
+
+                if (
+                    peer.signalingState ===
+                    "have-local-offer"
+                ) {
+
+                    await peer.setRemoteDescription(
+                        new RTCSessionDescription(
+                            signal.payload
+                        )
+                    );
+                }
+
+
+                await flushIce(
+                    remoteUserId
                 );
 
-                await drainIceCandidates(
-                    remoteUserId,
-                    pc
-                );
             } catch (error) {
+
                 console.error(
                     "Answer handling failed:",
                     error
                 );
             }
 
+
             return;
         }
+
+
+        /*
+         * ICE CANDIDATE
+         */
 
         if (
             signal.signal_type ===
             "ice-candidate"
         ) {
-            if (!pc) {
-                queueIceCandidate(
-                    remoteUserId,
-                    signal.payload
+
+            const peer =
+                state.call.peerConnections.get(
+                    remoteUserId
                 );
 
-                return;
-            }
+
+            /*
+             * ICE can arrive before
+             * remote description.
+             *
+             * Queue it.
+             */
 
             if (
-                !pc.remoteDescription ||
-                !pc.remoteDescription.type
+                !peer ||
+                !peer.remoteDescription
             ) {
-                queueIceCandidate(
-                    remoteUserId,
+
+                const list =
+                    state.call.pendingIce.get(
+                        remoteUserId
+                    ) ||
+                    [];
+
+
+                list.push(
                     signal.payload
                 );
+
+
+                state.call.pendingIce.set(
+                    remoteUserId,
+                    list
+                );
+
 
                 return;
             }
 
+
             try {
-                await pc.addIceCandidate(
+
+                await peer.addIceCandidate(
                     new RTCIceCandidate(
                         signal.payload
                     )
                 );
+
             } catch (error) {
+
                 console.warn(
                     "ICE candidate failed:",
                     error
                 );
             }
+        }
+    }
+
+
+    async function flushIce(
+        remoteUserId
+    ) {
+
+        const peer =
+            state.call.peerConnections.get(
+                remoteUserId
+            );
+
+
+        if (
+            !peer ||
+            !peer.remoteDescription
+        ) {
+
+            return;
+        }
+
+
+        const candidates =
+            state.call.pendingIce.get(
+                remoteUserId
+            ) ||
+            [];
+
+
+        state.call.pendingIce.set(
+            remoteUserId,
+            []
+        );
+
+
+        for (
+            const candidate of
+                candidates
+        ) {
+
+            try {
+
+                await peer.addIceCandidate(
+                    new RTCIceCandidate(
+                        candidate
+                    )
+                );
+
+            } catch {}
         }
     }
 
@@ -4251,22 +6258,27 @@
         userId,
         stream
     ) {
+
         if (
             !dom.callVideoGrid ||
             !userId ||
             !stream
         ) {
+
             return;
         }
 
+
         let tile =
-            document.querySelector(
+            dom.callVideoGrid.querySelector(
                 `[data-call-user="${CSS.escape(
                     userId
                 )}"]`
             );
 
+
         if (!tile) {
+
             tile =
                 document.createElement(
                     "div"
@@ -4278,10 +6290,12 @@
             tile.dataset.callUser =
                 userId;
 
+
             const video =
                 document.createElement(
                     "video"
                 );
+
 
             video.autoplay =
                 true;
@@ -4289,26 +6303,29 @@
             video.playsInline =
                 true;
 
-            video.controls =
-                false;
-
             video.srcObject =
                 stream;
+
 
             tile.appendChild(
                 video
             );
 
+
             dom.callVideoGrid.appendChild(
                 tile
             );
+
         } else {
+
             const video =
                 tile.querySelector(
                     "video"
                 );
 
+
             if (video) {
+
                 video.srcObject =
                     stream;
             }
@@ -4319,36 +6336,44 @@
     function removePeer(
         userId
     ) {
-        const pc =
+
+        const peer =
             state.call.peerConnections.get(
                 userId
             );
 
-        if (pc) {
-            try {
-                pc.close();
-            } catch (_) {}
 
-            state.call.peerConnections.delete(
-                userId
-            );
-        }
+        try {
 
-        state.call.pendingIceCandidates.delete(
+            peer?.close();
+
+        } catch {}
+
+
+        state.call.peerConnections.delete(
             userId
         );
 
+
+        state.call.pendingIce.delete(
+            userId
+        );
+
+
         if (
+            dom.callVideoGrid &&
             typeof CSS !==
                 "undefined" &&
             CSS.escape
         ) {
+
             const tile =
-                document.querySelector(
+                dom.callVideoGrid.querySelector(
                     `[data-call-user="${CSS.escape(
                         userId
                     )}"]`
                 );
+
 
             if (tile) {
                 tile.remove();
@@ -4358,44 +6383,283 @@
 
 
     /* =========================================================
+       START CALL INTERFACE
+       ========================================================= */
+
+    async function startCallInterface({
+
+        room,
+
+        callType,
+
+        scope,
+
+        communityId
+
+    }) {
+
+        state.call.active =
+            true;
+
+
+        state.call.roomId =
+            room.id;
+
+
+        state.call.roomCode =
+            room.room_code;
+
+
+        state.call.callType =
+            callType;
+
+
+        state.call.scope =
+            scope;
+
+
+        state.call.communityId =
+            communityId;
+
+
+        state.call.startedAt =
+            Date.now();
+
+
+        showCallOverlay(
+            room,
+            callType,
+            scope
+        );
+
+
+        startCallTimer();
+
+
+        try {
+
+            /*
+             * Ask for media first.
+             */
+
+            await acquireLocalMedia(
+                callType
+            );
+
+
+            /*
+             * Then subscribe to Realtime.
+             *
+             * This order is important.
+             */
+
+            await subscribeToCallRoom(
+                room.id
+            );
+
+
+            /*
+             * Mark room active.
+             */
+
+            await state.supabase
+                .from(
+                    "chat_call_rooms"
+                )
+                .update({
+
+                    status:
+                        "active",
+
+                    started_at:
+                        new Date()
+                            .toISOString(),
+
+                    updated_at:
+                        new Date()
+                            .toISOString()
+
+                })
+                .eq(
+                    "id",
+                    room.id
+                );
+
+
+            /*
+             * Connect to everyone already
+             * inside the room.
+             */
+
+            const {
+                data:
+                    joined
+            } =
+                await state.supabase
+                    .from(
+                        "chat_call_participants"
+                    )
+                    .select(
+                        "user_id"
+                    )
+                    .eq(
+                        "room_id",
+                        room.id
+                    )
+                    .eq(
+                        "status",
+                        "joined"
+                    );
+
+
+            for (
+                const participant of
+                    joined ||
+                    []
+            ) {
+
+                if (
+                    participant.user_id !==
+                    state.user.id
+                ) {
+
+                    await createPeerConnection(
+                        participant.user_id,
+                        true
+                    );
+                }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "Call startup failed:",
+                error
+            );
+
+
+            await leaveCall(
+                false
+            );
+
+
+            throw error;
+        }
+    }
+
+
+    /* =========================================================
+       CALL TIMER
+       ========================================================= */
+
+    function startCallTimer() {
+
+        stopCallTimer();
+
+
+        state.call.timer =
+            setInterval(
+                () => {
+
+                    if (
+                        !state.call.startedAt ||
+                        !dom.callDuration
+                    ) {
+
+                        return;
+                    }
+
+
+                    const seconds =
+                        Math.floor(
+                            (
+                                Date.now() -
+                                state.call.startedAt
+                            ) /
+                            1000
+                        );
+
+
+                    const minutes =
+                        Math.floor(
+                            seconds /
+                            60
+                        );
+
+
+                    const remaining =
+                        seconds %
+                        60;
+
+
+                    dom.callDuration.textContent =
+                        `${String(
+                            minutes
+                        ).padStart(
+                            2,
+                            "0"
+                        )}:${String(
+                            remaining
+                        ).padStart(
+                            2,
+                            "0"
+                        )}`;
+                },
+                1000
+            );
+    }
+
+
+    function stopCallTimer() {
+
+        if (
+            state.call.timer
+        ) {
+
+            clearInterval(
+                state.call.timer
+            );
+        }
+
+
+        state.call.timer =
+            null;
+    }
+
+
+    /* =========================================================
        CALL CONTROLS
        ========================================================= */
 
     function toggleMicrophone() {
-        const stream =
-            state.call.localStream;
 
-        if (!stream) {
+        const tracks =
+            state.call.localStream
+                ?.getAudioTracks() ||
+            [];
+
+
+        if (!tracks.length) {
             return;
         }
 
-        const audioTracks =
-            stream.getAudioTracks();
-
-        if (!audioTracks.length) {
-            return;
-        }
 
         state.call.microphoneEnabled =
             !state.call.microphoneEnabled;
 
-        audioTracks.forEach(
+
+        tracks.forEach(
             track => {
+
                 track.enabled =
                     state.call.microphoneEnabled;
             }
         );
 
+
         if (
             dom.toggleMicrophoneButton
         ) {
-            dom.toggleMicrophoneButton
-                .setAttribute(
-                    "aria-pressed",
-                    String(
-                        state.call.microphoneEnabled
-                    )
-                );
 
             dom.toggleMicrophoneButton.textContent =
                 state.call.microphoneEnabled
@@ -4406,40 +6670,34 @@
 
 
     function toggleCamera() {
-        const stream =
-            state.call.localStream;
 
-        if (!stream) {
+        const tracks =
+            state.call.localStream
+                ?.getVideoTracks() ||
+            [];
+
+
+        if (!tracks.length) {
             return;
         }
 
-        const videoTracks =
-            stream.getVideoTracks();
-
-        if (!videoTracks.length) {
-            return;
-        }
 
         state.call.cameraEnabled =
             !state.call.cameraEnabled;
 
-        videoTracks.forEach(
+
+        tracks.forEach(
             track => {
+
                 track.enabled =
                     state.call.cameraEnabled;
             }
         );
 
+
         if (
             dom.toggleCameraButton
         ) {
-            dom.toggleCameraButton
-                .setAttribute(
-                    "aria-pressed",
-                    String(
-                        state.call.cameraEnabled
-                    )
-                );
 
             dom.toggleCameraButton.textContent =
                 state.call.cameraEnabled
@@ -4450,63 +6708,67 @@
 
 
     async function toggleScreenShare() {
+
         if (
             !navigator.mediaDevices ||
             !navigator.mediaDevices
                 .getDisplayMedia
         ) {
-            setStatus(
-                "Screen sharing is not supported by this browser."
+
+            toast(
+                "Screen sharing is not supported by this browser.",
+                "error"
             );
 
             return;
         }
 
+
         if (
             state.call.screenSharing
         ) {
+
             stopScreenShare();
 
             return;
         }
 
-        if (
-            state.call.callType !==
-            "video"
-        ) {
-            setStatus(
-                "Screen sharing is available during video calls."
-            );
-
-            return;
-        }
 
         try {
+
             const stream =
                 await navigator.mediaDevices
                     .getDisplayMedia({
+
                         video:
                             true
                     });
 
-            const screenTrack =
+
+            const track =
                 stream.getVideoTracks()[0];
 
-            if (!screenTrack) {
+
+            if (!track) {
                 return;
             }
+
 
             state.call.screenStream =
                 stream;
 
+
             state.call.screenSharing =
                 true;
 
+
             state.call.peerConnections
                 .forEach(
-                    pc => {
+                    peer => {
+
                         const sender =
-                            pc.getSenders()
+                            peer
+                                .getSenders()
                                 .find(
                                     item =>
                                         item.track &&
@@ -4514,38 +6776,40 @@
                                             "video"
                                 );
 
+
                         if (sender) {
+
                             sender.replaceTrack(
-                                screenTrack
+                                track
                             );
                         }
                     }
                 );
 
+
             if (
                 dom.localVideo
             ) {
+
                 dom.localVideo.srcObject =
                     stream;
             }
 
-            screenTrack.onended =
-                () => {
+
+            track.onended =
+                () =>
                     stopScreenShare();
-                };
-        } catch (error) {
-            console.warn(
-                "Screen sharing cancelled:",
-                error
-            );
-        }
+
+        } catch {}
     }
 
 
     function stopScreenShare() {
+
         if (
             state.call.screenStream
         ) {
+
             state.call.screenStream
                 .getTracks()
                 .forEach(
@@ -4553,23 +6817,30 @@
                         track.stop()
                 );
 
+
             state.call.screenStream =
                 null;
         }
 
+
         state.call.screenSharing =
             false;
 
-        const cameraTrack =
+
+        const camera =
             state.call.localStream
                 ?.getVideoTracks()[0];
 
-        if (cameraTrack) {
+
+        if (camera) {
+
             state.call.peerConnections
                 .forEach(
-                    pc => {
+                    peer => {
+
                         const sender =
-                            pc.getSenders()
+                            peer
+                                .getSenders()
                                 .find(
                                     item =>
                                         item.track &&
@@ -4577,17 +6848,21 @@
                                             "video"
                                 );
 
+
                         if (sender) {
+
                             sender.replaceTrack(
-                                cameraTrack
+                                camera
                             );
                         }
                     }
                 );
 
+
             if (
                 dom.localVideo
             ) {
+
                 dom.localVideo.srcObject =
                     state.call.localStream;
             }
@@ -4596,66 +6871,112 @@
 
 
     /* =========================================================
-       END CALL
+       LEAVE CALL
        ========================================================= */
 
     async function leaveCall(
-        silent = false
+        updateServer =
+            true
     ) {
+
         const roomId =
             state.call.roomId;
 
+
         if (
+            updateServer &&
             roomId &&
             state.user
         ) {
-            try {
-                await state.supabase
-                    .from(
-                        "chat_call_participants"
-                    )
-                    .update({
-                        status:
-                            "left",
 
-                        left_at:
-                            new Date()
-                                .toISOString()
-                    })
-                    .eq(
-                        "room_id",
-                        roomId
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    );
-            } catch (error) {
-                console.warn(
-                    "Could not update call participant:",
-                    error
+            await state.supabase
+                .from(
+                    "chat_call_participants"
+                )
+                .update({
+
+                    status:
+                        "left",
+
+                    left_at:
+                        new Date()
+                            .toISOString()
+
+                })
+                .eq(
+                    "room_id",
+                    roomId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
                 );
-            }
         }
+
+
+        /*
+         * Only creator ends the room.
+         */
+
+        if (
+            roomId &&
+            state.call.scope &&
+            state.user
+        ) {
+
+            await state.supabase
+                .from(
+                    "chat_call_rooms"
+                )
+                .update({
+
+                    status:
+                        "ended",
+
+                    ended_at:
+                        new Date()
+                            .toISOString(),
+
+                    updated_at:
+                        new Date()
+                            .toISOString()
+
+                })
+                .eq(
+                    "id",
+                    roomId
+                )
+                .eq(
+                    "created_by",
+                    state.user.id
+                );
+        }
+
 
         stopScreenShare();
 
+
         state.call.peerConnections
             .forEach(
-                pc => {
+                peer => {
+
                     try {
-                        pc.close();
-                    } catch (_) {}
+                        peer.close();
+                    } catch {}
                 }
             );
 
+
         state.call.peerConnections.clear();
 
-        state.call.pendingIceCandidates.clear();
+
+        state.call.pendingIce.clear();
+
 
         if (
             state.call.localStream
         ) {
+
             state.call.localStream
                 .getTracks()
                 .forEach(
@@ -4664,34 +6985,36 @@
                 );
         }
 
+
         state.call.localStream =
             null;
 
-        if (
+
+        removeRealtimeChannel(
             state.call.roomChannel
-        ) {
-            removeRealtimeChannel(
-                state.call.roomChannel
-            );
+        );
 
-            state.call.roomChannel =
-                null;
-        }
 
-        if (
+        removeRealtimeChannel(
             state.call.participantChannel
-        ) {
-            removeRealtimeChannel(
-                state.call.participantChannel
-            );
+        );
 
-            state.call.participantChannel =
-                null;
-        }
+
+        state.call.roomChannel =
+            null;
+
+
+        state.call.participantChannel =
+            null;
+
 
         stopCallTimer();
 
+
         state.call.active =
+            false;
+
+        state.call.connecting =
             false;
 
         state.call.roomId =
@@ -4709,32 +7032,35 @@
         state.call.communityId =
             null;
 
-        state.call.channelId =
-            null;
-
         state.call.startedAt =
             null;
 
         state.call.screenSharing =
             false;
 
+
         if (
             dom.callOverlay
         ) {
+
             dom.callOverlay.hidden =
                 true;
         }
 
+
         if (
             dom.localVideo
         ) {
+
             dom.localVideo.srcObject =
                 null;
         }
 
+
         if (
             dom.callVideoGrid
         ) {
+
             dom.callVideoGrid
                 .querySelectorAll(
                     ".call-video-tile"
@@ -4745,150 +7071,24 @@
                 );
         }
 
-        if (!silent) {
-            announce(
-                "Call ended."
-            );
-        }
-    }
 
-
-    async function markCallRoomStarted(
-        roomId
-    ) {
-        if (!roomId) {
-            return;
-        }
-
-        const now =
-            new Date()
-                .toISOString();
-
-        const {
-            error
-        } =
-            await state.supabase
-                .from(
-                    "chat_call_rooms"
-                )
-                .update({
-                    status:
-                        "active",
-
-                    started_at:
-                        now,
-
-                    updated_at:
-                        now
-                })
-                .eq(
-                    "id",
-                    roomId
-                );
-
-        if (error) {
-            console.warn(
-                "Could not mark call active:",
-                error
-            );
-        }
-    }
-
-
-    /* =========================================================
-       INCOMING CALL LISTENER
-       ========================================================= */
-
-    function setupIncomingCallListener() {
-        if (!state.user) {
-            return;
-        }
-
-        const existing =
-            state.realtimeChannels.find(
-                channel =>
-                    channel.__mwanikiIncomingCall
-            );
-
-        if (existing) {
-            return;
-        }
-
-        const channel =
-            state.supabase
-                .channel(
-                    `incoming-calls:${state.user.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "INSERT",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_call_participants",
-
-                        filter:
-                            `user_id=eq.${state.user.id}`
-                    },
-                    async payload => {
-                        const participant =
-                            payload.new;
-
-                        if (
-                            !participant ||
-                            participant.status !==
-                                "invited"
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            state.call.active &&
-                            state.call.roomId ===
-                                participant.room_id
-                        ) {
-                            return;
-                        }
-
-                        await showIncomingCall(
-                            participant.room_id
-                        );
-                    }
-                )
-                .subscribe(
-                    status => {
-                        console.log(
-                            "Incoming call listener:",
-                            status
-                        );
-                    }
-                );
-
-        channel.__mwanikiIncomingCall =
-            true;
-
-        state.realtimeChannels.push(
-            channel
+        announce(
+            "Call ended."
         );
     }
 
 
+    /* =========================================================
+       INCOMING CALL
+       ========================================================= */
+
     async function showIncomingCall(
         roomId
     ) {
-        if (
-            !dom.incomingCallToast ||
-            !roomId
-        ) {
-            return;
-        }
 
         const {
-            data: room,
+            data:
+                room,
             error
         } =
             await state.supabase
@@ -4904,32 +7104,33 @@
                 )
                 .maybeSingle();
 
-        if (error) {
-            console.warn(
-                "Could not load incoming call room:",
-                error
-            );
+
+        if (
+            error ||
+            !room
+        ) {
 
             return;
         }
 
-        if (!room) {
-            return;
-        }
 
         if (
             room.status ===
-                "ended"
+            "ended"
         ) {
+
             return;
         }
 
-        state.call.incoming =
+
+        state.incomingCall =
             room;
+
 
         if (
             dom.incomingCallTitle
         ) {
+
             dom.incomingCallTitle.textContent =
                 room.call_type ===
                     "video"
@@ -4937,9 +7138,11 @@
                     : "Incoming voice call";
         }
 
+
         if (
             dom.incomingCallText
         ) {
+
             dom.incomingCallText.textContent =
                 room.call_scope ===
                     "community"
@@ -4947,36 +7150,145 @@
                     : "You have been invited to a general call.";
         }
 
-        dom.incomingCallToast.hidden =
-            false;
+
+        if (
+            dom.incomingCallToast
+        ) {
+
+            dom.incomingCallToast.hidden =
+                false;
+        }
+    }
+
+
+    function setupIncomingCallListener() {
+
+        if (!state.user) {
+            return;
+        }
+
+
+        const channel =
+            state.supabase
+                .channel(
+                    `incoming-calls:${state.user.id}`
+                )
+                .on(
+                    "postgres_changes",
+                    {
+
+                        event:
+                            "INSERT",
+
+                        schema:
+                            "public",
+
+                        table:
+                            "chat_call_participants",
+
+                        filter:
+                            `user_id=eq.${state.user.id}`
+
+                    },
+                    payload => {
+
+                        const participant =
+                            payload.new;
+
+
+                        if (
+                            participant?.status !==
+                            "invited"
+                        ) {
+
+                            return;
+                        }
+
+
+                        if (
+                            state.call.active &&
+                            state.call.roomId ===
+                                participant.room_id
+                        ) {
+
+                            return;
+                        }
+
+
+                        showIncomingCall(
+                            participant.room_id
+                        );
+                    }
+                )
+                .subscribe();
+
+
+        state.realtimeChannels.push(
+            channel
+        );
     }
 
 
     async function acceptIncomingCall() {
+
         const room =
-            state.call.incoming;
+            state.incomingCall;
+
 
         if (!room) {
             return;
         }
 
-        state.call.incoming =
+
+        state.incomingCall =
             null;
+
 
         if (
             dom.incomingCallToast
         ) {
+
             dom.incomingCallToast.hidden =
                 true;
         }
 
+
         try {
-            /*
-             * Start the call interface first so that the
-             * signaling subscription exists before the
-             * caller sends/re-sends the offer.
-             */
+
+            const {
+                error
+            } =
+                await state.supabase
+                    .from(
+                        "chat_call_participants"
+                    )
+                    .update({
+
+                        status:
+                            "joined",
+
+                        joined_at:
+                            new Date()
+                                .toISOString()
+
+                    })
+                    .eq(
+                        "room_id",
+                        room.id
+                    )
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    );
+
+
+            if (error) {
+                throw error;
+            }
+
+
             await startCallInterface({
+
                 room,
 
                 callType:
@@ -4986,550 +7298,618 @@
                     room.call_scope,
 
                 communityId:
-                    room.community_id,
-
-                participantIds:
-                    []
+                    room.community_id
             });
 
-            const {
-                error
-            } =
-                await state.supabase
-                    .from(
-                        "chat_call_participants"
-                    )
-                    .update({
-                        status:
-                            "joined",
-
-                        joined_at:
-                            new Date()
-                                .toISOString()
-                    })
-                    .eq(
-                        "room_id",
-                        room.id
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    );
-
-            if (error) {
-                throw error;
-            }
-
-            /*
-             * Fetch current room participants. This catches
-             * callers who created an offer before our listener
-             * became ready.
-             */
-            const participants =
-                await loadRoomParticipants(
-                    room.id
-                );
-
-            for (
-                const participant of participants
-            ) {
-                if (
-                    participant.user_id &&
-                    participant.user_id !==
-                        state.user.id &&
-                    participant.status ===
-                        "joined"
-                ) {
-                    /*
-                     * The caller may already have a peer
-                     * connection. We only create one when
-                     * needed.
-                     */
-                    if (
-                        !state.call.peerConnections.has(
-                            participant.user_id
-                        )
-                    ) {
-                        await createPeerConnection(
-                            participant.user_id,
-                            false
-                        );
-                    }
-                }
-            }
         } catch (error) {
+
             console.error(
                 "Could not accept call:",
                 error
             );
 
-            await leaveCall(
-                true
-            );
-
-            setStatus(
+            toast(
                 error.message ||
-                    "Could not join the call."
+                    "Could not join the call.",
+                "error"
             );
         }
     }
 
 
     async function declineIncomingCall() {
+
         const room =
-            state.call.incoming;
+            state.incomingCall;
+
 
         if (!room) {
             return;
         }
 
-        state.call.incoming =
+
+        state.incomingCall =
             null;
+
 
         if (
             dom.incomingCallToast
         ) {
+
             dom.incomingCallToast.hidden =
                 true;
         }
 
-        try {
-            const {
-                error
-            } =
-                await state.supabase
-                    .from(
-                        "chat_call_participants"
-                    )
-                    .update({
-                        status:
-                            "declined",
 
-                        left_at:
-                            new Date()
-                                .toISOString()
-                    })
-                    .eq(
-                        "room_id",
-                        room.id
-                    )
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    );
+        await state.supabase
+            .from(
+                "chat_call_participants"
+            )
+            .update({
 
-            if (error) {
-                console.warn(
-                    "Could not decline call:",
-                    error
-                );
-            }
-        } catch (error) {
-            console.warn(
-                "Could not decline call:",
-                error
+                status:
+                    "declined",
+
+                left_at:
+                    new Date()
+                        .toISOString()
+
+            })
+            .eq(
+                "room_id",
+                room.id
+            )
+            .eq(
+                "user_id",
+                state.user.id
             );
-        }
     }
 
 
     /* =========================================================
-       CALL EVENTS
+       EVENTS
        ========================================================= */
 
-    function bindCallEvents() {
+    function bindEvents() {
+
+        [
+            dom.homeButton,
+            dom.railHomeButton,
+            dom.dashboardButton
+        ].forEach(
+            button => {
+
+                button?.addEventListener(
+                    "click",
+                    () =>
+                        location.href =
+                            CONFIG.dashboardUrl
+                );
+            }
+        );
+
+
+        [
+            dom.railProfileButton,
+            dom.sidebarProfileButton
+        ].forEach(
+            button => {
+
+                button?.addEventListener(
+                    "click",
+                    () =>
+                        location.href =
+                            CONFIG.profileUrl
+                );
+            }
+        );
+
+
+        [
+            dom.openCommunityButton,
+            dom.communitySelectorButton,
+            dom.headerCommunityButton
+        ].forEach(
+            button => {
+
+                button?.addEventListener(
+                    "click",
+                    openCommunityModal
+                );
+            }
+        );
+
+
+        dom.closeCommunityModal
+            ?.addEventListener(
+                "click",
+                closeCommunityModal
+            );
+
+
+        dom.communityModal
+            ?.addEventListener(
+                "click",
+                event => {
+
+                    if (
+                        event.target ===
+                        dom.communityModal
+                    ) {
+
+                        closeCommunityModal();
+                    }
+                }
+            );
+
+
+        dom.communityModalSearch
+            ?.addEventListener(
+                "input",
+                event =>
+                    renderCommunityChoices(
+                        event.target.value
+                    )
+            );
+
+
+        dom.messageForm
+            ?.addEventListener(
+                "submit",
+                sendMessage
+            );
+
+
         if (
-            dom.generalCallButton
+            dom.sendMessageButton &&
+            !dom.messageForm
         ) {
-            dom.generalCallButton.addEventListener(
+
+            dom.sendMessageButton
+                .addEventListener(
+                    "click",
+                    sendMessage
+                );
+        }
+
+
+        dom.messageInput
+            ?.addEventListener(
+                "keydown",
+                event => {
+
+                    if (
+                        event.key ===
+                            "Enter" &&
+                        !event.shiftKey
+                    ) {
+
+                        event.preventDefault();
+
+                        sendMessage(
+                            event
+                        );
+                    }
+                }
+            );
+
+
+        dom.channelSearchInput
+            ?.addEventListener(
+                "input",
+                event => {
+
+                    state.searchTerm =
+                        event.target.value;
+
+                    renderChannels();
+                }
+            );
+
+
+        dom.emojiButton
+            ?.addEventListener(
+                "click",
+                toggleEmojiPicker
+            );
+
+
+        dom.attachButton
+            ?.addEventListener(
+                "click",
+                () =>
+                    ensureAttachmentInput()
+                        .click()
+            );
+
+
+        dom.chatSearchButton
+            ?.addEventListener(
+                "click",
+                searchMessages
+            );
+
+
+        dom.closeMessageSearchButton
+            ?.addEventListener(
+                "click",
+                closeMessageSearch
+            );
+
+
+        dom.cancelReplyButton
+            ?.addEventListener(
+                "click",
+                cancelReply
+            );
+
+
+        /*
+         * General call.
+         */
+
+        dom.generalCallButton
+            ?.addEventListener(
                 "click",
                 openGeneralCallModal
             );
-        }
 
-        if (
-            dom.closeGeneralCallModalButton
-        ) {
-            dom.closeGeneralCallModalButton.addEventListener(
+
+        dom.closeGeneralCallModalButton
+            ?.addEventListener(
                 "click",
                 closeGeneralCallModal
             );
-        }
 
-        if (
-            dom.cancelGeneralCallButton
-        ) {
-            dom.cancelGeneralCallButton.addEventListener(
+
+        dom.cancelGeneralCallButton
+            ?.addEventListener(
                 "click",
                 closeGeneralCallModal
             );
-        }
 
-        if (
-            dom.generalVoiceCallButton
-        ) {
-            dom.generalVoiceCallButton.addEventListener(
+
+        dom.generalVoiceCallButton
+            ?.addEventListener(
                 "click",
                 () => {
+
                     state.pendingGeneralCallType =
                         "voice";
-
-                    if (
-                        dom.generalCallMessage
-                    ) {
-                        dom.generalCallMessage.textContent =
-                            "Voice call selected. Choose students below.";
-                    }
                 }
             );
-        }
 
-        if (
-            dom.generalVideoCallButton
-        ) {
-            dom.generalVideoCallButton.addEventListener(
+
+        dom.generalVideoCallButton
+            ?.addEventListener(
                 "click",
                 () => {
+
                     state.pendingGeneralCallType =
                         "video";
-
-                    if (
-                        dom.generalCallMessage
-                    ) {
-                        dom.generalCallMessage.textContent =
-                            "Video call selected. Choose students below.";
-                    }
                 }
             );
-        }
 
-        if (
-            dom.startGeneralCallButton
-        ) {
-            dom.startGeneralCallButton.addEventListener(
+
+        dom.startGeneralCallButton
+            ?.addEventListener(
                 "click",
                 startGeneralCall
             );
-        }
 
-        if (
-            dom.voiceCallButton
-        ) {
-            dom.voiceCallButton.addEventListener(
+
+        /*
+         * Community calls.
+         */
+
+        dom.voiceCallButton
+            ?.addEventListener(
                 "click",
-                () => {
+                () =>
                     startCommunityCall(
                         "voice"
-                    );
-                }
+                    )
             );
-        }
 
-        if (
-            dom.videoCallButton
-        ) {
-            dom.videoCallButton.addEventListener(
+
+        dom.videoCallButton
+            ?.addEventListener(
                 "click",
-                () => {
+                () =>
                     startCommunityCall(
                         "video"
-                    );
-                }
+                    )
             );
-        }
 
-        if (
-            dom.toggleMicrophoneButton
-        ) {
-            dom.toggleMicrophoneButton.addEventListener(
+
+        /*
+         * Call controls.
+         */
+
+        dom.toggleMicrophoneButton
+            ?.addEventListener(
                 "click",
                 toggleMicrophone
             );
-        }
 
-        if (
-            dom.toggleCameraButton
-        ) {
-            dom.toggleCameraButton.addEventListener(
+
+        dom.toggleCameraButton
+            ?.addEventListener(
                 "click",
                 toggleCamera
             );
-        }
 
-        if (
-            dom.shareScreenButton
-        ) {
-            dom.shareScreenButton.addEventListener(
+
+        dom.shareScreenButton
+            ?.addEventListener(
                 "click",
                 toggleScreenShare
             );
-        }
 
-        if (
-            dom.leaveCallButton
-        ) {
-            dom.leaveCallButton.addEventListener(
+
+        dom.leaveCallButton
+            ?.addEventListener(
                 "click",
-                () => leaveCall()
+                () =>
+                    leaveCall(
+                        true
+                    )
             );
-        }
 
-        if (
-            dom.acceptCallButton
-        ) {
-            dom.acceptCallButton.addEventListener(
+
+        /*
+         * Incoming call.
+         */
+
+        dom.acceptCallButton
+            ?.addEventListener(
                 "click",
                 acceptIncomingCall
             );
-        }
 
-        if (
-            dom.declineCallButton
-        ) {
-            dom.declineCallButton.addEventListener(
+
+        dom.declineCallButton
+            ?.addEventListener(
                 "click",
                 declineIncomingCall
             );
-        }
 
-        if (
-            dom.generalCallModal
-        ) {
-            dom.generalCallModal.addEventListener(
+
+        /*
+         * Close general call modal by clicking backdrop.
+         */
+
+        dom.generalCallModal
+            ?.addEventListener(
                 "click",
                 event => {
+
                     if (
                         event.target ===
                         dom.generalCallModal
                     ) {
+
                         closeGeneralCallModal();
                     }
                 }
             );
-        }
 
-        if (
-            dom.minimizeCallButton
-        ) {
-            dom.minimizeCallButton.addEventListener(
-                "click",
-                () => {
-                    if (
-                        dom.callOverlay
-                    ) {
-                        dom.callOverlay.classList.toggle(
-                            "call-minimized"
-                        );
-                    }
+
+        /*
+         * Close emoji picker when clicking anywhere else.
+         */
+
+        document.addEventListener(
+            "pointerdown",
+            event => {
+
+                const picker =
+                    document.getElementById(
+                        "mwanikiEmojiPicker"
+                    );
+
+
+                if (
+                    state.emojiPickerOpen &&
+                    picker &&
+                    !picker.contains(
+                        event.target
+                    ) &&
+                    event.target !==
+                        dom.emojiButton
+                ) {
+
+                    closeEmojiPicker();
                 }
-            );
-        }
-    }
 
 
-    /* =========================================================
-       COMMUNITY REALTIME
-       ========================================================= */
+                /*
+                 * Close old community menu too.
+                 */
 
-    function subscribeToCommunityRealtime() {
-        if (
-            state.communityRealtimeChannel
-        ) {
-            removeRealtimeChannel(
-                state.communityRealtimeChannel
-            );
+                const menu =
+                    document.getElementById(
+                        "communityMenu"
+                    );
 
-            state.communityRealtimeChannel =
-                null;
-        }
 
-        const channel =
-            state.supabase
-                .channel(
-                    `community-messages:${state.user.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "INSERT",
+                const menuButton =
+                    document.getElementById(
+                        "communityMenuButton"
+                    );
 
-                        schema:
-                            "public",
 
-                        table:
-                            "chat_messages"
-                    },
-                    async payload => {
-                        const message =
-                            payload.new;
+                if (
+                    menu &&
+                    !menu.contains(
+                        event.target
+                    ) &&
+                    event.target !==
+                        menuButton
+                ) {
 
-                        if (
-                            !message
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            message.channel_id !==
-                            state.selectedChannel?.id
-                        ) {
-                            return;
-                        }
-
-                        /*
-                         * Avoid duplicating messages that
-                         * this browser already appended.
-                         */
-                        if (
-                            state.messages.some(
-                                item =>
-                                    item.id ===
-                                    message.id
-                            )
-                        ) {
-                            return;
-                        }
-
-                        const {
-                            data: student
-                        } =
-                            await state.supabase
-                                .from(
-                                    "students"
-                                )
-                                .select(
-                                    "id, full_name, photo_url"
-                                )
-                                .eq(
-                                    "id",
-                                    message.user_id
-                                )
-                                .maybeSingle();
-
-                        message._profile =
-                            student
-                                ? normalizeProfile(
-                                    student
-                                )
-                                : null;
-
-                        state.messages.push(
-                            message
-                        );
-
-                        renderMessages();
-                    }
-                )
-                .subscribe(
-                    status => {
-                        console.log(
-                            "Community realtime:",
-                            status
-                        );
-                    }
-                );
-
-        channel.__mwanikiCommunity =
-            true;
-
-        state.communityRealtimeChannel =
-            channel;
-
-        state.realtimeChannels.push(
-            channel
+                    menu.classList.add(
+                        "hidden"
+                    );
+                }
+            }
         );
+
+
+        /*
+         * Escape closes every floating UI.
+         */
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key !==
+                    "Escape"
+                ) {
+
+                    return;
+                }
+
+
+                closeEmojiPicker();
+
+
+                if (
+                    state.communityModalOpen
+                ) {
+
+                    closeCommunityModal();
+                }
+
+
+                if (
+                    dom.generalCallModal &&
+                    !dom.generalCallModal.hidden
+                ) {
+
+                    closeGeneralCallModal();
+                }
+
+
+                if (
+                    dom.incomingCallToast &&
+                    !dom.incomingCallToast.hidden
+                ) {
+
+                    dom.incomingCallToast.hidden =
+                        true;
+                }
+
+
+                if (
+                    dom.messageSearchPanel &&
+                    !dom.messageSearchPanel
+                        .classList
+                        .contains(
+                            "hidden"
+                        )
+                ) {
+
+                    closeMessageSearch();
+                }
+            }
+        );
+
+
+        bindMessageActionEvents();
     }
 
 
     /* =========================================================
-       MOBILE SIDEBAR
+       READ STATUS
        ========================================================= */
 
-    function toggleMobileSidebar() {
-        if (
-            dom.channelSidebar
-        ) {
-            dom.channelSidebar.classList.toggle(
-                "mobile-open"
-            );
-        }
-    }
-
-
-    /* =========================================================
-       GENERAL SEARCH / PROFILE EVENTS
-       ========================================================= */
-
-    function bindAdditionalUI() {
-        if (
-            dom.channelToggleButton
-        ) {
-            dom.channelToggleButton.addEventListener(
-                "click",
-                toggleMobileSidebar
-            );
-        }
-
-        if (
-            dom.generalCallUserInput
-        ) {
-            dom.generalCallUserInput.addEventListener(
-                "input",
-                filterGeneralCallUsers
-            );
-        }
-
-        if (
-            dom.generalCallUserList
-        ) {
-            dom.generalCallUserList.addEventListener(
-                "change",
-                updateGeneralCallSelectionCount
-            );
-        }
-    }
-
-
-    function filterGeneralCallUsers(
-        event
+    async function markChannelRead(
+        channelId
     ) {
-        const term =
-            String(
-                event.target.value ||
-                    ""
-            )
-                .trim()
-                .toLowerCase();
 
         if (
-            !dom.generalCallUserList
+            !state.user ||
+            !channelId
         ) {
+
             return;
         }
 
-        dom.generalCallUserList
-            .querySelectorAll(
-                ".general-call-user"
-            )
-            .forEach(
-                row => {
-                    const name =
-                        row.querySelector(
-                            ".general-call-user-name"
-                        )
-                            ?.textContent ||
-                        "";
 
-                    row.hidden =
-                        term.length > 0 &&
-                        !name
-                            .toLowerCase()
-                            .includes(
-                                term
-                            );
-                }
-            );
+        const lastMessage =
+            state.messages[
+                state.messages.length - 1
+            ];
+
+
+        const payload = {
+
+            channel_id:
+                channelId,
+
+            user_id:
+                state.user.id,
+
+            last_read_message_id:
+                lastMessage?.id ||
+                null,
+
+            last_read_at:
+                new Date()
+                    .toISOString()
+        };
+
+
+        const {
+            data
+        } =
+            await state.supabase
+                .from(
+                    "chat_read_status"
+                )
+                .select(
+                    "id"
+                )
+                .eq(
+                    "channel_id",
+                    channelId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .maybeSingle();
+
+
+        if (
+            data?.id
+        ) {
+
+            await state.supabase
+                .from(
+                    "chat_read_status"
+                )
+                .update(
+                    payload
+                )
+                .eq(
+                    "id",
+                    data.id
+                );
+
+        } else {
+
+            await state.supabase
+                .from(
+                    "chat_read_status"
+                )
+                .insert(
+                    payload
+                );
+        }
     }
 
 
@@ -5538,24 +7918,26 @@
        ========================================================= */
 
     async function init() {
+
         if (
             state.initialized
         ) {
+
             return;
         }
 
+
         state.initialized =
             true;
+
 
         console.log(
             "Mwaniki Community: Connecting..."
         );
 
-        cacheDom();
-
-        disableStartConversationUI();
 
         try {
+
             await waitForSupabase();
 
             await loadAuthenticatedUser();
@@ -5564,49 +7946,89 @@
 
             await loadCommunities();
 
-            console.log(
-                "Mwaniki Community: Ready"
-            );
 
-            if (
-                state.communities.length
-            ) {
-                await selectCommunity(
-                    state.communities[0].id
-                );
-            } else {
-                renderMessageArea();
-            }
+            /*
+             * Create UI controls dynamically.
+             */
 
             createEmojiPicker();
 
-            bindNavigation();
+            ensureAttachmentInput();
 
-            bindMessageEvents();
 
-            bindAccessibility();
+            /*
+             * Bind everything once.
+             */
 
-            bindCallEvents();
+            bindEvents();
 
-            bindAdditionalUI();
 
-            startPresenceHeartbeat();
+            /*
+             * Incoming call listener.
+             */
 
             setupIncomingCallListener();
 
-            subscribeToCommunityRealtime();
+
+            /*
+             * Presence.
+             */
+
+            startPresenceHeartbeat();
+
+
+            /*
+             * Restore previous community.
+             */
+
+            const savedCommunity =
+                storageGet(
+                    "mwanikiCommunityId"
+                );
+
+
+            const firstCommunity =
+                state.communities.find(
+                    community =>
+                        String(
+                            community.id
+                        ) ===
+                        String(
+                            savedCommunity
+                        )
+                ) ||
+                state.communities[0];
+
+
+            if (
+                firstCommunity
+            ) {
+
+                await selectCommunity(
+                    firstCommunity.id
+                );
+
+            } else {
+
+                renderMessageArea();
+            }
+
 
             console.log(
                 "Mwaniki Community fully initialized."
             );
+
         } catch (error) {
+
             console.error(
                 "Mwaniki Community initialization failed:",
                 error
             );
 
+
             state.initialized =
                 false;
+
 
             setStatus(
                 error.message ||
@@ -5617,41 +8039,11 @@
 
 
     /* =========================================================
-       CLEANUP
-       ========================================================= */
-
-    window.addEventListener(
-        "beforeunload",
-        () => {
-            if (
-                state.presenceTimer
-            ) {
-                clearInterval(
-                    state.presenceTimer
-                );
-            }
-
-            if (
-                state.call.active
-            ) {
-                state.call.peerConnections
-                    .forEach(
-                        pc => {
-                            try {
-                                pc.close();
-                            } catch (_) {}
-                        }
-                    );
-            }
-        }
-    );
-
-
-    /* =========================================================
        PUBLIC API
        ========================================================= */
 
     window.MwanikiCommunity = {
+
         state,
 
         init,
@@ -5668,13 +8060,7 @@
 
         sendMessage,
 
-        openCommunityModal,
-
-        closeCommunityModal,
-
-        openGeneralCallModal,
-
-        closeGeneralCallModal,
+        deleteMessage,
 
         startCommunityCall,
 
@@ -5682,13 +8068,23 @@
 
         leaveCall,
 
+        openGeneralCallModal,
+
+        closeGeneralCallModal,
+
+        acceptIncomingCall,
+
+        declineIncomingCall,
+
+        openCommunityModal,
+
+        closeCommunityModal,
+
         loadOnlineUsers,
 
         getProfileName,
 
-        getProfilePhoto,
-
-        updatePresence
+        getProfilePhoto
     };
 
 
@@ -5700,6 +8096,7 @@
         document.readyState ===
         "loading"
     ) {
+
         document.addEventListener(
             "DOMContentLoaded",
             init,
@@ -5708,7 +8105,9 @@
                     true
             }
         );
+
     } else {
+
         init();
     }
 
