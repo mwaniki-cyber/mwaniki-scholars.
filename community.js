@@ -2,30 +2,36 @@
    MWANIKI SCHOLARS COMMUNITY ENGINE
    community.js
 
-   COMPLETE SYNCHRONIZED VERSION
+   COMPLETE COMMUNITY VERSION
 
-   Features:
-   - Supabase initialization wait
+   FIXES:
+   - Uses existing Supabase client
+   - No invalid reply_to column
+   - Messages load correctly
+   - Messages send correctly
+   - Realtime messages
+   - Student profile loading
+   - Supabase Storage profile photos
+   - Real student photos in messages
+   - Real student photo in sidebar/rail
+   - Emoji community icons
+   - Large Unicode emoji keyboard
+   - Recent emojis
+   - Apple-compatible Unicode emojis
    - Communities
    - Channels
    - Mwaniki Scholars General
    - Community General
    - Community search
    - Channel search
-   - Messages
-   - Student profile photos
-   - Emoji community icons
    - Presence
-   - Realtime messages
    - Accessibility
    - Keyboard navigation
-   - Real Unicode emoji keyboard
    ============================================================ */
 
 (() => {
 
     "use strict";
-
 
     /* ============================================================
        CONFIG
@@ -33,35 +39,37 @@
 
     const CONFIG = {
 
-        dashboardUrl:
-            "./dashboard.html",
+        dashboardUrl: "./dashboard.html",
 
-        profileUrl:
-            "./profile.html",
+        profileUrl: "./profile.html",
+
+        profileBucket: "student-profiles",
 
         defaultAvatar:
             "data:image/svg+xml;charset=UTF-8," +
             encodeURIComponent(`
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    width="96"
-                    height="96"
-                    viewBox="0 0 96 96"
+                    width="160"
+                    height="160"
+                    viewBox="0 0 160 160"
                 >
                     <rect
-                        width="96"
-                        height="96"
-                        rx="48"
+                        width="160"
+                        height="160"
+                        rx="80"
                         fill="#dce9e7"
                     />
+
                     <circle
-                        cx="48"
-                        cy="37"
-                        r="17"
+                        cx="80"
+                        cy="62"
+                        r="30"
                         fill="#087f73"
                     />
+
                     <path
-                        d="M20 82c4-18 15-27 28-27s24 9 28 27"
+                        d="M35 137c6-30 24-45 45-45s39 15 45 45"
                         fill="#087f73"
                     />
                 </svg>
@@ -263,10 +271,13 @@
 
             "acceptCallButton",
 
-            "declineCallButton"
+            "declineCallButton",
+
+            "accessibilityAnnouncer",
+
+            "communityStatus"
 
         ];
-
 
         ids.forEach(id => {
 
@@ -278,7 +289,7 @@
 
 
     /* ============================================================
-       ANNOUNCER
+       ACCESSIBILITY ANNOUNCER
        ============================================================ */
 
     function announce(message) {
@@ -286,14 +297,11 @@
         const text =
             String(message || "");
 
-
         const announcer =
-            $("accessibilityAnnouncer");
-
+            dom.accessibilityAnnouncer;
 
         const status =
-            $("communityStatus");
-
+            dom.communityStatus;
 
         if (announcer) {
 
@@ -301,18 +309,15 @@
 
             window.setTimeout(() => {
 
-                announcer.textContent =
-                    text;
+                announcer.textContent = text;
 
             }, 20);
 
         }
 
-
         if (status) {
 
-            status.textContent =
-                text;
+            status.textContent = text;
 
         }
 
@@ -325,72 +330,74 @@
 
     async function waitForSupabase() {
 
-        if (
-            window.supabaseClient &&
-            typeof window.supabaseClient.from ===
-            "function"
-        ) {
+        const immediateClients = [
 
-            return window.supabaseClient;
+            window.supabaseClient,
 
-        }
+            window.sb,
 
+            window.mwanikiSupabase,
 
-        if (
-            typeof window.waitForMwanikiSupabase ===
-            "function"
-        ) {
+            window.supabase
 
-            try {
+        ];
 
-                return await
-                    window.waitForMwanikiSupabase();
-
-            } catch (error) {
-
-                console.error(
-                    "Supabase wait failed:",
-                    error
-                );
-
-            }
-
-        }
-
-
-        for (
-            let attempt = 0;
-            attempt < 100;
-            attempt++
-        ) {
-
-            const client =
-                window.supabaseClient ||
-                window.sb ||
-                window.mwanikiSupabase;
-
+        for (const client of immediateClients) {
 
             if (
                 client &&
-                typeof client.from ===
-                "function"
+                typeof client.from === "function"
             ) {
 
                 return client;
 
             }
 
+        }
 
-            await new Promise(
-                resolve =>
-                    setTimeout(
-                        resolve,
-                        100
-                    )
+
+        /*
+         * supabase.js is an ES module.
+         * Module execution can happen after this classic script.
+         * Therefore we wait instead of creating another client.
+         */
+
+        for (
+            let attempt = 0;
+            attempt < 150;
+            attempt++
+        ) {
+
+            const clients = [
+
+                window.supabaseClient,
+
+                window.sb,
+
+                window.mwanikiSupabase,
+
+                window.supabase
+
+            ];
+
+            for (const client of clients) {
+
+                if (
+                    client &&
+                    typeof client.from === "function"
+                ) {
+
+                    return client;
+
+                }
+
+            }
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 100)
             );
 
         }
-
 
         throw new Error(
             "Supabase client did not become available."
@@ -407,11 +414,9 @@
 
         cacheDom();
 
-
         announce(
             "Loading Mwaniki Scholars Community."
         );
-
 
         try {
 
@@ -421,6 +426,7 @@
         } catch (error) {
 
             console.error(
+                "Supabase initialization failed:",
                 error
             );
 
@@ -432,9 +438,7 @@
 
         }
 
-
         bindEvents();
-
 
         await loadAuthenticatedUser();
 
@@ -444,16 +448,13 @@
 
         await loadCommunities();
 
-
         renderCommunityRail();
 
         renderCommunitySelector();
 
         renderCommunityModal();
 
-
         await selectInitialCommunity();
-
 
         setupRealtime();
 
@@ -463,11 +464,9 @@
 
         setupEmojiPicker();
 
-
         announce(
             "Mwaniki Scholars Community is ready."
         );
-
 
         console.log(
             "Mwaniki Community fully initialized."
@@ -477,7 +476,7 @@
 
 
     /* ============================================================
-       AUTH
+       AUTHENTICATION
        ============================================================ */
 
     async function loadAuthenticatedUser() {
@@ -492,7 +491,6 @@
                     .auth
                     .getUser();
 
-
             if (error) {
 
                 console.warn(
@@ -504,11 +502,9 @@
 
             }
 
-
             state.user =
                 data?.user ||
                 null;
-
 
             if (state.user) {
 
@@ -532,7 +528,7 @@
 
 
     /* ============================================================
-       PROFILE
+       PROFILE LOADING
        ============================================================ */
 
     async function loadProfile() {
@@ -545,6 +541,71 @@
 
         }
 
+        try {
+
+            let profile =
+                await fetchStudentProfile(
+                    state.user.id
+                );
+
+            if (!profile) {
+
+                console.warn(
+                    "No student profile found for authenticated user."
+                );
+
+            }
+
+            state.profile =
+                normalizeProfile(
+                    profile
+                );
+
+            updateProfileUI();
+
+            console.log(
+                "Student profile loaded:",
+                state.profile
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "Student profile error:",
+                error
+            );
+
+            state.profile = null;
+
+            setProfileFallback();
+
+        }
+
+    }
+
+
+    /*
+     * The previous version requested several columns simultaneously.
+     * If one column is different in the current students table,
+     * Supabase returns HTTP 400.
+     *
+     * We therefore first request the complete row, then normalize it.
+     *
+     * If students.id is not the Auth UUID, we also try user_id.
+     */
+
+    async function fetchStudentProfile(
+        userId
+    ) {
+
+        if (!userId) {
+            return null;
+        }
+
+
+        /* --------------------------------------------------------
+           Attempt 1: students.id
+           -------------------------------------------------------- */
 
         try {
 
@@ -554,52 +615,136 @@
             } =
                 await state.supabase
                     .from("students")
-                    .select(`
-                        id,
-                        full_name,
-                        name,
-                        student_name,
-                        photo_url
-                    `)
+                    .select("*")
                     .eq(
                         "id",
-                        state.user.id
+                        userId
                     )
                     .maybeSingle();
 
+            if (!error && data) {
+
+                return data;
+
+            }
 
             if (error) {
 
                 console.warn(
-                    "Student profile error:",
-                    error
+                    "students.id profile lookup:",
+                    error.message || error
                 );
-
-                setProfileFallback();
-
-                return;
 
             }
 
-
-            state.profile =
-                data ||
-                null;
-
-
-            updateProfileUI();
-
-
         } catch (error) {
 
-            console.error(
-                "Profile exception:",
+            console.warn(
+                "students.id lookup exception:",
                 error
             );
 
-            setProfileFallback();
+        }
+
+
+        /* --------------------------------------------------------
+           Attempt 2: students.user_id
+           -------------------------------------------------------- */
+
+        try {
+
+            const {
+                data,
+                error
+            } =
+                await state.supabase
+                    .from("students")
+                    .select("*")
+                    .eq(
+                        "user_id",
+                        userId
+                    )
+                    .maybeSingle();
+
+            if (!error && data) {
+
+                return data;
+
+            }
+
+            if (error) {
+
+                console.warn(
+                    "students.user_id profile lookup:",
+                    error.message || error
+                );
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "students.user_id lookup exception:",
+                error
+            );
 
         }
+
+
+        return null;
+
+    }
+
+
+    function normalizeProfile(
+        profile
+    ) {
+
+        if (!profile) {
+            return null;
+        }
+
+        const name =
+
+            profile.full_name ||
+
+            profile.name ||
+
+            profile.student_name ||
+
+            profile.display_name ||
+
+            profile.username ||
+
+            state.user?.email ||
+
+            "Student";
+
+        const rawPhoto =
+
+            profile.photo_url ||
+
+            profile.avatar_url ||
+
+            profile.profile_photo ||
+
+            profile.profile_image ||
+
+            profile.photo ||
+
+            profile.avatar ||
+
+            "";
+
+        return {
+
+            ...profile,
+
+            display_name: name,
+
+            photo_url: rawPhoto
+
+        };
 
     }
 
@@ -610,11 +755,17 @@
 
         return (
 
+            profile?.display_name ||
+
             profile?.full_name ||
 
             profile?.name ||
 
             profile?.student_name ||
+
+            profile?.displayName ||
+
+            profile?.username ||
 
             state.user?.email ||
 
@@ -625,17 +776,197 @@
     }
 
 
+    /*
+     * Converts:
+     *
+     * 1. Full HTTPS URL
+     * 2. data:image URL
+     * 3. Supabase public URL
+     * 4. student-profiles/file.jpg
+     * 5. file.jpg
+     *
+     * into a usable browser image URL.
+     */
+
+    function resolveProfilePhoto(
+        rawPhoto
+    ) {
+
+        const value =
+            String(
+                rawPhoto || ""
+            ).trim();
+
+        if (!value) {
+
+            return CONFIG.defaultAvatar;
+
+        }
+
+
+        /* Data URI */
+
+        if (
+            /^data:image\//i.test(value)
+        ) {
+
+            return value;
+
+        }
+
+
+        /* Blob URL */
+
+        if (
+            /^blob:/i.test(value)
+        ) {
+
+            return value;
+
+        }
+
+
+        /* Normal external/public URL */
+
+        if (
+            /^https?:\/\//i.test(value)
+        ) {
+
+            return value;
+
+        }
+
+
+        /*
+         * Supabase Storage path.
+         *
+         * The student-profiles bucket is expected to be public.
+         */
+
+        let path =
+            value;
+
+
+        path =
+            path.replace(
+                /^\/+/,
+                ""
+            );
+
+
+        path =
+            path.replace(
+                /^student-profiles\//i,
+                ""
+            );
+
+
+        /*
+         * If the database accidentally stored the complete
+         * Supabase storage path, extract the object path.
+         */
+
+        const marker =
+            "/storage/v1/object/public/" +
+            CONFIG.profileBucket +
+            "/";
+
+        const markerIndex =
+            path.indexOf(marker);
+
+
+        if (markerIndex >= 0) {
+
+            path =
+                path.slice(
+                    markerIndex +
+                    marker.length
+                );
+
+        }
+
+
+        try {
+
+            const result =
+                state.supabase
+                    .storage
+                    .from(
+                        CONFIG.profileBucket
+                    )
+                    .getPublicUrl(
+                        path
+                    );
+
+            if (
+                result?.data?.publicUrl
+            ) {
+
+                return result.data.publicUrl;
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "Could not create profile photo URL:",
+                error
+            );
+
+        }
+
+
+        /*
+         * Final manual fallback for a public bucket.
+         */
+
+        return (
+            "https://bazixdwtysmkkdeloerx.supabase.co" +
+            "/storage/v1/object/public/" +
+            CONFIG.profileBucket +
+            "/" +
+            encodePath(path)
+        );
+
+    }
+
+
+    function encodePath(
+        path
+    ) {
+
+        return String(path)
+            .split("/")
+            .map(
+                part =>
+                    encodeURIComponent(part)
+            )
+            .join("/");
+
+    }
+
+
     function getProfilePhoto(
         profile = state.profile
     ) {
 
-        return (
+        const raw =
 
             profile?.photo_url ||
 
-            CONFIG.defaultAvatar
+            profile?.avatar_url ||
 
-        );
+            profile?.profile_photo ||
+
+            profile?.profile_image ||
+
+            profile?.photo ||
+
+            profile?.avatar ||
+
+            "";
+
+        return resolveProfilePhoto(raw);
 
     }
 
@@ -648,7 +979,6 @@
         const photo =
             getProfilePhoto();
 
-
         if (
             dom.sidebarProfileName
         ) {
@@ -658,13 +988,11 @@
 
         }
 
-
         setImage(
             dom.sidebarProfileAvatar,
             photo,
             `${name} profile photo`
         );
-
 
         setImage(
             dom.railProfileAvatar,
@@ -681,7 +1009,6 @@
             state.user?.email ||
             "Student";
 
-
         if (
             dom.sidebarProfileName
         ) {
@@ -691,13 +1018,11 @@
 
         }
 
-
         setImage(
             dom.sidebarProfileAvatar,
             CONFIG.defaultAvatar,
             `${name} profile photo`
         );
-
 
         setImage(
             dom.railProfileAvatar,
@@ -709,7 +1034,7 @@
 
 
     /* ============================================================
-       SAFE IMAGES
+       SAFE IMAGE HANDLING
        ============================================================ */
 
     function setImage(
@@ -722,25 +1047,29 @@
             return;
         }
 
+        image.loading =
+            "lazy";
 
-        image.onerror = () => {
-
-            image.onerror = null;
-
-            image.src =
-                CONFIG.defaultAvatar;
-
-        };
-
-
-        image.src =
-            source ||
-            CONFIG.defaultAvatar;
-
+        image.decoding =
+            "async";
 
         image.alt =
             alt ||
             "Profile photo";
+
+        image.onerror =
+            () => {
+
+                image.onerror = null;
+
+                image.src =
+                    CONFIG.defaultAvatar;
+
+            };
+
+        image.src =
+            source ||
+            CONFIG.defaultAvatar;
 
     }
 
@@ -757,10 +1086,8 @@
             return;
         }
 
-
         state.loadingCommunities =
             true;
-
 
         try {
 
@@ -794,7 +1121,6 @@
                         }
                     );
 
-
             if (error) {
 
                 console.error(
@@ -813,17 +1139,14 @@
 
             }
 
-
             state.communities =
                 Array.isArray(data)
                     ? data
                     : [];
 
-
             console.log(
                 `Communities loaded: ${state.communities.length}`
             );
-
 
         } catch (error) {
 
@@ -864,13 +1187,10 @@
 
         }
 
-
         state.loadingChannels =
             true;
 
-
         renderChannelLoading();
-
 
         try {
 
@@ -923,7 +1243,6 @@
                         }
                     );
 
-
             if (error) {
 
                 console.error(
@@ -942,25 +1261,20 @@
 
             }
 
-
             state.channels =
                 Array.isArray(data)
                     ? data
                     : [];
 
-
             state.channels.sort(
                 sortChannels
             );
-
 
             console.log(
                 `Channels loaded: ${state.channels.length}`
             );
 
-
             renderChannels();
-
 
         } catch (error) {
 
@@ -997,7 +1311,6 @@
         const bg =
             isGeneralChannel(b);
 
-
         if (ag && !bg) {
             return -1;
         }
@@ -1006,18 +1319,19 @@
             return 1;
         }
 
-
         const ap =
-            Number(a.position ?? 999999);
+            Number(
+                a.position ?? 999999
+            );
 
         const bp =
-            Number(b.position ?? 999999);
-
+            Number(
+                b.position ?? 999999
+            );
 
         if (ap !== bp) {
             return ap - bp;
         }
-
 
         return String(
             a.name || ""
@@ -1041,14 +1355,12 @@
             .trim()
             .toLowerCase();
 
-
         const slug =
             String(
                 channel?.slug || ""
             )
             .trim()
             .toLowerCase();
-
 
         return (
 
@@ -1066,7 +1378,7 @@
 
 
     /* ============================================================
-       INITIAL COMMUNITY
+       COMMUNITY SELECTION
        ============================================================ */
 
     async function selectInitialCommunity() {
@@ -1091,12 +1403,10 @@
 
         }
 
-
         const stored =
             localStorage.getItem(
                 "mwanikiSelectedCommunity"
             );
-
 
         let community =
             state.communities.find(
@@ -1105,14 +1415,12 @@
                     String(stored)
             );
 
-
         if (!community) {
 
             community =
                 state.communities[0];
 
         }
-
 
         await selectCommunity(
             community,
@@ -1121,10 +1429,6 @@
 
     }
 
-
-    /* ============================================================
-       SELECT COMMUNITY
-       ============================================================ */
 
     async function selectCommunity(
         community,
@@ -1135,29 +1439,23 @@
             return;
         }
 
-
         state.selectedCommunity =
             community;
-
 
         state.selectedChannel =
             null;
 
-
         state.messages =
             [];
-
 
         localStorage.setItem(
             "mwanikiSelectedCommunity",
             String(community.id)
         );
 
-
         localStorage.removeItem(
             "mwanikiSelectedChannel"
         );
-
 
         renderCommunityRail();
 
@@ -1165,22 +1463,18 @@
 
         renderCommunityModal();
 
-
         await loadChannels(
             community.id
         );
-
 
         const general =
             state.channels.find(
                 isGeneralChannel
             );
 
-
         const channel =
             general ||
             state.channels[0];
-
 
         if (channel) {
 
@@ -1199,7 +1493,6 @@
 
             renderWelcomeState();
 
-
             if (announceSelection) {
 
                 announce(
@@ -1210,15 +1503,10 @@
 
         }
 
-
         closeCommunityModal();
 
     }
 
-
-    /* ============================================================
-       SELECT CHANNEL
-       ============================================================ */
 
     async function selectChannel(
         channel,
@@ -1229,29 +1517,23 @@
             return;
         }
 
-
         state.selectedChannel =
             channel;
-
 
         localStorage.setItem(
             "mwanikiSelectedChannel",
             String(channel.id)
         );
 
-
         updateMainChannelHeader(
             channel
         );
 
-
         renderChannels();
-
 
         await loadMessages(
             channel.id
         );
-
 
         if (announceSelection) {
 
@@ -1273,15 +1555,12 @@
         const container =
             dom.communityRailList;
 
-
         if (!container) {
             return;
         }
 
-
         container.innerHTML =
             "";
-
 
         state.communities.forEach(
             community => {
@@ -1291,29 +1570,23 @@
                         "button"
                     );
 
-
                 button.type =
                     "button";
-
 
                 button.className =
                     "rail-community-icon";
 
-
                 button.dataset.communityId =
                     community.id;
-
 
                 button.title =
                     community.name ||
                     "Community";
 
-
                 button.setAttribute(
                     "aria-label",
                     `Open ${community.name || "community"}`
                 );
-
 
                 if (
                     state.selectedCommunity &&
@@ -1329,7 +1602,6 @@
                         "active"
                     );
 
-
                     button.setAttribute(
                         "aria-current",
                         "page"
@@ -1337,13 +1609,11 @@
 
                 }
 
-
                 renderIconContent(
                     button,
                     community.icon_url,
                     community.name
                 );
-
 
                 button.addEventListener(
                     "click",
@@ -1352,7 +1622,6 @@
                             community
                         )
                 );
-
 
                 container.appendChild(
                     button
@@ -1373,7 +1642,6 @@
         const community =
             state.selectedCommunity;
 
-
         if (!community) {
 
             if (
@@ -1385,7 +1653,6 @@
 
             }
 
-
             if (
                 dom.selectedCommunityName
             ) {
@@ -1394,7 +1661,6 @@
                     "Mwaniki Scholars";
 
             }
-
 
             if (
                 dom.selectedCommunityDescription
@@ -1405,18 +1671,15 @@
 
             }
 
-
             return;
 
         }
-
 
         renderIcon(
             dom.selectedCommunityIcon,
             community.icon_url,
             community.name
         );
-
 
         if (
             dom.selectedCommunityName
@@ -1427,7 +1690,6 @@
                 "Community";
 
         }
-
 
         if (
             dom.selectedCommunityDescription
@@ -1443,7 +1705,7 @@
 
 
     /* ============================================================
-       ICONS
+       COMMUNITY ICONS
        ============================================================ */
 
     function renderIcon(
@@ -1456,10 +1718,8 @@
             return;
         }
 
-
         container.innerHTML =
             "";
-
 
         renderIconContent(
             container,
@@ -1480,20 +1740,18 @@
             return;
         }
 
-
         container.innerHTML =
             "";
-
 
         const icon =
             String(
                 value || ""
             ).trim();
 
-
         /*
-         * Emoji is text, NOT an image URL.
+         * Emoji is text, not an image URL.
          */
+
         if (
             icon &&
             !looksLikeImageUrl(icon)
@@ -1504,26 +1762,21 @@
                     "span"
                 );
 
-
             span.textContent =
                 icon;
-
 
             span.setAttribute(
                 "aria-hidden",
                 "true"
             );
 
-
             container.appendChild(
                 span
             );
 
-
             return;
 
         }
-
 
         if (icon) {
 
@@ -1532,18 +1785,14 @@
                     "img"
                 );
 
-
             image.src =
                 icon;
-
 
             image.alt =
                 `${name || "Community"} icon`;
 
-
             image.loading =
                 "lazy";
-
 
             image.onerror =
                 () => {
@@ -1555,12 +1804,10 @@
                             "span"
                         );
 
-
                     fallback.textContent =
                         getCommunityInitials(
                             name
                         );
-
 
                     container.appendChild(
                         fallback
@@ -1568,28 +1815,23 @@
 
                 };
 
-
             container.appendChild(
                 image
             );
 
-
             return;
 
         }
-
 
         const fallback =
             document.createElement(
                 "span"
             );
 
-
         fallback.textContent =
             getCommunityInitials(
                 name
             );
-
 
         container.appendChild(
             fallback
@@ -1631,15 +1873,12 @@
                 "MS"
             ).trim();
 
-
         if (!text) {
             return "MS";
         }
 
-
         const words =
             text.split(/\s+/);
-
 
         if (
             words.length === 1
@@ -1650,7 +1889,6 @@
                 .toUpperCase();
 
         }
-
 
         return (
 
@@ -1672,22 +1910,18 @@
         const container =
             dom.channelList;
 
-
         if (!container) {
             return;
         }
 
-
         container.innerHTML =
             "";
-
 
         const channels =
             filterChannels(
                 state.channels,
                 state.channelSearch
             );
-
 
         if (!channels.length) {
 
@@ -1697,10 +1931,8 @@
 
         }
 
-
         const groups =
             {};
-
 
         channels.forEach(
             channel => {
@@ -1711,16 +1943,13 @@
                         "Channels"
                     ).trim();
 
-
                 if (!category) {
                     category =
                         "Channels";
                 }
 
-
                 const normalized =
                     category.toLowerCase();
-
 
                 if (
                     normalized === "text"
@@ -1731,7 +1960,6 @@
 
                 }
 
-
                 if (
                     normalized === "voice"
                 ) {
@@ -1741,6 +1969,14 @@
 
                 }
 
+                if (
+                    normalized === "announcement"
+                ) {
+
+                    category =
+                        "Announcements";
+
+                }
 
                 if (!groups[category]) {
 
@@ -1749,14 +1985,12 @@
 
                 }
 
-
                 groups[category].push(
                     channel
                 );
 
             }
         );
-
 
         Object.entries(
             groups
@@ -1767,35 +2001,28 @@
                     sortChannels
                 );
 
-
                 const section =
                     document.createElement(
                         "section"
                     );
 
-
                 section.className =
                     "channel-section";
-
 
                 const title =
                     document.createElement(
                         "div"
                     );
 
-
                 title.className =
                     "channel-section-title";
-
 
                 title.textContent =
                     category;
 
-
                 section.appendChild(
                     title
                 );
-
 
                 list.forEach(
                     channel => {
@@ -1808,7 +2035,6 @@
 
                     }
                 );
-
 
                 container.appendChild(
                     section
@@ -1832,11 +2058,9 @@
             .trim()
             .toLowerCase();
 
-
         if (!q) {
             return [...channels];
         }
-
 
         return channels.filter(
             channel => {
@@ -1878,18 +2102,14 @@
                 "button"
             );
 
-
         button.type =
             "button";
-
 
         button.className =
             "channel-item";
 
-
         button.dataset.channelId =
             channel.id;
-
 
         if (
             state.selectedChannel &&
@@ -1903,7 +2123,6 @@
                 "active"
             );
 
-
             button.setAttribute(
                 "aria-current",
                 "page"
@@ -1911,53 +2130,43 @@
 
         }
 
-
         const icon =
             document.createElement(
                 "span"
             );
 
-
         icon.className =
             "channel-icon";
-
 
         icon.textContent =
             getChannelIcon(
                 channel
             );
 
-
         const name =
             document.createElement(
                 "span"
             );
 
-
         name.className =
             "channel-name";
-
 
         name.textContent =
             channel.name ||
             "General";
 
-
         button.appendChild(
             icon
         );
-
 
         button.appendChild(
             name
         );
 
-
         button.setAttribute(
             "aria-label",
             `Open ${getChannelLabel(channel)}`
         );
-
 
         button.addEventListener(
             "click",
@@ -1966,7 +2175,6 @@
                     channel
                 )
         );
-
 
         return button;
 
@@ -1985,14 +2193,12 @@
 
         }
 
-
         const type =
             String(
                 channel.channel_type ||
                 ""
             )
             .toLowerCase();
-
 
         if (
             type.includes("voice")
@@ -2002,7 +2208,6 @@
 
         }
 
-
         if (
             type.includes("announcement")
         ) {
@@ -2010,7 +2215,6 @@
             return "📢";
 
         }
-
 
         if (
             type.includes("study")
@@ -2020,7 +2224,6 @@
 
         }
 
-
         if (
             type.includes("course")
         ) {
@@ -2028,7 +2231,6 @@
             return "🎓";
 
         }
-
 
         return (
             channel.icon ||
@@ -2061,7 +2263,7 @@
 
 
     /* ============================================================
-       HEADER
+       MAIN HEADER
        ============================================================ */
 
     function updateMainChannelHeader(
@@ -2070,28 +2272,41 @@
 
         if (!channel) {
 
-            dom.mainChannelTitle.textContent =
-                "# General";
+            if (dom.mainChannelTitle) {
 
+                dom.mainChannelTitle.textContent =
+                    "# General";
 
-            dom.mainChannelDescription.textContent =
-                "Mwaniki Scholars General";
+            }
+
+            if (dom.mainChannelDescription) {
+
+                dom.mainChannelDescription.textContent =
+                    "Mwaniki Scholars General";
+
+            }
 
             return;
 
         }
 
+        if (dom.mainChannelTitle) {
 
-        dom.mainChannelTitle.textContent =
-            getChannelLabel(
-                channel
-            );
+            dom.mainChannelTitle.textContent =
+                getChannelLabel(
+                    channel
+                );
 
+        }
 
-        dom.mainChannelDescription.textContent =
-            channel.description ||
-            state.selectedCommunity?.name ||
-            "Mwaniki Scholars";
+        if (dom.mainChannelDescription) {
+
+            dom.mainChannelDescription.textContent =
+                channel.description ||
+                state.selectedCommunity?.name ||
+                "Mwaniki Scholars";
+
+        }
 
     }
 
@@ -2112,15 +2327,21 @@
 
         }
 
-
         state.loadingMessages =
             true;
 
-
         renderMessageLoading();
 
-
         try {
+
+            /*
+             * IMPORTANT:
+             *
+             * chat_messages does NOT use reply_to
+             * in the confirmed schema.
+             *
+             * Therefore it is deliberately NOT selected.
+             */
 
             const {
                 data,
@@ -2133,7 +2354,6 @@
                         channel_id,
                         user_id,
                         content,
-                        reply_to,
                         created_at
                     `)
                     .eq(
@@ -2147,7 +2367,6 @@
                         }
                     )
                     .limit(500);
-
 
             if (error) {
 
@@ -2165,16 +2384,14 @@
 
             }
 
-
             state.messages =
-                data || [];
-
+                Array.isArray(data)
+                    ? data
+                    : [];
 
             await attachMessageProfiles();
 
-
             renderMessages();
-
 
         } catch (error) {
 
@@ -2198,6 +2415,10 @@
     }
 
 
+    /* ============================================================
+       MESSAGE PROFILE ATTACHMENT
+       ============================================================ */
+
     async function attachMessageProfiles() {
 
         const ids =
@@ -2209,14 +2430,24 @@
                                 message.user_id
                         )
                         .filter(Boolean)
+                        .map(String)
                 )
             ];
-
 
         if (!ids.length) {
             return;
         }
 
+
+        const profiles =
+            new Map();
+
+
+        /*
+         * Try one query first.
+         * Using select("*") prevents the previous problem where
+         * one missing column caused HTTP 400.
+         */
 
         try {
 
@@ -2226,91 +2457,261 @@
             } =
                 await state.supabase
                     .from("students")
-                    .select(`
-                        id,
-                        full_name,
-                        name,
-                        student_name,
-                        photo_url
-                    `)
+                    .select("*")
                     .in(
                         "id",
                         ids
                     );
 
+            if (!error) {
 
-            if (error) {
+                (data || []).forEach(
+                    profile => {
+
+                        profiles.set(
+                            String(profile.id),
+                            normalizeProfile(
+                                profile
+                            )
+                        );
+
+                    }
+                );
+
+            } else {
 
                 console.warn(
-                    "Message profile loading failed:",
-                    error
+                    "students.id batch profile lookup:",
+                    error.message || error
                 );
-
-                return;
 
             }
-
-
-            const profiles =
-                new Map();
-
-
-            (data || []).forEach(
-                profile => {
-
-                    profiles.set(
-                        String(profile.id),
-                        profile
-                    );
-
-                }
-            );
-
-
-            state.messages =
-                state.messages.map(
-                    message => ({
-
-                        ...message,
-
-                        profile:
-                            profiles.get(
-                                String(
-                                    message.user_id
-                                )
-                            ) ||
-                            null
-
-                    })
-                );
-
 
         } catch (error) {
 
             console.warn(
-                "Profile attachment error:",
+                "students.id batch lookup exception:",
                 error
             );
+
+        }
+
+
+        /*
+         * If students.id isn't the Auth UUID, try user_id.
+         */
+
+        const missingIds =
+            ids.filter(
+                id =>
+                    !profiles.has(id)
+            );
+
+
+        if (missingIds.length) {
+
+            try {
+
+                const {
+                    data,
+                    error
+                } =
+                    await state.supabase
+                        .from("students")
+                        .select("*")
+                        .in(
+                            "user_id",
+                            missingIds
+                        );
+
+                if (!error) {
+
+                    (data || []).forEach(
+                        profile => {
+
+                            const authId =
+                                profile.user_id;
+
+                            if (authId) {
+
+                                profiles.set(
+                                    String(authId),
+                                    normalizeProfile(
+                                        profile
+                                    )
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "students.user_id batch lookup:",
+                    error
+                );
+
+            }
+
+        }
+
+
+        state.messages =
+            state.messages.map(
+                message => ({
+
+                    ...message,
+
+                    profile:
+                        profiles.get(
+                            String(
+                                message.user_id
+                            )
+                        ) ||
+                        (
+                            state.user &&
+                            String(
+                                message.user_id
+                            ) ===
+                            String(
+                                state.user.id
+                            )
+                                ? state.profile
+                                : null
+                        )
+
+                })
+            );
+
+    }
+
+
+    /* ============================================================
+       SINGLE MESSAGE PROFILE
+       ============================================================ */
+
+    async function attachSingleProfile(
+        message
+    ) {
+
+        if (
+            state.user &&
+            String(
+                message.user_id
+            ) ===
+            String(
+                state.user.id
+            )
+        ) {
+
+            message.profile =
+                state.profile;
+
+            return;
+
+        }
+
+        try {
+
+            let profile =
+                null;
+
+
+            try {
+
+                const {
+                    data,
+                    error
+                } =
+                    await state.supabase
+                        .from("students")
+                        .select("*")
+                        .eq(
+                            "id",
+                            message.user_id
+                        )
+                        .maybeSingle();
+
+                if (!error && data) {
+
+                    profile =
+                        normalizeProfile(
+                            data
+                        );
+
+                }
+
+            } catch (_) {}
+
+
+            if (!profile) {
+
+                try {
+
+                    const {
+                        data,
+                        error
+                    } =
+                        await state.supabase
+                            .from("students")
+                            .select("*")
+                            .eq(
+                                "user_id",
+                                message.user_id
+                            )
+                            .maybeSingle();
+
+                    if (!error && data) {
+
+                        profile =
+                            normalizeProfile(
+                                data
+                            );
+
+                    }
+
+                } catch (_) {}
+
+            }
+
+
+            message.profile =
+                profile;
+
+        } catch (error) {
+
+            console.warn(
+                "Single profile loading failed:",
+                error
+            );
+
+            message.profile =
+                null;
 
         }
 
     }
 
 
+    /* ============================================================
+       MESSAGE RENDERING
+       ============================================================ */
+
     function renderMessages() {
 
         const container =
             dom.messageList;
 
-
         if (!container) {
             return;
         }
 
-
         container.innerHTML =
             "";
-
 
         if (!state.messages.length) {
 
@@ -2319,7 +2720,6 @@
             return;
 
         }
-
 
         state.messages.forEach(
             message => {
@@ -2332,7 +2732,6 @@
 
             }
         );
-
 
         scrollMessagesToBottom();
 
@@ -2348,23 +2747,33 @@
                 "article"
             );
 
-
         article.className =
             "message";
-
 
         article.dataset.messageId =
             message.id;
 
+
+        /* --------------------------------------------------------
+           AVATAR
+           -------------------------------------------------------- */
 
         const avatar =
             document.createElement(
                 "img"
             );
 
-
         avatar.className =
             "message-avatar";
+
+        avatar.width =
+            42;
+
+        avatar.height =
+            42;
+
+        avatar.alt =
+            "Student profile photo";
 
 
         const author =
@@ -2373,20 +2782,27 @@
             );
 
 
-        setImage(
-            avatar,
+        const photo =
             getProfilePhoto(
                 message.profile
-            ),
+            );
+
+
+        setImage(
+            avatar,
+            photo,
             `${author} profile photo`
         );
 
+
+        /* --------------------------------------------------------
+           CONTENT
+           -------------------------------------------------------- */
 
         const content =
             document.createElement(
                 "div"
             );
-
 
         content.className =
             "message-content";
@@ -2397,7 +2813,6 @@
                 "div"
             );
 
-
         header.className =
             "message-header";
 
@@ -2407,10 +2822,8 @@
                 "span"
             );
 
-
         authorElement.className =
             "message-author";
-
 
         authorElement.textContent =
             author;
@@ -2421,15 +2834,12 @@
                 "time"
             );
 
-
         time.className =
             "message-time";
-
 
         time.dateTime =
             message.created_at ||
             "";
-
 
         time.textContent =
             formatTime(
@@ -2441,7 +2851,6 @@
             authorElement
         );
 
-
         header.appendChild(
             time
         );
@@ -2452,10 +2861,8 @@
                 "div"
             );
 
-
         text.className =
             "message-text";
-
 
         text.textContent =
             message.content ||
@@ -2466,7 +2873,6 @@
             header
         );
 
-
         content.appendChild(
             text
         );
@@ -2475,7 +2881,6 @@
         article.appendChild(
             avatar
         );
-
 
         article.appendChild(
             content
@@ -2495,10 +2900,8 @@
             return "";
         }
 
-
         const date =
             new Date(value);
-
 
         if (
             Number.isNaN(
@@ -2509,7 +2912,6 @@
             return "";
 
         }
-
 
         return date.toLocaleString(
             [],
@@ -2538,11 +2940,9 @@
 
         }
 
-
         if (state.sendingMessage) {
             return;
         }
-
 
         if (!state.user) {
 
@@ -2554,7 +2954,6 @@
 
         }
 
-
         if (!state.selectedChannel) {
 
             announce(
@@ -2565,28 +2964,35 @@
 
         }
 
-
         const content =
             String(
                 dom.messageInput?.value ||
                 ""
             ).trim();
 
-
         if (!content) {
             return;
         }
 
-
         state.sendingMessage =
             true;
 
+        if (dom.sendMessageButton) {
 
-        dom.sendMessageButton.disabled =
-            true;
+            dom.sendMessageButton.disabled =
+                true;
 
+        }
 
         try {
+
+            /*
+             * Confirmed safe insert schema:
+             *
+             * channel_id
+             * user_id
+             * content
+             */
 
             const {
                 data,
@@ -2595,6 +3001,7 @@
                 await state.supabase
                     .from("chat_messages")
                     .insert({
+
                         channel_id:
                             state.selectedChannel.id,
 
@@ -2602,13 +3009,13 @@
                             state.user.id,
 
                         content
+
                     })
                     .select(`
                         id,
                         channel_id,
                         user_id,
                         content,
-                        reply_to,
                         created_at
                     `)
                     .single();
@@ -2630,9 +3037,12 @@
             }
 
 
-            dom.messageInput.value =
-                "";
+            if (dom.messageInput) {
 
+                dom.messageInput.value =
+                    "";
+
+            }
 
             autoResizeTextarea();
 
@@ -2661,7 +3071,6 @@
                         data
                     );
 
-
                     renderMessages();
 
                 }
@@ -2681,23 +3090,23 @@
                 error
             );
 
-
             announce(
                 "Message could not be sent."
             );
-
 
         } finally {
 
             state.sendingMessage =
                 false;
 
+            if (dom.sendMessageButton) {
 
-            dom.sendMessageButton.disabled =
-                false;
+                dom.sendMessageButton.disabled =
+                    false;
 
+            }
 
-            dom.messageInput.focus();
+            dom.messageInput?.focus();
 
         }
 
@@ -2714,7 +3123,6 @@
             return;
         }
 
-
         if (
             state.realtimeChannel
         ) {
@@ -2728,7 +3136,6 @@
             } catch (_) {}
 
         }
-
 
         state.realtimeChannel =
             state.supabase
@@ -2747,11 +3154,9 @@
                         const message =
                             payload.new;
 
-
                         if (!message) {
                             return;
                         }
-
 
                         if (
                             !state.selectedChannel ||
@@ -2767,7 +3172,6 @@
 
                         }
 
-
                         const exists =
                             state.messages.some(
                                 item =>
@@ -2779,21 +3183,17 @@
                                     )
                             );
 
-
                         if (exists) {
                             return;
                         }
-
 
                         await attachSingleProfile(
                             message
                         );
 
-
                         state.messages.push(
                             message
                         );
-
 
                         renderMessages();
 
@@ -2810,65 +3210,7 @@
                     }
                 );
 
-
         setupPresence();
-
-    }
-
-
-    async function attachSingleProfile(
-        message
-    ) {
-
-        if (
-            state.user &&
-            String(
-                message.user_id
-            ) ===
-            String(
-                state.user.id
-            )
-        ) {
-
-            message.profile =
-                state.profile;
-
-            return;
-
-        }
-
-
-        try {
-
-            const {
-                data
-            } =
-                await state.supabase
-                    .from("students")
-                    .select(`
-                        id,
-                        full_name,
-                        name,
-                        student_name,
-                        photo_url
-                    `)
-                    .eq(
-                        "id",
-                        message.user_id
-                    )
-                    .maybeSingle();
-
-
-            message.profile =
-                data ||
-                null;
-
-        } catch (_) {
-
-            message.profile =
-                null;
-
-        }
 
     }
 
@@ -2883,10 +3225,8 @@
             return;
         }
 
-
         const now =
             new Date().toISOString();
-
 
         try {
 
@@ -2915,7 +3255,6 @@
                         }
                     );
 
-
             if (error) {
 
                 console.warn(
@@ -2927,11 +3266,9 @@
 
             }
 
-
             console.log(
                 "Presence updated: online"
             );
-
 
         } catch (error) {
 
@@ -2951,6 +3288,19 @@
             return;
         }
 
+        if (
+            state.presenceChannel
+        ) {
+
+            try {
+
+                state.supabase.removeChannel(
+                    state.presenceChannel
+                );
+
+            } catch (_) {}
+
+        }
 
         state.presenceChannel =
             state.supabase
@@ -3017,7 +3367,7 @@
 
 
     /* ============================================================
-       GLOBAL GENERAL
+       MWANIKI SCHOLARS GENERAL
        ============================================================ */
 
     async function showMwanikiGeneral() {
@@ -3034,16 +3384,13 @@
         state.messages =
             [];
 
-
         localStorage.removeItem(
             "mwanikiSelectedCommunity"
         );
 
-
         localStorage.removeItem(
             "mwanikiSelectedChannel"
         );
-
 
         renderCommunitySelector();
 
@@ -3057,7 +3404,6 @@
 
         renderGlobalGeneral();
 
-
         announce(
             "Mwaniki Scholars General opened."
         );
@@ -3067,23 +3413,26 @@
 
     function renderGlobalGeneral() {
 
+        if (!dom.messageList) {
+            return;
+        }
+
         dom.messageList.innerHTML =
             "";
-
 
         const card =
             document.createElement(
                 "div"
             );
 
-
         card.className =
             "welcome-card";
 
-
         card.innerHTML = `
-            <div class="welcome-icon"
-                 aria-hidden="true">💬</div>
+            <div
+                class="welcome-icon"
+                aria-hidden="true"
+            >💬</div>
 
             <h2>Mwaniki Scholars General</h2>
 
@@ -3094,35 +3443,28 @@
             </p>
         `;
 
-
         const button =
             document.createElement(
                 "button"
             );
 
-
         button.type =
             "button";
-
 
         button.className =
             "header-action primary";
 
-
         button.textContent =
             "Choose Community";
-
 
         button.addEventListener(
             "click",
             openCommunityModal
         );
 
-
         card.appendChild(
             button
         );
-
 
         dom.messageList.appendChild(
             card
@@ -3141,89 +3483,80 @@
             return;
         }
 
-
         dom.messageList.innerHTML =
             "";
-
 
         const card =
             document.createElement(
                 "div"
             );
 
-
         card.className =
             "welcome-card";
-
 
         const icon =
             document.createElement(
                 "div"
             );
 
-
         icon.className =
             "welcome-icon";
 
-
         icon.textContent =
             "💬";
-
 
         const title =
             document.createElement(
                 "h2"
             );
 
-
         title.textContent =
             state.selectedChannel
                 ? `Welcome to ${getChannelLabel(state.selectedChannel)}`
                 : "Welcome to Mwaniki Scholars";
-
 
         const paragraph =
             document.createElement(
                 "p"
             );
 
-
         paragraph.textContent =
             "This channel has no messages yet. Start the conversation.";
-
 
         const button =
             document.createElement(
                 "button"
             );
 
-
         button.type =
             "button";
-
 
         button.className =
             "header-action primary";
 
-
         button.textContent =
             "Start Conversation";
-
 
         button.addEventListener(
             "click",
             focusMessageInput
         );
 
+        card.appendChild(
+            icon
+        );
 
-        card.appendChild(icon);
+        card.appendChild(
+            title
+        );
 
-        card.appendChild(title);
+        card.appendChild(
+            paragraph
+        );
 
-        card.appendChild(paragraph);
-
-        card.appendChild(button);
-
+        card.appendChild(
+            button
+        );
 
         dom.messageList.appendChild(
             card
@@ -3242,34 +3575,27 @@
             return;
         }
 
-
         state.modalPreviousFocus =
             document.activeElement;
 
-
         renderCommunityModal();
-
 
         dom.communityModal.classList.add(
             "open"
         );
-
 
         dom.communityModal.setAttribute(
             "aria-hidden",
             "false"
         );
 
-
         setModalExpanded(
             true
         );
 
-
         document.body.classList.add(
             "modal-open"
         );
-
 
         window.setTimeout(
             () => {
@@ -3279,7 +3605,6 @@
             },
             20
         );
-
 
         announce(
             "Community selector opened."
@@ -3294,27 +3619,22 @@
             return;
         }
 
-
         dom.communityModal.classList.remove(
             "open"
         );
-
 
         dom.communityModal.setAttribute(
             "aria-hidden",
             "true"
         );
 
-
         setModalExpanded(
             false
         );
 
-
         document.body.classList.remove(
             "modal-open"
         );
-
 
         if (
             state.modalPreviousFocus &&
@@ -3326,7 +3646,6 @@
             state.modalPreviousFocus.focus();
 
         }
-
 
         state.modalPreviousFocus =
             null;
@@ -3361,21 +3680,17 @@
         const container =
             dom.communityChoiceList;
 
-
         if (!container) {
             return;
         }
 
-
         container.innerHTML =
             "";
-
 
         const query =
             state.communitySearch
                 .trim()
                 .toLowerCase();
-
 
         const communities =
             state.communities.filter(
@@ -3384,7 +3699,6 @@
                     if (!query) {
                         return true;
                     }
-
 
                     return (
 
@@ -3405,7 +3719,6 @@
                 }
             );
 
-
         if (!communities.length) {
 
             const empty =
@@ -3413,24 +3726,19 @@
                     "div"
                 );
 
-
             empty.className =
                 "center-state";
 
-
             empty.textContent =
                 "No communities found.";
-
 
             container.appendChild(
                 empty
             );
 
-
             return;
 
         }
-
 
         communities.forEach(
             community => {
@@ -3440,36 +3748,29 @@
                         "button"
                     );
 
-
                 button.type =
                     "button";
 
-
                 button.className =
                     "community-choice";
-
 
                 button.setAttribute(
                     "role",
                     "option"
                 );
 
-
                 button.setAttribute(
                     "aria-label",
                     `Open ${community.name}`
                 );
-
 
                 const icon =
                     document.createElement(
                         "div"
                     );
 
-
                 icon.className =
                     "community-choice-icon";
-
 
                 renderIconContent(
                     icon,
@@ -3477,65 +3778,52 @@
                     community.name
                 );
 
-
                 const info =
                     document.createElement(
                         "div"
                     );
 
-
                 info.className =
                     "community-choice-info";
-
 
                 const name =
                     document.createElement(
                         "div"
                     );
 
-
                 name.className =
                     "community-choice-name";
 
-
                 name.textContent =
                     community.name;
-
 
                 const description =
                     document.createElement(
                         "div"
                     );
 
-
                 description.className =
                     "community-choice-description";
-
 
                 description.textContent =
                     community.description ||
                     "Mwaniki Scholars community";
 
-
                 info.appendChild(
                     name
                 );
-
 
                 info.appendChild(
                     description
                 );
 
-
                 button.appendChild(
                     icon
                 );
 
-
                 button.appendChild(
                     info
                 );
-
 
                 button.addEventListener(
                     "click",
@@ -3544,7 +3832,6 @@
                             community
                         )
                 );
-
 
                 container.appendChild(
                     button
@@ -3557,14 +3844,15 @@
 
 
     /* ============================================================
-       EMOJI KEYBOARD
+       EMOJI DATABASE
        ============================================================ */
 
     const EMOJI_CATEGORIES = {
 
-        "Recent": [],
+        Recent: [],
 
-        "Smileys": [
+        Smileys: [
+
             "😀","😃","😄","😁","😆","😅","😂","🤣",
             "😊","😇","🙂","🙃","😉","😌","😍","🥰",
             "😘","😗","😙","😚","😋","😛","😝","😜",
@@ -3579,37 +3867,57 @@
             "🤕","🤑","🤠","😈","👿","👹","👺","🤡",
             "💩","👻","💀","☠️","👽","👾","🤖","🎃",
             "😺","😸","😹","😻","😼","😽","🙀","😿",
-            "😾","🙈","🙉","🙊"
+            "😾","🙈","🙉","🙊",
+
+            "🫠","🫢","🫣","🫡","🫥","🫤","🥹",
+            "😮‍💨","😵‍💫","🫨","🤭","🤗","🤩",
+            "😶‍🌫️","😐","😑","😬","🙃","😌"
+
         ],
 
-        "People": [
+        People: [
+
             "👋","🤚","🖐️","✋","🖖","👌","🤏","✌️",
             "🤞","🤟","🤘","🤙","👈","👉","👆","👇",
             "☝️","👍","👎","✊","👊","🤛","🤜","👏",
             "🙌","👐","🤲","🙏","✍️","💅","🤳","💪",
             "🦾","🦿","🦵","🦶","👂","👃","🧠","🫀",
             "🫁","🦷","🦴","👀","👁️","👅","👄","💋",
+
             "👶","🧒","👦","👧","🧑","👱","👨","👩",
-            "🧔","👨‍⚕️","👩‍⚕️","👨‍🎓","👩‍🎓","👨‍🏫","👩‍🏫",
-            "👮","🕵️","👷","💂","🧑‍⚕️","🧑‍🎓","🧑‍🏫"
+            "🧔","👴","👵","🧓","👨‍⚕️","👩‍⚕️",
+            "🧑‍⚕️","👨‍🎓","👩‍🎓","🧑‍🎓",
+            "👨‍🏫","👩‍🏫","🧑‍🏫","👮","🕵️",
+            "👷","💂","🥷","👸","🤴","👰","🤵",
+            "🧑‍💻","👨‍💻","👩‍💻","🧑‍🔬","👨‍🔬",
+            "👩‍🔬","🧑‍🚀","👨‍🚀","👩‍🚀"
+
         ],
 
-        "Hearts": [
+        Hearts: [
+
             "❤️","🧡","💛","💚","💙","💜","🖤","🩷",
             "🩵","🩶","🤍","🤎","💔","❣️","💕","💞",
             "💓","💗","💖","💘","💝","💟","♥️","💌",
-            "💋","❤️‍🔥","❤️‍🩹"
+            "💋","❤️‍🔥","❤️‍🩹","💖","💗","💓",
+            "💞","💕","💟","♥️","♦️","♣️","♠️"
+
         ],
 
-        "Medical": [
+        Medical: [
+
             "🩺","💊","💉","🩸","🧬","🧫","🧪","🔬",
             "🦠","🩹","🩻","🫀","🫁","🧠","🦷","🦴",
-            "👁️","👂","👃","🧑‍⚕️","👨‍⚕️","👩‍⚕️","⚕️",
-            "🚑","🏥","🩼","🧯","💗","❤️‍🩹","📋","📑",
-            "📚","📖","📝","✏️","📌","📍","🎓","🔎"
+            "👁️","👂","👃","🧑‍⚕️","👨‍⚕️","👩‍⚕️",
+            "⚕️","🚑","🏥","🩼","🩹","🧯",
+            "📋","📑","📚","📖","📝","✏️","📌",
+            "📍","🎓","🔎","🧫","🧬","🦠","🧪",
+            "🩸","💉","💊","🩺","🩻","🫀","🫁"
+
         ],
 
-        "Animals": [
+        Animals: [
+
             "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼",
             "🐨","🐯","🦁","🐮","🐷","🐸","🐵","🙈",
             "🙉","🙊","🐔","🐧","🐦","🐤","🦆","🦅",
@@ -3617,10 +3925,15 @@
             "🦋","🐌","🐞","🐜","🪲","🕷️","🦂","🐢",
             "🐍","🦎","🦖","🦕","🐙","🦑","🦀","🐠",
             "🐟","🐡","🐬","🐳","🦈","🐊","🐘","🦏",
-            "🦒","🦓","🦘","🦬","🐄","🐎","🐕","🐈"
+            "🦒","🦓","🦘","🦬","🐄","🐎","🐕","🐈",
+            "🐅","🐆","🦣","🦧","🦍","🦥","🦦","🦨",
+            "🦫","🦔","🐇","🐿️","🦜","🦢","🦩","🦚",
+            "🐋","🦭","🦐","🪼","🪸","🐚"
+
         ],
 
-        "Food": [
+        Food: [
+
             "🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇",
             "🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥",
             "🥝","🍅","🥑","🥦","🥬","🥒","🌶️","🌽",
@@ -3628,54 +3941,83 @@
             "🧀","🥚","🍳","🧈","🥞","🧇","🥓","🥩",
             "🍗","🍔","🍟","🍕","🌭","🌮","🌯","🥗",
             "🍿","🍩","🍪","🎂","🍰","🧁","🍫","🍬",
-            "🍭","☕","🍵","🥤","🧃","🧋","💧"
+            "🍭","☕","🍵","🥤","🧃","🧋","💧",
+            "🍚","🍜","🍝","🍣","🍤","🍱","🥟","🍙",
+            "🍘","🍥","🥠","🍛","🍲","🥣","🥡","🫕",
+            "🥪","🌮","🌯","🫔","🥙","🧆","🥘","🍖",
+            "🍫","🍮","🍯","🧂","🫙","🍽️"
+
         ],
 
-        "Activities": [
+        Activities: [
+
             "⚽","🏀","🏈","⚾","🥎","🎾","🏐","🏉",
             "🥏","🎱","🏓","🏸","🏒","🏑","🥊","🥋",
             "⛳","🏹","🎣","🤿","🏆","🥇","🥈","🥉",
             "🎮","🕹️","🎲","♟️","🎯","🎳","🎨","🎭",
             "🎬","🎤","🎧","🎼","🎹","🥁","🎸","🎻",
-            "🎺","🎷","🏋️","🚴","🏃","🧘","🧗"
+            "🎺","🎷","🏋️","🚴","🏃","🧘","🧗",
+            "🏄","🏊","🚣","🧑‍🚀","🎯","🎪","🎟️",
+            "🎫","🎖️","🏅","🎗️","🎰"
+
         ],
 
-        "Travel": [
+        Travel: [
+
             "🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑",
             "🚒","🚐","🛻","🚚","🚛","🚜","🛵","🏍️",
             "🚲","🛴","✈️","🛫","🛬","🚁","🚀","🛸",
             "🚢","⛵","🚤","🚂","🚆","🚇","🚉","🏠",
             "🏥","🏫","🏢","🏦","🏨","⛪","🕌","🗿",
             "🗽","🗼","🏰","🏯","🌍","🌎","🌏","🗺️",
-            "🏖️","🏝️","🏕️","⛰️","🌋"
+            "🏖️","🏝️","🏕️","⛰️","🌋","🌄","🌅",
+            "🌌","🌃","🏙️","🌆","🌉","🎡","🎢","🎠"
+
         ],
 
-        "Objects": [
+        Objects: [
+
             "⌚","📱","💻","⌨️","🖥️","🖨️","📷","📹",
             "🔋","🔌","💡","🔦","🕯️","📚","📖","📝",
             "✏️","🖊️","📎","📌","📍","📐","✂️","🔒",
             "🔑","🔨","🪛","⚙️","🔧","🧰","🧲","💰",
             "💳","🎁","🎈","🎉","🎊","📦","✉️","📧",
-            "📞","☎️","📺","📻","🎵","🔔","📣","📢"
+            "📞","☎️","📺","📻","🎵","🔔","📣","📢",
+            "🧮","📒","📕","📗","📘","📙","📓","📔",
+            "📃","📄","📜","🗂️","🗃️","🗄️","📂","📁",
+            "🗑️","🖇️","📏","📎","🖋️","🖌️","🧷",
+            "🔍","🔎","🔬","🔭","💡","🧭","⏰","⌛"
+
         ],
 
-        "Symbols": [
+        Symbols: [
+
             "❤️","⭐","🌟","✨","⚡","🔥","💥","💯",
             "❗","❓","‼️","⁉️","⭕","❌","✅","☑️",
             "✔️","➕","➖","✖️","➗","♻️","⚠️","🚫",
             "🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪",
             "⬆️","⬇️","⬅️","➡️","↗️","↘️","↙️","↖️",
-            "🔝","🔚","🔙","🔜","♾️","©️","®️","™️"
+            "🔝","🔚","🔙","🔜","♾️","©️","®️","™️",
+            "☀️","☁️","☔","❄️","☃️","⚡","☄️","🌈",
+            "💤","💢","💦","💨","🕳️","💬","💭",
+            "🔔","🔕","🔇","🔊","📣","📢","🔒","🔓",
+            "🔑","🔐","⚙️","🔧","🛠️","⚕️","✳️","❇️"
+
         ],
 
-        "Flags": [
+        Flags: [
+
             "🇰🇪","🇺🇬","🇹🇿","🇷🇼","🇧🇮","🇸🇸","🇪🇹",
             "🇳🇬","🇬🇭","🇿🇦","🇿🇲","🇿🇼","🇧🇼","🇲🇼",
             "🇲🇿","🇸🇴","🇸🇩","🇪🇬","🇦🇪","🇸🇦","🇮🇳",
             "🇨🇳","🇯🇵","🇰🇷","🇦🇺","🇳🇿","🇬🇧","🇺🇸",
             "🇨🇦","🇲🇽","🇧🇷","🇦🇷","🇩🇪","🇫🇷","🇮🇹",
             "🇪🇸","🇵🇹","🇳🇱","🇧🇪","🇨🇭","🇸🇪","🇳🇴",
-            "🇩🇰","🇫🇮","🇮🇪","🇺🇦","🇵🇱","🇹🇷"
+            "🇩🇰","🇫🇮","🇮🇪","🇺🇦","🇵🇱","🇹🇷","🇬🇷",
+            "🇮🇱","🇵🇭","🇸🇬","🇲🇾","🇮🇩","🇹🇭","🇻🇳",
+            "🇵🇰","🇧🇩","🇳🇵","🇱🇰","🇦🇫","🇮🇷","🇮🇶",
+            "🇶🇦","🇰🇼","🇯🇴","🇱🇧","🇲🇦","🇩🇿","🇹🇳"
+
         ]
 
     };
@@ -3691,10 +4033,25 @@
             return;
         }
 
+        dom.emojiButton.setAttribute(
+            "aria-haspopup",
+            "dialog"
+        );
+
+        dom.emojiButton.setAttribute(
+            "aria-expanded",
+            "false"
+        );
 
         dom.emojiButton.addEventListener(
             "click",
-            toggleEmojiPicker
+            event => {
+
+                event.preventDefault();
+
+                toggleEmojiPicker();
+
+            }
         );
 
     }
@@ -3712,7 +4069,6 @@
 
         }
 
-
         createEmojiPicker();
 
     }
@@ -3722,26 +4078,21 @@
 
         closeEmojiPicker();
 
-
         const picker =
             document.createElement(
                 "div"
             );
 
-
         picker.id =
             "mwanikiEmojiPicker";
 
-
         picker.className =
             "emoji-picker";
-
 
         picker.setAttribute(
             "role",
             "dialog"
         );
-
 
         picker.setAttribute(
             "aria-label",
@@ -3749,11 +4100,12 @@
         );
 
 
+        /* SEARCH */
+
         const header =
             document.createElement(
                 "div"
             );
-
 
         header.className =
             "emoji-picker-header";
@@ -3764,18 +4116,14 @@
                 "input"
             );
 
-
         search.type =
             "search";
-
 
         search.className =
             "emoji-search";
 
-
         search.placeholder =
-            "Search emoji or type a symbol...";
-
+            "Search or paste an emoji...";
 
         search.setAttribute(
             "aria-label",
@@ -3787,17 +4135,17 @@
             search
         );
 
-
         picker.appendChild(
             header
         );
 
 
+        /* CATEGORIES */
+
         const categories =
             document.createElement(
                 "div"
             );
-
 
         categories.className =
             "emoji-categories";
@@ -3814,24 +4162,19 @@
                         "button"
                     );
 
-
                 button.type =
                     "button";
-
 
                 button.className =
                     "emoji-category";
 
-
                 button.title =
                     category;
-
 
                 button.setAttribute(
                     "aria-label",
                     category
                 );
-
 
                 button.textContent =
                     getCategoryIcon(
@@ -3895,15 +4238,15 @@
         );
 
 
+        /* GRID */
+
         const grid =
             document.createElement(
                 "div"
             );
 
-
         grid.className =
             "emoji-grid";
-
 
         picker.appendChild(
             grid
@@ -3973,9 +4316,12 @@
         query
     ) {
 
+        if (!grid) {
+            return;
+        }
+
         grid.innerHTML =
             "";
-
 
         const clean =
             String(
@@ -3983,7 +4329,6 @@
             )
             .trim()
             .toLowerCase();
-
 
         let emojis =
             EMOJI_CATEGORIES[
@@ -3994,8 +4339,7 @@
 
         if (
             state.emojiCategory ===
-            "Recent" &&
-            !emojis.length
+            "Recent"
         ) {
 
             emojis =
@@ -4004,21 +4348,74 @@
         }
 
 
+        /*
+         * If the user pastes/types an actual emoji,
+         * find it regardless of category.
+         */
+
         if (clean) {
 
-            /*
-             * Unicode itself does not contain English emoji
-             * names in the browser. Searching the character
-             * itself still works when the user pastes/types it.
-             * We also accept category searches.
-             */
-            emojis =
-                emojis.filter(
-                    emoji =>
-                        emoji.includes(
-                            query
+            const all =
+                Object.values(
+                    EMOJI_CATEGORIES
+                )
+                .flat();
+
+
+            const exactMatches =
+                [
+                    ...new Set(
+                        all.filter(
+                            emoji =>
+                                emoji.includes(
+                                    query
+                                )
                         )
-                );
+                    )
+                ];
+
+
+            if (exactMatches.length) {
+
+                emojis =
+                    exactMatches;
+
+            } else {
+
+                /*
+                 * Search category names.
+                 * Example:
+                 * "medical"
+                 * "heart"
+                 * "food"
+                 */
+
+                const categoryMatch =
+                    Object.keys(
+                        EMOJI_CATEGORIES
+                    )
+                    .find(
+                        category =>
+                            category
+                                .toLowerCase()
+                                .includes(clean)
+                    );
+
+
+                if (categoryMatch) {
+
+                    emojis =
+                        EMOJI_CATEGORIES[
+                            categoryMatch
+                        ];
+
+                } else {
+
+                    emojis = [];
+
+                }
+
+            }
 
         }
 
@@ -4030,26 +4427,27 @@
                     "div"
                 );
 
-
             empty.className =
                 "emoji-empty";
-
 
             empty.textContent =
                 "No emojis found.";
 
-
             grid.appendChild(
                 empty
             );
-
 
             return;
 
         }
 
 
-        emojis.forEach(
+        [
+            ...new Set(
+                emojis
+            )
+        ]
+        .forEach(
             emoji => {
 
                 const button =
@@ -4057,24 +4455,19 @@
                         "button"
                     );
 
-
                 button.type =
                     "button";
-
 
                 button.className =
                     "emoji-item";
 
-
                 button.textContent =
                     emoji;
-
 
                 button.setAttribute(
                     "aria-label",
                     `Insert ${emoji}`
                 );
-
 
                 button.addEventListener(
                     "click",
@@ -4083,7 +4476,6 @@
                             emoji
                         )
                 );
-
 
                 grid.appendChild(
                     button
@@ -4117,7 +4509,7 @@
 
             Activities: "🎮",
 
-            Travel: "🚗",
+            Travel: "✈️",
 
             Objects: "💡",
 
@@ -4126,7 +4518,6 @@
             Flags: "🇰🇪"
 
         };
-
 
         return (
             icons[category] ||
@@ -4140,32 +4531,30 @@
         picker
     ) {
 
+        if (
+            !picker ||
+            !dom.emojiButton
+        ) {
+            return;
+        }
+
         const rect =
             dom.emojiButton.getBoundingClientRect();
 
-
         const width =
             Math.min(
-                420,
+                440,
                 window.innerWidth - 24
             );
-
 
         let left =
             rect.left;
 
-
-        let top =
-            rect.top -
-            10;
-
-
         picker.style.width =
             `${width}px`;
 
-
-        picker.style.left =
-            `${Math.max(
+        left =
+            Math.max(
                 12,
                 Math.min(
                     left,
@@ -4173,8 +4562,16 @@
                     width -
                     12
                 )
-            )}px`;
+            );
 
+        picker.style.left =
+            `${left}px`;
+
+        picker.style.top =
+            `${Math.max(
+                12,
+                rect.top - 12
+            )}px`;
 
         picker.style.transform =
             "translateY(-100%)";
@@ -4195,19 +4592,16 @@
 
         }
 
-
         dom.emojiButton?.setAttribute(
             "aria-expanded",
             "false"
         );
-
 
         document.removeEventListener(
             "mousedown",
             emojiOutsideClick,
             true
         );
-
 
         document.removeEventListener(
             "keydown",
@@ -4268,20 +4662,16 @@
             return;
         }
 
-
         const input =
             dom.messageInput;
-
 
         const start =
             input.selectionStart ??
             input.value.length;
 
-
         const end =
             input.selectionEnd ??
             input.value.length;
-
 
         input.value =
 
@@ -4296,23 +4686,18 @@
                 end
             );
 
-
         const cursor =
             start +
             emoji.length;
 
-
         input.focus();
-
 
         input.setSelectionRange(
             cursor,
             cursor
         );
 
-
         autoResizeTextarea();
-
 
         rememberEmoji(
             emoji
@@ -4335,11 +4720,16 @@
                             item !==
                             emoji
                     )
+
             ]
             .slice(
                 0,
-                50
+                80
             );
+
+
+        EMOJI_CATEGORIES.Recent =
+            state.recentEmojis;
 
 
         try {
@@ -4368,7 +4758,6 @@
                     "[]"
                 );
 
-
             if (
                 Array.isArray(saved)
             ) {
@@ -4381,7 +4770,12 @@
 
             }
 
-        } catch (_) {}
+        } catch (_) {
+
+            state.recentEmojis =
+                [];
+
+        }
 
     }
 
@@ -4392,11 +4786,17 @@
 
     function renderChannelLoading() {
 
+        if (!dom.channelList) {
+            return;
+        }
+
         dom.channelList.innerHTML = `
             <div class="center-state">
                 <div>
-                    <div class="loader"
-                         aria-hidden="true"></div>
+                    <div
+                        class="loader"
+                        aria-hidden="true"
+                    ></div>
                     Loading channels...
                 </div>
             </div>
@@ -4409,69 +4809,57 @@
         detail
     ) {
 
+        if (!dom.channelList) {
+            return;
+        }
+
         dom.channelList.innerHTML =
             "";
-
 
         const element =
             document.createElement(
                 "div"
             );
 
-
         element.className =
             "center-state";
-
-
-        element.innerHTML =
-            "";
-
 
         const wrapper =
             document.createElement(
                 "div"
             );
 
-
         const title =
             document.createElement(
                 "strong"
             );
 
-
         title.textContent =
             "Unable to load channels.";
-
 
         const message =
             document.createElement(
                 "div"
             );
 
-
         message.style.marginTop =
             "7px";
-
 
         message.textContent =
             detail ||
             "Please try refreshing the community.";
 
-
         wrapper.appendChild(
             title
         );
-
 
         wrapper.appendChild(
             message
         );
 
-
         element.appendChild(
             wrapper
         );
-
 
         dom.channelList.appendChild(
             element
@@ -4482,25 +4870,25 @@
 
     function renderEmptyChannels() {
 
+        if (!dom.channelList) {
+            return;
+        }
+
         dom.channelList.innerHTML =
             "";
-
 
         const element =
             document.createElement(
                 "div"
             );
 
-
         element.className =
             "center-state";
-
 
         element.textContent =
             state.selectedCommunity
                 ? "No channels found in this community."
                 : "Choose a community to see its channels.";
-
 
         dom.channelList.appendChild(
             element
@@ -4511,11 +4899,17 @@
 
     function renderMessageLoading() {
 
+        if (!dom.messageList) {
+            return;
+        }
+
         dom.messageList.innerHTML = `
             <div class="center-state">
                 <div>
-                    <div class="loader"
-                         aria-hidden="true"></div>
+                    <div
+                        class="loader"
+                        aria-hidden="true"
+                    ></div>
                     Loading messages...
                 </div>
             </div>
@@ -4526,23 +4920,23 @@
 
     function renderMessageError() {
 
+        if (!dom.messageList) {
+            return;
+        }
+
         dom.messageList.innerHTML =
             "";
-
 
         const element =
             document.createElement(
                 "div"
             );
 
-
         element.className =
             "center-state";
 
-
         element.textContent =
             "Unable to load messages.";
-
 
         dom.messageList.appendChild(
             element
@@ -4560,33 +4954,27 @@
             message
         );
 
-
         if (dom.messageList) {
 
             dom.messageList.innerHTML =
                 "";
-
 
             const element =
                 document.createElement(
                     "div"
                 );
 
-
             element.className =
                 "center-state";
 
-
             element.textContent =
                 message;
-
 
             dom.messageList.appendChild(
                 element
             );
 
         }
-
 
         announce(
             message
@@ -4632,10 +5020,8 @@
             return;
         }
 
-
         dom.messageInput.style.height =
             "auto";
-
 
         dom.messageInput.style.height =
             `${Math.min(
@@ -4660,7 +5046,7 @@
 
 
     /* ============================================================
-       PROFILE NAVIGATION
+       PROFILE / DASHBOARD NAVIGATION
        ============================================================ */
 
     function openProfile() {
@@ -4690,42 +5076,35 @@
             "Return to Mwaniki Scholars dashboard"
         );
 
-
         addAria(
             dom.railHomeButton,
             "Home"
         );
-
 
         addAria(
             dom.railGeneralButton,
             "Open Mwaniki Scholars General"
         );
 
-
         document.addEventListener(
             "keydown",
             globalKeyboard
         );
-
 
         dom.communityRailList?.addEventListener(
             "keydown",
             railKeyboard
         );
 
-
         dom.channelList?.addEventListener(
             "keydown",
             channelKeyboard
         );
 
-
         dom.communityChoiceList?.addEventListener(
             "keydown",
             communityKeyboard
         );
-
 
         dom.communityModal?.addEventListener(
             "keydown",
@@ -4754,7 +5133,6 @@
 
         }
 
-
         if (
             event.key === "/" &&
             !isTyping(
@@ -4767,7 +5145,6 @@
             dom.channelSearchInput?.focus();
 
         }
-
 
         if (
             event.key === "Escape"
@@ -4795,7 +5172,6 @@
         const tag =
             target?.tagName?.toLowerCase();
 
-
         return (
 
             tag === "input" ||
@@ -4821,21 +5197,17 @@
                     )
             ];
 
-
         const index =
             buttons.indexOf(
                 document.activeElement
             );
 
-
         if (index < 0) {
             return;
         }
 
-
         let next =
             index;
-
 
         if (
             event.key ===
@@ -4865,7 +5237,6 @@
 
         }
 
-
         event.preventDefault();
 
         buttons[next].focus();
@@ -4885,21 +5256,17 @@
                     )
             ];
 
-
         const index =
             buttons.indexOf(
                 document.activeElement
             );
 
-
         if (index < 0) {
             return;
         }
 
-
         let next =
             index;
-
 
         if (
             event.key ===
@@ -4928,7 +5295,6 @@
             return;
 
         }
-
 
         event.preventDefault();
 
@@ -4949,21 +5315,17 @@
                     )
             ];
 
-
         const index =
             buttons.indexOf(
                 document.activeElement
             );
 
-
         if (index < 0) {
             return;
         }
 
-
         let next =
             index;
-
 
         if (
             event.key ===
@@ -4993,7 +5355,6 @@
 
         }
 
-
         event.preventDefault();
 
         buttons[next].focus();
@@ -5011,7 +5372,6 @@
             return;
         }
 
-
         const focusable =
             [
                 ...dom.communityModal
@@ -5025,21 +5385,17 @@
                     item.offsetParent !== null
             );
 
-
         if (!focusable.length) {
             return;
         }
 
-
         const first =
             focusable[0];
-
 
         const last =
             focusable[
                 focusable.length - 1
             ];
-
 
         if (
             event.shiftKey &&
@@ -5073,7 +5429,6 @@
             return;
         }
 
-
         if (
             !element.hasAttribute(
                 "aria-label"
@@ -5101,60 +5456,50 @@
             goDashboard
         );
 
-
         dom.dashboardButton?.addEventListener(
             "click",
             goDashboard
         );
-
 
         dom.railHomeButton?.addEventListener(
             "click",
             goDashboard
         );
 
-
         dom.railGeneralButton?.addEventListener(
             "click",
             showMwanikiGeneral
         );
-
 
         dom.railProfileButton?.addEventListener(
             "click",
             openProfile
         );
 
-
         dom.sidebarProfileButton?.addEventListener(
             "click",
             openProfile
         );
-
 
         dom.openCommunityButton?.addEventListener(
             "click",
             openCommunityModal
         );
 
-
         dom.communitySelectorButton?.addEventListener(
             "click",
             openCommunityModal
         );
-
 
         dom.headerCommunityButton?.addEventListener(
             "click",
             openCommunityModal
         );
 
-
         dom.closeCommunityModal?.addEventListener(
             "click",
             closeCommunityModal
         );
-
 
         dom.communityModal?.addEventListener(
             "click",
@@ -5173,6 +5518,8 @@
         );
 
 
+        /* CHANNEL SEARCH */
+
         dom.channelSearchInput?.addEventListener(
             "input",
             event => {
@@ -5186,6 +5533,8 @@
         );
 
 
+        /* COMMUNITY SEARCH */
+
         dom.communityModalSearch?.addEventListener(
             "input",
             event => {
@@ -5198,6 +5547,8 @@
             }
         );
 
+
+        /* MESSAGE FORM */
 
         dom.messageForm?.addEventListener(
             "submit",
@@ -5249,6 +5600,8 @@
         );
 
 
+        /* PRESENCE */
+
         document.addEventListener(
             "visibilitychange",
             () => {
@@ -5262,6 +5615,8 @@
             }
         );
 
+
+        /* RESIZE */
 
         window.addEventListener(
             "resize",
@@ -5281,6 +5636,8 @@
         );
 
 
+        /* EXIT */
+
         window.addEventListener(
             "beforeunload",
             () => {
@@ -5294,7 +5651,7 @@
 
 
     /* ============================================================
-       OFFLINE
+       OFFLINE PRESENCE
        ============================================================ */
 
     function setOfflinePresence() {
@@ -5306,12 +5663,12 @@
             return;
         }
 
-
         try {
 
             state.supabase
                 .from("chat_presence")
                 .update({
+
                     status:
                         "offline",
 
@@ -5320,6 +5677,7 @@
 
                     updated_at:
                         new Date().toISOString()
+
                 })
                 .eq(
                     "user_id",
@@ -5347,7 +5705,6 @@
 
             renderCommunityModal();
 
-
             if (
                 state.selectedCommunity
             ) {
@@ -5359,7 +5716,6 @@
             }
 
         },
-
 
         refreshMessages:
             async () => {
@@ -5376,14 +5732,11 @@
 
             },
 
-
         openCommunitySelector:
             openCommunityModal,
 
-
         closeCommunitySelector:
             closeCommunityModal,
-
 
         sendMessage
 
