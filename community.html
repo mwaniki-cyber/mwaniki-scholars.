@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -11,17 +9,17 @@
     >
 
     <meta
-        name="theme-color"
-        content="#071415"
+        name="description"
+        content="Mwaniki Scholars Community"
     >
 
     <meta
-        name="description"
-        content="Mwaniki Scholars Community — learn, discuss and collaborate."
+        name="theme-color"
+        content="#071a18"
     >
 
     <title>
-        Communities | Mwaniki Scholars
+        Community | Mwaniki Scholars
     </title>
 
     <link
@@ -33,32 +31,34 @@
         rel="stylesheet"
         href="./community.css"
     >
-
 </head>
-
 
 <body>
 
-<div
-    id="communityApp"
-    class="ms-community"
->
+<div class="community-app">
 
+    <!-- =========================================================
+         TOP BAR
+         ========================================================= -->
 
-    <!-- =====================================================
-         GLOBAL HEADER
-         ===================================================== -->
+    <header class="topbar">
 
-    <header class="ms-header">
+        <div class="brand-area">
 
-        <div class="ms-brand">
+            <button
+                class="mobile-menu-btn"
+                id="mobileMenuButton"
+                type="button"
+                aria-label="Open navigation"
+            >
+                ☰
+            </button>
 
-            <div class="ms-logo">
-                MS
+            <div class="brand-mark">
+                🧬
             </div>
 
-            <div class="ms-brand-copy">
-
+            <div class="brand-text">
                 <strong>
                     Mwaniki Scholars
                 </strong>
@@ -66,88 +66,80 @@
                 <span>
                     Community
                 </span>
-
             </div>
 
         </div>
 
 
-        <div class="ms-header-center">
+        <div class="global-search">
 
-            <div class="ms-breadcrumb">
+            <span class="search-icon">
+                ⌕
+            </span>
 
-                <span>
-                    Communities
-                </span>
+            <input
+                id="globalSearch"
+                type="search"
+                placeholder="Search communities and channels..."
+                autocomplete="off"
+            >
 
-                <b>/</b>
+            <kbd>
+                /
+            </kbd>
 
-                <strong id="headerCommunityName">
-                    Medical Students
-                </strong>
-
-            </div>
+        </div>
 
 
-            <div class="ms-search">
+        <div class="top-actions">
 
-                <span class="ms-search-icon">
-                    ⌕
-                </span>
+            <button
+                id="callButton"
+                class="top-action"
+                type="button"
+                title="Community calls"
+            >
+                📞
+            </button>
 
-                <input
-                    id="globalCommunitySearch"
-                    type="search"
-                    placeholder="Search Mwaniki Scholars..."
-                    autocomplete="off"
+            <button
+                id="notificationButton"
+                class="top-action"
+                type="button"
+                title="Notifications"
+            >
+                🔔
+
+                <span
+                    id="notificationBadge"
+                    class="notification-badge hidden"
                 >
-
-                <span class="ms-search-key">
-                    /
+                    0
                 </span>
-
-            </div>
-
-        </div>
-
-
-        <div class="ms-header-actions">
+            </button>
 
             <button
-                id="generalCallButton"
-                class="ms-header-call"
+                id="profileButton"
+                class="profile-button"
                 type="button"
             >
+                <span
+                    id="headerAvatar"
+                    class="avatar avatar-small"
+                >
+                    👤
+                </span>
 
-                <span class="call-symbol">
-                    ☎
+                <span
+                    id="headerUserName"
+                    class="profile-name"
+                >
+                    Student
                 </span>
 
                 <span>
-                    General Call
+                    ▾
                 </span>
-
-            </button>
-
-
-            <button
-                id="memberToggleButton"
-                class="ms-header-icon"
-                type="button"
-                title="Members"
-            >
-                ♙
-            </button>
-
-
-            <button
-                id="dashboardButton"
-                class="ms-header-icon"
-                type="button"
-                title="Dashboard"
-                onclick="window.location.href='./dashboard.html'"
-            >
-                ⌂
             </button>
 
         </div>
@@ -155,243 +147,38 @@
     </header>
 
 
+    <!-- =========================================================
+         MAIN WORKSPACE
+         ========================================================= -->
 
-    <!-- =====================================================
-         MAIN AREA
-         ===================================================== -->
+    <main class="workspace">
 
-    <div class="ms-body">
-
-
-        <!-- =================================================
-             COMMUNITY RAIL
-             ================================================= -->
+        <!-- =====================================================
+             LEFT: SPACES
+             ===================================================== -->
 
         <aside
-            id="communityRail"
-            class="ms-rail"
+            id="spacesPanel"
+            class="spaces-panel"
         >
 
-            <button
-                id="homeCommunityButton"
-                class="ms-rail-home active"
-                type="button"
-                title="Home"
-            >
+            <div class="panel-heading">
 
-                <span>
-                    ⌂
-                </span>
-
-            </button>
-
-
-            <div class="ms-rail-line"></div>
-
-
-            <div
-                id="communityRailList"
-                class="ms-rail-list"
-            >
-
-                <button
-                    id="medicalCommunityButton"
-                    class="ms-community-orb active"
-                    type="button"
-                    data-community-slug="medical-students"
-                    title="Medical Students"
-                >
-
-                    <span>
-                        ⚕
+                <div>
+                    <span class="eyebrow">
+                        MWANIKI
                     </span>
 
-                </button>
-
-
-                <button
-                    id="gamingCommunityButton"
-                    class="ms-community-orb"
-                    type="button"
-                    data-community-slug="gaming"
-                    title="Gaming"
-                >
-
-                    <span>
-                        🎮
-                    </span>
-
-                </button>
-
-
-                <button
-                    id="memesCommunityButton"
-                    class="ms-community-orb"
-                    type="button"
-                    data-community-slug="memes"
-                    title="Memes"
-                >
-
-                    <span>
-                        😂
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <div class="ms-rail-bottom">
+                    <h2>
+                        Spaces
+                    </h2>
+                </div>
 
                 <button
                     id="createCommunityButton"
-                    class="ms-create-community"
+                    class="icon-button"
                     type="button"
-                    title="Create Community"
-                >
-
-                    <span>
-                        +
-                    </span>
-
-                </button>
-
-            </div>
-
-        </aside>
-
-
-
-        <!-- =================================================
-             COMMUNITY NAVIGATION
-             ================================================= -->
-
-        <aside
-            id="channelSidebar"
-            class="ms-navigation"
-        >
-
-
-            <div class="ms-community-cover">
-
-                <div class="ms-community-cover-top">
-
-                    <div
-                        id="activeCommunityIcon"
-                        class="ms-community-avatar"
-                    >
-                        ⚕
-                    </div>
-
-
-                    <button
-                        id="communityMenuButton"
-                        class="ms-more-button"
-                        type="button"
-                    >
-                        ⋯
-                    </button>
-
-                </div>
-
-
-                <div class="ms-community-name">
-
-                    <h1 id="activeCommunityName">
-                        Medical Students
-                    </h1>
-
-                    <p id="activeCommunityDescription">
-                        Learn, discuss and collaborate.
-                    </p>
-
-                </div>
-
-            </div>
-
-
-
-            <!-- COMMUNITY MENU -->
-
-            <div
-                id="communityMenu"
-                class="ms-context-menu hidden"
-            >
-
-                <button
-                    id="communityMenuCreateChannel"
-                    type="button"
-                >
-                    ＋ Create channel
-                </button>
-
-                <button
-                    id="communityMenuCreateCommunity"
-                    type="button"
-                >
-                    ＋ Create community
-                </button>
-
-                <button
-                    id="communityMenuRefresh"
-                    type="button"
-                >
-                    ↻ Refresh
-                </button>
-
-            </div>
-
-
-
-            <!-- SEARCH -->
-
-            <div class="ms-nav-search">
-
-                <button
-                    id="communitySearchButton"
-                    type="button"
-                >
-
-                    <span>
-                        ⌕
-                    </span>
-
-                    <span>
-                        Find a channel
-                    </span>
-
-                </button>
-
-            </div>
-
-
-            <div
-                id="channelSearchArea"
-                class="ms-channel-search hidden"
-            >
-
-                <input
-                    id="channelSearchInput"
-                    type="search"
-                    placeholder="Search channels..."
-                >
-
-            </div>
-
-
-
-            <!-- CHANNELS -->
-
-            <div class="ms-section-title">
-
-                <span>
-                    COMMUNITY
-                </span>
-
-                <button
-                    id="createChannelButton"
-                    type="button"
-                    title="Create channel"
+                    title="Create community"
                 >
                     +
                 </button>
@@ -399,97 +186,78 @@
             </div>
 
 
-            <nav
-                id="channelList"
-                class="ms-channel-list"
+            <button
+                id="homeSpaceButton"
+                class="space-item active"
+                type="button"
+                data-space-type="home"
             >
 
-                <button
-                    class="ms-channel active"
-                    type="button"
-                >
+                <span class="space-icon home-icon">
+                    🏠
+                </span>
 
-                    <span class="channel-hash">
-                        #
-                    </span>
+                <span class="space-copy">
 
-                    <span>
-                        general
-                    </span>
+                    <strong>
+                        Mwaniki Scholars
+                    </strong>
 
-                </button>
+                    <small>
+                        Main Community
+                    </small>
 
+                </span>
 
-                <button
-                    class="ms-channel"
-                    type="button"
-                >
-
-                    <span class="channel-hash">
-                        #
-                    </span>
-
-                    <span>
-                        announcements
-                    </span>
-
-                </button>
+            </button>
 
 
-                <button
-                    class="ms-channel"
-                    type="button"
-                >
-
-                    <span class="channel-hash">
-                        #
-                    </span>
-
-                    <span>
-                        discussions
-                    </span>
-
-                </button>
-
-            </nav>
+            <div class="spaces-divider">
+                COMMUNITIES
+            </div>
 
 
+            <div
+                id="communityList"
+                class="community-list"
+            >
 
-            <!-- NAVIGATION FOOTER -->
-
-            <div class="ms-nav-footer">
-
-                <div class="ms-current-user">
-
-                    <div
-                        id="sidebarUserAvatar"
-                        class="ms-user-avatar"
-                    >
-                        U
-                    </div>
-
-
-                    <div class="ms-user-details">
-
-                        <strong id="sidebarUserName">
-                            Student
-                        </strong>
-
-                        <span id="sidebarUserStatus">
-                            ● Online
-                        </span>
-
-                    </div>
-
+                <div class="loading-space">
+                    <span class="loading-dot"></span>
+                    Loading communities...
                 </div>
 
+            </div>
+
+
+            <div class="spaces-footer">
 
                 <button
-                    class="ms-settings-button"
+                    id="allCommunitiesButton"
+                    class="footer-space-button"
                     type="button"
-                    title="Settings"
                 >
-                    ⚙
+                    <span>
+                        ◉
+                    </span>
+
+                    <span>
+                        All communities
+                    </span>
+                </button>
+
+                <button
+                    id="settingsButton"
+                    class="footer-space-button"
+                    type="button"
+                >
+                    <span>
+                        ⚙️
+                    </span>
+
+                    <span>
+                        Community settings
+                    </span>
                 </button>
 
             </div>
@@ -497,46 +265,138 @@
         </aside>
 
 
+        <!-- =====================================================
+             MIDDLE: CHANNELS
+             ===================================================== -->
 
-        <!-- =================================================
-             MAIN CONTENT
-             ================================================= -->
-
-        <main
-            id="communityMain"
-            class="ms-main"
+        <aside
+            id="channelsPanel"
+            class="channels-panel"
         >
 
+            <div class="channel-header">
 
-            <!-- MAIN HEADER -->
+                <div class="selected-space-heading">
 
-            <header class="ms-channel-header">
-
-                <div class="ms-channel-heading">
-
-                    <div class="ms-hash-large">
-                        #
+                    <div
+                        id="selectedSpaceIcon"
+                        class="selected-space-icon"
+                    >
+                        🏠
                     </div>
 
                     <div>
 
-                        <div class="ms-channel-name-row">
+                        <h2 id="selectedSpaceName">
+                            Mwaniki Scholars
+                        </h2>
 
-                            <h2 id="activeChannelName">
-                                general
-                            </h2>
+                        <p id="selectedSpaceDescription">
+                            Main community
+                        </p>
 
-                            <span
-                                id="activeRoleBadge"
-                                class="ms-role"
-                            >
-                                Student
+                    </div>
+
+                </div>
+
+                <button
+                    id="channelPanelClose"
+                    class="mobile-close"
+                    type="button"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="channel-tools">
+
+                <div class="channel-search">
+
+                    <span>
+                        ⌕
+                    </span>
+
+                    <input
+                        id="channelSearch"
+                        type="search"
+                        placeholder="Find a channel..."
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="channelList"
+                class="channel-list"
+            >
+
+                <div class="channel-loading">
+                    Loading channels...
+                </div>
+
+            </div>
+
+
+            <div class="channel-footer">
+
+                <button
+                    id="createChannelButton"
+                    class="create-channel-button"
+                    type="button"
+                >
+                    <span>
+                        +
+                    </span>
+
+                    Create channel
+                </button>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================================
+             RIGHT: CHAT
+             ===================================================== -->
+
+        <section class="chat-panel">
+
+            <header class="chat-header">
+
+                <div class="chat-title-area">
+
+                    <div
+                        id="chatChannelIcon"
+                        class="chat-channel-icon"
+                    >
+                        💬
+                    </div>
+
+                    <div>
+
+                        <div class="breadcrumb">
+
+                            <span id="chatCommunityName">
+                                Mwaniki Scholars
                             </span>
+
+                            <span>
+                                /
+                            </span>
+
+                            <strong id="chatChannelName">
+                                General
+                            </strong>
 
                         </div>
 
-                        <p id="activeChannelDescription">
-                            General discussion for the community
+                        <p id="chatChannelDescription">
+                            Welcome to Mwaniki Scholars Community.
                         </p>
 
                     </div>
@@ -544,64 +404,57 @@
                 </div>
 
 
-                <div class="ms-channel-tools">
+                <div class="chat-actions">
 
                     <button
-                        id="voiceCallButton"
-                        type="button"
-                        title="Voice call"
-                    >
-                        ☎
-                    </button>
-
-
-                    <button
-                        id="videoCallButton"
-                        type="button"
-                        title="Video call"
-                    >
-                        ▣
-                    </button>
-
-
-                    <button
-                        id="chatSearchButton"
-                        type="button"
-                        title="Search"
-                    >
-                        ⌕
-                    </button>
-
-
-                    <button
-                        id="channelToggleButton"
+                        id="channelInfoButton"
+                        class="chat-action"
                         type="button"
                         title="Channel information"
                     >
                         ⓘ
                     </button>
 
+                    <button
+                        id="membersButton"
+                        class="chat-action"
+                        type="button"
+                        title="Members"
+                    >
+                        👥
+                    </button>
+
+                    <button
+                        id="chatSearchButton"
+                        class="chat-action"
+                        type="button"
+                        title="Search messages"
+                    >
+                        🔍
+                    </button>
+
                 </div>
 
             </header>
 
 
-
-            <!-- MESSAGE SEARCH -->
-
             <div
-                id="messageSearchPanel"
-                class="ms-message-search hidden"
+                id="messageSearchBar"
+                class="message-search-bar hidden"
             >
+
+                <span>
+                    🔍
+                </span>
 
                 <input
                     id="messageSearchInput"
                     type="search"
-                    placeholder="Search messages..."
+                    placeholder="Search this conversation..."
                 >
 
                 <button
-                    id="closeMessageSearchButton"
+                    id="closeMessageSearch"
                     type="button"
                 >
                     ×
@@ -610,907 +463,284 @@
             </div>
 
 
-
-            <!-- =================================================
-                 HOME / CHAT CONTENT
-                 ================================================= -->
-
             <div
-                id="messageList"
-                class="ms-message-area"
+                id="messagesContainer"
+                class="messages-container"
             >
 
-                <!-- Welcome section -->
+                <div
+                    id="welcomeChannel"
+                    class="welcome-channel"
+                >
 
-                <section class="ms-welcome">
-
-                    <div class="ms-welcome-icon">
-                        ⚕
+                    <div class="welcome-icon">
+                        💬
                     </div>
 
-                    <span class="ms-eyebrow">
-                        MWANIKI SCHOLARS COMMUNITY
-                    </span>
-
-                    <h2>
-                        Welcome to
-                        <strong>
-                            <span id="emptyChannelName">
-                                general
-                            </span>
-                        </strong>
-                    </h2>
+                    <h1>
+                        Welcome to General
+                    </h1>
 
                     <p>
-                        A place to ask questions, exchange knowledge,
-                        find study partners and grow together.
+                        This is the beginning of the conversation.
+                        Start something interesting.
                     </p>
 
-                </section>
-
-
-
-                <!-- Quick actions -->
-
-                <section class="ms-quick-section">
-
-                    <div class="ms-section-label">
-                        QUICK ACCESS
-                    </div>
-
-
-                    <div class="ms-quick-grid">
-
-                        <button
-                            class="ms-quick-card"
-                            type="button"
-                        >
-
-                            <span class="ms-quick-icon notes">
-                                ▤
-                            </span>
-
-                            <span class="ms-quick-copy">
-
-                                <strong>
-                                    Study Notes
-                                </strong>
-
-                                <small>
-                                    Browse learning material
-                                </small>
-
-                            </span>
-
-                            <span class="ms-arrow">
-                                →
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            class="ms-quick-card"
-                            type="button"
-                        >
-
-                            <span class="ms-quick-icon quiz">
-                                ✓
-                            </span>
-
-                            <span class="ms-quick-copy">
-
-                                <strong>
-                                    Quizzes
-                                </strong>
-
-                                <small>
-                                    Test your knowledge
-                                </small>
-
-                            </span>
-
-                            <span class="ms-arrow">
-                                →
-                            </span>
-
-                        </button>
-
-
-                        <button
-                            class="ms-quick-card"
-                            type="button"
-                        >
-
-                            <span class="ms-quick-icon tutor">
-                                ✦
-                            </span>
-
-                            <span class="ms-quick-copy">
-
-                                <strong>
-                                    Find a Tutor
-                                </strong>
-
-                                <small>
-                                    Get academic support
-                                </small>
-
-                            </span>
-
-                            <span class="ms-arrow">
-                                →
-                            </span>
-
-                        </button>
-
-                    </div>
-
-                </section>
-
-
-
-                <!-- Messages dynamically appear here -->
-
-                <div class="ms-live-messages">
-
-                    <!-- community.js messages go here -->
+                    <button
+                        id="startConversationButton"
+                        class="start-conversation-button"
+                        type="button"
+                    >
+                        ✨ Start a conversation
+                    </button>
 
                 </div>
+
+                <div
+                    id="messageList"
+                    class="message-list"
+                ></div>
 
             </div>
 
 
+            <footer class="composer-area">
 
-            <!-- =================================================
-                 REPLY
-                 ================================================= -->
+                <div
+                    id="replyPreview"
+                    class="reply-preview hidden"
+                >
 
-            <div
-                id="replyPreview"
-                class="ms-reply hidden"
-            >
+                    <div>
 
-                <div class="ms-reply-bar"></div>
+                        <span>
+                            Replying to
+                        </span>
 
-                <div>
+                        <strong id="replyAuthor">
+                            User
+                        </strong>
 
-                    <span>
-                        Replying to
-                    </span>
+                        <p id="replyText">
+                            Message
+                        </p>
 
-                    <strong id="replyPreviewText">
-                        message
-                    </strong>
+                    </div>
+
+                    <button
+                        id="cancelReplyButton"
+                        type="button"
+                    >
+                        ×
+                    </button>
 
                 </div>
 
-                <button
-                    id="cancelReplyButton"
-                    type="button"
-                >
-                    ×
-                </button>
 
-            </div>
-
-
-
-            <!-- =================================================
-                 COMPOSER
-                 ================================================= -->
-
-            <div class="ms-composer-area">
-
-                <form
-                    id="messageForm"
-                    class="ms-composer"
-                >
+                <div class="composer">
 
                     <button
                         id="attachmentButton"
+                        class="composer-button"
                         type="button"
                         title="Attach"
                     >
                         +
                     </button>
 
-
-                    <input
+                    <textarea
                         id="messageInput"
-                        type="text"
-                        placeholder="Message #general"
-                        autocomplete="off"
-                    >
+                        rows="1"
+                        placeholder="Message #General"
+                    ></textarea>
 
+                    <button
+                        id="emojiButton"
+                        class="composer-button"
+                        type="button"
+                        title="Emoji"
+                    >
+                        😊
+                    </button>
 
                     <button
                         id="sendMessageButton"
-                        type="submit"
-                        title="Send"
+                        class="send-button"
+                        type="button"
+                        title="Send message"
                     >
-                        ↑
+                        ➤
                     </button>
 
-                </form>
-
-
-                <div class="ms-composer-note">
-                    Mwaniki Scholars Community · Learn together
                 </div>
+
+                <div class="composer-hint">
+                    Press Enter to send · Shift + Enter for a new line
+                </div>
+
+            </footer>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         COMMUNITY SEARCH / SELECTOR MODAL
+         ========================================================= -->
+
+    <div
+        id="communityOverlay"
+        class="overlay hidden"
+    >
+
+        <div class="community-modal">
+
+            <header class="modal-header">
+
+                <div>
+                    <span class="eyebrow">
+                        EXPLORE
+                    </span>
+
+                    <h2>
+                        Communities
+                    </h2>
+                </div>
+
+                <button
+                    id="closeCommunityModal"
+                    class="modal-close"
+                    type="button"
+                >
+                    ×
+                </button>
+
+            </header>
+
+
+            <div class="modal-search">
+
+                <span>
+                    🔍
+                </span>
+
+                <input
+                    id="communitySearch"
+                    type="search"
+                    placeholder="Search communities..."
+                >
 
             </div>
 
 
-        </main>
+            <div
+                id="communityModalList"
+                class="community-modal-list"
+            ></div>
+
+        </div>
 
     </div>
 
 
+    <!-- =========================================================
+         NOTIFICATION PANEL
+         ========================================================= -->
 
-    <!-- =====================================================
-         MEMBERS DRAWER
-         ===================================================== -->
-
-    <aside
-        id="memberSidebar"
-        class="ms-members"
+    <div
+        id="notificationPanel"
+        class="floating-panel hidden"
     >
 
-        <header>
+        <div class="floating-panel-header">
 
-            <div>
-
-                <span>
-                    COMMUNITY MEMBERS
-                </span>
-
-                <strong id="memberCount">
-                    0
-                </strong>
-
-            </div>
+            <strong>
+                Notifications
+            </strong>
 
             <button
-                id="closeMemberSidebarButton"
+                id="closeNotificationPanel"
                 type="button"
             >
                 ×
             </button>
 
-        </header>
-
-
-        <div class="ms-member-search">
-
-            <input
-                id="memberSearchInput"
-                type="search"
-                placeholder="Search members..."
-            >
-
         </div>
-
 
         <div
-            id="memberList"
-            class="ms-member-list"
-        ></div>
-
-    </aside>
-
-
-
-    <!-- =====================================================
-         OVERLAY
-         ===================================================== -->
-
-    <div
-        id="communityDrawerOverlay"
-        class="ms-overlay hidden"
-    ></div>
-
-
-
-    <!-- =====================================================
-         COMMUNITY MODAL
-         ===================================================== -->
-
-    <div
-        id="communityModal"
-        class="ms-modal hidden"
-    >
-
-        <div class="ms-modal-card">
-
-            <header>
-
-                <div>
-
-                    <span>
-                        NEW COMMUNITY
-                    </span>
-
-                    <h2>
-                        Create a community
-                    </h2>
-
-                </div>
-
-                <button
-                    id="closeCommunityModalButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-
-            <form id="communityForm">
-
-                <label>
-                    Community name
-
-                    <input
-                        id="communityNameInput"
-                        type="text"
-                        maxlength="80"
-                        required
-                        placeholder="Medical Students"
-                    >
-
-                </label>
-
-
-                <label>
-                    Description
-
-                    <textarea
-                        id="communityDescriptionInput"
-                        maxlength="300"
-                        placeholder="Describe this community..."
-                    ></textarea>
-
-                </label>
-
-
-                <label>
-                    Course
-
-                    <select id="communityCourseSelect">
-
-                        <option value="">
-                            General community
-                        </option>
-
-                    </select>
-
-                </label>
-
-
-                <label>
-                    Icon
-
-                    <input
-                        id="communityIconInput"
-                        type="text"
-                        maxlength="10"
-                        placeholder="⚕"
-                    >
-
-                </label>
-
-
-                <div
-                    id="communityFormMessage"
-                    class="ms-form-message"
-                ></div>
-
-
-                <footer>
-
-                    <button
-                        id="cancelCommunityButton"
-                        class="ms-button-secondary"
-                        type="button"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        class="ms-button-primary"
-                        type="submit"
-                    >
-                        Create Community
-                    </button>
-
-                </footer>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         CHANNEL MODAL
-         ===================================================== -->
-
-    <div
-        id="channelModal"
-        class="ms-modal hidden"
-    >
-
-        <div class="ms-modal-card">
-
-            <header>
-
-                <div>
-
-                    <span>
-                        NEW CHANNEL
-                    </span>
-
-                    <h2>
-                        Create a channel
-                    </h2>
-
-                </div>
-
-                <button
-                    id="closeChannelModalButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-
-            <form id="channelForm">
-
-                <label>
-                    Channel name
-
-                    <input
-                        id="channelNameInput"
-                        type="text"
-                        maxlength="80"
-                        required
-                        placeholder="pharmacology"
-                    >
-
-                </label>
-
-
-                <label>
-                    Description
-
-                    <textarea
-                        id="channelDescriptionInput"
-                        maxlength="300"
-                        placeholder="What is this channel for?"
-                    ></textarea>
-
-                </label>
-
-
-                <label>
-                    Category
-
-                    <input
-                        id="channelCategoryInput"
-                        type="text"
-                        placeholder="General"
-                    >
-
-                </label>
-
-
-                <label>
-                    Visibility
-
-                    <select id="channelVisibilitySelect">
-
-                        <option value="public">
-                            Public
-                        </option>
-
-                        <option value="private">
-                            Private
-                        </option>
-
-                    </select>
-
-                </label>
-
-
-                <label>
-                    Course
-
-                    <select id="channelCourseSelect">
-
-                        <option value="">
-                            No course
-                        </option>
-
-                    </select>
-
-                </label>
-
-
-                <div
-                    id="channelFormMessage"
-                    class="ms-form-message"
-                ></div>
-
-
-                <footer>
-
-                    <button
-                        id="cancelChannelButton"
-                        class="ms-button-secondary"
-                        type="button"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        class="ms-button-primary"
-                        type="submit"
-                    >
-                        Create Channel
-                    </button>
-
-                </footer>
-
-            </form>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         GENERAL CALL MODAL
-         ===================================================== -->
-
-    <div
-        id="generalCallModal"
-        class="ms-modal hidden"
-    >
-
-        <div class="ms-modal-card ms-call-modal">
-
-            <header>
-
-                <div>
-
-                    <span>
-                        MWANIKI CALL
-                    </span>
-
-                    <h2>
-                        Start a call
-                    </h2>
-
-                    <p>
-                        Call people independently of community calls.
-                    </p>
-
-                </div>
-
-                <button
-                    id="closeGeneralCallModalButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-
-            <div class="ms-call-types">
-
-                <button
-                    id="generalVoiceCallButton"
-                    type="button"
-                >
-
-                    <span>
-                        ☎
-                    </span>
-
-                    <strong>
-                        Voice
-                    </strong>
-
-                    <small>
-                        Audio call
-                    </small>
-
-                </button>
-
-
-                <button
-                    id="generalVideoCallButton"
-                    type="button"
-                >
-
-                    <span>
-                        ▣
-                    </span>
-
-                    <strong>
-                        Video
-                    </strong>
-
-                    <small>
-                        Video call
-                    </small>
-
-                </button>
-
-            </div>
-
-
-            <div class="ms-call-picker">
-
-                <label>
-
-                    Select people
-
-                    <input
-                        id="generalCallUserInput"
-                        type="search"
-                        placeholder="Search online members..."
-                    >
-
-                </label>
-
-
-                <div
-                    id="generalCallUserStatus"
-                    class="ms-call-status"
-                >
-                    Loading online members...
-                </div>
-
-
-                <div
-                    id="generalCallUserList"
-                    class="ms-call-users"
-                ></div>
-
-
-                <div
-                    id="generalCallSelectionCount"
-                    class="ms-selection-count"
-                >
-                    0 selected
-                </div>
-
-            </div>
-
-
-            <div
-                id="generalCallMessage"
-                class="ms-form-message"
-            ></div>
-
-
-            <footer>
-
-                <button
-                    id="cancelGeneralCallButton"
-                    class="ms-button-secondary"
-                    type="button"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    id="startGeneralCallButton"
-                    class="ms-button-primary"
-                    type="button"
-                >
-                    Start Call
-                </button>
-
-            </footer>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         ACTIVE CALL
-         ===================================================== -->
-
-    <section
-        id="callOverlay"
-        class="ms-call-overlay hidden"
-    >
-
-        <header>
-
-            <div class="ms-call-title">
-
-                <div id="callTypeIcon">
-                    ▣
-                </div>
-
-                <div>
-
-                    <strong id="callTitle">
-                        Community Call
-                    </strong>
-
-                    <span id="callSubtitle">
-                        Connecting...
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <span id="callDuration">
-                00:00
-            </span>
-
-
-            <button
-                id="minimizeCallButton"
-                type="button"
-            >
-                −
-            </button>
-
-        </header>
-
-
-        <div
-            id="callVideoGrid"
-            class="ms-video-grid"
+            id="notificationList"
+            class="notification-list"
         >
 
-            <div
-                id="localVideoTile"
-                class="ms-video-tile"
-            >
-
-                <video
-                    id="localVideo"
-                    autoplay
-                    muted
-                    playsinline
-                ></video>
-
-                <span>
-                    You
-                </span>
-
+            <div class="empty-state-small">
+                No new notifications.
             </div>
-
-        </div>
-
-
-        <div
-            id="callParticipants"
-            class="ms-call-participants"
-        ></div>
-
-
-        <footer class="ms-call-controls">
-
-            <button
-                id="toggleMicrophoneButton"
-                type="button"
-            >
-                🎙
-            </button>
-
-            <button
-                id="toggleCameraButton"
-                type="button"
-            >
-                ▣
-            </button>
-
-            <button
-                id="shareScreenButton"
-                type="button"
-            >
-                ▤
-            </button>
-
-            <button
-                id="leaveCallButton"
-                class="ms-leave-call"
-                type="button"
-            >
-                ☎
-            </button>
-
-        </footer>
-
-    </section>
-
-
-
-    <!-- =====================================================
-         INCOMING CALL
-         ===================================================== -->
-
-    <div
-        id="incomingCallToast"
-        class="ms-incoming hidden"
-    >
-
-        <div class="ms-incoming-icon">
-            ☎
-        </div>
-
-        <div>
-
-            <strong id="incomingCallTitle">
-                Incoming call
-            </strong>
-
-            <span id="incomingCallText">
-                Someone is calling you.
-            </span>
-
-        </div>
-
-
-        <div class="ms-incoming-actions">
-
-            <button
-                id="acceptCallButton"
-                type="button"
-            >
-                Accept
-            </button>
-
-            <button
-                id="declineCallButton"
-                type="button"
-            >
-                Decline
-            </button>
 
         </div>
 
     </div>
 
 
-
-    <!-- =====================================================
-         TOAST
-         ===================================================== -->
+    <!-- =========================================================
+         PROFILE PANEL
+         ========================================================= -->
 
     <div
-        id="communityToast"
-        class="ms-toast hidden"
-    ></div>
+        id="profilePanel"
+        class="profile-panel hidden"
+    >
 
+        <div
+            id="profileAvatarLarge"
+            class="avatar avatar-large"
+        >
+            👤
+        </div>
+
+        <strong id="profilePanelName">
+            Student
+        </strong>
+
+        <span id="profilePanelEmail">
+            —
+        </span>
+
+        <button
+            id="profilePageButton"
+            type="button"
+        >
+            👤 Profile
+        </button>
+
+        <button
+            id="logoutButton"
+            type="button"
+            class="danger-button"
+        >
+            ↪ Sign out
+        </button>
+
+    </div>
+
+
+    <!-- =========================================================
+         TOAST
+         ========================================================= -->
+
+    <div
+        id="toastContainer"
+        class="toast-container"
+    ></div>
 
 </div>
 
 
-<script
-    type="module"
-    src="./community.js"
-></script>
+<!-- Existing Supabase configuration -->
+<script src="./supabase.js"></script>
+
+<!-- Community engine -->
+<script src="./community.js"></script>
 
 </body>
-
 </html>
