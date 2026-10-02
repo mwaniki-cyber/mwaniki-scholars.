@@ -156,7 +156,25 @@ import { supabase } from "./supabase.js";
         );
 
     }
+/* =========================================================
+   DOM VISIBILITY HELPER
+   ========================================================= */
 
+function showElement(element, show = true) {
+    if (!element) return;
+
+    if (show) {
+        element.hidden = false;
+        element.style.display = "";
+        element.classList.remove("hidden");
+        element.removeAttribute("aria-hidden");
+    } else {
+        element.hidden = true;
+        element.style.display = "none";
+        element.classList.add("hidden");
+        element.setAttribute("aria-hidden", "true");
+    }
+}
 
     function setText(id, value) {
 
