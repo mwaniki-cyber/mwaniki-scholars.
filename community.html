@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,7 +10,7 @@
 
     <meta
         name="description"
-        content="Mwaniki Scholars Community"
+        content="Mwaniki Scholars academic community"
     >
 
     <meta name="theme-color" content="#087f73">
@@ -19,1183 +18,159 @@
     <title>Mwaniki Scholars Community</title>
 
     <link rel="icon" href="./favicon.ico">
-
     <link rel="stylesheet" href="./style.css">
-
-    <style>
-
-        /* =========================================================
-           MWANIKI SCHOLARS COMMUNITY
-           CLEAN UI FOUNDATION
-           ========================================================= */
-
-        :root {
-            --ms-primary: #087f73;
-            --ms-primary-dark: #05665d;
-            --ms-primary-soft: #e8f7f5;
-
-            --ms-bg: #f4f7f9;
-            --ms-panel: #ffffff;
-            --ms-panel-2: #f8fafb;
-
-            --ms-text: #17212b;
-            --ms-muted: #71808f;
-
-            --ms-border: #e4e9ed;
-
-            --ms-danger: #dc3545;
-            --ms-success: #20a464;
-
-            --ms-shadow:
-                0 8px 30px rgba(16, 24, 40, 0.07);
-
-            --ms-radius: 16px;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-        }
-
-        body {
-            font-family:
-                Inter,
-                system-ui,
-                -apple-system,
-                BlinkMacSystemFont,
-                "Segoe UI",
-                sans-serif;
-
-            background: var(--ms-bg);
-            color: var(--ms-text);
-            overflow: hidden;
-        }
-
-        button,
-        input,
-        textarea {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        /* =========================================================
-           APP
-           ========================================================= */
-
-        .community-app {
-            width: 100%;
-            height: 100vh;
-            display: grid;
-
-            grid-template-columns:
-                72px
-                280px
-                minmax(0, 1fr);
-
-            background: var(--ms-bg);
-        }
-
-        /* =========================================================
-           LEFT RAIL
-           ========================================================= */
-
-        .community-rail {
-            background: #092f2b;
-
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-
-            padding: 14px 0;
-
-            gap: 12px;
-
-            border-right: 1px solid rgba(255,255,255,.06);
-        }
-
-        .rail-logo {
-            width: 46px;
-            height: 46px;
-
-            border-radius: 14px;
-
-            display: grid;
-            place-items: center;
-
-            background: white;
-            color: var(--ms-primary);
-
-            font-weight: 900;
-            font-size: 18px;
-
-            box-shadow:
-                0 5px 18px rgba(0,0,0,.18);
-        }
-
-        .rail-divider {
-            width: 34px;
-            height: 1px;
-
-            background: rgba(255,255,255,.14);
-
-            margin: 4px 0;
-        }
-
-        .rail-button {
-            position: relative;
-
-            width: 46px;
-            height: 46px;
-
-            border: 0;
-            border-radius: 14px;
-
-            background: transparent;
-            color: #b7cfcc;
-
-            display: grid;
-            place-items: center;
-
-            transition:
-                background .18s ease,
-                color .18s ease,
-                transform .18s ease;
-        }
-
-        .rail-button:hover {
-            background: rgba(255,255,255,.10);
-            color: white;
-            transform: translateY(-1px);
-        }
-
-        .rail-button.active {
-            background: var(--ms-primary);
-            color: white;
-        }
-
-        .rail-button svg {
-            width: 22px;
-            height: 22px;
-        }
-
-        .rail-community-icon {
-            width: 46px;
-            height: 46px;
-
-            border-radius: 14px;
-
-            border: 0;
-
-            background: rgba(255,255,255,.08);
-
-            color: white;
-
-            display: grid;
-            place-items: center;
-
-            font-weight: 800;
-
-            overflow: hidden;
-        }
-
-        .rail-community-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .rail-spacer {
-            flex: 1;
-        }
-
-        /* =========================================================
-           COMMUNITY NAVIGATION
-           ========================================================= */
-
-        .community-sidebar {
-            min-width: 0;
-
-            background: var(--ms-panel);
-
-            border-right: 1px solid var(--ms-border);
-
-            display: flex;
-            flex-direction: column;
-        }
-
-        .sidebar-header {
-            height: 76px;
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-
-            padding: 0 18px;
-
-            border-bottom: 1px solid var(--ms-border);
-        }
-
-        .brand-title {
-            font-size: 17px;
-            font-weight: 850;
-            letter-spacing: -.3px;
-        }
-
-        .brand-subtitle {
-            font-size: 11px;
-            color: var(--ms-muted);
-            margin-top: 2px;
-        }
-
-        .sidebar-icon-button {
-            width: 36px;
-            height: 36px;
-
-            border: 1px solid var(--ms-border);
-
-            border-radius: 10px;
-
-            background: white;
-
-            display: grid;
-            place-items: center;
-
-            color: var(--ms-muted);
-        }
-
-        .sidebar-icon-button:hover {
-            background: var(--ms-primary-soft);
-            color: var(--ms-primary);
-        }
-
-        /* =========================================================
-           SEARCH
-           ========================================================= */
-
-        .channel-search {
-            padding: 14px 14px 10px;
-        }
-
-        .search-box {
-            height: 42px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 9px;
-
-            padding: 0 12px;
-
-            background: var(--ms-panel-2);
-
-            border: 1px solid var(--ms-border);
-
-            border-radius: 12px;
-        }
-
-        .search-box svg {
-            width: 18px;
-            color: var(--ms-muted);
-        }
-
-        .search-box input {
-            min-width: 0;
-            flex: 1;
-
-            border: 0;
-            outline: 0;
-
-            background: transparent;
-
-            color: var(--ms-text);
-        }
-
-        /* =========================================================
-           COMMUNITY SELECTOR
-           ========================================================= */
-
-        .community-selector {
-            padding: 8px 14px 12px;
-        }
-
-        .selector-button {
-            width: 100%;
-
-            border: 1px solid var(--ms-border);
-
-            background: white;
-
-            border-radius: 14px;
-
-            padding: 11px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 10px;
-
-            text-align: left;
-        }
-
-        .selector-button:hover {
-            border-color: #b9dcd8;
-            background: #fbfefe;
-        }
-
-        .selector-icon {
-            width: 38px;
-            height: 38px;
-
-            flex: 0 0 38px;
-
-            border-radius: 11px;
-
-            background: var(--ms-primary-soft);
-
-            color: var(--ms-primary);
-
-            display: grid;
-            place-items: center;
-
-            font-weight: 900;
-
-            overflow: hidden;
-        }
-
-        .selector-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .selector-text {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .selector-title {
-            font-size: 13px;
-            font-weight: 800;
-
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .selector-description {
-            margin-top: 2px;
-
-            color: var(--ms-muted);
-
-            font-size: 11px;
-        }
-
-        /* =========================================================
-           CHANNELS
-           ========================================================= */
-
-        .channel-area {
-            min-height: 0;
-            flex: 1;
-
-            overflow-y: auto;
-
-            padding: 6px 10px 16px;
-        }
-
-        .channel-section {
-            margin-bottom: 18px;
-        }
-
-        .channel-section-title {
-            padding: 8px 8px 7px;
-
-            color: var(--ms-muted);
-
-            font-size: 10px;
-            font-weight: 900;
-
-            letter-spacing: .08em;
-
-            text-transform: uppercase;
-        }
-
-        .channel-item {
-            width: 100%;
-
-            min-height: 42px;
-
-            border: 0;
-
-            background: transparent;
-
-            border-radius: 11px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 10px;
-
-            padding: 8px 10px;
-
-            color: #5d6974;
-
-            text-align: left;
-
-            margin-bottom: 2px;
-        }
-
-        .channel-item:hover {
-            background: #f0f5f5;
-            color: var(--ms-text);
-        }
-
-        .channel-item.active {
-            background: var(--ms-primary-soft);
-            color: var(--ms-primary);
-            font-weight: 800;
-        }
-
-        .channel-icon {
-            width: 23px;
-            height: 23px;
-
-            display: grid;
-            place-items: center;
-
-            flex: 0 0 23px;
-        }
-
-        .channel-name {
-            min-width: 0;
-            flex: 1;
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .channel-count {
-            font-size: 10px;
-            color: var(--ms-muted);
-        }
-
-        /* =========================================================
-           SIDEBAR FOOTER
-           ========================================================= */
-
-        .sidebar-user {
-            border-top: 1px solid var(--ms-border);
-
-            padding: 12px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 10px;
-        }
-
-        .user-avatar {
-            width: 38px;
-            height: 38px;
-
-            border-radius: 50%;
-
-            object-fit: cover;
-
-            background: #dce9e7;
-
-            flex: 0 0 38px;
-        }
-
-        .sidebar-user-info {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .sidebar-user-name {
-            font-size: 12px;
-            font-weight: 800;
-
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-        }
-
-        .sidebar-user-status {
-            font-size: 10px;
-            color: var(--ms-success);
-        }
-
-        /* =========================================================
-           MAIN
-           ========================================================= */
-
-        .community-main {
-            min-width: 0;
-            min-height: 0;
-
-            display: flex;
-            flex-direction: column;
-
-            background: #f8fafb;
-        }
-
-        .main-header {
-            min-height: 76px;
-
-            background: white;
-
-            border-bottom: 1px solid var(--ms-border);
-
-            padding: 12px 22px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 16px;
-        }
-
-        .main-header-info {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .main-channel-title {
-            display: flex;
-            align-items: center;
-
-            gap: 8px;
-
-            font-size: 18px;
-            font-weight: 900;
-        }
-
-        .main-channel-description {
-            margin-top: 3px;
-
-            color: var(--ms-muted);
-
-            font-size: 12px;
-
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .main-actions {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header-action {
-            height: 38px;
-
-            border: 1px solid var(--ms-border);
-
-            background: white;
-
-            border-radius: 10px;
-
-            padding: 0 12px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 7px;
-
-            color: #53616c;
-
-            font-weight: 700;
-
-            font-size: 12px;
-        }
-
-        .header-action:hover {
-            background: var(--ms-primary-soft);
-            color: var(--ms-primary);
-        }
-
-        .header-action.primary {
-            background: var(--ms-primary);
-            color: white;
-            border-color: var(--ms-primary);
-        }
-
-        .header-action.primary:hover {
-            background: var(--ms-primary-dark);
-        }
-
-        /* =========================================================
-           CHAT
-           ========================================================= */
-
-        .chat-container {
-            min-height: 0;
-            flex: 1;
-
-            display: flex;
-            flex-direction: column;
-        }
-
-        .chat-messages {
-            min-height: 0;
-            flex: 1;
-
-            overflow-y: auto;
-
-            padding: 24px 26px 18px;
-        }
-
-        .welcome-card {
-            max-width: 720px;
-
-            margin: 28px auto;
-
-            background: white;
-
-            border: 1px solid var(--ms-border);
-
-            border-radius: 22px;
-
-            padding: 34px;
-
-            box-shadow: var(--ms-shadow);
-
-            text-align: center;
-        }
-
-        .welcome-icon {
-            width: 68px;
-            height: 68px;
-
-            border-radius: 20px;
-
-            background: var(--ms-primary-soft);
-            color: var(--ms-primary);
-
-            display: grid;
-            place-items: center;
-
-            margin: 0 auto 18px;
-        }
-
-        .welcome-card h2 {
-            margin: 0;
-
-            font-size: 24px;
-        }
-
-        .welcome-card p {
-            color: var(--ms-muted);
-            line-height: 1.6;
-        }
-
-        .message {
-            display: flex;
-
-            gap: 12px;
-
-            margin-bottom: 19px;
-
-            max-width: 920px;
-        }
-
-        .message-avatar {
-            width: 42px;
-            height: 42px;
-
-            border-radius: 50%;
-
-            object-fit: cover;
-
-            flex: 0 0 42px;
-
-            background: #dfe9e7;
-        }
-
-        .message-content {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .message-header {
-            display: flex;
-            align-items: baseline;
-
-            gap: 8px;
-
-            margin-bottom: 4px;
-        }
-
-        .message-author {
-            font-size: 13px;
-            font-weight: 850;
-        }
-
-        .message-time {
-            color: #9aa5ae;
-            font-size: 10px;
-        }
-
-        .message-text {
-            color: #34414c;
-
-            font-size: 14px;
-
-            line-height: 1.55;
-
-            white-space: pre-wrap;
-
-            word-break: break-word;
-        }
-
-        .message-actions {
-            display: flex;
-
-            align-items: center;
-
-            gap: 5px;
-
-            margin-top: 7px;
-        }
-
-        .message-action {
-            border: 0;
-
-            background: transparent;
-
-            color: #87939d;
-
-            font-size: 11px;
-
-            padding: 4px 7px;
-
-            border-radius: 7px;
-        }
-
-        .message-action:hover {
-            background: #edf3f3;
-            color: var(--ms-primary);
-        }
-
-        /* =========================================================
-           COMPOSER
-           ========================================================= */
-
-        .chat-composer {
-            padding: 12px 22px 18px;
-
-            background:
-                linear-gradient(
-                    to bottom,
-                    rgba(248,250,251,0),
-                    #f8fafb 18px
-                );
-        }
-
-        .composer-box {
-            max-width: 1050px;
-
-            margin: 0 auto;
-
-            background: white;
-
-            border: 1px solid var(--ms-border);
-
-            border-radius: 16px;
-
-            box-shadow:
-                0 5px 20px rgba(16,24,40,.05);
-
-            padding: 10px;
-        }
-
-        .composer-toolbar {
-            display: flex;
-            align-items: center;
-
-            gap: 5px;
-
-            margin-bottom: 5px;
-        }
-
-        .composer-tool {
-            width: 34px;
-            height: 30px;
-
-            border: 0;
-
-            background: transparent;
-
-            border-radius: 8px;
-
-            color: #74818c;
-        }
-
-        .composer-tool:hover {
-            background: #f0f5f5;
-            color: var(--ms-primary);
-        }
-
-        .composer-row {
-            display: flex;
-            align-items: flex-end;
-
-            gap: 10px;
-        }
-
-        .composer-row textarea {
-            min-width: 0;
-            flex: 1;
-
-            resize: none;
-
-            min-height: 42px;
-            max-height: 130px;
-
-            border: 0;
-            outline: 0;
-
-            padding: 9px 8px;
-
-            background: transparent;
-
-            line-height: 1.45;
-        }
-
-        .send-button {
-            width: 42px;
-            height: 42px;
-
-            flex: 0 0 42px;
-
-            border: 0;
-
-            border-radius: 12px;
-
-            background: var(--ms-primary);
-
-            color: white;
-
-            display: grid;
-            place-items: center;
-        }
-
-        .send-button:hover {
-            background: var(--ms-primary-dark);
-        }
-
-        /* =========================================================
-           EMPTY / LOADING
-           ========================================================= */
-
-        .center-state {
-            min-height: 280px;
-
-            display: grid;
-            place-items: center;
-
-            text-align: center;
-
-            color: var(--ms-muted);
-        }
-
-        .loader {
-            width: 32px;
-            height: 32px;
-
-            border-radius: 50%;
-
-            border: 3px solid #dcebea;
-            border-top-color: var(--ms-primary);
-
-            animation: spin .8s linear infinite;
-
-            margin: 0 auto 12px;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-
-        /* =========================================================
-           MODAL
-           ========================================================= */
-
-        .modal {
-            position: fixed;
-
-            inset: 0;
-
-            z-index: 1000;
-
-            background: rgba(6, 20, 19, .48);
-
-            display: none;
-
-            align-items: center;
-            justify-content: center;
-
-            padding: 20px;
-        }
-
-        .modal.open {
-            display: flex;
-        }
-
-        .modal-card {
-            width: min(680px, 100%);
-
-            max-height: 85vh;
-
-            overflow: hidden;
-
-            background: white;
-
-            border-radius: 20px;
-
-            box-shadow:
-                0 25px 70px rgba(0,0,0,.25);
-        }
-
-        .modal-header {
-            padding: 18px 20px;
-
-            border-bottom: 1px solid var(--ms-border);
-
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .modal-title {
-            font-size: 17px;
-            font-weight: 900;
-        }
-
-        .modal-close {
-            width: 34px;
-            height: 34px;
-
-            border: 0;
-
-            background: #f1f4f5;
-
-            border-radius: 9px;
-
-            font-size: 20px;
-        }
-
-        .modal-body {
-            padding: 18px;
-
-            overflow-y: auto;
-
-            max-height: calc(85vh - 72px);
-        }
-
-        .community-choice {
-            width: 100%;
-
-            border: 1px solid var(--ms-border);
-
-            background: white;
-
-            border-radius: 14px;
-
-            padding: 12px;
-
-            display: flex;
-
-            align-items: center;
-
-            gap: 12px;
-
-            text-align: left;
-
-            margin-bottom: 8px;
-        }
-
-        .community-choice:hover {
-            border-color: #b8dcd8;
-            background: #f9fdfc;
-        }
-
-        .community-choice-icon {
-            width: 44px;
-            height: 44px;
-
-            border-radius: 13px;
-
-            background: var(--ms-primary-soft);
-
-            color: var(--ms-primary);
-
-            display: grid;
-            place-items: center;
-
-            font-weight: 900;
-
-            overflow: hidden;
-        }
-
-        .community-choice-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .community-choice-info {
-            min-width: 0;
-            flex: 1;
-        }
-
-        .community-choice-name {
-            font-size: 13px;
-            font-weight: 850;
-        }
-
-        .community-choice-description {
-            color: var(--ms-muted);
-            font-size: 11px;
-            margin-top: 2px;
-        }
-
-        /* =========================================================
-           MOBILE
-           ========================================================= */
-
-        @media (max-width: 900px) {
-
-            .community-app {
-                grid-template-columns:
-                    62px
-                    1fr;
-            }
-
-            .community-sidebar {
-                display: none;
-            }
-
-            .community-rail {
-                width: 62px;
-            }
-
-            .main-header {
-                padding: 10px 14px;
-            }
-
-            .chat-messages {
-                padding: 18px 14px;
-            }
-
-            .chat-composer {
-                padding: 10px 12px 14px;
-            }
-
-            .header-action span {
-                display: none;
-            }
-
-            .header-action {
-                width: 38px;
-                padding: 0;
-                justify-content: center;
-            }
-        }
-
-    </style>
+    <link rel="stylesheet" href="./community.css">
 </head>
 
 <body>
 
-<div class="community-app">
+<!--
+=========================================================
+GLOBAL ACCESSIBILITY ANNOUNCER
+=========================================================
+-->
+
+<div
+    id="accessibilityAnnouncer"
+    class="sr-only"
+    aria-live="polite"
+    aria-atomic="true"
+></div>
+
+
+<!--
+=========================================================
+APPLICATION
+=========================================================
+-->
+
+<div
+    class="community-app"
+    id="communityApp"
+>
 
     <!-- =====================================================
-         LEFT RAIL
+         COMMUNITY RAIL
          ===================================================== -->
 
-    <aside class="community-rail">
+    <aside
+        class="community-rail"
+        aria-label="Main navigation"
+    >
+
+        <!-- BRAND / HOME -->
 
         <button
+            type="button"
             class="rail-logo"
             id="homeButton"
-            title="Back to Mwaniki Scholars Dashboard"
-            aria-label="Back to dashboard"
+            title="Return to Mwaniki Scholars dashboard"
+            aria-label="Return to Mwaniki Scholars dashboard"
         >
-            MS
+            <span aria-hidden="true">MS</span>
         </button>
 
-        <div class="rail-divider"></div>
+
+        <div
+            class="rail-divider"
+            aria-hidden="true"
+        ></div>
+
 
         <!-- HOME -->
+
         <button
+            type="button"
             class="rail-button active"
             id="railHomeButton"
             title="Home"
             aria-label="Home"
+            aria-current="page"
         >
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 10.5 12 3l9 7.5"/>
-                <path d="M5 9.5V21h14V9.5"/>
-                <path d="M9 21v-7h6v7"/>
+
+            <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M3 10.5 12 3l9 7.5"></path>
+                <path d="M5 9.5V21h14V9.5"></path>
+                <path d="M9 21v-7h6v7"></path>
             </svg>
+
+            <span class="sr-only">
+                Home
+            </span>
+
         </button>
 
-        <!-- GENERAL MWANIKI -->
+
+        <!-- MWANIKI GENERAL -->
+
         <button
+            type="button"
             class="rail-button"
             id="railGeneralButton"
             title="Mwaniki Scholars General"
-            aria-label="Mwaniki Scholars General"
+            aria-label="Open Mwaniki Scholars general chat"
         >
-            <svg viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2"
-                 stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"/>
+
+            <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"></path>
             </svg>
+
+            <span class="sr-only">
+                Mwaniki Scholars General
+            </span>
+
         </button>
+
+
+        <!--
+        DYNAMIC COMMUNITY BUTTONS ARE INSERTED HERE
+        -->
 
         <div
             id="communityRailList"
-            style="
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                gap:10px;
-            "
+            class="community-rail-list"
+            aria-label="Communities"
         ></div>
 
-        <div class="rail-spacer"></div>
+
+        <div
+            class="rail-spacer"
+            aria-hidden="true"
+        ></div>
+
 
         <!-- PROFILE -->
+
         <button
+            type="button"
             class="rail-community-icon"
             id="railProfileButton"
-            title="Profile"
-            aria-label="Profile"
+            title="Open your profile"
+            aria-label="Open your profile"
         >
+
             <img
                 id="railProfileAvatar"
                 src=""
-                alt="Profile"
+                alt="Your profile photo"
             >
+
         </button>
 
     </aside>
@@ -1205,31 +180,56 @@
          COMMUNITY SIDEBAR
          ===================================================== -->
 
-    <aside class="community-sidebar">
+    <aside
+        class="community-sidebar"
+        aria-label="Community and channel navigation"
+    >
+
+        <!-- SIDEBAR HEADER -->
 
         <header class="sidebar-header">
 
             <div>
-                <div class="brand-title">
+                <div
+                    class="brand-title"
+                    id="communityBrandTitle"
+                >
                     Mwaniki Community
                 </div>
 
-                <div class="brand-subtitle">
+                <div
+                    class="brand-subtitle"
+                    id="communityBrandSubtitle"
+                >
                     Learn • Discuss • Connect
                 </div>
             </div>
 
+
             <button
+                type="button"
                 class="sidebar-icon-button"
                 id="openCommunityButton"
-                title="Choose community"
-                aria-label="Choose community"
+                title="Choose a community"
+                aria-label="Choose a community"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="communityModal"
             >
-                <svg viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14"/>
-                    <path d="M5 12h14"/>
+
+                <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                >
+                    <path d="M12 5v14"></path>
+                    <path d="M5 12h14"></path>
                 </svg>
+
             </button>
 
         </header>
@@ -1239,23 +239,42 @@
 
         <div class="channel-search">
 
-            <label class="search-box">
+            <label
+                class="search-box"
+                for="channelSearchInput"
+            >
 
-                <svg viewBox="0 0 24 24" fill="none"
-                     stroke="currentColor"
-                     stroke-width="2">
-                    <circle cx="11" cy="11" r="7"/>
-                    <path d="m20 20-4-4"/>
+                <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-4-4"></path>
                 </svg>
+
 
                 <input
                     id="channelSearchInput"
                     type="search"
-                    placeholder="Search communities & channels..."
+                    placeholder="Search communities and channels"
                     autocomplete="off"
+                    aria-label="Search communities and channels"
+                    aria-controls="channelList"
+                    aria-describedby="channelSearchHelp"
                 >
 
             </label>
+
+            <span
+                id="channelSearchHelp"
+                class="sr-only"
+            >
+                Type to filter communities and channels.
+                Press Escape to clear the search.
+            </span>
 
         </div>
 
@@ -1265,16 +284,23 @@
         <div class="community-selector">
 
             <button
+                type="button"
                 class="selector-button"
                 id="communitySelectorButton"
+                aria-label="Current community. Open community selector"
+                aria-haspopup="dialog"
+                aria-expanded="false"
+                aria-controls="communityModal"
             >
 
                 <div
                     class="selector-icon"
                     id="selectedCommunityIcon"
+                    aria-hidden="true"
                 >
                     MS
                 </div>
+
 
                 <div class="selector-text">
 
@@ -1294,7 +320,9 @@
 
                 </div>
 
+
                 <svg
+                    aria-hidden="true"
                     width="16"
                     height="16"
                     viewBox="0 0 24 24"
@@ -1302,7 +330,7 @@
                     stroke="currentColor"
                     stroke-width="2"
                 >
-                    <path d="m7 10 5 5 5-5"/>
+                    <path d="m7 10 5 5 5-5"></path>
                 </svg>
 
             </button>
@@ -1310,48 +338,78 @@
         </div>
 
 
-        <!-- CHANNELS -->
+        <!-- CHANNEL LIST -->
 
-        <div
+        <nav
             class="channel-area"
             id="channelList"
+            aria-label="Channels"
         >
 
-            <div class="center-state">
+            <div
+                class="center-state"
+                id="channelLoadingState"
+                role="status"
+                aria-live="polite"
+            >
+
                 <div>
-                    <div class="loader"></div>
+
+                    <div
+                        class="loader"
+                        aria-hidden="true"
+                    ></div>
+
                     Loading channels...
+
                 </div>
+
             </div>
 
-        </div>
+        </nav>
 
 
         <!-- CURRENT USER -->
 
         <footer class="sidebar-user">
 
-            <img
-                id="sidebarProfileAvatar"
-                class="user-avatar"
-                src=""
-                alt="Profile photo"
+            <button
+                type="button"
+                class="sidebar-user-profile"
+                id="sidebarProfileButton"
+                title="Open your profile"
+                aria-label="Open your profile"
             >
 
-            <div class="sidebar-user-info">
-
-                <div
-                    class="sidebar-user-name"
-                    id="sidebarProfileName"
+                <img
+                    id="sidebarProfileAvatar"
+                    class="user-avatar"
+                    src=""
+                    alt="Your profile photo"
                 >
-                    Loading...
-                </div>
 
-                <div class="sidebar-user-status">
-                    ● Online
-                </div>
 
-            </div>
+                <span class="sidebar-user-info">
+
+                    <span
+                        class="sidebar-user-name"
+                        id="sidebarProfileName"
+                    >
+                        Loading...
+                    </span>
+
+                    <span class="sidebar-user-status">
+                        <span
+                            class="status-dot"
+                            aria-hidden="true"
+                        ></span>
+
+                        Online
+                    </span>
+
+                </span>
+
+            </button>
 
         </footer>
 
@@ -1362,15 +420,24 @@
          MAIN CHAT
          ===================================================== -->
 
-    <main class="community-main">
+    <main
+        class="community-main"
+        id="communityMain"
+    >
 
-        <header class="main-header">
+        <!-- CHAT HEADER -->
+
+        <header
+            class="main-header"
+            aria-label="Current channel"
+        >
 
             <div class="main-header-info">
 
                 <div
                     class="main-channel-title"
                     id="mainChannelTitle"
+                    aria-live="polite"
                 >
                     # General
                 </div>
@@ -1385,64 +452,97 @@
             </div>
 
 
-            <div class="main-actions">
+            <div
+                class="main-actions"
+                aria-label="Conversation actions"
+            >
 
                 <!-- HOME -->
+
                 <button
+                    type="button"
                     class="header-action"
                     id="dashboardButton"
-                    title="Back to dashboard"
+                    title="Return to dashboard"
+                    aria-label="Return to dashboard"
                 >
-                    <svg width="17" height="17"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2">
-                        <path d="M3 10.5 12 3l9 7.5"/>
-                        <path d="M5 9.5V21h14V9.5"/>
+
+                    <svg
+                        aria-hidden="true"
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M3 10.5 12 3l9 7.5"></path>
+                        <path d="M5 9.5V21h14V9.5"></path>
                     </svg>
 
                     <span>Home</span>
+
                 </button>
 
 
-                <!-- COMMUNITY -->
+                <!-- COMMUNITIES -->
+
                 <button
+                    type="button"
                     class="header-action"
                     id="headerCommunityButton"
-                    title="Choose community"
+                    title="Choose a community"
+                    aria-label="Choose a community"
+                    aria-haspopup="dialog"
+                    aria-expanded="false"
+                    aria-controls="communityModal"
                 >
-                    <svg width="17" height="17"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2">
-                        <circle cx="9" cy="8" r="3"/>
-                        <circle cx="17" cy="9" r="2"/>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
-                        <path d="M14.5 15c.8-.6 1.7-.9 2.7-.9 2.7 0 4.8 2.1 4.8 4.9"/>
+
+                    <svg
+                        aria-hidden="true"
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle cx="9" cy="8" r="3"></circle>
+                        <circle cx="17" cy="9" r="2"></circle>
+                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
+                        <path d="M14.5 15c.8-.6 1.7-.9 2.7-.9 2.7 0 4.8 2.1 4.8 4.9"></path>
                     </svg>
 
                     <span>Communities</span>
+
                 </button>
 
 
                 <!-- START CONVERSATION -->
+
                 <button
+                    type="button"
                     class="header-action primary"
                     id="startConversationButton"
-                    title="Start conversation"
+                    title="Start a new conversation"
+                    aria-label="Start a new conversation"
                 >
-                    <svg width="17" height="17"
-                         viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                         stroke-width="2">
-                        <path d="M12 20h9"/>
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/>
+
+                    <svg
+                        aria-hidden="true"
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M12 20h9"></path>
+                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
                     </svg>
 
                     <span>Start Conversation</span>
+
                 </button>
 
             </div>
@@ -1452,41 +552,63 @@
 
         <!-- CHAT -->
 
-        <section class="chat-container">
+        <section
+            class="chat-container"
+            aria-label="Channel conversation"
+        >
+
+            <!-- MESSAGE AREA -->
 
             <div
                 class="chat-messages"
                 id="messageList"
+                role="log"
+                aria-live="polite"
+                aria-relevant="additions text"
+                aria-label="Messages"
             >
 
-                <div class="welcome-card">
+                <div
+                    class="welcome-card"
+                    id="welcomeCard"
+                >
 
-                    <div class="welcome-icon">
+                    <div
+                        class="welcome-icon"
+                        aria-hidden="true"
+                    >
 
-                        <svg width="34"
-                             height="34"
-                             viewBox="0 0 24 24"
-                             fill="none"
-                             stroke="currentColor"
-                             stroke-width="1.8">
-                            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"/>
+                        <svg
+                            width="34"
+                            height="34"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                        >
+                            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"></path>
                         </svg>
 
                     </div>
+
 
                     <h2>
                         Welcome to Mwaniki Scholars
                     </h2>
 
+
                     <p>
                         This is the beginning of the conversation.
-                        Share ideas, ask questions, discuss medicine,
+                        Ask questions, share ideas, discuss medicine,
                         and learn together.
                     </p>
 
+
                     <button
+                        type="button"
                         class="header-action primary"
                         id="welcomeStartButton"
+                        aria-label="Start a conversation in this channel"
                     >
                         Start Conversation
                     </button>
@@ -1500,24 +622,36 @@
 
             <div class="chat-composer">
 
-                <div class="composer-box">
+                <form
+                    class="composer-box"
+                    id="messageForm"
+                    aria-label="Send a message"
+                >
 
-                    <div class="composer-toolbar">
+                    <div
+                        class="composer-toolbar"
+                        aria-label="Message tools"
+                    >
 
                         <button
+                            type="button"
                             class="composer-tool"
                             id="attachButton"
-                            title="Attach"
+                            title="Attach a file"
+                            aria-label="Attach a file"
                         >
-                            +
+                            <span aria-hidden="true">+</span>
                         </button>
 
+
                         <button
+                            type="button"
                             class="composer-tool"
                             id="emojiButton"
-                            title="Emoji"
+                            title="Add emoji"
+                            aria-label="Add emoji"
                         >
-                            ☺
+                            <span aria-hidden="true">☺</span>
                         </button>
 
                     </div>
@@ -1525,32 +659,59 @@
 
                     <div class="composer-row">
 
+                        <label
+                            for="messageInput"
+                            class="sr-only"
+                        >
+                            Write a message
+                        </label>
+
+
                         <textarea
                             id="messageInput"
+                            name="message"
                             rows="1"
                             placeholder="Message this channel..."
+                            aria-label="Write a message"
+                            aria-describedby="messageInputHelp"
                         ></textarea>
 
+
+                        <span
+                            id="messageInputHelp"
+                            class="sr-only"
+                        >
+                            Press Enter to send.
+                            Press Shift and Enter for a new line.
+                        </span>
+
+
                         <button
+                            type="submit"
                             class="send-button"
                             id="sendMessageButton"
                             title="Send message"
                             aria-label="Send message"
                         >
-                            <svg width="19"
-                                 height="19"
-                                 viewBox="0 0 24 24"
-                                 fill="none"
-                                 stroke="currentColor"
-                                 stroke-width="2">
-                                <path d="m22 2-7 20-4-9-9-4Z"/>
-                                <path d="M22 2 11 13"/>
+
+                            <svg
+                                aria-hidden="true"
+                                width="19"
+                                height="19"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <path d="m22 2-7 20-4-9-9-4Z"></path>
+                                <path d="M22 2 11 13"></path>
                             </svg>
+
                         </button>
 
                     </div>
 
-                </div>
+                </form>
 
             </div>
 
@@ -1562,35 +723,95 @@
 
 
 <!-- =========================================================
-     COMMUNITY MODAL
+     COMMUNITY SELECTOR MODAL
      ========================================================= -->
 
 <div
     class="modal"
     id="communityModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="communityModalTitle"
+    aria-describedby="communityModalDescription"
+    aria-hidden="true"
 >
 
-    <div class="modal-card">
+    <div
+        class="modal-card"
+        role="document"
+    >
 
         <header class="modal-header">
 
-            <div class="modal-title">
-                Choose a community
+            <div>
+
+                <div
+                    class="modal-title"
+                    id="communityModalTitle"
+                >
+                    Choose a community
+                </div>
+
+                <p
+                    class="modal-description"
+                    id="communityModalDescription"
+                >
+                    Search or select any available community.
+                </p>
+
             </div>
 
+
             <button
+                type="button"
                 class="modal-close"
                 id="closeCommunityModal"
-                aria-label="Close"
+                title="Close community selector"
+                aria-label="Close community selector"
             >
-                ×
+                <span aria-hidden="true">×</span>
             </button>
 
         </header>
 
+
+        <div class="modal-search">
+
+            <label
+                class="search-box"
+                for="communityModalSearch"
+            >
+
+                <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <path d="m20 20-4-4"></path>
+                </svg>
+
+
+                <input
+                    id="communityModalSearch"
+                    type="search"
+                    placeholder="Search communities..."
+                    autocomplete="off"
+                    aria-label="Search communities"
+                >
+
+            </label>
+
+        </div>
+
+
         <div
             class="modal-body"
             id="communityChoiceList"
+            role="listbox"
+            aria-label="Available communities"
         ></div>
 
     </div>
@@ -1599,17 +820,958 @@
 
 
 <!-- =========================================================
-     SUPABASE
+     SCREEN READER STATUS
+     ========================================================= -->
+
+<div
+    id="communityStatus"
+    class="sr-only"
+    role="status"
+    aria-live="polite"
+    aria-atomic="true"
+></div>
+
+
+<!-- =========================================================
+     SCRIPTS
      ========================================================= -->
 
 <script src="./supabase.js"></script>
+<script src="./community.js"></script>
+
 
 <!-- =========================================================
-     COMMUNITY ENGINE
+     ACCESSIBILITY BEHAVIOR
      ========================================================= -->
 
-<script src="./community.js"></script>
+<script>
+
+(function () {
+
+    "use strict";
+
+
+    /* =====================================================
+       HELPERS
+       ===================================================== */
+
+    const $ = (selector, root = document) =>
+        root.querySelector(selector);
+
+    const $$ = (selector, root = document) =>
+        Array.from(root.querySelectorAll(selector));
+
+
+    const announce = (message) => {
+
+        const announcer =
+            $("#accessibilityAnnouncer");
+
+        const status =
+            $("#communityStatus");
+
+        if (announcer) {
+            announcer.textContent = "";
+
+            window.setTimeout(() => {
+                announcer.textContent = message;
+            }, 30);
+        }
+
+        if (status) {
+            status.textContent = message;
+        }
+    };
+
+
+    /* =====================================================
+       FOCUSABLE ELEMENTS
+       ===================================================== */
+
+    const getFocusable = (container) => {
+
+        if (!container) return [];
+
+        return $$(
+            `
+            a[href],
+            button:not([disabled]),
+            input:not([disabled]),
+            textarea:not([disabled]),
+            select:not([disabled]),
+            [tabindex]:not([tabindex="-1"])
+            `,
+            container
+        ).filter(element => {
+
+            return (
+                !element.hidden &&
+                element.offsetParent !== null
+            );
+
+        });
+
+    };
+
+
+    /* =====================================================
+       COMMUNITY MODAL
+       ===================================================== */
+
+    const modal =
+        $("#communityModal");
+
+    const modalOpenButtons = [
+        $("#openCommunityButton"),
+        $("#communitySelectorButton"),
+        $("#headerCommunityButton")
+    ].filter(Boolean);
+
+    const closeModalButton =
+        $("#closeCommunityModal");
+
+    let previousFocusedElement = null;
+
+
+    const openCommunityModal = () => {
+
+        if (!modal) return;
+
+        previousFocusedElement =
+            document.activeElement;
+
+        modal.classList.add("open");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "false"
+        );
+
+        modalOpenButtons.forEach(button => {
+
+            button.setAttribute(
+                "aria-expanded",
+                "true"
+            );
+
+        });
+
+
+        document.body.classList.add(
+            "modal-open"
+        );
+
+
+        const search =
+            $("#communityModalSearch");
+
+        window.setTimeout(() => {
+
+            if (search) {
+                search.focus();
+            } else if (closeModalButton) {
+                closeModalButton.focus();
+            }
+
+        }, 30);
+
+
+        announce(
+            "Community selector opened. Search for a community or use the arrow keys."
+        );
+    };
+
+
+    const closeCommunityModal = () => {
+
+        if (!modal) return;
+
+        modal.classList.remove("open");
+
+        modal.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        modalOpenButtons.forEach(button => {
+
+            button.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+        });
+
+
+        document.body.classList.remove(
+            "modal-open"
+        );
+
+
+        if (
+            previousFocusedElement &&
+            typeof previousFocusedElement.focus === "function"
+        ) {
+            previousFocusedElement.focus();
+        }
+
+
+        announce(
+            "Community selector closed."
+        );
+    };
+
+
+    modalOpenButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            openCommunityModal
+        );
+
+    });
+
+
+    if (closeModalButton) {
+
+        closeModalButton.addEventListener(
+            "click",
+            closeCommunityModal
+        );
+
+    }
+
+
+    if (modal) {
+
+        modal.addEventListener(
+            "click",
+            event => {
+
+                if (event.target === modal) {
+                    closeCommunityModal();
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       ESCAPE KEY
+       ===================================================== */
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.key === "Escape" &&
+                modal &&
+                modal.classList.contains("open")
+            ) {
+
+                event.preventDefault();
+
+                closeCommunityModal();
+
+                return;
+            }
+
+
+            /* Clear search with Escape */
+
+            if (
+                event.key === "Escape" &&
+                document.activeElement ===
+                $("#channelSearchInput")
+            ) {
+
+                const input =
+                    $("#channelSearchInput");
+
+                if (input && input.value) {
+
+                    input.value = "";
+
+                    input.dispatchEvent(
+                        new Event("input", {
+                            bubbles: true
+                        })
+                    );
+
+                    announce(
+                        "Channel search cleared."
+                    );
+                }
+            }
+
+        }
+    );
+
+
+    /* =====================================================
+       MODAL FOCUS TRAP
+       ===================================================== */
+
+    if (modal) {
+
+        modal.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key !== "Tab" ||
+                    !modal.classList.contains("open")
+                ) {
+                    return;
+                }
+
+
+                const focusable =
+                    getFocusable(modal);
+
+
+                if (!focusable.length) {
+                    event.preventDefault();
+                    return;
+                }
+
+
+                const first =
+                    focusable[0];
+
+                const last =
+                    focusable[focusable.length - 1];
+
+
+                if (
+                    event.shiftKey &&
+                    document.activeElement === first
+                ) {
+
+                    event.preventDefault();
+
+                    last.focus();
+
+                } else if (
+                    !event.shiftKey &&
+                    document.activeElement === last
+                ) {
+
+                    event.preventDefault();
+
+                    first.focus();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       RAIL ARROW NAVIGATION
+       ===================================================== */
+
+    const setupRailKeyboardNavigation = () => {
+
+        const rail =
+            $(".community-rail");
+
+        if (!rail) return;
+
+
+        rail.addEventListener(
+            "keydown",
+            event => {
+
+                const buttons =
+                    $$(
+                        "button:not([disabled])",
+                        rail
+                    );
+
+
+                const current =
+                    document.activeElement;
+
+                const index =
+                    buttons.indexOf(current);
+
+
+                if (index === -1) {
+                    return;
+                }
+
+
+                let nextIndex = index;
+
+
+                if (event.key === "ArrowDown") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        (index + 1) %
+                        buttons.length;
+
+                }
+
+
+                if (event.key === "ArrowUp") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        (
+                            index - 1 +
+                            buttons.length
+                        ) %
+                        buttons.length;
+
+                }
+
+
+                if (event.key === "Home") {
+
+                    event.preventDefault();
+
+                    nextIndex = 0;
+
+                }
+
+
+                if (event.key === "End") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        buttons.length - 1;
+
+                }
+
+
+                if (nextIndex !== index) {
+
+                    buttons[nextIndex].focus();
+
+                }
+
+            }
+        );
+
+    };
+
+
+    setupRailKeyboardNavigation();
+
+
+    /* =====================================================
+       MESSAGE COMPOSER
+       ===================================================== */
+
+    const messageInput =
+        $("#messageInput");
+
+    const messageForm =
+        $("#messageForm");
+
+
+    if (messageInput) {
+
+        messageInput.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key === "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+                    if (messageForm) {
+
+                        if (
+                            typeof messageForm.requestSubmit ===
+                            "function"
+                        ) {
+
+                            messageForm.requestSubmit();
+
+                        } else {
+
+                            $("#sendMessageButton")?.click();
+
+                        }
+
+                    }
+
+                }
+
+            }
+        );
+
+
+        messageInput.addEventListener(
+            "input",
+            () => {
+
+                messageInput.style.height =
+                    "auto";
+
+                messageInput.style.height =
+                    Math.min(
+                        messageInput.scrollHeight,
+                        130
+                    ) + "px";
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       SEARCH KEYBOARD SUPPORT
+       ===================================================== */
+
+    const channelSearch =
+        $("#channelSearchInput");
+
+
+    if (channelSearch) {
+
+        channelSearch.addEventListener(
+            "keydown",
+            event => {
+
+                if (event.key === "ArrowDown") {
+
+                    event.preventDefault();
+
+                    const firstChannel =
+                        $("#channelList button");
+
+                    if (firstChannel) {
+                        firstChannel.focus();
+                    }
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       DYNAMIC CHANNEL KEYBOARD SUPPORT
+       ===================================================== */
+
+    const channelList =
+        $("#channelList");
+
+
+    if (channelList) {
+
+        channelList.addEventListener(
+            "keydown",
+            event => {
+
+                const channelButtons =
+                    $$(
+                        "button",
+                        channelList
+                    );
+
+                const current =
+                    document.activeElement;
+
+                const index =
+                    channelButtons.indexOf(current);
+
+                if (index === -1) {
+                    return;
+                }
+
+
+                let nextIndex = index;
+
+
+                if (event.key === "ArrowDown") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        Math.min(
+                            index + 1,
+                            channelButtons.length - 1
+                        );
+
+                }
+
+
+                if (event.key === "ArrowUp") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        Math.max(
+                            index - 1,
+                            0
+                        );
+
+                }
+
+
+                if (event.key === "Home") {
+
+                    event.preventDefault();
+
+                    nextIndex = 0;
+
+                }
+
+
+                if (event.key === "End") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        channelButtons.length - 1;
+
+                }
+
+
+                if (nextIndex !== index) {
+
+                    channelButtons[
+                        nextIndex
+                    ].focus();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       COMMUNITY LIST KEYBOARD SUPPORT
+       ===================================================== */
+
+    const communityChoiceList =
+        $("#communityChoiceList");
+
+
+    if (communityChoiceList) {
+
+        communityChoiceList.addEventListener(
+            "keydown",
+            event => {
+
+                const choices =
+                    $$(
+                        "button",
+                        communityChoiceList
+                    );
+
+                const current =
+                    document.activeElement;
+
+                const index =
+                    choices.indexOf(current);
+
+                if (index === -1) {
+                    return;
+                }
+
+
+                let nextIndex = index;
+
+
+                if (event.key === "ArrowDown") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        Math.min(
+                            index + 1,
+                            choices.length - 1
+                        );
+
+                }
+
+
+                if (event.key === "ArrowUp") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        Math.max(
+                            index - 1,
+                            0
+                        );
+
+                }
+
+
+                if (event.key === "Home") {
+
+                    event.preventDefault();
+
+                    nextIndex = 0;
+
+                }
+
+
+                if (event.key === "End") {
+
+                    event.preventDefault();
+
+                    nextIndex =
+                        choices.length - 1;
+
+                }
+
+
+                if (nextIndex !== index) {
+
+                    choices[nextIndex].focus();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       DYNAMIC CONTENT OBSERVER
+       ===================================================== */
+
+    const observer =
+        new MutationObserver(
+            mutations => {
+
+                let addedContent = false;
+
+                mutations.forEach(
+                    mutation => {
+
+                        if (
+                            mutation.addedNodes &&
+                            mutation.addedNodes.length
+                        ) {
+                            addedContent = true;
+                        }
+
+                    }
+                );
+
+
+                if (!addedContent) {
+                    return;
+                }
+
+
+                /* Ensure dynamically-created images
+                   remain accessible. */
+
+                $$(
+                    "#messageList img"
+                ).forEach(image => {
+
+                    if (!image.getAttribute("alt")) {
+
+                        image.setAttribute(
+                            "alt",
+                            "Profile photo"
+                        );
+
+                    }
+
+                });
+
+
+                /* Make dynamic channel buttons
+                   keyboard accessible. */
+
+                $$("#channelList button").forEach(
+                    button => {
+
+                        if (
+                            !button.hasAttribute(
+                                "type"
+                            )
+                        ) {
+
+                            button.setAttribute(
+                                "type",
+                                "button"
+                            );
+
+                        }
+
+                        if (
+                            !button.hasAttribute(
+                                "aria-label"
+                            )
+                        ) {
+
+                            const text =
+                                button.textContent
+                                    .trim()
+                                    .replace(
+                                        /\s+/g,
+                                        " "
+                                    );
+
+                            if (text) {
+
+                                button.setAttribute(
+                                    "aria-label",
+                                    `Open ${text}`
+                                );
+
+                            }
+
+                        }
+
+                    }
+                );
+
+
+                /* Make dynamic community
+                   buttons accessible. */
+
+                $$("#communityRailList button")
+                    .forEach(button => {
+
+                        if (
+                            !button.hasAttribute(
+                                "type"
+                            )
+                        ) {
+
+                            button.setAttribute(
+                                "type",
+                                "button"
+                            );
+
+                        }
+
+                        if (
+                            !button.hasAttribute(
+                                "aria-label"
+                            )
+                        ) {
+
+                            const text =
+                                button.textContent
+                                    .trim()
+                                    .replace(
+                                        /\s+/g,
+                                        " "
+                                    );
+
+                            if (text) {
+
+                                button.setAttribute(
+                                    "aria-label",
+                                    `Open ${text} community`
+                                );
+
+                            }
+
+                        }
+
+                    });
+
+
+            }
+        );
+
+
+    if (channelList) {
+
+        observer.observe(
+            channelList,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+    }
+
+
+    const railList =
+        $("#communityRailList");
+
+
+    if (railList) {
+
+        observer.observe(
+            railList,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       START CONVERSATION BUTTONS
+       ===================================================== */
+
+    [
+        $("#startConversationButton"),
+        $("#welcomeStartButton")
+    ]
+        .filter(Boolean)
+        .forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => {
+
+                    if (messageInput) {
+
+                        messageInput.focus();
+
+                        announce(
+                            "Message box focused. Type your conversation and press Enter to send."
+                        );
+
+                    }
+
+                }
+            );
+
+        });
+
+
+    /* =====================================================
+       INITIAL STATUS
+       ===================================================== */
+
+    announce(
+        "Mwaniki Scholars community loaded. Use Tab to navigate, Enter or Space to activate buttons, and arrow keys to move through navigation."
+    );
+
+
+})();
+
+</script>
 
 </body>
 </html>
-
