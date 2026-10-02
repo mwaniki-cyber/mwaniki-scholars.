@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -11,13 +10,13 @@
     >
 
     <meta
-        name="description"
-        content="Mwaniki Scholars Community"
+        name="theme-color"
+        content="#07151a"
     >
 
     <meta
-        name="theme-color"
-        content="#087f73"
+        name="description"
+        content="Mwaniki Scholars Community"
     >
 
     <title>
@@ -28,7 +27,6 @@
         rel="stylesheet"
         href="./community.css"
     >
-
 </head>
 
 <body>
@@ -42,38 +40,80 @@
          TOP BAR
          ===================================================== -->
 
-    <header class="community-header">
+    <header class="mw-topbar">
 
-        <div class="community-brand">
+        <div class="mw-brand">
 
-            <a
-                href="./dashboard.html"
-                class="community-logo-link"
-            >
+            <div class="mw-brand-mark">
+                MS
+            </div>
+
+            <div class="mw-brand-text">
+
                 <strong>
                     Mwaniki Scholars
                 </strong>
-            </a>
 
-            <span>
-                Community
-            </span>
+                <span>
+                    Community
+                </span>
+
+            </div>
 
         </div>
 
-        <div class="community-header-actions">
+
+        <div class="mw-topbar-center">
+
+            <div class="mw-global-search">
+
+                <span class="mw-search-icon">
+                    🔎
+                </span>
+
+                <input
+                    type="text"
+                    placeholder="Search community..."
+                    id="globalCommunitySearch"
+                >
+
+                <span class="mw-search-shortcut">
+                    /
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="mw-topbar-actions">
 
             <button
                 type="button"
-                id="generalCallButton"
-                class="general-call-launcher"
+                class="mw-top-action"
+                id="notificationButton"
+                title="Notifications"
             >
-                📞 General Call
+                🔔
+            </button>
+
+            <button
+                type="button"
+                class="mw-general-call-button"
+                id="generalCallButton"
+            >
+                <span>
+                    📞
+                </span>
+
+                <span>
+                    General Call
+                </span>
             </button>
 
             <a
                 href="./dashboard.html"
-                class="dashboard-link"
+                class="mw-dashboard-button"
             >
                 Dashboard
             </a>
@@ -84,10 +124,10 @@
 
 
     <!-- =====================================================
-         MAIN COMMUNITY LAYOUT
+         APPLICATION BODY
          ===================================================== -->
 
-    <main class="community-layout">
+    <div class="mw-workspace">
 
 
         <!-- =================================================
@@ -96,155 +136,310 @@
 
         <aside
             id="communityRail"
-            class="community-rail"
+            class="mw-community-rail"
         >
 
-            <div class="channel-loading">
-                Loading communities...
+            <div class="mw-rail-top">
+
+                <!-- HOME -->
+
+                <button
+                    type="button"
+                    id="homeCommunityButton"
+                    class="mw-community-icon home active"
+                    title="Home"
+                >
+
+                    <span>
+                        🏠
+                    </span>
+
+                </button>
+
+
+                <div class="mw-rail-divider"></div>
+
+
+                <!-- COMMUNITIES WILL BE INSERTED HERE -->
+
+                <div
+                    id="communityRailList"
+                    class="mw-community-rail-list"
+                >
+
+                    <button
+                        type="button"
+                        class="mw-community-icon"
+                        title="Medical Community"
+                    >
+                        🩺
+                    </button>
+
+                    <button
+                        type="button"
+                        class="mw-community-icon"
+                        title="Gaming Community"
+                    >
+                        🎮
+                    </button>
+
+                    <button
+                        type="button"
+                        class="mw-community-icon"
+                        title="Memes Community"
+                    >
+                        😂
+                    </button>
+
+                </div>
+
+
+                <div class="mw-rail-divider"></div>
+
+
+                <!-- ADD COMMUNITY -->
+
+                <button
+                    type="button"
+                    id="createCommunityButton"
+                    class="mw-community-icon add"
+                    title="Create Community"
+                >
+                    +
+                </button>
+
+            </div>
+
+
+            <div class="mw-rail-bottom">
+
+                <div
+                    class="mw-online-indicator"
+                    title="Online"
+                ></div>
+
             </div>
 
         </aside>
 
 
         <!-- =================================================
-             CHANNEL SIDEBAR
+             COMMUNITY / CHANNEL SIDEBAR
              ================================================= -->
 
         <aside
             id="channelSidebar"
-            class="channel-sidebar"
+            class="mw-sidebar"
         >
 
-            <div class="active-community-header">
+            <!-- COMMUNITY HEADER -->
 
-                <div class="active-community-icon-wrapper">
+            <div class="mw-sidebar-community">
 
-                    <img
-                        id="activeCommunityIcon"
-                        class="active-community-icon"
-                        alt=""
-                    >
+                <div
+                    id="activeCommunityIcon"
+                    class="mw-active-community-icon"
+                >
+                    🩺
+                </div>
+
+                <div class="mw-active-community-info">
+
+                    <h2 id="activeCommunityName">
+                        Mwaniki Scholars
+                    </h2>
+
+                    <p id="activeCommunityDescription">
+                        Medical learning community
+                    </p>
 
                 </div>
 
-                <div class="active-community-info">
-
-                    <strong id="activeCommunityName">
-                        Community
-                    </strong>
-
-                    <small id="activeCommunityDescription">
-                    </small>
-
-                </div>
+                <button
+                    type="button"
+                    id="communityMenuButton"
+                    class="mw-sidebar-menu-button"
+                >
+                    ⋯
+                </button>
 
             </div>
 
 
-            <!-- Course banner -->
+            <!-- COMMUNITY COURSE -->
 
             <div
                 id="communityCourseBanner"
-                class="community-course-banner hidden"
+                class="mw-course-banner"
             >
 
-                <small id="communityCourseLabel">
-                </small>
+                <span class="mw-course-banner-icon">
+                    📚
+                </span>
 
-                <strong id="communityCourseName">
-                </strong>
+                <div>
+
+                    <span id="communityCourseLabel">
+                        COURSE COMMUNITY
+                    </span>
+
+                    <strong id="communityCourseName">
+                        All Courses
+                    </strong>
+
+                </div>
 
             </div>
 
 
-            <!-- Channel search -->
+            <!-- SEARCH -->
 
-            <div class="channel-search">
+            <div class="mw-sidebar-search">
+
+                <span>
+                    🔎
+                </span>
 
                 <input
-                    type="search"
+                    type="text"
                     id="channelSearchInput"
-                    placeholder="Search channels..."
-                    autocomplete="off"
+                    placeholder="Find a channel"
                 >
 
             </div>
 
 
-            <!-- Channels -->
+            <!-- CHANNELS -->
 
             <div
                 id="channelList"
-                class="channel-list"
+                class="mw-channel-list"
             >
 
-                <div class="channel-loading">
-                    Loading channels...
+                <div class="mw-channel-category">
+
+                    <div class="mw-channel-category-title">
+
+                        <span>
+                            TEXT CHANNELS
+                        </span>
+
+                    </div>
+
+                    <button class="mw-channel active">
+                        <span>#</span>
+                        <span>general</span>
+                    </button>
+
+                    <button class="mw-channel">
+                        <span>#</span>
+                        <span>announcements</span>
+                    </button>
+
+                    <button class="mw-channel">
+                        <span>#</span>
+                        <span>discussions</span>
+                    </button>
+
+                </div>
+
+
+                <div class="mw-channel-category">
+
+                    <div class="mw-channel-category-title">
+
+                        <span>
+                            ACADEMIC
+                        </span>
+
+                    </div>
+
+                    <button class="mw-channel">
+                        <span>📚</span>
+                        <span>study-room</span>
+                    </button>
+
+                    <button class="mw-channel">
+                        <span>🧪</span>
+                        <span>laboratory</span>
+                    </button>
+
+                    <button class="mw-channel">
+                        <span>🩺</span>
+                        <span>clinical-cases</span>
+                    </button>
+
                 </div>
 
             </div>
 
 
-            <button
-                type="button"
-                id="createChannelButton"
-                class="create-channel-button"
-            >
-                + Create Channel
-            </button>
+            <!-- SIDEBAR FOOTER -->
+
+            <div class="mw-sidebar-footer">
+
+                <button
+                    type="button"
+                    id="createChannelButton"
+                    class="mw-create-channel"
+                >
+                    <span>+</span>
+                    Create Channel
+                </button>
+
+            </div>
 
         </aside>
 
 
         <!-- =================================================
-             CHAT AREA
+             MAIN CHAT
              ================================================= -->
 
-        <section class="community-chat">
+        <main
+            id="communityMain"
+            class="mw-chat"
+        >
 
+            <!-- CHAT HEADER -->
 
-            <!-- Chat header -->
+            <header class="mw-chat-header">
 
-            <header class="chat-header">
+                <div class="mw-chat-channel-icon">
+                    #
+                </div>
 
-                <div class="chat-header-left">
+                <div class="mw-chat-title">
 
-                    <button
-                        type="button"
-                        id="channelToggleButton"
-                        class="mobile-toggle-button"
-                        aria-label="Open channels"
-                    >
-                        ☰
-                    </button>
-
-                    <div>
+                    <div class="mw-chat-title-row">
 
                         <h1 id="activeChannelName">
-                            Select a channel
+                            general
                         </h1>
 
                         <span
                             id="activeRoleBadge"
-                            class="role-badge"
+                            class="mw-role-badge"
                         >
                             Student
                         </span>
 
-                        <p id="activeChannelDescription">
-                        </p>
-
                     </div>
+
+                    <p id="activeChannelDescription">
+                        Welcome to the Mwaniki Scholars community.
+                    </p>
 
                 </div>
 
 
-                <div class="chat-header-actions">
+                <div class="mw-chat-actions">
 
                     <button
                         type="button"
                         id="voiceCallButton"
-                        title="Voice call"
+                        class="mw-chat-action"
+                        title="Voice Call"
                     >
                         📞
                     </button>
@@ -252,7 +447,8 @@
                     <button
                         type="button"
                         id="videoCallButton"
-                        title="Video call"
+                        class="mw-chat-action"
+                        title="Video Call"
                     >
                         📹
                     </button>
@@ -260,7 +456,8 @@
                     <button
                         type="button"
                         id="chatSearchButton"
-                        title="Search messages"
+                        class="mw-chat-action"
+                        title="Search Messages"
                     >
                         🔎
                     </button>
@@ -268,6 +465,7 @@
                     <button
                         type="button"
                         id="memberToggleButton"
+                        class="mw-chat-action"
                         title="Members"
                     >
                         👥
@@ -278,18 +476,17 @@
             </header>
 
 
-            <!-- Message search -->
+            <!-- MESSAGE SEARCH -->
 
             <div
                 id="messageSearchPanel"
-                class="message-search-panel hidden"
+                class="mw-message-search"
             >
 
                 <input
-                    type="search"
+                    type="text"
                     id="messageSearchInput"
                     placeholder="Search messages..."
-                    autocomplete="off"
                 >
 
                 <button
@@ -302,43 +499,49 @@
             </div>
 
 
-            <!-- Messages -->
+            <!-- MESSAGES -->
 
-            <div
+            <section
                 id="messageList"
-                class="message-list"
+                class="mw-message-list"
             >
 
-                <div class="message-empty">
+                <div class="mw-welcome">
 
-                    <h3>
-                        Welcome to Mwaniki Scholars Community
-                    </h3>
+                    <div class="mw-welcome-icon">
+                        👋
+                    </div>
+
+                    <h2>
+                        Welcome to Mwaniki Scholars
+                    </h2>
 
                     <p>
-                        Select a channel to begin.
+                        This is the beginning of the
+                        <strong>#general</strong>
+                        conversation.
                     </p>
 
                 </div>
 
-            </div>
+            </section>
 
 
-            <!-- Reply preview -->
+            <!-- REPLY -->
 
             <div
                 id="replyPreview"
-                class="reply-preview hidden"
+                class="mw-reply-preview"
             >
 
                 <div>
 
-                    <small>
+                    <span>
                         Replying to
-                    </small>
-
-                    <span id="replyPreviewText">
                     </span>
+
+                    <strong id="replyPreviewText">
+                    </strong>
 
                 </div>
 
@@ -352,59 +555,61 @@
             </div>
 
 
-            <!-- Message form -->
+            <!-- COMPOSER -->
 
             <form
                 id="messageForm"
-                class="message-form"
+                class="mw-composer"
             >
 
                 <button
                     type="button"
                     id="attachmentButton"
-                    title="Attach file"
+                    class="mw-composer-button"
+                    title="Attach"
                 >
-                    📎
+                    +
                 </button>
 
-                <input
-                    type="text"
+                <textarea
                     id="messageInput"
-                    placeholder="Message this channel..."
-                    autocomplete="off"
-                >
+                    rows="1"
+                    placeholder="Message #general"
+                ></textarea>
 
                 <button
                     type="submit"
                     id="sendMessageButton"
+                    class="mw-send-button"
+                    title="Send"
                 >
-                    Send
+                    ➤
                 </button>
 
             </form>
 
-        </section>
+        </main>
 
 
         <!-- =================================================
-             MEMBER SIDEBAR
+             MEMBER PANEL
              ================================================= -->
 
         <aside
             id="memberSidebar"
-            class="member-sidebar"
+            class="mw-members"
         >
 
-            <header class="member-header">
+            <div class="mw-members-header">
 
                 <div>
 
-                    <strong>
+                    <h2>
                         Members
-                    </strong>
+                    </h2>
 
                     <span id="memberCount">
-                        0
+                        0 online
                     </span>
 
                 </div>
@@ -416,16 +621,19 @@
                     ×
                 </button>
 
-            </header>
+            </div>
 
 
-            <div class="member-search">
+            <div class="mw-member-search">
+
+                <span>
+                    🔎
+                </span>
 
                 <input
-                    type="search"
+                    type="text"
                     id="memberSearchInput"
-                    placeholder="Search members..."
-                    autocomplete="off"
+                    placeholder="Search members"
                 >
 
             </div>
@@ -433,13 +641,51 @@
 
             <div
                 id="memberList"
-                class="member-list"
+                class="mw-member-list"
             >
+
+                <div class="mw-member-loading">
+                    Loading members...
+                </div>
+
             </div>
 
         </aside>
 
-    </main>
+    </div>
+
+
+    <!-- =====================================================
+         COMMUNITY MENU
+         ===================================================== -->
+
+    <div
+        id="communityMenu"
+        class="mw-context-menu"
+    >
+
+        <button
+            type="button"
+            id="communityMenuCreateChannel"
+        >
+            ＋ Create Channel
+        </button>
+
+        <button
+            type="button"
+            id="communityMenuCreateCommunity"
+        >
+            ＋ Create Community
+        </button>
+
+        <button
+            type="button"
+            id="communityMenuRefresh"
+        >
+            ↻ Refresh
+        </button>
+
+    </div>
 
 
     <!-- =====================================================
@@ -448,7 +694,7 @@
 
     <div
         id="communityDrawerOverlay"
-        class="community-drawer-overlay"
+        class="mw-overlay"
     ></div>
 
 
@@ -458,75 +704,102 @@
 
     <div
         id="communityModal"
-        class="modal hidden"
+        class="mw-modal"
     >
 
-        <div class="modal-card">
+        <div class="mw-modal-card">
 
-            <button
-                type="button"
-                id="closeCommunityModalButton"
-                class="modal-close"
-            >
-                ×
-            </button>
+            <div class="mw-modal-header">
 
-            <h2>
-                Create Community
-            </h2>
+                <div>
+
+                    <span>
+                        COMMUNITY
+                    </span>
+
+                    <h2>
+                        Create Community
+                    </h2>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="closeCommunityModalButton"
+                >
+                    ×
+                </button>
+
+            </div>
+
 
             <form id="communityForm">
 
                 <label>
-                    Community name
-
-                    <input
-                        type="text"
-                        id="communityNameInput"
-                        required
-                        maxlength="100"
-                    >
-
+                    Community Name
                 </label>
+
+                <input
+                    type="text"
+                    id="communityNameInput"
+                    required
+                    placeholder="e.g. Medical Students"
+                >
+
 
                 <label>
                     Description
-
-                    <textarea
-                        id="communityDescriptionInput"
-                        rows="4"
-                        maxlength="500"
-                    ></textarea>
-
                 </label>
+
+                <textarea
+                    id="communityDescriptionInput"
+                    placeholder="Describe your community..."
+                ></textarea>
+
 
                 <label>
-                    Icon URL
-
-                    <input
-                        type="url"
-                        id="communityIconInput"
-                        placeholder="https://..."
-                    >
-
+                    Course
                 </label>
+
+                <select id="communityCourseSelect">
+
+                    <option value="">
+                        General Community
+                    </option>
+
+                </select>
+
+
+                <label>
+                    Icon
+                </label>
+
+                <input
+                    type="text"
+                    id="communityIconInput"
+                    placeholder="🩺"
+                >
+
 
                 <div
                     id="communityFormMessage"
-                    class="form-message"
+                    class="mw-form-message"
                 ></div>
 
-                <div class="modal-actions">
+
+                <div class="mw-modal-actions">
 
                     <button
                         type="button"
                         id="cancelCommunityButton"
+                        class="mw-secondary-button"
                     >
                         Cancel
                     </button>
 
                     <button
                         type="submit"
+                        class="mw-primary-button"
                     >
                         Create Community
                     </button>
@@ -546,106 +819,119 @@
 
     <div
         id="channelModal"
-        class="modal hidden"
+        class="mw-modal"
     >
 
-        <div class="modal-card">
+        <div class="mw-modal-card">
 
-            <button
-                type="button"
-                id="closeChannelModalButton"
-                class="modal-close"
-            >
-                ×
-            </button>
+            <div class="mw-modal-header">
 
-            <h2>
-                Create Channel
-            </h2>
+                <div>
+
+                    <span>
+                        CHANNEL
+                    </span>
+
+                    <h2>
+                        Create Channel
+                    </h2>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="closeChannelModalButton"
+                >
+                    ×
+                </button>
+
+            </div>
+
 
             <form id="channelForm">
 
                 <label>
-                    Channel name
-
-                    <input
-                        type="text"
-                        id="channelNameInput"
-                        required
-                        maxlength="100"
-                    >
-
+                    Channel Name
                 </label>
+
+                <input
+                    type="text"
+                    id="channelNameInput"
+                    required
+                    placeholder="general"
+                >
+
 
                 <label>
                     Description
-
-                    <textarea
-                        id="channelDescriptionInput"
-                        rows="3"
-                        maxlength="500"
-                    ></textarea>
-
                 </label>
+
+                <textarea
+                    id="channelDescriptionInput"
+                    placeholder="What is this channel for?"
+                ></textarea>
+
 
                 <label>
-                    Channel category
-
-                    <input
-                        type="text"
-                        id="channelCategoryInput"
-                        value="text"
-                        placeholder="text"
-                    >
-
+                    Category
                 </label>
+
+                <input
+                    type="text"
+                    id="channelCategoryInput"
+                    placeholder="Text Channels"
+                >
+
 
                 <label>
                     Visibility
-
-                    <select id="channelVisibilitySelect">
-
-                        <option value="public">
-                            Public
-                        </option>
-
-                        <option value="private">
-                            Private
-                        </option>
-
-                    </select>
-
                 </label>
+
+                <select id="channelVisibilitySelect">
+
+                    <option value="public">
+                        Public
+                    </option>
+
+                    <option value="private">
+                        Private
+                    </option>
+
+                </select>
+
 
                 <label>
                     Course
-
-                    <select id="channelCourseSelect">
-
-                        <option value="">
-                            No course linked
-                        </option>
-
-                    </select>
-
                 </label>
+
+                <select id="channelCourseSelect">
+
+                    <option value="">
+                        General
+                    </option>
+
+                </select>
+
 
                 <div
                     id="channelFormMessage"
-                    class="form-message"
+                    class="mw-form-message"
                 ></div>
 
-                <div class="modal-actions">
+
+                <div class="mw-modal-actions">
 
                     <button
                         type="button"
                         id="cancelChannelButton"
+                        class="mw-secondary-button"
                     >
                         Cancel
                     </button>
 
                     <button
                         type="submit"
+                        class="mw-primary-button"
                     >
                         Create Channel
                     </button>
@@ -660,111 +946,118 @@
 
 
     <!-- =====================================================
-         COMMUNITY MENU
-         ===================================================== -->
-
-    <div
-        id="communityMenu"
-        class="community-menu hidden"
-    >
-
-        <button
-            type="button"
-            id="communityMenuCreateChannel"
-        >
-            Create Channel
-        </button>
-
-        <button
-            type="button"
-            id="communityMenuCreateCommunity"
-        >
-            Create Community
-        </button>
-
-        <button
-            type="button"
-            id="communityMenuRefresh"
-        >
-            Refresh
-        </button>
-
-    </div>
-
-
-    <!-- =====================================================
          GENERAL CALL MODAL
          ===================================================== -->
 
     <div
         id="generalCallModal"
-        class="modal hidden"
+        class="mw-modal"
     >
 
-        <div class="modal-card call-picker-modal">
+        <div class="mw-modal-card mw-call-picker-card">
 
-            <button
-                type="button"
-                id="closeGeneralCallModalButton"
-                class="modal-close"
-            >
-                ×
-            </button>
+            <div class="mw-modal-header">
 
-            <h2>
-                Start a General Call
-            </h2>
+                <div>
 
-            <p>
-                Choose the online people you want to call.
-            </p>
+                    <span>
+                        MWANIKI CALL
+                    </span>
+
+                    <h2>
+                        Start a Call
+                    </h2>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="closeGeneralCallModalButton"
+                >
+                    ×
+                </button>
+
+            </div>
 
 
-            <div class="call-type-selector">
+            <div class="mw-call-type-selector">
 
                 <button
                     type="button"
                     id="generalVoiceCallButton"
+                    class="mw-call-type active"
                 >
-                    📞 Voice
+                    <span>
+                        📞
+                    </span>
+
+                    Voice Call
                 </button>
 
                 <button
                     type="button"
                     id="generalVideoCallButton"
-                    class="active"
+                    class="mw-call-type"
                 >
-                    📹 Video
+                    <span>
+                        📹
+                    </span>
+
+                    Video Call
                 </button>
+
+            </div>
+
+
+            <div class="mw-online-heading">
+
+                <span>
+                    ONLINE MEMBERS
+                </span>
+
+                <small id="generalCallSelectionCount">
+                    0 selected
+                </small>
 
             </div>
 
 
             <div
                 id="generalCallUserList"
-                class="general-call-user-list"
+                class="mw-call-user-list"
             >
 
-                <div class="call-picker-loading">
-                    Loading online users...
+                <div class="mw-member-loading">
+                    Finding online members...
                 </div>
 
             </div>
 
 
+            <input
+                type="hidden"
+                id="generalCallUserInput"
+            >
+
+
+            <div
+                id="generalCallUserStatus"
+                class="mw-call-status"
+            ></div>
+
+
             <div
                 id="generalCallMessage"
-                class="general-call-message"
-            >
-                Select one or more online users.
-            </div>
+                class="mw-form-message"
+            ></div>
 
 
-            <div class="modal-actions">
+            <div class="mw-modal-actions">
 
                 <button
                     type="button"
                     id="cancelGeneralCallButton"
+                    class="mw-secondary-button"
                 >
                     Cancel
                 </button>
@@ -772,6 +1065,7 @@
                 <button
                     type="button"
                     id="startGeneralCallButton"
+                    class="mw-primary-button"
                 >
                     Start Call
                 </button>
@@ -784,120 +1078,117 @@
 
 
     <!-- =====================================================
-         CALL OVERLAY
+         ACTIVE CALL
          ===================================================== -->
 
     <div
         id="callOverlay"
-        class="call-overlay hidden"
+        class="mw-call-overlay"
     >
 
-        <div class="call-window">
+        <header class="mw-call-header">
 
-            <header class="call-header">
+            <div class="mw-call-header-icon">
+                📞
+            </div>
 
-                <div>
+            <div>
 
-                    <span id="callTypeIcon">
-                        📹
-                    </span>
+                <h2 id="callTitle">
+                    Mwaniki Call
+                </h2>
 
-                    <strong id="callTitle">
-                        Call
-                    </strong>
-
-                    <small id="callSubtitle">
-                    </small>
-
-                </div>
-
-                <div>
-
-                    <span id="callDuration">
-                        00:00
-                    </span>
-
-                    <button
-                        type="button"
-                        id="minimizeCallButton"
-                    >
-                        —
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <div
-                id="callVideoGrid"
-                class="call-video-grid"
-            >
-
-                <div
-                    id="localVideoTile"
-                    class="call-video-tile local-video-tile"
-                >
-
-                    <video
-                        id="localVideo"
-                        autoplay
-                        muted
-                        playsinline
-                    ></video>
-
-                    <span>
-                        You
-                    </span>
-
-                </div>
+                <p id="callSubtitle">
+                    Connecting...
+                </p>
 
             </div>
 
+            <div
+                id="callDuration"
+                class="mw-call-duration"
+            >
+                00:00
+            </div>
+
+            <button
+                type="button"
+                id="minimizeCallButton"
+                class="mw-call-top-button"
+            >
+                −
+            </button>
+
+        </header>
+
+
+        <main
+            id="callVideoGrid"
+            class="mw-call-video-grid"
+        >
 
             <div
-                id="callParticipants"
-                class="call-participants"
-            ></div>
+                id="localVideoTile"
+                class="mw-video-tile local"
+            >
+
+                <video
+                    id="localVideo"
+                    autoplay
+                    muted
+                    playsinline
+                ></video>
+
+                <span>
+                    You
+                </span>
+
+            </div>
+
+        </main>
 
 
-            <footer class="call-controls">
+        <div
+            id="callParticipants"
+            class="mw-call-participants"
+        ></div>
 
-                <button
-                    type="button"
-                    id="toggleMicrophoneButton"
-                    title="Mute microphone"
-                >
-                    🎙️
-                </button>
 
-                <button
-                    type="button"
-                    id="toggleCameraButton"
-                    title="Camera"
-                >
-                    📹
-                </button>
+        <footer class="mw-call-controls">
 
-                <button
-                    type="button"
-                    id="shareScreenButton"
-                    title="Share screen"
-                >
-                    🖥️
-                </button>
+            <button
+                type="button"
+                id="toggleMicrophoneButton"
+                class="mw-call-control"
+            >
+                🎙️
+            </button>
 
-                <button
-                    type="button"
-                    id="leaveCallButton"
-                    class="leave-call-button"
-                >
-                    End Call
-                </button>
+            <button
+                type="button"
+                id="toggleCameraButton"
+                class="mw-call-control"
+            >
+                📹
+            </button>
 
-            </footer>
+            <button
+                type="button"
+                id="shareScreenButton"
+                class="mw-call-control"
+            >
+                🖥️
+            </button>
 
-        </div>
+            <button
+                type="button"
+                id="leaveCallButton"
+                class="mw-call-control danger"
+            >
+                ☎
+            </button>
+
+        </footer>
 
     </div>
 
@@ -908,14 +1199,18 @@
 
     <div
         id="incomingCallToast"
-        class="incoming-call-toast hidden"
+        class="mw-incoming-call"
     >
 
-        <div>
+        <div class="mw-incoming-icon">
+            📞
+        </div>
 
-            <strong id="incomingCallTitle">
+        <div class="mw-incoming-info">
+
+            <h3 id="incomingCallTitle">
                 Incoming Call
-            </strong>
+            </h3>
 
             <p id="incomingCallText">
                 Someone is calling you.
@@ -923,20 +1218,23 @@
 
         </div>
 
-        <div>
 
-            <button
-                type="button"
-                id="acceptCallButton"
-            >
-                Accept
-            </button>
+        <div class="mw-incoming-actions">
 
             <button
                 type="button"
                 id="declineCallButton"
+                class="mw-decline-button"
             >
                 Decline
+            </button>
+
+            <button
+                type="button"
+                id="acceptCallButton"
+                class="mw-accept-button"
+            >
+                Answer
             </button>
 
         </div>
@@ -950,19 +1248,20 @@
 
     <div
         id="communityToast"
-        class="community-toast"
+        class="mw-toast"
     ></div>
 
+</div>
 
-    <!-- =====================================================
-         ONLY APPLICATION SCRIPT
-         ===================================================== -->
 
-    <script
-        type="module"
-        src="./community.js"
-    ></script>
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script
+    type="module"
+    src="./community.js"
+></script>
 
 </body>
-
 </html>
