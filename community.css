@@ -3958,3 +3958,292 @@ a:focus-visible {
         min-width: 0;
     }
 }
+/* ============================================================
+   MWANIKI COMMUNITY — BLUR FIX
+   ============================================================ */
+
+/* Remove accidental blur from the main application */
+#communityApp,
+#communityApp *,
+.community-app,
+.community-app * {
+    filter: none !important;
+    backdrop-filter: none !important;
+}
+
+/* Keep the actual background normal */
+#communityApp {
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Main community sections */
+#communityRail,
+#channelSidebar,
+#memberSidebar,
+#communityMain,
+#mainChat,
+#messageList,
+#channelList,
+#memberList,
+#messageForm,
+.chat-area,
+.chat-main,
+.community-main,
+.community-sidebar,
+.community-content {
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
+
+/* Text must remain sharp */
+#communityApp h1,
+#communityApp h2,
+#communityApp h3,
+#communityApp h4,
+#communityApp p,
+#communityApp span,
+#communityApp strong,
+#communityApp small,
+#communityApp button,
+#communityApp input,
+#communityApp textarea,
+#communityApp select,
+#communityApp label {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* ============================================================
+   MESSAGE AVATARS
+   ============================================================ */
+
+#messageList .chat-message-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+
+    overflow: hidden !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+    backdrop-filter: none !important;
+}
+
+#messageList .chat-message-avatar img,
+#messageList .chat-message-avatar .mwaniki-user-avatar {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    max-width: 44px !important;
+    min-height: 44px !important;
+    max-height: 44px !important;
+
+    object-fit: cover !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* ============================================================
+   MEMBER AVATARS
+   ============================================================ */
+
+#memberList .community-member-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+
+    overflow: hidden !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+}
+
+#memberList .community-member-avatar img,
+#memberList .community-member-avatar .mwaniki-user-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    min-height: 40px !important;
+    max-height: 40px !important;
+
+    object-fit: cover !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+}
+
+/* ============================================================
+   CALL USER PICKER
+   ============================================================ */
+
+#generalCallModal,
+#generalCallModal * {
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
+
+#generalCallUserList {
+    filter: none !important;
+    backdrop-filter: none !important;
+}
+
+.general-call-user-option {
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
+
+.general-call-user-avatar {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+
+    overflow: hidden !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+}
+
+.general-call-user-avatar img,
+.general-call-user-avatar .mwaniki-user-avatar {
+    width: 46px !important;
+    height: 46px !important;
+    min-width: 46px !important;
+    max-width: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+
+    object-fit: cover !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+}
+
+/* ============================================================
+   COMMUNITY ICONS
+   ============================================================ */
+
+.community-rail-icon {
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
+
+.community-rail-icon img {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    max-width: 42px !important;
+    min-height: 42px !important;
+    max-height: 42px !important;
+
+    object-fit: cover !important;
+    border-radius: 50% !important;
+
+    filter: none !important;
+}
+
+/* ============================================================
+   DO NOT BLUR THE CHAT
+   ============================================================ */
+
+#messageList,
+#messageList .chat-message,
+#messageList .chat-message-content,
+#messageList .chat-message-text,
+#channelList,
+#memberList {
+    filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+}
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+
+#communityModal,
+#channelModal,
+#generalCallModal,
+#callOverlay {
+    filter: none !important;
+}
+
+/* Do not blur the content inside modal */
+#communityModal *,
+#channelModal *,
+#generalCallModal *,
+#callOverlay * {
+    filter: none !important;
+    opacity: 1 !important;
+}
+
+/* ============================================================
+   CALL VIDEO
+   ============================================================ */
+
+#callVideoGrid video,
+#localVideo {
+    filter: none !important;
+    opacity: 1 !important;
+    backdrop-filter: none !important;
+}
+
+/* ============================================================
+   PREVENT FULL-PAGE BLUR FROM OLD CSS
+   ============================================================ */
+
+body {
+    filter: none !important;
+}
+
+html {
+    filter: none !important;
+}
+
+/* ============================================================
+   PREVENT DISABLED/LOADING STYLE FROM COVERING THE APP
+   ============================================================ */
+
+#communityApp.is-loading,
+#communityApp.loading,
+#communityApp.loading-state {
+    filter: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* ============================================================
+   FIX POSSIBLE BLUR OVERLAY
+   ============================================================ */
+
+#communityDrawerOverlay {
+    filter: none !important;
+}
+
+#communityDrawerOverlay.hidden {
+    display: none !important;
+}
+
+#communityDrawerOverlay:not(.hidden) {
+    /* overlay itself can remain dark,
+       but must not blur the whole page */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
