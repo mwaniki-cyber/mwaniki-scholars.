@@ -3502,3 +3502,459 @@ a:focus-visible {
     }
 
 }
+/* =========================================================
+   MWANIKI SCHOLARS COMMUNITY
+   MESSAGE AVATAR + STUDENT PHOTO FIX
+   ========================================================= */
+
+/* ---------------------------------------------------------
+   MESSAGE ROW
+   --------------------------------------------------------- */
+
+.message-item,
+.chat-message,
+.message-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   MESSAGE AVATAR WRAPPER
+   --------------------------------------------------------- */
+
+.message-avatar,
+.chat-message-avatar,
+.message-user-avatar,
+.message-profile-avatar,
+.user-avatar {
+    flex: 0 0 42px;
+    width: 42px !important;
+    height: 42px !important;
+
+    min-width: 42px !important;
+    min-height: 42px !important;
+    max-width: 42px !important;
+    max-height: 42px !important;
+
+    border-radius: 50%;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   ACTUAL STUDENT PHOTO
+   THIS IS THE IMPORTANT PART
+   --------------------------------------------------------- */
+
+.message-avatar img,
+.chat-message-avatar img,
+.message-user-avatar img,
+.message-profile-avatar img,
+.user-avatar img,
+.message-item img.avatar,
+.chat-message img.avatar {
+    display: block;
+
+    width: 100% !important;
+    height: 100% !important;
+
+    min-width: 0 !important;
+    min-height: 0 !important;
+
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border: 0;
+    margin: 0;
+    padding: 0;
+
+    border-radius: 50%;
+
+    position: static !important;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   MESSAGE CONTENT
+   Prevent long content or images from expanding layout
+   --------------------------------------------------------- */
+
+.message-content,
+.chat-message-content,
+.message-body,
+.message-text {
+    flex: 1 1 auto;
+
+    width: 0;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   MESSAGE HEADER
+   --------------------------------------------------------- */
+
+.message-header,
+.chat-message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    max-width: 100%;
+    min-width: 0;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   STUDENT NAME
+   --------------------------------------------------------- */
+
+.message-author,
+.message-user-name,
+.chat-message-author,
+.message-name {
+    max-width: 100%;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-weight: 700;
+}
+
+
+/* ---------------------------------------------------------
+   MESSAGE TEXT
+   --------------------------------------------------------- */
+
+.message-text,
+.chat-message-text,
+.message-content p {
+    max-width: 100%;
+
+    overflow-wrap: anywhere;
+    word-break: break-word;
+
+    white-space: pre-wrap;
+}
+
+
+/* ---------------------------------------------------------
+   PROFILE PHOTOS ANYWHERE INSIDE THE MESSAGE AREA
+   --------------------------------------------------------- */
+
+#messageList img {
+    box-sizing: border-box;
+}
+
+
+/* Avatar images specifically */
+#messageList .message-avatar img,
+#messageList .chat-message-avatar img,
+#messageList .message-user-avatar img,
+#messageList .message-profile-avatar img,
+#messageList .user-avatar img {
+    width: 42px !important;
+    height: 42px !important;
+
+    max-width: 42px !important;
+    max-height: 42px !important;
+
+    min-width: 42px !important;
+    min-height: 42px !important;
+
+    object-fit: cover !important;
+    border-radius: 50% !important;
+}
+
+
+/* ---------------------------------------------------------
+   REAL PROFILE PHOTO CLASS
+   If community.js uses profile-photo/avatar-photo
+   --------------------------------------------------------- */
+
+.profile-photo,
+.avatar-photo,
+.student-photo,
+.user-photo {
+    width: 42px !important;
+    height: 42px !important;
+
+    min-width: 42px !important;
+    min-height: 42px !important;
+
+    max-width: 42px !important;
+    max-height: 42px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    overflow: hidden;
+
+    display: block;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   PREVENT RAW IMAGES FROM BECOMING GIANT
+   --------------------------------------------------------- */
+
+#messageList img {
+    max-width: 100%;
+}
+
+#messageList .profile-photo,
+#messageList .avatar-photo,
+#messageList .student-photo,
+#messageList .user-photo {
+    max-width: 42px !important;
+    max-height: 42px !important;
+}
+
+
+/* ---------------------------------------------------------
+   MESSAGE LIST
+   --------------------------------------------------------- */
+
+#messageList {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   MESSAGE LIST CHILDREN
+   --------------------------------------------------------- */
+
+#messageList > *,
+#messageList .message-item,
+#messageList .chat-message {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+
+/* ---------------------------------------------------------
+   IMAGE ATTACHMENTS
+   Do NOT apply avatar sizing to actual shared images.
+   These can be larger, but remain inside the chat.
+   --------------------------------------------------------- */
+
+.message-attachment img,
+.chat-attachment img,
+.message-image,
+.chat-message-image {
+    width: auto;
+    height: auto;
+
+    max-width: min(100%, 500px);
+    max-height: 400px;
+
+    object-fit: contain;
+
+    border-radius: 12px;
+
+    display: block;
+}
+
+
+/* ---------------------------------------------------------
+   MEMBER SIDEBAR AVATARS
+   --------------------------------------------------------- */
+
+.member-avatar,
+.member-photo,
+.member-user-avatar {
+    flex: 0 0 38px;
+
+    width: 38px !important;
+    height: 38px !important;
+
+    min-width: 38px !important;
+    min-height: 38px !important;
+
+    max-width: 38px !important;
+    max-height: 38px !important;
+
+    border-radius: 50%;
+    overflow: hidden;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+}
+
+.member-avatar img,
+.member-photo img,
+.member-user-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+
+    min-width: 0 !important;
+    min-height: 0 !important;
+
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+    object-fit: cover !important;
+
+    border-radius: 50% !important;
+
+    display: block;
+}
+
+
+/* ---------------------------------------------------------
+   GENERAL USER PICKER AVATARS
+   --------------------------------------------------------- */
+
+.call-user-avatar,
+.online-user-avatar,
+.general-call-user-avatar {
+    width: 40px !important;
+    height: 40px !important;
+
+    min-width: 40px !important;
+    min-height: 40px !important;
+
+    max-width: 40px !important;
+    max-height: 40px !important;
+
+    border-radius: 50%;
+    overflow: hidden;
+
+    box-sizing: border-box;
+}
+
+.call-user-avatar img,
+.online-user-avatar img,
+.general-call-user-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+    object-fit: cover !important;
+
+    border-radius: 50% !important;
+
+    display: block;
+}
+
+
+/* ---------------------------------------------------------
+   HEADER PROFILE AVATAR
+   Keep dashboard/header profile images contained too.
+   --------------------------------------------------------- */
+
+#headerProfileAvatar,
+#profileLargeAvatar {
+    object-fit: cover !important;
+    overflow: hidden;
+}
+
+
+/* ---------------------------------------------------------
+   EMERGENCY OVERRIDE
+   Prevent a profile image from ever becoming a full
+   chat-sized image because of inherited CSS.
+   --------------------------------------------------------- */
+
+#messageList .profile-photo img,
+#messageList .avatar-photo img,
+#messageList .student-photo img,
+#messageList .user-photo img {
+    width: 100% !important;
+    height: 100% !important;
+
+    max-width: 100% !important;
+    max-height: 100% !important;
+
+    object-fit: cover !important;
+}
+
+
+/* ---------------------------------------------------------
+   MOBILE
+   --------------------------------------------------------- */
+
+@media (max-width: 700px) {
+
+    .message-avatar,
+    .chat-message-avatar,
+    .message-user-avatar,
+    .message-profile-avatar,
+    .user-avatar {
+        flex-basis: 36px;
+
+        width: 36px !important;
+        height: 36px !important;
+
+        min-width: 36px !important;
+        min-height: 36px !important;
+
+        max-width: 36px !important;
+        max-height: 36px !important;
+    }
+
+    #messageList .message-avatar img,
+    #messageList .chat-message-avatar img,
+    #messageList .message-user-avatar img,
+    #messageList .message-profile-avatar img,
+    #messageList .user-avatar img {
+        width: 36px !important;
+        height: 36px !important;
+
+        min-width: 36px !important;
+        min-height: 36px !important;
+
+        max-width: 36px !important;
+        max-height: 36px !important;
+    }
+
+    .message-content,
+    .chat-message-content {
+        min-width: 0;
+    }
+}
