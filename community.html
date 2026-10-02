@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -13,22 +15,36 @@
         content="Mwaniki Scholars academic community"
     >
 
-    <meta name="theme-color" content="#087f73">
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
 
     <title>Mwaniki Scholars Community</title>
 
-    <link rel="icon" href="./favicon.ico">
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./community.css">
+    <link
+        rel="icon"
+        href="./favicon.ico"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./community.css"
+    >
+
 </head>
+
 
 <body>
 
-<!--
-=========================================================
-GLOBAL ACCESSIBILITY ANNOUNCER
-=========================================================
--->
+<!-- =========================================================
+     GLOBAL ACCESSIBILITY ANNOUNCER
+     ========================================================= -->
 
 <div
     id="accessibilityAnnouncer"
@@ -38,16 +54,15 @@ GLOBAL ACCESSIBILITY ANNOUNCER
 ></div>
 
 
-<!--
-=========================================================
-APPLICATION
-=========================================================
--->
+<!-- =========================================================
+     APPLICATION
+     ========================================================= -->
 
 <div
     class="community-app"
     id="communityApp"
 >
+
 
     <!-- =====================================================
          COMMUNITY RAIL
@@ -57,8 +72,6 @@ APPLICATION
         class="community-rail"
         aria-label="Main navigation"
     >
-
-        <!-- BRAND / HOME -->
 
         <button
             type="button"
@@ -76,8 +89,6 @@ APPLICATION
             aria-hidden="true"
         ></div>
 
-
-        <!-- HOME -->
 
         <button
             type="button"
@@ -102,34 +113,23 @@ APPLICATION
                 <path d="M9 21v-7h6v7"></path>
             </svg>
 
-            <span class="sr-only">
-                Home
-            </span>
+            <span class="sr-only">Home</span>
 
         </button>
 
-
-        <!-- MWANIKI GENERAL -->
 
         <button
             type="button"
             class="rail-button"
             id="railGeneralButton"
             title="Mwaniki Scholars General"
-            aria-label="Open Mwaniki Scholars general chat"
+            aria-label="Open Mwaniki Scholars General"
         >
 
-            <svg
+            <span
+                class="rail-emoji"
                 aria-hidden="true"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"></path>
-            </svg>
+            >💬</span>
 
             <span class="sr-only">
                 Mwaniki Scholars General
@@ -137,10 +137,6 @@ APPLICATION
 
         </button>
 
-
-        <!--
-        DYNAMIC COMMUNITY BUTTONS ARE INSERTED HERE
-        -->
 
         <div
             id="communityRailList"
@@ -154,8 +150,6 @@ APPLICATION
             aria-hidden="true"
         ></div>
 
-
-        <!-- PROFILE -->
 
         <button
             type="button"
@@ -185,11 +179,11 @@ APPLICATION
         aria-label="Community and channel navigation"
     >
 
-        <!-- SIDEBAR HEADER -->
 
         <header class="sidebar-header">
 
-            <div>
+            <div class="brand-block">
+
                 <div
                     class="brand-title"
                     id="communityBrandTitle"
@@ -203,6 +197,7 @@ APPLICATION
                 >
                     Learn • Discuss • Connect
                 </div>
+
             </div>
 
 
@@ -217,18 +212,10 @@ APPLICATION
                 aria-controls="communityModal"
             >
 
-                <svg
+                <span
                     aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                >
-                    <path d="M12 5v14"></path>
-                    <path d="M5 12h14"></path>
-                </svg>
+                    class="button-symbol"
+                >⌄</span>
 
             </button>
 
@@ -251,35 +238,36 @@ APPLICATION
                     stroke="currentColor"
                     stroke-width="2"
                 >
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <path d="m20 20-4-4"></path>
+                    <circle
+                        cx="11"
+                        cy="11"
+                        r="7"
+                    ></circle>
+
+                    <path
+                        d="m20 20-4-4"
+                    ></path>
+
                 </svg>
 
 
                 <input
                     id="channelSearchInput"
                     type="search"
-                    placeholder="Search communities and channels"
+                    placeholder="Search channels..."
                     autocomplete="off"
-                    aria-label="Search communities and channels"
+                    aria-label="Search channels"
                     aria-controls="channelList"
-                    aria-describedby="channelSearchHelp"
                 >
 
-            </label>
+                <kbd>/</kbd>
 
-            <span
-                id="channelSearchHelp"
-                class="sr-only"
-            >
-                Type to filter communities and channels.
-                Press Escape to clear the search.
-            </span>
+            </label>
 
         </div>
 
 
-        <!-- COMMUNITY SELECTOR -->
+        <!-- CURRENT COMMUNITY -->
 
         <div class="community-selector">
 
@@ -287,7 +275,7 @@ APPLICATION
                 type="button"
                 class="selector-button"
                 id="communitySelectorButton"
-                aria-label="Current community. Open community selector"
+                aria-label="Open community selector"
                 aria-haspopup="dialog"
                 aria-expanded="false"
                 aria-controls="communityModal"
@@ -311,6 +299,7 @@ APPLICATION
                         Mwaniki Scholars
                     </div>
 
+
                     <div
                         class="selector-description"
                         id="selectedCommunityDescription"
@@ -321,24 +310,19 @@ APPLICATION
                 </div>
 
 
-                <svg
+                <span
+                    class="selector-chevron"
                     aria-hidden="true"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
                 >
-                    <path d="m7 10 5 5 5-5"></path>
-                </svg>
+                   ⌄
+                </span>
 
             </button>
 
         </div>
 
 
-        <!-- CHANNEL LIST -->
+        <!-- CHANNELS -->
 
         <nav
             class="channel-area"
@@ -348,9 +332,7 @@ APPLICATION
 
             <div
                 class="center-state"
-                id="channelLoadingState"
                 role="status"
-                aria-live="polite"
             >
 
                 <div>
@@ -369,7 +351,7 @@ APPLICATION
         </nav>
 
 
-        <!-- CURRENT USER -->
+        <!-- USER -->
 
         <footer class="sidebar-user">
 
@@ -398,13 +380,16 @@ APPLICATION
                         Loading...
                     </span>
 
+
                     <span class="sidebar-user-status">
+
                         <span
                             class="status-dot"
                             aria-hidden="true"
                         ></span>
 
                         Online
+
                     </span>
 
                 </span>
@@ -417,7 +402,7 @@ APPLICATION
 
 
     <!-- =====================================================
-         MAIN CHAT
+         MAIN
          ===================================================== -->
 
     <main
@@ -425,7 +410,8 @@ APPLICATION
         id="communityMain"
     >
 
-        <!-- CHAT HEADER -->
+
+        <!-- HEADER -->
 
         <header
             class="main-header"
@@ -437,10 +423,10 @@ APPLICATION
                 <div
                     class="main-channel-title"
                     id="mainChannelTitle"
-                    aria-live="polite"
                 >
                     # General
                 </div>
+
 
                 <div
                     class="main-channel-description"
@@ -457,8 +443,6 @@ APPLICATION
                 aria-label="Conversation actions"
             >
 
-                <!-- HOME -->
-
                 <button
                     type="button"
                     class="header-action"
@@ -466,26 +450,10 @@ APPLICATION
                     title="Return to dashboard"
                     aria-label="Return to dashboard"
                 >
-
-                    <svg
-                        aria-hidden="true"
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path d="M3 10.5 12 3l9 7.5"></path>
-                        <path d="M5 9.5V21h14V9.5"></path>
-                    </svg>
-
+                    <span aria-hidden="true">⌂</span>
                     <span>Home</span>
-
                 </button>
 
-
-                <!-- COMMUNITIES -->
 
                 <button
                     type="button"
@@ -497,52 +465,34 @@ APPLICATION
                     aria-expanded="false"
                     aria-controls="communityModal"
                 >
-
-                    <svg
-                        aria-hidden="true"
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <circle cx="9" cy="8" r="3"></circle>
-                        <circle cx="17" cy="9" r="2"></circle>
-                        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"></path>
-                        <path d="M14.5 15c.8-.6 1.7-.9 2.7-.9 2.7 0 4.8 2.1 4.8 4.9"></path>
-                    </svg>
-
+                    <span aria-hidden="true">☷</span>
                     <span>Communities</span>
-
                 </button>
 
 
-                <!-- START CONVERSATION -->
+                <!-- GENERAL CALL -->
+
+                <button
+                    type="button"
+                    class="header-action call-action"
+                    id="generalCallButton"
+                    title="Start a general call"
+                    aria-label="Start a general call"
+                >
+                    <span aria-hidden="true">📞</span>
+                    <span>General Call</span>
+                </button>
+
 
                 <button
                     type="button"
                     class="header-action primary"
                     id="startConversationButton"
-                    title="Start a new conversation"
-                    aria-label="Start a new conversation"
+                    title="Start a conversation"
+                    aria-label="Start a conversation"
                 >
-
-                    <svg
-                        aria-hidden="true"
-                        width="17"
-                        height="17"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path d="M12 20h9"></path>
-                        <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"></path>
-                    </svg>
-
+                    <span aria-hidden="true">✎</span>
                     <span>Start Conversation</span>
-
                 </button>
 
             </div>
@@ -557,58 +507,38 @@ APPLICATION
             aria-label="Channel conversation"
         >
 
-            <!-- MESSAGE AREA -->
-
             <div
                 class="chat-messages"
                 id="messageList"
                 role="log"
                 aria-live="polite"
-                aria-relevant="additions text"
+                aria-relevant="additions"
                 aria-label="Messages"
             >
 
-                <div
-                    class="welcome-card"
-                    id="welcomeCard"
-                >
+                <div class="welcome-card">
 
                     <div
                         class="welcome-icon"
                         aria-hidden="true"
                     >
-
-                        <svg
-                            width="34"
-                            height="34"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="1.8"
-                        >
-                            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.5 9.7 9.7 0 0 1-4.2-.9L3 21l1.9-4.3A8.5 8.5 0 0 1 3 11.5C3 6.8 7 3 12 3s9 3.8 9 8.5Z"></path>
-                        </svg>
-
+                        💬
                     </div>
-
 
                     <h2>
                         Welcome to Mwaniki Scholars
                     </h2>
 
-
                     <p>
-                        This is the beginning of the conversation.
-                        Ask questions, share ideas, discuss medicine,
-                        and learn together.
+                        Choose a community and channel,
+                        then start learning and discussing
+                        with other students.
                     </p>
-
 
                     <button
                         type="button"
                         class="header-action primary"
                         id="welcomeStartButton"
-                        aria-label="Start a conversation in this channel"
                     >
                         Start Conversation
                     </button>
@@ -640,18 +570,20 @@ APPLICATION
                             title="Attach a file"
                             aria-label="Attach a file"
                         >
-                            <span aria-hidden="true">+</span>
+                            +
                         </button>
 
 
                         <button
                             type="button"
-                            class="composer-tool"
+                            class="composer-tool emoji-trigger"
                             id="emojiButton"
-                            title="Add emoji"
-                            aria-label="Add emoji"
+                            title="Open emoji keyboard"
+                            aria-label="Open emoji keyboard"
+                            aria-haspopup="dialog"
+                            aria-expanded="false"
                         >
-                            <span aria-hidden="true">☺</span>
+                            😊
                         </button>
 
                     </div>
@@ -673,17 +605,7 @@ APPLICATION
                             rows="1"
                             placeholder="Message this channel..."
                             aria-label="Write a message"
-                            aria-describedby="messageInputHelp"
                         ></textarea>
-
-
-                        <span
-                            id="messageInputHelp"
-                            class="sr-only"
-                        >
-                            Press Enter to send.
-                            Press Shift and Enter for a new line.
-                        </span>
 
 
                         <button
@@ -693,20 +615,7 @@ APPLICATION
                             title="Send message"
                             aria-label="Send message"
                         >
-
-                            <svg
-                                aria-hidden="true"
-                                width="19"
-                                height="19"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path d="m22 2-7 20-4-9-9-4Z"></path>
-                                <path d="M22 2 11 13"></path>
-                            </svg>
-
+                            ➤
                         </button>
 
                     </div>
@@ -723,7 +632,7 @@ APPLICATION
 
 
 <!-- =========================================================
-     COMMUNITY SELECTOR MODAL
+     COMMUNITY MODAL
      ========================================================= -->
 
 <div
@@ -732,14 +641,10 @@ APPLICATION
     role="dialog"
     aria-modal="true"
     aria-labelledby="communityModalTitle"
-    aria-describedby="communityModalDescription"
     aria-hidden="true"
 >
 
-    <div
-        class="modal-card"
-        role="document"
-    >
+    <div class="modal-card">
 
         <header class="modal-header">
 
@@ -749,14 +654,11 @@ APPLICATION
                     class="modal-title"
                     id="communityModalTitle"
                 >
-                    Choose a community
+                    Communities
                 </div>
 
-                <p
-                    class="modal-description"
-                    id="communityModalDescription"
-                >
-                    Search or select any available community.
+                <p class="modal-description">
+                    Search and choose a community.
                 </p>
 
             </div>
@@ -766,10 +668,9 @@ APPLICATION
                 type="button"
                 class="modal-close"
                 id="closeCommunityModal"
-                title="Close community selector"
                 aria-label="Close community selector"
             >
-                <span aria-hidden="true">×</span>
+                ×
             </button>
 
         </header>
@@ -782,17 +683,7 @@ APPLICATION
                 for="communityModalSearch"
             >
 
-                <svg
-                    aria-hidden="true"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                >
-                    <circle cx="11" cy="11" r="7"></circle>
-                    <path d="m20 20-4-4"></path>
-                </svg>
-
+                <span aria-hidden="true">⌕</span>
 
                 <input
                     id="communityModalSearch"
@@ -820,7 +711,291 @@ APPLICATION
 
 
 <!-- =========================================================
-     SCREEN READER STATUS
+     GENERAL CALL MODAL
+     ========================================================= -->
+
+<div
+    class="modal"
+    id="generalCallModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="generalCallTitle"
+    aria-hidden="true"
+>
+
+    <div class="modal-card call-modal-card">
+
+        <header class="modal-header">
+
+            <div>
+
+                <div
+                    class="modal-title"
+                    id="generalCallTitle"
+                >
+                    General Call
+                </div>
+
+                <p class="modal-description">
+                    Choose who you want to call.
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                class="modal-close"
+                id="closeGeneralCallModalButton"
+                aria-label="Close general call"
+            >
+                ×
+            </button>
+
+        </header>
+
+
+        <div
+            id="generalCallUserList"
+            class="call-user-list"
+        ></div>
+
+
+        <div
+            id="generalCallUserStatus"
+            class="call-user-status"
+            aria-live="polite"
+        >
+            Loading online students...
+        </div>
+
+
+        <div
+            id="generalCallSelectionCount"
+            class="call-selection-count"
+        >
+            0 selected
+        </div>
+
+
+        <div
+            id="generalCallMessage"
+            class="form-message"
+            aria-live="polite"
+        ></div>
+
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="header-action"
+                id="cancelGeneralCallButton"
+            >
+                Cancel
+            </button>
+
+            <button
+                type="button"
+                class="header-action primary"
+                id="startGeneralCallButton"
+            >
+                📞 Start Call
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     CALL OVERLAY
+     ========================================================= -->
+
+<div
+    class="call-overlay"
+    id="callOverlay"
+    aria-hidden="true"
+>
+
+    <div class="call-shell">
+
+        <header class="call-header">
+
+            <div>
+
+                <div id="callTitle">
+                    Mwaniki Call
+                </div>
+
+                <div id="callSubtitle">
+                    Connecting...
+                </div>
+
+            </div>
+
+
+            <div
+                id="callDuration"
+                aria-live="polite"
+            >
+                00:00
+            </div>
+
+        </header>
+
+
+        <div
+            class="call-video-grid"
+            id="callVideoGrid"
+        >
+
+            <div
+                class="local-video-tile"
+                id="localVideoTile"
+            >
+
+                <video
+                    id="localVideo"
+                    autoplay
+                    muted
+                    playsinline
+                ></video>
+
+                <span>
+                    You
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div
+            id="callParticipants"
+            class="call-participants"
+        ></div>
+
+
+        <div class="call-controls">
+
+            <button
+                type="button"
+                id="toggleMicrophoneButton"
+                aria-label="Mute microphone"
+                title="Mute microphone"
+            >
+                🎙️
+            </button>
+
+
+            <button
+                type="button"
+                id="toggleCameraButton"
+                aria-label="Turn camera off"
+                title="Turn camera off"
+            >
+                📹
+            </button>
+
+
+            <button
+                type="button"
+                id="shareScreenButton"
+                aria-label="Share screen"
+                title="Share screen"
+            >
+                🖥️
+            </button>
+
+
+            <button
+                type="button"
+                id="minimizeCallButton"
+                aria-label="Minimize call"
+                title="Minimize call"
+            >
+                —
+            </button>
+
+
+            <button
+                type="button"
+                id="leaveCallButton"
+                class="leave-call"
+                aria-label="Leave call"
+                title="Leave call"
+            >
+                ☎
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     INCOMING CALL
+     ========================================================= -->
+
+<div
+    class="incoming-call-toast"
+    id="incomingCallToast"
+    aria-hidden="true"
+>
+
+    <div class="incoming-call-content">
+
+        <div
+            class="incoming-call-icon"
+            aria-hidden="true"
+        >
+            📞
+        </div>
+
+        <div>
+
+            <strong id="incomingCallTitle">
+                Incoming call
+            </strong>
+
+            <p id="incomingCallText">
+                Someone is calling you.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="incoming-call-actions">
+
+        <button
+            type="button"
+            id="acceptCallButton"
+            class="accept-call"
+        >
+            Accept
+        </button>
+
+        <button
+            type="button"
+            id="declineCallButton"
+            class="decline-call"
+        >
+            Decline
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     ACCESSIBILITY STATUS
      ========================================================= -->
 
 <div
@@ -838,940 +1013,6 @@ APPLICATION
 
 <script src="./supabase.js"></script>
 <script src="./community.js"></script>
-
-
-<!-- =========================================================
-     ACCESSIBILITY BEHAVIOR
-     ========================================================= -->
-
-<script>
-
-(function () {
-
-    "use strict";
-
-
-    /* =====================================================
-       HELPERS
-       ===================================================== */
-
-    const $ = (selector, root = document) =>
-        root.querySelector(selector);
-
-    const $$ = (selector, root = document) =>
-        Array.from(root.querySelectorAll(selector));
-
-
-    const announce = (message) => {
-
-        const announcer =
-            $("#accessibilityAnnouncer");
-
-        const status =
-            $("#communityStatus");
-
-        if (announcer) {
-            announcer.textContent = "";
-
-            window.setTimeout(() => {
-                announcer.textContent = message;
-            }, 30);
-        }
-
-        if (status) {
-            status.textContent = message;
-        }
-    };
-
-
-    /* =====================================================
-       FOCUSABLE ELEMENTS
-       ===================================================== */
-
-    const getFocusable = (container) => {
-
-        if (!container) return [];
-
-        return $$(
-            `
-            a[href],
-            button:not([disabled]),
-            input:not([disabled]),
-            textarea:not([disabled]),
-            select:not([disabled]),
-            [tabindex]:not([tabindex="-1"])
-            `,
-            container
-        ).filter(element => {
-
-            return (
-                !element.hidden &&
-                element.offsetParent !== null
-            );
-
-        });
-
-    };
-
-
-    /* =====================================================
-       COMMUNITY MODAL
-       ===================================================== */
-
-    const modal =
-        $("#communityModal");
-
-    const modalOpenButtons = [
-        $("#openCommunityButton"),
-        $("#communitySelectorButton"),
-        $("#headerCommunityButton")
-    ].filter(Boolean);
-
-    const closeModalButton =
-        $("#closeCommunityModal");
-
-    let previousFocusedElement = null;
-
-
-    const openCommunityModal = () => {
-
-        if (!modal) return;
-
-        previousFocusedElement =
-            document.activeElement;
-
-        modal.classList.add("open");
-
-        modal.setAttribute(
-            "aria-hidden",
-            "false"
-        );
-
-        modalOpenButtons.forEach(button => {
-
-            button.setAttribute(
-                "aria-expanded",
-                "true"
-            );
-
-        });
-
-
-        document.body.classList.add(
-            "modal-open"
-        );
-
-
-        const search =
-            $("#communityModalSearch");
-
-        window.setTimeout(() => {
-
-            if (search) {
-                search.focus();
-            } else if (closeModalButton) {
-                closeModalButton.focus();
-            }
-
-        }, 30);
-
-
-        announce(
-            "Community selector opened. Search for a community or use the arrow keys."
-        );
-    };
-
-
-    const closeCommunityModal = () => {
-
-        if (!modal) return;
-
-        modal.classList.remove("open");
-
-        modal.setAttribute(
-            "aria-hidden",
-            "true"
-        );
-
-        modalOpenButtons.forEach(button => {
-
-            button.setAttribute(
-                "aria-expanded",
-                "false"
-            );
-
-        });
-
-
-        document.body.classList.remove(
-            "modal-open"
-        );
-
-
-        if (
-            previousFocusedElement &&
-            typeof previousFocusedElement.focus === "function"
-        ) {
-            previousFocusedElement.focus();
-        }
-
-
-        announce(
-            "Community selector closed."
-        );
-    };
-
-
-    modalOpenButtons.forEach(button => {
-
-        button.addEventListener(
-            "click",
-            openCommunityModal
-        );
-
-    });
-
-
-    if (closeModalButton) {
-
-        closeModalButton.addEventListener(
-            "click",
-            closeCommunityModal
-        );
-
-    }
-
-
-    if (modal) {
-
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if (event.target === modal) {
-                    closeCommunityModal();
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       ESCAPE KEY
-       ===================================================== */
-
-    document.addEventListener(
-        "keydown",
-        event => {
-
-            if (
-                event.key === "Escape" &&
-                modal &&
-                modal.classList.contains("open")
-            ) {
-
-                event.preventDefault();
-
-                closeCommunityModal();
-
-                return;
-            }
-
-
-            /* Clear search with Escape */
-
-            if (
-                event.key === "Escape" &&
-                document.activeElement ===
-                $("#channelSearchInput")
-            ) {
-
-                const input =
-                    $("#channelSearchInput");
-
-                if (input && input.value) {
-
-                    input.value = "";
-
-                    input.dispatchEvent(
-                        new Event("input", {
-                            bubbles: true
-                        })
-                    );
-
-                    announce(
-                        "Channel search cleared."
-                    );
-                }
-            }
-
-        }
-    );
-
-
-    /* =====================================================
-       MODAL FOCUS TRAP
-       ===================================================== */
-
-    if (modal) {
-
-        modal.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key !== "Tab" ||
-                    !modal.classList.contains("open")
-                ) {
-                    return;
-                }
-
-
-                const focusable =
-                    getFocusable(modal);
-
-
-                if (!focusable.length) {
-                    event.preventDefault();
-                    return;
-                }
-
-
-                const first =
-                    focusable[0];
-
-                const last =
-                    focusable[focusable.length - 1];
-
-
-                if (
-                    event.shiftKey &&
-                    document.activeElement === first
-                ) {
-
-                    event.preventDefault();
-
-                    last.focus();
-
-                } else if (
-                    !event.shiftKey &&
-                    document.activeElement === last
-                ) {
-
-                    event.preventDefault();
-
-                    first.focus();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       RAIL ARROW NAVIGATION
-       ===================================================== */
-
-    const setupRailKeyboardNavigation = () => {
-
-        const rail =
-            $(".community-rail");
-
-        if (!rail) return;
-
-
-        rail.addEventListener(
-            "keydown",
-            event => {
-
-                const buttons =
-                    $$(
-                        "button:not([disabled])",
-                        rail
-                    );
-
-
-                const current =
-                    document.activeElement;
-
-                const index =
-                    buttons.indexOf(current);
-
-
-                if (index === -1) {
-                    return;
-                }
-
-
-                let nextIndex = index;
-
-
-                if (event.key === "ArrowDown") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        (index + 1) %
-                        buttons.length;
-
-                }
-
-
-                if (event.key === "ArrowUp") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        (
-                            index - 1 +
-                            buttons.length
-                        ) %
-                        buttons.length;
-
-                }
-
-
-                if (event.key === "Home") {
-
-                    event.preventDefault();
-
-                    nextIndex = 0;
-
-                }
-
-
-                if (event.key === "End") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        buttons.length - 1;
-
-                }
-
-
-                if (nextIndex !== index) {
-
-                    buttons[nextIndex].focus();
-
-                }
-
-            }
-        );
-
-    };
-
-
-    setupRailKeyboardNavigation();
-
-
-    /* =====================================================
-       MESSAGE COMPOSER
-       ===================================================== */
-
-    const messageInput =
-        $("#messageInput");
-
-    const messageForm =
-        $("#messageForm");
-
-
-    if (messageInput) {
-
-        messageInput.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key === "Enter" &&
-                    !event.shiftKey
-                ) {
-
-                    event.preventDefault();
-
-                    if (messageForm) {
-
-                        if (
-                            typeof messageForm.requestSubmit ===
-                            "function"
-                        ) {
-
-                            messageForm.requestSubmit();
-
-                        } else {
-
-                            $("#sendMessageButton")?.click();
-
-                        }
-
-                    }
-
-                }
-
-            }
-        );
-
-
-        messageInput.addEventListener(
-            "input",
-            () => {
-
-                messageInput.style.height =
-                    "auto";
-
-                messageInput.style.height =
-                    Math.min(
-                        messageInput.scrollHeight,
-                        130
-                    ) + "px";
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       SEARCH KEYBOARD SUPPORT
-       ===================================================== */
-
-    const channelSearch =
-        $("#channelSearchInput");
-
-
-    if (channelSearch) {
-
-        channelSearch.addEventListener(
-            "keydown",
-            event => {
-
-                if (event.key === "ArrowDown") {
-
-                    event.preventDefault();
-
-                    const firstChannel =
-                        $("#channelList button");
-
-                    if (firstChannel) {
-                        firstChannel.focus();
-                    }
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       DYNAMIC CHANNEL KEYBOARD SUPPORT
-       ===================================================== */
-
-    const channelList =
-        $("#channelList");
-
-
-    if (channelList) {
-
-        channelList.addEventListener(
-            "keydown",
-            event => {
-
-                const channelButtons =
-                    $$(
-                        "button",
-                        channelList
-                    );
-
-                const current =
-                    document.activeElement;
-
-                const index =
-                    channelButtons.indexOf(current);
-
-                if (index === -1) {
-                    return;
-                }
-
-
-                let nextIndex = index;
-
-
-                if (event.key === "ArrowDown") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        Math.min(
-                            index + 1,
-                            channelButtons.length - 1
-                        );
-
-                }
-
-
-                if (event.key === "ArrowUp") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        Math.max(
-                            index - 1,
-                            0
-                        );
-
-                }
-
-
-                if (event.key === "Home") {
-
-                    event.preventDefault();
-
-                    nextIndex = 0;
-
-                }
-
-
-                if (event.key === "End") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        channelButtons.length - 1;
-
-                }
-
-
-                if (nextIndex !== index) {
-
-                    channelButtons[
-                        nextIndex
-                    ].focus();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       COMMUNITY LIST KEYBOARD SUPPORT
-       ===================================================== */
-
-    const communityChoiceList =
-        $("#communityChoiceList");
-
-
-    if (communityChoiceList) {
-
-        communityChoiceList.addEventListener(
-            "keydown",
-            event => {
-
-                const choices =
-                    $$(
-                        "button",
-                        communityChoiceList
-                    );
-
-                const current =
-                    document.activeElement;
-
-                const index =
-                    choices.indexOf(current);
-
-                if (index === -1) {
-                    return;
-                }
-
-
-                let nextIndex = index;
-
-
-                if (event.key === "ArrowDown") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        Math.min(
-                            index + 1,
-                            choices.length - 1
-                        );
-
-                }
-
-
-                if (event.key === "ArrowUp") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        Math.max(
-                            index - 1,
-                            0
-                        );
-
-                }
-
-
-                if (event.key === "Home") {
-
-                    event.preventDefault();
-
-                    nextIndex = 0;
-
-                }
-
-
-                if (event.key === "End") {
-
-                    event.preventDefault();
-
-                    nextIndex =
-                        choices.length - 1;
-
-                }
-
-
-                if (nextIndex !== index) {
-
-                    choices[nextIndex].focus();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       DYNAMIC CONTENT OBSERVER
-       ===================================================== */
-
-    const observer =
-        new MutationObserver(
-            mutations => {
-
-                let addedContent = false;
-
-                mutations.forEach(
-                    mutation => {
-
-                        if (
-                            mutation.addedNodes &&
-                            mutation.addedNodes.length
-                        ) {
-                            addedContent = true;
-                        }
-
-                    }
-                );
-
-
-                if (!addedContent) {
-                    return;
-                }
-
-
-                /* Ensure dynamically-created images
-                   remain accessible. */
-
-                $$(
-                    "#messageList img"
-                ).forEach(image => {
-
-                    if (!image.getAttribute("alt")) {
-
-                        image.setAttribute(
-                            "alt",
-                            "Profile photo"
-                        );
-
-                    }
-
-                });
-
-
-                /* Make dynamic channel buttons
-                   keyboard accessible. */
-
-                $$("#channelList button").forEach(
-                    button => {
-
-                        if (
-                            !button.hasAttribute(
-                                "type"
-                            )
-                        ) {
-
-                            button.setAttribute(
-                                "type",
-                                "button"
-                            );
-
-                        }
-
-                        if (
-                            !button.hasAttribute(
-                                "aria-label"
-                            )
-                        ) {
-
-                            const text =
-                                button.textContent
-                                    .trim()
-                                    .replace(
-                                        /\s+/g,
-                                        " "
-                                    );
-
-                            if (text) {
-
-                                button.setAttribute(
-                                    "aria-label",
-                                    `Open ${text}`
-                                );
-
-                            }
-
-                        }
-
-                    }
-                );
-
-
-                /* Make dynamic community
-                   buttons accessible. */
-
-                $$("#communityRailList button")
-                    .forEach(button => {
-
-                        if (
-                            !button.hasAttribute(
-                                "type"
-                            )
-                        ) {
-
-                            button.setAttribute(
-                                "type",
-                                "button"
-                            );
-
-                        }
-
-                        if (
-                            !button.hasAttribute(
-                                "aria-label"
-                            )
-                        ) {
-
-                            const text =
-                                button.textContent
-                                    .trim()
-                                    .replace(
-                                        /\s+/g,
-                                        " "
-                                    );
-
-                            if (text) {
-
-                                button.setAttribute(
-                                    "aria-label",
-                                    `Open ${text} community`
-                                );
-
-                            }
-
-                        }
-
-                    });
-
-
-            }
-        );
-
-
-    if (channelList) {
-
-        observer.observe(
-            channelList,
-            {
-                childList: true,
-                subtree: true
-            }
-        );
-
-    }
-
-
-    const railList =
-        $("#communityRailList");
-
-
-    if (railList) {
-
-        observer.observe(
-            railList,
-            {
-                childList: true,
-                subtree: true
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       START CONVERSATION BUTTONS
-       ===================================================== */
-
-    [
-        $("#startConversationButton"),
-        $("#welcomeStartButton")
-    ]
-        .filter(Boolean)
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    if (messageInput) {
-
-                        messageInput.focus();
-
-                        announce(
-                            "Message box focused. Type your conversation and press Enter to send."
-                        );
-
-                    }
-
-                }
-            );
-
-        });
-
-
-    /* =====================================================
-       INITIAL STATUS
-       ===================================================== */
-
-    announce(
-        "Mwaniki Scholars community loaded. Use Tab to navigate, Enter or Space to activate buttons, and arrow keys to move through navigation."
-    );
-
-
-})();
-
-</script>
 
 </body>
 </html>
