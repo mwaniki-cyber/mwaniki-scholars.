@@ -15,13 +15,31 @@ const SUPABASE_ANON_KEY =
 // CREATE SUPABASE CLIENT
 // =====================================================
 
-export const supabase = createClient(
+const supabase = createClient(
     SUPABASE_URL,
     SUPABASE_ANON_KEY
 );
+
+// =====================================================
+// EXPORT FOR MODULE-BASED FILES
+// =====================================================
+
+export { supabase };
+
+// =====================================================
+// GLOBAL CLIENT
+// Keeps compatibility with existing Mwaniki Scholars
+// pages such as community.js
+// =====================================================
+
+window.supabase = supabase;
+window.supabaseClient = supabase;
+window.sb = supabase;
+window.mwanikiSupabase = supabase;
 
 // =====================================================
 // CONNECTION MESSAGE
 // =====================================================
 
 console.log("✅ Mwaniki Scholars Supabase Connected");
+console.log("✅ Global Supabase client available");
