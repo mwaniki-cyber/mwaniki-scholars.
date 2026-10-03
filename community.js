@@ -1160,7 +1160,39 @@ import { supabase } from "./supabase.js";
                 })
                 .join("");
     }
+/* =========================================================
+   BACK TO DASHBOARD
+   ========================================================= */
 
+function setupCommunityHomeButton() {
+
+    const button = document.getElementById(
+        "communityHomeButton"
+    );
+
+    if (!button) {
+        console.warn(
+            "⚠️ #communityHomeButton was not found."
+        );
+        return;
+    }
+
+    button.addEventListener(
+        "click",
+        function () {
+
+            console.log(
+                "🏠 Returning to Mwaniki Scholars dashboard..."
+            );
+
+            window.location.href = "./dashboard.html";
+        }
+    );
+
+    console.log(
+        "✅ Community Home button activated."
+    );
+}
     /* ========================================================
        MESSAGES
        ======================================================== */
