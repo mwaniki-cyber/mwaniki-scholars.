@@ -33,6 +33,7 @@ const state = {
 
     profiles: new Map(),
     reactions: new Map(),
+    messageAttachments: new Map(),
 
     messagePageSize: 50,
     loadingMessages: false,
@@ -40,6 +41,7 @@ const state = {
     hasOlderMessages: false,
 
     realtimeChannel: null,
+
     rulesAccepted: false,
 
     reactionPickerMessageId: null,
@@ -123,7 +125,10 @@ function toast(message, type = "info") {
    INITIALIZATION
    ========================================================= */
 
-document.addEventListener("DOMContentLoaded", initializeCommunity);
+document.addEventListener(
+    "DOMContentLoaded",
+    initializeCommunity
+);
 
 async function initializeCommunity() {
     try {
@@ -138,27 +143,41 @@ async function initializeCommunity() {
         }
 
         const {
-            data: {
-                session
-            },
+            data: { session },
             error
         } = await supabase.auth.getSession();
 
         if (error) {
-            console.error("Session error:", error);
+            console.error("❌ Session error:", error);
         }
 
         state.user = session?.user || null;
 
         if (!state.user) {
-            toast("Please sign in to use the community.", "error");
+            toast(
+                "Please sign in to use the community.",
+                "error"
+            );
             return;
         }
 
+        /*
+         * Load current user's profile.
+         */
         await loadOwnProfile();
 
+        /*
+         * Load communities immediately.
+         */
         await loadCommunities();
 
+        /*
+         * IMPORTANT:
+         * If rules have already been accepted,
+         * enter the community automatically.
+         *
+         * The globe/community button is NOT required.
+         */
         if (state.rulesAccepted) {
             await enterCommunity();
         }
@@ -167,9 +186,26 @@ async function initializeCommunity() {
 
         console.log("✅ Community initialized");
 
+        console.log(
+            "🌐 Current community:",
+            state.selectedCommunity?.name || "None"
+        );
+
+        console.log(
+            "📢 Current channels:",
+            state.channels.length
+        );
+
     } catch (error) {
-        console.error("❌ Community initialization failed:", error);
-        toast("The community could not be loaded.", "error");
+        console.error(
+            "❌ Community initialization failed:",
+            error
+        );
+
+        toast(
+            "The community could not be loaded.",
+            "error"
+        );
     }
 }
 
@@ -179,25 +215,38 @@ async function initializeCommunity() {
    ========================================================= */
 
 function setupAuthListener() {
-    supabase.auth.onAuthStateChange(async (event, session) => {
-        state.user = session?.user || null;
+    supabase.auth.onAuthStateChange(
+        async (event, session) => {
+            state.user = session?.user || null;
 
-        if (event === "SIGNED_OUT") {
-            state.profile = null;
-            state.profiles.clear();
-            window.location.href = "./index.html";
-            return;
-        }
+            if (event === "SIGNED_OUT") {
+                state.profile = null;
+                state.profiles.clear();
 
-        if (event === "SIGNED_IN") {
-            await loadOwnProfile();
+                if (state.realtimeChannel) {
+                    await supabase.removeChannel(
+                        state.realtimeChannel
+                    );
 
-            if (state.rulesAccepted) {
-                await loadCommunities();
-                await enterCommunity();
+                    state.realtimeChannel = null;
+                }
+
+                window.location.href =
+                    "./index.html";
+
+                return;
+            }
+
+            if (event === "SIGNED_IN") {
+                await loadOwnProfile();
+
+                if (state.rulesAccepted) {
+                    await loadCommunities();
+                    await enterCommunity();
+                }
             }
         }
-    });
+    );
 }
 
 
@@ -215,27 +264,39 @@ async function loadOwnProfile() {
         error
     } = await supabase
         .from("students")
-        .select("id,full_name,email,course,level,photo_url")
+        .select(
+            "id,full_name,email,course,level,photo_url"
+        )
         .eq("id", state.user.id)
         .maybeSingle();
 
     if (error) {
-        console.error("❌ Could not load own student profile:", error);
+        console.error(
+            "❌ Could not load own student profile:",
+            error
+        );
+
         return null;
     }
 
     if (!data) {
-        console.warn("⚠️ No student profile found for current user.");
+        console.warn(
+            "⚠️ No student profile found for current user."
+        );
+
         return null;
     }
 
     state.profile = data;
 
-    state.profiles.set(data.id, {
-        id: data.id,
-        full_name: data.full_name,
-        photo_url: data.photo_url
-    });
+    state.profiles.set(
+        data.id,
+        {
+            id: data.id,
+            full_name: data.full_name || "Student",
+            photo_url: data.photo_url || ""
+        }
+    );
 
     updateProfileInterface();
 
@@ -264,12 +325,20 @@ async function loadProfilesForUsers(userIds) {
         return;
     }
 
+    /*
+     * IMPORTANT:
+     * Other users are loaded through the safe
+     * chat_public_profiles view rather than exposing
+     * students.email or students.phone.
+     */
     const {
         data,
         error
     } = await supabase
         .from("chat_public_profiles")
-        .select("id,full_name,photo_url")
+        .select(
+            "id,full_name,photo_url"
+        )
         .in("id", missingIds);
 
     if (error) {
@@ -279,47 +348,65 @@ async function loadProfilesForUsers(userIds) {
         );
 
         for (const id of missingIds) {
-            state.profiles.set(id, {
+            state.profiles.set(
                 id,
-                full_name: "Student",
-                photo_url: ""
-            });
+                {
+                    id,
+                    full_name: "Student",
+                    photo_url: ""
+                }
+            );
         }
 
         return;
     }
 
     for (const profile of data || []) {
-        state.profiles.set(profile.id, {
-            id: profile.id,
-            full_name: profile.full_name || "Student",
-            photo_url: profile.photo_url || ""
-        });
+        state.profiles.set(
+            profile.id,
+            {
+                id: profile.id,
+                full_name:
+                    profile.full_name ||
+                    "Student",
+                photo_url:
+                    profile.photo_url ||
+                    ""
+            }
+        );
     }
 
     for (const id of missingIds) {
         if (!state.profiles.has(id)) {
-            state.profiles.set(id, {
+            state.profiles.set(
                 id,
-                full_name: "Student",
-                photo_url: ""
-            });
+                {
+                    id,
+                    full_name: "Student",
+                    photo_url: ""
+                }
+            );
         }
     }
 }
 
 
 function getProfile(userId) {
-    return state.profiles.get(userId) || {
-        id: userId,
-        full_name: "Student",
-        photo_url: ""
-    };
+    return (
+        state.profiles.get(userId) ||
+        {
+            id: userId,
+            full_name: "Student",
+            photo_url: ""
+        }
+    );
 }
 
 
 function getInitials(name) {
-    const clean = String(name || "Student")
+    const clean = String(
+        name || "Student"
+    )
         .trim()
         .split(/\s+/)
         .filter(Boolean);
@@ -329,7 +416,9 @@ function getInitials(name) {
     }
 
     if (clean.length === 1) {
-        return clean[0].substring(0, 2).toUpperCase();
+        return clean[0]
+            .substring(0, 2)
+            .toUpperCase();
     }
 
     return (
@@ -373,17 +462,24 @@ function updateProfileInterface() {
         }
     }
 
-    setText("sidebarProfileName", name);
+    setText(
+        "sidebarProfileName",
+        name
+    );
 }
 
 
 /* =========================================================
-   RULES
+   COMMUNITY RULES
    ========================================================= */
 
 function readRulesAgreement() {
     try {
-        return localStorage.getItem(RULES_STORAGE_KEY) === RULES_VERSION;
+        return (
+            localStorage.getItem(
+                RULES_STORAGE_KEY
+            ) === RULES_VERSION
+        );
     } catch {
         return false;
     }
@@ -397,7 +493,10 @@ function saveRulesAgreement() {
             RULES_VERSION
         );
     } catch (error) {
-        console.warn("Could not save community rules:", error);
+        console.warn(
+            "Could not save community rules:",
+            error
+        );
     }
 
     state.rulesAccepted = true;
@@ -405,39 +504,50 @@ function saveRulesAgreement() {
 
 
 function showRulesGate() {
-    const gate = $("communityRulesGate");
+    const gate =
+        $("communityRulesGate");
 
     if (gate) {
         gate.classList.remove("hidden");
     }
 
-    document.body.classList.add("community-rules-open");
+    document.body.classList.add(
+        "community-rules-open"
+    );
 }
 
 
 function hideRulesGate() {
-    const gate = $("communityRulesGate");
+    const gate =
+        $("communityRulesGate");
 
     if (gate) {
         gate.classList.add("hidden");
     }
 
-    document.body.classList.remove("community-rules-open");
+    document.body.classList.remove(
+        "community-rules-open"
+    );
 }
 
 
 function handleRulesAgreement() {
-    const checkbox = $("communityRulesAgreement");
-    const button = $("acceptCommunityRulesButton");
+    const checkbox =
+        $("communityRulesAgreement");
+
+    const button =
+        $("acceptCommunityRulesButton");
 
     if (button) {
-        button.disabled = !checkbox?.checked;
+        button.disabled =
+            !checkbox?.checked;
     }
 }
 
 
 async function acceptCommunityRules() {
-    const checkbox = $("communityRulesAgreement");
+    const checkbox =
+        $("communityRulesAgreement");
 
     if (!checkbox?.checked) {
         return;
@@ -446,7 +556,8 @@ async function acceptCommunityRules() {
     saveRulesAgreement();
     hideRulesGate();
 
-    const message = $("rulesGateMessage");
+    const message =
+        $("rulesGateMessage");
 
     if (message) {
         message.textContent = "";
@@ -485,24 +596,57 @@ async function loadCommunities() {
         });
 
     if (error) {
-        console.error("❌ Failed to load communities:", error);
-        toast("Could not load communities.", "error");
+        console.error(
+            "❌ Failed to load communities:",
+            error
+        );
+
+        toast(
+            "Could not load communities.",
+            "error"
+        );
+
         return;
     }
 
     state.communities = data || [];
 
+    /*
+     * If there is no selected community,
+     * automatically choose General Chat first.
+     */
+    if (!state.selectedCommunity) {
+        state.selectedCommunity =
+            state.communities.find(
+                community =>
+                    String(
+                        community.slug || ""
+                    ).toLowerCase() ===
+                    "general-chat"
+            ) ||
+            state.communities.find(
+                community =>
+                    String(
+                        community.name || ""
+                    ).toLowerCase() ===
+                    "general chat"
+            ) ||
+            state.communities[0] ||
+            null;
+    }
+
     renderCommunityRail();
     renderCommunityChoices();
 
-    if (!state.selectedCommunity && state.communities.length) {
-        state.selectedCommunity = state.communities[0];
+    if (state.selectedCommunity) {
+        updateSelectedCommunityInterface();
     }
 }
 
 
 function renderCommunityRail() {
-    const container = $("communityRailList");
+    const container =
+        $("communityRailList");
 
     if (!container) {
         return;
@@ -511,28 +655,39 @@ function renderCommunityRail() {
     container.innerHTML = "";
 
     for (const community of state.communities) {
-        const button = document.createElement("button");
+        const button =
+            document.createElement("button");
 
         button.type = "button";
-        button.className = "rail-community-button";
+
+        button.className =
+            "rail-community-button";
 
         if (
             state.selectedCommunity &&
-            community.id === state.selectedCommunity.id
+            community.id ===
+                state.selectedCommunity.id
         ) {
             button.classList.add("active");
         }
 
-        button.title = community.name;
+        button.title =
+            community.name;
 
-        button.innerHTML = renderCommunityIcon(
-            community.icon_url,
-            community.name
+        button.innerHTML =
+            renderCommunityIcon(
+                community.icon_url,
+                community.name
+            );
+
+        button.addEventListener(
+            "click",
+            async () => {
+                await selectCommunity(
+                    community.id
+                );
+            }
         );
-
-        button.addEventListener("click", async () => {
-            await selectCommunity(community.id);
-        });
 
         container.appendChild(button);
     }
@@ -540,26 +695,35 @@ function renderCommunityRail() {
 
 
 function renderCommunityChoices(filter = "") {
-    const container = $("communityChoiceList");
+    const container =
+        $("communityChoiceList");
 
     if (!container) {
         return;
     }
 
-    const search = String(filter)
-        .trim()
-        .toLowerCase();
+    const search =
+        String(filter)
+            .trim()
+            .toLowerCase();
 
-    const communities = state.communities.filter(community => {
-        if (!search) {
-            return true;
-        }
+    const communities =
+        state.communities.filter(
+            community => {
+                if (!search) {
+                    return true;
+                }
 
-        return (
-            community.name?.toLowerCase().includes(search) ||
-            community.description?.toLowerCase().includes(search)
+                return (
+                    community.name
+                        ?.toLowerCase()
+                        .includes(search) ||
+                    community.description
+                        ?.toLowerCase()
+                        .includes(search)
+                );
+            }
         );
-    });
 
     container.innerHTML = "";
 
@@ -569,14 +733,17 @@ function renderCommunityChoices(filter = "") {
                 No communities found.
             </div>
         `;
+
         return;
     }
 
     for (const community of communities) {
-        const button = document.createElement("button");
+        const button =
+            document.createElement("button");
 
         button.type = "button";
-        button.className = "community-choice";
+        button.className =
+            "community-choice";
 
         button.innerHTML = `
             <span class="community-choice-icon">
@@ -587,24 +754,41 @@ function renderCommunityChoices(filter = "") {
             </span>
 
             <span class="community-choice-info">
-                <strong>${escapeHtml(community.name)}</strong>
-                <small>${escapeHtml(
-                    community.description || "Community"
-                )}</small>
+                <strong>
+                    ${escapeHtml(
+                        community.name
+                    )}
+                </strong>
+
+                <small>
+                    ${escapeHtml(
+                        community.description ||
+                        "Community"
+                    )}
+                </small>
             </span>
         `;
 
-        button.addEventListener("click", async () => {
-            await selectCommunity(community.id);
-            closeCommunityModal();
-        });
+        button.addEventListener(
+            "click",
+            async () => {
+                await selectCommunity(
+                    community.id
+                );
+
+                closeCommunityModal();
+            }
+        );
 
         container.appendChild(button);
     }
 }
 
 
-function renderCommunityIcon(icon, name) {
+function renderCommunityIcon(
+    icon,
+    name
+) {
     if (
         icon &&
         (
@@ -616,40 +800,65 @@ function renderCommunityIcon(icon, name) {
         return `
             <img
                 src="${escapeAttribute(icon)}"
-                alt="${escapeAttribute(name || "Community")}"
+                alt="${escapeAttribute(
+                    name || "Community"
+                )}"
                 class="community-icon-image"
             >
         `;
     }
 
-    return escapeHtml(icon || "🌐");
+    return escapeHtml(
+        icon || "🌐"
+    );
 }
 
 
-async function selectCommunity(communityId) {
-    const community = state.communities.find(
-        item => item.id === communityId
-    );
+async function selectCommunity(
+    communityId
+) {
+    const community =
+        state.communities.find(
+            item =>
+                item.id === communityId
+        );
 
     if (!community) {
         return;
     }
 
-    state.selectedCommunity = community;
+    console.log(
+        "🌐 Switching community:",
+        community.name
+    );
+
+    state.selectedCommunity =
+        community;
+
     state.selectedChannel = null;
     state.channels = [];
     state.messages = [];
+
+    state.reactions.clear();
+    state.messageAttachments.clear();
 
     renderCommunityRail();
 
     updateSelectedCommunityInterface();
 
-    await loadChannels(community.id);
+    /*
+     * Automatically load this community's
+     * channels.
+     */
+    await loadChannels(
+        community.id
+    );
 }
 
 
 function updateSelectedCommunityInterface() {
-    const community = state.selectedCommunity;
+    const community =
+        state.selectedCommunity;
 
     if (!community) {
         return;
@@ -662,16 +871,19 @@ function updateSelectedCommunityInterface() {
 
     setText(
         "selectedCommunityDescription",
-        community.description || "Community"
+        community.description ||
+        "Community"
     );
 
-    const icon = $("selectedCommunityIcon");
+    const icon =
+        $("selectedCommunityIcon");
 
     if (icon) {
-        icon.innerHTML = renderCommunityIcon(
-            community.icon_url,
-            community.name
-        );
+        icon.innerHTML =
+            renderCommunityIcon(
+                community.icon_url,
+                community.name
+            );
     }
 
     setText(
@@ -690,7 +902,36 @@ function updateSelectedCommunityInterface() {
    CHANNELS
    ========================================================= */
 
-async function loadChannels(communityId) {
+async function loadChannels(
+    communityId
+) {
+    if (!communityId) {
+        console.warn(
+            "⚠️ No community ID supplied."
+        );
+
+        state.channels = [];
+        state.selectedChannel = null;
+
+        renderChannels();
+        clearChannelInterface();
+
+        return;
+    }
+
+    console.log(
+        "📡 Loading channels automatically for:",
+        communityId
+    );
+
+    /*
+     * Clear previous channel state.
+     */
+    state.channels = [];
+    state.selectedChannel = null;
+
+    renderChannels();
+
     const {
         data,
         error
@@ -714,122 +955,246 @@ async function loadChannels(communityId) {
             created_at,
             updated_at
         `)
-        .eq("community_id", communityId)
-        .eq("is_active", true)
-        .eq("is_archived", false)
-        .order("position", {
-            ascending: true
-        })
-        .order("name", {
-            ascending: true
-        });
+        .eq(
+            "community_id",
+            communityId
+        )
+        .eq(
+            "is_active",
+            true
+        )
+        .eq(
+            "is_archived",
+            false
+        )
+        .order(
+            "position",
+            {
+                ascending: true
+            }
+        )
+        .order(
+            "name",
+            {
+                ascending: true
+            }
+        );
 
     if (error) {
-        console.error("❌ Failed to load channels:", error);
-        toast("Could not load channels.", "error");
+        console.error(
+            "❌ Failed to load channels:",
+            error
+        );
+
+        state.channels = [];
+
+        renderChannels();
+
+        clearChannelInterface();
+
+        toast(
+            "Could not load channels.",
+            "error"
+        );
+
         return;
     }
 
     state.channels = data || [];
 
+    console.log(
+        `✅ ${state.channels.length} channel(s) loaded automatically.`
+    );
+
+    /*
+     * Render channels immediately.
+     */
     renderChannels();
 
+    /*
+     * No channels available.
+     */
     if (!state.channels.length) {
+        state.selectedChannel = null;
+
         clearChannelInterface();
+
         return;
     }
 
-    await selectChannel(state.channels[0].id);
+    /*
+     * Prefer #general.
+     */
+    const defaultChannel =
+        state.channels.find(
+            channel =>
+                String(
+                    channel.slug || ""
+                ).toLowerCase() ===
+                "general"
+        ) ||
+        state.channels.find(
+            channel =>
+                String(
+                    channel.name || ""
+                ).toLowerCase() ===
+                "general"
+        ) ||
+        state.channels[0];
+
+    console.log(
+        "📌 Automatically selecting:",
+        defaultChannel.name
+    );
+
+    await selectChannel(
+        defaultChannel.id
+    );
 }
 
 
 function renderChannels(filter = "") {
-    const container = $("channelList");
+    const container =
+        $("channelList");
 
     if (!container) {
         return;
     }
 
-    const search = String(filter)
-        .trim()
-        .toLowerCase();
+    const search =
+        String(filter)
+            .trim()
+            .toLowerCase();
 
-    const channels = state.channels.filter(channel => {
-        if (!search) {
-            return true;
-        }
+    /*
+     * No channels loaded yet.
+     */
+    if (!state.channels.length) {
+        container.innerHTML = `
+            <div class="channel-empty">
+                Loading channels...
+            </div>
+        `;
 
-        return (
-            channel.name?.toLowerCase().includes(search) ||
-            channel.description?.toLowerCase().includes(search)
+        return;
+    }
+
+    const channels =
+        state.channels.filter(
+            channel => {
+                if (!search) {
+                    return true;
+                }
+
+                return (
+                    channel.name
+                        ?.toLowerCase()
+                        .includes(search) ||
+                    channel.description
+                        ?.toLowerCase()
+                        .includes(search)
+                );
+            }
         );
-    });
 
     container.innerHTML = "";
 
     if (!channels.length) {
         container.innerHTML = `
             <div class="channel-empty">
-                No channels found.
+                No matching channels found.
             </div>
         `;
+
         return;
     }
 
     for (const channel of channels) {
-        const button = document.createElement("button");
+        const button =
+            document.createElement("button");
 
         button.type = "button";
-        button.className = "channel-button";
+
+        button.className =
+            "channel-button";
 
         if (
             state.selectedChannel &&
-            channel.id === state.selectedChannel.id
+            channel.id ===
+                state.selectedChannel.id
         ) {
             button.classList.add("active");
         }
 
         button.innerHTML = `
             <span class="channel-button-icon">
-                ${escapeHtml(channel.icon || "#")}
+                ${escapeHtml(
+                    channel.icon || "#"
+                )}
             </span>
+
             <span class="channel-button-name">
-                ${escapeHtml(channel.name)}
+                ${escapeHtml(
+                    channel.name
+                )}
             </span>
         `;
 
-        button.addEventListener("click", async () => {
-            await selectChannel(channel.id);
-        });
+        button.addEventListener(
+            "click",
+            async () => {
+                await selectChannel(
+                    channel.id
+                );
+            }
+        );
 
         container.appendChild(button);
     }
 }
 
 
-async function selectChannel(channelId) {
-    const channel = state.channels.find(
-        item => item.id === channelId
-    );
+async function selectChannel(
+    channelId
+) {
+    const channel =
+        state.channels.find(
+            item =>
+                item.id === channelId
+        );
 
     if (!channel) {
         return;
     }
 
-    state.selectedChannel = channel;
+    console.log(
+        "📢 Selecting channel:",
+        channel.name
+    );
+
+    state.selectedChannel =
+        channel;
+
     state.messages = [];
+
     state.reactions.clear();
+    state.messageAttachments.clear();
 
     renderChannels();
+
     updateSelectedChannelInterface();
 
     await loadMessages(true);
-    await subscribeToChannel(channel.id);
+
+    await subscribeToChannel(
+        channel.id
+    );
 }
 
 
 function updateSelectedChannelInterface() {
-    const channel = state.selectedChannel;
+    const channel =
+        state.selectedChannel;
 
     if (!channel) {
         return;
@@ -851,7 +1216,8 @@ function updateSelectedChannelInterface() {
         channel.icon || "#"
     );
 
-    const input = $("messageInput");
+    const input =
+        $("messageInput");
 
     if (input) {
         input.placeholder =
@@ -861,19 +1227,31 @@ function updateSelectedChannelInterface() {
 
 
 function clearChannelInterface() {
-    setText("mainChannelTitle", "No channels");
+    setText(
+        "mainChannelTitle",
+        "No channels"
+    );
+
     setText(
         "mainChannelDescription",
         "This community has no available channels."
     );
 
-    const messageList = $("messageList");
+    setText(
+        "mainChannelIcon",
+        "#"
+    );
+
+    const messageList =
+        $("messageList");
 
     if (messageList) {
         messageList.innerHTML = "";
     }
 
-    showElement($("messageEmptyState"));
+    showElement(
+        $("messageEmptyState")
+    );
 }
 
 
@@ -881,47 +1259,63 @@ function clearChannelInterface() {
    MESSAGES
    ========================================================= */
 
-async function loadMessages(reset = true) {
-    if (!state.selectedChannel || state.loadingMessages) {
+async function loadMessages(
+    reset = true
+) {
+    if (
+        !state.selectedChannel ||
+        state.loadingMessages
+    ) {
         return;
     }
 
     state.loadingMessages = true;
 
     try {
-        let query = supabase
-            .from("chat_messages")
-            .select(`
-                id,
-                channel_id,
-                user_id,
-                parent_message_id,
-                content,
-                message_type,
-                is_edited,
-                is_deleted,
-                is_pinned,
-                edited_at,
-                deleted_at,
-                created_at,
-                updated_at
-            `)
-            .eq(
-                "channel_id",
-                state.selectedChannel.id
-            )
-            .order("created_at", {
-                ascending: false
-            })
-            .limit(state.messagePageSize + 1);
+        let query =
+            supabase
+                .from("chat_messages")
+                .select(`
+                    id,
+                    channel_id,
+                    user_id,
+                    parent_message_id,
+                    content,
+                    message_type,
+                    is_edited,
+                    is_deleted,
+                    is_pinned,
+                    edited_at,
+                    deleted_at,
+                    created_at,
+                    updated_at
+                `)
+                .eq(
+                    "channel_id",
+                    state.selectedChannel.id
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: false
+                    }
+                )
+                .limit(
+                    state.messagePageSize + 1
+                );
 
-        if (!reset && state.messages.length) {
-            const oldest = state.messages[0];
+        if (
+            !reset &&
+            state.messages.length
+        ) {
+            const oldest =
+                state.messages[0];
 
-            query = query.lt(
-                "created_at",
-                oldest.created_at
-            );
+            query =
+                query.lt(
+                    "created_at",
+                    oldest.created_at
+                );
         }
 
         const {
@@ -930,19 +1324,32 @@ async function loadMessages(reset = true) {
         } = await query;
 
         if (error) {
-            console.error("❌ Failed to load messages:", error);
-            toast("Could not load messages.", "error");
+            console.error(
+                "❌ Failed to load messages:",
+                error
+            );
+
+            toast(
+                "Could not load messages.",
+                "error"
+            );
+
             return;
         }
 
         const rows = data || [];
 
         state.hasOlderMessages =
-            rows.length > state.messagePageSize;
+            rows.length >
+            state.messagePageSize;
 
-        const page = rows
-            .slice(0, state.messagePageSize)
-            .reverse();
+        const page =
+            rows
+                .slice(
+                    0,
+                    state.messagePageSize
+                )
+                .reverse();
 
         if (reset) {
             state.messages = page;
@@ -953,12 +1360,31 @@ async function loadMessages(reset = true) {
             ];
         }
 
+        /*
+         * Load profiles.
+         */
         await loadProfilesForUsers(
-            state.messages.map(message => message.user_id)
+            state.messages.map(
+                message =>
+                    message.user_id
+            )
         );
 
+        /*
+         * Load reactions.
+         */
         await loadReactionsForMessages(
-            state.messages.map(message => message.id)
+            state.messages.map(
+                message =>
+                    message.id
+            )
+        );
+
+        /*
+         * Load attachments.
+         */
+        await loadAttachmentsForMessages(
+            state.messages
         );
 
         renderMessages();
@@ -979,7 +1405,8 @@ async function loadOlderMessages() {
 
     state.loadingOlderMessages = true;
 
-    const messageList = $("messageList");
+    const messageList =
+        $("messageList");
 
     const previousHeight =
         messageList?.scrollHeight || 0;
@@ -999,6 +1426,7 @@ async function loadOlderMessages() {
                 previousHeight +
                 previousTop;
         }
+
     } finally {
         state.loadingOlderMessages = false;
     }
@@ -1010,8 +1438,11 @@ async function loadOlderMessages() {
    ========================================================= */
 
 function renderMessages() {
-    const container = $("messageList");
-    const emptyState = $("messageEmptyState");
+    const container =
+        $("messageList");
+
+    const emptyState =
+        $("messageEmptyState");
 
     if (!container) {
         return;
@@ -1025,6 +1456,7 @@ function renderMessages() {
         }
 
         updateOlderMessagesButton();
+
         return;
     }
 
@@ -1032,27 +1464,31 @@ function renderMessages() {
         hideElement(emptyState);
     }
 
-    const shouldStickToBottom =
+    const shouldStick =
         isNearBottom(container);
 
-    container.innerHTML = state.messages
-        .map(renderMessage)
-        .join("");
+    container.innerHTML =
+        state.messages
+            .map(renderMessage)
+            .join("");
 
     bindMessageActions();
 
     updateOlderMessagesButton();
 
-    if (shouldStickToBottom) {
-        requestAnimationFrame(() => {
-            scrollToBottom();
-        });
+    if (shouldStick) {
+        requestAnimationFrame(
+            scrollToBottom
+        );
     }
 }
 
 
 function renderMessage(message) {
-    const profile = getProfile(message.user_id);
+    const profile =
+        getProfile(
+            message.user_id
+        );
 
     const name =
         profile.full_name ||
@@ -1060,31 +1496,56 @@ function renderMessage(message) {
 
     const ownMessage =
         state.user &&
-        message.user_id === state.user.id;
+        message.user_id ===
+            state.user.id;
 
     const deleted =
-        Boolean(message.is_deleted);
+        Boolean(
+            message.is_deleted
+        );
 
     const timestamp =
-        formatMessageTime(message.created_at);
+        formatMessageTime(
+            message.created_at
+        );
 
-    const avatar = renderAvatar(
-        profile,
-        name
-    );
+    const avatar =
+        renderAvatar(
+            profile,
+            name
+        );
 
-    const content = deleted
-        ? `<div class="message-deleted">This message was deleted.</div>`
-        : renderMessageContent(message);
+    const content =
+        deleted
+            ? `
+                <div class="message-deleted">
+                    This message was deleted.
+                </div>
+            `
+            : renderMessageContent(
+                message
+            );
 
-    const edited = message.is_edited && !deleted
-        ? `<span class="message-edited">(edited)</span>`
-        : "";
+    const edited =
+        message.is_edited &&
+        !deleted
+            ? `
+                <span class="message-edited">
+                    (edited)
+                </span>
+            `
+            : "";
 
     return `
         <article
-            class="message-row ${ownMessage ? "own-message" : ""}"
-            data-message-id="${escapeAttribute(message.id)}"
+            class="message-row ${
+                ownMessage
+                    ? "own-message"
+                    : ""
+            }"
+            data-message-id="${escapeAttribute(
+                message.id
+            )}"
         >
 
             <div class="message-avatar">
@@ -1094,28 +1555,32 @@ function renderMessage(message) {
             <div class="message-body">
 
                 <div class="message-meta">
+
                     <strong class="message-author">
                         ${escapeHtml(name)}
                     </strong>
 
                     <span class="message-time">
-                        ${escapeHtml(timestamp)}
+                        ${escapeHtml(
+                            timestamp
+                        )}
                     </span>
 
                     ${edited}
+
                 </div>
 
                 <div class="message-content">
                     ${content}
                 </div>
 
-                ${
-                    renderMessageAttachments(message.id)
-                }
+                ${renderMessageAttachments(
+                    message.id
+                )}
 
-                ${
-                    renderReactions(message.id)
-                }
+                ${renderReactions(
+                    message.id
+                )}
 
                 <div class="message-actions">
 
@@ -1123,7 +1588,9 @@ function renderMessage(message) {
                         type="button"
                         class="message-action-button"
                         data-action="reply"
-                        data-message-id="${escapeAttribute(message.id)}"
+                        data-message-id="${escapeAttribute(
+                            message.id
+                        )}"
                     >
                         Reply
                     </button>
@@ -1132,19 +1599,24 @@ function renderMessage(message) {
                         type="button"
                         class="message-action-button"
                         data-action="react"
-                        data-message-id="${escapeAttribute(message.id)}"
+                        data-message-id="${escapeAttribute(
+                            message.id
+                        )}"
                     >
                         React
                     </button>
 
                     ${
-                        ownMessage && !deleted
+                        ownMessage &&
+                        !deleted
                             ? `
                                 <button
                                     type="button"
                                     class="message-action-button danger"
                                     data-action="delete"
-                                    data-message-id="${escapeAttribute(message.id)}"
+                                    data-message-id="${escapeAttribute(
+                                        message.id
+                                    )}"
                                 >
                                     Delete
                                 </button>
@@ -1156,9 +1628,13 @@ function renderMessage(message) {
 
                 <div
                     class="reaction-picker hidden"
-                    data-reaction-picker="${escapeAttribute(message.id)}"
+                    data-reaction-picker="${escapeAttribute(
+                        message.id
+                    )}"
                 >
-                    ${renderReactionButtons(message.id)}
+                    ${renderReactionButtons(
+                        message.id
+                    )}
                 </div>
 
             </div>
@@ -1167,41 +1643,63 @@ function renderMessage(message) {
 }
 
 
-function renderAvatar(profile, name) {
+function renderAvatar(
+    profile,
+    name
+) {
     if (profile.photo_url) {
         return `
             <img
-                src="${escapeAttribute(profile.photo_url)}"
-                alt="${escapeAttribute(name)}"
+                src="${escapeAttribute(
+                    profile.photo_url
+                )}"
+                alt="${escapeAttribute(
+                    name
+                )}"
                 loading="lazy"
-                onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');"
+                onerror="
+                    this.style.display='none';
+                    this.nextElementSibling?.classList.remove('hidden');
+                "
             >
+
             <span class="avatar-initials hidden">
-                ${escapeHtml(getInitials(name))}
+                ${escapeHtml(
+                    getInitials(name)
+                )}
             </span>
         `;
     }
 
     return `
         <span class="avatar-initials">
-            ${escapeHtml(getInitials(name))}
+            ${escapeHtml(
+                getInitials(name)
+            )}
         </span>
     `;
 }
 
 
-function renderMessageContent(message) {
+function renderMessageContent(
+    message
+) {
     const content =
-        String(message.content || "");
+        String(
+            message.content || ""
+        );
 
     if (
-        message.message_type === "gif" &&
+        message.message_type ===
+            "gif" &&
         isSafeImageUrl(content)
     ) {
         return `
             <div class="message-gif">
                 <img
-                    src="${escapeAttribute(content)}"
+                    src="${escapeAttribute(
+                        content
+                    )}"
                     alt="GIF"
                     loading="lazy"
                 >
@@ -1211,17 +1709,23 @@ function renderMessageContent(message) {
 
     return `
         <div class="message-text">
-            ${formatMessageText(content)}
+            ${formatMessageText(
+                content
+            )}
         </div>
     `;
 }
 
 
 function formatMessageText(text) {
-    const escaped = escapeHtml(text);
+    const escaped =
+        escapeHtml(text);
 
     return escaped
-        .replace(/\n/g, "<br>")
+        .replace(
+            /\n/g,
+            "<br>"
+        )
         .replace(
             /(https?:\/\/[^\s<]+)/g,
             `<a
@@ -1235,11 +1739,14 @@ function formatMessageText(text) {
 
 function isSafeImageUrl(url) {
     try {
-        const parsed = new URL(url);
+        const parsed =
+            new URL(url);
 
         return (
-            parsed.protocol === "https:" ||
-            parsed.protocol === "http:"
+            parsed.protocol ===
+                "https:" ||
+            parsed.protocol ===
+                "http:"
         );
     } catch {
         return false;
@@ -1247,9 +1754,17 @@ function isSafeImageUrl(url) {
 }
 
 
-function renderMessageAttachments(messageId) {
+/* =========================================================
+   ATTACHMENTS
+   ========================================================= */
+
+function renderMessageAttachments(
+    messageId
+) {
     const attachments =
-        messageAttachments.get(messageId) || [];
+        state.messageAttachments.get(
+            messageId
+        ) || [];
 
     if (!attachments.length) {
         return "";
@@ -1257,95 +1772,82 @@ function renderMessageAttachments(messageId) {
 
     return `
         <div class="message-attachments">
-            ${attachments.map(attachment => {
-                const image =
-                    attachment.mime_type?.startsWith("image/");
 
-                if (image && attachment.file_url) {
+            ${attachments
+                .map(attachment => {
+                    const image =
+                        attachment
+                            .mime_type
+                            ?.startsWith(
+                                "image/"
+                            );
+
+                    if (
+                        image &&
+                        attachment.file_url
+                    ) {
+                        return `
+                            <a
+                                class="attachment-image"
+                                href="${escapeAttribute(
+                                    attachment.file_url
+                                )}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <img
+                                    src="${escapeAttribute(
+                                        attachment.file_url
+                                    )}"
+                                    alt="${escapeAttribute(
+                                        attachment.file_name
+                                    )}"
+                                    loading="lazy"
+                                >
+                            </a>
+                        `;
+                    }
+
                     return `
                         <a
-                            class="attachment-image"
-                            href="${escapeAttribute(attachment.file_url)}"
+                            class="attachment-file"
+                            href="${escapeAttribute(
+                                attachment.file_url ||
+                                "#"
+                            )}"
                             target="_blank"
                             rel="noopener noreferrer"
                         >
-                            <img
-                                src="${escapeAttribute(attachment.file_url)}"
-                                alt="${escapeAttribute(
-                                    attachment.file_name
-                                )}"
-                                loading="lazy"
-                            >
+                            📎
+
+                            <span>
+                                ${escapeHtml(
+                                    attachment.file_name ||
+                                    "Attachment"
+                                )}
+                            </span>
                         </a>
                     `;
-                }
+                })
+                .join("")}
 
-                return `
-                    <a
-                        class="attachment-file"
-                        href="${escapeAttribute(
-                            attachment.file_url || "#"
-                        )}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        📎
-                        <span>
-                            ${escapeHtml(
-                                attachment.file_name ||
-                                "Attachment"
-                            )}
-                        </span>
-                    </a>
-                `;
-            }).join("")}
         </div>
     `;
 }
 
 
-const messageAttachments = new Map();
+async function loadAttachmentsForMessages(
+    messages
+) {
+    const ids =
+        (messages || [])
+            .map(
+                message =>
+                    message.id
+            )
+            .filter(Boolean);
 
-
-async function loadAttachmentsForMessage(messageId) {
-    const {
-        data,
-        error
-    } = await supabase
-        .from("chat_attachments")
-        .select(`
-            id,
-            message_id,
-            uploaded_by,
-            file_name,
-            file_path,
-            file_url,
-            mime_type,
-            file_size,
-            created_at
-        `)
-        .eq("message_id", messageId)
-        .order("created_at", {
-            ascending: true
-        });
-
-    if (error) {
-        console.error(
-            "Could not load attachments:",
-            error
-        );
-        return;
-    }
-
-    messageAttachments.set(
-        messageId,
-        data || []
-    );
-}
-
-
-async function loadAttachmentsForMessages(messages) {
-    const ids = messages.map(message => message.id);
+    state.messageAttachments.clear();
 
     if (!ids.length) {
         return;
@@ -1367,31 +1869,42 @@ async function loadAttachmentsForMessages(messages) {
             file_size,
             created_at
         `)
-        .in("message_id", ids)
-        .order("created_at", {
-            ascending: true
-        });
+        .in(
+            "message_id",
+            ids
+        )
+        .order(
+            "created_at",
+            {
+                ascending: true
+            }
+        );
 
     if (error) {
         console.error(
-            "Could not load message attachments:",
+            "❌ Could not load message attachments:",
             error
         );
+
         return;
     }
 
-    messageAttachments.clear();
-
     for (const attachment of data || []) {
-        if (!messageAttachments.has(attachment.message_id)) {
-            messageAttachments.set(
+        if (
+            !state.messageAttachments.has(
+                attachment.message_id
+            )
+        ) {
+            state.messageAttachments.set(
                 attachment.message_id,
                 []
             );
         }
 
-        messageAttachments
-            .get(attachment.message_id)
+        state.messageAttachments
+            .get(
+                attachment.message_id
+            )
             .push(attachment);
     }
 }
@@ -1401,11 +1914,15 @@ async function loadAttachmentsForMessages(messages) {
    REACTIONS
    ========================================================= */
 
-async function loadReactionsForMessages(messageIds) {
+async function loadReactionsForMessages(
+    messageIds
+) {
     state.reactions.clear();
 
     const ids = [
-        ...new Set(messageIds || [])
+        ...new Set(
+            messageIds || []
+        )
     ];
 
     if (!ids.length) {
@@ -1416,7 +1933,9 @@ async function loadReactionsForMessages(messageIds) {
         data,
         error
     } = await supabase
-        .from("chat_message_reactions")
+        .from(
+            "chat_message_reactions"
+        )
         .select(`
             id,
             message_id,
@@ -1424,18 +1943,26 @@ async function loadReactionsForMessages(messageIds) {
             reaction,
             created_at
         `)
-        .in("message_id", ids);
+        .in(
+            "message_id",
+            ids
+        );
 
     if (error) {
         console.error(
             "❌ Failed to load reactions:",
             error
         );
+
         return;
     }
 
     for (const reaction of data || []) {
-        if (!state.reactions.has(reaction.message_id)) {
+        if (
+            !state.reactions.has(
+                reaction.message_id
+            )
+        ) {
             state.reactions.set(
                 reaction.message_id,
                 []
@@ -1443,24 +1970,35 @@ async function loadReactionsForMessages(messageIds) {
         }
 
         state.reactions
-            .get(reaction.message_id)
+            .get(
+                reaction.message_id
+            )
             .push(reaction);
     }
 }
 
 
-function renderReactions(messageId) {
+function renderReactions(
+    messageId
+) {
     const reactions =
-        state.reactions.get(messageId) || [];
+        state.reactions.get(
+            messageId
+        ) || [];
 
     if (!reactions.length) {
         return "";
     }
 
-    const grouped = new Map();
+    const grouped =
+        new Map();
 
     for (const reaction of reactions) {
-        if (!grouped.has(reaction.reaction)) {
+        if (
+            !grouped.has(
+                reaction.reaction
+            )
+        ) {
             grouped.set(
                 reaction.reaction,
                 []
@@ -1468,35 +2006,58 @@ function renderReactions(messageId) {
         }
 
         grouped
-            .get(reaction.reaction)
-            .push(reaction.user_id);
+            .get(
+                reaction.reaction
+            )
+            .push(
+                reaction.user_id
+            );
     }
 
     return `
         <div class="message-reactions">
-            ${[...grouped.entries()]
-                .map(([emoji, users]) => `
-                    <button
-                        type="button"
-                        class="reaction-chip ${
-                            users.includes(state.user?.id)
-                                ? "selected"
-                                : ""
-                        }"
-                        data-reaction="${escapeAttribute(emoji)}"
-                        data-message-id="${escapeAttribute(messageId)}"
-                    >
-                        ${escapeHtml(emoji)}
-                        <span>${users.length}</span>
-                    </button>
-                `)
+
+            ${[
+                ...grouped.entries()
+            ]
+                .map(
+                    ([emoji, users]) => `
+                        <button
+                            type="button"
+                            class="reaction-chip ${
+                                users.includes(
+                                    state.user?.id
+                                )
+                                    ? "selected"
+                                    : ""
+                            }"
+                            data-reaction="${escapeAttribute(
+                                emoji
+                            )}"
+                            data-message-id="${escapeAttribute(
+                                messageId
+                            )}"
+                        >
+                            ${escapeHtml(
+                                emoji
+                            )}
+
+                            <span>
+                                ${users.length}
+                            </span>
+                        </button>
+                    `
+                )
                 .join("")}
+
         </div>
     `;
 }
 
 
-function renderReactionButtons(messageId) {
+function renderReactionButtons(
+    messageId
+) {
     const emojis = [
         "👍",
         "❤️",
@@ -1505,51 +2066,91 @@ function renderReactionButtons(messageId) {
         "👏",
         "🔥",
         "💯",
-        "🙏"
+        "🙏",
+        "😍",
+        "🥰",
+        "😎",
+        "🤔",
+        "😢",
+        "😡",
+        "🤯",
+        "🙌",
+        "💪",
+        "✨",
+        "✅"
     ];
 
-    return emojis.map(emoji => `
-        <button
-            type="button"
-            class="reaction-choice"
-            data-reaction="${escapeAttribute(emoji)}"
-            data-message-id="${escapeAttribute(messageId)}"
-        >
-            ${emoji}
-        </button>
-    `).join("");
+    return emojis
+        .map(
+            emoji => `
+                <button
+                    type="button"
+                    class="reaction-choice"
+                    data-reaction="${escapeAttribute(
+                        emoji
+                    )}"
+                    data-message-id="${escapeAttribute(
+                        messageId
+                    )}"
+                >
+                    ${emoji}
+                </button>
+            `
+        )
+        .join("");
 }
 
 
-function openReactionPicker(messageId) {
+function openReactionPicker(
+    messageId
+) {
     closeReactionPicker();
+
+    const selector =
+        `[data-reaction-picker="${CSS.escape(
+            messageId
+        )}"]`;
 
     const picker =
         document.querySelector(
-            `[data-reaction-picker="${CSS.escape(messageId)}"]`
+            selector
         );
 
     if (!picker) {
         return;
     }
 
-    picker.classList.remove("hidden");
+    picker.classList.remove(
+        "hidden"
+    );
 
     state.reactionPickerMessageId =
         messageId;
 
-    state.reactionOutsideHandler = event => {
-        if (
-            picker.contains(event.target) ||
-            event.target.closest(
-                `[data-action="react"][data-message-id="${CSS.escape(messageId)}"]`
-            )
-        ) {
-            return;
-        }
+    state.reactionOutsideHandler =
+        event => {
+            const target =
+                event.target;
 
-        closeReactionPicker();
-    };
+            if (
+                picker.contains(target)
+            ) {
+                return;
+            }
+
+            const reactButton =
+                target.closest?.(
+                    `[data-action="react"][data-message-id="${CSS.escape(
+                        messageId
+                    )}"]`
+                );
+
+            if (reactButton) {
+                return;
+            }
+
+            closeReactionPicker();
+        };
 
     setTimeout(() => {
         document.addEventListener(
@@ -1562,24 +2163,36 @@ function openReactionPicker(messageId) {
 
 function closeReactionPicker() {
     document
-        .querySelectorAll(".reaction-picker")
+        .querySelectorAll(
+            ".reaction-picker"
+        )
         .forEach(element => {
-            element.classList.add("hidden");
+            element.classList.add(
+                "hidden"
+            );
         });
 
-    if (state.reactionOutsideHandler) {
+    if (
+        state.reactionOutsideHandler
+    ) {
         document.removeEventListener(
             "click",
             state.reactionOutsideHandler
         );
     }
 
-    state.reactionOutsideHandler = null;
-    state.reactionPickerMessageId = null;
+    state.reactionOutsideHandler =
+        null;
+
+    state.reactionPickerMessageId =
+        null;
 }
 
 
-async function toggleReaction(messageId, reaction) {
+async function toggleReaction(
+    messageId,
+    reaction
+) {
     if (!state.user) {
         return;
     }
@@ -1588,11 +2201,22 @@ async function toggleReaction(messageId, reaction) {
         data: existing,
         error: lookupError
     } = await supabase
-        .from("chat_message_reactions")
+        .from(
+            "chat_message_reactions"
+        )
         .select("id")
-        .eq("message_id", messageId)
-        .eq("user_id", state.user.id)
-        .eq("reaction", reaction)
+        .eq(
+            "message_id",
+            messageId
+        )
+        .eq(
+            "user_id",
+            state.user.id
+        )
+        .eq(
+            "reaction",
+            reaction
+        )
         .maybeSingle();
 
     if (lookupError) {
@@ -1600,6 +2224,7 @@ async function toggleReaction(messageId, reaction) {
             "Reaction lookup failed:",
             lookupError
         );
+
         return;
     }
 
@@ -1607,25 +2232,36 @@ async function toggleReaction(messageId, reaction) {
         const {
             error
         } = await supabase
-            .from("chat_message_reactions")
+            .from(
+                "chat_message_reactions"
+            )
             .delete()
-            .eq("id", existing.id);
+            .eq(
+                "id",
+                existing.id
+            );
 
         if (error) {
             console.error(
                 "Reaction removal failed:",
                 error
             );
+
             return;
         }
+
     } else {
         const {
             error
         } = await supabase
-            .from("chat_message_reactions")
+            .from(
+                "chat_message_reactions"
+            )
             .insert({
-                message_id: messageId,
-                user_id: state.user.id,
+                message_id:
+                    messageId,
+                user_id:
+                    state.user.id,
                 reaction
             });
 
@@ -1634,12 +2270,16 @@ async function toggleReaction(messageId, reaction) {
                 "Reaction insertion failed:",
                 error
             );
+
             return;
         }
     }
 
     await loadReactionsForMessages(
-        state.messages.map(message => message.id)
+        state.messages.map(
+            message =>
+                message.id
+        )
     );
 
     renderMessages();
@@ -1652,7 +2292,9 @@ async function toggleReaction(messageId, reaction) {
 
 function bindMessageActions() {
     document
-        .querySelectorAll("[data-action]")
+        .querySelectorAll(
+            "[data-action]"
+        )
         .forEach(button => {
             button.addEventListener(
                 "click",
@@ -1661,7 +2303,9 @@ function bindMessageActions() {
         });
 
     document
-        .querySelectorAll(".reaction-choice")
+        .querySelectorAll(
+            ".reaction-choice"
+        )
         .forEach(button => {
             button.addEventListener(
                 "click",
@@ -1669,10 +2313,12 @@ function bindMessageActions() {
                     event.stopPropagation();
 
                     const messageId =
-                        button.dataset.messageId;
+                        button.dataset
+                            .messageId;
 
                     const reaction =
-                        button.dataset.reaction;
+                        button.dataset
+                            .reaction;
 
                     closeReactionPicker();
 
@@ -1685,14 +2331,18 @@ function bindMessageActions() {
         });
 
     document
-        .querySelectorAll(".reaction-chip")
+        .querySelectorAll(
+            ".reaction-chip"
+        )
         .forEach(button => {
             button.addEventListener(
                 "click",
                 async () => {
                     await toggleReaction(
-                        button.dataset.messageId,
-                        button.dataset.reaction
+                        button.dataset
+                            .messageId,
+                        button.dataset
+                            .reaction
                     );
                 }
             );
@@ -1700,8 +2350,11 @@ function bindMessageActions() {
 }
 
 
-async function handleMessageAction(event) {
-    const button = event.currentTarget;
+async function handleMessageAction(
+    event
+) {
+    const button =
+        event.currentTarget;
 
     const action =
         button.dataset.action;
@@ -1715,7 +2368,11 @@ async function handleMessageAction(event) {
 
     if (action === "react") {
         event.stopPropagation();
-        openReactionPicker(messageId);
+
+        openReactionPicker(
+            messageId
+        );
+
         return;
     }
 
@@ -1725,7 +2382,9 @@ async function handleMessageAction(event) {
     }
 
     if (action === "delete") {
-        await deleteMessage(messageId);
+        await deleteMessage(
+            messageId
+        );
     }
 }
 
@@ -1733,30 +2392,40 @@ async function handleMessageAction(event) {
 function beginReply(messageId) {
     const message =
         state.messages.find(
-            item => item.id === messageId
+            item =>
+                item.id === messageId
         );
 
     if (!message) {
         return;
     }
 
-    const input = $("messageInput");
+    const input =
+        $("messageInput");
 
     if (!input) {
         return;
     }
 
-    input.dataset.replyTo = messageId;
+    input.dataset.replyTo =
+        messageId;
 
     const profile =
-        getProfile(message.user_id);
+        getProfile(
+            message.user_id
+        );
 
     input.placeholder =
-        `Reply to ${profile.full_name || "Student"}...`;
+        `Reply to ${
+            profile.full_name ||
+            "Student"
+        }...`;
 
     input.focus();
 
-    toast("Reply mode enabled.");
+    toast(
+        "Reply mode enabled."
+    );
 }
 
 
@@ -1764,21 +2433,31 @@ function beginReply(messageId) {
    DELETE MESSAGE
    ========================================================= */
 
-async function deleteMessage(messageId) {
+async function deleteMessage(
+    messageId
+) {
     const message =
         state.messages.find(
-            item => item.id === messageId
+            item =>
+                item.id === messageId
         );
 
-    if (!message || !state.user) {
+    if (
+        !message ||
+        !state.user
+    ) {
         return;
     }
 
-    if (message.user_id !== state.user.id) {
+    if (
+        message.user_id !==
+        state.user.id
+    ) {
         toast(
             "You can only delete your own messages.",
             "error"
         );
+
         return;
     }
 
@@ -1794,14 +2473,26 @@ async function deleteMessage(messageId) {
     const {
         error
     } = await supabase
-        .from("chat_messages")
+        .from(
+            "chat_messages"
+        )
         .update({
             is_deleted: true,
-            deleted_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
+            deleted_at:
+                new Date()
+                    .toISOString(),
+            updated_at:
+                new Date()
+                    .toISOString()
         })
-        .eq("id", messageId)
-        .eq("user_id", state.user.id);
+        .eq(
+            "id",
+            messageId
+        )
+        .eq(
+            "user_id",
+            state.user.id
+        );
 
     if (error) {
         console.error(
@@ -1817,7 +2508,29 @@ async function deleteMessage(messageId) {
         return;
     }
 
-    toast("Message deleted.");
+    /*
+     * Update locally immediately.
+     */
+    const localMessage =
+        state.messages.find(
+            item =>
+                item.id === messageId
+        );
+
+    if (localMessage) {
+        localMessage.is_deleted =
+            true;
+
+        localMessage.deleted_at =
+            new Date()
+                .toISOString();
+    }
+
+    renderMessages();
+
+    toast(
+        "Message deleted."
+    );
 }
 
 
@@ -1825,7 +2538,9 @@ async function deleteMessage(messageId) {
    SEND MESSAGE
    ========================================================= */
 
-async function sendMessage(event) {
+async function sendMessage(
+    event
+) {
     event?.preventDefault();
 
     if (!state.rulesAccepted) {
@@ -1834,16 +2549,25 @@ async function sendMessage(event) {
     }
 
     if (!state.selectedChannel) {
-        toast("Select a channel first.", "error");
+        toast(
+            "Select a channel first.",
+            "error"
+        );
+
         return;
     }
 
     if (!state.user) {
-        toast("You must be signed in.", "error");
+        toast(
+            "You must be signed in.",
+            "error"
+        );
+
         return;
     }
 
-    const input = $("messageInput");
+    const input =
+        $("messageInput");
 
     if (!input) {
         return;
@@ -1852,10 +2576,17 @@ async function sendMessage(event) {
     const content =
         input.value.trim();
 
-    const files =
-        [...($("attachmentInput")?.files || [])];
+    const files = [
+        ...(
+            $("attachmentInput")
+                ?.files || []
+        )
+    ];
 
-    if (!content && !files.length) {
+    if (
+        !content &&
+        !files.length
+    ) {
         return;
     }
 
@@ -1863,18 +2594,22 @@ async function sendMessage(event) {
         $("sendMessageButton");
 
     if (sendButton) {
-        sendButton.disabled = true;
+        sendButton.disabled =
+            true;
     }
 
     try {
         const replyTo =
-            input.dataset.replyTo || null;
+            input.dataset.replyTo ||
+            null;
 
         const {
             data: message,
             error
         } = await supabase
-            .from("chat_messages")
+            .from(
+                "chat_messages"
+            )
             .insert({
                 channel_id:
                     state.selectedChannel.id,
@@ -1932,10 +2667,13 @@ async function sendMessage(event) {
         }
 
         input.value = "";
+
         delete input.dataset.replyTo;
 
         input.placeholder =
-            `Message #${state.selectedChannel.name}`;
+            `Message #${
+                state.selectedChannel.name
+            }`;
 
         const attachmentInput =
             $("attachmentInput");
@@ -1950,21 +2688,27 @@ async function sendMessage(event) {
 
     } finally {
         if (sendButton) {
-            sendButton.disabled = false;
+            sendButton.disabled =
+                false;
         }
     }
 }
 
 
 /* =========================================================
-   ATTACHMENTS
+   ATTACHMENT UPLOAD
    ========================================================= */
 
-async function uploadAttachments(messageId, files) {
+async function uploadAttachments(
+    messageId,
+    files
+) {
     for (const file of files) {
         try {
             const safeName =
-                sanitizeFileName(file.name);
+                sanitizeFileName(
+                    file.name
+                );
 
             const path =
                 `chat/${state.selectedChannel.id}/${messageId}/${Date.now()}-${safeName}`;
@@ -1972,11 +2716,19 @@ async function uploadAttachments(messageId, files) {
             const {
                 error: uploadError
             } = await supabase.storage
-                .from("chat-attachments")
-                .upload(path, file, {
-                    cacheControl: "3600",
-                    upsert: false
-                });
+                .from(
+                    "chat-attachments"
+                )
+                .upload(
+                    path,
+                    file,
+                    {
+                        cacheControl:
+                            "3600",
+                        upsert:
+                            false
+                    }
+                );
 
             if (uploadError) {
                 console.error(
@@ -1994,25 +2746,48 @@ async function uploadAttachments(messageId, files) {
 
             const {
                 data: publicData
-            } = supabase.storage
-                .from("chat-attachments")
-                .getPublicUrl(path);
+            } =
+                supabase.storage
+                    .from(
+                        "chat-attachments"
+                    )
+                    .getPublicUrl(
+                        path
+                    );
 
             const fileUrl =
-                publicData?.publicUrl || "";
+                publicData?.publicUrl ||
+                "";
 
             const {
-                error: attachmentError
+                error:
+                    attachmentError
             } = await supabase
-                .from("chat_attachments")
+                .from(
+                    "chat_attachments"
+                )
                 .insert({
-                    message_id: messageId,
-                    uploaded_by: state.user.id,
-                    file_name: file.name,
-                    file_path: path,
-                    file_url: fileUrl,
-                    mime_type: file.type || "application/octet-stream",
-                    file_size: file.size
+                    message_id:
+                        messageId,
+
+                    uploaded_by:
+                        state.user.id,
+
+                    file_name:
+                        file.name,
+
+                    file_path:
+                        path,
+
+                    file_url:
+                        fileUrl,
+
+                    mime_type:
+                        file.type ||
+                        "application/octet-stream",
+
+                    file_size:
+                        file.size
                 });
 
             if (attachmentError) {
@@ -2032,10 +2807,20 @@ async function uploadAttachments(messageId, files) {
 }
 
 
-function sanitizeFileName(name) {
-    return String(name || "file")
-        .replace(/[^a-zA-Z0-9._-]/g, "_")
-        .substring(0, 180);
+function sanitizeFileName(
+    name
+) {
+    return String(
+        name || "file"
+    )
+        .replace(
+            /[^a-zA-Z0-9._-]/g,
+            "_"
+        )
+        .substring(
+            0,
+            180
+        );
 }
 
 
@@ -2044,43 +2829,62 @@ function sanitizeFileName(name) {
    ========================================================= */
 
 function previewGif() {
-    const input = $("gifUrlInput");
-    const preview = $("gifPreview");
-    const sendButton = $("sendGifButton");
+    const input =
+        $("gifUrlInput");
+
+    const preview =
+        $("gifPreview");
+
+    const sendButton =
+        $("sendGifButton");
 
     const url =
-        input?.value.trim() || "";
+        input?.value.trim() ||
+        "";
 
-    state.selectedGifUrl = "";
-    state.selectedGifPreview = "";
+    state.selectedGifUrl =
+        "";
 
-    if (!url || !isSafeImageUrl(url)) {
+    state.selectedGifPreview =
+        "";
+
+    if (
+        !url ||
+        !isSafeImageUrl(url)
+    ) {
         if (preview) {
             preview.innerHTML =
                 "<p>Enter a valid image/GIF URL.</p>";
         }
 
         if (sendButton) {
-            sendButton.disabled = true;
+            sendButton.disabled =
+                true;
         }
 
         return;
     }
 
-    state.selectedGifUrl = url;
-    state.selectedGifPreview = url;
+    state.selectedGifUrl =
+        url;
+
+    state.selectedGifPreview =
+        url;
 
     if (preview) {
         preview.innerHTML = `
             <img
-                src="${escapeAttribute(url)}"
+                src="${escapeAttribute(
+                    url
+                )}"
                 alt="GIF preview"
             >
         `;
     }
 
     if (sendButton) {
-        sendButton.disabled = false;
+        sendButton.disabled =
+            false;
     }
 }
 
@@ -2091,26 +2895,37 @@ async function sendGif() {
         return;
     }
 
-    if (!state.selectedChannel || !state.user) {
+    if (
+        !state.selectedChannel ||
+        !state.user
+    ) {
         return;
     }
 
     const url =
         state.selectedGifUrl ||
-        $("gifUrlInput")?.value.trim();
+        $("gifUrlInput")
+            ?.value
+            .trim();
 
-    if (!url || !isSafeImageUrl(url)) {
+    if (
+        !url ||
+        !isSafeImageUrl(url)
+    ) {
         toast(
             "Enter a valid GIF URL.",
             "error"
         );
+
         return;
     }
 
     const {
         error
     } = await supabase
-        .from("chat_messages")
+        .from(
+            "chat_messages"
+        )
         .insert({
             channel_id:
                 state.selectedChannel.id,
@@ -2142,63 +2957,414 @@ async function sendGif() {
     closeGifPicker();
 
     await loadMessages(true);
+
     scrollToBottom();
 }
 
 
 /* =========================================================
-   EMOJI
+   MASSIVE EMOJI SYSTEM
    ========================================================= */
 
-const EMOJIS = [
-    "😀", "😃", "😄", "😁", "😆", "😅",
-    "😂", "🤣", "😊", "😇", "🙂", "🙃",
-    "😉", "😌", "😍", "🥰", "😘", "😎",
-    "🤓", "🧐", "🤔", "🤨", "😐", "😑",
-    "😶", "🙄", "😏", "😴", "🤗", "🤭",
-    "🤫", "🤥", "😮", "😯", "😲", "😳",
-    "🥳", "😇", "😭", "😢", "😡", "🤯",
-    "👍", "👎", "👏", "🙌", "🙏", "💪",
-    "❤️", "💙", "💚", "💛", "🧡", "💜",
-    "🔥", "✨", "🎉", "💯", "✅", "❌"
-];
+/*
+ * Instead of maintaining a tiny manually-written list,
+ * build the emoji catalogue from Unicode supported by
+ * the browser.
+ *
+ * This means newly supported Unicode emoji can appear
+ * without us having to manually add every character.
+ */
+
+let emojiCatalogue = null;
 
 
-function populateEmojiPicker() {
-    const grid = $("emojiGrid");
-
-    if (!grid || grid.children.length) {
-        return;
+function buildEmojiCatalogue() {
+    if (emojiCatalogue) {
+        return emojiCatalogue;
     }
 
-    grid.innerHTML = EMOJIS
-        .map(emoji => `
-            <button
-                type="button"
-                class="emoji-choice"
-                data-emoji="${escapeAttribute(emoji)}"
-            >
-                ${emoji}
-            </button>
-        `)
-        .join("");
+    const set = new Set();
 
-    grid.querySelectorAll(".emoji-choice")
-        .forEach(button => {
-            button.addEventListener(
-                "click",
-                () => {
-                    insertEmoji(
-                        button.dataset.emoji
-                    );
-                }
+    /*
+     * Main emoji blocks.
+     */
+    const ranges = [
+        [0x1F000, 0x1FAFF],
+        [0x1FC00, 0x1FFFF],
+        [0x2300, 0x23FF],
+        [0x2600, 0x27BF],
+        [0x2B00, 0x2BFF],
+        [0x2934, 0x2935],
+        [0x25AA, 0x25FF],
+        [0x203C, 0x3299]
+    ];
+
+    /*
+     * Unicode property support.
+     */
+    let emojiRegex = null;
+
+    try {
+        emojiRegex =
+            new RegExp(
+                "\\p{Emoji_Presentation}|\\p{Emoji}",
+                "u"
             );
-        });
+    } catch {
+        emojiRegex = null;
+    }
+
+    for (const [start, end] of ranges) {
+        for (
+            let codePoint = start;
+            codePoint <= end;
+            codePoint++
+        ) {
+            const character =
+                String.fromCodePoint(
+                    codePoint
+                );
+
+            /*
+             * Avoid adding ordinary numbers,
+             * letters and unrelated symbols.
+             */
+            if (
+                emojiRegex &&
+                emojiRegex.test(character)
+            ) {
+                set.add(character);
+            }
+        }
+    }
+
+    /*
+     * Explicit commonly-supported symbols.
+     */
+    const extraSymbols = [
+        "©",
+        "®",
+        "™",
+        "‼",
+        "⁉",
+        "ℹ️",
+        "↔️",
+        "↕️",
+        "↖️",
+        "↗️",
+        "↘️",
+        "↙️",
+        "↩️",
+        "↪️",
+        "⌚",
+        "⌛",
+        "⏩",
+        "⏪",
+        "⏫",
+        "⏬",
+        "⏰",
+        "⏳",
+        "◼️",
+        "◻️",
+        "◾",
+        "◽",
+        "▪️",
+        "▫️",
+        "▶️",
+        "◀️",
+        "🔼",
+        "🔽",
+        "⭕",
+        "❗",
+        "❓",
+        "❕",
+        "❔",
+        "❌",
+        "⭕",
+        "➕",
+        "➖",
+        "➗",
+        "✖️",
+        "✔️",
+        "☑️",
+        "⭐",
+        "🌟",
+        "✨",
+        "⚡",
+        "☀️",
+        "☁️",
+        "☔",
+        "❄️",
+        "☃️",
+        "♻️",
+        "⚠️",
+        "🚸",
+        "🔱",
+        "⚜️",
+        "♠️",
+        "♥️",
+        "♦️",
+        "♣️",
+        "🎵",
+        "🎶"
+    ];
+
+    for (
+        const emoji of extraSymbols
+    ) {
+        set.add(emoji);
+    }
+
+    /*
+     * Skin-tone modifiers.
+     */
+    const skinTones = [
+        "🏻",
+        "🏼",
+        "🏽",
+        "🏾",
+        "🏿"
+    ];
+
+    /*
+     * Regional indicators create flags.
+     */
+    const regionalIndicators = [];
+
+    for (
+        let codePoint = 0x1F1E6;
+        codePoint <= 0x1F1FF;
+        codePoint++
+    ) {
+        regionalIndicators.push(
+            String.fromCodePoint(
+                codePoint
+            )
+        );
+    }
+
+    /*
+     * Common flag combinations.
+     */
+    for (
+        let first = 0;
+        first <
+            regionalIndicators.length;
+        first++
+    ) {
+        for (
+            let second = 0;
+            second <
+                regionalIndicators.length;
+            second++
+        ) {
+            set.add(
+                regionalIndicators[first] +
+                regionalIndicators[second]
+            );
+        }
+    }
+
+    /*
+     * Skin-tone variants for many
+     * emoji that accept modifiers.
+     */
+    const baseEmoji =
+        [...set].filter(
+            emoji =>
+                emoji.length <= 4
+        );
+
+    for (
+        const emoji of baseEmoji
+    ) {
+        for (
+            const tone of skinTones
+        ) {
+            set.add(
+                emoji + tone
+            );
+        }
+    }
+
+    /*
+     * Important common ZWJ sequences.
+     */
+    const zwjSequences = [
+        "👨‍⚕️",
+        "👩‍⚕️",
+        "🧑‍⚕️",
+        "👨‍🎓",
+        "👩‍🎓",
+        "🧑‍🎓",
+        "👨‍🏫",
+        "👩‍🏫",
+        "🧑‍🏫",
+        "👨‍💻",
+        "👩‍💻",
+        "🧑‍💻",
+        "👨‍🔬",
+        "👩‍🔬",
+        "🧑‍🔬",
+        "👨‍🚀",
+        "👩‍🚀",
+        "🧑‍🚀",
+        "👨‍🍳",
+        "👩‍🍳",
+        "🧑‍🍳",
+        "👨‍⚖️",
+        "👩‍⚖️",
+        "🧑‍⚖️",
+        "👨‍🌾",
+        "👩‍🌾",
+        "🧑‍🌾",
+        "👨‍🎨",
+        "👩‍🎨",
+        "🧑‍🎨",
+        "👨‍🚒",
+        "👩‍🚒",
+        "🧑‍🚒",
+        "👨‍✈️",
+        "👩‍✈️",
+        "🧑‍✈️",
+        "👨‍🔧",
+        "👩‍🔧",
+        "🧑‍🔧",
+        "👨‍⚕️",
+        "👩‍⚕️",
+        "🧑‍⚕️",
+        "🏳️‍🌈",
+        "🏳️‍⚧️",
+        "🏴‍☠️",
+        "❤️‍🔥",
+        "❤️‍🩹",
+        "🧑‍🤝‍🧑",
+        "👩‍❤️‍👨",
+        "👨‍❤️‍👨",
+        "👩‍❤️‍👩",
+        "💁‍♂️",
+        "💁‍♀️",
+        "🙋‍♂️",
+        "🙋‍♀️",
+        "🙆‍♂️",
+        "🙆‍♀️",
+        "🙅‍♂️",
+        "🙅‍♀️",
+        "🤷‍♂️",
+        "🤷‍♀️",
+        "🤦‍♂️",
+        "🤦‍♀️",
+        "💇‍♂️",
+        "💇‍♀️",
+        "💆‍♂️",
+        "💆‍♀️",
+        "🧘‍♂️",
+        "🧘‍♀️",
+        "🚶‍♂️",
+        "🚶‍♀️",
+        "🏃‍♂️",
+        "🏃‍♀️",
+        "🕺",
+        "💃",
+        "👯‍♂️",
+        "👯‍♀️"
+    ];
+
+    for (
+        const emoji of zwjSequences
+    ) {
+        set.add(emoji);
+    }
+
+    emojiCatalogue = [
+        ...set
+    ];
+
+    return emojiCatalogue;
 }
 
 
-function insertEmoji(emoji) {
-    const input = $("messageInput");
+/*
+ * Generate a large searchable emoji picker.
+ */
+function populateEmojiPicker() {
+    const grid =
+        $("emojiGrid");
+
+    if (!grid) {
+        return;
+    }
+
+    const emojis =
+        buildEmojiCatalogue();
+
+    if (
+        grid.dataset.loaded === "true"
+    ) {
+        return;
+    }
+
+    grid.innerHTML = "";
+
+    const fragment =
+        document.createDocumentFragment();
+
+    for (
+        const emoji of emojis
+    ) {
+        const button =
+            document.createElement(
+                "button"
+            );
+
+        button.type = "button";
+
+        button.className =
+            "emoji-choice";
+
+        button.dataset.emoji =
+            emoji;
+
+        button.textContent =
+            emoji;
+
+        button.title =
+            emoji;
+
+        button.addEventListener(
+            "click",
+            event => {
+                event.stopPropagation();
+
+                insertEmoji(
+                    emoji
+                );
+            }
+        );
+
+        fragment.appendChild(
+            button
+        );
+    }
+
+    grid.appendChild(
+        fragment
+    );
+
+    grid.dataset.loaded =
+        "true";
+
+    console.log(
+        `😀 Emoji picker loaded ${emojis.length} Unicode emoji/variants.`
+    );
+}
+
+
+function insertEmoji(
+    emoji
+) {
+    const input =
+        $("messageInput");
 
     if (!input) {
         return;
@@ -2213,31 +3379,46 @@ function insertEmoji(emoji) {
         input.value.length;
 
     input.value =
-        input.value.substring(0, start) +
+        input.value.substring(
+            0,
+            start
+        ) +
         emoji +
-        input.value.substring(end);
+        input.value.substring(
+            end
+        );
 
     const position =
-        start + emoji.length;
+        start +
+        emoji.length;
 
-    input.selectionStart = position;
-    input.selectionEnd = position;
+    input.selectionStart =
+        position;
+
+    input.selectionEnd =
+        position;
 
     input.focus();
+
+    resizeMessageInput();
 }
 
 
 function toggleEmojiPicker() {
-    const picker = $("emojiPicker");
-    const gifPicker = $("gifPicker");
-    const button = $("emojiButton");
+    const picker =
+        $("emojiPicker");
+
+    const button =
+        $("emojiButton");
 
     if (!picker) {
         return;
     }
 
     const isOpen =
-        !picker.classList.contains("hidden");
+        !picker.classList.contains(
+            "hidden"
+        );
 
     closeGifPicker();
 
@@ -2248,7 +3429,9 @@ function toggleEmojiPicker() {
 
     populateEmojiPicker();
 
-    picker.classList.remove("hidden");
+    picker.classList.remove(
+        "hidden"
+    );
 
     if (button) {
         button.setAttribute(
@@ -2260,11 +3443,16 @@ function toggleEmojiPicker() {
 
 
 function closeEmojiPicker() {
-    const picker = $("emojiPicker");
-    const button = $("emojiButton");
+    const picker =
+        $("emojiPicker");
+
+    const button =
+        $("emojiButton");
 
     if (picker) {
-        picker.classList.add("hidden");
+        picker.classList.add(
+            "hidden"
+        );
     }
 
     if (button) {
@@ -2281,14 +3469,17 @@ function closeEmojiPicker() {
    ========================================================= */
 
 function toggleGifPicker() {
-    const picker = $("gifPicker");
+    const picker =
+        $("gifPicker");
 
     if (!picker) {
         return;
     }
 
     const open =
-        !picker.classList.contains("hidden");
+        !picker.classList.contains(
+            "hidden"
+        );
 
     closeEmojiPicker();
 
@@ -2297,15 +3488,20 @@ function toggleGifPicker() {
         return;
     }
 
-    picker.classList.remove("hidden");
+    picker.classList.remove(
+        "hidden"
+    );
 }
 
 
 function closeGifPicker() {
-    const picker = $("gifPicker");
+    const picker =
+        $("gifPicker");
 
     if (picker) {
-        picker.classList.add("hidden");
+        picker.classList.add(
+            "hidden"
+        );
     }
 }
 
@@ -2315,7 +3511,8 @@ function closeGifPicker() {
    ========================================================= */
 
 function openAttachmentPicker() {
-    const input = $("attachmentInput");
+    const input =
+        $("attachmentInput");
 
     if (input) {
         input.click();
@@ -2324,16 +3521,24 @@ function openAttachmentPicker() {
 
 
 function handleAttachmentSelection() {
-    const input = $("attachmentInput");
+    const input =
+        $("attachmentInput");
 
-    if (!input?.files?.length) {
+    if (
+        !input?.files?.length
+    ) {
         return;
     }
 
-    const count = input.files.length;
+    const count =
+        input.files.length;
 
     toast(
-        `${count} file${count === 1 ? "" : "s"} ready to send.`
+        `${count} file${
+            count === 1
+                ? ""
+                : "s"
+        } ready to send.`
     );
 }
 
@@ -2342,13 +3547,16 @@ function handleAttachmentSelection() {
    REALTIME
    ========================================================= */
 
-async function subscribeToChannel(channelId) {
+async function subscribeToChannel(
+    channelId
+) {
     if (state.realtimeChannel) {
         await supabase.removeChannel(
             state.realtimeChannel
         );
 
-        state.realtimeChannel = null;
+        state.realtimeChannel =
+            null;
     }
 
     const realtimeName =
@@ -2356,14 +3564,18 @@ async function subscribeToChannel(channelId) {
 
     state.realtimeChannel =
         supabase
-            .channel(realtimeName)
+            .channel(
+                realtimeName
+            )
+
             .on(
                 "postgres_changes",
                 {
                     event: "*",
                     schema: "public",
                     table: "chat_messages",
-                    filter: `channel_id=eq.${channelId}`
+                    filter:
+                        `channel_id=eq.${channelId}`
                 },
                 async payload => {
                     console.log(
@@ -2371,32 +3583,39 @@ async function subscribeToChannel(channelId) {
                         payload.eventType
                     );
 
-                    await loadMessages(true);
+                    await loadMessages(
+                        true
+                    );
                 }
             )
+
             .on(
                 "postgres_changes",
                 {
                     event: "*",
                     schema: "public",
-                    table: "chat_message_reactions"
+                    table:
+                        "chat_message_reactions"
                 },
                 async () => {
                     await loadReactionsForMessages(
                         state.messages.map(
-                            message => message.id
+                            message =>
+                                message.id
                         )
                     );
 
                     renderMessages();
                 }
             )
+
             .on(
                 "postgres_changes",
                 {
                     event: "*",
                     schema: "public",
-                    table: "chat_attachments"
+                    table:
+                        "chat_attachments"
                 },
                 async () => {
                     await loadAttachmentsForMessages(
@@ -2406,11 +3625,14 @@ async function subscribeToChannel(channelId) {
                     renderMessages();
                 }
             )
-            .subscribe(status => {
-                console.log(
-                    `📡 Community realtime: ${status}`
-                );
-            });
+
+            .subscribe(
+                status => {
+                    console.log(
+                        `📡 Community realtime: ${status}`
+                    );
+                }
+            );
 }
 
 
@@ -2450,9 +3672,12 @@ function openCommunityModal() {
 
     renderCommunityChoices();
 
-    modal.classList.remove("hidden");
+    modal.classList.remove(
+        "hidden"
+    );
 
-    $("communityModalSearch")?.focus();
+    $("communityModalSearch")
+        ?.focus();
 }
 
 
@@ -2461,7 +3686,9 @@ function closeCommunityModal() {
         $("communityModal");
 
     if (modal) {
-        modal.classList.add("hidden");
+        modal.classList.add(
+            "hidden"
+        );
     }
 }
 
@@ -2476,7 +3703,9 @@ function openGeneralCallModal() {
         $("generalCallModal");
 
     if (modal) {
-        modal.classList.remove("hidden");
+        modal.classList.remove(
+            "hidden"
+        );
     }
 }
 
@@ -2486,7 +3715,9 @@ function closeGeneralCallModal() {
         $("generalCallModal");
 
     if (modal) {
-        modal.classList.add("hidden");
+        modal.classList.add(
+            "hidden"
+        );
     }
 
     setText(
@@ -2496,8 +3727,11 @@ function closeGeneralCallModal() {
 }
 
 
-function setGeneralCallMode(mode) {
-    state.selectedCallMode = mode;
+function setGeneralCallMode(
+    mode
+) {
+    state.selectedCallMode =
+        mode;
 
     const voice =
         $("generalVoiceCallButton");
@@ -2529,23 +3763,21 @@ function startGeneralCall() {
             "generalCallMessage",
             "Enter the user UUID."
         );
+
         return;
     }
 
     /*
-       call.js owns the actual WebRTC call engine.
-
-       We dispatch a custom event so community.js
-       does not duplicate call logic.
-    */
-
+     * call.js owns actual WebRTC.
+     */
     window.dispatchEvent(
         new CustomEvent(
             "mwaniki:start-general-call",
             {
                 detail: {
                     targetUserId,
-                    mode: state.selectedCallMode
+                    mode:
+                        state.selectedCallMode
                 }
             }
         )
@@ -2572,7 +3804,9 @@ function scrollToBottom() {
 }
 
 
-function isNearBottom(container) {
+function isNearBottom(
+    container
+) {
     if (!container) {
         return true;
     }
@@ -2600,7 +3834,9 @@ function updateOlderMessagesButton() {
 }
 
 
-function formatMessageTime(dateValue) {
+function formatMessageTime(
+    dateValue
+) {
     if (!dateValue) {
         return "";
     }
@@ -2608,7 +3844,11 @@ function formatMessageTime(dateValue) {
     const date =
         new Date(dateValue);
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
         return "";
     }
 
@@ -2631,27 +3871,73 @@ async function enterCommunity() {
         return;
     }
 
+    /*
+     * Ensure communities exist.
+     */
     if (!state.communities.length) {
         await loadCommunities();
     }
 
-    if (!state.selectedCommunity) {
-        if (!state.communities.length) {
-            toast(
-                "No active communities are available.",
-                "error"
-            );
-            return;
-        }
+    if (!state.communities.length) {
+        toast(
+            "No active communities are available.",
+            "error"
+        );
 
+        renderChannels();
+
+        clearChannelInterface();
+
+        return;
+    }
+
+    /*
+     * Automatically choose General Chat.
+     */
+    if (!state.selectedCommunity) {
         state.selectedCommunity =
+            state.communities.find(
+                community =>
+                    String(
+                        community.slug ||
+                        ""
+                    ).toLowerCase() ===
+                    "general-chat"
+            ) ||
+            state.communities.find(
+                community =>
+                    String(
+                        community.name ||
+                        ""
+                    ).toLowerCase() ===
+                    "general chat"
+            ) ||
             state.communities[0];
     }
 
+    if (!state.selectedCommunity) {
+        return;
+    }
+
+    console.log(
+        "🌐 Automatically entering:",
+        state.selectedCommunity.name
+    );
+
     updateSelectedCommunityInterface();
 
+    renderCommunityRail();
+
+    /*
+     * AUTOMATIC CHANNEL LOADING.
+     */
     await loadChannels(
         state.selectedCommunity.id
+    );
+
+    console.log(
+        "📢 Automatic channel loading complete:",
+        state.channels.length
     );
 }
 
@@ -2668,7 +3954,8 @@ function resizeMessageInput() {
         return;
     }
 
-    input.style.height = "auto";
+    input.style.height =
+        "auto";
 
     input.style.height =
         `${Math.min(
@@ -2678,24 +3965,31 @@ function resizeMessageInput() {
 }
 
 
-function handleMessageKeydown(event) {
+function handleMessageKeydown(
+    event
+) {
     if (
         event.key === "Enter" &&
         !event.shiftKey
     ) {
         event.preventDefault();
 
-        $("messageForm")?.requestSubmit();
+        $("messageForm")
+            ?.requestSubmit();
     }
 }
 
 
 /* =========================================================
-   GLOBAL ESCAPE HANDLER
+   GLOBAL ESCAPE
    ========================================================= */
 
-function handleEscapeKey(event) {
-    if (event.key !== "Escape") {
+function handleEscapeKey(
+    event
+) {
+    if (
+        event.key !== "Escape"
+    ) {
         return;
     }
 
@@ -2713,7 +4007,9 @@ function handleEscapeKey(event) {
 
 function wireInterface() {
 
-    /* Rules */
+    /* ---------------------------------------------
+       Rules
+       --------------------------------------------- */
 
     $("communityRulesAgreement")
         ?.addEventListener(
@@ -2728,7 +4024,9 @@ function wireInterface() {
         );
 
 
-    /* Message */
+    /* ---------------------------------------------
+       Message
+       --------------------------------------------- */
 
     $("messageForm")
         ?.addEventListener(
@@ -2749,7 +4047,9 @@ function wireInterface() {
         );
 
 
-    /* Attachment */
+    /* ---------------------------------------------
+       Attachments
+       --------------------------------------------- */
 
     $("attachButton")
         ?.addEventListener(
@@ -2764,7 +4064,9 @@ function wireInterface() {
         );
 
 
-    /* Emoji */
+    /* ---------------------------------------------
+       Emoji
+       --------------------------------------------- */
 
     $("emojiButton")
         ?.addEventListener(
@@ -2778,11 +4080,16 @@ function wireInterface() {
     $("closeEmojiButton")
         ?.addEventListener(
             "click",
-            closeEmojiPicker
+            event => {
+                event.stopPropagation();
+                closeEmojiPicker();
+            }
         );
 
 
-    /* GIF */
+    /* ---------------------------------------------
+       GIF
+       --------------------------------------------- */
 
     $("gifButton")
         ?.addEventListener(
@@ -2796,7 +4103,10 @@ function wireInterface() {
     $("closeGifButton")
         ?.addEventListener(
             "click",
-            closeGifPicker
+            event => {
+                event.stopPropagation();
+                closeGifPicker();
+            }
         );
 
     $("previewGifButton")
@@ -2812,7 +4122,9 @@ function wireInterface() {
         );
 
 
-    /* Older messages */
+    /* ---------------------------------------------
+       Older messages
+       --------------------------------------------- */
 
     $("loadOlderMessagesButton")
         ?.addEventListener(
@@ -2821,7 +4133,9 @@ function wireInterface() {
         );
 
 
-    /* Community */
+    /* ---------------------------------------------
+       Communities
+       --------------------------------------------- */
 
     $("openCommunityButton")
         ?.addEventListener(
@@ -2852,7 +4166,9 @@ function wireInterface() {
         );
 
 
-    /* Navigation */
+    /* ---------------------------------------------
+       Navigation
+       --------------------------------------------- */
 
     $("homeButton")
         ?.addEventListener(
@@ -2885,7 +4201,9 @@ function wireInterface() {
         );
 
 
-    /* Channel search */
+    /* ---------------------------------------------
+       Channel search
+       --------------------------------------------- */
 
     $("channelSearchInput")
         ?.addEventListener(
@@ -2898,18 +4216,23 @@ function wireInterface() {
         );
 
 
-    /* Welcome button */
+    /* ---------------------------------------------
+       Welcome button
+       --------------------------------------------- */
 
     $("welcomeStartButton")
         ?.addEventListener(
             "click",
             () => {
-                $("messageInput")?.focus();
+                $("messageInput")
+                    ?.focus();
             }
         );
 
 
-    /* General Call */
+    /* ---------------------------------------------
+       General Call
+       --------------------------------------------- */
 
     $("generalCallButton")
         ?.addEventListener(
@@ -2933,7 +4256,9 @@ function wireInterface() {
         ?.addEventListener(
             "click",
             () => {
-                setGeneralCallMode("voice");
+                setGeneralCallMode(
+                    "voice"
+                );
             }
         );
 
@@ -2941,7 +4266,9 @@ function wireInterface() {
         ?.addEventListener(
             "click",
             () => {
-                setGeneralCallMode("video");
+                setGeneralCallMode(
+                    "video"
+                );
             }
         );
 
@@ -2952,7 +4279,9 @@ function wireInterface() {
         );
 
 
-    /* Escape */
+    /* ---------------------------------------------
+       Escape
+       --------------------------------------------- */
 
     document.addEventListener(
         "keydown",
@@ -2960,12 +4289,13 @@ function wireInterface() {
     );
 
 
-    /* Close pickers when clicking elsewhere */
+    /* ---------------------------------------------
+       Close emoji/GIF when clicking outside
+       --------------------------------------------- */
 
     document.addEventListener(
         "click",
         event => {
-
             const emojiPicker =
                 $("emojiPicker");
 
@@ -2980,16 +4310,24 @@ function wireInterface() {
 
             if (
                 emojiPicker &&
-                !emojiPicker.contains(event.target) &&
-                !emojiButton?.contains(event.target)
+                !emojiPicker.contains(
+                    event.target
+                ) &&
+                !emojiButton?.contains(
+                    event.target
+                )
             ) {
                 closeEmojiPicker();
             }
 
             if (
                 gifPicker &&
-                !gifPicker.contains(event.target) &&
-                !gifButton?.contains(event.target)
+                !gifPicker.contains(
+                    event.target
+                ) &&
+                !gifButton?.contains(
+                    event.target
+                )
             ) {
                 closeGifPicker();
             }
@@ -2999,34 +4337,16 @@ function wireInterface() {
 
 
 /* =========================================================
-   LOAD ATTACHMENTS WITH MESSAGES
-   ========================================================= */
-
-const originalLoadMessages =
-    loadMessages;
-
-loadMessages = async function(reset = true) {
-
-    await originalLoadMessages(reset);
-
-    await loadAttachmentsForMessages(
-        state.messages
-    );
-
-    renderMessages();
-};
-
-
-/* =========================================================
    CLEANUP
    ========================================================= */
 
 window.addEventListener(
     "beforeunload",
-    async () => {
-
-        if (state.realtimeChannel) {
-            await supabase.removeChannel(
+    () => {
+        if (
+            state.realtimeChannel
+        ) {
+            supabase.removeChannel(
                 state.realtimeChannel
             );
         }
@@ -3040,16 +4360,42 @@ window.addEventListener(
 
 window.mwanikiCommunity = {
     state,
+
     reload: async () => {
         await loadCommunities();
 
-        if (state.selectedCommunity) {
+        if (
+            state.selectedCommunity
+        ) {
             await loadChannels(
                 state.selectedCommunity.id
             );
         }
-    }
+    },
+
+    reloadChannels: async () => {
+        if (
+            state.selectedCommunity
+        ) {
+            await loadChannels(
+                state.selectedCommunity.id
+            );
+        }
+    },
+
+    reloadMessages: async () => {
+        await loadMessages(true);
+    },
+
+    openEmojiPicker:
+        () => {
+            populateEmojiPicker();
+            $("emojiPicker")
+                ?.classList
+                .remove("hidden");
+        }
 };
+
 
 console.log(
     "✅ Mwaniki Scholars community.js loaded successfully"
