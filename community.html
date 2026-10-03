@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
 
     <meta
@@ -9,22 +11,26 @@
     >
 
     <meta
-        name="description"
-        content="Mwaniki Scholars academic community"
-    >
-
-    <meta
         name="theme-color"
         content="#087f73"
     >
 
-    <title>Mwaniki Scholars Community</title>
+    <meta
+        name="description"
+        content="Mwaniki Scholars academic community."
+    >
+
+    <title>
+        Community | Mwaniki Scholars
+    </title>
 
     <link
         rel="stylesheet"
         href="./community.css"
     >
+
 </head>
+
 
 <body>
 
@@ -32,6 +38,7 @@
     id="communityApp"
     class="community-app"
 >
+
 
     <!-- =====================================================
          ACCESSIBILITY
@@ -41,50 +48,46 @@
         id="accessibilityAnnouncer"
         class="sr-only"
         aria-live="polite"
-        aria-atomic="true"
     ></div>
 
     <div
         id="communityStatus"
-        class="community-status"
+        class="sr-only"
         aria-live="polite"
     ></div>
 
 
     <!-- =====================================================
-         LEFT RAIL
+         LEFT COMMUNITY RAIL
          ===================================================== -->
 
     <aside class="community-rail">
 
         <button
             id="homeButton"
-            class="rail-button rail-home"
+            class="rail-button"
             type="button"
-            title="Dashboard"
-            aria-label="Dashboard"
+            title="Home"
         >
-            <span>⌂</span>
+            🏠
         </button>
 
         <button
             id="railHomeButton"
-            class="rail-button"
+            class="rail-button active"
             type="button"
-            title="Home"
-            aria-label="Home"
+            title="Community"
         >
-            <span>🏠</span>
+            💬
         </button>
 
         <button
             id="railGeneralButton"
-            class="rail-button rail-general"
+            class="rail-button"
             type="button"
-            title="General Community"
-            aria-label="General Community"
+            title="General call"
         >
-            <span>💬</span>
+            📞
         </button>
 
         <div
@@ -99,13 +102,14 @@
             class="rail-profile-button"
             type="button"
             title="Profile"
-            aria-label="Profile"
         >
+
             <img
                 id="railProfileAvatar"
                 src=""
                 alt="Profile"
             >
+
         </button>
 
     </aside>
@@ -117,148 +121,141 @@
 
     <aside class="community-sidebar">
 
-        <header class="community-sidebar-header">
 
-            <div class="community-brand">
+        <!-- BRAND -->
 
-                <div class="community-brand-mark">
-                    MS
+        <div class="community-brand">
+
+            <div class="brand-mark">
+                M
+            </div>
+
+            <div>
+
+                <div
+                    id="communityBrandTitle"
+                    class="brand-title"
+                >
+                    Mwaniki Scholars
                 </div>
 
-                <div>
-                    <div
-                        id="communityBrandTitle"
-                        class="community-brand-title"
-                    >
-                        Mwaniki Scholars
-                    </div>
-
-                    <div
-                        id="communityBrandSubtitle"
-                        class="community-brand-subtitle"
-                    >
-                        Academic Community
-                    </div>
+                <div
+                    id="communityBrandSubtitle"
+                    class="brand-subtitle"
+                >
+                    Academic Community
                 </div>
 
             </div>
 
-            <button
-                id="openCommunityButton"
-                class="icon-button"
-                type="button"
-                title="Browse communities"
-                aria-label="Browse communities"
-            >
-                +
-            </button>
-
-        </header>
+        </div>
 
 
-        <!-- COMMUNITY SELECTOR -->
+        <!-- OPEN COMMUNITY -->
 
         <button
-            id="communitySelectorButton"
+            id="openCommunityButton"
             class="community-selector"
             type="button"
-            aria-label="Select community"
         >
 
             <span
                 id="selectedCommunityIcon"
-                class="selected-community-icon"
+                class="community-selector-icon"
             >
                 💬
             </span>
 
-            <span class="community-selector-content">
+            <span class="community-selector-info">
 
                 <strong
                     id="selectedCommunityName"
                 >
-                    Community
+                    Select Community
                 </strong>
 
                 <small
                     id="selectedCommunityDescription"
                 >
-                    Select a community
+                    Choose a community
                 </small>
 
             </span>
 
-            <span class="community-selector-arrow">
+            <span class="selector-arrow">
                 ▾
             </span>
 
         </button>
 
 
-        <!-- CHANNEL SEARCH -->
+        <!-- SEARCH -->
 
         <div class="channel-search">
 
-            <span class="channel-search-icon">
-                ⌕
+            <span>
+                🔎
             </span>
 
             <input
                 id="channelSearchInput"
                 type="search"
-                placeholder="Search channels"
+                placeholder="Search channels..."
                 autocomplete="off"
-                aria-label="Search channels"
             >
 
         </div>
 
 
-        <!-- CHANNEL LIST -->
+        <!-- CHANNELS -->
+
+        <div class="sidebar-section-title">
+
+            <span>
+                CHANNELS
+            </span>
+
+        </div>
 
         <div
             id="channelList"
             class="channel-list"
-            aria-label="Channels"
         ></div>
-
-
-        <div class="sidebar-spacer"></div>
 
 
         <!-- SIDEBAR PROFILE -->
 
-        <button
-            id="sidebarProfileButton"
-            class="sidebar-profile"
-            type="button"
-        >
+        <div class="sidebar-profile">
 
-            <img
-                id="sidebarProfileAvatar"
-                src=""
-                alt="Profile"
+            <button
+                id="sidebarProfileButton"
+                class="sidebar-profile-button"
+                type="button"
             >
 
-            <span class="sidebar-profile-info">
-
-                <strong
-                    id="sidebarProfileName"
+                <img
+                    id="sidebarProfileAvatar"
+                    src=""
+                    alt="Profile"
                 >
-                    Student
-                </strong>
 
-                <small>
-                    Online
-                </small>
+                <span class="sidebar-profile-info">
 
-            </span>
+                    <strong
+                        id="sidebarProfileName"
+                    >
+                        Student
+                    </strong>
 
-            <span class="sidebar-profile-menu">
-                ⋯
-            </span>
+                    <small>
+                        Online
+                    </small>
 
-        </button>
+                </span>
+
+            </button>
+
+        </div>
 
     </aside>
 
@@ -272,17 +269,21 @@
         class="community-main"
     >
 
-        <!-- CHANNEL HEADER -->
 
-        <header class="channel-header">
+        <!-- HEADER -->
+
+        <header class="community-header">
 
             <div class="channel-heading">
 
-                <div class="channel-title-line">
+                <div
+                    id="mainChannelIcon"
+                    class="main-channel-icon"
+                >
+                    #
+                </div>
 
-                    <span class="channel-hash">
-                        #
-                    </span>
+                <div>
 
                     <h1
                         id="mainChannelTitle"
@@ -290,57 +291,55 @@
                         Welcome
                     </h1>
 
-                </div>
+                    <p
+                        id="mainChannelDescription"
+                    >
+                        Select a channel to start learning together.
+                    </p>
 
-                <p
-                    id="mainChannelDescription"
-                >
-                    Select a channel to start learning together.
-                </p>
+                </div>
 
             </div>
 
 
-            <div class="channel-actions">
+            <div class="header-actions">
 
                 <button
                     id="dashboardButton"
-                    class="header-action"
+                    class="header-button"
                     type="button"
-                    title="Dashboard"
                 >
-                    <span>⌂</span>
-                    <span>Dashboard</span>
+                    Dashboard
                 </button>
 
                 <button
                     id="headerCommunityButton"
-                    class="header-action"
+                    class="header-button"
                     type="button"
-                    title="Communities"
                 >
-                    <span>◉</span>
-                    <span>Communities</span>
+                    Communities
                 </button>
+
+                <!-- THIS BUTTON IS OWNED BY THE INDEPENDENT CALL JS -->
 
                 <button
                     id="generalCallButton"
-                    class="header-action call-action"
+                    class="header-icon-button call-trigger"
                     type="button"
                     title="General call"
+                    aria-label="General call"
                 >
-                    <span>📹</span>
-                    <span>General Call</span>
+                    📞
                 </button>
 
                 <button
                     id="startConversationButton"
-                    class="header-action primary-action"
+                    class="header-icon-button"
                     type="button"
                     title="Start conversation"
+                    aria-label="Start conversation"
                 >
-                    <span>✎</span>
-                    <span>Message</span>
+                    ✎
                 </button>
 
             </div>
@@ -356,10 +355,10 @@
             aria-label="Messages"
         >
 
-            <div class="welcome-state">
+            <div class="empty-community">
 
-                <div class="welcome-icon">
-                    💬
+                <div class="empty-community-icon">
+                    🎓
                 </div>
 
                 <h2>
@@ -367,15 +366,16 @@
                 </h2>
 
                 <p>
-                    Connect with fellow students, tutors and academic communities.
+                    Connect with fellow students, tutors,
+                    and academic communities.
                 </p>
 
                 <button
                     id="welcomeStartButton"
-                    class="welcome-button"
+                    class="primary-button"
                     type="button"
                 >
-                    Start a conversation
+                    Explore Community
                 </button>
 
             </div>
@@ -383,44 +383,58 @@
         </section>
 
 
-        <!-- MESSAGE COMPOSER -->
+        <!-- COMPOSER -->
 
-        <div class="composer-wrapper">
+        <form
+            id="messageForm"
+            class="message-composer"
+            autocomplete="off"
+        >
 
-            <form
-                id="messageForm"
-                class="message-composer"
-                autocomplete="off"
-            >
+            <div
+                id="attachmentPreview"
+                class="attachment-preview hidden"
+            ></div>
+
+
+            <div class="composer-row">
+
 
                 <button
                     id="attachButton"
-                    class="composer-button"
+                    class="composer-tool"
                     type="button"
-                    title="Attach a photo or document"
-                    aria-label="Attach a photo or document"
+                    title="Attach file"
+                    aria-label="Attach file"
                 >
                     📎
                 </button>
 
+
                 <button
                     id="emojiButton"
-                    class="composer-button"
+                    class="composer-tool"
                     type="button"
                     title="Emoji"
                     aria-label="Open emoji picker"
                     aria-expanded="false"
+                    aria-controls="emojiPicker"
                 >
                     😊
                 </button>
 
-                <textarea
-                    id="messageInput"
-                    rows="1"
-                    maxlength="5000"
-                    placeholder="Message this channel..."
-                    aria-label="Message"
-                ></textarea>
+
+                <div class="message-input-wrapper">
+
+                    <textarea
+                        id="messageInput"
+                        rows="1"
+                        maxlength="5000"
+                        placeholder="Message this channel..."
+                    ></textarea>
+
+                </div>
+
 
                 <button
                     id="sendMessageButton"
@@ -432,13 +446,42 @@
                     ➤
                 </button>
 
-            </form>
-
-            <div class="composer-hint">
-                Press Enter to send · Shift + Enter for a new line
             </div>
 
-        </div>
+
+            <!-- EMOJI PICKER -->
+
+            <div
+                id="emojiPicker"
+                class="emoji-picker hidden"
+                role="dialog"
+                aria-label="Emoji picker"
+            >
+
+                <div class="emoji-picker-header">
+
+                    <strong>
+                        Emoji
+                    </strong>
+
+                    <button
+                        id="closeEmojiButton"
+                        type="button"
+                        aria-label="Close emoji picker"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <div
+                    id="emojiGrid"
+                    class="emoji-grid"
+                ></div>
+
+            </div>
+
+        </form>
 
     </main>
 
@@ -449,33 +492,29 @@
 
     <div
         id="communityModal"
-        class="modal"
-        hidden
+        class="modal-backdrop hidden"
         aria-hidden="true"
     >
 
         <div
-            class="modal-backdrop"
-            data-close-community
-        ></div>
-
-        <section
-            class="modal-card community-modal-card"
+            class="modal community-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="communityModalTitle"
         >
 
-            <header class="modal-header">
+            <div class="modal-header">
 
                 <div>
+
                     <h2 id="communityModalTitle">
                         Communities
                     </h2>
 
                     <p>
-                        Choose an academic community.
+                        Choose an academic community
                     </p>
+
                 </div>
 
                 <button
@@ -487,14 +526,10 @@
                     ×
                 </button>
 
-            </header>
+            </div>
 
 
             <div class="modal-search">
-
-                <span>
-                    ⌕
-                </span>
 
                 <input
                     id="communityModalSearch"
@@ -511,7 +546,7 @@
                 class="community-choice-list"
             ></div>
 
-        </section>
+        </div>
 
     </div>
 
@@ -520,35 +555,34 @@
          GENERAL CALL MODAL
          ===================================================== -->
 
+    <!--
+        ALL CALL FUNCTIONALITY IS HANDLED BY THE
+        INDEPENDENT CALL JS.
+    -->
+
     <div
         id="generalCallModal"
-        class="modal"
-        hidden
+        class="modal-backdrop hidden"
         aria-hidden="true"
     >
 
         <div
-            class="modal-backdrop"
-            data-close-general-call
-        ></div>
-
-        <section
-            class="modal-card call-selection-card"
+            class="modal call-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="generalCallTitle"
         >
 
-            <header class="modal-header">
+            <div class="modal-header">
 
                 <div>
 
                     <h2 id="generalCallTitle">
-                        Start a General Call
+                        General Call
                     </h2>
 
                     <p>
-                        Select people to invite.
+                        Start a private voice or video call.
                     </p>
 
                 </div>
@@ -557,48 +591,61 @@
                     id="closeGeneralCallModalButton"
                     class="modal-close"
                     type="button"
-                    aria-label="Close call window"
+                    aria-label="Close call dialog"
                 >
                     ×
                 </button>
 
-            </header>
+            </div>
 
 
-            <div
-                id="generalCallUserStatus"
-                class="call-user-status"
+            <div class="call-mode-selector">
+
+                <button
+                    id="generalVoiceCallButton"
+                    class="call-mode-button active"
+                    type="button"
+                >
+                    📞
+                    <span>Voice</span>
+                </button>
+
+                <button
+                    id="generalVideoCallButton"
+                    class="call-mode-button"
+                    type="button"
+                >
+                    🎥
+                    <span>Video</span>
+                </button>
+
+            </div>
+
+
+            <label
+                class="field-label"
+                for="generalCallUserInput"
             >
-                Loading members...
-            </div>
+                User UUID
+            </label>
 
-
-            <div
-                id="generalCallUserList"
-                class="call-user-list"
-            ></div>
-
-
-            <div class="call-selection-footer">
-
-                <span>
-                    Selected:
-                    <strong id="generalCallSelectionCount">
-                        0
-                    </strong>
-                </span>
-
-            </div>
+            <input
+                id="generalCallUserInput"
+                class="text-field"
+                type="text"
+                placeholder="Enter recipient user UUID"
+                autocomplete="off"
+            >
 
 
             <div
                 id="generalCallMessage"
-                class="call-modal-message"
+                class="call-message"
                 aria-live="polite"
             ></div>
 
 
-            <footer class="modal-footer">
+            <div class="modal-actions">
 
                 <button
                     id="cancelGeneralCallButton"
@@ -613,12 +660,12 @@
                     class="primary-button"
                     type="button"
                 >
-                    📹 Start Call
+                    Start Call
                 </button>
 
-            </footer>
+            </div>
 
-        </section>
+        </div>
 
     </div>
 
@@ -627,139 +674,153 @@
          CALL OVERLAY
          ===================================================== -->
 
+    <!--
+        These IDs are intentionally preserved exactly for
+        the independent universal WebRTC call engine.
+    -->
+
     <section
         id="callOverlay"
-        class="call-overlay"
-        hidden
-        aria-hidden="true"
+        class="call-overlay hidden"
+        aria-label="Active call"
     >
 
-        <div class="call-background"></div>
+        <div class="call-window">
 
-        <header class="call-header">
 
-            <div class="call-title-area">
+            <!-- CALL HEADER -->
 
-                <div class="call-live-indicator">
-                    <span></span>
-                    LIVE
+            <header class="call-header">
+
+                <div class="call-heading">
+
+                    <div
+                        id="callTypeIcon"
+                        class="call-type-icon"
+                    >
+                        📞
+                    </div>
+
+                    <div>
+
+                        <h2 id="callTitle">
+                            General Call
+                        </h2>
+
+                        <p id="callSubtitle">
+                            Voice call
+                        </p>
+
+                    </div>
+
                 </div>
 
-                <h2 id="callTitle">
-                    Call
-                </h2>
 
-                <p id="callSubtitle">
-                    Mwaniki Scholars
-                </p>
+                <div class="call-header-right">
 
-            </div>
+                    <span
+                        id="callDuration"
+                        class="call-duration"
+                    >
+                        00:00
+                    </span>
+
+                    <button
+                        id="minimizeCallButton"
+                        class="call-header-button"
+                        type="button"
+                        title="Minimize call"
+                        aria-label="Minimize call"
+                    >
+                        ─
+                    </button>
+
+                </div>
+
+            </header>
 
 
-            <div class="call-time">
-                <span id="callDuration">
-                    00:00
-                </span>
-            </div>
-
-        </header>
-
-
-        <!-- VIDEO GRID -->
-
-        <div
-            id="callVideoGrid"
-            class="call-video-grid"
-        >
+            <!-- VIDEO AREA -->
 
             <div
-                id="localVideoTile"
-                class="video-tile local-video-tile"
+                id="callVideoGrid"
+                class="call-video-grid"
             >
 
-                <video
-                    id="localVideo"
-                    autoplay
-                    muted
-                    playsinline
-                ></video>
+                <div
+                    id="localVideoTile"
+                    class="video-tile local-video-tile"
+                >
 
-                <div class="video-name">
-                    You
-                </div>
+                    <video
+                        id="localVideo"
+                        autoplay
+                        muted
+                        playsinline
+                    ></video>
 
-                <div class="video-status">
-                    <span id="localMicStatus">
-                        🎙
-                    </span>
+                    <div class="video-name">
+                        You
+                    </div>
+
                 </div>
 
             </div>
 
-        </div>
+
+            <!-- PARTICIPANTS -->
+
+            <div
+                id="callParticipants"
+                class="call-participants"
+            ></div>
 
 
-        <!-- CALL PARTICIPANTS -->
+            <!-- CONTROLS -->
 
-        <div
-            id="callParticipants"
-            class="call-participants"
-        ></div>
+            <div class="call-controls">
 
+                <button
+                    id="toggleMicrophoneButton"
+                    class="call-control-button active"
+                    type="button"
+                    title="Microphone"
+                    aria-label="Toggle microphone"
+                >
+                    🎙️
+                </button>
 
-        <!-- CALL CONTROLS -->
+                <button
+                    id="toggleCameraButton"
+                    class="call-control-button active"
+                    type="button"
+                    title="Camera"
+                    aria-label="Toggle camera"
+                >
+                    📹
+                </button>
 
-        <div class="call-controls">
+                <button
+                    id="shareScreenButton"
+                    class="call-control-button"
+                    type="button"
+                    title="Share screen"
+                    aria-label="Share screen"
+                >
+                    🖥️
+                </button>
 
-            <button
-                id="toggleMicrophoneButton"
-                class="call-control"
-                type="button"
-                title="Mute microphone"
-                aria-label="Mute microphone"
-            >
-                🎙
-            </button>
+                <button
+                    id="leaveCallButton"
+                    class="call-control-button danger"
+                    type="button"
+                    title="Leave call"
+                    aria-label="Leave call"
+                >
+                    ☎
+                </button>
 
-            <button
-                id="toggleCameraButton"
-                class="call-control"
-                type="button"
-                title="Turn camera off"
-                aria-label="Turn camera off"
-            >
-                📷
-            </button>
-
-            <button
-                id="shareScreenButton"
-                class="call-control"
-                type="button"
-                title="Share screen"
-                aria-label="Share screen"
-            >
-                🖥
-            </button>
-
-            <button
-                id="minimizeCallButton"
-                class="call-control"
-                type="button"
-                title="Minimize call"
-                aria-label="Minimize call"
-            >
-                −
-            </button>
-
-            <button
-                id="leaveCallButton"
-                class="call-control leave-call"
-                type="button"
-                title="Leave call"
-                aria-label="Leave call"
-            >
-                ☎
-            </button>
+            </div>
 
         </div>
 
@@ -770,26 +831,26 @@
          INCOMING CALL
          ===================================================== -->
 
-    <aside
+    <div
         id="incomingCallToast"
-        class="incoming-call-toast"
-        hidden
-        aria-hidden="true"
+        class="incoming-call-toast hidden"
+        role="alertdialog"
+        aria-label="Incoming call"
     >
 
         <div class="incoming-call-icon">
-            📹
+            📞
         </div>
 
-        <div class="incoming-call-content">
+        <div class="incoming-call-info">
 
             <strong id="incomingCallTitle">
                 Incoming Call
             </strong>
 
-            <p id="incomingCallText">
-                Someone is calling you.
-            </p>
+            <span id="incomingCallText">
+                Someone is calling you
+            </span>
 
         </div>
 
@@ -797,25 +858,49 @@
 
             <button
                 id="acceptCallButton"
-                class="accept-call-button"
+                class="incoming-accept"
                 type="button"
-                title="Accept call"
             >
-                ✓
+                Accept
             </button>
 
             <button
                 id="declineCallButton"
-                class="decline-call-button"
+                class="incoming-decline"
                 type="button"
-                title="Decline call"
             >
-                ×
+                Decline
             </button>
 
         </div>
 
-    </aside>
+    </div>
+
+
+    <!-- =====================================================
+         TOAST
+         ===================================================== -->
+
+    <div
+        id="communityToast"
+        class="community-toast"
+        role="status"
+        aria-live="polite"
+    ></div>
+
+
+    <!-- =====================================================
+         FILE INPUT
+         ===================================================== -->
+
+    <input
+        id="communityFileInput"
+        type="file"
+        hidden
+        multiple
+        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.zip"
+    >
+
 
 </div>
 
@@ -832,6 +917,20 @@
 <script
     src="./community.js"
 ></script>
+
+<!--
+    IMPORTANT:
+    Replace ./call.js with the ACTUAL filename of your
+    independent call JS.
+
+    Do not copy its code into community.js.
+-->
+
+<script
+    type="module"
+    src="./call.js"
+></script>
+
 
 </body>
 </html>
