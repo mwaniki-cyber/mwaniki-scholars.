@@ -1,47 +1,40 @@
 /* ============================================================
    MWANIKI SCHOLARS
    call.js
-   SINGLE WEBRTC CALLING ENGINE
 
-   Works with the current community.html:
+   SINGLE REAL WEBRTC ENGINE
 
-   generalCallButton
-   communityCallButton
-   callModal
-   callSpecificPersonButton
-   callWholeCommunityButton
+   community.js = community/chat
+   call.js      = WebRTC only
 
-   activeCallOverlay
-   activeCallTitle
-   activeCallStatus
-   callParticipantGrid
-   toggleMicrophoneButton
-   toggleCameraButton
-   shareScreenButton
-   leaveCallButton
-   leaveCallButtonBottom
+   Supports:
+   - direct calls
+   - general calls
+   - community calls
+   - audio
+   - video
+   - microphone
+   - camera
+   - screen sharing
+   - incoming calls
+   - multiple peers
+   - independent rooms
 
-   incomingCallToast
-   incomingCallerName
-   incomingCallType
-   acceptCallButton
-   rejectCallButton
-
-   IMPORTANT:
-   - community.js does NOT contain WebRTC
-   - this file is the ONLY calling engine
-   - no UUID is entered by the student
-   - users are selected visually by community.js
+   Supabase Broadcast is used for WebRTC signaling.
+   Every participant in a room joins the SAME room channel.
    ============================================================ */
 
 (() => {
     "use strict";
 
-    console.log("📞 Mwaniki Scholars call engine loading...");
+    console.log(
+        "📞 Mwaniki Scholars call engine loading..."
+    );
 
-    /* ============================================================
+
+    /* =========================================================
        CONFIG
-       ============================================================ */
+       ========================================================= */
 
     const CONFIG = {
         iceServers: [
@@ -53,7 +46,7 @@
             }
         ],
 
-        callTimeout: 45000,
+        ringTimeout: 45000,
 
         audio: {
             echoCancellation: true,
@@ -65,9 +58,11 @@
             width: {
                 ideal: 1280
             },
+
             height: {
                 ideal: 720
             },
+
             frameRate: {
                 ideal: 30,
                 max: 30
@@ -75,18 +70,24 @@
         }
     };
 
-    /* ============================================================
+
+    /* =========================================================
        STATE
-       ============================================================ */
+       ========================================================= */
 
     let db = null;
     let currentUser = null;
 
     let currentRoom = null;
-    let currentMode = "audio";
-    let currentScope = "general";
+
+    let currentScope =
+        "general";
+
+    let currentMode =
+        "audio";
 
     let localStream = null;
+
     let screenStream = null;
     let screenTrack = null;
 
@@ -94,36 +95,33 @@
     let cameraEnabled = false;
     let screenSharing = false;
 
-    let callTimeoutTimer = null;
+    let signalChannel = null;
+    let incomingChannel = null;
+
+    let ringTimer = null;
 
     let incomingInvite = null;
 
-    let incomingChannel = null;
-    let signalChannel = null;
-    let participantChannel = null;
+    const peers =
+        new Map();
 
-    const peers = new Map();
-
-    /*
-     * queued ICE candidates:
-     *
-     * Sometimes an ICE candidate arrives before the
-     * remote description has been installed.
-     */
-    const pendingCandidates = new Map();
+    const pendingCandidates =
+        new Map();
 
     const elements = {};
 
-    /* ============================================================
-       DOM
-       ============================================================ */
 
-    function $(id) {
-        return document.getElementById(id);
-    }
+    /* =========================================================
+       DOM
+       ========================================================= */
+
+    const $ =
+        id =>
+            document.getElementById(id);
+
 
     function cacheElements() {
-        const ids = [
+        [
             "generalCallButton",
             "communityCallButton",
 
@@ -146,30 +144,32 @@
             "incomingCallToast",
             "incomingCallerName",
             "incomingCallType",
+            "incomingCallAvatar",
+
             "acceptCallButton",
-            "rejectCallButton",
-
-            "profileModalContent"
-        ];
-
-        ids.forEach(id => {
-            elements[id] = $(id);
-        });
-
-        /*
-         * The current HTML uses one button for accepting.
-         * We keep the references simple and reliable.
-         */
+            "rejectCallButton"
+        ].forEach(
+            id => {
+                elements[id] =
+                    $(id);
+            }
+        );
     }
 
-    /* ============================================================
+
+    /* =========================================================
        SUPABASE
-       ============================================================ */
+       ========================================================= */
 
-    async function waitForSupabase(timeout = 15000) {
-        const started = Date.now();
+    async function waitForSupabase() {
+        const started =
+            Date.now();
 
-        while (Date.now() - started < timeout) {
+        while (
+            Date.now() -
+            started <
+            15000
+        ) {
             const client =
                 window.supabaseClient ||
                 window.mwanikiSupabase ||
@@ -178,292 +178,211 @@
 
             if (
                 client &&
-                typeof client.from === "function"
+                typeof client.from ===
+                    "function"
             ) {
                 return client;
             }
 
-            await sleep(100);
-        }
-
-        throw new Error(
-            "Supabase client was not available."
-        );
-    }
-
-    async function initializeSupabase() {
-        try {
-            db = await waitForSupabase();
-
-            const {
-                data,
-                error
-            } = await db.auth.getSession();
-
-            if (error) {
-                console.error(
-                    "❌ Call authentication error:",
-                    error
-                );
-
-                return false;
-            }
-
-            currentUser =
-                data?.session?.user || null;
-
-            if (!currentUser) {
-                console.warn(
-                    "⚠️ No signed-in user for call engine."
-                );
-
-                return false;
-            }
-
-            console.log(
-                "📞 Call engine authenticated:",
-                currentUser.id
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        100
+                    )
             );
-
-            return true;
-
-        } catch (error) {
-            console.error(
-                "❌ Call engine Supabase initialization failed:",
-                error
-            );
-
-            return false;
-        }
-    }
-
-    /* ============================================================
-       PROFILE HELPERS
-       ============================================================ */
-
-    async function getProfile(userId) {
-        if (!userId || !db) {
-            return null;
-        }
-
-        /*
-         * chat_public_profiles is preferred because it is intended
-         * for community-facing identity information.
-         */
-
-        try {
-            const {
-                data,
-                error
-            } = await db
-                .from("chat_public_profiles")
-                .select("*")
-                .eq("id", userId)
-                .maybeSingle();
-
-            if (!error && data) {
-                return data;
-            }
-        } catch (_) {}
-
-        /*
-         * Fallbacks for installations where the public profile
-         * has not yet been populated.
-         */
-
-        for (
-            const table of [
-                "profiles",
-                "user_profiles",
-                "students"
-            ]
-        ) {
-            try {
-                const {
-                    data,
-                    error
-                } = await db
-                    .from(table)
-                    .select("*")
-                    .eq("id", userId)
-                    .maybeSingle();
-
-                if (!error && data) {
-                    return data;
-                }
-            } catch (_) {}
         }
 
         return null;
     }
 
-    function profileName(profile) {
-        if (!profile) {
-            return "Mwaniki Scholar";
+
+    async function initializeSupabase() {
+        db =
+            await waitForSupabase();
+
+        if (!db) {
+            console.error(
+                "❌ Supabase unavailable for calls."
+            );
+
+            return false;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await db.auth.getSession();
+
+        if (error) {
+            console.error(
+                error
+            );
+
+            return false;
+        }
+
+        currentUser =
+            data?.session?.user ||
+            null;
+
+        if (!currentUser) {
+            console.warn(
+                "⚠️ No authenticated user."
+            );
+
+            return false;
+        }
+
+        console.log(
+            "📞 Call authenticated:",
+            currentUser.id
+        );
+
+        return true;
+    }
+
+
+    /* =========================================================
+       HELPERS
+       ========================================================= */
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+    }
+
+
+    function initials(name) {
+        const parts =
+            String(
+                name ||
+                "Mwaniki Scholar"
+            )
+                .trim()
+                .split(/\s+/);
+
+        if (
+            parts.length === 1
+        ) {
+            return parts[0]
+                .slice(0, 2)
+                .toUpperCase();
         }
 
         return (
-            profile.display_name ||
-            profile.full_name ||
-            profile.name ||
-            profile.username ||
-            "Mwaniki Scholar"
-        );
+            parts[0][0] +
+            parts[
+                parts.length - 1
+            ][0]
+        ).toUpperCase();
     }
 
-    function profileAvatar(profile) {
-        if (!profile) {
-            return "";
+
+    function notice(message) {
+        const toast =
+            $("toast");
+
+        if (!toast) {
+            console.info(
+                "📞",
+                message
+            );
+
+            return;
         }
 
-        return (
-            profile.avatar_url ||
-            profile.photo_url ||
-            profile.profile_image ||
-            profile.image_url ||
-            ""
+        toast.textContent =
+            message;
+
+        toast.classList.remove(
+            "hidden"
         );
+
+        clearTimeout(
+            toast._callTimer
+        );
+
+        toast._callTimer =
+            setTimeout(
+                () => {
+                    toast.classList.add(
+                        "hidden"
+                    );
+                },
+                3500
+            );
     }
 
-    async function getUserIdentity(userId) {
-        const profile =
-            await getProfile(userId);
+
+    async function getIdentity(
+        userId
+    ) {
+        try {
+            const {
+                data
+            } = await db
+                .from(
+                    "chat_public_profiles"
+                )
+                .select("*")
+                .eq(
+                    "id",
+                    userId
+                )
+                .maybeSingle();
+
+            if (data) {
+                return {
+                    name:
+                        data.display_name ||
+                        data.full_name ||
+                        data.name ||
+                        data.username ||
+                        "Mwaniki Scholar",
+
+                    avatar:
+                        data.avatar_url ||
+                        data.photo_url ||
+                        data.profile_image ||
+                        ""
+                };
+            }
+        } catch (_) {}
 
         return {
-            id: userId,
-            name: profileName(profile),
-            avatar: profileAvatar(profile),
-            profile
+            name:
+                "Mwaniki Scholar",
+            avatar: ""
         };
     }
 
-    /* ============================================================
-       CALL MODAL
-       ============================================================ */
 
-    function openCallModal() {
-        const modal =
-            elements.callModal;
+    /* =========================================================
+       COMMUNITY
+       ========================================================= */
 
-        if (!modal) {
-            console.warn(
-                "⚠️ #callModal not found."
-            );
-
-            return;
-        }
-
-        modal.classList.remove("hidden");
-
-        modal.hidden = false;
-
-        document.body.classList.add(
-            "call-modal-open"
-        );
-    }
-
-    function closeCallModal() {
-        const modal =
-            elements.callModal;
-
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.add("hidden");
-
-        modal.hidden = true;
-
-        document.body.classList.remove(
-            "call-modal-open"
-        );
-    }
-
-    /* ============================================================
-       GENERAL CALL
-       ============================================================ */
-
-    async function openGeneralCall() {
-        /*
-         * Community.js may use this event to display its own
-         * user-selection interface.
-         */
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "mwaniki:open-general-call-picker",
-                {
-                    detail: {
-                        mode: "audio"
-                    }
-                }
-            )
-        );
-
-        /*
-         * If community.js does not provide a picker, show the
-         * existing call choice modal as a safe fallback.
-         */
-
-        openCallModal();
-    }
-
-    /* ============================================================
-       COMMUNITY CALL
-       ============================================================ */
-
-    async function openCommunityCall() {
-        const communityId =
-            getCurrentCommunityId();
-
-        if (!communityId) {
-            showNotice(
-                "Select a community before starting a community call."
-            );
-
-            return;
-        }
-
-        closeCallModal();
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "mwaniki:community-call-request",
-                {
-                    detail: {
-                        communityId,
-                        mode: "audio"
-                    }
-                }
-            )
-        );
-
-        /*
-         * community.js normally handles the member selection.
-         */
-
-        window.dispatchEvent(
-            new CustomEvent(
-                "mwaniki:community-call",
-                {
-                    detail: {
-                        communityId,
-                        mode: "audio"
-                    }
-                }
-            )
-        );
-    }
-
-    /* ============================================================
-       COMMUNITY ID
-       ============================================================ */
-
-    function getCurrentCommunityId() {
-        /*
-         * community.js exposes this when available.
-         */
-
+    function getCommunityId() {
         if (
             window.MwanikiCommunity &&
             typeof
@@ -471,395 +390,115 @@
                     .getCurrentCommunityId ===
                 "function"
         ) {
-            return (
-                window.MwanikiCommunity
-                    .getCurrentCommunityId()
-            );
+            return window
+                .MwanikiCommunity
+                .getCurrentCommunityId();
         }
-
-        /*
-         * Fallback to the storage value used by the community
-         * engine.
-         */
 
         return (
             localStorage.getItem(
                 "mwanikiCommunityId"
             ) ||
-            localStorage.getItem(
-                "selectedCommunityId"
-            ) ||
             null
         );
     }
 
-    /* ============================================================
-       CALL REQUEST EVENTS
-       ============================================================ */
 
-    function setupExternalCallEvents() {
-        /*
-         * Direct call from community.js.
-         *
-         * The UI selects the person.
-         * The UUID is never entered manually.
-         */
+    /* =========================================================
+       MODAL
+       ========================================================= */
 
-        window.addEventListener(
-            "mwaniki:call-user",
-            async event => {
-                const detail =
-                    event.detail || {};
-
-                if (!detail.userId) {
-                    showNotice(
-                        "Please select a member to call."
-                    );
-
-                    return;
-                }
-
-                await startDirectCall(
-                    detail.userId,
-                    detail.mode ||
-                        "audio"
-                );
-            }
-        );
-
-        /*
-         * General call from community.js.
-         */
-
-        window.addEventListener(
-            "mwaniki:start-general-call",
-            async event => {
-                const detail =
-                    event.detail || {};
-
-                const ids =
-                    Array.isArray(
-                        detail.userIds
-                    )
-                        ? detail.userIds
-                        : [];
-
-                await startGeneralCall(
-                    ids,
-                    detail.mode ||
-                        "audio"
-                );
-            }
-        );
-
-        /*
-         * Community call from community.js.
-         */
-
-        window.addEventListener(
-            "mwaniki:start-community-call",
-            async event => {
-                const detail =
-                    event.detail || {};
-
-                const communityId =
-                    detail.communityId ||
-                    getCurrentCommunityId();
-
-                const userIds =
-                    Array.isArray(
-                        detail.userIds
-                    )
-                        ? detail.userIds
-                        : [];
-
-                await startCommunityCall(
-                    communityId,
-                    userIds,
-                    detail.mode ||
-                        "audio"
-                );
-            }
-        );
-
-        /*
-         * Backward-compatible event names.
-         */
-
-        window.addEventListener(
-            "mwaniki:general-call",
-            async event => {
-                const detail =
-                    event.detail || {};
-
-                if (
-                    Array.isArray(
-                        detail.userIds
-                    ) &&
-                    detail.userIds.length
-                ) {
-                    await startGeneralCall(
-                        detail.userIds,
-                        detail.mode ||
-                            "audio"
-                    );
-                }
-            }
-        );
-
-        window.addEventListener(
-            "mwaniki:community-call",
-            async event => {
-                const detail =
-                    event.detail || {};
-
-                const communityId =
-                    detail.communityId ||
-                    getCurrentCommunityId();
-
-                if (!communityId) {
-                    return;
-                }
-
-                if (
-                    Array.isArray(
-                        detail.userIds
-                    ) &&
-                    detail.userIds.length
-                ) {
-                    await startCommunityCall(
-                        communityId,
-                        detail.userIds,
-                        detail.mode ||
-                            "audio"
-                    );
-                }
-            }
-        );
+    function openCallModal() {
+        elements.callModal
+            ?.classList.remove(
+                "hidden"
+            );
     }
 
-    /* ============================================================
-       DIRECT CALL
-       ============================================================ */
 
-    async function startDirectCall(
-        userId,
-        mode = "audio"
-    ) {
-        if (!currentUser) {
-            showNotice(
-                "Please sign in before making a call."
+    function closeCallModal() {
+        elements.callModal
+            ?.classList.add(
+                "hidden"
             );
-
-            return;
-        }
-
-        if (!userId) {
-            showNotice(
-                "Please select a member to call."
-            );
-
-            return;
-        }
-
-        if (
-            String(userId) ===
-            String(currentUser.id)
-        ) {
-            showNotice(
-                "You cannot call yourself."
-            );
-
-            return;
-        }
-
-        await createCall({
-            scope: "direct",
-            communityId: null,
-            userIds: [userId],
-            mode
-        });
     }
 
-    /* ============================================================
-       GENERAL CALL
-       ============================================================ */
 
-    async function startGeneralCall(
-        userIds,
-        mode = "audio"
-    ) {
-        if (!currentUser) {
-            showNotice(
-                "Please sign in before making a call."
-            );
+    /* =========================================================
+       ROOM CREATION
+       ========================================================= */
 
-            return;
-        }
-
-        const recipients =
-            normalizeUserIds(
-                userIds
-            );
-
-        if (!recipients.length) {
-            showNotice(
-                "No members were selected for the call."
-            );
-
-            return;
-        }
-
-        await createCall({
-            scope: "general",
-            communityId: null,
-            userIds: recipients,
-            mode
-        });
-    }
-
-    /* ============================================================
-       COMMUNITY CALL
-       ============================================================ */
-
-    async function startCommunityCall(
+    async function createRoom({
+        scope,
         communityId,
         userIds,
-        mode = "audio"
-    ) {
-        if (!currentUser) {
-            showNotice(
+        mode
+    }) {
+        if (
+            !currentUser ||
+            !db
+        ) {
+            notice(
                 "Please sign in before making a call."
             );
 
             return;
         }
 
-        if (!communityId) {
-            showNotice(
-                "No community was selected."
-            );
-
-            return;
-        }
-
         const recipients =
-            normalizeUserIds(
-                userIds
-            );
-
-        if (!recipients.length) {
-            /*
-             * Let community.js resolve the community members if
-             * it has not supplied the selection.
-             */
-
-            window.dispatchEvent(
-                new CustomEvent(
-                    "mwaniki:community-call-picker-needed",
-                    {
-                        detail: {
-                            communityId,
-                            mode
-                        }
-                    }
+            Array.from(
+                new Set(
+                    (
+                        userIds ||
+                        []
+                    )
+                        .map(
+                            id =>
+                                String(
+                                    id
+                                )
+                        )
+                        .filter(
+                            id =>
+                                id &&
+                                id !==
+                                    String(
+                                        currentUser.id
+                                    )
+                        )
                 )
             );
 
+        if (!recipients.length) {
+            notice(
+                "Select at least one other member."
+            );
+
             return;
-        }
-
-        await createCall({
-            scope: "community",
-            communityId,
-            userIds: recipients,
-            mode
-        });
-    }
-
-    /* ============================================================
-       CREATE ROOM
-       ============================================================ */
-
-    async function createCall({
-        scope,
-        communityId = null,
-        userIds = [],
-        mode = "audio"
-    }) {
-        if (!db || !currentUser) {
-            showNotice(
-                "Call service is not ready."
-            );
-
-            return null;
-        }
-
-        const recipients =
-            normalizeUserIds(
-                userIds
-            );
-
-        if (!recipients.length) {
-            showNotice(
-                "No call recipients were selected."
-            );
-
-            return null;
-        }
-
-        if (
-            recipients.some(
-                id =>
-                    String(id) ===
-                    String(currentUser.id)
-            )
-        ) {
-            /*
-             * Remove self instead of failing the entire call.
-             */
-
-            for (
-                let i = recipients.length - 1;
-                i >= 0;
-                i--
-            ) {
-                if (
-                    String(
-                        recipients[i]
-                    ) ===
-                    String(currentUser.id)
-                ) {
-                    recipients.splice(i, 1);
-                }
-            }
-        }
-
-        if (!recipients.length) {
-            showNotice(
-                "No other members were selected."
-            );
-
-            return null;
         }
 
         try {
             closeCallModal();
 
             const {
-                data: room,
+                data:
+                    room,
                 error
             } = await db
-                .from("chat_call_rooms")
+                .from(
+                    "chat_call_rooms"
+                )
                 .insert({
                     community_id:
-                        communityId,
+                        communityId ||
+                        null,
 
                     created_by:
                         currentUser.id,
 
                     target_user_id:
-                        scope === "direct"
+                        scope ===
+                        "direct"
                             ? recipients[0]
                             : null,
 
@@ -872,7 +511,8 @@
                     max_participants:
                         Math.max(
                             2,
-                            recipients.length + 1
+                            recipients.length +
+                                1
                         )
                 })
                 .select("*")
@@ -882,30 +522,27 @@
                 throw error;
             }
 
-            currentRoom = room;
+            currentRoom =
+                room;
 
-            currentMode = mode;
+            currentScope =
+                scope;
 
-            currentScope = scope;
+            currentMode =
+                mode ||
+                "audio";
 
-            /*
-             * Caller joins.
-             */
-
-            await upsertParticipant(
+            await joinParticipant(
                 room.id,
                 currentUser.id,
                 "joined"
             );
 
-            /*
-             * Add recipients and send invitations.
-             */
-
             for (
-                const userId of recipients
+                const userId of
+                recipients
             ) {
-                await upsertParticipant(
+                await joinParticipant(
                     room.id,
                     userId,
                     "invited"
@@ -918,10 +555,10 @@
             }
 
             await startLocalMedia(
-                mode
+                currentMode
             );
 
-            await setupRoomRealtime(
+            await joinSignalRoom(
                 room.id
             );
 
@@ -929,1086 +566,210 @@
                 "Calling..."
             );
 
-            updateCallStatus(
-                "Calling..."
+            startRingTimer();
+
+            /*
+             * Give the signaling subscription a moment
+             * before offers can be generated.
+             */
+
+            setTimeout(
+                async () => {
+                    await announcePresence();
+                },
+                500
             );
 
-            startCallTimeout();
-
             console.log(
-                "📞 Call room created:",
+                "📞 Room created:",
                 room.id
             );
 
-            return room;
-
         } catch (error) {
             console.error(
-                "❌ Could not create call:",
+                "❌ Call creation failed:",
                 error
             );
 
-            stopLocalStream();
+            await cleanupCall(
+                false
+            );
 
-            showNotice(
+            notice(
                 error?.message ||
-                "Unable to start the call."
-            );
-
-            return null;
-        }
-    }
-
-    /* ============================================================
-       NORMALIZE IDS
-       ============================================================ */
-
-    function normalizeUserIds(
-        ids
-    ) {
-        if (!Array.isArray(ids)) {
-            return [];
-        }
-
-        return Array.from(
-            new Set(
-                ids
-                    .map(id =>
-                        String(
-                            id || ""
-                        ).trim()
-                    )
-                    .filter(Boolean)
-            )
-        );
-    }
-
-    /* ============================================================
-       INVITES
-       ============================================================ */
-
-    async function createInvite(
-        roomId,
-        receiverId
-    ) {
-        try {
-            const {
-                error
-            } = await db
-                .from("chat_call_invites")
-                .insert({
-                    room_id: roomId,
-                    sender_id:
-                        currentUser.id,
-                    receiver_id:
-                        receiverId,
-                    status: "pending"
-                });
-
-            if (error) {
-                console.error(
-                    "❌ Call invite failed:",
-                    error
-                );
-            }
-
-        } catch (error) {
-            console.error(
-                "❌ Call invite exception:",
-                error
+                "Unable to start call."
             );
         }
     }
 
-    /* ============================================================
+
+    /* =========================================================
        PARTICIPANTS
-       ============================================================ */
+       ========================================================= */
 
-    async function upsertParticipant(
+    async function joinParticipant(
         roomId,
         userId,
         status
     ) {
-        try {
-            const payload = {
-                room_id: roomId,
-                user_id: userId,
-                status
-            };
+        /*
+         * Do not rely on an upsert constraint existing.
+         */
 
-            if (
-                status ===
-                "joined"
-            ) {
-                payload.joined_at =
-                    new Date()
-                        .toISOString();
+        const {
+            data:
+                existing
+        } = await db
+            .from(
+                "chat_call_participants"
+            )
+            .select("id")
+            .eq(
+                "room_id",
+                roomId
+            )
+            .eq(
+                "user_id",
+                userId
+            )
+            .maybeSingle();
 
-                payload.left_at = null;
-            }
-
-            const {
-                error
-            } = await db
+        if (existing) {
+            await db
                 .from(
                     "chat_call_participants"
                 )
-                .upsert(
-                    payload,
-                    {
-                        onConflict:
-                            "room_id,user_id"
-                    }
+                .update({
+                    status,
+
+                    joined_at:
+                        status ===
+                        "joined"
+                            ? new Date()
+                                .toISOString()
+                            : undefined,
+
+                    left_at:
+                        status ===
+                        "joined"
+                            ? null
+                            : undefined
+                })
+                .eq(
+                    "id",
+                    existing.id
                 );
 
-            if (error) {
-                console.warn(
-                    "⚠️ Participant update failed:",
-                    error
-                );
-            }
-
-        } catch (error) {
-            console.warn(
-                "⚠️ Participant update exception:",
-                error
-            );
-        }
-    }
-
-    /* ============================================================
-       LOCAL MEDIA
-       ============================================================ */
-
-    async function startLocalMedia(
-        mode
-    ) {
-        stopLocalStream();
-
-        const wantsVideo =
-            mode === "video";
-
-        try {
-            localStream =
-                await navigator
-                    .mediaDevices
-                    .getUserMedia({
-                        audio:
-                            CONFIG.audio,
-
-                        video:
-                            wantsVideo
-                                ? CONFIG.video
-                                : false
-                    });
-
-            microphoneEnabled = true;
-
-            cameraEnabled =
-                wantsVideo;
-
-            attachLocalParticipant();
-
-            updateControls();
-
-        } catch (error) {
-            console.error(
-                "❌ Media permission failed:",
-                error
-            );
-
-            if (
-                mode === "video"
-            ) {
-                showNotice(
-                    "Camera and microphone permission is required for a video call."
-                );
-            } else {
-                showNotice(
-                    "Microphone permission is required for an audio call."
-                );
-            }
-
-            throw error;
-        }
-    }
-
-    function stopLocalStream() {
-        if (!localStream) {
             return;
         }
 
-        localStream
-            .getTracks()
-            .forEach(track => {
-                try {
-                    track.stop();
-                } catch (_) {}
-            });
-
-        localStream = null;
-    }
-
-    /* ============================================================
-       CALL PARTICIPANT UI
-       ============================================================ */
-
-    function attachLocalParticipant() {
-        const grid =
-            elements.callParticipantGrid;
-
-        if (!grid) {
-            return;
-        }
-
-        let tile =
-            grid.querySelector(
-                '[data-call-local="true"]'
-            );
-
-        if (!tile) {
-            tile =
-                document.createElement(
-                    "div"
-                );
-
-            tile.className =
-                "call-participant-tile";
-
-            tile.dataset.callLocal =
-                "true";
-
-            tile.innerHTML = `
-                <div class="call-participant-media"></div>
-
-                <div class="call-participant-label">
-                    You
-                </div>
-            `;
-
-            grid.prepend(tile);
-        }
-
-        const media =
-            tile.querySelector(
-                ".call-participant-media"
-            );
-
-        if (!media) {
-            return;
-        }
-
-        media.innerHTML = "";
-
-        if (
-            localStream &&
-            localStream.getVideoTracks().length
-        ) {
-            const video =
-                document.createElement(
-                    "video"
-                );
-
-            video.autoplay = true;
-            video.muted = true;
-            video.playsInline = true;
-
-            video.srcObject =
-                localStream;
-
-            video.className =
-                "call-participant-video";
-
-            media.appendChild(
-                video
-            );
-
-        } else {
-            media.innerHTML = `
-                <div class="call-audio-avatar">
-                    ${escapeHtml(
-                        getInitials(
-                            "You"
-                        )
-                    )}
-                </div>
-            `;
-        }
-    }
-
-    async function attachRemoteParticipant(
-        userId,
-        stream
-    ) {
-        const grid =
-            elements.callParticipantGrid;
-
-        if (!grid) {
-            return;
-        }
-
-        let tile =
-            grid.querySelector(
-                `[data-call-user="${cssEscape(
-                    userId
-                )}"]`
-            );
-
-        if (!tile) {
-            tile =
-                document.createElement(
-                    "div"
-                );
-
-            tile.className =
-                "call-participant-tile";
-
-            tile.dataset.callUser =
-                userId;
-
-            const identity =
-                await getUserIdentity(
-                    userId
-                );
-
-            tile.innerHTML = `
-                <div class="call-participant-media">
-                    <div class="call-audio-avatar">
-                        ${escapeHtml(
-                            getInitials(
-                                identity.name
-                            )
-                        )}
-                    </div>
-                </div>
-
-                <div class="call-participant-label">
-                    ${escapeHtml(
-                        identity.name
-                    )}
-                </div>
-            `;
-
-            grid.appendChild(tile);
-        }
-
-        const media =
-            tile.querySelector(
-                ".call-participant-media"
-            );
-
-        if (!media) {
-            return;
-        }
-
-        let video =
-            media.querySelector(
-                "video"
-            );
-
-        if (!video) {
-            video =
-                document.createElement(
-                    "video"
-                );
-
-            video.autoplay = true;
-            video.playsInline = true;
-
-            video.className =
-                "call-participant-video";
-
-            media.innerHTML = "";
-
-            media.appendChild(
-                video
-            );
-        }
-
-        video.srcObject =
-            stream;
-    }
-
-    function removeRemoteParticipant(
-        userId
-    ) {
-        const tile =
-            document.querySelector(
-                `[data-call-user="${cssEscape(
-                    userId
-                )}"]`
-            );
-
-        if (tile) {
-            tile.remove();
-        }
-    }
-
-    /* ============================================================
-       WEBRTC
-       ============================================================ */
-
-    function createPeer(
-        remoteUserId
-    ) {
-        if (
-            peers.has(
-                remoteUserId
+        await db
+            .from(
+                "chat_call_participants"
             )
-        ) {
-            return peers.get(
-                remoteUserId
-            );
-        }
+            .insert({
+                room_id:
+                    roomId,
 
-        const connection =
-            new RTCPeerConnection({
-                iceServers:
-                    CONFIG.iceServers
+                user_id:
+                    userId,
+
+                status,
+
+                joined_at:
+                    status ===
+                    "joined"
+                        ? new Date()
+                            .toISOString()
+                        : null
             });
-
-        const peer = {
-            connection,
-            remoteDescriptionSet:
-                false
-        };
-
-        peers.set(
-            remoteUserId,
-            peer
-        );
-
-        if (localStream) {
-            localStream
-                .getTracks()
-                .forEach(track => {
-                    connection.addTrack(
-                        track,
-                        localStream
-                    );
-                });
-        }
-
-        connection.onicecandidate =
-            event => {
-                if (
-                    !event.candidate
-                ) {
-                    return;
-                }
-
-                sendSignal({
-                    receiverId:
-                        remoteUserId,
-
-                    signalType:
-                        "ice-candidate",
-
-                    payload: {
-                        candidate:
-                            event.candidate
-                    }
-                });
-            };
-
-        connection.ontrack =
-            event => {
-                const stream =
-                    event.streams?.[0];
-
-                if (!stream) {
-                    return;
-                }
-
-                attachRemoteParticipant(
-                    remoteUserId,
-                    stream
-                );
-            };
-
-        connection.onconnectionstatechange =
-            () => {
-                const state =
-                    connection.connectionState;
-
-                console.log(
-                    `📞 Peer ${remoteUserId}: ${state}`
-                );
-
-                if (
-                    state ===
-                        "connected"
-                ) {
-                    clearCallTimeout();
-
-                    updateCallStatus(
-                        "Connected"
-                    );
-                }
-
-                if (
-                    state ===
-                        "failed"
-                ) {
-                    removePeer(
-                        remoteUserId
-                    );
-                }
-
-                if (
-                    state ===
-                        "closed"
-                ) {
-                    removePeer(
-                        remoteUserId
-                    );
-                }
-            };
-
-        connection.oniceconnectionstatechange =
-            () => {
-                if (
-                    connection.iceConnectionState ===
-                    "failed"
-                ) {
-                    console.warn(
-                        "⚠️ ICE connection failed:",
-                        remoteUserId
-                    );
-                }
-            };
-
-        return peer;
     }
 
-    async function makeOffer(
-        remoteUserId
-    ) {
-        const peer =
-            createPeer(
-                remoteUserId
-            );
 
-        const connection =
-            peer.connection;
-
-        try {
-            const offer =
-                await connection
-                    .createOffer();
-
-            await connection
-                .setLocalDescription(
-                    offer
-                );
-
-            await sendSignal({
-                receiverId:
-                    remoteUserId,
-
-                signalType:
-                    "offer",
-
-                payload: {
-                    offer:
-                        connection
-                            .localDescription
-                }
-            });
-
-        } catch (error) {
-            console.error(
-                "❌ Offer failed:",
-                error
-            );
-        }
-    }
-
-    async function receiveOffer(
-        senderId,
-        offer
-    ) {
-        const peer =
-            createPeer(
-                senderId
-            );
-
-        try {
-            await peer.connection
-                .setRemoteDescription(
-                    new RTCSessionDescription(
-                        offer
-                    )
-                );
-
-            peer.remoteDescriptionSet =
-                true;
-
-            await flushPendingCandidates(
-                senderId
-            );
-
-            const answer =
-                await peer.connection
-                    .createAnswer();
-
-            await peer.connection
-                .setLocalDescription(
-                    answer
-                );
-
-            await sendSignal({
-                receiverId:
-                    senderId,
-
-                signalType:
-                    "answer",
-
-                payload: {
-                    answer:
-                        peer.connection
-                            .localDescription
-                }
-            });
-
-        } catch (error) {
-            console.error(
-                "❌ Offer handling failed:",
-                error
-            );
-        }
-    }
-
-    async function receiveAnswer(
-        senderId,
-        answer
-    ) {
-        const peer =
-            peers.get(
-                senderId
-            );
-
-        if (!peer) {
-            return;
-        }
-
-        try {
-            await peer.connection
-                .setRemoteDescription(
-                    new RTCSessionDescription(
-                        answer
-                    )
-                );
-
-            peer.remoteDescriptionSet =
-                true;
-
-            await flushPendingCandidates(
-                senderId
-            );
-
-        } catch (error) {
-            console.error(
-                "❌ Answer handling failed:",
-                error
-            );
-        }
-    }
-
-    async function receiveIceCandidate(
-        senderId,
-        candidate
-    ) {
-        const peer =
-            peers.get(
-                senderId
-            );
-
-        if (
-            !peer ||
-            !peer.remoteDescriptionSet
-        ) {
-            const list =
-                pendingCandidates.get(
-                    senderId
-                ) || [];
-
-            list.push(
-                candidate
-            );
-
-            pendingCandidates.set(
-                senderId,
-                list
-            );
-
-            return;
-        }
-
-        try {
-            await peer.connection
-                .addIceCandidate(
-                    new RTCIceCandidate(
-                        candidate
-                    )
-                );
-
-        } catch (error) {
-            console.warn(
-                "⚠️ ICE candidate failed:",
-                error
-            );
-        }
-    }
-
-    async function flushPendingCandidates(
-        userId
-    ) {
-        const list =
-            pendingCandidates.get(
-                userId
-            );
-
-        if (!list?.length) {
-            return;
-        }
-
-        const peer =
-            peers.get(
-                userId
-            );
-
-        if (!peer) {
-            return;
-        }
-
-        for (
-            const candidate of list
-        ) {
-            try {
-                await peer.connection
-                    .addIceCandidate(
-                        new RTCIceCandidate(
-                            candidate
-                        )
-                    );
-            } catch (_) {}
-        }
-
-        pendingCandidates.delete(
-            userId
-        );
-    }
-
-    function removePeer(
-        userId
-    ) {
-        const peer =
-            peers.get(
-                userId
-            );
-
-        if (peer) {
-            try {
-                peer.connection.close();
-            } catch (_) {}
-        }
-
-        peers.delete(
-            userId
-        );
-
-        pendingCandidates.delete(
-            userId
-        );
-
-        removeRemoteParticipant(
-            userId
-        );
-    }
-
-    /* ============================================================
-       SIGNALING
-       ============================================================
-
-       IMPORTANT:
-
-       We use Supabase Realtime Broadcast for WebRTC signaling.
-
-       This avoids depending on an unverified
-       chat_call_signals table column layout.
-    */
-
-    async function setupRoomRealtime(
-        roomId
-    ) {
-        await removeRoomRealtime();
-
-        signalChannel =
-            db.channel(
-                `mwaniki-call-signal-${roomId}-${currentUser.id}`
-            );
-
-        signalChannel
-            .on(
-                "broadcast",
-                {
-                    event:
-                        "signal"
-                },
-                async payload => {
-                    const message =
-                        payload.payload;
-
-                    if (!message) {
-                        return;
-                    }
-
-                    if (
-                        message.senderId ===
-                        currentUser.id
-                    ) {
-                        return;
-                    }
-
-                    if (
-                        message.receiverId &&
-                        String(
-                            message.receiverId
-                        ) !==
-                        String(
-                            currentUser.id
-                        )
-                    ) {
-                        return;
-                    }
-
-                    await handleSignal(
-                        message
-                    );
-                }
-            )
-            .subscribe(
-                status => {
-                    console.log(
-                        "📞 Call signal channel:",
-                        status
-                    );
-                }
-            );
-
-        participantChannel =
-            db.channel(
-                `mwaniki-call-participants-${roomId}`
-            );
-
-        participantChannel
-            .on(
-                "postgres_changes",
-                {
-                    event: "*",
-                    schema: "public",
-                    table:
-                        "chat_call_participants",
-                    filter:
-                        `room_id=eq.${roomId}`
-                },
-                async payload => {
-                    await handleParticipantChange(
-                        payload
-                    );
-                }
-            )
-            .subscribe(
-                status => {
-                    console.log(
-                        "📞 Call participant channel:",
-                        status
-                    );
-                }
-            );
-    }
-
-    async function sendSignal({
-        receiverId,
-        signalType,
-        payload
-    }) {
-        if (
-            !signalChannel ||
-            !currentRoom
-        ) {
-            return;
-        }
-
-        try {
-            await signalChannel.send({
-                type: "broadcast",
-                event: "signal",
-                payload: {
-                    senderId:
-                        currentUser.id,
-
-                    receiverId,
-
-                    roomId:
-                        currentRoom.id,
-
-                    signalType,
-
-                    payload
-                }
-            });
-        } catch (error) {
-            console.error(
-                "❌ WebRTC signal failed:",
-                error
-            );
-        }
-    }
-
-    async function handleSignal(
-        signal
-    ) {
+    async function leaveParticipant() {
         if (
             !currentRoom ||
-            String(
-                signal.roomId
-            ) !==
-                String(
-                    currentRoom.id
-                )
-        ) {
-            return;
-        }
-
-        switch (
-            signal.signalType
-        ) {
-            case "offer":
-                await receiveOffer(
-                    signal.senderId,
-                    signal.payload?.offer
-                );
-                break;
-
-            case "answer":
-                await receiveAnswer(
-                    signal.senderId,
-                    signal.payload?.answer
-                );
-                break;
-
-            case "ice-candidate":
-                await receiveIceCandidate(
-                    signal.senderId,
-                    signal.payload?.candidate
-                );
-                break;
-
-            case "hangup":
-                removePeer(
-                    signal.senderId
-                );
-                break;
-        }
-    }
-
-    /* ============================================================
-       PARTICIPANT EVENTS
-       ============================================================ */
-
-    async function handleParticipantChange(
-        payload
-    ) {
-        const participant =
-            payload.new ||
-            payload.old;
-
-        if (!participant) {
-            return;
-        }
-
-        if (
-            String(
-                participant.user_id
-            ) ===
-            String(
-                currentUser.id
-            )
-        ) {
-            return;
-        }
-
-        if (
-            participant.status ===
-            "joined"
-        ) {
-            /*
-             * Deterministic offerer:
-             *
-             * UUID comparison prevents both sides from creating
-             * an offer simultaneously.
-             */
-
-            if (
-                String(
-                    currentUser.id
-                ) <
-                String(
-                    participant.user_id
-                )
-            ) {
-                await makeOffer(
-                    participant.user_id
-                );
-            }
-
-            clearCallTimeout();
-
-            updateCallStatus(
-                "Connected"
-            );
-        }
-
-        if (
-            participant.status ===
-                "left" ||
-            participant.status ===
-                "rejected"
-        ) {
-            removePeer(
-                participant.user_id
-            );
-        }
-    }
-
-    /* ============================================================
-       INCOMING CALLS
-       ============================================================ */
-
-    function subscribeToIncomingCalls() {
-        if (
-            !db ||
             !currentUser
         ) {
             return;
         }
 
-        if (incomingChannel) {
-            try {
-                db.removeChannel(
-                    incomingChannel
-                );
-            } catch (_) {}
+        await db
+            .from(
+                "chat_call_participants"
+            )
+            .update({
+                status:
+                    "left",
 
-            incomingChannel =
-                null;
+                left_at:
+                    new Date()
+                        .toISOString()
+            })
+            .eq(
+                "room_id",
+                currentRoom.id
+            )
+            .eq(
+                "user_id",
+                currentUser.id
+            );
+    }
+
+
+    /* =========================================================
+       INVITES
+       ========================================================= */
+
+    async function createInvite(
+        roomId,
+        receiverId
+    ) {
+        const {
+            error
+        } = await db
+            .from(
+                "chat_call_invites"
+            )
+            .insert({
+                room_id:
+                    roomId,
+
+                sender_id:
+                    currentUser.id,
+
+                receiver_id:
+                    receiverId,
+
+                status:
+                    "pending"
+            });
+
+        if (error) {
+            console.warn(
+                "Invite error:",
+                error
+            );
+        }
+    }
+
+
+    /* =========================================================
+       INCOMING CALLS
+       ========================================================= */
+
+    async function subscribeIncoming() {
+        if (
+            incomingChannel
+        ) {
+            await db.removeChannel(
+                incomingChannel
+            );
         }
 
         incomingChannel =
             db.channel(
-                `mwaniki-incoming-calls-${currentUser.id}`
+                `mwaniki-incoming-${currentUser.id}`
             );
 
         incomingChannel
@@ -2033,16 +794,13 @@
                         return;
                     }
 
-                    /*
-                     * If already inside another call, don't overwrite
-                     * the active call.
-                     */
-
-                    if (currentRoom) {
+                    if (
+                        currentRoom
+                    ) {
                         return;
                     }
 
-                    await displayIncomingCall(
+                    await showIncoming(
                         invite
                     );
                 }
@@ -2050,21 +808,22 @@
             .subscribe(
                 status => {
                     console.log(
-                        "📞 Incoming call channel:",
+                        "📞 Incoming calls:",
                         status
                     );
                 }
             );
     }
 
-    async function displayIncomingCall(
+
+    async function showIncoming(
         invite
     ) {
         incomingInvite =
             invite;
 
         const identity =
-            await getUserIdentity(
+            await getIdentity(
                 invite.sender_id
             );
 
@@ -2081,68 +840,66 @@
         ) {
             elements.incomingCallType
                 .textContent =
-                "Incoming call";
+                "Incoming voice call";
         }
 
-        const toast =
-            elements.incomingCallToast;
-
-        if (!toast) {
-            return;
+        if (
+            elements.incomingCallAvatar
+        ) {
+            elements.incomingCallAvatar
+                .innerHTML =
+                identity.avatar
+                    ? `
+                        <img
+                            src="${escapeHtml(
+                                identity.avatar
+                            )}"
+                            alt=""
+                            style="
+                                width:100%;
+                                height:100%;
+                                object-fit:cover;
+                                border-radius:50%;
+                            "
+                        >
+                    `
+                    : escapeHtml(
+                        initials(
+                            identity.name
+                        )
+                    );
         }
 
-        toast.hidden = false;
-
-        toast.classList.remove(
-            "hidden"
-        );
-
-        toast.classList.add(
-            "open"
-        );
+        elements.incomingCallToast
+            ?.classList.remove(
+                "hidden"
+            );
     }
 
-    function hideIncomingCall() {
-        const toast =
-            elements.incomingCallToast;
 
-        if (!toast) {
-            return;
-        }
-
-        toast.classList.remove(
-            "open"
-        );
-
-        toast.classList.add(
-            "hidden"
-        );
-
-        toast.hidden = true;
-    }
-
-    /* ============================================================
-       ACCEPT CALL
-       ============================================================ */
-
-    async function acceptIncomingCall(
-        mode = "audio"
-    ) {
-        if (!incomingInvite) {
-            return;
-        }
-
-        const invite =
-            incomingInvite;
+    function hideIncoming() {
+        elements.incomingCallToast
+            ?.classList.add(
+                "hidden"
+            );
 
         incomingInvite =
             null;
+    }
 
-        hideIncomingCall();
+
+    async function acceptIncoming() {
+        const invite =
+            incomingInvite;
+
+        if (!invite) return;
+
+        hideIncoming();
 
         try {
             const {
-                data: room,
+                data:
+                    room,
                 error
             } = await db
                 .from(
@@ -2163,7 +920,7 @@
                 room.room_status ===
                 "ended"
             ) {
-                showNotice(
+                notice(
                     "This call has already ended."
                 );
 
@@ -2173,12 +930,12 @@
             currentRoom =
                 room;
 
-            currentMode =
-                mode;
-
             currentScope =
                 room.call_scope ||
                 "general";
+
+            currentMode =
+                "audio";
 
             await db
                 .from(
@@ -2197,17 +954,17 @@
                     invite.id
                 );
 
-            await upsertParticipant(
+            await joinParticipant(
                 room.id,
                 currentUser.id,
                 "joined"
             );
 
             await startLocalMedia(
-                mode
+                "audio"
             );
 
-            await setupRoomRealtime(
+            await joinSignalRoom(
                 room.id
             );
 
@@ -2215,90 +972,132 @@
                 "Connected"
             );
 
-            updateCallStatus(
-                "Connected"
-            );
+            await announcePresence();
 
         } catch (error) {
             console.error(
-                "❌ Unable to accept call:",
                 error
             );
 
-            showNotice(
+            notice(
                 "Unable to join the call."
             );
         }
     }
 
-    /* ============================================================
-       REJECT CALL
-       ============================================================ */
 
-    async function rejectIncomingCall() {
-        if (!incomingInvite) {
-            return;
-        }
-
+    async function rejectIncoming() {
         const invite =
             incomingInvite;
 
-        incomingInvite =
-            null;
+        if (!invite) return;
 
-        hideIncomingCall();
+        hideIncoming();
+
+        await db
+            .from(
+                "chat_call_invites"
+            )
+            .update({
+                status:
+                    "rejected",
+
+                responded_at:
+                    new Date()
+                        .toISOString()
+            })
+            .eq(
+                "id",
+                invite.id
+            );
+    }
+
+
+    /* =========================================================
+       LOCAL MEDIA
+       ========================================================= */
+
+    async function startLocalMedia(
+        mode
+    ) {
+        stopLocalMedia();
+
+        const video =
+            mode === "video";
 
         try {
-            await db
-                .from(
-                    "chat_call_invites"
-                )
-                .update({
-                    status:
-                        "rejected",
+            localStream =
+                await navigator
+                    .mediaDevices
+                    .getUserMedia({
+                        audio:
+                            CONFIG.audio,
 
-                    responded_at:
-                        new Date()
-                            .toISOString()
-                })
-                .eq(
-                    "id",
-                    invite.id
-                );
+                        video:
+                            video
+                                ? CONFIG.video
+                                : false
+                    });
+
+            microphoneEnabled =
+                true;
+
+            cameraEnabled =
+                video;
+
+            renderLocalTile();
+
+            updateControls();
+
         } catch (error) {
-            console.warn(
-                "⚠️ Could not reject call:",
+            console.error(
+                "Media permission error:",
                 error
+            );
+
+            throw new Error(
+                video
+                    ? "Camera and microphone permission was denied."
+                    : "Microphone permission was denied."
             );
         }
     }
 
-    /* ============================================================
-       CALL OVERLAY
-       ============================================================ */
+
+    function stopLocalMedia() {
+        if (!localStream) {
+            return;
+        }
+
+        localStream
+            .getTracks()
+            .forEach(
+                track => {
+                    try {
+                        track.stop();
+                    } catch (_) {}
+                }
+            );
+
+        localStream =
+            null;
+    }
+
+
+    /* =========================================================
+       CALL UI
+       ========================================================= */
 
     function showCallOverlay(
-        status = "Connecting..."
+        status
     ) {
         const overlay =
             elements.activeCallOverlay;
 
-        if (!overlay) {
-            console.warn(
-                "⚠️ #activeCallOverlay not found."
-            );
-
-            return;
-        }
-
-        overlay.hidden = false;
+        if (!overlay) return;
 
         overlay.classList.remove(
             "hidden"
-        );
-
-        overlay.classList.add(
-            "open"
         );
 
         if (
@@ -2315,28 +1114,17 @@
                     : "General Call";
         }
 
-        updateCallStatus(
+        updateStatus(
             status
         );
     }
 
+
     function hideCallOverlay() {
-        const overlay =
-            elements.activeCallOverlay;
-
-        if (!overlay) {
-            return;
-        }
-
-        overlay.classList.remove(
-            "open"
-        );
-
-        overlay.classList.add(
-            "hidden"
-        );
-
-        overlay.hidden = true;
+        elements.activeCallOverlay
+            ?.classList.add(
+                "hidden"
+            );
 
         if (
             elements.callParticipantGrid
@@ -2346,21 +1134,850 @@
         }
     }
 
-    function updateCallStatus(
-        status
+
+    function updateStatus(
+        text
     ) {
         if (
             elements.activeCallStatus
         ) {
             elements.activeCallStatus
                 .textContent =
-                status || "";
+                text;
         }
     }
 
-    /* ============================================================
+
+    function renderLocalTile() {
+        const grid =
+            elements.callParticipantGrid;
+
+        if (!grid) return;
+
+        let tile =
+            grid.querySelector(
+                '[data-local-call-tile="true"]'
+            );
+
+        if (!tile) {
+            tile =
+                document.createElement(
+                    "div"
+                );
+
+            tile.className =
+                "call-participant-tile";
+
+            tile.dataset.localCallTile =
+                "true";
+
+            tile.innerHTML = `
+                <div class="call-participant-media"></div>
+
+                <div class="call-participant-label">
+                    You
+                </div>
+            `;
+
+            grid.prepend(
+                tile
+            );
+        }
+
+        const media =
+            tile.querySelector(
+                ".call-participant-media"
+            );
+
+        media.innerHTML = "";
+
+        if (
+            localStream &&
+            localStream.getVideoTracks()
+                .length
+        ) {
+            const video =
+                document.createElement(
+                    "video"
+                );
+
+            video.autoplay =
+                true;
+
+            video.muted =
+                true;
+
+            video.playsInline =
+                true;
+
+            video.srcObject =
+                localStream;
+
+            video.className =
+                "call-participant-video";
+
+            media.appendChild(
+                video
+            );
+
+        } else {
+            media.innerHTML = `
+                <div class="call-audio-avatar">
+                    ${escapeHtml(
+                        initials(
+                            "You"
+                        )
+                    )}
+                </div>
+            `;
+        }
+    }
+
+
+    async function renderRemoteTile(
+        userId,
+        stream
+    ) {
+        const grid =
+            elements.callParticipantGrid;
+
+        if (!grid) return;
+
+        let tile =
+            grid.querySelector(
+                `[data-remote-user="${CSS.escape(
+                    String(
+                        userId
+                    )
+                )}"]`
+            );
+
+        if (!tile) {
+            const identity =
+                await getIdentity(
+                    userId
+                );
+
+            tile =
+                document.createElement(
+                    "div"
+                );
+
+            tile.className =
+                "call-participant-tile";
+
+            tile.dataset.remoteUser =
+                userId;
+
+            tile.innerHTML = `
+                <div class="call-participant-media">
+                    <div class="call-audio-avatar">
+                        ${escapeHtml(
+                            initials(
+                                identity.name
+                            )
+                        )}
+                    </div>
+                </div>
+
+                <div class="call-participant-label">
+                    ${escapeHtml(
+                        identity.name
+                    )}
+                </div>
+            `;
+
+            grid.appendChild(
+                tile
+            );
+        }
+
+        const media =
+            tile.querySelector(
+                ".call-participant-media"
+            );
+
+        let video =
+            media.querySelector(
+                "video"
+            );
+
+        if (!video) {
+            media.innerHTML = "";
+
+            video =
+                document.createElement(
+                    "video"
+                );
+
+            video.autoplay =
+                true;
+
+            video.playsInline =
+                true;
+
+            video.className =
+                "call-participant-video";
+
+            media.appendChild(
+                video
+            );
+        }
+
+        video.srcObject =
+            stream;
+    }
+
+
+    function removeRemoteTile(
+        userId
+    ) {
+        const tile =
+            document.querySelector(
+                `[data-remote-user="${CSS.escape(
+                    String(
+                        userId
+                    )
+                )}"]`
+            );
+
+        tile?.remove();
+    }
+
+
+    /* =========================================================
+       WEBRTC PEER
+       ========================================================= */
+
+    function getPeer(
+        userId
+    ) {
+        if (
+            peers.has(
+                String(userId)
+            )
+        ) {
+            return peers.get(
+                String(userId)
+            );
+        }
+
+        const connection =
+            new RTCPeerConnection({
+                iceServers:
+                    CONFIG.iceServers
+            });
+
+        const peer = {
+            connection,
+            remoteDescriptionSet:
+                false
+        };
+
+        peers.set(
+            String(userId),
+            peer
+        );
+
+        if (localStream) {
+            localStream
+                .getTracks()
+                .forEach(
+                    track => {
+                        connection.addTrack(
+                            track,
+                            localStream
+                        );
+                    }
+                );
+        }
+
+        connection.onicecandidate =
+            event => {
+                if (
+                    !event.candidate
+                ) {
+                    return;
+                }
+
+                sendSignal(
+                    userId,
+                    "ice",
+                    {
+                        candidate:
+                            event.candidate
+                    }
+                );
+            };
+
+        connection.ontrack =
+            event => {
+                const stream =
+                    event.streams?.[0];
+
+                if (stream) {
+                    renderRemoteTile(
+                        userId,
+                        stream
+                    );
+                }
+            };
+
+        connection.onconnectionstatechange =
+            () => {
+                const status =
+                    connection.connectionState;
+
+                console.log(
+                    `📞 ${userId}: ${status}`
+                );
+
+                if (
+                    status ===
+                    "connected"
+                ) {
+                    clearRingTimer();
+
+                    updateStatus(
+                        "Connected"
+                    );
+                }
+
+                if (
+                    status ===
+                        "failed" ||
+                    status ===
+                        "closed"
+                ) {
+                    removePeer(
+                        userId
+                    );
+                }
+            };
+
+        return peer;
+    }
+
+
+    async function createOffer(
+        userId
+    ) {
+        const peer =
+            getPeer(
+                userId
+            );
+
+        if (
+            peer.connection.signalingState !==
+            "stable"
+        ) {
+            return;
+        }
+
+        const offer =
+            await peer.connection
+                .createOffer();
+
+        await peer.connection
+            .setLocalDescription(
+                offer
+            );
+
+        await sendSignal(
+            userId,
+            "offer",
+            {
+                offer:
+                    peer.connection
+                        .localDescription
+            }
+        );
+    }
+
+
+    async function handleOffer(
+        senderId,
+        offer
+    ) {
+        const peer =
+            getPeer(
+                senderId
+            );
+
+        await peer.connection
+            .setRemoteDescription(
+                new RTCSessionDescription(
+                    offer
+                )
+            );
+
+        peer.remoteDescriptionSet =
+            true;
+
+        await flushCandidates(
+            senderId
+        );
+
+        const answer =
+            await peer.connection
+                .createAnswer();
+
+        await peer.connection
+            .setLocalDescription(
+                answer
+            );
+
+        await sendSignal(
+            senderId,
+            "answer",
+            {
+                answer:
+                    peer.connection
+                        .localDescription
+            }
+        );
+    }
+
+
+    async function handleAnswer(
+        senderId,
+        answer
+    ) {
+        const peer =
+            peers.get(
+                String(
+                    senderId
+                )
+            );
+
+        if (!peer) {
+            return;
+        }
+
+        await peer.connection
+            .setRemoteDescription(
+                new RTCSessionDescription(
+                    answer
+                )
+            );
+
+        peer.remoteDescriptionSet =
+            true;
+
+        await flushCandidates(
+            senderId
+        );
+    }
+
+
+    async function handleIce(
+        senderId,
+        candidate
+    ) {
+        const peer =
+            peers.get(
+                String(
+                    senderId
+                )
+            );
+
+        if (
+            !peer ||
+            !peer.remoteDescriptionSet
+        ) {
+            const list =
+                pendingCandidates.get(
+                    String(
+                        senderId
+                    )
+                ) || [];
+
+            list.push(
+                candidate
+            );
+
+            pendingCandidates.set(
+                String(
+                    senderId
+                ),
+                list
+            );
+
+            return;
+        }
+
+        try {
+            await peer.connection
+                .addIceCandidate(
+                    new RTCIceCandidate(
+                        candidate
+                    )
+                );
+        } catch (error) {
+            console.warn(
+                "ICE error:",
+                error
+            );
+        }
+    }
+
+
+    async function flushCandidates(
+        userId
+    ) {
+        const key =
+            String(
+                userId
+            );
+
+        const list =
+            pendingCandidates.get(
+                key
+            );
+
+        if (!list?.length) {
+            return;
+        }
+
+        const peer =
+            peers.get(
+                key
+            );
+
+        if (!peer) {
+            return;
+        }
+
+        for (
+            const candidate of list
+        ) {
+            try {
+                await peer.connection
+                    .addIceCandidate(
+                        new RTCIceCandidate(
+                            candidate
+                        )
+                    );
+            } catch (_) {}
+        }
+
+        pendingCandidates.delete(
+            key
+        );
+    }
+
+
+    function removePeer(
+        userId
+    ) {
+        const key =
+            String(
+                userId
+            );
+
+        const peer =
+            peers.get(
+                key
+            );
+
+        if (peer) {
+            try {
+                peer.connection.close();
+            } catch (_) {}
+        }
+
+        peers.delete(
+            key
+        );
+
+        pendingCandidates.delete(
+            key
+        );
+
+        removeRemoteTile(
+            key
+        );
+    }
+
+
+    /* =========================================================
+       SIGNALING
+       ========================================================= */
+
+    async function joinSignalRoom(
+        roomId
+    ) {
+        if (
+            signalChannel
+        ) {
+            await db.removeChannel(
+                signalChannel
+            );
+        }
+
+        /*
+         * CRITICAL:
+         *
+         * Do NOT put user ID in the channel name.
+         *
+         * Every participant must join exactly:
+         *
+         * mwaniki-call-room-{roomId}
+         */
+
+        signalChannel =
+            db.channel(
+                `mwaniki-call-room-${roomId}`
+            );
+
+        signalChannel
+            .on(
+                "broadcast",
+                {
+                    event:
+                        "webrtc"
+                },
+                async event => {
+                    const message =
+                        event.payload;
+
+                    if (!message) {
+                        return;
+                    }
+
+                    if (
+                        String(
+                            message.senderId
+                        ) ===
+                        String(
+                            currentUser.id
+                        )
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        message.receiverId &&
+                        String(
+                            message.receiverId
+                        ) !==
+                        String(
+                            currentUser.id
+                        )
+                    ) {
+                        return;
+                    }
+
+                    if (
+                        String(
+                            message.roomId
+                        ) !==
+                        String(
+                            currentRoom?.id
+                        )
+                    ) {
+                        return;
+                    }
+
+                    try {
+                        switch (
+                            message.type
+                        ) {
+                            case "presence":
+                                await handlePresence(
+                                    message.senderId
+                                );
+                                break;
+
+                            case "offer":
+                                await handleOffer(
+                                    message.senderId,
+                                    message.data
+                                        ?.offer
+                                );
+                                break;
+
+                            case "answer":
+                                await handleAnswer(
+                                    message.senderId,
+                                    message.data
+                                        ?.answer
+                                );
+                                break;
+
+                            case "ice":
+                                await handleIce(
+                                    message.senderId,
+                                    message.data
+                                        ?.candidate
+                                );
+                                break;
+
+                            case "hangup":
+                                removePeer(
+                                    message.senderId
+                                );
+                                break;
+                        }
+                    } catch (error) {
+                        console.error(
+                            "Signal handling error:",
+                            error
+                        );
+                    }
+                }
+            )
+            .subscribe(
+                status => {
+                    console.log(
+                        "📞 WebRTC signaling:",
+                        status
+                    );
+                }
+            );
+
+        /*
+         * Wait until the channel is subscribed.
+         */
+
+        await waitForChannelSubscribed();
+    }
+
+
+    function waitForChannelSubscribed() {
+        return new Promise(
+            resolve => {
+                let done = false;
+
+                const timer =
+                    setTimeout(
+                        () => {
+                            if (!done) {
+                                done = true;
+                                resolve();
+                            }
+                        },
+                        5000
+                    );
+
+                if (
+                    signalChannel
+                ) {
+                    signalChannel.on(
+                        "system",
+                        {},
+                        payload => {
+                            if (
+                                payload?.status ===
+                                "ok" &&
+                                !done
+                            ) {
+                                done = true;
+
+                                clearTimeout(
+                                    timer
+                                );
+
+                                resolve();
+                            }
+                        }
+                    );
+                } else {
+                    clearTimeout(
+                        timer
+                    );
+
+                    resolve();
+                }
+            }
+        );
+    }
+
+
+    async function sendSignal(
+        receiverId,
+        type,
+        data
+    ) {
+        if (
+            !signalChannel ||
+            !currentRoom
+        ) {
+            return;
+        }
+
+        await signalChannel.send({
+            type:
+                "broadcast",
+
+            event:
+                "webrtc",
+
+            payload: {
+                roomId:
+                    currentRoom.id,
+
+                senderId:
+                    currentUser.id,
+
+                receiverId:
+                    receiverId ||
+                    null,
+
+                type,
+
+                data:
+                    data || {}
+            }
+        });
+    }
+
+
+    async function announcePresence() {
+        if (
+            !currentRoom ||
+            !signalChannel
+        ) {
+            return;
+        }
+
+        await sendSignal(
+            null,
+            "presence",
+            {}
+        );
+    }
+
+
+    async function handlePresence(
+        remoteUserId
+    ) {
+        /*
+         * Deterministic offerer:
+         *
+         * Smaller UUID creates the offer.
+         * This prevents both sides from creating
+         * competing offers.
+         */
+
+        if (
+            String(
+                currentUser.id
+            ) <
+            String(
+                remoteUserId
+            )
+        ) {
+            await createOffer(
+                remoteUserId
+            );
+        }
+    }
+
+
+    /* =========================================================
        MICROPHONE
-       ============================================================ */
+       ========================================================= */
 
     function toggleMicrophone() {
         if (!localStream) {
@@ -2388,31 +2005,94 @@
         updateControls();
     }
 
-    /* ============================================================
-       CAMERA
-       ============================================================ */
 
-    function toggleCamera() {
+    /* =========================================================
+       CAMERA
+       ========================================================= */
+
+    async function toggleCamera() {
+        if (!currentRoom) {
+            return;
+        }
+
         if (!localStream) {
             return;
         }
 
-        const tracks =
+        let videoTracks =
             localStream
                 .getVideoTracks();
 
-        if (!tracks.length) {
-            showNotice(
-                "This is an audio-only call."
-            );
+        if (!videoTracks.length) {
+            try {
+                const stream =
+                    await navigator
+                        .mediaDevices
+                        .getUserMedia({
+                            audio: false,
+                            video:
+                                CONFIG.video
+                        });
 
-            return;
+                const track =
+                    stream.getVideoTracks()[0];
+
+                if (!track) {
+                    return;
+                }
+
+                localStream.addTrack(
+                    track
+                );
+
+                cameraEnabled =
+                    true;
+
+                for (
+                    const peer of
+                    peers.values()
+                ) {
+                    const sender =
+                        peer.connection
+                            .getSenders()
+                            .find(
+                                item =>
+                                    item.track &&
+                                    item.track.kind ===
+                                        "video"
+                            );
+
+                    if (sender) {
+                        await sender.replaceTrack(
+                            track
+                        );
+                    } else {
+                        peer.connection.addTrack(
+                            track,
+                            localStream
+                        );
+                    }
+                }
+
+                renderLocalTile();
+
+                updateControls();
+
+                return;
+
+            } catch (error) {
+                notice(
+                    "Camera permission was denied."
+                );
+
+                return;
+            }
         }
 
         cameraEnabled =
             !cameraEnabled;
 
-        tracks.forEach(
+        videoTracks.forEach(
             track => {
                 track.enabled =
                     cameraEnabled;
@@ -2422,26 +2102,30 @@
         updateControls();
     }
 
-    /* ============================================================
-       SCREEN SHARING
-       ============================================================ */
+
+    /* =========================================================
+       SCREEN SHARE
+       ========================================================= */
 
     async function toggleScreenShare() {
         if (!currentRoom) {
             return;
         }
 
-        if (screenSharing) {
+        if (
+            screenSharing
+        ) {
             await stopScreenShare();
+
             return;
         }
 
         if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices
-                .getDisplayMedia
+            !navigator
+                .mediaDevices
+                ?.getDisplayMedia
         ) {
-            showNotice(
+            notice(
                 "Screen sharing is not supported by this browser."
             );
 
@@ -2466,7 +2150,8 @@
             }
 
             for (
-                const peer of peers.values()
+                const peer of
+                peers.values()
             ) {
                 const sender =
                     peer.connection
@@ -2479,29 +2164,35 @@
                         );
 
                 if (sender) {
-                    await sender
-                        .replaceTrack(
-                            screenTrack
-                        );
+                    await sender.replaceTrack(
+                        screenTrack
+                    );
+                } else {
+                    peer.connection.addTrack(
+                        screenTrack,
+                        screenStream
+                    );
                 }
             }
 
-            screenSharing = true;
+            screenSharing =
+                true;
 
             updateControls();
 
             screenTrack.onended =
-                async () => {
-                    await stopScreenShare();
+                () => {
+                    stopScreenShare();
                 };
 
         } catch (error) {
             console.warn(
-                "Screen sharing cancelled:",
+                "Screen share cancelled:",
                 error
             );
         }
     }
+
 
     async function stopScreenShare() {
         if (!screenSharing) {
@@ -2515,10 +2206,12 @@
                     track =>
                         track.kind ===
                         "video"
-                ) || null;
+                ) ||
+            null;
 
         for (
-            const peer of peers.values()
+            const peer of
+            peers.values()
         ) {
             const sender =
                 peer.connection
@@ -2532,200 +2225,206 @@
 
             if (sender) {
                 try {
-                    await sender
-                        .replaceTrack(
-                            cameraTrack
-                        );
+                    await sender.replaceTrack(
+                        cameraTrack
+                    );
                 } catch (_) {}
             }
         }
 
-        if (screenTrack) {
-            try {
-                screenTrack.stop();
-            } catch (_) {}
+        screenStream
+            ?.getTracks()
+            .forEach(
+                track => {
+                    try {
+                        track.stop();
+                    } catch (_) {}
+                }
+            );
 
-            screenTrack = null;
-        }
+        screenStream =
+            null;
 
-        if (screenStream) {
-            screenStream
-                .getTracks()
-                .forEach(
-                    track => {
-                        try {
-                            track.stop();
-                        } catch (_) {}
-                    }
-                );
+        screenTrack =
+            null;
 
-            screenStream = null;
-        }
-
-        screenSharing = false;
+        screenSharing =
+            false;
 
         updateControls();
     }
 
-    /* ============================================================
-       CONTROLS UI
-       ============================================================ */
+
+    /* =========================================================
+       CONTROLS
+       ========================================================= */
 
     function updateControls() {
-        if (
-            elements.toggleMicrophoneButton
-        ) {
-            elements
-                .toggleMicrophoneButton
-                .textContent =
+        const mic =
+            elements.toggleMicrophoneButton;
+
+        const camera =
+            elements.toggleCameraButton;
+
+        const screen =
+            elements.shareScreenButton;
+
+        if (mic) {
+            mic.textContent =
                 microphoneEnabled
                     ? "🎙️"
                     : "🔇";
 
-            elements
-                .toggleMicrophoneButton
-                .title =
+            mic.title =
                 microphoneEnabled
                     ? "Mute microphone"
                     : "Unmute microphone";
         }
 
-        if (
-            elements.toggleCameraButton
-        ) {
-            elements
-                .toggleCameraButton
-                .textContent =
+        if (camera) {
+            camera.textContent =
                 cameraEnabled
                     ? "📹"
                     : "🚫";
 
-            elements
-                .toggleCameraButton
-                .title =
+            camera.title =
                 cameraEnabled
                     ? "Turn camera off"
                     : "Turn camera on";
         }
 
-        if (
-            elements.shareScreenButton
-        ) {
-            elements
-                .shareScreenButton
-                .textContent =
+        if (screen) {
+            screen.textContent =
                 screenSharing
                     ? "⛶"
                     : "🖥️";
 
-            elements
-                .shareScreenButton
-                .title =
+            screen.title =
                 screenSharing
                     ? "Stop screen sharing"
                     : "Share screen";
         }
     }
 
-    /* ============================================================
+
+    /* =========================================================
+       TIMER
+       ========================================================= */
+
+    function startRingTimer() {
+        clearRingTimer();
+
+        ringTimer =
+            setTimeout(
+                async () => {
+                    if (
+                        currentRoom &&
+                        peers.size ===
+                            0
+                    ) {
+                        notice(
+                            "No one answered the call."
+                        );
+
+                        await endCall();
+                    }
+                },
+                CONFIG.ringTimeout
+            );
+    }
+
+
+    function clearRingTimer() {
+        if (ringTimer) {
+            clearTimeout(
+                ringTimer
+            );
+
+            ringTimer =
+                null;
+        }
+    }
+
+
+    /* =========================================================
        END CALL
-       ============================================================ */
+       ========================================================= */
 
     async function endCall() {
-        clearCallTimeout();
+        if (!currentRoom) {
+            hideCallOverlay();
+
+            return;
+        }
+
+        clearRingTimer();
 
         const room =
             currentRoom;
 
         /*
-         * Tell peers that we are leaving.
+         * Notify peers.
          */
 
-        if (signalChannel) {
-            for (
-                const userId of peers.keys()
-            ) {
-                try {
-                    await sendSignal({
-                        receiverId:
-                            userId,
-
-                        signalType:
-                            "hangup",
-
-                        payload: {}
-                    });
-                } catch (_) {}
-            }
-        }
-
-        if (
-            room &&
-            currentUser
+        for (
+            const userId of
+            peers.keys()
         ) {
             try {
-                await db
-                    .from(
-                        "chat_call_participants"
-                    )
-                    .update({
-                        status:
-                            "left",
-
-                        left_at:
-                            new Date()
-                                .toISOString()
-                    })
-                    .eq(
-                        "room_id",
-                        room.id
-                    )
-                    .eq(
-                        "user_id",
-                        currentUser.id
-                    );
-            } catch (error) {
-                console.warn(
-                    "⚠️ Could not update participant leave:",
-                    error
+                await sendSignal(
+                    userId,
+                    "hangup",
+                    {}
                 );
-            }
-
-            /*
-             * Only the creator should end the room itself.
-             */
-
-            if (
-                String(
-                    room.created_by
-                ) ===
-                String(
-                    currentUser.id
-                )
-            ) {
-                try {
-                    await db
-                        .from(
-                            "chat_call_rooms"
-                        )
-                        .update({
-                            room_status:
-                                "ended"
-                        })
-                        .eq(
-                            "id",
-                            room.id
-                        )
-                        .eq(
-                            "created_by",
-                            currentUser.id
-                        );
-                } catch (_) {}
-            }
+            } catch (_) {}
         }
 
+        await leaveParticipant();
+
+        /*
+         * Creator ends room.
+         */
+
+        if (
+            String(
+                room.created_by
+            ) ===
+            String(
+                currentUser.id
+            )
+        ) {
+            await db
+                .from(
+                    "chat_call_rooms"
+                )
+                .update({
+                    room_status:
+                        "ended"
+                })
+                .eq(
+                    "id",
+                    room.id
+                );
+        }
+
+        await cleanupCall(
+            true
+        );
+
+        notice(
+            "Call ended."
+        );
+    }
+
+
+    async function cleanupCall(
+        hide = true
+    ) {
+        clearRingTimer();
+
         for (
-            const userId of peers.keys()
+            const userId of
+            peers.keys()
         ) {
             removePeer(
                 userId
@@ -2738,70 +2437,8 @@
 
         await stopScreenShare();
 
-        stopLocalStream();
+        stopLocalMedia();
 
-        await removeRoomRealtime();
-
-        currentRoom = null;
-
-        incomingInvite = null;
-
-        microphoneEnabled = true;
-        cameraEnabled = false;
-        screenSharing = false;
-
-        hideCallOverlay();
-
-        updateControls();
-
-        console.log(
-            "📞 Call ended."
-        );
-    }
-
-    /* ============================================================
-       TIMEOUT
-       ============================================================ */
-
-    function startCallTimeout() {
-        clearCallTimeout();
-
-        callTimeoutTimer =
-            setTimeout(
-                async () => {
-                    if (
-                        currentRoom &&
-                        peers.size === 0
-                    ) {
-                        showNotice(
-                            "No one answered the call."
-                        );
-
-                        await endCall();
-                    }
-                },
-                CONFIG.callTimeout
-            );
-    }
-
-    function clearCallTimeout() {
-        if (
-            callTimeoutTimer
-        ) {
-            clearTimeout(
-                callTimeoutTimer
-            );
-
-            callTimeoutTimer =
-                null;
-        }
-    }
-
-    /* ============================================================
-       REALTIME CLEANUP
-       ============================================================ */
-
-    async function removeRoomRealtime() {
         if (
             signalChannel &&
             db
@@ -2816,50 +2453,71 @@
                 null;
         }
 
-        if (
-            participantChannel &&
-            db
-        ) {
-            try {
-                await db.removeChannel(
-                    participantChannel
-                );
-            } catch (_) {}
+        currentRoom =
+            null;
 
-            participantChannel =
-                null;
+        currentScope =
+            "general";
+
+        currentMode =
+            "audio";
+
+        microphoneEnabled =
+            true;
+
+        cameraEnabled =
+            false;
+
+        screenSharing =
+            false;
+
+        if (hide) {
+            hideCallOverlay();
         }
+
+        updateControls();
     }
 
-    /* ============================================================
+
+    /* =========================================================
        EVENTS
-       ============================================================ */
+       ========================================================= */
 
     function setupEvents() {
-        /*
-         * Header General Call button.
-         */
 
         elements.generalCallButton
             ?.addEventListener(
                 "click",
-                openGeneralCall
+                () => {
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            "mwaniki:open-general-call-picker"
+                        )
+                    );
+                }
             );
 
-        /*
-         * Community Call button.
-         */
 
         elements.communityCallButton
             ?.addEventListener(
                 "click",
-                openCommunityCall
+                () => {
+                    const communityId =
+                        getCommunityId();
+
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            "mwaniki:community-call-picker-needed",
+                            {
+                                detail: {
+                                    communityId
+                                }
+                            }
+                        )
+                    );
+                }
             );
 
-        /*
-         * Call modal:
-         * Specific person
-         */
 
         elements.callSpecificPersonButton
             ?.addEventListener(
@@ -2875,10 +2533,6 @@
                 }
             );
 
-        /*
-         * Call modal:
-         * Whole community
-         */
 
         elements.callWholeCommunityButton
             ?.addEventListener(
@@ -2886,24 +2540,13 @@
                 () => {
                     closeCallModal();
 
-                    const communityId =
-                        getCurrentCommunityId();
-
-                    if (!communityId) {
-                        showNotice(
-                            "Select a community first."
-                        );
-
-                        return;
-                    }
-
                     window.dispatchEvent(
                         new CustomEvent(
                             "mwaniki:community-call-picker-needed",
                             {
                                 detail: {
-                                    communityId,
-                                    mode: "audio"
+                                    communityId:
+                                        getCommunityId()
                                 }
                             }
                         )
@@ -2911,42 +2554,27 @@
                 }
             );
 
-        /*
-         * Microphone.
-         */
 
-        elements
-            .toggleMicrophoneButton
+        elements.toggleMicrophoneButton
             ?.addEventListener(
                 "click",
                 toggleMicrophone
             );
 
-        /*
-         * Camera.
-         */
 
-        elements
-            .toggleCameraButton
+        elements.toggleCameraButton
             ?.addEventListener(
                 "click",
                 toggleCamera
             );
 
-        /*
-         * Screen.
-         */
 
-        elements
-            .shareScreenButton
+        elements.shareScreenButton
             ?.addEventListener(
                 "click",
                 toggleScreenShare
             );
 
-        /*
-         * Both end-call buttons perform exactly the same action.
-         */
 
         elements.leaveCallButton
             ?.addEventListener(
@@ -2954,256 +2582,189 @@
                 endCall
             );
 
+
         elements.leaveCallButtonBottom
             ?.addEventListener(
                 "click",
                 endCall
             );
 
-        /*
-         * Incoming call accept.
-         */
 
         elements.acceptCallButton
             ?.addEventListener(
                 "click",
-                () =>
-                    acceptIncomingCall(
-                        "audio"
-                    )
+                acceptIncoming
             );
 
-        /*
-         * Incoming call reject.
-         */
 
         elements.rejectCallButton
             ?.addEventListener(
                 "click",
-                rejectIncomingCall
+                rejectIncoming
             );
 
-        /*
-         * Escape.
-         */
 
-        document.addEventListener(
-            "keydown",
+        window.addEventListener(
+            "mwaniki:call-user",
             event => {
+                const detail =
+                    event.detail ||
+                    {};
+
                 if (
-                    event.key ===
-                    "Escape"
+                    detail.userId
                 ) {
-                    closeCallModal();
+                    createRoom({
+                        scope:
+                            "direct",
+
+                        communityId:
+                            null,
+
+                        userIds: [
+                            detail.userId
+                        ],
+
+                        mode:
+                            detail.mode ||
+                            "audio"
+                    });
                 }
             }
         );
 
-        /*
-         * Browser/tab closing.
-         */
+
+        window.addEventListener(
+            "mwaniki:start-general-call",
+            event => {
+                const detail =
+                    event.detail ||
+                    {};
+
+                createRoom({
+                    scope:
+                        "general",
+
+                    communityId:
+                        null,
+
+                    userIds:
+                        detail.userIds ||
+                        [],
+
+                    mode:
+                        detail.mode ||
+                        "audio"
+                });
+            }
+        );
+
+
+        window.addEventListener(
+            "mwaniki:start-community-call",
+            event => {
+                const detail =
+                    event.detail ||
+                    {};
+
+                createRoom({
+                    scope:
+                        "community",
+
+                    communityId:
+                        detail.communityId ||
+                        getCommunityId(),
+
+                    userIds:
+                        detail.userIds ||
+                        [],
+
+                    mode:
+                        detail.mode ||
+                        "audio"
+                });
+            }
+        );
+
 
         window.addEventListener(
             "beforeunload",
             () => {
-                if (localStream) {
-                    localStream
-                        .getTracks()
-                        .forEach(
-                            track =>
-                                track.stop()
-                        );
-                }
-
-                if (screenStream) {
-                    screenStream
-                        .getTracks()
-                        .forEach(
-                            track =>
-                                track.stop()
-                        );
-                }
+                stopScreenShare();
+                stopLocalMedia();
             }
         );
     }
 
-    /* ============================================================
-       NOTIFICATION
-       ============================================================ */
 
-    function showNotice(
-        message
-    ) {
-        console.info(
-            "📞",
-            message
-        );
-
-        if (
-            typeof window.showNotification ===
-            "function"
-        ) {
-            try {
-                window.showNotification(
-                    message
-                );
-
-                return;
-            } catch (_) {}
-        }
-
-        /*
-         * Prefer the community toast if available.
-         */
-
-        const toast =
-            document.getElementById(
-                "toast"
-            );
-
-        if (toast) {
-            toast.textContent =
-                message;
-
-            toast.classList.remove(
-                "hidden"
-            );
-
-            clearTimeout(
-                toast._mwanikiTimer
-            );
-
-            toast._mwanikiTimer =
-                setTimeout(
-                    () => {
-                        toast.classList.add(
-                            "hidden"
-                        );
-                    },
-                    3500
-                );
-
-            return;
-        }
-
-        console.warn(
-            message
-        );
-    }
-
-    /* ============================================================
-       UTILITIES
-       ============================================================ */
-
-    function sleep(
-        milliseconds
-    ) {
-        return new Promise(
-            resolve =>
-                setTimeout(
-                    resolve,
-                    milliseconds
-                )
-        );
-    }
-
-    function getInitials(
-        name
-    ) {
-        const parts =
-            String(
-                name || ""
-            )
-                .trim()
-                .split(/\s+/)
-                .filter(Boolean);
-
-        if (!parts.length) {
-            return "MS";
-        }
-
-        if (
-            parts.length === 1
-        ) {
-            return parts[0]
-                .slice(0, 2)
-                .toUpperCase();
-        }
-
-        return (
-            parts[0][0] +
-            parts[
-                parts.length - 1
-            ][0]
-        ).toUpperCase();
-    }
-
-    function escapeHtml(
-        value
-    ) {
-        return String(
-            value ?? ""
-        )
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
-    }
-
-    function cssEscape(
-        value
-    ) {
-        if (
-            window.CSS &&
-            typeof window.CSS.escape ===
-                "function"
-        ) {
-            return window.CSS.escape(
-                String(value)
-            );
-        }
-
-        return String(value)
-            .replace(
-                /[^a-zA-Z0-9_-]/g,
-                "\\$&"
-            );
-    }
-
-    /* ============================================================
+    /* =========================================================
        PUBLIC API
-       ============================================================ */
+       ========================================================= */
 
     window.MwanikiCalls = {
+
         openCallModal,
 
         closeCallModal,
 
-        startDirectCall,
+        startDirectCall(
+            userId,
+            mode = "audio"
+        ) {
+            return createRoom({
+                scope:
+                    "direct",
 
-        startGeneralCall,
+                communityId:
+                    null,
 
-        startCommunityCall,
+                userIds: [
+                    userId
+                ],
 
-        acceptIncomingCall,
+                mode
+            });
+        },
 
-        rejectIncomingCall,
+        startGeneralCall(
+            userIds,
+            mode = "audio"
+        ) {
+            return createRoom({
+                scope:
+                    "general",
+
+                communityId:
+                    null,
+
+                userIds,
+
+                mode
+            });
+        },
+
+        startCommunityCall(
+            communityId,
+            userIds,
+            mode = "audio"
+        ) {
+            return createRoom({
+                scope:
+                    "community",
+
+                communityId,
+
+                userIds,
+
+                mode
+            });
+        },
+
+        acceptIncomingCall:
+            acceptIncoming,
+
+        rejectIncomingCall:
+            rejectIncoming,
 
         endCall,
 
@@ -3224,16 +2785,15 @@
         }
     };
 
-    /* ============================================================
-       INITIALIZATION
-       ============================================================ */
+
+    /* =========================================================
+       INIT
+       ========================================================= */
 
     async function initialize() {
         cacheElements();
 
         setupEvents();
-
-        setupExternalCallEvents();
 
         const ready =
             await initializeSupabase();
@@ -3242,14 +2802,15 @@
             return;
         }
 
-        subscribeToIncomingCalls();
+        await subscribeIncoming();
 
         updateControls();
 
         console.log(
-            "✅ Mwaniki Scholars single call engine ready."
+            "✅ Mwaniki Scholars single WebRTC engine ready."
         );
     }
+
 
     if (
         document.readyState ===
@@ -3265,4 +2826,5 @@
     } else {
         initialize();
     }
+
 })();
