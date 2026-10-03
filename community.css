@@ -1,1324 +1,2268 @@
-<!DOCTYPE html>
-<html lang="en">
+/* ============================================================
+   MWANIKI SCHOLARS COMMUNITY
+   community.css
+   ============================================================ */
 
-<head>
+:root {
+    --community-primary: #087f73;
+    --community-primary-dark: #05665d;
+    --community-accent: #0b7285;
 
-    <meta charset="UTF-8">
+    --community-bg: #eef4f3;
+    --community-panel: #ffffff;
+    --community-border: #dce7e5;
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    --community-text: #17302d;
+    --community-muted: #6d7d7a;
 
-    <meta
-        name="description"
-        content="Mwaniki Scholars Community - academic discussion, collaboration, contests and calls."
-    >
+    --community-danger: #d64545;
 
-    <meta
-        name="theme-color"
-        content="#087f73"
-    >
+    --community-header-height: 76px;
+    --community-rail-width: 76px;
+    --community-sidebar-width: 255px;
+    --community-members-width: 250px;
+}
 
-    <title>Mwaniki Scholars Community</title>
 
-    <link
-        rel="stylesheet"
-        href="./style.css"
-    >
+/* ============================================================
+   RESET
+   ============================================================ */
 
-    <link
-        rel="stylesheet"
-        href="./community.css"
-    >
+* {
+    box-sizing: border-box;
+}
 
-</head>
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
 
+button {
+    cursor: pointer;
+}
 
-<body>
+.hidden {
+    display: none !important;
+}
 
-<div
-    id="app"
-    class="community-app"
->
 
+/* ============================================================
+   APP
+   ============================================================ */
 
-    <!-- =====================================================
-         HEADER
-         ===================================================== -->
+.community-app {
+    min-height: 100vh;
+    width: 100%;
+    background: var(--community-bg);
+    color: var(--community-text);
+}
 
-    <header class="community-header">
 
-        <div class="brand-area">
+/* ============================================================
+   HEADER
+   ============================================================ */
 
-            <button
-                id="mobileSidebarButton"
-                class="icon-button mobile-only"
-                type="button"
-                aria-label="Open menu"
-                title="Open menu"
-            >
-                ☰
-            </button>
+.community-header {
+    height: var(--community-header-height);
 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-            <!-- HOME -->
+    gap: 18px;
 
-            <button
-                id="communityHomeButton"
-                class="community-home-button"
-                type="button"
-                title="Back to Dashboard"
-                aria-label="Back to Dashboard"
-            >
+    padding: 0 18px;
 
-                <span class="home-button-icon">
-                    ⌂
-                </span>
+    background: #ffffff;
 
-                <span class="home-button-text">
-                    Home
-                </span>
+    border-bottom: 1px solid var(--community-border);
 
-            </button>
+    position: relative;
+    z-index: 100;
+}
 
+.brand-area {
+    min-width: 0;
 
-            <div class="brand-mark">
-                🎓
-            </div>
+    display: flex;
+    align-items: center;
 
+    gap: 12px;
+}
 
-            <div class="community-brand-text">
+.brand-mark {
+    width: 42px;
+    height: 42px;
 
-                <h1>
-                    Mwaniki Scholars
-                </h1>
+    flex: 0 0 42px;
 
-                <span>
-                    Community
-                </span>
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-            </div>
+    border-radius: 12px;
 
-        </div>
+    background: #e7f5f2;
 
+    font-size: 23px;
+}
 
-        <div class="header-actions">
+.community-brand-text {
+    min-width: 0;
+}
 
-            <button
-                id="communityRulesButton"
-                class="header-button"
-                type="button"
-            >
-                📜 Rules
-            </button>
+.community-brand-text h1 {
+    margin: 0;
 
+    font-size: 17px;
+    font-weight: 800;
 
-            <button
-                id="ticketButton"
-                class="header-button"
-                type="button"
-            >
-                🎫 Tickets
-            </button>
+    white-space: nowrap;
+}
 
+.community-brand-text span {
+    display: block;
 
-            <button
-                id="friendsButton"
-                class="header-button"
-                type="button"
-            >
+    margin-top: 2px;
 
-                👥 Friends
+    color: var(--community-muted);
 
-                <span
-                    id="friendRequestBadge"
-                    class="count-badge hidden"
-                >
-                    0
-                </span>
+    font-size: 12px;
+}
 
-            </button>
 
+/* ============================================================
+   HOME
+   ============================================================ */
 
-            <button
-                id="generalCallButton"
-                class="header-button call-button"
-                type="button"
-            >
-                📞 Call
-            </button>
+.community-home-button {
+    min-height: 42px;
 
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-            <button
-                id="profileButton"
-                class="profile-button"
-                type="button"
-            >
+    gap: 7px;
 
-                <span
-                    id="headerProfileAvatar"
-                    class="avatar avatar-small"
-                >
-                    👤
-                </span>
+    padding: 0 13px;
 
-                <span id="headerProfileName">
-                    Account
-                </span>
+    border: 1px solid rgba(8,127,115,.2);
 
-                <span
-                    id="headerPresenceDot"
-                    class="presence-dot offline"
-                ></span>
+    border-radius: 11px;
 
-            </button>
+    background: #ffffff;
 
-        </div>
+    color: var(--community-primary);
 
-    </header>
+    font-weight: 800;
 
+    transition: .18s ease;
+}
 
+.community-home-button:hover {
+    color: #ffffff;
+    background: var(--community-primary);
 
-    <!-- =====================================================
-         MAIN LAYOUT
-         ===================================================== -->
+    border-color: var(--community-primary);
 
-    <main class="community-layout">
+    transform: translateY(-1px);
+}
 
+.home-button-icon {
+    font-size: 21px;
+    line-height: 1;
+}
 
-        <!-- COMMUNITY RAIL -->
 
-        <aside
-            id="communityRail"
-            class="community-rail"
-        >
+/* ============================================================
+   HEADER ACTIONS
+   ============================================================ */
 
-            <div class="rail-heading">
-                <span>
-                    Communities
-                </span>
-            </div>
+.header-actions {
+    display: flex;
+    align-items: center;
 
+    gap: 8px;
+}
 
-            <div
-                id="communityRailList"
-                class="community-rail-list"
-            ></div>
+.header-button,
+.profile-button {
+    min-height: 40px;
 
+    border: 1px solid var(--community-border);
 
-            <button
-                id="addCommunityButton"
-                class="rail-add-button"
-                type="button"
-                title="Communities"
-            >
-                +
-            </button>
+    border-radius: 10px;
 
-        </aside>
+    background: #ffffff;
 
+    color: var(--community-text);
 
+    padding: 0 11px;
 
-        <!-- CHANNEL SIDEBAR -->
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-        <aside
-            id="channelSidebar"
-            class="channel-sidebar"
-        >
+    gap: 7px;
 
-            <div class="selected-community">
+    font-size: 13px;
+    font-weight: 700;
 
-                <div
-                    id="selectedCommunityIcon"
-                    class="selected-community-icon"
-                >
-                    🎓
-                </div>
+    transition: .18s ease;
+}
 
+.header-button:hover,
+.profile-button:hover {
+    border-color: var(--community-primary);
+    color: var(--community-primary);
 
-                <div class="selected-community-info">
+    background: #f3faf9;
+}
 
-                    <strong
-                        id="selectedCommunityName"
-                    >
-                        Mwaniki Scholars
-                    </strong>
+.call-button {
+    background: #e9f8f5;
+    color: var(--community-primary);
+    border-color: #bde5de;
+}
 
-                    <span
-                        id="selectedCommunityDescription"
-                    >
-                        Academic community
-                    </span>
+.profile-button {
+    max-width: 190px;
+}
 
-                </div>
+#headerProfileName {
+    max-width: 110px;
 
-            </div>
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
 
-            <div class="sidebar-call-area">
+/* ============================================================
+   AVATAR
+   ============================================================ */
 
-                <button
-                    id="communityCallButton"
-                    class="community-call-button"
-                    type="button"
-                >
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-                    <span>
-                        📞
-                    </span>
+    overflow: hidden;
 
-                    <span>
-                        Community Call
-                    </span>
+    border-radius: 50%;
 
-                </button>
+    background: #e8f1ef;
 
-            </div>
+    flex: 0 0 auto;
+}
 
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-            <div class="channel-scroll">
+.avatar-small {
+    width: 29px;
+    height: 29px;
+    font-size: 14px;
+}
 
 
-                <section class="channel-group">
+/* ============================================================
+   PRESENCE
+   ============================================================ */
 
-                    <div class="channel-group-title">
-                        <span>
-                            INFORMATION
-                        </span>
-                    </div>
+.presence-dot {
+    width: 9px;
+    height: 9px;
 
-                    <div
-                        id="informationChannels"
-                        class="channel-list"
-                    ></div>
+    border-radius: 50%;
 
-                </section>
+    background: #a9b4b2;
 
+    border: 2px solid #ffffff;
+}
 
+.presence-dot.online {
+    background: #20a66a;
+}
 
-                <section class="channel-group">
+.presence-dot.idle {
+    background: #e4a82f;
+}
 
-                    <div class="channel-group-title">
-                        <span>
-                            COURSES
-                        </span>
-                    </div>
+.presence-dot.dnd {
+    background: #d64545;
+}
 
-                    <div
-                        id="courseChannels"
-                        class="channel-list"
-                    ></div>
+.presence-dot.offline {
+    background: #a8b2b0;
+}
 
-                </section>
 
+/* ============================================================
+   MAIN
+   ============================================================ */
 
+.community-layout {
+    min-height: calc(100vh - var(--community-header-height));
 
-                <section class="channel-group">
+    display: grid;
 
-                    <div class="channel-group-title">
-                        <span>
-                            COMMUNITY
-                        </span>
-                    </div>
+    grid-template-columns:
+        var(--community-rail-width)
+        var(--community-sidebar-width)
+        minmax(0, 1fr)
+        var(--community-members-width);
 
-                    <div
-                        id="communityChannels"
-                        class="channel-list"
-                    ></div>
+    overflow: hidden;
+}
 
-                </section>
 
+/* ============================================================
+   COMMUNITY RAIL
+   ============================================================ */
 
+.community-rail {
+    background: #102b28;
 
-                <section class="channel-group">
+    padding: 12px 10px;
 
-                    <div class="channel-group-title">
-                        <span>
-                            CONTESTS
-                        </span>
-                    </div>
+    display: flex;
+    flex-direction: column;
 
-                    <button
-                        id="contestChannelButton"
-                        class="special-channel-button"
-                        type="button"
-                    >
+    gap: 10px;
 
-                        <span>
-                            🏆
-                        </span>
+    overflow-y: auto;
+}
 
-                        <span>
-                            Contests & Tests
-                        </span>
+.rail-heading {
+    color: #a9c0bc;
 
-                    </button>
+    font-size: 9px;
 
-                </section>
+    text-align: center;
 
-            </div>
+    text-transform: uppercase;
 
-        </aside>
+    font-weight: 800;
 
+    letter-spacing: .06em;
+}
 
+.community-rail-list {
+    display: flex;
+    flex-direction: column;
 
-        <!-- =================================================
-             CHAT
-             ================================================= -->
+    gap: 9px;
+}
 
-        <section class="chat-area">
+.community-rail-item {
+    width: 52px;
+    height: 52px;
 
+    margin: 0 auto;
 
-            <header class="chat-header">
+    padding: 0;
 
-                <div class="chat-channel-info">
+    border: 0;
 
-                    <div
-                        id="currentChannelIcon"
-                        class="channel-header-icon"
-                    >
-                        #
-                    </div>
+    border-radius: 16px;
 
-                    <div>
+    background: #dfeae8;
 
-                        <h2 id="currentChannelName">
-                            general
-                        </h2>
+    overflow: visible;
 
-                        <p id="currentChannelDescription">
-                            Community discussion
-                        </p>
+    position: relative;
 
-                    </div>
+    transition: .18s ease;
+}
 
-                </div>
+.community-rail-item:hover {
+    transform: translateY(-2px);
+    border-radius: 14px;
+}
 
+.community-rail-item.active {
+    background: var(--community-primary);
 
-                <div class="chat-header-actions">
+    box-shadow:
+        0 0 0 3px rgba(255,255,255,.12);
+}
 
-                    <button
-                        id="channelSearchButton"
-                        class="icon-button"
-                        type="button"
-                        title="Search messages"
-                    >
-                        🔎
-                    </button>
+.community-rail-icon {
+    width: 100%;
+    height: 100%;
 
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-                    <button
-                        id="channelMembersButton"
-                        class="icon-button"
-                        type="button"
-                        title="Members"
-                    >
-                        👥
-                    </button>
+    overflow: hidden;
 
-                </div>
+    border-radius: inherit;
 
-            </header>
+    font-size: 27px;
+}
 
+.community-rail-icon img {
+    width: 100%;
+    height: 100%;
 
+    object-fit: cover;
 
-            <div
-                id="messageList"
-                class="message-list"
-                aria-live="polite"
-            >
+    display: block;
+}
 
-                <div
-                    id="messageLoading"
-                    class="message-loading"
-                >
-                    Loading messages...
-                </div>
+.community-rail-icon-fallback {
+    width: 100%;
+    height: 100%;
 
-            </div>
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    background: #e6f2ef;
 
+    border-radius: inherit;
 
-            <div
-                id="typingIndicator"
-                class="typing-indicator hidden"
-            >
-                Someone is typing...
-            </div>
+    font-size: 27px;
+}
 
+.community-rail-item::after {
+    content: attr(data-community-name);
 
+    position: absolute;
 
-            <!-- COMPOSER -->
+    left: calc(100% + 9px);
+    top: 50%;
 
-            <footer class="composer-area">
+    transform: translateY(-50%);
 
+    opacity: 0;
 
-                <div
-                    id="attachmentPreview"
-                    class="attachment-preview hidden"
-                ></div>
+    pointer-events: none;
 
+    white-space: nowrap;
 
-                <div class="composer">
+    padding: 6px 9px;
 
+    background: #152522;
+    color: #ffffff;
 
-                    <button
-                        id="attachButton"
-                        class="composer-button"
-                        type="button"
-                        title="Attach file"
-                    >
-                        📎
-                    </button>
+    border-radius: 7px;
 
+    font-size: 11px;
+    font-weight: 700;
 
-                    <button
-                        id="emojiButton"
-                        class="composer-button"
-                        type="button"
-                        title="Emoji"
-                    >
-                        😊
-                    </button>
+    z-index: 1000;
 
+    transition: .15s ease;
+}
 
-                    <button
-                        id="stickerButton"
-                        class="composer-button"
-                        type="button"
-                        title="Stickers"
-                    >
-                        🏷️
-                    </button>
+.community-rail-item:hover::after {
+    opacity: 1;
+}
 
+.rail-add-button {
+    width: 52px;
+    height: 52px;
 
-                    <button
-                        id="gifButton"
-                        class="composer-button"
-                        type="button"
-                        title="GIF"
-                    >
-                        GIF
-                    </button>
+    margin: auto auto 0;
 
+    border: 1px dashed #75948f;
 
-                    <button
-                        id="voiceNoteButton"
-                        class="composer-button"
-                        type="button"
-                        title="Voice note"
-                    >
-                        🎙️
-                    </button>
+    border-radius: 16px;
 
+    background: transparent;
 
-                    <textarea
-                        id="messageInput"
-                        rows="1"
-                        maxlength="5000"
-                        placeholder="Write a message..."
-                    ></textarea>
+    color: #c9dcda;
 
+    font-size: 25px;
+}
 
-                    <button
-                        id="sendMessageButton"
-                        class="send-button"
-                        type="button"
-                    >
-                        Send
-                    </button>
+.rail-add-button:hover {
+    background: rgba(255,255,255,.08);
+}
 
-                </div>
 
+/* ============================================================
+   CHANNEL SIDEBAR
+   ============================================================ */
 
+.channel-sidebar {
+    min-width: 0;
 
-                <input
-                    id="attachmentInput"
-                    type="file"
-                    hidden
-                    multiple
-                    accept="
-                        image/*,
-                        application/pdf,
-                        text/plain,
-                        text/csv,
-                        application/msword,
-                        application/vnd.openxmlformats-officedocument.wordprocessingml.document,
-                        application/vnd.ms-powerpoint,
-                        application/vnd.openxmlformats-officedocument.presentationml.presentation,
-                        application/vnd.ms-excel,
-                        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
-                        audio/*
-                    "
-                >
+    background: #f7faf9;
 
+    border-right: 1px solid var(--community-border);
 
+    display: flex;
+    flex-direction: column;
+}
 
-                <!-- EMOJI -->
+.selected-community {
+    min-height: 75px;
 
-                <div
-                    id="emojiPanel"
-                    class="picker-panel hidden"
-                >
+    display: flex;
+    align-items: center;
 
-                    <div class="picker-title">
+    gap: 10px;
 
-                        <strong>
-                            Emoji
-                        </strong>
+    padding: 11px;
 
-                        <button
-                            class="picker-close"
-                            type="button"
-                            data-close-picker="emojiPanel"
-                        >
-                            ×
-                        </button>
+    border-bottom: 1px solid var(--community-border);
+}
 
-                    </div>
+.selected-community-icon {
+    width: 43px;
+    height: 43px;
 
+    flex: 0 0 43px;
 
-                    <input
-                        id="emojiSearch"
-                        class="picker-search"
-                        type="search"
-                        placeholder="Search emoji..."
-                    >
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
+    border-radius: 12px;
 
-                    <div
-                        id="emojiCategories"
-                        class="emoji-categories"
-                    ></div>
+    background: #e3f2ef;
 
+    font-size: 22px;
 
-                    <div
-                        id="emojiGrid"
-                        class="emoji-grid"
-                    ></div>
+    overflow: hidden;
+}
 
-                </div>
+.selected-community-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
+.selected-community-info {
+    min-width: 0;
+}
 
+.selected-community-info strong {
+    display: block;
 
-                <!-- STICKERS -->
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
-                <div
-                    id="stickerPanel"
-                    class="picker-panel hidden"
-                >
+    font-size: 13px;
+}
 
-                    <div class="picker-title">
+.selected-community-info span {
+    display: block;
 
-                        <strong>
-                            Stickers
-                        </strong>
+    margin-top: 3px;
 
-                        <button
-                            class="picker-close"
-                            type="button"
-                            data-close-picker="stickerPanel"
-                        >
-                            ×
-                        </button>
+    color: var(--community-muted);
 
-                    </div>
+    font-size: 11px;
 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-                    <div
-                        id="stickerGrid"
-                        class="sticker-grid"
-                    ></div>
+.sidebar-call-area {
+    padding: 10px;
 
-                </div>
+    border-bottom: 1px solid var(--community-border);
+}
 
+.community-call-button {
+    width: 100%;
 
+    min-height: 39px;
 
-                <!-- GIF -->
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-                <div
-                    id="gifPanel"
-                    class="picker-panel hidden"
-                >
+    gap: 8px;
 
-                    <div class="picker-title">
+    border: 1px solid #bde5de;
 
-                        <strong>
-                            GIFs
-                        </strong>
+    border-radius: 9px;
 
-                        <button
-                            class="picker-close"
-                            type="button"
-                            data-close-picker="gifPanel"
-                        >
-                            ×
-                        </button>
+    background: #eaf8f5;
 
-                    </div>
+    color: var(--community-primary);
 
+    font-weight: 800;
 
-                    <input
-                        id="gifSearch"
-                        class="picker-search"
-                        type="search"
-                        placeholder="Search GIFs..."
-                    >
+    transition: .18s ease;
+}
 
+.community-call-button:hover {
+    background: var(--community-primary);
+    color: #ffffff;
+}
 
-                    <div
-                        id="gifGrid"
-                        class="gif-grid"
-                    >
+.channel-scroll {
+    overflow-y: auto;
 
-                        <div class="empty-picker">
-                            GIF provider can be connected here.
-                        </div>
+    padding: 12px 9px;
+}
 
-                    </div>
+.channel-group {
+    margin-bottom: 17px;
+}
 
-                </div>
+.channel-group-title {
+    padding: 0 7px 6px;
 
-            </footer>
+    color: #81918e;
 
-        </section>
+    font-size: 9px;
+    font-weight: 900;
 
+    letter-spacing: .08em;
+}
 
+.channel-list {
+    display: flex;
+    flex-direction: column;
 
-        <!-- MEMBER SIDEBAR -->
+    gap: 3px;
+}
 
-        <aside
-            id="memberSidebar"
-            class="member-sidebar"
-        >
+.channel-item,
+.special-channel-button {
+    width: 100%;
 
-            <div class="member-sidebar-header">
+    min-height: 37px;
 
-                <strong>
-                    Members
-                </strong>
+    display: flex;
+    align-items: center;
 
-                <span id="memberCount">
-                    0
-                </span>
+    gap: 9px;
 
-            </div>
+    border: 0;
 
+    border-radius: 8px;
 
-            <div
-                id="memberList"
-                class="member-list"
-            ></div>
+    background: transparent;
 
-        </aside>
+    color: #536562;
 
-    </main>
+    text-align: left;
 
-</div>
+    padding: 0 9px;
 
+    font-size: 12px;
+    font-weight: 700;
+}
 
+.channel-item:hover,
+.special-channel-button:hover {
+    background: #e7f2f0;
+    color: var(--community-primary);
+}
 
-<!-- =========================================================
-     FILE PREVIEW
-     ========================================================= -->
+.channel-item.active {
+    background: #dff1ed;
+    color: var(--community-primary);
+}
 
-<div
-    id="filePreviewModal"
-    class="modal hidden"
->
+.channel-item-icon {
+    width: 19px;
 
-    <div class="modal-card">
+    text-align: center;
 
-        <div class="modal-header">
+    font-size: 14px;
+}
 
-            <h2>
-                Send attachment
-            </h2>
+.channel-item-text {
+    overflow: hidden;
 
-            <button
-                class="modal-close"
-                type="button"
-                data-close-modal="filePreviewModal"
-            >
-                ×
-            </button>
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
-        </div>
 
+/* ============================================================
+   CHAT
+   ============================================================ */
 
-        <div
-            id="filePreviewContent"
-            class="modal-body"
-        ></div>
+.chat-area {
+    min-width: 0;
 
+    display: flex;
+    flex-direction: column;
 
-        <div class="modal-actions">
+    background: #ffffff;
+}
 
-            <button
-                type="button"
-                class="secondary-button"
-                data-close-modal="filePreviewModal"
-            >
-                Cancel
-            </button>
+.chat-header {
+    min-height: 69px;
 
-            <button
-                id="confirmAttachmentButton"
-                type="button"
-                class="primary-button"
-            >
-                Send
-            </button>
+    padding: 9px 15px;
 
-        </div>
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-    </div>
+    gap: 10px;
 
-</div>
+    border-bottom: 1px solid var(--community-border);
+}
 
+.chat-channel-info {
+    min-width: 0;
 
+    display: flex;
+    align-items: center;
 
-<!-- =========================================================
-     FRIENDS
-     ========================================================= -->
+    gap: 10px;
+}
 
-<div
-    id="friendsModal"
-    class="modal hidden"
->
+.channel-header-icon {
+    width: 37px;
+    height: 37px;
 
-    <div class="modal-card large-modal">
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-        <div class="modal-header">
+    border-radius: 10px;
 
-            <h2>
-                Friends
-            </h2>
+    background: #eef5f3;
 
-            <button
-                class="modal-close"
-                type="button"
-                data-close-modal="friendsModal"
-            >
-                ×
-            </button>
+    color: var(--community-primary);
 
-        </div>
+    font-size: 17px;
+    font-weight: 900;
+}
 
+.chat-channel-info h2 {
+    margin: 0;
 
-        <div class="friends-tabs">
+    font-size: 15px;
+}
 
-            <button
-                class="friend-tab active"
-                data-friend-tab="friends"
-                type="button"
-            >
-                Friends
-            </button>
+.chat-channel-info p {
+    margin: 3px 0 0;
 
+    color: var(--community-muted);
 
-            <button
-                class="friend-tab"
-                data-friend-tab="requests"
-                type="button"
-            >
+    font-size: 11px;
 
-                Requests
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 
-                <span id="friendRequestsCount"></span>
+.chat-header-actions {
+    display: flex;
+    gap: 5px;
+}
 
-            </button>
+.icon-button {
+    width: 36px;
+    height: 36px;
 
-        </div>
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
+    border: 1px solid var(--community-border);
 
-        <div
-            id="friendsContent"
-            class="friends-content"
-        ></div>
+    border-radius: 9px;
 
-    </div>
+    background: #ffffff;
 
-</div>
+    color: var(--community-text);
+}
 
+.icon-button:hover {
+    color: var(--community-primary);
+    border-color: #a9d7d0;
+    background: #f1faf8;
+}
 
 
-<!-- =========================================================
-     TICKET
-     ========================================================= -->
+/* ============================================================
+   MESSAGES
+   ============================================================ */
 
-<div
-    id="ticketModal"
-    class="modal hidden"
->
+.message-list {
+    flex: 1;
 
-    <div class="modal-card">
+    min-height: 0;
 
-        <div class="modal-header">
+    overflow-y: auto;
 
-            <h2>
-                🎫 Raise a Concern
-            </h2>
+    padding: 15px 18px 18px;
+}
 
-            <button
-                class="modal-close"
-                type="button"
-                data-close-modal="ticketModal"
-            >
-                ×
-            </button>
+.message-loading {
+    padding: 35px 10px;
 
-        </div>
+    text-align: center;
 
+    color: var(--community-muted);
+}
 
-        <form id="ticketForm">
+.message-row {
+    display: flex;
 
-            <label>
-                Concern type
+    gap: 10px;
 
-                <select
-                    id="ticketType"
-                    required
-                >
+    padding: 8px 7px;
 
-                    <option value="">
-                        Select concern
-                    </option>
+    border-radius: 9px;
 
-                    <option value="member_report">
-                        Report a member
-                    </option>
+    position: relative;
+}
 
-                    <option value="message_report">
-                        Report a message
-                    </option>
+.message-row:hover {
+    background: #f7faf9;
+}
 
-                    <option value="harassment">
-                        Harassment
-                    </option>
+.message-row.pinned {
+    background: #fff9e9;
+}
 
-                    <option value="technical">
-                        Technical problem
-                    </option>
+.message-avatar {
+    width: 35px;
+    height: 35px;
 
-                    <option value="moderation">
-                        Moderation concern
-                    </option>
+    flex: 0 0 35px;
 
-                    <option value="appeal">
-                        Moderation appeal
-                    </option>
+    object-fit: cover;
 
-                    <option value="other">
-                        Other
-                    </option>
+    border-radius: 50%;
 
-                </select>
+    background: #e4efed;
+}
 
-            </label>
+.message-avatar-fallback {
+    width: 35px;
+    height: 35px;
 
+    flex: 0 0 35px;
 
-            <label>
-                Subject
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-                <input
-                    id="ticketSubject"
-                    type="text"
-                    maxlength="150"
-                    required
-                >
+    border-radius: 50%;
 
-            </label>
+    background: #e0efec;
 
+    color: var(--community-primary);
 
-            <label>
-                Description
+    font-size: 11px;
+    font-weight: 900;
+}
 
-                <textarea
-                    id="ticketDescription"
-                    rows="6"
-                    maxlength="5000"
-                    required
-                ></textarea>
+.message-body {
+    min-width: 0;
 
-            </label>
+    flex: 1;
+}
 
+.message-topline {
+    display: flex;
+    align-items: baseline;
 
-            <div class="modal-actions">
+    gap: 8px;
+}
 
-                <button
-                    type="button"
-                    class="secondary-button"
-                    data-close-modal="ticketModal"
-                >
-                    Cancel
-                </button>
+.message-author {
+    font-size: 13px;
+    font-weight: 900;
+}
 
-                <button
-                    type="submit"
-                    class="primary-button"
-                >
-                    Submit Ticket
-                </button>
+.message-time {
+    color: #8a9895;
+    font-size: 10px;
+}
 
-            </div>
+.message-content {
+    margin-top: 3px;
 
-        </form>
+    color: #344643;
 
-    </div>
+    font-size: 13px;
 
-</div>
+    line-height: 1.55;
 
+    word-break: break-word;
+}
 
+.message-content a {
+    color: var(--community-primary);
 
-<!-- =========================================================
-     RULES
-     ========================================================= -->
+    text-decoration: underline;
+}
 
-<div
-    id="rulesModal"
-    class="modal hidden"
->
+.message-actions {
+    display: flex;
 
-    <div class="modal-card large-modal">
+    flex-wrap: wrap;
 
-        <div class="modal-header">
+    gap: 4px;
 
-            <h2>
-                📜 Community Rules
-            </h2>
+    margin-top: 6px;
 
-            <button
-                class="modal-close"
-                type="button"
-                data-close-modal="rulesModal"
-            >
-                ×
-            </button>
+    opacity: 0;
 
-        </div>
+    transition: .15s ease;
+}
 
+.message-row:hover .message-actions {
+    opacity: 1;
+}
 
-        <div class="rules-content">
+.message-action {
+    border: 1px solid var(--community-border);
 
-            <ol>
+    background: #ffffff;
 
-                <li>
-                    Respect other members.
-                </li>
+    border-radius: 6px;
 
-                <li>
-                    No harassment, threats or hateful abuse.
-                </li>
+    padding: 3px 6px;
 
-                <li>
-                    No spam or flooding.
-                </li>
+    font-size: 10px;
 
-                <li>
-                    No unsolicited self-promotion or advertising.
-                </li>
+    color: #5c6c69;
+}
 
-                <li>
-                    Keep academic discussions relevant to their channels.
-                </li>
+.message-action:hover {
+    color: var(--community-primary);
+    border-color: #a8d4ce;
+}
 
-                <li>
-                    Do not impersonate another member.
-                </li>
+.message-attachment {
+    margin-top: 7px;
 
-                <li>
-                    Do not share prohibited or harmful material.
-                </li>
+    max-width: 440px;
 
-                <li>
-                    Respect moderator decisions and use tickets for appeals.
-                </li>
+    border: 1px solid var(--community-border);
 
-            </ol>
+    border-radius: 10px;
 
-        </div>
+    overflow: hidden;
 
-    </div>
+    background: #f8fbfa;
+}
 
-</div>
+.message-attachment img {
+    display: block;
 
+    max-width: 100%;
+    max-height: 350px;
 
+    object-fit: contain;
+}
 
-<!-- =========================================================
-     PROFILE
-     ========================================================= -->
+.message-file {
+    padding: 10px;
 
-<div
-    id="profileModal"
-    class="modal hidden"
->
+    display: flex;
+    align-items: center;
 
-    <div class="modal-card profile-card-modal">
+    gap: 9px;
 
-        <button
-            class="modal-close floating-close"
-            type="button"
-            data-close-modal="profileModal"
-        >
-            ×
-        </button>
+    color: var(--community-primary);
 
+    font-weight: 700;
+}
 
-        <div
-            id="profileModalContent"
-            class="profile-modal-content"
-        ></div>
+.message-file small {
+    display: block;
 
-    </div>
+    color: var(--community-muted);
 
-</div>
+    font-weight: 500;
+}
 
+.reaction-row {
+    display: flex;
 
+    flex-wrap: wrap;
 
-<!-- =========================================================
-     CALL CHOICE
-     ========================================================= -->
+    gap: 4px;
 
-<div
-    id="callModal"
-    class="modal hidden"
->
+    margin-top: 6px;
+}
 
-    <div class="modal-card">
+.reaction-button {
+    min-width: 30px;
 
-        <div class="modal-header">
+    padding: 3px 6px;
 
-            <h2>
-                📞 Start a Call
-            </h2>
+    border: 1px solid #dbe6e4;
 
-            <button
-                class="modal-close"
-                type="button"
-                data-close-modal="callModal"
-            >
-                ×
-            </button>
+    border-radius: 12px;
 
-        </div>
+    background: #ffffff;
 
+    font-size: 12px;
+}
 
-        <div class="call-choice">
+.reaction-button.active {
+    background: #e3f4f1;
+    border-color: #9dd6ce;
+}
 
-            <button
-                id="callSpecificPersonButton"
-                class="call-choice-button"
-                type="button"
-            >
 
-                👤
+/* ============================================================
+   COMPOSER
+   ============================================================ */
 
-                <strong>
-                    Specific person
-                </strong>
+.composer-area {
+    position: relative;
 
-                <span>
-                    Choose someone to call
-                </span>
+    padding: 9px 12px 12px;
 
-            </button>
+    border-top: 1px solid var(--community-border);
 
+    background: #ffffff;
+}
 
-            <button
-                id="callWholeCommunityButton"
-                class="call-choice-button"
-                type="button"
-            >
+.composer {
+    display: flex;
+    align-items: flex-end;
 
-                👥
+    gap: 5px;
 
-                <strong>
-                    Whole community
-                </strong>
+    padding: 6px;
 
-                <span>
-                    Invite eligible community members
-                </span>
+    border: 1px solid var(--community-border);
 
-            </button>
+    border-radius: 13px;
 
-        </div>
+    background: #f8faf9;
+}
 
-    </div>
+.composer-button,
+.send-button {
+    min-width: 36px;
+    height: 36px;
 
-</div>
+    border-radius: 9px;
 
+    border: 1px solid var(--community-border);
 
+    background: #ffffff;
 
-<!-- =========================================================
-     ACTIVE CALL
-     ========================================================= -->
+    color: #536562;
 
-<div
-    id="activeCallOverlay"
-    class="call-overlay hidden"
->
+    font-weight: 800;
+}
 
-    <div class="active-call-window">
+.composer-button:hover {
+    color: var(--community-primary);
+    border-color: #a9d7d0;
+}
 
-        <div class="active-call-header">
+.send-button {
+    padding: 0 13px;
 
-            <div>
+    background: var(--community-primary);
 
-                <strong id="activeCallTitle">
-                    Call
-                </strong>
+    border-color: var(--community-primary);
 
-                <span id="activeCallStatus">
-                    Connecting...
-                </span>
+    color: #ffffff;
+}
 
-            </div>
+.send-button:hover {
+    background: var(--community-primary-dark);
+}
 
+#messageInput {
+    flex: 1;
 
-            <button
-                id="leaveCallButton"
-                class="danger-button"
-                type="button"
-            >
-                End Call
-            </button>
+    min-width: 0;
 
-        </div>
+    max-height: 150px;
 
+    resize: none;
 
-        <div
-            id="callParticipantGrid"
-            class="call-participant-grid"
-        ></div>
+    border: 0;
 
+    outline: none;
 
-        <div class="call-controls">
+    background: transparent;
 
-            <button
-                id="toggleMicrophoneButton"
-                type="button"
-                title="Microphone"
-            >
-                🎙️
-            </button>
+    color: var(--community-text);
 
+    padding: 9px 6px;
 
-            <button
-                id="toggleCameraButton"
-                type="button"
-                title="Camera"
-            >
-                📹
-            </button>
+    line-height: 1.4;
+}
 
 
-            <button
-                id="shareScreenButton"
-                type="button"
-                title="Share screen"
-            >
-                🖥️
-            </button>
+/* ============================================================
+   PICKERS
+   ============================================================ */
 
+.picker-panel {
+    position: absolute;
 
-            <button
-                id="leaveCallButtonBottom"
-                class="danger-button"
-                type="button"
-                title="End call"
-            >
-                ☎
-            </button>
+    left: 12px;
+    bottom: calc(100% + 8px);
 
-        </div>
+    width: min(390px, calc(100vw - 30px));
 
-    </div>
+    max-height: 430px;
 
-</div>
+    overflow: hidden;
 
+    display: flex;
+    flex-direction: column;
 
+    background: #ffffff;
 
-<!-- =========================================================
-     INCOMING CALL
-     ========================================================= -->
+    border: 1px solid var(--community-border);
 
-<div
-    id="incomingCallToast"
-    class="incoming-call hidden"
->
+    border-radius: 14px;
 
-    <div
-        id="incomingCallAvatar"
-        class="incoming-call-avatar"
-    >
-        📞
-    </div>
+    box-shadow:
+        0 15px 40px rgba(22,48,44,.16);
 
+    z-index: 500;
+}
 
-    <div>
+.picker-title {
+    min-height: 45px;
 
-        <strong id="incomingCallerName">
-            Incoming call
-        </strong>
+    padding: 0 11px;
 
-        <span id="incomingCallType">
-            Voice call
-        </span>
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-    </div>
+    border-bottom: 1px solid var(--community-border);
+}
 
+.picker-close {
+    width: 29px;
+    height: 29px;
 
-    <div class="incoming-call-actions">
+    border: 0;
 
-        <button
-            id="acceptCallButton"
-            class="accept-call"
-            type="button"
-        >
-            ✓
-        </button>
+    border-radius: 7px;
 
+    background: #f1f5f4;
 
-        <button
-            id="rejectCallButton"
-            class="reject-call"
-            type="button"
-        >
-            ×
-        </button>
+    color: #5b6966;
 
-    </div>
+    font-size: 19px;
+}
 
-</div>
+.picker-close:hover {
+    background: #e5efed;
+    color: var(--community-primary);
+}
 
+.picker-search {
+    margin: 9px;
 
+    min-height: 35px;
 
-<div
-    id="toast"
-    class="toast hidden"
-></div>
+    padding: 0 9px;
 
+    border: 1px solid var(--community-border);
 
+    border-radius: 8px;
 
-<script
-    type="module"
-    src="./supabase.js"
-></script>
+    outline: none;
+}
 
-<script
-    type="module"
-    src="./community.js"
-></script>
+.picker-search:focus {
+    border-color: var(--community-primary);
+}
 
-<script
-    type="module"
-    src="./call.js"
-></script>
+.emoji-categories {
+    display: flex;
 
+    gap: 4px;
 
-</body>
+    padding: 0 9px 7px;
 
-</html>
+    overflow-x: auto;
+}
+
+.emoji-category-button {
+    min-width: 32px;
+    height: 30px;
+
+    border: 1px solid transparent;
+
+    border-radius: 7px;
+
+    background: #f3f6f5;
+}
+
+.emoji-category-button.active {
+    border-color: #a8d7d0;
+
+    background: #e5f4f1;
+}
+
+.emoji-grid {
+    flex: 1;
+
+    overflow-y: auto;
+
+    display: grid;
+
+    grid-template-columns: repeat(8, 1fr);
+
+    gap: 3px;
+
+    padding: 8px;
+}
+
+.emoji-item {
+    min-height: 36px;
+
+    border: 0;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    font-size: 22px;
+}
+
+.emoji-item:hover {
+    background: #eef6f4;
+}
+
+.sticker-grid,
+.gif-grid {
+    padding: 12px;
+
+    overflow-y: auto;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 8px;
+}
+
+.sticker-item {
+    min-height: 75px;
+
+    border: 1px solid var(--community-border);
+
+    border-radius: 10px;
+
+    background: #f7faf9;
+
+    font-size: 30px;
+}
+
+.empty-picker {
+    grid-column: 1 / -1;
+
+    padding: 30px 10px;
+
+    text-align: center;
+
+    color: var(--community-muted);
+
+    font-size: 12px;
+}
+
+
+/* ============================================================
+   ATTACHMENT PREVIEW
+   ============================================================ */
+
+.attachment-preview {
+    display: flex;
+
+    gap: 7px;
+
+    overflow-x: auto;
+
+    padding: 6px 0;
+}
+
+.attachment-preview-item {
+    position: relative;
+
+    min-width: 95px;
+
+    max-width: 150px;
+
+    padding: 7px;
+
+    border: 1px solid var(--community-border);
+
+    border-radius: 9px;
+
+    background: #f7faf9;
+
+    font-size: 10px;
+}
+
+.attachment-preview-item img {
+    width: 100%;
+    height: 70px;
+
+    object-fit: cover;
+
+    border-radius: 6px;
+
+    margin-bottom: 4px;
+}
+
+.attachment-preview-remove {
+    position: absolute;
+
+    top: 4px;
+    right: 4px;
+
+    width: 21px;
+    height: 21px;
+
+    border: 0;
+
+    border-radius: 50%;
+
+    background: rgba(0,0,0,.65);
+
+    color: #ffffff;
+}
+
+
+/* ============================================================
+   MEMBER SIDEBAR
+   ============================================================ */
+
+.member-sidebar {
+    min-width: 0;
+
+    background: #f8faf9;
+
+    border-left: 1px solid var(--community-border);
+
+    display: flex;
+    flex-direction: column;
+}
+
+.member-sidebar-header {
+    min-height: 69px;
+
+    padding: 0 13px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    border-bottom: 1px solid var(--community-border);
+
+    font-size: 13px;
+}
+
+.member-sidebar-header span {
+    min-width: 23px;
+    height: 23px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    background: #e3efed;
+
+    color: var(--community-primary);
+
+    font-size: 10px;
+    font-weight: 900;
+}
+
+.member-list {
+    overflow-y: auto;
+
+    padding: 10px;
+}
+
+.member-item {
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 7px;
+
+    border-radius: 8px;
+}
+
+.member-item:hover {
+    background: #eef5f3;
+}
+
+.member-avatar {
+    width: 33px;
+    height: 33px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    background: #e1edeb;
+}
+
+.member-information {
+    min-width: 0;
+
+    flex: 1;
+}
+
+.member-information strong {
+    display: block;
+
+    font-size: 11px;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-information small {
+    color: var(--community-muted);
+
+    font-size: 9px;
+}
+
+
+/* ============================================================
+   MODALS
+   ============================================================ */
+
+.modal {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 2000;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(10,29,26,.56);
+}
+
+.modal-card {
+    width: min(510px, 100%);
+
+    max-height: min(750px, 90vh);
+
+    overflow-y: auto;
+
+    background: #ffffff;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 25px 80px rgba(0,0,0,.22);
+
+    padding: 18px;
+}
+
+.large-modal {
+    width: min(700px, 100%);
+}
+
+.modal-header {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-bottom: 15px;
+}
+
+.modal-header h2 {
+    margin: 0;
+
+    font-size: 17px;
+}
+
+.modal-close {
+    width: 34px;
+    height: 34px;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    background: #f0f4f3;
+
+    color: #53625f;
+
+    font-size: 20px;
+}
+
+.modal-close:hover {
+    background: #e5efed;
+    color: var(--community-primary);
+}
+
+.modal-body {
+    padding: 5px 0;
+}
+
+.modal-actions {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 8px;
+
+    margin-top: 15px;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button {
+    min-height: 37px;
+
+    padding: 0 13px;
+
+    border-radius: 8px;
+
+    border: 1px solid transparent;
+
+    font-weight: 800;
+}
+
+.primary-button {
+    background: var(--community-primary);
+    color: #ffffff;
+}
+
+.primary-button:hover {
+    background: var(--community-primary-dark);
+}
+
+.secondary-button {
+    background: #ffffff;
+    color: var(--community-text);
+    border-color: var(--community-border);
+}
+
+.secondary-button:hover {
+    border-color: var(--community-primary);
+    color: var(--community-primary);
+}
+
+.danger-button {
+    background: var(--community-danger);
+    color: #ffffff;
+}
+
+.danger-button:hover {
+    filter: brightness(.92);
+}
+
+.modal-card label {
+    display: block;
+
+    margin-bottom: 12px;
+
+    color: #4d5e5a;
+
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.modal-card input,
+.modal-card textarea,
+.modal-card select {
+    display: block;
+
+    width: 100%;
+
+    margin-top: 5px;
+
+    border: 1px solid var(--community-border);
+
+    border-radius: 8px;
+
+    padding: 9px;
+
+    outline: none;
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus,
+.modal-card select:focus {
+    border-color: var(--community-primary);
+}
+
+
+/* ============================================================
+   FRIENDS
+   ============================================================ */
+
+.friends-tabs {
+    display: flex;
+
+    gap: 6px;
+
+    border-bottom: 1px solid var(--community-border);
+
+    padding-bottom: 7px;
+}
+
+.friend-tab {
+    border: 0;
+
+    background: transparent;
+
+    padding: 8px 12px;
+
+    border-radius: 8px;
+
+    color: var(--community-muted);
+
+    font-weight: 800;
+}
+
+.friend-tab.active,
+.friend-tab:hover {
+    color: var(--community-primary);
+
+    background: #eaf6f3;
+}
+
+.friends-content {
+    min-height: 180px;
+
+    padding: 15px 0;
+}
+
+
+/* ============================================================
+   CALL UI
+   ============================================================ */
+
+.call-choice {
+    display: grid;
+
+    gap: 10px;
+}
+
+.call-choice-button {
+    min-height: 90px;
+
+    display: grid;
+
+    grid-template-columns: 42px 1fr;
+
+    grid-template-rows: auto auto;
+
+    column-gap: 12px;
+
+    align-items: center;
+
+    padding: 12px;
+
+    border: 1px solid var(--community-border);
+
+    border-radius: 12px;
+
+    background: #f8fbfa;
+
+    text-align: left;
+
+    color: var(--community-text);
+}
+
+.call-choice-button:hover {
+    border-color: #9dd4cd;
+
+    background: #eef8f5;
+}
+
+.call-choice-button > strong,
+.call-choice-button > span {
+    grid-column: 2;
+}
+
+.call-choice-button::first-letter {
+    font-size: 25px;
+}
+
+.call-user-list {
+    display: grid;
+
+    gap: 6px;
+
+    max-height: 420px;
+
+    overflow-y: auto;
+}
+
+.call-user-option {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 8px;
+
+    border: 1px solid var(--community-border);
+
+    border-radius: 9px;
+
+    background: #ffffff;
+
+    text-align: left;
+}
+
+.call-user-option:hover,
+.call-user-option.selected {
+    background: #eaf7f4;
+
+    border-color: #9dd4cd;
+}
+
+.call-user-avatar {
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    background: #e2eeeb;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 11px;
+    font-weight: 900;
+}
+
+.call-user-information {
+    flex: 1;
+    min-width: 0;
+}
+
+.call-user-information strong {
+    display: block;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.call-user-information small {
+    color: var(--community-muted);
+}
+
+.call-status-dot {
+    display: inline-block;
+
+    width: 7px;
+    height: 7px;
+
+    margin-right: 3px;
+
+    border-radius: 50%;
+
+    background: #a8b2b0;
+}
+
+.call-status-dot.online {
+    background: #20a66a;
+}
+
+.call-status-dot.idle {
+    background: #e4a82f;
+}
+
+.call-user-check {
+    opacity: 0;
+
+    color: var(--community-primary);
+
+    font-weight: 900;
+}
+
+.call-user-option.selected .call-user-check {
+    opacity: 1;
+}
+
+.call-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 3000;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 18px;
+
+    background: rgba(4,17,15,.88);
+}
+
+.active-call-window {
+    width: min(1100px, 100%);
+
+    height: min(750px, 92vh);
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    background: #11201e;
+
+    border: 1px solid rgba(255,255,255,.1);
+
+    border-radius: 16px;
+}
+
+.active-call-header {
+    min-height: 64px;
+
+    padding: 10px 14px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    color: #ffffff;
+
+    border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.active-call-header strong {
+    display: block;
+
+    font-size: 15px;
+}
+
+.active-call-header span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #a9bbb7;
+
+    font-size: 11px;
+}
+
+.call-participant-grid {
+    flex: 1;
+
+    min-height: 0;
+
+    overflow: auto;
+
+    display: grid;
+
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(220px, 1fr)
+    );
+
+    gap: 10px;
+
+    padding: 12px;
+}
+
+.call-video-tile {
+    min-height: 180px;
+
+    position: relative;
+
+    overflow: hidden;
+
+    border-radius: 12px;
+
+    background: #091210;
+}
+
+.call-video-tile video {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: block;
+}
+
+.call-video-label {
+    position: absolute;
+
+    left: 8px;
+    bottom: 8px;
+
+    padding: 4px 7px;
+
+    border-radius: 6px;
+
+    background: rgba(0,0,0,.6);
+
+    color: #ffffff;
+
+    font-size: 10px;
+}
+
+.call-controls {
+    min-height: 67px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    padding: 10px;
+
+    border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.call-controls button {
+    width: 43px;
+    height: 43px;
+
+    border: 0;
+
+    border-radius: 50%;
+
+    background: #29403c;
+
+    color: #ffffff;
+
+    font-size: 17px;
+}
+
+.call-controls button:hover {
+    background: #3a5752;
+}
+
+.call-controls .danger-button {
+    background: var(--community-danger);
+}
+
+.incoming-call {
+    position: fixed;
+
+    top: 90px;
+    right: 20px;
+
+    z-index: 3500;
+
+    width: min(370px, calc(100vw - 40px));
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    background: #ffffff;
+
+    border: 1px solid var(--community-border);
+
+    border-radius: 13px;
+
+    box-shadow:
+        0 15px 45px rgba(0,0,0,.2);
+}
+
+.incoming-call-avatar {
+    width: 40px;
+    height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background: #e4f1ee;
+}
+
+.incoming-call-avatar img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+}
+
+.incoming-call > div:nth-child(2) {
+    flex: 1;
+    min-width: 0;
+}
+
+.incoming-call strong,
+.incoming-call span {
+    display: block;
+}
+
+.incoming-call span {
+    margin-top: 3px;
+
+    color: var(--community-muted);
+
+    font-size: 11px;
+}
+
+.incoming-call-actions {
+    display: flex;
+
+    gap: 5px;
+}
+
+.accept-call,
+.reject-call {
+    width: 35px;
+    height: 35px;
+
+    border: 0;
+
+    border-radius: 50%;
+
+    color: #ffffff;
+
+    font-size: 17px;
+}
+
+.accept-call {
+    background: #20a66a;
+}
+
+.reject-call {
+    background: var(--community-danger);
+}
+
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+.toast {
+    position: fixed;
+
+    left: 50%;
+    bottom: 25px;
+
+    z-index: 5000;
+
+    transform: translateX(-50%);
+
+    max-width: min(420px, calc(100vw - 30px));
+
+    padding: 10px 15px;
+
+    border-radius: 9px;
+
+    background: #162522;
+
+    color: #ffffff;
+
+    font-size: 12px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.18);
+}
+
+
+/* ============================================================
+   RULES
+   ============================================================ */
+
+.rules-content {
+    color: #536460;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+}
+
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+
+.profile-card-modal {
+    position: relative;
+}
+
+.floating-close {
+    position: absolute;
+
+    top: 10px;
+    right: 10px;
+}
+
+.profile-modal-content {
+    min-height: 180px;
+}
+
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 1150px) {
+
+    .community-layout {
+        grid-template-columns:
+            var(--community-rail-width)
+            var(--community-sidebar-width)
+            minmax(0, 1fr);
+    }
+
+    .member-sidebar {
+        display: none;
+    }
+
+}
+
+@media (max-width: 850px) {
+
+    .header-button {
+        display: none;
+    }
+
+    .community-layout {
+        grid-template-columns:
+            var(--community-rail-width)
+            minmax(0, 1fr);
+    }
+
+    .channel-sidebar {
+        position: fixed;
+
+        top: var(--community-header-height);
+        bottom: 0;
+        left: 0;
+
+        width: 280px;
+
+        z-index: 1500;
+
+        transform: translateX(-105%);
+
+        box-shadow:
+            10px 0 30px rgba(0,0,0,.15);
+
+        transition: transform .2s ease;
+    }
+
+    .channel-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .mobile-only {
+        display: inline-flex;
+    }
+
+    .community-home-button {
+        min-width: 42px;
+
+        width: 42px;
+
+        padding: 0;
+    }
+
+    .home-button-text {
+        display: none;
+    }
+
+    .community-brand-text {
+        display: none;
+    }
+
+}
+
+@media (max-width: 600px) {
+
+    .community-header {
+        padding: 0 8px;
+
+        gap: 6px;
+    }
+
+    .brand-area {
+        gap: 6px;
+    }
+
+    .brand-mark {
+        display: none;
+    }
+
+    .community-layout {
+        grid-template-columns: 62px minmax(0,1fr);
+    }
+
+    .community-rail {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .community-rail-item,
+    .rail-add-button {
+        width: 46px;
+        height: 46px;
+    }
+
+    .message-list {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+    .message-actions {
+        opacity: 1;
+    }
+
+    .composer {
+        gap: 3px;
+    }
+
+    .composer-button {
+        min-width: 32px;
+        width: 32px;
+        padding: 0;
+    }
+
+    .send-button {
+        padding: 0 9px;
+    }
+
+}
