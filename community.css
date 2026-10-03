@@ -3006,3 +3006,28 @@ emoji-picker::part(picker) {
         transition-duration: .01ms !important;
     }
 }
+/* =========================================================
+   RULES GATE BUTTON FIX
+   ========================================================= */
+
+#rulesGate {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+}
+
+#rulesGate button,
+#acceptRulesButton,
+#agreeRulesButton,
+#agreeAndContinueButton,
+#continueRulesButton,
+#rulesAgreeButton {
+    position: relative;
+    z-index: 100001;
+    pointer-events: auto;
+    cursor: pointer;
+}
+
+#rulesGate.hidden {
+    display: none !important;
+}
