@@ -293,6 +293,7 @@ button:disabled {
 
 .community-brand {
 
+
     display: flex;
     align-items: center;
 
@@ -1885,216 +1886,161 @@ button:disabled {
 
 
 /* =========================================================
-   RULES GATE
+   COMMUNITY RULES MODAL
    ========================================================= */
 
-.rules-gate {
-
+.community-rules-modal {
     position: fixed;
-
     inset: 0;
+    z-index: 99999;
 
-    z-index: 1000;
-
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     padding: 20px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #071116,
-            #0c2528
-        );
+    background: rgba(0, 0, 0, 0.72);
 
+    backdrop-filter: blur(8px);
 }
 
 
-.rules-card {
+.community-rules-modal.hidden {
+    display: none !important;
+}
 
-    width:
-        min(650px,100%);
 
-    max-height:
-        92vh;
+.community-rules-box {
+    width: min(620px, 100%);
 
+    max-height: 90vh;
     overflow-y: auto;
 
     padding: 30px;
 
-    border:
-        1px solid rgba(255,255,255,.1);
+    background: #ffffff;
 
-    border-radius: 24px;
-
-    background:
-        rgba(20,34,42,.97);
+    border-radius: 20px;
 
     box-shadow:
-        0 30px 90px rgba(0,0,0,.5);
-
+        0 25px 80px rgba(0, 0, 0, 0.3);
 }
 
 
-.rules-logo {
+.community-rules-box h2 {
+    margin: 0 0 10px;
+
+    color: #087f73;
+
+    font-size: 25px;
+}
+
+
+.community-rules-box > p {
+    margin-bottom: 20px;
+
+    color: #667085;
+}
+
+
+.community-rules-content {
+    padding: 18px;
 
     margin-bottom: 20px;
 
+    background: #f5f8f8;
+
+    border-radius: 14px;
 }
 
 
-.rules-heading h1 {
+.community-rules-content p {
+    margin: 0 0 14px;
 
-    margin:
-        6px
-        0
-        8px;
+    line-height: 1.6;
 
-    font-size: 29px;
-
+    color: #344054;
 }
 
 
-.rules-heading p {
-
-    color: var(--muted);
-
-    line-height: 1.55;
-
+.community-rules-content p:last-child {
+    margin-bottom: 0;
 }
 
 
-.rules-content {
-
-    display: grid;
-
-    gap: 10px;
-
-    margin:
-        22px
-        0;
-
-}
-
-
-.rule-item {
-
-    display: flex;
-
-    gap: 12px;
-
-    padding: 13px;
-
-    border:
-        1px solid var(--border);
-
-    border-radius: 13px;
-
-    background: #182932;
-
-}
-
-
-.rule-number {
-
-    width: 27px;
-    height: 27px;
-
-    flex-shrink: 0;
-
-    display: grid;
-    place-items: center;
-
-    border-radius: 8px;
-
-    background: rgba(8,127,115,.2);
-
-    color: #67d5c6;
-
-    font-size: 12px;
-
-    font-weight: 900;
-
-}
-
-
-.rule-item strong {
-
-    display: block;
-
-    margin-bottom: 3px;
-
-}
-
-
-.rule-item p {
-
-    margin: 0;
-
-    color: #91a6af;
-
-    font-size: 12px;
-
-    line-height: 1.5;
-
-}
-
-
-.rules-checkbox {
-
+.community-rules-agreement {
     display: flex;
 
     align-items: flex-start;
 
-    gap: 10px;
+    gap: 12px;
 
-    color: #cbd8dc;
+    margin-bottom: 20px;
 
-    font-size: 13px;
+    cursor: pointer;
 
-    line-height: 1.45;
+    color: #344054;
 
+    line-height: 1.5;
 }
 
 
-.rules-checkbox input {
+.community-rules-agreement input {
+    width: 20px;
+    height: 20px;
 
-    margin-top: 3px;
+    margin-top: 2px;
 
-    accent-color: var(--primary);
+    flex: 0 0 auto;
 
+    cursor: pointer;
 }
 
 
-.rules-continue {
-
+#communityRulesContinue {
     width: 100%;
 
-    margin-top: 17px;
+    min-height: 50px;
 
-    padding: 12px;
+    border: 0;
 
+    border-radius: 12px;
+
+    background: #98a2b3;
+
+    color: #ffffff;
+
+    font-size: 16px;
+
+    font-weight: 700;
+
+    cursor: not-allowed;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
 }
 
 
-.rules-gate-message {
+#communityRulesContinue.enabled,
+#communityRulesContinue:not(:disabled) {
+    background: #087f73;
 
-    min-height: 18px;
-
-    margin:
-        10px
-        0
-        0;
-
-    color: #ff9ca5;
-
-    text-align: center;
-
-    font-size: 12px;
-
+    cursor: pointer;
 }
 
+
+#communityRulesContinue:not(:disabled):hover {
+    background: #066b61;
+
+    transform: translateY(-1px);
+}
+
+
+#communityRulesContinue:disabled {
+    opacity: 0.7;
+}
 
 /* =========================================================
    CALL UI
