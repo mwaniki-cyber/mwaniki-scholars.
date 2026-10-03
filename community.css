@@ -1,2181 +1,1324 @@
-/* ============================================================
-   MWANIKI SCHOLARS
-   COMMUNITY CSS
-   Discord-style academic community
-   ============================================================ */
-
-:root {
-    --ms-primary: #087f73;
-    --ms-primary-dark: #05665d;
-    --ms-primary-light: #e6f7f4;
-
-    --ms-accent: #0b7285;
-    --ms-accent-light: #e8f7fa;
-
-    --ms-bg: #f4f7f9;
-    --ms-surface: #ffffff;
-    --ms-surface-2: #f8fafb;
-    --ms-surface-3: #eef3f5;
-
-    --ms-border: #dfe7ea;
-    --ms-border-dark: #cbd6da;
-
-    --ms-text: #172126;
-    --ms-text-secondary: #64747b;
-    --ms-text-muted: #8a999f;
-
-    --ms-success: #16a34a;
-    --ms-warning: #f59e0b;
-    --ms-danger: #dc2626;
-    --ms-danger-dark: #b91c1c;
-
-    --ms-shadow: 0 8px 30px rgba(16, 42, 50, 0.08);
-    --ms-shadow-lg: 0 18px 55px rgba(16, 42, 50, 0.16);
-
-    --community-rail-width: 78px;
-    --channel-sidebar-width: 260px;
-    --member-sidebar-width: 245px;
-    --header-height: 70px;
-
-    --radius-sm: 7px;
-    --radius-md: 10px;
-    --radius-lg: 15px;
-    --radius-xl: 20px;
-}
-
-/* ============================================================
-   RESET
-   ============================================================ */
-
-* {
-    box-sizing: border-box;
-}
-
-html,
-body {
-    width: 100%;
-    min-height: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    background: var(--ms-bg);
-    color: var(--ms-text);
-    font-family:
-        Inter,
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-}
-
-button,
-input,
-textarea,
-select {
-    font: inherit;
-}
-
-button {
-    cursor: pointer;
-}
-
-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
-}
-
-.hidden {
-    display: none !important;
-}
-
-/* ============================================================
-   MAIN APPLICATION
-   ============================================================ */
-
-.community-app {
-    width: 100%;
-    height: 100vh;
-    min-height: 620px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: var(--ms-bg);
-}
-
-/* ============================================================
-   HEADER
-   ============================================================ */
-
-.community-header {
-    height: var(--header-height);
-    min-height: var(--header-height);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    padding: 0 18px;
-    background: var(--ms-surface);
-    border-bottom: 1px solid var(--ms-border);
-    z-index: 100;
-}
-
-.brand-area {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-    min-width: 0;
-}
-
-.brand-mark {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    display: grid;
-    place-items: center;
-    background: var(--ms-primary-light);
-    font-size: 22px;
-    flex-shrink: 0;
-}
-
-.brand-area h1 {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.2;
-    font-weight: 800;
-}
-
-.brand-area span {
-    display: block;
-    margin-top: 2px;
-    color: var(--ms-text-muted);
-    font-size: 12px;
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-
-.header-button,
-.profile-button {
-    min-height: 40px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--ms-text);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 7px;
-    padding: 7px 11px;
-    transition:
-        background 0.18s ease,
-        border-color 0.18s ease,
-        transform 0.18s ease;
-}
-
-.header-button:hover,
-.profile-button:hover {
-    background: var(--ms-surface-3);
-    border-color: var(--ms-border);
-}
-
-.header-button:active,
-.profile-button:active {
-    transform: translateY(1px);
-}
-
-.call-button {
-    color: var(--ms-primary);
-    background: var(--ms-primary-light);
-}
-
-.profile-button {
-    padding-right: 9px;
-}
-
-.avatar {
-    display: inline-grid;
-    place-items: center;
-    overflow: hidden;
-    background: var(--ms-surface-3);
-    color: var(--ms-text-secondary);
-    border-radius: 50%;
-}
-
-.avatar img,
-.avatar-small img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.avatar-small {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
-}
-
-.presence-dot {
-    width: 9px;
-    height: 9px;
-    border-radius: 50%;
-    background: var(--ms-text-muted);
-    border: 2px solid var(--ms-surface);
-}
-
-.presence-dot.online {
-    background: var(--ms-success);
-}
-
-.presence-dot.idle {
-    background: var(--ms-warning);
-}
-
-.presence-dot.dnd {
-    background: var(--ms-danger);
-}
-
-.presence-dot.offline {
-    background: #aab5b9;
-}
-
-.count-badge {
-    min-width: 19px;
-    height: 19px;
-    padding: 0 5px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    background: var(--ms-danger);
-    color: #fff;
-    font-size: 10px;
-    font-weight: 800;
-}
-
-/* ============================================================
-   LAYOUT
-   ============================================================ */
-
-.community-layout {
-    flex: 1;
-    min-height: 0;
-    display: grid;
-    grid-template-columns:
-        var(--community-rail-width)
-        var(--channel-sidebar-width)
-        minmax(0, 1fr)
-        var(--member-sidebar-width);
-}
-
-/* ============================================================
-   COMMUNITY RAIL
-   ============================================================ */
-
-.community-rail {
-    min-width: 0;
-    background: #102b31;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12px 8px;
-    overflow-y: auto;
-}
-
-.rail-heading {
-    width: 100%;
-    padding: 5px 0 11px;
-    text-align: center;
-}
-
-.rail-heading span {
-    display: block;
-    color: rgba(255,255,255,0.58);
-    font-size: 9px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.7px;
-}
-
-.community-rail-list {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.community-rail-item,
-.community-rail-button {
-    width: 48px;
-    height: 48px;
-    border: 0;
-    border-radius: 15px;
-    background: rgba(255,255,255,0.08);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    font-size: 20px;
-    transition:
-        border-radius 0.18s ease,
-        background 0.18s ease,
-        transform 0.18s ease;
-}
-
-.community-rail-item:hover,
-.community-rail-button:hover {
-    border-radius: 12px;
-    background: rgba(255,255,255,0.16);
-    transform: translateY(-1px);
-}
-
-.community-rail-item.active {
-    border-radius: 12px;
-    background: var(--ms-primary);
-}
-
-.community-rail-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.rail-add-button {
-    width: 42px;
-    height: 42px;
-    margin-top: 12px;
-    border: 1px dashed rgba(255,255,255,0.35);
-    border-radius: 13px;
-    background: transparent;
-    color: #fff;
-    font-size: 24px;
-}
-
-.rail-add-button:hover {
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.7);
-}
-
-/* ============================================================
-   CHANNEL SIDEBAR
-   ============================================================ */
-
-.channel-sidebar {
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--ms-surface);
-    border-right: 1px solid var(--ms-border);
-}
-
-.selected-community {
-    min-height: 70px;
-    padding: 12px 14px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.selected-community-icon {
-    width: 38px;
-    height: 38px;
-    border-radius: 11px;
-    background: var(--ms-primary-light);
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.selected-community-icon img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.selected-community-info {
-    min-width: 0;
-}
-
-.selected-community-info strong {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 13px;
-}
-
-.selected-community-info span {
-    display: block;
-    margin-top: 2px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--ms-text-muted);
-    font-size: 11px;
-}
-
-.sidebar-call-area {
-    padding: 10px;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.community-call-button {
-    width: 100%;
-    min-height: 40px;
-    border: 1px solid #bfe6df;
-    border-radius: 9px;
-    background: var(--ms-primary-light);
-    color: var(--ms-primary-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    font-size: 12px;
-    font-weight: 750;
-}
-
-.community-call-button:hover {
-    background: #d8f2ed;
-}
-
-.channel-scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 12px 9px 18px;
-}
-
-.channel-group {
-    margin-bottom: 18px;
-}
-
-.channel-group-title {
-    padding: 0 8px 7px;
-    color: var(--ms-text-muted);
-    font-size: 9px;
-    font-weight: 850;
-    letter-spacing: 0.8px;
-}
-
-.channel-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-}
-
-.channel-button,
-.special-channel-button {
-    width: 100%;
-    min-height: 35px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 9px;
-    text-align: left;
-    font-size: 12px;
-}
-
-.channel-button:hover,
-.special-channel-button:hover {
-    background: var(--ms-surface-3);
-    color: var(--ms-text);
-}
-
-.channel-button.active {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary-dark);
-    font-weight: 750;
-}
-
-.channel-icon {
-    width: 20px;
-    text-align: center;
-    flex-shrink: 0;
-}
-
-.channel-button span:last-child,
-.special-channel-button span:last-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.special-channel-button {
-    color: var(--ms-warning);
-}
-
-/* ============================================================
-   CHAT AREA
-   ============================================================ */
-
-.chat-area {
-    min-width: 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    background: var(--ms-surface);
-}
-
-.chat-header {
-    min-height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    padding: 10px 18px;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.chat-channel-info {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 11px;
-}
-
-.channel-header-icon {
-    width: 38px;
-    height: 38px;
-    flex-shrink: 0;
-    border-radius: 10px;
-    background: var(--ms-surface-3);
-    color: var(--ms-text-secondary);
-    display: grid;
-    place-items: center;
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.chat-channel-info h2 {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 800;
-}
-
-.chat-channel-info p {
-    margin: 3px 0 0;
-    color: var(--ms-text-muted);
-    font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.chat-header-actions {
-    display: flex;
-    gap: 5px;
-}
-
-.icon-button {
-    width: 38px;
-    height: 38px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    display: grid;
-    place-items: center;
-}
-
-.icon-button:hover {
-    background: var(--ms-surface-3);
-    color: var(--ms-text);
-}
-
-/* ============================================================
-   MESSAGE LIST
-   ============================================================ */
-
-.message-list {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 20px 20px 12px;
-    scroll-behavior: smooth;
-}
-
-.message-loading {
-    padding: 35px 15px;
-    text-align: center;
-    color: var(--ms-text-muted);
-    font-size: 13px;
-}
-
-.message {
-    position: relative;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 17px;
-}
-
-.message.own {
-    flex-direction: row-reverse;
-}
-
-.message-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: var(--ms-surface-3);
-    display: grid;
-    place-items: center;
-    color: var(--ms-text-secondary);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-.message-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.message-body {
-    max-width: min(720px, 78%);
-    min-width: 0;
-}
-
-.message.own .message-body {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-}
-
-.message-meta {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    margin: 0 0 4px;
-    color: var(--ms-text-muted);
-    font-size: 10px;
-}
-
-.message.own .message-meta {
-    justify-content: flex-end;
-}
-
-.message-author {
-    color: var(--ms-text-secondary);
-    font-weight: 750;
-}
-
-.message-content {
-    position: relative;
-    padding: 10px 12px;
-    border: 1px solid var(--ms-border);
-    border-radius: 12px;
-    background: var(--ms-surface-2);
-    color: var(--ms-text);
-    font-size: 13px;
-    line-height: 1.55;
-    overflow-wrap: anywhere;
-}
-
-.message.own .message-content {
-    background: var(--ms-primary-light);
-    border-color: #c4e8e2;
-}
-
-.message.deleted .message-content {
-    color: var(--ms-text-muted);
-    background: var(--ms-surface-3);
-    font-style: italic;
-}
-
-.message.deleted .message-attachment,
-.message.deleted .attachment-link,
-.message.deleted img,
-.message.deleted audio,
-.message.deleted video {
-    display: none !important;
-}
-
-.message-content a {
-    color: var(--ms-accent);
-    text-decoration: underline;
-    overflow-wrap: anywhere;
-}
-
-.message-content img {
-    display: block;
-    max-width: min(420px, 100%);
-    max-height: 420px;
-    margin-top: 8px;
-    border-radius: 9px;
-    object-fit: contain;
-}
-
-.message-content audio {
-    width: min(400px, 100%);
-    margin-top: 8px;
-}
-
-.message-content video {
-    width: min(520px, 100%);
-    max-height: 400px;
-    margin-top: 8px;
-    border-radius: 9px;
-    background: #000;
-}
-
-.message-actions {
-    position: absolute;
-    top: -15px;
-    right: 5px;
-    display: flex;
-    gap: 3px;
-    padding: 3px;
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
-    background: var(--ms-surface);
-    box-shadow: var(--ms-shadow);
-    opacity: 0;
-    pointer-events: none;
-    transform: translateY(3px);
-    transition:
-        opacity 0.15s ease,
-        transform 0.15s ease;
-    z-index: 5;
-}
-
-.message:hover .message-actions,
-.message:focus-within .message-actions {
-    opacity: 1;
-    pointer-events: auto;
-    transform: translateY(0);
-}
-
-.message-action {
-    width: 30px;
-    height: 28px;
-    border: 0;
-    border-radius: 6px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    display: grid;
-    place-items: center;
-    font-size: 13px;
-}
-
-.message-action:hover {
-    background: var(--ms-surface-3);
-    color: var(--ms-text);
-}
-
-.message-action.delete:hover {
-    color: var(--ms-danger);
-    background: #fff0f0;
-}
-
-.message-reactions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 5px;
-}
-
-.reaction-button {
-    border: 1px solid var(--ms-border);
-    border-radius: 999px;
-    background: var(--ms-surface);
-    padding: 3px 7px;
-    color: var(--ms-text-secondary);
-    font-size: 11px;
-}
-
-.reaction-button:hover {
-    border-color: #9dd7cf;
-    background: var(--ms-primary-light);
-}
-
-.message-edited {
-    margin-left: 3px;
-    color: var(--ms-text-muted);
-    font-size: 9px;
-}
-
-/* ============================================================
-   ATTACHMENTS
-   ============================================================ */
-
-.message-attachment {
-    margin-top: 8px;
-    padding: 9px;
-    border: 1px solid var(--ms-border);
-    border-radius: 9px;
-    background: var(--ms-surface);
-}
-
-.attachment-link {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    color: var(--ms-text);
-    text-decoration: none;
-}
-
-.attachment-link:hover {
-    background: var(--ms-surface-3);
-}
-
-.attachment-icon {
-    width: 35px;
-    height: 35px;
-    border-radius: 8px;
-    background: var(--ms-surface-3);
-    display: grid;
-    place-items: center;
-    flex-shrink: 0;
-}
-
-.attachment-name {
-    min-width: 0;
-    font-size: 12px;
-    font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.attachment-size {
-    display: block;
-    margin-top: 2px;
-    color: var(--ms-text-muted);
-    font-size: 9px;
-}
-
-/* ============================================================
-   TYPING
-   ============================================================ */
-
-.typing-indicator {
-    min-height: 25px;
-    padding: 4px 20px;
-    color: var(--ms-text-muted);
-    font-size: 10px;
-}
-
-/* ============================================================
-   COMPOSER
-   ============================================================ */
-
-.composer-area {
-    position: relative;
-    flex-shrink: 0;
-    padding: 10px 15px 13px;
-    background: var(--ms-surface);
-    border-top: 1px solid var(--ms-border);
-}
-
-.composer {
-    min-height: 48px;
-    display: flex;
-    align-items: flex-end;
-    gap: 5px;
-    padding: 5px;
-    border: 1px solid var(--ms-border);
-    border-radius: 13px;
-    background: var(--ms-surface-2);
-}
-
-.composer:focus-within {
-    border-color: #9ed8d1;
-    box-shadow: 0 0 0 3px rgba(8,127,115,0.07);
-}
-
-.composer-button {
-    width: 36px;
-    height: 36px;
-    flex-shrink: 0;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    display: grid;
-    place-items: center;
-    font-size: 16px;
-}
-
-.composer-button:hover {
-    background: var(--ms-surface-3);
-    color: var(--ms-text);
-}
-
-#messageInput {
-    flex: 1;
-    min-width: 0;
-    min-height: 36px;
-    max-height: 150px;
-    resize: none;
-    border: 0;
-    outline: 0;
-    padding: 9px 7px;
-    background: transparent;
-    color: var(--ms-text);
-    line-height: 1.4;
-}
-
-#messageInput::placeholder {
-    color: var(--ms-text-muted);
-}
-
-.send-button {
-    min-width: 62px;
-    height: 36px;
-    flex-shrink: 0;
-    border: 0;
-    border-radius: 8px;
-    background: var(--ms-primary);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.send-button:hover {
-    background: var(--ms-primary-dark);
-}
-
-/* ============================================================
-   ATTACHMENT PREVIEW
-   ============================================================ */
-
-.attachment-preview {
-    margin-bottom: 7px;
-    padding: 8px;
-    border: 1px solid var(--ms-border);
-    border-radius: 9px;
-    background: var(--ms-surface-2);
-}
-
-.attachment-preview-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px;
-}
-
-.attachment-preview-item img {
-    width: 45px;
-    height: 45px;
-    border-radius: 7px;
-    object-fit: cover;
-}
-
-.attachment-preview-name {
-    flex: 1;
-    min-width: 0;
-    font-size: 11px;
-    font-weight: 700;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.attachment-preview-remove {
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: var(--ms-danger);
-}
-
-/* ============================================================
-   PICKERS
-   ============================================================ */
-
-.picker-panel {
-    position: absolute;
-    right: 15px;
-    bottom: calc(100% + 8px);
-    width: min(390px, calc(100vw - 30px));
-    max-height: 430px;
-    overflow: hidden;
-    z-index: 50;
-    border: 1px solid var(--ms-border);
-    border-radius: 14px;
-    background: var(--ms-surface);
-    box-shadow: var(--ms-shadow-lg);
-}
-
-.picker-title {
-    min-height: 45px;
-    padding: 9px 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.picker-title strong {
-    font-size: 12px;
-}
-
-.picker-close {
-    width: 30px;
-    height: 30px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    font-size: 20px;
-}
-
-.picker-close:hover {
-    background: var(--ms-surface-3);
-}
-
-.picker-search {
-    width: calc(100% - 20px);
-    margin: 10px;
-    height: 35px;
-    padding: 0 10px;
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
-    outline: 0;
-    background: var(--ms-surface-2);
-    color: var(--ms-text);
-}
-
-.emoji-categories {
-    display: flex;
-    gap: 3px;
-    overflow-x: auto;
-    padding: 0 9px 7px;
-}
-
-.emoji-category {
-    min-width: 31px;
-    height: 30px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-}
-
-.emoji-category:hover,
-.emoji-category.active {
-    background: var(--ms-primary-light);
-}
-
-.emoji-grid {
-    max-height: 300px;
-    overflow-y: auto;
-    padding: 8px;
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 3px;
-}
-
-.emoji-button {
-    width: 100%;
-    aspect-ratio: 1;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    font-size: 22px;
-}
-
-.emoji-button:hover {
-    background: var(--ms-surface-3);
-}
-
-.sticker-grid,
-.gif-grid {
-    max-height: 350px;
-    overflow-y: auto;
-    padding: 10px;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-.sticker-button,
-.gif-button {
-    min-height: 90px;
-    border: 1px solid var(--ms-border);
-    border-radius: 9px;
-    background: var(--ms-surface-2);
-}
-
-.sticker-button:hover,
-.gif-button:hover {
-    border-color: #9ed8d1;
-}
-
-.empty-picker {
-    grid-column: 1 / -1;
-    padding: 35px 10px;
-    text-align: center;
-    color: var(--ms-text-muted);
-    font-size: 12px;
-}
-
-/* ============================================================
-   MEMBER SIDEBAR
-   ============================================================ */
-
-.member-sidebar {
-    min-width: 0;
-    min-height: 0;
-    background: var(--ms-surface);
-    border-left: 1px solid var(--ms-border);
-    overflow-y: auto;
-}
-
-.member-sidebar-header {
-    min-height: 70px;
-    padding: 0 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--ms-border);
-    color: var(--ms-text-secondary);
-    font-size: 12px;
-}
-
-.member-sidebar-header span {
-    min-width: 22px;
-    height: 22px;
-    border-radius: 999px;
-    background: var(--ms-surface-3);
-    display: grid;
-    place-items: center;
-    font-size: 10px;
-}
-
-.member-list {
-    padding: 10px;
-}
-
-.member-item {
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    padding: 8px;
-    border-radius: 9px;
-}
-
-.member-item:hover {
-    background: var(--ms-surface-3);
-}
-
-.member-avatar {
-    position: relative;
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-    border-radius: 50%;
-    overflow: hidden;
-    background: var(--ms-surface-3);
-    display: grid;
-    place-items: center;
-    font-size: 11px;
-}
-
-.member-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.member-presence {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    width: 9px;
-    height: 9px;
-    border: 2px solid var(--ms-surface);
-    border-radius: 50%;
-    background: #aab5b9;
-}
-
-.member-presence.online {
-    background: var(--ms-success);
-}
-
-.member-presence.idle {
-    background: var(--ms-warning);
-}
-
-.member-presence.dnd {
-    background: var(--ms-danger);
-}
-
-.member-information {
-    min-width: 0;
-}
-
-.member-information strong {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 11px;
-}
-
-.member-information small {
-    display: block;
-    margin-top: 2px;
-    color: var(--ms-text-muted);
-    font-size: 9px;
-}
-
-/* ============================================================
-   MODALS
-   ============================================================ */
-
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-    background: rgba(10, 27, 32, 0.58);
-    backdrop-filter: blur(4px);
-}
-
-.modal.hidden {
-    display: none !important;
-}
-
-.modal-card {
-    position: relative;
-    width: min(520px, 100%);
-    max-height: min(90vh, 760px);
-    overflow-y: auto;
-    border-radius: 16px;
-    background: var(--ms-surface);
-    box-shadow: var(--ms-shadow-lg);
-}
-
-.large-modal {
-    width: min(720px, 100%);
-}
-
-.profile-card-modal {
-    width: min(500px, 100%);
-}
-
-.modal-header {
-    min-height: 55px;
-    padding: 10px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.modal-header h2 {
-    margin: 0;
-    font-size: 15px;
-}
-
-.modal-close {
-    width: 34px;
-    height: 34px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    font-size: 21px;
-}
-
-.modal-close:hover {
-    background: var(--ms-surface-3);
-}
-
-.floating-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 5;
-}
-
-.modal-body {
-    padding: 15px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 12px 15px;
-    border-top: 1px solid var(--ms-border);
-}
-
-.primary-button,
-.secondary-button,
-.danger-button {
-    min-height: 38px;
-    padding: 0 14px;
-    border-radius: 8px;
-    font-size: 11px;
-    font-weight: 750;
-}
-
-.primary-button {
-    border: 0;
-    background: var(--ms-primary);
-    color: #fff;
-}
-
-.primary-button:hover {
-    background: var(--ms-primary-dark);
-}
-
-.secondary-button {
-    border: 1px solid var(--ms-border);
-    background: var(--ms-surface);
-    color: var(--ms-text-secondary);
-}
-
-.secondary-button:hover {
-    background: var(--ms-surface-3);
-}
-
-.danger-button {
-    border: 0;
-    background: var(--ms-danger);
-    color: #fff;
-}
-
-.danger-button:hover {
-    background: var(--ms-danger-dark);
-}
-
-/* ============================================================
-   TICKETS
-   ============================================================ */
-
-#ticketForm {
-    padding: 15px;
-}
-
-#ticketForm label {
-    display: block;
-    margin-bottom: 13px;
-    color: var(--ms-text-secondary);
-    font-size: 11px;
-    font-weight: 700;
-}
-
-#ticketForm input,
-#ticketForm select,
-#ticketForm textarea {
-    width: 100%;
-    margin-top: 6px;
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
-    outline: 0;
-    background: var(--ms-surface-2);
-    color: var(--ms-text);
-    padding: 9px 10px;
-}
-
-#ticketForm input:focus,
-#ticketForm select:focus,
-#ticketForm textarea:focus {
-    border-color: #8bcfc6;
-    box-shadow: 0 0 0 3px rgba(8,127,115,0.06);
-}
-
-/* ============================================================
-   RULES
-   ============================================================ */
-
-.rules-content {
-    padding: 20px;
-}
-
-.rules-content ol {
-    margin: 0;
-    padding-left: 21px;
-}
-
-.rules-content li {
-    margin-bottom: 12px;
-    color: var(--ms-text-secondary);
-    font-size: 13px;
-    line-height: 1.55;
-}
-
-/* ============================================================
-   FRIENDS
-   ============================================================ */
-
-.friends-tabs {
-    display: flex;
-    gap: 3px;
-    padding: 10px 15px;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.friend-tab {
-    min-height: 35px;
-    border: 0;
-    border-radius: 8px;
-    padding: 0 12px;
-    background: transparent;
-    color: var(--ms-text-secondary);
-    font-size: 11px;
-}
-
-.friend-tab.active {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary-dark);
-    font-weight: 750;
-}
-
-.friends-content {
-    min-height: 180px;
-    padding: 15px;
-}
-
-/* ============================================================
-   CALL CHOICE MODAL
-   ============================================================ */
-
-.call-choice {
-    padding: 18px;
-    display: grid;
-    gap: 10px;
-}
-
-.call-choice-button {
-    min-height: 80px;
-    padding: 13px;
-    border: 1px solid var(--ms-border);
-    border-radius: 11px;
-    background: var(--ms-surface-2);
-    color: var(--ms-text);
-    display: grid;
-    grid-template-columns: 42px 1fr;
-    grid-template-rows: auto auto;
-    column-gap: 10px;
-    text-align: left;
-}
-
-.call-choice-button:hover {
-    border-color: #9ed8d1;
-    background: var(--ms-primary-light);
-}
-
-.call-choice-button > :first-child {
-    grid-row: 1 / 3;
-    display: grid;
-    place-items: center;
-    font-size: 23px;
-}
-
-.call-choice-button strong {
-    align-self: end;
-    font-size: 12px;
-}
-
-.call-choice-button span {
-    align-self: start;
-    margin-top: 3px;
-    color: var(--ms-text-muted);
-    font-size: 10px;
-}
-
-/* ============================================================
-   GENERAL CALL PICKER
-   These classes support the older/general-call controls
-   used by call.js if present in the HTML.
-   ============================================================ */
-
-#generalCallModal {
-    position: fixed;
-    inset: 0;
-    z-index: 1100;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 18px;
-    background: rgba(10, 27, 32, 0.58);
-    backdrop-filter: blur(4px);
-}
-
-#generalCallModal.open {
-    display: flex;
-}
-
-.general-call-card,
-.general-call-modal-card {
-    width: min(520px, 100%);
-    max-height: 88vh;
-    overflow-y: auto;
-    border-radius: 16px;
-    background: var(--ms-surface);
-    box-shadow: var(--ms-shadow-lg);
-}
-
-.general-call-header {
-    padding: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--ms-border);
-}
-
-.general-call-header h2 {
-    margin: 0;
-    font-size: 15px;
-}
-
-.general-call-body {
-    padding: 15px;
-}
-
-.general-call-user-list,
-#generalCallUserList {
-    max-height: 330px;
-    overflow-y: auto;
-    padding: 5px;
-}
-
-.call-user-option {
-    width: 100%;
-    min-height: 58px;
-    margin-bottom: 4px;
-    padding: 7px 9px;
-    border: 1px solid transparent;
-    border-radius: 9px;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    gap: 9px;
-    text-align: left;
-    color: var(--ms-text);
-}
-
-.call-user-option:hover {
-    background: var(--ms-surface-3);
-}
-
-.call-user-option.selected {
-    border-color: #9ed8d1;
-    background: var(--ms-primary-light);
-}
-
-.call-user-avatar {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    object-fit: cover;
-    overflow: hidden;
-    background: var(--ms-surface-3);
-    display: grid;
-    place-items: center;
-    color: var(--ms-text-secondary);
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.call-user-information {
-    min-width: 0;
-    flex: 1;
-}
-
-.call-user-information strong {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-}
-
-.call-user-information small {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 3px;
-    color: var(--ms-text-muted);
-    font-size: 9px;
-}
-
-.call-status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #aab5b9;
-}
-
-.call-status-dot.online {
-    background: var(--ms-success);
-}
-
-.call-status-dot.idle {
-    background: var(--ms-warning);
-}
-
-.call-status-dot.dnd {
-    background: var(--ms-danger);
-}
-
-.call-user-check {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--ms-surface-3);
-    color: transparent;
-    display: grid;
-    place-items: center;
-    font-size: 11px;
-}
-
-.call-user-option.selected .call-user-check {
-    background: var(--ms-primary);
-    color: #fff;
-}
-
-.call-empty-users,
-.call-loading-users {
-    padding: 35px 15px;
-    text-align: center;
-    color: var(--ms-text-muted);
-    font-size: 11px;
-}
-
-.call-empty-users {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 5px;
-}
-
-.call-empty-icon {
-    margin-bottom: 3px;
-    font-size: 30px;
-}
-
-.call-empty-users strong {
-    color: var(--ms-text-secondary);
-}
-
-.general-call-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 12px 15px;
-    border-top: 1px solid var(--ms-border);
-}
-
-/* ============================================================
-   ACTIVE CALL OVERLAY
-   Matches the current community.html IDs:
-   activeCallOverlay
-   activeCallTitle
-   activeCallStatus
-   callParticipantGrid
-   toggleMicrophoneButton
-   toggleCameraButton
-   shareScreenButton
-   leaveCallButton
-   leaveCallButtonBottom
-   ============================================================ */
-
-.call-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    background: rgba(5, 18, 22, 0.88);
-    backdrop-filter: blur(7px);
-}
-
-.call-overlay.hidden {
-    display: none !important;
-}
-
-.active-call-window {
-    width: min(1100px, 100%);
-    height: min(760px, 92vh);
-    min-height: 480px;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 18px;
-    background: #102126;
-    color: #fff;
-    box-shadow: 0 25px 90px rgba(0,0,0,0.4);
-}
-
-.active-call-header {
-    min-height: 70px;
-    padding: 12px 15px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
-}
-
-.active-call-header strong {
-    display: block;
-    font-size: 14px;
-}
-
-.active-call-header span {
-    display: block;
-    margin-top: 3px;
-    color: rgba(255,255,255,0.55);
-    font-size: 10px;
-}
-
-.call-participant-grid {
-    flex: 1;
-    min-height: 0;
-    padding: 14px;
-    overflow-y: auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 10px;
-}
-
-.call-participant,
-.call-video-tile {
-    position: relative;
-    min-height: 190px;
-    overflow: hidden;
-    border-radius: 13px;
-    background: #071317;
-    border: 1px solid rgba(255,255,255,0.07);
-}
-
-.call-participant video,
-.call-video-tile video {
-    width: 100%;
-    height: 100%;
-    min-height: 190px;
-    display: block;
-    object-fit: cover;
-    background: #071317;
-}
-
-.call-participant-name {
-    position: absolute;
-    left: 9px;
-    bottom: 9px;
-    padding: 5px 8px;
-    border-radius: 7px;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    font-size: 10px;
-}
-
-.call-remote-video {
-    width: 100%;
-    min-height: 190px;
-    object-fit: cover;
-    border-radius: 12px;
-    background: #071317;
-}
-
-.call-local-video {
-    width: 100%;
-    max-height: 330px;
-    object-fit: cover;
-    border-radius: 12px;
-    background: #071317;
-}
-
-.call-controls {
-    min-height: 76px;
-    padding: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    border-top: 1px solid rgba(255,255,255,0.08);
-}
-
-.call-controls button {
-    width: 46px;
-    height: 46px;
-    border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 50%;
-    background: rgba(255,255,255,0.09);
-    color: #fff;
-    display: grid;
-    place-items: center;
-    font-size: 17px;
-}
-
-.call-controls button:hover {
-    background: rgba(255,255,255,0.17);
-}
-
-.call-controls .danger-button {
-    width: 52px;
-    height: 44px;
-    border-radius: 13px;
-    background: var(--ms-danger);
-}
-
-.call-controls .danger-button:hover {
-    background: var(--ms-danger-dark);
-}
-
-/* Compatibility with call.js naming */
-
-#callOverlay {
-    position: fixed;
-    inset: 0;
-    z-index: 2000;
-}
-
-#callOverlay.hidden {
-    display: none !important;
-}
-
-#callOverlay.open {
-    display: flex;
-}
-
-/* ============================================================
-   INCOMING CALL
-   ============================================================ */
-
-.incoming-call {
-    position: fixed;
-    right: 20px;
-    bottom: 20px;
-    z-index: 2200;
-    width: min(360px, calc(100vw - 30px));
-    padding: 13px;
-    border: 1px solid var(--ms-border);
-    border-radius: 14px;
-    background: var(--ms-surface);
-    box-shadow: var(--ms-shadow-lg);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.incoming-call.hidden {
-    display: none !important;
-}
-
-.incoming-call-avatar {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: var(--ms-primary-light);
-    display: grid;
-    place-items: center;
-    overflow: hidden;
-    flex-shrink: 0;
-}
-
-.incoming-call-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.incoming-call > div:nth-child(2) {
-    min-width: 0;
-    flex: 1;
-}
-
-.incoming-call strong {
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 12px;
-}
-
-.incoming-call span {
-    display: block;
-    margin-top: 3px;
-    color: var(--ms-text-muted);
-    font-size: 10px;
-}
-
-.incoming-call-actions {
-    display: flex;
-    gap: 6px;
-}
-
-.incoming-call-actions button {
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 50%;
-    color: #fff;
-    font-weight: 800;
-}
-
-.accept-call {
-    background: var(--ms-success);
-}
-
-.reject-call {
-    background: var(--ms-danger);
-}
-
-/* ============================================================
-   TOAST
-   ============================================================ */
-
-.toast {
-    position: fixed;
-    left: 50%;
-    bottom: 25px;
-    z-index: 3000;
-    max-width: min(420px, calc(100vw - 30px));
-    padding: 11px 15px;
-    border-radius: 9px;
-    background: #172126;
-    color: #fff;
-    box-shadow: var(--ms-shadow-lg);
-    font-size: 11px;
-    transform: translateX(-50%);
-}
-
-/* ============================================================
-   MOBILE SIDEBAR BUTTON
-   ============================================================ */
-
-.mobile-only {
-    display: none;
-}
-
-/* ============================================================
-   SCROLLBARS
-   ============================================================ */
-
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd6da transparent;
-}
-
-*::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
-}
-
-*::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-*::-webkit-scrollbar-thumb {
-    border-radius: 999px;
-    background: #cbd6da;
-}
-
-*::-webkit-scrollbar-thumb:hover {
-    background: #aebdc2;
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-
-@media (max-width: 1180px) {
-    :root {
-        --member-sidebar-width: 210px;
-    }
-
-    .header-button {
-        padding: 7px 8px;
-    }
-
-    .member-sidebar {
-        display: none;
-    }
-
-    .community-layout {
-        grid-template-columns:
-            var(--community-rail-width)
-            var(--channel-sidebar-width)
-            minmax(0, 1fr);
-    }
-}
-
-@media (max-width: 850px) {
-    :root {
-        --channel-sidebar-width: 230px;
-    }
-
-    .header-actions .header-button:not(.call-button) {
-        display: none;
-    }
-
-    .mobile-only {
-        display: grid;
-    }
-}
-
-@media (max-width: 680px) {
-    .community-app {
-        min-height: 100vh;
-    }
-
-    .community-header {
-        padding: 0 10px;
-    }
-
-    .brand-mark {
-        width: 36px;
-        height: 36px;
-    }
-
-    .brand-area h1 {
-        font-size: 14px;
-    }
-
-    .community-layout {
-        grid-template-columns: 60px minmax(0, 1fr);
-    }
-
-    .channel-sidebar {
-        position: fixed;
-        left: 60px;
-        top: var(--header-height);
-        bottom: 0;
-        width: min(280px, calc(100vw - 60px));
-        z-index: 900;
-        transform: translateX(-105%);
-        transition: transform 0.2s ease;
-        box-shadow: var(--ms-shadow-lg);
-    }
-
-    .channel-sidebar.mobile-open {
-        transform: translateX(0);
-    }
-
-    .community-rail {
-        width: 60px;
-    }
-
-    .community-rail-item,
-    .community-rail-button {
-        width: 42px;
-        height: 42px;
-    }
-
-    .chat-header {
-        padding: 9px 10px;
-    }
-
-    .message-list {
-        padding: 14px 10px 8px;
-    }
-
-    .message-body {
-        max-width: 85%;
-    }
-
-    .composer-area {
-        padding: 8px;
-    }
-
-    .composer-button {
-        width: 32px;
-        height: 32px;
-    }
-
-    .composer {
-        gap: 2px;
-    }
-
-    .send-button {
-        min-width: 55px;
-    }
-
-    .picker-panel {
-        right: 8px;
-        bottom: calc(100% + 8px);
-    }
-
-    .active-call-window {
-        width: 100%;
-        height: 100%;
-        min-height: 100%;
-        border-radius: 0;
-    }
-
-    .call-participant-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 470px) {
-    .header-actions {
-        gap: 2px;
-    }
-
-    .call-button {
-        width: 38px;
-        padding: 0;
-        font-size: 0;
-    }
-
-    .call-button::before {
-        content: "📞";
-        font-size: 16px;
-    }
-
-    .profile-button {
-        padding: 4px;
-    }
-
-    #headerProfileName {
-        display: none;
-    }
-
-    .message-avatar {
-        width: 31px;
-        height: 31px;
-    }
-
-    .message-body {
-        max-width: calc(100vw - 80px);
-    }
-
-    .message-content {
-        font-size: 12px;
-    }
-
-    .emoji-grid {
-        grid-template-columns: repeat(7, 1fr);
-    }
-
-    .emoji-button {
-        font-size: 20px;
-    }
-
-    .incoming-call {
-        right: 10px;
-        bottom: 10px;
-    }
-}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="Mwaniki Scholars Community - academic discussion, collaboration, contests and calls."
+    >
+
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
+
+    <title>Mwaniki Scholars Community</title>
+
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./community.css"
+    >
+
+</head>
+
+
+<body>
+
+<div
+    id="app"
+    class="community-app"
+>
+
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="community-header">
+
+        <div class="brand-area">
+
+            <button
+                id="mobileSidebarButton"
+                class="icon-button mobile-only"
+                type="button"
+                aria-label="Open menu"
+                title="Open menu"
+            >
+                ☰
+            </button>
+
+
+            <!-- HOME -->
+
+            <button
+                id="communityHomeButton"
+                class="community-home-button"
+                type="button"
+                title="Back to Dashboard"
+                aria-label="Back to Dashboard"
+            >
+
+                <span class="home-button-icon">
+                    ⌂
+                </span>
+
+                <span class="home-button-text">
+                    Home
+                </span>
+
+            </button>
+
+
+            <div class="brand-mark">
+                🎓
+            </div>
+
+
+            <div class="community-brand-text">
+
+                <h1>
+                    Mwaniki Scholars
+                </h1>
+
+                <span>
+                    Community
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="header-actions">
+
+            <button
+                id="communityRulesButton"
+                class="header-button"
+                type="button"
+            >
+                📜 Rules
+            </button>
+
+
+            <button
+                id="ticketButton"
+                class="header-button"
+                type="button"
+            >
+                🎫 Tickets
+            </button>
+
+
+            <button
+                id="friendsButton"
+                class="header-button"
+                type="button"
+            >
+
+                👥 Friends
+
+                <span
+                    id="friendRequestBadge"
+                    class="count-badge hidden"
+                >
+                    0
+                </span>
+
+            </button>
+
+
+            <button
+                id="generalCallButton"
+                class="header-button call-button"
+                type="button"
+            >
+                📞 Call
+            </button>
+
+
+            <button
+                id="profileButton"
+                class="profile-button"
+                type="button"
+            >
+
+                <span
+                    id="headerProfileAvatar"
+                    class="avatar avatar-small"
+                >
+                    👤
+                </span>
+
+                <span id="headerProfileName">
+                    Account
+                </span>
+
+                <span
+                    id="headerPresenceDot"
+                    class="presence-dot offline"
+                ></span>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =====================================================
+         MAIN LAYOUT
+         ===================================================== -->
+
+    <main class="community-layout">
+
+
+        <!-- COMMUNITY RAIL -->
+
+        <aside
+            id="communityRail"
+            class="community-rail"
+        >
+
+            <div class="rail-heading">
+                <span>
+                    Communities
+                </span>
+            </div>
+
+
+            <div
+                id="communityRailList"
+                class="community-rail-list"
+            ></div>
+
+
+            <button
+                id="addCommunityButton"
+                class="rail-add-button"
+                type="button"
+                title="Communities"
+            >
+                +
+            </button>
+
+        </aside>
+
+
+
+        <!-- CHANNEL SIDEBAR -->
+
+        <aside
+            id="channelSidebar"
+            class="channel-sidebar"
+        >
+
+            <div class="selected-community">
+
+                <div
+                    id="selectedCommunityIcon"
+                    class="selected-community-icon"
+                >
+                    🎓
+                </div>
+
+
+                <div class="selected-community-info">
+
+                    <strong
+                        id="selectedCommunityName"
+                    >
+                        Mwaniki Scholars
+                    </strong>
+
+                    <span
+                        id="selectedCommunityDescription"
+                    >
+                        Academic community
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="sidebar-call-area">
+
+                <button
+                    id="communityCallButton"
+                    class="community-call-button"
+                    type="button"
+                >
+
+                    <span>
+                        📞
+                    </span>
+
+                    <span>
+                        Community Call
+                    </span>
+
+                </button>
+
+            </div>
+
+
+            <div class="channel-scroll">
+
+
+                <section class="channel-group">
+
+                    <div class="channel-group-title">
+                        <span>
+                            INFORMATION
+                        </span>
+                    </div>
+
+                    <div
+                        id="informationChannels"
+                        class="channel-list"
+                    ></div>
+
+                </section>
+
+
+
+                <section class="channel-group">
+
+                    <div class="channel-group-title">
+                        <span>
+                            COURSES
+                        </span>
+                    </div>
+
+                    <div
+                        id="courseChannels"
+                        class="channel-list"
+                    ></div>
+
+                </section>
+
+
+
+                <section class="channel-group">
+
+                    <div class="channel-group-title">
+                        <span>
+                            COMMUNITY
+                        </span>
+                    </div>
+
+                    <div
+                        id="communityChannels"
+                        class="channel-list"
+                    ></div>
+
+                </section>
+
+
+
+                <section class="channel-group">
+
+                    <div class="channel-group-title">
+                        <span>
+                            CONTESTS
+                        </span>
+                    </div>
+
+                    <button
+                        id="contestChannelButton"
+                        class="special-channel-button"
+                        type="button"
+                    >
+
+                        <span>
+                            🏆
+                        </span>
+
+                        <span>
+                            Contests & Tests
+                        </span>
+
+                    </button>
+
+                </section>
+
+            </div>
+
+        </aside>
+
+
+
+        <!-- =================================================
+             CHAT
+             ================================================= -->
+
+        <section class="chat-area">
+
+
+            <header class="chat-header">
+
+                <div class="chat-channel-info">
+
+                    <div
+                        id="currentChannelIcon"
+                        class="channel-header-icon"
+                    >
+                        #
+                    </div>
+
+                    <div>
+
+                        <h2 id="currentChannelName">
+                            general
+                        </h2>
+
+                        <p id="currentChannelDescription">
+                            Community discussion
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chat-header-actions">
+
+                    <button
+                        id="channelSearchButton"
+                        class="icon-button"
+                        type="button"
+                        title="Search messages"
+                    >
+                        🔎
+                    </button>
+
+
+                    <button
+                        id="channelMembersButton"
+                        class="icon-button"
+                        type="button"
+                        title="Members"
+                    >
+                        👥
+                    </button>
+
+                </div>
+
+            </header>
+
+
+
+            <div
+                id="messageList"
+                class="message-list"
+                aria-live="polite"
+            >
+
+                <div
+                    id="messageLoading"
+                    class="message-loading"
+                >
+                    Loading messages...
+                </div>
+
+            </div>
+
+
+
+            <div
+                id="typingIndicator"
+                class="typing-indicator hidden"
+            >
+                Someone is typing...
+            </div>
+
+
+
+            <!-- COMPOSER -->
+
+            <footer class="composer-area">
+
+
+                <div
+                    id="attachmentPreview"
+                    class="attachment-preview hidden"
+                ></div>
+
+
+                <div class="composer">
+
+
+                    <button
+                        id="attachButton"
+                        class="composer-button"
+                        type="button"
+                        title="Attach file"
+                    >
+                        📎
+                    </button>
+
+
+                    <button
+                        id="emojiButton"
+                        class="composer-button"
+                        type="button"
+                        title="Emoji"
+                    >
+                        😊
+                    </button>
+
+
+                    <button
+                        id="stickerButton"
+                        class="composer-button"
+                        type="button"
+                        title="Stickers"
+                    >
+                        🏷️
+                    </button>
+
+
+                    <button
+                        id="gifButton"
+                        class="composer-button"
+                        type="button"
+                        title="GIF"
+                    >
+                        GIF
+                    </button>
+
+
+                    <button
+                        id="voiceNoteButton"
+                        class="composer-button"
+                        type="button"
+                        title="Voice note"
+                    >
+                        🎙️
+                    </button>
+
+
+                    <textarea
+                        id="messageInput"
+                        rows="1"
+                        maxlength="5000"
+                        placeholder="Write a message..."
+                    ></textarea>
+
+
+                    <button
+                        id="sendMessageButton"
+                        class="send-button"
+                        type="button"
+                    >
+                        Send
+                    </button>
+
+                </div>
+
+
+
+                <input
+                    id="attachmentInput"
+                    type="file"
+                    hidden
+                    multiple
+                    accept="
+                        image/*,
+                        application/pdf,
+                        text/plain,
+                        text/csv,
+                        application/msword,
+                        application/vnd.openxmlformats-officedocument.wordprocessingml.document,
+                        application/vnd.ms-powerpoint,
+                        application/vnd.openxmlformats-officedocument.presentationml.presentation,
+                        application/vnd.ms-excel,
+                        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
+                        audio/*
+                    "
+                >
+
+
+
+                <!-- EMOJI -->
+
+                <div
+                    id="emojiPanel"
+                    class="picker-panel hidden"
+                >
+
+                    <div class="picker-title">
+
+                        <strong>
+                            Emoji
+                        </strong>
+
+                        <button
+                            class="picker-close"
+                            type="button"
+                            data-close-picker="emojiPanel"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <input
+                        id="emojiSearch"
+                        class="picker-search"
+                        type="search"
+                        placeholder="Search emoji..."
+                    >
+
+
+                    <div
+                        id="emojiCategories"
+                        class="emoji-categories"
+                    ></div>
+
+
+                    <div
+                        id="emojiGrid"
+                        class="emoji-grid"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- STICKERS -->
+
+                <div
+                    id="stickerPanel"
+                    class="picker-panel hidden"
+                >
+
+                    <div class="picker-title">
+
+                        <strong>
+                            Stickers
+                        </strong>
+
+                        <button
+                            class="picker-close"
+                            type="button"
+                            data-close-picker="stickerPanel"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <div
+                        id="stickerGrid"
+                        class="sticker-grid"
+                    ></div>
+
+                </div>
+
+
+
+                <!-- GIF -->
+
+                <div
+                    id="gifPanel"
+                    class="picker-panel hidden"
+                >
+
+                    <div class="picker-title">
+
+                        <strong>
+                            GIFs
+                        </strong>
+
+                        <button
+                            class="picker-close"
+                            type="button"
+                            data-close-picker="gifPanel"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+
+                    <input
+                        id="gifSearch"
+                        class="picker-search"
+                        type="search"
+                        placeholder="Search GIFs..."
+                    >
+
+
+                    <div
+                        id="gifGrid"
+                        class="gif-grid"
+                    >
+
+                        <div class="empty-picker">
+                            GIF provider can be connected here.
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </footer>
+
+        </section>
+
+
+
+        <!-- MEMBER SIDEBAR -->
+
+        <aside
+            id="memberSidebar"
+            class="member-sidebar"
+        >
+
+            <div class="member-sidebar-header">
+
+                <strong>
+                    Members
+                </strong>
+
+                <span id="memberCount">
+                    0
+                </span>
+
+            </div>
+
+
+            <div
+                id="memberList"
+                class="member-list"
+            ></div>
+
+        </aside>
+
+    </main>
+
+</div>
+
+
+
+<!-- =========================================================
+     FILE PREVIEW
+     ========================================================= -->
+
+<div
+    id="filePreviewModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <h2>
+                Send attachment
+            </h2>
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close-modal="filePreviewModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div
+            id="filePreviewContent"
+            class="modal-body"
+        ></div>
+
+
+        <div class="modal-actions">
+
+            <button
+                type="button"
+                class="secondary-button"
+                data-close-modal="filePreviewModal"
+            >
+                Cancel
+            </button>
+
+            <button
+                id="confirmAttachmentButton"
+                type="button"
+                class="primary-button"
+            >
+                Send
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     FRIENDS
+     ========================================================= -->
+
+<div
+    id="friendsModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card large-modal">
+
+        <div class="modal-header">
+
+            <h2>
+                Friends
+            </h2>
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close-modal="friendsModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="friends-tabs">
+
+            <button
+                class="friend-tab active"
+                data-friend-tab="friends"
+                type="button"
+            >
+                Friends
+            </button>
+
+
+            <button
+                class="friend-tab"
+                data-friend-tab="requests"
+                type="button"
+            >
+
+                Requests
+
+                <span id="friendRequestsCount"></span>
+
+            </button>
+
+        </div>
+
+
+        <div
+            id="friendsContent"
+            class="friends-content"
+        ></div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     TICKET
+     ========================================================= -->
+
+<div
+    id="ticketModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <h2>
+                🎫 Raise a Concern
+            </h2>
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close-modal="ticketModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <form id="ticketForm">
+
+            <label>
+                Concern type
+
+                <select
+                    id="ticketType"
+                    required
+                >
+
+                    <option value="">
+                        Select concern
+                    </option>
+
+                    <option value="member_report">
+                        Report a member
+                    </option>
+
+                    <option value="message_report">
+                        Report a message
+                    </option>
+
+                    <option value="harassment">
+                        Harassment
+                    </option>
+
+                    <option value="technical">
+                        Technical problem
+                    </option>
+
+                    <option value="moderation">
+                        Moderation concern
+                    </option>
+
+                    <option value="appeal">
+                        Moderation appeal
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+            </label>
+
+
+            <label>
+                Subject
+
+                <input
+                    id="ticketSubject"
+                    type="text"
+                    maxlength="150"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+                Description
+
+                <textarea
+                    id="ticketDescription"
+                    rows="6"
+                    maxlength="5000"
+                    required
+                ></textarea>
+
+            </label>
+
+
+            <div class="modal-actions">
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    data-close-modal="ticketModal"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="primary-button"
+                >
+                    Submit Ticket
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     RULES
+     ========================================================= -->
+
+<div
+    id="rulesModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card large-modal">
+
+        <div class="modal-header">
+
+            <h2>
+                📜 Community Rules
+            </h2>
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close-modal="rulesModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="rules-content">
+
+            <ol>
+
+                <li>
+                    Respect other members.
+                </li>
+
+                <li>
+                    No harassment, threats or hateful abuse.
+                </li>
+
+                <li>
+                    No spam or flooding.
+                </li>
+
+                <li>
+                    No unsolicited self-promotion or advertising.
+                </li>
+
+                <li>
+                    Keep academic discussions relevant to their channels.
+                </li>
+
+                <li>
+                    Do not impersonate another member.
+                </li>
+
+                <li>
+                    Do not share prohibited or harmful material.
+                </li>
+
+                <li>
+                    Respect moderator decisions and use tickets for appeals.
+                </li>
+
+            </ol>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     PROFILE
+     ========================================================= -->
+
+<div
+    id="profileModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card profile-card-modal">
+
+        <button
+            class="modal-close floating-close"
+            type="button"
+            data-close-modal="profileModal"
+        >
+            ×
+        </button>
+
+
+        <div
+            id="profileModalContent"
+            class="profile-modal-content"
+        ></div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     CALL CHOICE
+     ========================================================= -->
+
+<div
+    id="callModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card">
+
+        <div class="modal-header">
+
+            <h2>
+                📞 Start a Call
+            </h2>
+
+            <button
+                class="modal-close"
+                type="button"
+                data-close-modal="callModal"
+            >
+                ×
+            </button>
+
+        </div>
+
+
+        <div class="call-choice">
+
+            <button
+                id="callSpecificPersonButton"
+                class="call-choice-button"
+                type="button"
+            >
+
+                👤
+
+                <strong>
+                    Specific person
+                </strong>
+
+                <span>
+                    Choose someone to call
+                </span>
+
+            </button>
+
+
+            <button
+                id="callWholeCommunityButton"
+                class="call-choice-button"
+                type="button"
+            >
+
+                👥
+
+                <strong>
+                    Whole community
+                </strong>
+
+                <span>
+                    Invite eligible community members
+                </span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     ACTIVE CALL
+     ========================================================= -->
+
+<div
+    id="activeCallOverlay"
+    class="call-overlay hidden"
+>
+
+    <div class="active-call-window">
+
+        <div class="active-call-header">
+
+            <div>
+
+                <strong id="activeCallTitle">
+                    Call
+                </strong>
+
+                <span id="activeCallStatus">
+                    Connecting...
+                </span>
+
+            </div>
+
+
+            <button
+                id="leaveCallButton"
+                class="danger-button"
+                type="button"
+            >
+                End Call
+            </button>
+
+        </div>
+
+
+        <div
+            id="callParticipantGrid"
+            class="call-participant-grid"
+        ></div>
+
+
+        <div class="call-controls">
+
+            <button
+                id="toggleMicrophoneButton"
+                type="button"
+                title="Microphone"
+            >
+                🎙️
+            </button>
+
+
+            <button
+                id="toggleCameraButton"
+                type="button"
+                title="Camera"
+            >
+                📹
+            </button>
+
+
+            <button
+                id="shareScreenButton"
+                type="button"
+                title="Share screen"
+            >
+                🖥️
+            </button>
+
+
+            <button
+                id="leaveCallButtonBottom"
+                class="danger-button"
+                type="button"
+                title="End call"
+            >
+                ☎
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     INCOMING CALL
+     ========================================================= -->
+
+<div
+    id="incomingCallToast"
+    class="incoming-call hidden"
+>
+
+    <div
+        id="incomingCallAvatar"
+        class="incoming-call-avatar"
+    >
+        📞
+    </div>
+
+
+    <div>
+
+        <strong id="incomingCallerName">
+            Incoming call
+        </strong>
+
+        <span id="incomingCallType">
+            Voice call
+        </span>
+
+    </div>
+
+
+    <div class="incoming-call-actions">
+
+        <button
+            id="acceptCallButton"
+            class="accept-call"
+            type="button"
+        >
+            ✓
+        </button>
+
+
+        <button
+            id="rejectCallButton"
+            class="reject-call"
+            type="button"
+        >
+            ×
+        </button>
+
+    </div>
+
+</div>
+
+
+
+<div
+    id="toast"
+    class="toast hidden"
+></div>
+
+
+
+<script
+    type="module"
+    src="./supabase.js"
+></script>
+
+<script
+    type="module"
+    src="./community.js"
+></script>
+
+<script
+    type="module"
+    src="./call.js"
+></script>
+
+
+</body>
+
+</html>
