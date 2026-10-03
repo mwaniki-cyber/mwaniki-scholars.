@@ -1,31 +1,27 @@
 /* =========================================================
-   MWANIKI SCHOLARS COMMUNITY
-   community.js
+   MWANIKI SCHOLARS COMMUNITY ENGINE
    ---------------------------------------------------------
-   Handles:
-   - Authentication
-   - Community loading
-   - Community switching
-   - Channel loading
+   - Supabase community/chat engine
    - Messages
-   - Message pagination
-   - Attachments
-   - Images/documents
-   - GIFs
-   - Emoji picker
-   - Voice notes
    - Reactions
+   - Attachments
+   - GIFs
+   - Emoji
+   - Voice notes
    - Delete own messages
-   - Realtime messages/reactions/attachments
+   - Realtime messages
+   - Community switching
+   - Channel switching
    - Rules gate
-   - General-call event dispatch
+   - General-call event bridge
    ---------------------------------------------------------
-   WebRTC is intentionally NOT implemented here.
-   WebRTC lives in call.js.
+   WebRTC/call engine belongs ONLY in call.js
    ========================================================= */
 
 (() => {
+
     "use strict";
+
 
     /* =====================================================
        CONFIG
@@ -43,48 +39,20 @@
     const RULES_VERSION =
         "mwaniki-community-rules-v3";
 
-    const MESSAGE_PAGE_SIZE = 50;
+    const MESSAGE_PAGE_SIZE =
+        50;
 
     const MAX_FILE_SIZE =
         50 * 1024 * 1024;
 
-    const GIF_LIMIT = 24;
-
-    const GIPHY_API_KEY =
-        "YOUR_GIPHY_API_KEY";
-
-    /* =====================================================
-       SUPABASE
-       ===================================================== */
-
-    let supabase = null;
-
-    function getSupabase() {
-
-        if (window.supabaseClient) {
-            return window.supabaseClient;
-        }
-
-        if (window.supabase) {
-            return window.supabase;
-        }
-
-        if (window.sb) {
-            return window.sb;
-        }
-
-        if (window.mwanikiSupabase) {
-            return window.mwanikiSupabase;
-        }
-
-        return null;
-    }
 
     /* =====================================================
        STATE
        ===================================================== */
 
     const state = {
+
+        supabase: null,
 
         user: null,
 
@@ -94,29 +62,31 @@
 
         channels: [],
 
+        members: [],
+
         messages: [],
 
         reactions: [],
 
         attachments: [],
 
-        profiles: new Map(),
+        publicProfiles: [],
 
         selectedCommunity: null,
 
         selectedChannel: null,
 
-        messageLoading: false,
+        selectedMessageForReply: null,
 
-        olderMessagesLoading: false,
+        messageOffset: 0,
 
         hasMoreMessages: true,
 
-        oldestMessageCreatedAt: null,
+        loadingMessages: false,
 
-        rulesAccepted: false,
+        sendingMessage: false,
 
-        realtimeChannels: [],
+        selectedFiles: [],
 
         recording: false,
 
@@ -124,31 +94,65 @@
 
         recordedChunks: [],
 
-        gifSearchTimeout: null,
+        recordingStartedAt: 0,
 
-        currentGifQuery: "",
+        recordingTimer: null,
+
+        realtimeChannel: null,
+
+        emojiOpen: false,
+
+        gifOpen: false,
+
+        memberSidebarOpen: true,
 
         initialized: false
 
     };
 
+
     /* =====================================================
-       DOM HELPER
+       DOM
        ===================================================== */
 
-    function $(selector) {
-        return document.querySelector(selector);
-    }
+    const $ = (id) =>
+        document.getElementById(id);
 
-    function $all(selector) {
-        return Array.from(
-            document.querySelectorAll(selector)
+
+    /* =====================================================
+       UTILITIES
+       ===================================================== */
+
+    function sleep(ms) {
+        return new Promise(resolve =>
+            setTimeout(resolve, ms)
         );
     }
 
-    /* =====================================================
-       HTML ESCAPING
-       ===================================================== */
+
+    async function waitForSupabase(timeout = 10000) {
+
+        const started =
+            Date.now();
+
+        while (!window.supabase) {
+
+            if (
+                Date.now() - started >
+                timeout
+            ) {
+                throw new Error(
+                    "Supabase client was not available after 10 seconds."
+                );
+            }
+
+            await sleep(100);
+
+        }
+
+        return window.supabase;
+    }
+
 
     function escapeHtml(value) {
 
@@ -160,42 +164,194 @@
             .replace(/'/g, "&#039;");
     }
 
-    function safeUrl(value) {
 
-        if (!value) {
-            return "";
-        }
+    function safeUrl(value) {
 
         try {
 
             const url =
-                new URL(value, window.location.href);
+                new URL(value);
 
-            const allowed =
-                [
-                    "http:",
-                    "https:",
-                    "blob:",
-                    "data:"
-                ];
-
-            if (!allowed.includes(url.protocol)) {
-                return "";
+            if (
+                url.protocol === "http:" ||
+                url.protocol === "https:"
+            ) {
+                return url.href;
             }
 
-            return url.href;
+        } catch (_) {}
 
-        } catch {
+        return "";
+    }
 
+
+    function initials(name) {
+
+        const value =
+            String(name || "Student")
+                .trim();
+
+        if (!value) {
+            return "S";
+        }
+
+        const parts =
+            value
+                .split(/\s+/)
+                .filter(Boolean);
+
+        if (parts.length === 1) {
+            return parts[0]
+                .slice(0, 2)
+                .toUpperCase();
+        }
+
+        return (
+            parts[0][0] +
+            parts[parts.length - 1][0]
+        ).toUpperCase();
+    }
+
+
+    function formatFileSize(bytes) {
+
+        const size =
+            Number(bytes || 0);
+
+        if (size < 1024) {
+            return `${size} B`;
+        }
+
+        if (size < 1024 * 1024) {
+            return `${(size / 1024).toFixed(1)} KB`;
+        }
+
+        return `${(
+            size /
+            (1024 * 1024)
+        ).toFixed(1)} MB`;
+    }
+
+
+    function formatTime(dateValue) {
+
+        if (!dateValue) {
             return "";
+        }
+
+        const date =
+            new Date(dateValue);
+
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+
+        return new Intl.DateTimeFormat(
+            undefined,
+            {
+                hour: "numeric",
+                minute: "2-digit"
+            }
+        ).format(date);
+    }
+
+
+    function formatRecordingTime(seconds) {
+
+        const value =
+            Math.max(0, Number(seconds || 0));
+
+        const minutes =
+            Math.floor(value / 60);
+
+        const remaining =
+            value % 60;
+
+        return (
+            String(minutes).padStart(2, "0") +
+            ":" +
+            String(remaining).padStart(2, "0")
+        );
+    }
+
+
+    function showToast(message) {
+
+        const toast =
+            $("communityToast");
+
+        if (!toast) {
+            return;
+        }
+
+        toast.textContent =
+            message;
+
+        toast.classList.remove("hidden");
+
+        clearTimeout(
+            showToast.timer
+        );
+
+        showToast.timer =
+            setTimeout(() => {
+
+                toast.classList.add(
+                    "hidden"
+                );
+
+            }, 2800);
+    }
+
+
+    function setMessage(
+        elementId,
+        message
+    ) {
+
+        const element =
+            $(elementId);
+
+        if (element) {
+            element.textContent =
+                message || "";
         }
     }
 
+
+    function closePickerMenus() {
+
+        const emojiPicker =
+            $("emojiPicker");
+
+        const gifPicker =
+            $("gifPicker");
+
+        if (emojiPicker) {
+            emojiPicker.classList.add(
+                "hidden"
+            );
+        }
+
+        if (gifPicker) {
+            gifPicker.classList.add(
+                "hidden"
+            );
+        }
+
+        state.emojiOpen = false;
+        state.gifOpen = false;
+    }
+
+
     /* =====================================================
        COMMUNITY ICONS
+       -----------------------------------------------------
+       IMPORTANT:
+       icon_url is intentionally NOT used here.
        ===================================================== */
 
-    function getCommunityIcon(community) {
+    function communityIcon(community) {
 
         const name =
             String(
@@ -204,11 +360,17 @@
                 .trim()
                 .toLowerCase();
 
-        if (name.includes("gaming")) {
+        if (
+            name.includes("gaming") ||
+            name.includes("game")
+        ) {
             return "🎮";
         }
 
-        if (name.includes("meme")) {
+        if (
+            name.includes("meme") ||
+            name.includes("fun")
+        ) {
             return "😂";
         }
 
@@ -223,226 +385,77 @@
         return "🌐";
     }
 
-    function getChannelIcon(channel) {
 
-        return channel?.icon || "#";
-    }
+    function channelIcon(channel) {
 
-    /* =====================================================
-       DATE / FILE HELPERS
-       ===================================================== */
-
-    function formatMessageTime(value) {
-
-        if (!value) {
-            return "";
-        }
-
-        const date =
-            new Date(value);
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-            return "";
-        }
-
-        return date.toLocaleTimeString(
-            [],
-            {
-                hour: "2-digit",
-                minute: "2-digit"
-            }
-        );
-    }
-
-    function formatMessageDate(value) {
-
-        if (!value) {
-            return "";
-        }
-
-        const date =
-            new Date(value);
-
-        return date.toLocaleDateString(
-            [],
-            {
-                day: "numeric",
-                month: "short",
-                year: "numeric"
-            }
-        );
-    }
-
-    function formatFileSize(bytes) {
-
-        const size =
-            Number(bytes || 0);
-
-        if (size < 1024) {
-            return `${size} B`;
-        }
-
-        if (size < 1024 * 1024) {
-            return `${(
-                size / 1024
-            ).toFixed(1)} KB`;
-        }
-
-        if (size < 1024 * 1024 * 1024) {
-            return `${(
-                size /
-                (1024 * 1024)
-            ).toFixed(1)} MB`;
-        }
-
-        return `${(
-            size /
-            (1024 * 1024 * 1024)
-        ).toFixed(1)} GB`;
-    }
-
-    function initials(name) {
-
-        const text =
-            String(
-                name || "Student"
-            )
+        const icon =
+            String(channel?.icon || "")
                 .trim();
 
-        if (!text) {
-            return "S";
+        if (icon) {
+            return icon;
         }
 
-        const parts =
-            text.split(/\s+/);
+        const type =
+            String(
+                channel?.channel_type || ""
+            ).toLowerCase();
 
-        if (parts.length === 1) {
-            return parts[0]
-                .slice(0, 2)
-                .toUpperCase();
+        if (type.includes("announcement")) {
+            return "📢";
         }
 
-        return (
-            parts[0][0] +
-            parts[parts.length - 1][0]
-        ).toUpperCase();
+        if (type.includes("study")) {
+            return "📚";
+        }
+
+        if (type.includes("voice")) {
+            return "🔊";
+        }
+
+        return "#";
     }
 
-    /* =====================================================
-       TOAST
-       ===================================================== */
-
-    function toast(message, type = "info") {
-
-        let element =
-            $("#communityToast");
-
-        if (!element) {
-
-            element =
-                document.createElement(
-                    "div"
-                );
-
-            element.id =
-                "communityToast";
-
-            element.className =
-                "community-toast";
-
-            document.body.appendChild(
-                element
-            );
-        }
-
-        element.textContent =
-            message;
-
-        element.dataset.type =
-            type;
-
-        element.classList.add(
-            "show"
-        );
-
-        clearTimeout(
-            element._timer
-        );
-
-        element._timer =
-            setTimeout(() => {
-
-                element.classList.remove(
-                    "show"
-                );
-
-            }, 3000);
-    }
 
     /* =====================================================
-       AUTHENTICATION
+       AUTH
        ===================================================== */
 
-    async function getCurrentUser() {
-
-        supabase =
-            getSupabase();
-
-        if (!supabase) {
-
-            console.error(
-                "Supabase client is not available."
-            );
-
-            return null;
-        }
+    async function loadAuthenticatedUser() {
 
         const {
             data,
             error
         } =
-            await supabase.auth.getSession();
+            await state.supabase.auth.getUser();
 
         if (error) {
-
-            console.error(
-                "Session error:",
-                error
-            );
-
-            return null;
+            throw error;
         }
 
-        return data?.session?.user || null;
-    }
+        if (!data?.user) {
 
-    async function requireAuthentication() {
+            showToast(
+                "Please sign in before entering the community."
+            );
+
+            throw new Error(
+                "No authenticated Supabase user."
+            );
+        }
 
         state.user =
-            await getCurrentUser();
+            data.user;
 
-        if (!state.user) {
-
-            toast(
-                "You must be signed in to use the community.",
-                "error"
-            );
-
-            return false;
-        }
-
-        return true;
+        return data.user;
     }
+
 
     /* =====================================================
        PROFILE
        ===================================================== */
 
-    async function loadOwnProfile() {
+    async function loadProfile() {
 
         if (!state.user) {
             return;
@@ -452,7 +465,7 @@
             data,
             error
         } =
-            await supabase
+            await state.supabase
                 .from("students")
                 .select("*")
                 .eq(
@@ -462,242 +475,191 @@
                 .maybeSingle();
 
         if (error) {
-
             console.warn(
-                "Could not load student profile:",
+                "Profile query warning:",
                 error
             );
-
-            return;
         }
 
         state.profile =
-            data || {};
+            data || {
+                id: state.user.id,
+                full_name:
+                    state.user.user_metadata
+                        ?.full_name ||
+                    state.user.email ||
+                    "Student",
+                email:
+                    state.user.email || ""
+            };
 
-        updateOwnProfileUI();
+        renderCurrentUser();
     }
 
-    function getProfileName(profile) {
 
-        if (!profile) {
-            return "Student";
-        }
+    function getCurrentUserName() {
 
         return (
-            profile.full_name ||
-            profile.name ||
-            profile.display_name ||
-            profile.username ||
+            state.profile?.full_name ||
+            state.profile?.name ||
+            state.user?.user_metadata
+                ?.full_name ||
             state.user?.email ||
             "Student"
         );
     }
 
+
     function getProfileAvatar(profile) {
 
-        if (!profile) {
-            return "";
-        }
-
         return (
-            profile.avatar_url ||
-            profile.profile_image ||
-            profile.photo_url ||
-            profile.image_url ||
+            profile?.avatar_url ||
+            profile?.profile_image ||
+            profile?.photo_url ||
+            profile?.image_url ||
+            profile?.photo ||
             ""
         );
     }
 
-    function updateOwnProfileUI() {
+
+    function renderCurrentUser() {
 
         const name =
-            getProfileName(
-                state.profile
-            );
+            getCurrentUserName();
 
         const avatar =
             getProfileAvatar(
                 state.profile
             );
 
-        const headerAvatar =
-            $("#headerProfileAvatar");
+        const avatarElement =
+            $("currentUserAvatar");
 
-        const profileAvatar =
-            $("#profileLargeAvatar");
+        if (avatarElement) {
 
-        if (headerAvatar) {
+            if (safeUrl(avatar)) {
 
-            if (avatar) {
-
-                headerAvatar.innerHTML = `
-                    <img
-                        src="${escapeHtml(
-                            safeUrl(avatar)
-                        )}"
-                        alt=""
-                    >
-                `;
+                avatarElement.innerHTML =
+                    `<img src="${escapeHtml(
+                        safeUrl(avatar)
+                    )}" alt="">`;
 
             } else {
 
-                headerAvatar.textContent =
+                avatarElement.textContent =
                     initials(name);
             }
         }
 
-        if (profileAvatar) {
+        const nameElement =
+            $("currentUserName");
 
-            if (avatar) {
+        if (nameElement) {
+            nameElement.textContent =
+                name;
+        }
 
-                profileAvatar.innerHTML = `
-                    <img
-                        src="${escapeHtml(
-                            safeUrl(avatar)
-                        )}"
-                        alt=""
-                    >
-                `;
+        const status =
+            $("currentUserStatus");
 
-            } else {
-
-                profileAvatar.textContent =
-                    initials(name);
-            }
+        if (status) {
+            status.textContent =
+                "Online";
         }
     }
+
 
     /* =====================================================
        RULES
        ===================================================== */
 
-    function rulesStorageKey() {
+    function rulesAccepted() {
 
-        if (!state.user) {
-            return null;
-        }
+        try {
 
-        return `
-            ${RULES_VERSION}:
-            ${state.user.id}
-        `.replace(/\s+/g, "");
-    }
+            return (
+                localStorage.getItem(
+                    RULES_VERSION
+                ) === "accepted"
+            );
 
-    function checkRulesAccepted() {
+        } catch (_) {
 
-        const key =
-            rulesStorageKey();
-
-        if (!key) {
             return false;
-        }
 
-        return (
-            localStorage.getItem(key) ===
-            "accepted"
-        );
+        }
     }
+
 
     function showRulesGate() {
 
         const gate =
-            $("#rulesGate");
+            $("rulesGate");
 
         if (!gate) {
+            return;
+        }
+
+        if (rulesAccepted()) {
+
+            gate.classList.add(
+                "hidden"
+            );
+
             return;
         }
 
         gate.classList.remove(
             "hidden"
         );
-
-        gate.style.display =
-            "flex";
-
-        const checkbox =
-            $("#communityRulesAgreement");
-
-        if (checkbox) {
-            checkbox.checked = false;
-        }
     }
 
-    function hideRulesGate() {
-
-        const gate =
-            $("#rulesGate");
-
-        if (!gate) {
-            return;
-        }
-
-        gate.classList.add(
-            "hidden"
-        );
-
-        gate.style.display =
-            "none";
-    }
 
     function setupRules() {
 
-        state.rulesAccepted =
-            checkRulesAccepted();
-
-        if (state.rulesAccepted) {
-
-            hideRulesGate();
-
-            return;
-        }
-
-        showRulesGate();
-
         const checkbox =
-            $("#communityRulesAgreement");
+            $("communityRulesAgreement");
 
         const button =
-            $("#acceptRulesButton");
+            $("acceptRulesButton");
 
         if (!button) {
             return;
         }
 
-        button.onclick =
+        button.addEventListener(
+            "click",
             () => {
 
                 if (
-                    checkbox &&
+                    !checkbox ||
                     !checkbox.checked
                 ) {
 
-                    const message =
-                        $("#rulesGateMessage");
-
-                    if (message) {
-
-                        message.textContent =
-                            "Please agree to the community rules first.";
-
-                    }
+                    setMessage(
+                        "rulesGateMessage",
+                        "Please accept the community guidelines first."
+                    );
 
                     return;
                 }
 
-                const key =
-                    rulesStorageKey();
-
                 localStorage.setItem(
-                    key,
+                    RULES_VERSION,
                     "accepted"
                 );
 
-                state.rulesAccepted =
-                    true;
+                $("rulesGate")
+                    ?.classList.add(
+                        "hidden"
+                    );
 
-                hideRulesGate();
-            };
+            }
+        );
+
     }
+
 
     /* =====================================================
        COMMUNITIES
@@ -709,7 +671,7 @@
             data,
             error
         } =
-            await supabase
+            await state.supabase
                 .from("chat_communities")
                 .select("*")
                 .eq(
@@ -724,35 +686,50 @@
                 );
 
         if (error) {
-
-            console.error(
-                "Community loading error:",
-                error
-            );
-
-            toast(
-                "Could not load communities.",
-                "error"
-            );
-
-            return;
+            throw error;
         }
 
         state.communities =
             data || [];
 
+        console.log(
+            `Community: ${state.communities.length} communities loaded.`
+        );
+
+        if (!state.communities.length) {
+            throw new Error(
+                "No active communities were found."
+            );
+        }
+
+        selectInitialCommunity();
+
         renderCommunityRail();
 
-        const savedId =
-            localStorage.getItem(
-                "mwanikiSelectedCommunity"
-            );
+        renderCommunityModal();
+
+        updateSelectedCommunityUI();
+    }
+
+
+    function selectInitialCommunity() {
+
+        let savedId = null;
+
+        try {
+
+            savedId =
+                localStorage.getItem(
+                    "mwanikiSelectedCommunity"
+                );
+
+        } catch (_) {}
 
         let selected =
             state.communities.find(
                 community =>
-                    community.id ===
-                    savedId
+                    String(community.id) ===
+                    String(savedId)
             );
 
         if (!selected) {
@@ -760,7 +737,9 @@
             selected =
                 state.communities.find(
                     community =>
-                        community.id ===
+                        String(
+                            community.id
+                        ) ===
                         DEFAULT_DISCUSSION_ID
                 );
         }
@@ -771,105 +750,35 @@
                 state.communities.find(
                     community =>
                         String(
-                            community.name || ""
-                        )
-                            .toLowerCase()
-                            .includes(
-                                "mwaniki scholars"
-                            )
+                            community.name
+                        ).toLowerCase() ===
+                        DEFAULT_DISCUSSION_NAME.toLowerCase()
                 );
         }
 
         if (!selected) {
             selected =
-                state.communities[0] ||
-                null;
-        }
-
-        if (selected) {
-            await selectCommunity(
-                selected
-            );
-        }
-
-        console.log(
-            `${state.communities.length} community(s) loaded.`
-        );
-    }
-
-    async function selectCommunity(
-        community
-    ) {
-
-        if (!community) {
-            return;
+                state.communities[0];
         }
 
         state.selectedCommunity =
-            community;
+            selected;
 
-        localStorage.setItem(
-            "mwanikiSelectedCommunity",
-            community.id
-        );
+        try {
 
-        updateSelectedCommunityUI();
+            localStorage.setItem(
+                "mwanikiSelectedCommunity",
+                selected.id
+            );
 
-        renderCommunityRail();
-
-        await loadChannels();
-
-        openCommunityModal(false);
+        } catch (_) {}
     }
 
-    function updateSelectedCommunityUI() {
-
-        const community =
-            state.selectedCommunity;
-
-        if (!community) {
-            return;
-        }
-
-        const icon =
-            $("#selectedCommunityIcon");
-
-        const name =
-            $("#selectedCommunityName");
-
-        const description =
-            $("#selectedCommunityDescription");
-
-        if (icon) {
-
-            icon.innerHTML = `
-                <span class="selected-community-emoji">
-                    ${getCommunityIcon(
-                        community
-                    )}
-                </span>
-            `;
-        }
-
-        if (name) {
-
-            name.textContent =
-                community.name ||
-                DEFAULT_DISCUSSION_NAME;
-        }
-
-        if (description) {
-
-            description.textContent =
-                community.description ||
-                "Academic Community";
-        }
-    }
 
     function renderCommunityRail() {
 
         const container =
-            $("#communityRailList");
+            $("communityRailList");
 
         if (!container) {
             return;
@@ -880,33 +789,39 @@
                 .map(community => {
 
                     const active =
-                        community.id ===
-                        state.selectedCommunity?.id;
+                        String(
+                            community.id
+                        ) ===
+                        String(
+                            state.selectedCommunity?.id
+                        );
 
                     return `
                         <button
                             type="button"
-                            class="community-rail-button ${
+                            class="community-rail-item ${
                                 active
                                     ? "active"
                                     : ""
                             }"
-                            data-community-id="${escapeHtml(
-                                community.id
-                            )}"
-                            title="${escapeHtml(
-                                community.name
-                            )}"
-                            aria-label="${escapeHtml(
-                                community.name
-                            )}"
+                            data-community-id="${
+                                escapeHtml(
+                                    community.id
+                                )
+                            }"
+                            title="${
+                                escapeHtml(
+                                    community.name
+                                )
+                            }"
                         >
-                            <span
-                                class="community-rail-icon"
-                                aria-hidden="true"
-                            >
-                                ${getCommunityIcon(
-                                    community
+                            <span class="community-rail-icon">
+                                ${communityIcon(community)}
+                            </span>
+
+                            <span class="community-rail-name">
+                                ${escapeHtml(
+                                    community.name
                                 )}
                             </span>
                         </button>
@@ -925,192 +840,59 @@
                     "click",
                     async () => {
 
-                        const community =
-                            state.communities.find(
-                                item =>
-                                    item.id ===
-                                    button.dataset
-                                        .communityId
-                            );
+                        const id =
+                            button.dataset.communityId;
 
-                        if (!community) {
-                            return;
-                        }
+                        await switchCommunity(id);
 
-                        await selectCommunity(
-                            community
-                        );
                     }
                 );
+
             });
     }
 
-    /* =====================================================
-       COMMUNITY MODAL
-       ===================================================== */
 
-    function openCommunityModal(
-        show = true
-    ) {
-
-        const modal =
-            $("#communityModal");
-
-        if (!modal) {
-            return;
-        }
-
-        if (show) {
-
-            modal.classList.add(
-                "open"
-            );
-
-            modal.classList.remove(
-                "hidden"
-            );
-
-            modal.style.display =
-                "flex";
-
-            renderCommunityModal();
-
-        } else {
-
-            closeCommunityModal();
-        }
-    }
-
-    function closeCommunityModal() {
-
-        const modal =
-            $("#communityModal");
-
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.remove(
-            "open"
-        );
-
-        modal.classList.add(
-            "hidden"
-        );
-
-        modal.style.display =
-            "none";
-    }
-
-    function renderCommunityModal(
-        search = ""
-    ) {
+    function renderCommunityModal() {
 
         const container =
-            $("#communityChoiceList");
+            $("communityChoiceList");
 
         if (!container) {
             return;
         }
 
-        const term =
-            String(search)
-                .trim()
-                .toLowerCase();
-
-        const communities =
-            state.communities.filter(
-                community => {
-
-                    if (!term) {
-                        return true;
-                    }
-
-                    const name =
-                        String(
-                            community.name ||
-                            ""
-                        ).toLowerCase();
-
-                    const description =
-                        String(
-                            community.description ||
-                            ""
-                        ).toLowerCase();
-
-                    return (
-                        name.includes(term) ||
-                        description.includes(term)
-                    );
-                }
-            );
-
-        if (!communities.length) {
-
-            container.innerHTML = `
-                <div class="community-empty">
-                    <div>🔎</div>
-                    <strong>
-                        No communities found
-                    </strong>
-                </div>
-            `;
-
-            return;
-        }
-
         container.innerHTML =
-            communities
+            state.communities
                 .map(community => {
-
-                    const active =
-                        community.id ===
-                        state.selectedCommunity?.id;
 
                     return `
                         <button
                             type="button"
-                            class="community-choice ${
-                                active
-                                    ? "active"
-                                    : ""
+                            class="community-choice"
+                            data-community-choice="${
+                                escapeHtml(
+                                    community.id
+                                )
                             }"
-                            data-community-id="${escapeHtml(
-                                community.id
-                            )}"
                         >
+                            <span class="community-choice-icon">
+                                ${communityIcon(community)}
+                            </span>
 
-                            <div class="community-choice-icon">
-
-                                <span
-                                    class="community-choice-emoji"
-                                    aria-hidden="true"
-                                >
-                                    ${getCommunityIcon(
-                                        community
-                                    )}
-                                </span>
-
-                            </div>
-
-                            <div class="community-choice-info">
-
+                            <span class="community-choice-info">
                                 <strong>
                                     ${escapeHtml(
-                                        community.name ||
-                                        "Community"
+                                        community.name
                                     )}
                                 </strong>
 
                                 <span>
                                     ${escapeHtml(
                                         community.description ||
-                                        "Academic Community"
+                                        "Community"
                                     )}
                                 </span>
-
-                            </div>
-
+                            </span>
                         </button>
                     `;
 
@@ -1119,7 +901,7 @@
 
         container
             .querySelectorAll(
-                "[data-community-id]"
+                "[data-community-choice]"
             )
             .forEach(button => {
 
@@ -1127,27 +909,88 @@
                     "click",
                     async () => {
 
-                        const community =
-                            state.communities.find(
-                                item =>
-                                    item.id ===
-                                    button.dataset
-                                        .communityId
-                            );
-
-                        if (!community) {
-                            return;
-                        }
+                        await switchCommunity(
+                            button.dataset.communityChoice
+                        );
 
                         closeCommunityModal();
 
-                        await selectCommunity(
-                            community
-                        );
                     }
                 );
+
             });
     }
+
+
+    async function switchCommunity(id) {
+
+        const community =
+            state.communities.find(
+                item =>
+                    String(item.id) ===
+                    String(id)
+            );
+
+        if (!community) {
+            return;
+        }
+
+        state.selectedCommunity =
+            community;
+
+        try {
+
+            localStorage.setItem(
+                "mwanikiSelectedCommunity",
+                community.id
+            );
+
+        } catch (_) {}
+
+        renderCommunityRail();
+
+        updateSelectedCommunityUI();
+
+        await loadChannels();
+
+    }
+
+
+    function updateSelectedCommunityUI() {
+
+        const community =
+            state.selectedCommunity;
+
+        if (!community) {
+            return;
+        }
+
+        const icon =
+            $("selectedCommunityIcon");
+
+        if (icon) {
+            icon.textContent =
+                communityIcon(community);
+        }
+
+        const name =
+            $("selectedCommunityName");
+
+        if (name) {
+            name.textContent =
+                community.name;
+        }
+
+        const description =
+            $("selectedCommunityDescription");
+
+        if (description) {
+            description.textContent =
+                community.description ||
+                "Mwaniki Scholars Community";
+        }
+    }
+
 
     /* =====================================================
        CHANNELS
@@ -1163,7 +1006,7 @@
             data,
             error
         } =
-            await supabase
+            await state.supabase
                 .from("chat_channels")
                 .select("*")
                 .eq(
@@ -1181,8 +1024,7 @@
                 .order(
                     "position",
                     {
-                        ascending: true,
-                        nullsFirst: false
+                        ascending: true
                     }
                 )
                 .order(
@@ -1193,34 +1035,52 @@
                 );
 
         if (error) {
-
-            console.error(
-                "Channel loading error:",
-                error
-            );
-
-            toast(
-                "Could not load channels.",
-                "error"
-            );
-
-            return;
+            throw error;
         }
 
         state.channels =
             data || [];
 
+        console.log(
+            `Community: ${state.channels.length} channels loaded automatically.`
+        );
+
         renderChannels();
 
-        const savedId =
-            localStorage.getItem(
-                `mwanikiSelectedChannel_${state.selectedCommunity.id}`
-            );
+        selectInitialChannel();
+
+        await loadChannelData();
+    }
+
+
+    function selectInitialChannel() {
+
+        if (!state.channels.length) {
+
+            state.selectedChannel =
+                null;
+
+            updateSelectedChannelUI();
+
+            return;
+        }
+
+        let savedId = null;
+
+        try {
+
+            savedId =
+                localStorage.getItem(
+                    "mwanikiSelectedChannel"
+                );
+
+        } catch (_) {}
 
         let channel =
             state.channels.find(
                 item =>
-                    item.id === savedId
+                    String(item.id) ===
+                    String(savedId)
             );
 
         if (!channel) {
@@ -1229,138 +1089,112 @@
                 state.channels.find(
                     item =>
                         String(
-                            item.name || ""
-                        )
-                            .toLowerCase() ===
+                            item.name
+                        ).toLowerCase() ===
                         "general"
                 );
         }
 
         if (!channel) {
             channel =
-                state.channels[0] ||
-                null;
+                state.channels[0];
         }
 
-        if (channel) {
-            await selectChannel(
-                channel
+        state.selectedChannel =
+            channel;
+
+        try {
+
+            localStorage.setItem(
+                "mwanikiSelectedChannel",
+                channel.id
             );
-        }
 
-        console.log(
-            `${state.channels.length} channel(s) loaded automatically`
-        );
+        } catch (_) {}
     }
 
-    function renderChannels() {
+
+    function renderChannels(
+        filter = ""
+    ) {
 
         const container =
-            $("#channelList");
+            $("channelList");
 
         if (!container) {
             return;
         }
 
-        if (!state.channels.length) {
+        const query =
+            String(filter || "")
+                .trim()
+                .toLowerCase();
 
-            container.innerHTML = `
-                <div class="channel-empty">
-                    No channels available.
-                </div>
-            `;
+        const channels =
+            state.channels.filter(
+                channel =>
+                    !query ||
+                    String(
+                        channel.name || ""
+                    )
+                        .toLowerCase()
+                        .includes(query)
+            );
+
+        if (!channels.length) {
+
+            container.innerHTML =
+                `<div class="channel-empty">
+                    No channels found.
+                </div>`;
 
             return;
         }
 
-        const grouped =
-            new Map();
-
-        state.channels.forEach(
-            channel => {
-
-                const type =
-                    channel.channel_type ||
-                    "text";
-
-                if (!grouped.has(type)) {
-                    grouped.set(
-                        type,
-                        []
-                    );
-                }
-
-                grouped
-                    .get(type)
-                    .push(channel);
-            }
-        );
-
-        let html = "";
-
-        grouped.forEach(
-            (channels, type) => {
-
-                html += `
-                    <div class="channel-group">
-
-                        <div class="channel-group-title">
-                            ${escapeHtml(
-                                formatChannelGroup(
-                                    type
-                                )
-                            )}
-                        </div>
-                `;
-
-                channels.forEach(
-                    channel => {
-
-                        const active =
-                            channel.id ===
-                            state.selectedChannel?.id;
-
-                        html += `
-                            <button
-                                type="button"
-                                class="channel-item ${
-                                    active
-                                        ? "active"
-                                        : ""
-                                }"
-                                data-channel-id="${escapeHtml(
-                                    channel.id
-                                )}"
-                            >
-
-                                <span class="channel-icon">
-                                    ${escapeHtml(
-                                        getChannelIcon(
-                                            channel
-                                        )
-                                    )}
-                                </span>
-
-                                <span class="channel-name">
-                                    ${escapeHtml(
-                                        channel.name ||
-                                        "channel"
-                                    )}
-                                </span>
-
-                            </button>
-                        `;
-                    }
-                );
-
-                html += `
-                    </div>
-                `;
-            }
-        );
-
         container.innerHTML =
-            html;
+            channels
+                .map(channel => {
+
+                    const active =
+                        String(
+                            channel.id
+                        ) ===
+                        String(
+                            state.selectedChannel?.id
+                        );
+
+                    return `
+                        <button
+                            type="button"
+                            class="channel-item ${
+                                active
+                                    ? "active"
+                                    : ""
+                            }"
+                            data-channel-id="${
+                                escapeHtml(
+                                    channel.id
+                                )
+                            }"
+                        >
+                            <span class="channel-icon">
+                                ${escapeHtml(
+                                    channelIcon(
+                                        channel
+                                    )
+                                )}
+                            </span>
+
+                            <span class="channel-name">
+                                ${escapeHtml(
+                                    channel.name
+                                )}
+                            </span>
+                        </button>
+                    `;
+
+                })
+                .join("");
 
         container
             .querySelectorAll(
@@ -1372,48 +1206,25 @@
                     "click",
                     async () => {
 
-                        const channel =
-                            state.channels.find(
-                                item =>
-                                    item.id ===
-                                    button.dataset
-                                        .channelId
-                            );
-
-                        if (!channel) {
-                            return;
-                        }
-
-                        await selectChannel(
-                            channel
+                        await switchChannel(
+                            button.dataset.channelId
                         );
+
                     }
                 );
+
             });
     }
 
-    function formatChannelGroup(type) {
 
-        const value =
-            String(type || "")
-                .toLowerCase();
+    async function switchChannel(id) {
 
-        if (
-            value.includes("voice")
-        ) {
-            return "VOICE CHANNELS";
-        }
-
-        if (
-            value.includes("announcement")
-        ) {
-            return "ANNOUNCEMENTS";
-        }
-
-        return "TEXT CHANNELS";
-    }
-
-    async function selectChannel(channel) {
+        const channel =
+            state.channels.find(
+                item =>
+                    String(item.id) ===
+                    String(id)
+            );
 
         if (!channel) {
             return;
@@ -1422,19 +1233,27 @@
         state.selectedChannel =
             channel;
 
-        localStorage.setItem(
-            `mwanikiSelectedChannel_${state.selectedCommunity.id}`,
-            channel.id
-        );
+        try {
 
-        updateSelectedChannelUI();
+            localStorage.setItem(
+                "mwanikiSelectedChannel",
+                channel.id
+            );
+
+        } catch (_) {}
 
         renderChannels();
 
-        await loadMessages();
+        updateSelectedChannelUI();
 
-        subscribeToChannel();
+        await loadChannelData();
+
+        subscribeToRealtime();
+
+        scrollMessagesToBottom();
+
     }
+
 
     function updateSelectedChannelUI() {
 
@@ -1442,218 +1261,336 @@
             state.selectedChannel;
 
         if (!channel) {
+
+            $("selectedChannelName")
+                && (
+                    $("selectedChannelName")
+                        .textContent =
+                        "No channel"
+                );
+
+            $("selectedChannelDescription")
+                && (
+                    $("selectedChannelDescription")
+                        .textContent =
+                        "No active channel is available."
+                );
+
             return;
         }
 
-        const name =
-            $("#selectedChannelName");
+        const icon =
+            $("selectedChannelIcon");
 
-        const description =
-            $("#selectedChannelDescription");
+        if (icon) {
+            icon.textContent =
+                channelIcon(channel);
+        }
+
+        const name =
+            $("selectedChannelName");
 
         if (name) {
-
             name.textContent =
-                channel.name ||
-                "general";
+                channel.name;
         }
+
+        const description =
+            $("selectedChannelDescription");
 
         if (description) {
-
             description.textContent =
                 channel.description ||
-                "Community discussion";
+                "Community discussion channel";
+        }
+
+        const welcomeTitle =
+            $("messageWelcomeTitle");
+
+        if (welcomeTitle) {
+            welcomeTitle.textContent =
+                `Welcome to ${channel.name}`;
+        }
+
+        const welcomeText =
+            $("messageWelcomeText");
+
+        if (welcomeText) {
+            welcomeText.textContent =
+                channel.description ||
+                "This is the beginning of this channel.";
+        }
+
+        const input =
+            $("messageInput");
+
+        if (input) {
+
+            input.placeholder =
+                `Message #${channel.name}`;
         }
     }
+
+
+    /* =====================================================
+       CHANNEL DATA
+       ===================================================== */
+
+    async function loadChannelData() {
+
+        if (!state.selectedChannel) {
+
+            clearMessages();
+
+            return;
+        }
+
+        state.messageOffset = 0;
+        state.hasMoreMessages = true;
+
+        await loadMessages(true);
+
+        await loadReactions();
+
+        await loadAttachments();
+
+        await loadMembers();
+
+        renderMessages();
+
+        subscribeToRealtime();
+
+    }
+
 
     /* =====================================================
        MESSAGES
        ===================================================== */
 
-    async function loadMessages() {
+    async function loadMessages(reset = false) {
+
+        if (
+            state.loadingMessages ||
+            !state.selectedChannel
+        ) {
+            return;
+        }
+
+        if (
+            !reset &&
+            !state.hasMoreMessages
+        ) {
+            return;
+        }
+
+        state.loadingMessages = true;
+
+        $("messageLoading")
+            ?.classList.remove(
+                "hidden"
+            );
+
+        try {
+
+            const from =
+                reset
+                    ? 0
+                    : state.messageOffset;
+
+            const to =
+                from +
+                MESSAGE_PAGE_SIZE -
+                1;
+
+            const {
+                data,
+                error
+            } =
+                await state.supabase
+                    .from("chat_messages")
+                    .select("*")
+                    .eq(
+                        "channel_id",
+                        state.selectedChannel.id
+                    )
+                    .order(
+                        "created_at",
+                        {
+                            ascending: true
+                        }
+                    )
+                    .range(
+                        from,
+                        to
+                    );
+
+            if (error) {
+                throw error;
+            }
+
+            const rows =
+                data || [];
+
+            if (reset) {
+
+                state.messages =
+                    rows;
+
+            } else {
+
+                state.messages =
+                    [
+                        ...rows,
+                        ...state.messages
+                    ];
+            }
+
+            state.messageOffset =
+                from + rows.length;
+
+            state.hasMoreMessages =
+                rows.length ===
+                MESSAGE_PAGE_SIZE;
+
+            await loadProfilesForMessages(
+                rows
+            );
+
+            renderMessages();
+
+        } catch (error) {
+
+            console.error(
+                "Message load failed:",
+                error
+            );
+
+            showToast(
+                "Unable to load messages."
+            );
+
+        } finally {
+
+            state.loadingMessages =
+                false;
+
+            $("messageLoading")
+                ?.classList.add(
+                    "hidden"
+                );
+        }
+    }
+
+
+    async function loadProfilesForMessages(
+        messages
+    ) {
+
+        const ids =
+            [
+                ...new Set(
+                    messages
+                        .map(
+                            message =>
+                                message.user_id
+                        )
+                        .filter(Boolean)
+                )
+            ];
+
+        if (!ids.length) {
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await state.supabase
+                .from("students")
+                .select("*")
+                .in(
+                    "id",
+                    ids
+                );
+
+        if (error) {
+
+            console.warn(
+                "Student profiles warning:",
+                error
+            );
+
+            return;
+        }
+
+        const existing =
+            new Map(
+                state.publicProfiles.map(
+                    profile =>
+                        [
+                            String(profile.id),
+                            profile
+                        ]
+                )
+            );
+
+        for (
+            const profile of
+            data || []
+        ) {
+
+            existing.set(
+                String(profile.id),
+                profile
+            );
+
+        }
+
+        state.publicProfiles =
+            Array.from(
+                existing.values()
+            );
+    }
+
+
+    function getMessageProfile(
+        userId
+    ) {
+
+        return state.publicProfiles
+            .find(
+                profile =>
+                    String(profile.id) ===
+                    String(userId)
+            );
+    }
+
+
+    function clearMessages() {
+
+        state.messages = [];
+        state.reactions = [];
+        state.attachments = [];
+
+        const list =
+            $("messageList");
+
+        if (list) {
+            list.innerHTML = "";
+        }
+    }
+
+
+    /* =====================================================
+       REACTIONS
+       ===================================================== */
+
+    async function loadReactions() {
 
         if (!state.selectedChannel) {
             return;
         }
-
-        state.messageLoading =
-            true;
-
-        state.hasMoreMessages =
-            true;
-
-        state.oldestMessageCreatedAt =
-            null;
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("chat_messages")
-                .select("*")
-                .eq(
-                    "channel_id",
-                    state.selectedChannel.id
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                )
-                .limit(
-                    MESSAGE_PAGE_SIZE
-                );
-
-        state.messageLoading =
-            false;
-
-        if (error) {
-
-            console.error(
-                "Message loading error:",
-                error
-            );
-
-            toast(
-                "Could not load messages.",
-                "error"
-            );
-
-            return;
-        }
-
-        state.messages =
-            (data || [])
-                .reverse();
-
-        if (
-            state.messages.length <
-            MESSAGE_PAGE_SIZE
-        ) {
-            state.hasMoreMessages =
-                false;
-        }
-
-        if (state.messages.length) {
-
-            state.oldestMessageCreatedAt =
-                state.messages[0]
-                    .created_at;
-        }
-
-        await loadMessageRelatedData();
-
-        renderMessages();
-
-        scrollMessagesToBottom();
-    }
-
-    async function loadOlderMessages() {
-
-        if (
-            state.olderMessagesLoading ||
-            !state.hasMoreMessages ||
-            !state.selectedChannel ||
-            !state.oldestMessageCreatedAt
-        ) {
-            return;
-        }
-
-        state.olderMessagesLoading =
-            true;
-
-        const container =
-            $("#messageList");
-
-        const oldHeight =
-            container?.scrollHeight || 0;
-
-        const oldTop =
-            container?.scrollTop || 0;
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("chat_messages")
-                .select("*")
-                .eq(
-                    "channel_id",
-                    state.selectedChannel.id
-                )
-                .lt(
-                    "created_at",
-                    state.oldestMessageCreatedAt
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: false
-                    }
-                )
-                .limit(
-                    MESSAGE_PAGE_SIZE
-                );
-
-        state.olderMessagesLoading =
-            false;
-
-        if (error) {
-
-            console.error(
-                "Older messages error:",
-                error
-            );
-
-            return;
-        }
-
-        const older =
-            (data || [])
-                .reverse();
-
-        if (
-            older.length <
-            MESSAGE_PAGE_SIZE
-        ) {
-            state.hasMoreMessages =
-                false;
-        }
-
-        if (older.length) {
-
-            state.messages =
-                [
-                    ...older,
-                    ...state.messages
-                ];
-
-            state.oldestMessageCreatedAt =
-                older[0].created_at;
-
-            await loadMessageRelatedData();
-
-            renderMessages();
-
-            if (container) {
-
-                const newHeight =
-                    container.scrollHeight;
-
-                container.scrollTop =
-                    oldTop +
-                    (
-                        newHeight -
-                        oldHeight
-                    );
-            }
-        }
-    }
-
-    async function loadMessageRelatedData() {
 
         const ids =
             state.messages
@@ -1664,71 +1601,9 @@
                 .filter(Boolean);
 
         if (!ids.length) {
+
             state.reactions = [];
-            state.attachments = [];
-            return;
-        }
 
-        const [
-            reactionResult,
-            attachmentResult
-        ] =
-            await Promise.all([
-
-                supabase
-                    .from(
-                        "chat_message_reactions"
-                    )
-                    .select("*")
-                    .in(
-                        "message_id",
-                        ids
-                    ),
-
-                supabase
-                    .from(
-                        "chat_attachments"
-                    )
-                    .select("*")
-                    .in(
-                        "message_id",
-                        ids
-                    )
-
-            ]);
-
-        if (!reactionResult.error) {
-
-            state.reactions =
-                reactionResult.data ||
-                [];
-        }
-
-        if (!attachmentResult.error) {
-
-            state.attachments =
-                attachmentResult.data ||
-                [];
-        }
-
-        await loadMessageProfiles();
-    }
-
-    async function loadMessageProfiles() {
-
-        const userIds =
-            [
-                ...new Set(
-                    state.messages
-                        .map(
-                            message =>
-                                message.user_id
-                        )
-                        .filter(Boolean)
-                )
-            ];
-
-        if (!userIds.length) {
             return;
         }
 
@@ -1736,488 +1611,43 @@
             data,
             error
         } =
-            await supabase
+            await state.supabase
                 .from(
-                    "students"
+                    "chat_message_reactions"
                 )
                 .select("*")
                 .in(
-                    "id",
-                    userIds
+                    "message_id",
+                    ids
                 );
 
         if (error) {
 
             console.warn(
-                "Student profile lookup failed:",
+                "Reaction load warning:",
                 error
             );
 
             return;
         }
 
-        (data || []).forEach(
-            profile => {
-
-                state.profiles.set(
-                    profile.id,
-                    profile
-                );
-            }
-        );
+        state.reactions =
+            data || [];
     }
 
-    /* =====================================================
-       MESSAGE RENDERING
-       ===================================================== */
 
-    function renderMessages() {
-
-        const container =
-            $("#messageList");
-
-        if (!container) {
-            return;
-        }
-
-        if (!state.messages.length) {
-
-            container.innerHTML = `
-                <div class="message-empty-state">
-                    <div class="empty-icon">💬</div>
-                    <h3>
-                        No messages yet
-                    </h3>
-                    <p>
-                        Start the conversation.
-                    </p>
-                </div>
-            `;
-
-            return;
-        }
-
-        let html = "";
-
-        let previousDate = "";
-
-        state.messages.forEach(
-            message => {
-
-                const date =
-                    formatMessageDate(
-                        message.created_at
-                    );
-
-                if (date !== previousDate) {
-
-                    html += `
-                        <div class="message-date-divider">
-                            <span>
-                                ${escapeHtml(
-                                    date
-                                )}
-                            </span>
-                        </div>
-                    `;
-
-                    previousDate =
-                        date;
-                }
-
-                html +=
-                    renderMessage(
-                        message
-                    );
-            }
-        );
-
-        container.innerHTML =
-            html;
-
-        attachMessageActions();
-    }
-
-    function renderMessage(message) {
-
-        const profile =
-            state.profiles.get(
-                message.user_id
-            );
-
-        const name =
-            getProfileName(
-                profile
-            );
-
-        const avatar =
-            getProfileAvatar(
-                profile
-            );
-
-        const own =
-            message.user_id ===
-            state.user?.id;
-
-        const deleted =
-            Boolean(
-                message.is_deleted
-            );
-
-        const reactions =
-            getMessageReactions(
-                message.id
-            );
-
-        const attachments =
-            state.attachments.filter(
-                item =>
-                    item.message_id ===
-                    message.id
-            );
-
-        let avatarHtml = "";
-
-        if (avatar) {
-
-            avatarHtml = `
-                <img
-                    src="${escapeHtml(
-                        safeUrl(avatar)
-                    )}"
-                    alt=""
-                    class="message-avatar-image"
-                >
-            `;
-
-        } else {
-
-            avatarHtml = `
-                <span class="message-avatar-initials">
-                    ${escapeHtml(
-                        initials(name)
-                    )}
-                </span>
-            `;
-        }
-
-        let content = "";
-
-        if (deleted) {
-
-            content = `
-                <div class="message-deleted">
-                    This message was deleted.
-                </div>
-            `;
-
-        } else {
-
-            content +=
-                renderMessageContent(
-                    message
-                );
-
-            content +=
-                renderAttachments(
-                    attachments
-                );
-        }
-
-        return `
-            <article
-                class="message-row ${
-                    own ? "own" : ""
-                }"
-                data-message-id="${escapeHtml(
-                    message.id
-                )}"
-            >
-
-                <div class="message-avatar">
-                    ${avatarHtml}
-                </div>
-
-                <div class="message-main">
-
-                    <div class="message-header">
-
-                        <strong class="message-author">
-                            ${escapeHtml(
-                                name
-                            )}
-                        </strong>
-
-                        <time>
-                            ${escapeHtml(
-                                formatMessageTime(
-                                    message.created_at
-                                )
-                            )}
-                        </time>
-
-                    </div>
-
-                    <div class="message-content">
-                        ${content}
-                    </div>
-
-                    ${
-                        deleted
-                            ? ""
-                            : renderReactions(
-                                message.id,
-                                reactions
-                            )
-                    }
-
-                    ${
-                        deleted
-                            ? ""
-                            : `
-                                <div class="message-actions">
-
-                                    <button
-                                        type="button"
-                                        data-action="react"
-                                        data-reaction="👍"
-                                        title="Like"
-                                    >
-                                        👍
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        data-action="react"
-                                        data-reaction="❤️"
-                                        title="Heart"
-                                    >
-                                        ❤️
-                                    </button>
-
-                                    ${
-                                        own
-                                            ? `
-                                                <button
-                                                    type="button"
-                                                    data-action="delete"
-                                                    title="Delete message"
-                                                >
-                                                    🗑️
-                                                </button>
-                                            `
-                                            : ""
-                                    }
-
-                                </div>
-                            `
-                    }
-
-                </div>
-
-            </article>
-        `;
-    }
-
-    function renderMessageContent(message) {
-
-        const type =
-            message.message_type ||
-            "text";
-
-        if (
-            type === "gif"
-        ) {
-
-            const url =
-                safeUrl(
-                    message.content
-                );
-
-            if (!url) {
-                return "";
-            }
-
-            return `
-                <div class="message-gif">
-                    <img
-                        src="${escapeHtml(url)}"
-                        alt="GIF"
-                        loading="lazy"
-                    >
-                </div>
-            `;
-        }
-
-        if (
-            type === "voice"
-        ) {
-
-            const url =
-                safeUrl(
-                    message.content
-                );
-
-            if (!url) {
-                return "";
-            }
-
-            return `
-                <div class="message-audio">
-                    <audio
-                        controls
-                        preload="metadata"
-                        src="${escapeHtml(url)}"
-                    ></audio>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="message-text">
-                ${formatMessageText(
-                    message.content
-                )}
-            </div>
-        `;
-    }
-
-    function formatMessageText(value) {
-
-        let text =
-            escapeHtml(
-                value || ""
-            );
-
-        text =
-            text.replace(
-                /\n/g,
-                "<br>"
-            );
-
-        return text;
-    }
-
-    function renderAttachments(
-        attachments
-    ) {
-
-        if (!attachments.length) {
-            return "";
-        }
-
-        return `
-            <div class="message-attachments">
-
-                ${attachments
-                    .map(
-                        attachment =>
-                            renderAttachment(
-                                attachment
-                            )
-                    )
-                    .join("")}
-
-            </div>
-        `;
-    }
-
-    function renderAttachment(
-        attachment
-    ) {
-
-        const url =
-            safeUrl(
-                attachment.file_url
-            );
-
-        if (!url) {
-            return "";
-        }
-
-        const mime =
-            String(
-                attachment.mime_type || ""
-            ).toLowerCase();
-
-        if (
-            mime.startsWith(
-                "image/"
-            )
-        ) {
-
-            return `
-                <a
-                    class="message-image-attachment"
-                    href="${escapeHtml(url)}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <img
-                        src="${escapeHtml(url)}"
-                        alt="${escapeHtml(
-                            attachment.file_name
-                        )}"
-                        loading="lazy"
-                    >
-                </a>
-            `;
-        }
-
-        return `
-            <a
-                class="message-file-attachment"
-                href="${escapeHtml(url)}"
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-            >
-
-                <span class="file-icon">
-                    📄
-                </span>
-
-                <span class="file-info">
-
-                    <strong>
-                        ${escapeHtml(
-                            attachment.file_name
-                        )}
-                    </strong>
-
-                    <small>
-                        ${escapeHtml(
-                            formatFileSize(
-                                attachment.file_size
-                            )
-                        )}
-                    </small>
-
-                </span>
-
-            </a>
-        `;
-    }
-
-    /* =====================================================
-       REACTIONS
-       ===================================================== */
-
-    function getMessageReactions(
+    function renderMessageReactions(
         messageId
     ) {
 
-        return state.reactions.filter(
-            reaction =>
-                reaction.message_id ===
-                messageId
-        );
-    }
-
-    function renderReactions(
-        messageId,
-        reactions
-    ) {
+        const reactions =
+            state.reactions.filter(
+                reaction =>
+                    String(
+                        reaction.message_id
+                    ) ===
+                    String(messageId)
+            );
 
         if (!reactions.length) {
             return "";
@@ -2226,77 +1656,85 @@
         const grouped =
             new Map();
 
-        reactions.forEach(
-            reaction => {
+        for (
+            const reaction of
+            reactions
+        ) {
 
-                const value =
-                    reaction.reaction ||
-                    "👍";
+            const key =
+                reaction.reaction ||
+                "👍";
 
-                if (!grouped.has(value)) {
-
-                    grouped.set(
-                        value,
-                        {
-                            count: 0,
-                            own: false
-                        }
-                    );
-                }
-
-                const item =
-                    grouped.get(value);
-
-                item.count++;
-
-                if (
-                    reaction.user_id ===
-                    state.user?.id
-                ) {
-
-                    item.own = true;
-                }
+            if (!grouped.has(key)) {
+                grouped.set(
+                    key,
+                    []
+                );
             }
-        );
+
+            grouped.get(key).push(
+                reaction
+            );
+        }
 
         return `
             <div class="message-reactions">
-
-                ${[
-                    ...grouped.entries()
-                ]
+                ${Array.from(
+                    grouped.entries()
+                )
                     .map(
-                        ([emoji, item]) => `
-                            <button
-                                type="button"
-                                class="reaction-chip ${
-                                    item.own
-                                        ? "own"
-                                        : ""
-                                }"
-                                data-action="react"
-                                data-reaction="${escapeHtml(
-                                    emoji
-                                )}"
-                            >
-                                ${escapeHtml(
-                                    emoji
-                                )}
-                                <span>
-                                    ${item.count}
-                                </span>
-                            </button>
-                        `
+                        ([emoji, rows]) => {
+
+                            const mine =
+                                rows.some(
+                                    row =>
+                                        String(
+                                            row.user_id
+                                        ) ===
+                                        String(
+                                            state.user?.id
+                                        )
+                                );
+
+                            return `
+                                <button
+                                    type="button"
+                                    class="reaction-button ${
+                                        mine
+                                            ? "active"
+                                            : ""
+                                    }"
+                                    data-reaction-message="${
+                                        escapeHtml(
+                                            messageId
+                                        )
+                                    }"
+                                    data-reaction="${
+                                        escapeHtml(
+                                            emoji
+                                        )
+                                    }"
+                                >
+                                    ${escapeHtml(
+                                        emoji
+                                    )}
+                                    <span>
+                                        ${rows.length}
+                                    </span>
+                                </button>
+                            `;
+
+                        }
                     )
                     .join("")}
-
             </div>
         `;
     }
 
+
     async function toggleReaction(
         messageId,
-        reactionValue
+        reaction
     ) {
 
         if (!state.user) {
@@ -2305,13 +1743,17 @@
 
         const existing =
             state.reactions.find(
-                reaction =>
-                    reaction.message_id ===
-                        messageId &&
-                    reaction.user_id ===
-                        state.user.id &&
-                    reaction.reaction ===
-                        reactionValue
+                row =>
+                    String(
+                        row.message_id
+                    ) ===
+                    String(messageId) &&
+                    String(
+                        row.user_id
+                    ) ===
+                    String(state.user.id) &&
+                    row.reaction ===
+                    reaction
             );
 
         if (existing) {
@@ -2319,7 +1761,7 @@
             const {
                 error
             } =
-                await supabase
+                await state.supabase
                     .from(
                         "chat_message_reactions"
                     )
@@ -2330,13 +1772,7 @@
                     );
 
             if (error) {
-
-                console.error(
-                    "Reaction removal error:",
-                    error
-                );
-
-                return;
+                throw error;
             }
 
         } else {
@@ -2344,98 +1780,600 @@
             const {
                 error
             } =
-                await supabase
+                await state.supabase
                     .from(
                         "chat_message_reactions"
                     )
                     .insert({
                         message_id:
                             messageId,
-
                         user_id:
                             state.user.id,
-
-                        reaction:
-                            reactionValue
+                        reaction
                     });
 
             if (error) {
-
-                console.error(
-                    "Reaction error:",
-                    error
-                );
-
-                return;
+                throw error;
             }
         }
 
-        await loadMessageRelatedData();
+        await loadReactions();
 
         renderMessages();
     }
 
+
     /* =====================================================
-       MESSAGE ACTIONS
+       ATTACHMENTS
        ===================================================== */
 
-    function attachMessageActions() {
+    async function loadAttachments() {
 
-        $all(
-            "[data-action='react']"
-        )
-            .forEach(button => {
+        const ids =
+            state.messages
+                .map(
+                    message =>
+                        message.id
+                )
+                .filter(Boolean);
 
-                button.onclick =
-                    async event => {
+        if (!ids.length) {
 
-                        event.stopPropagation();
+            state.attachments = [];
 
-                        const message =
-                            button.closest(
-                                "[data-message-id]"
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await state.supabase
+                .from("chat_attachments")
+                .select("*")
+                .in(
+                    "message_id",
+                    ids
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+
+            console.warn(
+                "Attachment load warning:",
+                error
+            );
+
+            return;
+        }
+
+        state.attachments =
+            data || [];
+    }
+
+
+    function renderMessageAttachments(
+        messageId
+    ) {
+
+        const files =
+            state.attachments.filter(
+                file =>
+                    String(
+                        file.message_id
+                    ) ===
+                    String(messageId)
+            );
+
+        if (!files.length) {
+            return "";
+        }
+
+        return `
+            <div class="message-attachments">
+                ${files
+                    .map(file => {
+
+                        const url =
+                            safeUrl(
+                                file.file_url
                             );
 
-                        if (!message) {
-                            return;
+                        const mime =
+                            String(
+                                file.mime_type ||
+                                ""
+                            ).toLowerCase();
+
+                        if (
+                            mime.startsWith(
+                                "image/"
+                            ) &&
+                            url
+                        ) {
+
+                            return `
+                                <a
+                                    href="${escapeHtml(url)}"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    <img
+                                        class="message-image"
+                                        src="${escapeHtml(url)}"
+                                        alt="${escapeHtml(
+                                            file.file_name
+                                        )}"
+                                        loading="lazy"
+                                    >
+                                </a>
+                            `;
                         }
 
-                        await toggleReaction(
-                            message.dataset
-                                .messageId,
-                            button.dataset
-                                .reaction ||
-                                "👍"
-                        );
-                    };
-            });
+                        return `
+                            <a
+                                class="attachment-card"
+                                href="${escapeHtml(
+                                    url
+                                )}"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                <span class="attachment-icon">
+                                    📎
+                                </span>
 
-        $all(
-            "[data-action='delete']"
-        )
+                                <span class="attachment-details">
+
+                                    <span class="attachment-name">
+                                        ${escapeHtml(
+                                            file.file_name
+                                        )}
+                                    </span>
+
+                                    <span class="attachment-size">
+                                        ${formatFileSize(
+                                            file.file_size
+                                        )}
+                                    </span>
+
+                                </span>
+                            </a>
+                        `;
+
+                    })
+                    .join("")}
+            </div>
+        `;
+    }
+
+
+    /* =====================================================
+       MESSAGE RENDERING
+       ===================================================== */
+
+    function renderMessages() {
+
+        const list =
+            $("messageList");
+
+        if (!list) {
+            return;
+        }
+
+        if (!state.messages.length) {
+
+            list.innerHTML =
+                `
+                <div class="channel-empty">
+                    No messages yet. Start the conversation.
+                </div>
+                `;
+
+            return;
+        }
+
+        const html =
+            state.messages
+                .map(message =>
+                    renderMessage(message)
+                )
+                .join("");
+
+        list.innerHTML =
+            html;
+
+        bindMessageActions();
+    }
+
+
+    function renderMessage(
+        message
+    ) {
+
+        const profile =
+            getMessageProfile(
+                message.user_id
+            );
+
+        const name =
+            profile?.full_name ||
+            profile?.name ||
+            (
+                String(
+                    message.user_id
+                ) ===
+                String(state.user?.id)
+                    ? getCurrentUserName()
+                    : "Student"
+            );
+
+        const avatar =
+            getProfileAvatar(
+                profile
+            );
+
+        const own =
+            String(
+                message.user_id
+            ) ===
+            String(
+                state.user?.id
+            );
+
+        const deleted =
+            Boolean(
+                message.is_deleted
+            );
+
+        const content =
+            deleted
+                ? `<span class="message-deleted">
+                    This message was deleted.
+                   </span>`
+                : renderMessageContent(
+                    message
+                );
+
+        const role =
+            profile?.role ||
+            profile?.user_role ||
+            "";
+
+        return `
+            <article
+                class="message-group ${
+                    own ? "own" : ""
+                }"
+                data-message-id="${
+                    escapeHtml(
+                        message.id
+                    )
+                }"
+            >
+
+                <div class="message-avatar">
+
+                    ${
+                        safeUrl(avatar)
+                            ? `
+                                <img
+                                    src="${escapeHtml(
+                                        safeUrl(avatar)
+                                    )}"
+                                    alt=""
+                                    loading="lazy"
+                                >
+                            `
+                            : escapeHtml(
+                                initials(name)
+                            )
+                    }
+
+                </div>
+
+
+                <div class="message-content">
+
+                    <div class="message-meta">
+
+                        <span class="message-author">
+                            ${escapeHtml(name)}
+                        </span>
+
+                        ${
+                            role
+                                ? `
+                                    <span class="message-role">
+                                        ${escapeHtml(
+                                            role
+                                        )}
+                                    </span>
+                                `
+                                : ""
+                        }
+
+                        <span class="message-time">
+                            ${escapeHtml(
+                                formatTime(
+                                    message.created_at
+                                )
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="message-text">
+
+                        ${content}
+
+                        ${
+                            message.is_edited
+                                ? `
+                                    <span class="message-edited">
+                                        edited
+                                    </span>
+                                `
+                                : ""
+                        }
+
+                    </div>
+
+
+                    ${renderMessageAttachments(
+                        message.id
+                    )}
+
+                    ${renderMessageReactions(
+                        message.id
+                    )}
+
+
+                    ${
+                        !deleted
+                            ? `
+                                <div class="message-actions">
+
+                                    <button
+                                        type="button"
+                                        class="message-action"
+                                        data-message-reply="${
+                                            escapeHtml(
+                                                message.id
+                                            )
+                                        }"
+                                    >
+                                        Reply
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        class="message-action"
+                                        data-message-reaction="${
+                                            escapeHtml(
+                                                message.id
+                                            )
+                                        }"
+                                    >
+                                        😊
+                                    </button>
+
+                                    ${
+                                        own
+                                            ? `
+                                                <button
+                                                    type="button"
+                                                    class="message-action delete"
+                                                    data-message-delete="${
+                                                        escapeHtml(
+                                                            message.id
+                                                        )
+                                                    }"
+                                                >
+                                                    Delete
+                                                </button>
+                                            `
+                                            : ""
+                                    }
+
+                                </div>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+            </article>
+        `;
+    }
+
+
+    function renderMessageContent(
+        message
+    ) {
+
+        const type =
+            String(
+                message.message_type ||
+                "text"
+            ).toLowerCase();
+
+        if (
+            type === "gif" &&
+            safeUrl(message.content)
+        ) {
+
+            return `
+                <img
+                    class="message-image"
+                    src="${escapeHtml(
+                        safeUrl(message.content)
+                    )}"
+                    alt="GIF"
+                    loading="lazy"
+                >
+            `;
+        }
+
+        if (type === "voice") {
+
+            const url =
+                safeUrl(
+                    message.content
+                );
+
+            if (url) {
+
+                return `
+                    <audio
+                        controls
+                        preload="metadata"
+                        src="${escapeHtml(url)}"
+                    ></audio>
+                `;
+            }
+        }
+
+        return escapeHtml(
+            message.content || ""
+        );
+    }
+
+
+    function bindMessageActions() {
+
+        document
+            .querySelectorAll(
+                "[data-message-delete]"
+            )
             .forEach(button => {
 
-                button.onclick =
-                    async event => {
-
-                        event.stopPropagation();
-
-                        const message =
-                            button.closest(
-                                "[data-message-id]"
-                            );
-
-                        if (!message) {
-                            return;
-                        }
+                button.addEventListener(
+                    "click",
+                    async () => {
 
                         await deleteMessage(
-                            message.dataset
-                                .messageId
+                            button.dataset.messageDelete
                         );
-                    };
+
+                    }
+                );
+
             });
+
+
+        document
+            .querySelectorAll(
+                "[data-message-reaction]"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        const messageId =
+                            button.dataset.messageReaction;
+
+                        const reaction =
+                            window.prompt(
+                                "Enter one emoji:",
+                                "👍"
+                            );
+
+                        if (!reaction) {
+                            return;
+                        }
+
+                        try {
+
+                            await toggleReaction(
+                                messageId,
+                                reaction.trim()
+                            );
+
+                        } catch (error) {
+
+                            console.error(
+                                error
+                            );
+
+                            showToast(
+                                "Unable to update reaction."
+                            );
+                        }
+
+                    }
+                );
+
+            });
+
+
+        document
+            .querySelectorAll(
+                "[data-reaction-message]"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    async () => {
+
+                        try {
+
+                            await toggleReaction(
+                                button.dataset.reactionMessage,
+                                button.dataset.reaction
+                            );
+
+                        } catch (error) {
+
+                            console.error(
+                                error
+                            );
+
+                            showToast(
+                                "Unable to update reaction."
+                            );
+                        }
+
+                    }
+                );
+
+            });
+
+
+        document
+            .querySelectorAll(
+                "[data-message-reply]"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        startReply(
+                            button.dataset.messageReply
+                        );
+
+                    }
+                );
+
+            });
+
     }
+
+
+    /* =====================================================
+       DELETE
+       ===================================================== */
 
     async function deleteMessage(
         messageId
@@ -2444,8 +2382,8 @@
         const message =
             state.messages.find(
                 item =>
-                    item.id ===
-                    messageId
+                    String(item.id) ===
+                    String(messageId)
             );
 
         if (!message) {
@@ -2453,13 +2391,12 @@
         }
 
         if (
-            message.user_id !==
-            state.user?.id
+            String(message.user_id) !==
+            String(state.user?.id)
         ) {
 
-            toast(
-                "You can only delete your own messages.",
-                "error"
+            showToast(
+                "You can only delete your own messages."
             );
 
             return;
@@ -2477,14 +2414,13 @@
         const {
             error
         } =
-            await supabase
+            await state.supabase
                 .from("chat_messages")
                 .update({
                     is_deleted: true,
                     deleted_at:
                         new Date().toISOString(),
-                    content:
-                        ""
+                    content: ""
                 })
                 .eq(
                     "id",
@@ -2498,13 +2434,12 @@
         if (error) {
 
             console.error(
-                "Delete message error:",
+                "Delete message failed:",
                 error
             );
 
-            toast(
-                "Could not delete the message.",
-                "error"
+            showToast(
+                "Message could not be deleted."
             );
 
             return;
@@ -2513,24 +2448,94 @@
         const target =
             state.messages.find(
                 item =>
-                    item.id ===
-                    messageId
+                    String(item.id) ===
+                    String(messageId)
             );
 
         if (target) {
 
-            target.is_deleted =
-                true;
-
+            target.is_deleted = true;
+            target.content = "";
             target.deleted_at =
                 new Date().toISOString();
 
-            target.content =
-                "";
         }
 
         renderMessages();
+
+        showToast(
+            "Message deleted."
+        );
     }
+
+
+    /* =====================================================
+       REPLY
+       ===================================================== */
+
+    function startReply(
+        messageId
+    ) {
+
+        const message =
+            state.messages.find(
+                item =>
+                    String(item.id) ===
+                    String(messageId)
+            );
+
+        if (!message) {
+            return;
+        }
+
+        state.selectedMessageForReply =
+            message;
+
+        const profile =
+            getMessageProfile(
+                message.user_id
+            );
+
+        const name =
+            profile?.full_name ||
+            profile?.name ||
+            "Student";
+
+        $("replyPreviewName")
+            && (
+                $("replyPreviewName")
+                    .textContent =
+                    `Reply to ${name}`
+            );
+
+        $("replyPreviewText")
+            && (
+                $("replyPreviewText")
+                    .textContent =
+                    message.content || ""
+            );
+
+        $("replyPreview")
+            ?.classList.remove(
+                "hidden"
+            );
+
+        $("messageInput")
+            ?.focus();
+    }
+
+
+    function cancelReply() {
+
+        state.selectedMessageForReply =
+            null;
+
+        $("replyPreview")
+            ?.classList.add(
+                "hidden"
+            );
+    }
+
 
     /* =====================================================
        SEND MESSAGE
@@ -2538,14 +2543,8 @@
 
     async function sendMessage() {
 
-        if (!state.rulesAccepted) {
-
-            showRulesGate();
-
-            return;
-        }
-
         if (
+            state.sendingMessage ||
             !state.user ||
             !state.selectedChannel
         ) {
@@ -2553,586 +2552,538 @@
         }
 
         const input =
-            $("#messageInput");
+            $("messageInput");
 
-        if (!input) {
+        const text =
+            input?.value.trim() || "";
+
+        if (
+            !text &&
+            !state.selectedFiles.length
+        ) {
             return;
         }
 
-        const content =
-            input.value.trim();
+        state.sendingMessage = true;
 
-        if (!content) {
-            return;
+        const button =
+            $("sendMessageButton");
+
+        if (button) {
+            button.disabled = true;
         }
 
-        input.disabled =
-            true;
+        try {
+
+            if (text) {
+
+                await insertMessage({
+                    content: text,
+                    message_type: "text"
+                });
+
+            }
+
+            if (state.selectedFiles.length) {
+
+                for (
+                    const file of
+                    state.selectedFiles
+                ) {
+
+                    await uploadFileAsMessage(
+                        file
+                    );
+
+                }
+
+            }
+
+            if (input) {
+                input.value = "";
+                autoResizeTextarea(input);
+            }
+
+            state.selectedFiles = [];
+
+            renderAttachmentPreview();
+
+            cancelReply();
+
+            await loadChannelData();
+
+            scrollMessagesToBottom();
+
+        } catch (error) {
+
+            console.error(
+                "Send message failed:",
+                error
+            );
+
+            showToast(
+                error.message ||
+                "Unable to send message."
+            );
+
+        } finally {
+
+            state.sendingMessage =
+                false;
+
+            if (button) {
+                button.disabled = false;
+            }
+        }
+    }
+
+
+    async function insertMessage({
+        content,
+        message_type
+    }) {
+
+        const payload = {
+
+            channel_id:
+                state.selectedChannel.id,
+
+            user_id:
+                state.user.id,
+
+            content:
+                content || "",
+
+            message_type:
+                message_type || "text"
+
+        };
+
+        if (
+            state.selectedMessageForReply?.id
+        ) {
+
+            payload.parent_message_id =
+                state.selectedMessageForReply.id;
+        }
 
         const {
             error
         } =
-            await supabase
+            await state.supabase
                 .from("chat_messages")
-                .insert({
-                    channel_id:
-                        state.selectedChannel.id,
-
-                    user_id:
-                        state.user.id,
-
-                    content,
-
-                    message_type:
-                        "text"
-                });
-
-        input.disabled =
-            false;
+                .insert(payload);
 
         if (error) {
-
-            console.error(
-                "Send message error:",
-                error
-            );
-
-            toast(
-                "Could not send message.",
-                "error"
-            );
-
-            return;
+            throw error;
         }
-
-        input.value = "";
-
-        resizeMessageInput();
-
-        scrollMessagesToBottom();
     }
 
-    function resizeMessageInput() {
-
-        const input =
-            $("#messageInput");
-
-        if (!input) {
-            return;
-        }
-
-        input.style.height =
-            "auto";
-
-        input.style.height =
-            Math.min(
-                input.scrollHeight,
-                180
-            ) + "px";
-    }
 
     /* =====================================================
-       ATTACHMENTS
+       FILE UPLOAD
        ===================================================== */
 
-    function setupAttachmentInput() {
+    function setupFileUpload() {
 
-        let input =
-            $("#communityFileInput");
+        const attach =
+            $("attachButton");
 
-        if (!input) {
+        const input =
+            $("attachmentInput");
 
-            input =
-                document.createElement(
-                    "input"
-                );
-
-            input.type =
-                "file";
-
-            input.id =
-                "communityFileInput";
-
-            input.hidden =
-                true;
-
-            input.multiple =
-                true;
-
-            input.accept =
-                [
-                    "image/*",
-                    ".pdf",
-                    ".txt",
-                    ".csv",
-                    ".doc",
-                    ".docx",
-                    ".ppt",
-                    ".pptx",
-                    ".xls",
-                    ".xlsx"
-                ].join(",");
-
-            document.body.appendChild(
-                input
-            );
+        if (!attach || !input) {
+            return;
         }
 
-        input.onchange =
-            async () => {
+        attach.addEventListener(
+            "click",
+            () => {
+
+                input.value = "";
+
+                input.click();
+
+            }
+        );
+
+        input.addEventListener(
+            "change",
+            () => {
 
                 const files =
                     Array.from(
                         input.files || []
                     );
 
-                input.value = "";
+                if (!files.length) {
+                    return;
+                }
+
+                const accepted = [];
 
                 for (
-                    const file of files
+                    const file of
+                    files
                 ) {
 
-                    await uploadAttachment(
-                        file
-                    );
+                    if (
+                        file.size >
+                        MAX_FILE_SIZE
+                    ) {
+
+                        showToast(
+                            `${file.name} is larger than 50 MB.`
+                        );
+
+                        continue;
+                    }
+
+                    accepted.push(file);
+
                 }
-            };
-    }
 
-    async function uploadAttachment(
-        file
-    ) {
+                state.selectedFiles =
+                    accepted;
 
-        if (!state.user) {
-            return;
-        }
+                renderAttachmentPreview();
 
-        if (!state.selectedChannel) {
-            return;
-        }
-
-        if (
-            file.size >
-            MAX_FILE_SIZE
-        ) {
-
-            toast(
-                `${file.name} is larger than 50 MB.`,
-                "error"
-            );
-
-            return;
-        }
-
-        try {
-
-            const extension =
-                getFileExtension(
-                    file.name
-                );
-
-            const folder =
-                file.type.startsWith(
-                    "image/"
-                )
-                    ? "images"
-                    : "documents";
-
-            const path =
-                `${state.user.id}/${folder}/${Date.now()}-${cryptoRandom()}${extension}`;
-
-            toast(
-                `Uploading ${file.name}...`,
-                "info"
-            );
-
-            const {
-                error: uploadError
-            } =
-                await supabase
-                    .storage
-                    .from(
-                        STORAGE_BUCKET
-                    )
-                    .upload(
-                        path,
-                        file,
-                        {
-                            cacheControl:
-                                "3600",
-
-                            upsert:
-                                false,
-
-                            contentType:
-                                file.type ||
-                                "application/octet-stream"
-                        }
-                    );
-
-            if (uploadError) {
-                throw uploadError;
             }
-
-            const {
-                data: publicData
-            } =
-                supabase
-                    .storage
-                    .from(
-                        STORAGE_BUCKET
-                    )
-                    .getPublicUrl(
-                        path
-                    );
-
-            const fileUrl =
-                publicData?.publicUrl;
-
-            if (!fileUrl) {
-                throw new Error(
-                    "Could not create public file URL."
-                );
-            }
-
-            const {
-                data: message,
-                error: messageError
-            } =
-                await supabase
-                    .from("chat_messages")
-                    .insert({
-                        channel_id:
-                            state.selectedChannel.id,
-
-                        user_id:
-                            state.user.id,
-
-                        content:
-                            file.name,
-
-                        message_type:
-                            "file"
-                    })
-                    .select()
-                    .single();
-
-            if (messageError) {
-                throw messageError;
-            }
-
-            const {
-                error: attachmentError
-            } =
-                await supabase
-                    .from(
-                        "chat_attachments"
-                    )
-                    .insert({
-                        message_id:
-                            message.id,
-
-                        uploaded_by:
-                            state.user.id,
-
-                        file_name:
-                            file.name,
-
-                        file_path:
-                            path,
-
-                        file_url:
-                            fileUrl,
-
-                        mime_type:
-                            file.type ||
-                            "application/octet-stream",
-
-                        file_size:
-                            file.size
-                    });
-
-            if (attachmentError) {
-                throw attachmentError;
-            }
-
-            toast(
-                "File sent.",
-                "success"
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Attachment upload error:",
-                error
-            );
-
-            toast(
-                "File upload failed.",
-                "error"
-            );
-        }
-    }
-
-    function getFileExtension(
-        filename
-    ) {
-
-        const value =
-            String(
-                filename || ""
-            );
-
-        const index =
-            value.lastIndexOf(".");
-
-        if (index === -1) {
-            return "";
-        }
-
-        return value.slice(
-            index
         );
     }
 
-    function cryptoRandom() {
 
-        if (
-            window.crypto &&
-            crypto.getRandomValues
-        ) {
+    function renderAttachmentPreview() {
 
-            const values =
-                new Uint32Array(2);
+        const container =
+            $("attachmentPreview");
 
-            crypto.getRandomValues(
-                values
-            );
-
-            return (
-                values[0].toString(16) +
-                values[1].toString(16)
-            );
+        if (!container) {
+            return;
         }
 
-        return Math.random()
-            .toString(36)
-            .slice(2);
+        if (!state.selectedFiles.length) {
+
+            container.innerHTML = "";
+
+            container.classList.add(
+                "hidden"
+            );
+
+            return;
+        }
+
+        container.classList.remove(
+            "hidden"
+        );
+
+        container.innerHTML =
+            state.selectedFiles
+                .map(
+                    (file, index) => `
+                        <div class="attachment-preview-item">
+
+                            <span>
+                                📎
+                                ${escapeHtml(
+                                    file.name
+                                )}
+                            </span>
+
+                            <button
+                                type="button"
+                                data-remove-file="${index}"
+                            >
+                                ×
+                            </button>
+
+                        </div>
+                    `
+                )
+                .join("");
+
+        container
+            .querySelectorAll(
+                "[data-remove-file]"
+            )
+            .forEach(button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const index =
+                            Number(
+                                button.dataset.removeFile
+                            );
+
+                        state.selectedFiles
+                            .splice(
+                                index,
+                                1
+                            );
+
+                        renderAttachmentPreview();
+
+                    }
+                );
+
+            });
     }
 
+
+    async function uploadFileAsMessage(
+        file
+    ) {
+
+        const extension =
+            file.name.includes(".")
+                ? file.name
+                    .split(".")
+                    .pop()
+                    .toLowerCase()
+                : "bin";
+
+        const folder =
+            file.type.startsWith("image/")
+                ? "images"
+                : "documents";
+
+        const filePath =
+            [
+                state.user.id,
+                folder,
+                `${crypto.randomUUID()}.${extension}`
+            ].join("/");
+
+        const {
+            error: uploadError
+        } =
+            await state.supabase.storage
+                .from(STORAGE_BUCKET)
+                .upload(
+                    filePath,
+                    file,
+                    {
+                        cacheControl:
+                            "3600",
+                        upsert: false,
+                        contentType:
+                            file.type ||
+                            "application/octet-stream"
+                    }
+                );
+
+        if (uploadError) {
+            throw uploadError;
+        }
+
+        const {
+            data: publicData
+        } =
+            state.supabase.storage
+                .from(STORAGE_BUCKET)
+                .getPublicUrl(
+                    filePath
+                );
+
+        const fileUrl =
+            publicData?.publicUrl || "";
+
+        const messageContent =
+            file.type.startsWith(
+                "image/"
+            )
+                ? ""
+                : file.name;
+
+        const {
+            data: message,
+            error: messageError
+        } =
+            await state.supabase
+                .from("chat_messages")
+                .insert({
+                    channel_id:
+                        state.selectedChannel.id,
+                    user_id:
+                        state.user.id,
+                    content:
+                        messageContent,
+                    message_type:
+                        "file"
+                })
+                .select("id")
+                .single();
+
+        if (messageError) {
+            throw messageError;
+        }
+
+        const {
+            error: attachmentError
+        } =
+            await state.supabase
+                .from("chat_attachments")
+                .insert({
+                    message_id:
+                        message.id,
+                    uploaded_by:
+                        state.user.id,
+                    file_name:
+                        file.name,
+                    file_path:
+                        filePath,
+                    file_url:
+                        fileUrl,
+                    mime_type:
+                        file.type ||
+                        "application/octet-stream",
+                    file_size:
+                        file.size
+                });
+
+        if (attachmentError) {
+            throw attachmentError;
+        }
+    }
+
+
     /* =====================================================
-       GIFS
+       GIF
        ===================================================== */
 
-    function setupGifPicker() {
+    function setupGif() {
 
         const button =
-            $("#gifButton");
+            $("gifButton");
 
         const picker =
-            $("#gifPicker");
+            $("gifPicker");
+
+        const close =
+            $("closeGifButton");
+
+        const search =
+            $("gifSearchInput");
 
         if (!button || !picker) {
             return;
         }
 
-        button.onclick =
+        button.addEventListener(
+            "click",
             event => {
 
                 event.stopPropagation();
 
-                const isOpen =
+                const emoji =
+                    $("emojiPicker");
+
+                emoji?.classList.add(
+                    "hidden"
+                );
+
+                state.emojiOpen = false;
+
+                const isHidden =
                     picker.classList.contains(
-                        "open"
+                        "hidden"
                     );
 
-                closeEmojiPicker();
+                picker.classList.toggle(
+                    "hidden",
+                    !isHidden
+                );
 
-                if (isOpen) {
+                state.gifOpen =
+                    isHidden;
 
-                    closeGifPicker();
-
-                } else {
-
-                    openGifPicker();
+                if (isHidden) {
+                    search?.focus();
                 }
-            };
 
-        document.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    !picker.contains(
-                        event.target
-                    ) &&
-                    event.target !== button
-                ) {
-
-                    closeGifPicker();
-                }
             }
         );
-    }
 
-    function openGifPicker() {
+        close?.addEventListener(
+            "click",
+            () => {
 
-        const picker =
-            $("#gifPicker");
+                picker.classList.add(
+                    "hidden"
+                );
 
-        if (!picker) {
-            return;
-        }
+                state.gifOpen = false;
 
-        picker.classList.add(
-            "open"
+            }
         );
 
-        picker.style.display =
-            "block";
-
-        renderGifPicker();
-    }
-
-    function closeGifPicker() {
-
-        const picker =
-            $("#gifPicker");
-
-        if (!picker) {
-            return;
-        }
-
-        picker.classList.remove(
-            "open"
-        );
-
-        picker.style.display =
-            "none";
-    }
-
-    function renderGifPicker(
-        query = ""
-    ) {
-
-        const picker =
-            $("#gifPicker");
-
-        if (!picker) {
-            return;
-        }
-
-        if (
-            !GIPHY_API_KEY ||
-            GIPHY_API_KEY ===
-                "YOUR_GIPHY_API_KEY"
-        ) {
-
-            picker.innerHTML = `
-                <div class="gif-placeholder">
-                    Add a Giphy API key in
-                    community.js to enable GIF search.
-                </div>
-            `;
-
-            return;
-        }
-
-        picker.innerHTML = `
-            <div class="gif-search-row">
-
-                <input
-                    type="search"
-                    id="gifSearchInput"
-                    placeholder="Search GIFs..."
-                    value="${escapeHtml(
-                        query
-                    )}"
-                >
-
-            </div>
-
-            <div
-                class="gif-results"
-                id="gifResults"
-            >
-                Loading GIFs...
-            </div>
-        `;
-
-        const input =
-            $("#gifSearchInput");
-
-        if (input) {
-
-            input.focus();
-
-            input.oninput =
+        search?.addEventListener(
+            "input",
+            debounce(
                 () => {
 
-                    clearTimeout(
-                        state.gifSearchTimeout
+                    loadGifs(
+                        search.value.trim()
                     );
 
-                    state.gifSearchTimeout =
-                        setTimeout(
-                            () => {
-
-                                loadGifs(
-                                    input.value.trim()
-                                );
-
-                            },
-                            400
-                        );
-                };
-        }
-
-        loadGifs(
-            query
+                },
+                450
+            )
         );
+
+        loadGifs("popular");
     }
 
+
     async function loadGifs(
-        query = ""
+        query
     ) {
 
-        const results =
-            $("#gifResults");
+        const container =
+            $("gifResults");
 
-        if (!results) {
+        if (!container) {
             return;
         }
 
-        if (
-            !GIPHY_API_KEY ||
-            GIPHY_API_KEY ===
-                "YOUR_GIPHY_API_KEY"
-        ) {
+        /*
+         * This intentionally uses Tenor's public endpoint
+         * only when a configured key exists.
+         * Without a key the picker stays usable but does
+         * not make an invalid request.
+         */
+
+        const key =
+            window.MWANIKI_TENOR_API_KEY ||
+            "";
+
+        if (!key) {
+
+            container.innerHTML =
+                `
+                <div
+                    class="channel-empty"
+                    style="grid-column:1/-1"
+                >
+                    Add a Tenor API key to enable GIF search.
+                </div>
+                `;
+
             return;
         }
 
         try {
 
-            const endpoint =
-                query
-                    ? "search"
-                    : "trending";
-
-            const url =
-                `https://api.giphy.com/v1/gifs/${endpoint}?api_key=${encodeURIComponent(
-                    GIPHY_API_KEY
-                )}&limit=${GIF_LIMIT}&rating=pg&lang=en${
-                    query
-                        ? `&q=${encodeURIComponent(
-                              query
-                          )}`
-                        : ""
-                }`;
-
             const response =
-                await fetch(url);
+                await fetch(
+                    `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
+                        query || "popular"
+                    )}&key=${encodeURIComponent(
+                        key
+                    )}&limit=12&media_filter=gif`
+                );
 
             if (!response.ok) {
                 throw new Error(
@@ -3140,269 +3091,216 @@
                 );
             }
 
-            const json =
+            const data =
                 await response.json();
 
-            const gifs =
-                json.data || [];
+            const results =
+                data.results || [];
 
-            if (!gifs.length) {
+            container.innerHTML =
+                results
+                    .map(result => {
 
-                results.innerHTML =
-                    "No GIFs found.";
-
-                return;
-            }
-
-            results.innerHTML =
-                gifs
-                    .map(gif => {
-
-                        const original =
-                            gif.images?.original
-                                ?.url;
-
-                        const preview =
-                            gif.images?.fixed_width
+                        const url =
+                            result?.media_formats
+                                ?.gif
                                 ?.url ||
-                            original;
+                            result?.media_formats
+                                ?.tinygif
+                                ?.url ||
+                            "";
 
-                        if (!original) {
+                        if (!safeUrl(url)) {
                             return "";
                         }
 
                         return `
                             <button
                                 type="button"
-                                class="gif-item"
-                                data-gif-url="${escapeHtml(
-                                    original
-                                )}"
+                                class="gif-result"
+                                data-gif-url="${
+                                    escapeHtml(
+                                        url
+                                    )
+                                }"
                             >
                                 <img
-                                    src="${escapeHtml(
-                                        preview
-                                    )}"
+                                    src="${escapeHtml(url)}"
                                     alt="GIF"
                                     loading="lazy"
                                 >
                             </button>
                         `;
+
                     })
                     .join("");
 
-            results
+            container
                 .querySelectorAll(
                     "[data-gif-url]"
                 )
                 .forEach(button => {
 
-                    button.onclick =
+                    button.addEventListener(
+                        "click",
                         async () => {
 
                             await sendGif(
-                                button.dataset
-                                    .gifUrl
+                                button.dataset.gifUrl
                             );
 
-                            closeGifPicker();
-                        };
+                            $("gifPicker")
+                                ?.classList.add(
+                                    "hidden"
+                                );
+
+                            state.gifOpen =
+                                false;
+
+                        }
+                    );
+
                 });
 
         } catch (error) {
 
             console.error(
-                "GIF error:",
+                "GIF load failed:",
                 error
             );
 
-            results.innerHTML =
-                "Could not load GIFs.";
+            container.innerHTML =
+                `
+                <div
+                    class="channel-empty"
+                    style="grid-column:1/-1"
+                >
+                    GIFs are temporarily unavailable.
+                </div>
+                `;
         }
     }
+
 
     async function sendGif(
         url
     ) {
 
-        if (
-            !url ||
-            !state.selectedChannel ||
-            !state.user
-        ) {
+        if (!safeUrl(url)) {
             return;
         }
 
-        const {
-            error
-        } =
-            await supabase
-                .from("chat_messages")
-                .insert({
-                    channel_id:
-                        state.selectedChannel.id,
+        try {
 
-                    user_id:
-                        state.user.id,
+            await insertMessage({
+                content:
+                    safeUrl(url),
+                message_type:
+                    "gif"
+            });
 
-                    content:
-                        url,
+            await loadChannelData();
 
-                    message_type:
-                        "gif"
-                });
+            scrollMessagesToBottom();
 
-        if (error) {
+        } catch (error) {
 
             console.error(
-                "GIF send error:",
+                "GIF send failed:",
                 error
             );
 
-            toast(
-                "Could not send GIF.",
-                "error"
+            showToast(
+                "Unable to send GIF."
             );
         }
     }
+
 
     /* =====================================================
        EMOJI
        ===================================================== */
 
-    function setupEmojiPicker() {
+    function setupEmoji() {
 
         const button =
-            $("#emojiButton");
+            $("emojiButton");
 
         const picker =
-            $("#emojiPicker");
+            $("emojiPicker");
 
         if (!button || !picker) {
             return;
         }
 
-        button.onclick =
+        button.addEventListener(
+            "click",
             event => {
 
                 event.stopPropagation();
 
-                const isOpen =
+                const gif =
+                    $("gifPicker");
+
+                gif?.classList.add(
+                    "hidden"
+                );
+
+                state.gifOpen = false;
+
+                const hidden =
                     picker.classList.contains(
-                        "open"
+                        "hidden"
                     );
 
-                closeGifPicker();
+                picker.classList.toggle(
+                    "hidden",
+                    !hidden
+                );
 
-                if (isOpen) {
+                state.emojiOpen =
+                    hidden;
 
-                    closeEmojiPicker();
+            }
+        );
 
-                } else {
+        const emojiElement =
+            picker.querySelector(
+                "emoji-picker"
+            );
 
-                    openEmojiPicker();
-                }
-            };
-
-        picker.addEventListener(
+        emojiElement?.addEventListener(
             "emoji-click",
             event => {
 
                 const emoji =
-                    event.detail
-                        ?.unicode;
+                    event.detail?.unicode ||
+                    event.detail?.emoji?.unicode ||
+                    "";
 
                 if (!emoji) {
                     return;
                 }
 
-                const input =
-                    $("#messageInput");
-
-                if (!input) {
-                    return;
-                }
-
-                insertTextAtCursor(
-                    input,
+                insertEmoji(
                     emoji
                 );
 
-                input.focus();
-            }
-        );
-
-        document.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    !picker.contains(
-                        event.target
-                    ) &&
-                    event.target !== button
-                ) {
-
-                    closeEmojiPicker();
-                }
-            }
-        );
-
-        document.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
-
-                    closeEmojiPicker();
-
-                    closeGifPicker();
-                }
             }
         );
     }
 
-    function openEmojiPicker() {
 
-        const picker =
-            $("#emojiPicker");
-
-        if (!picker) {
-            return;
-        }
-
-        picker.classList.add(
-            "open"
-        );
-
-        picker.style.display =
-            "block";
-    }
-
-    function closeEmojiPicker() {
-
-        const picker =
-            $("#emojiPicker");
-
-        if (!picker) {
-            return;
-        }
-
-        picker.classList.remove(
-            "open"
-        );
-
-        picker.style.display =
-            "none";
-    }
-
-    function insertTextAtCursor(
-        input,
-        text
+    function insertEmoji(
+        emoji
     ) {
+
+        const input =
+            $("messageInput");
+
+        if (!input) {
+            return;
+        }
 
         const start =
             input.selectionStart ??
@@ -3417,58 +3315,76 @@
                 0,
                 start
             ) +
-            text +
+            emoji +
             input.value.slice(
                 end
             );
 
         const cursor =
             start +
-            text.length;
+            emoji.length;
 
-        input.selectionStart =
-            cursor;
+        input.focus();
 
-        input.selectionEnd =
-            cursor;
+        input.setSelectionRange(
+            cursor,
+            cursor
+        );
 
-        resizeMessageInput();
+        autoResizeTextarea(
+            input
+        );
     }
+
 
     /* =====================================================
        VOICE NOTES
        ===================================================== */
 
-    function setupVoiceRecorder() {
+    function setupVoiceRecording() {
 
         const button =
-            $("#voiceNoteButton");
+            $("voiceNoteButton");
+
+        const cancel =
+            $("cancelVoiceButton");
+
+        const stop =
+            $("stopVoiceButton");
 
         if (!button) {
             return;
         }
 
-        button.onclick =
-            async () => {
+        button.addEventListener(
+            "click",
+            startVoiceRecording
+        );
 
-                if (state.recording) {
+        cancel?.addEventListener(
+            "click",
+            cancelVoiceRecording
+        );
 
-                    stopVoiceRecording();
-
-                } else {
-
-                    await startVoiceRecording();
-                }
-            };
+        stop?.addEventListener(
+            "click",
+            stopVoiceRecording
+        );
     }
+
 
     async function startVoiceRecording() {
 
-        if (!navigator.mediaDevices) {
+        if (state.recording) {
+            return;
+        }
 
-            toast(
-                "Your browser does not support voice recording.",
-                "error"
+        if (
+            !navigator.mediaDevices?.getUserMedia
+        ) {
+
+            showToast(
+                "Voice recording is not supported by this browser."
             );
 
             return;
@@ -3482,52 +3398,45 @@
                         audio: true
                     });
 
-            let mimeType =
-                "";
-
-            if (
+            const mimeType =
                 MediaRecorder.isTypeSupported(
                     "audio/webm;codecs=opus"
                 )
-            ) {
-
-                mimeType =
-                    "audio/webm;codecs=opus";
-
-            } else if (
-                MediaRecorder.isTypeSupported(
-                    "audio/webm"
-                )
-            ) {
-
-                mimeType =
-                    "audio/webm";
-            }
-
-            state.recordedChunks =
-                [];
+                    ? "audio/webm;codecs=opus"
+                    : "audio/webm";
 
             state.mediaRecorder =
                 new MediaRecorder(
                     stream,
-                    mimeType
-                        ? { mimeType }
-                        : undefined
+                    {
+                        mimeType
+                    }
                 );
+
+            state.recordedChunks =
+                [];
+
+            state.recording =
+                true;
+
+            state.recordingStartedAt =
+                Date.now();
 
             state.mediaRecorder.ondataavailable =
                 event => {
 
                     if (
                         event.data &&
-                        event.data.size
+                        event.data.size > 0
                     ) {
 
                         state.recordedChunks
                             .push(
                                 event.data
                             );
+
                     }
+
                 };
 
             state.mediaRecorder.onstop =
@@ -3540,55 +3449,84 @@
                                 track.stop()
                         );
 
-                    const type =
-                        state.mediaRecorder
-                            ?.mimeType ||
-                        "audio/webm";
+                    if (
+                        !state.recordedChunks.length
+                    ) {
+                        finishRecordingUI();
+                        return;
+                    }
 
                     const blob =
                         new Blob(
                             state.recordedChunks,
                             {
-                                type
+                                type:
+                                    mimeType
                             }
                         );
 
-                    state.mediaRecorder =
-                        null;
+                    finishRecordingUI();
 
-                    state.recordedChunks =
-                        [];
+                    await uploadVoiceNote(
+                        blob
+                    );
 
-                    if (
-                        blob.size > 0
-                    ) {
-
-                        await uploadVoiceNote(
-                            blob
-                        );
-                    }
                 };
 
             state.mediaRecorder.start();
 
-            state.recording =
-                true;
+            $("voiceRecorderBar")
+                ?.classList.remove(
+                    "hidden"
+                );
 
-            updateVoiceRecorderUI();
+            updateRecordingTimer();
+
+            state.recordingTimer =
+                setInterval(
+                    updateRecordingTimer,
+                    1000
+                );
 
         } catch (error) {
 
             console.error(
-                "Microphone error:",
+                "Voice recording failed:",
                 error
             );
 
-            toast(
-                "Microphone permission was not granted.",
-                "error"
+            showToast(
+                "Microphone access was not available."
             );
         }
     }
+
+
+    function updateRecordingTimer() {
+
+        if (!state.recordingStartedAt) {
+            return;
+        }
+
+        const seconds =
+            Math.floor(
+                (
+                    Date.now() -
+                    state.recordingStartedAt
+                ) / 1000
+            );
+
+        const timer =
+            $("recordingTimer");
+
+        if (timer) {
+            timer.textContent =
+                formatRecordingTime(
+                    seconds
+                );
+        }
+    }
+
 
     function stopVoiceRecording() {
 
@@ -3597,88 +3535,92 @@
             state.recording
         ) {
 
-            state.recording =
-                false;
+            state.mediaRecorder.stop();
+
+        }
+    }
+
+
+    function cancelVoiceRecording() {
+
+        if (
+            state.mediaRecorder &&
+            state.recording
+        ) {
+
+            state.recordedChunks = [];
 
             state.mediaRecorder.stop();
 
-            updateVoiceRecorderUI();
         }
     }
 
-    function updateVoiceRecorderUI() {
 
-        const button =
-            $("#voiceNoteButton");
+    function finishRecordingUI() {
 
-        const bar =
-            $("#voiceRecorderBar");
+        state.recording =
+            false;
 
-        if (button) {
+        state.mediaRecorder =
+            null;
 
-            button.classList.toggle(
-                "recording",
-                state.recording
+        state.recordingStartedAt =
+            0;
+
+        clearInterval(
+            state.recordingTimer
+        );
+
+        state.recordingTimer =
+            null;
+
+        $("voiceRecorderBar")
+            ?.classList.add(
+                "hidden"
             );
 
-            button.setAttribute(
-                "aria-label",
-                state.recording
-                    ? "Stop voice recording"
-                    : "Record voice note"
+        $("recordingTimer")
+            && (
+                $("recordingTimer")
+                    .textContent =
+                    "00:00"
             );
-        }
-
-        if (bar) {
-
-            bar.classList.toggle(
-                "active",
-                state.recording
-            );
-
-            bar.style.display =
-                state.recording
-                    ? "flex"
-                    : "none";
-        }
     }
+
 
     async function uploadVoiceNote(
         blob
     ) {
 
-        if (
-            !state.user ||
-            !state.selectedChannel
-        ) {
+        if (!state.user) {
             return;
         }
 
-        try {
+        const filePath =
+            [
+                state.user.id,
+                "voice-notes",
+                `${crypto.randomUUID()}.webm`
+            ].join("/");
 
-            const path =
-                `${state.user.id}/voice-notes/${Date.now()}-${cryptoRandom()}.webm`;
+        try {
 
             const {
                 error: uploadError
             } =
-                await supabase
-                    .storage
+                await state.supabase.storage
                     .from(
                         STORAGE_BUCKET
                     )
                     .upload(
-                        path,
+                        filePath,
                         blob,
                         {
-                            contentType:
-                                "audio/webm",
-
                             cacheControl:
                                 "3600",
-
-                            upsert:
-                                false
+                            upsert: false,
+                            contentType:
+                                "audio/webm"
                         }
                     );
 
@@ -3689,13 +3631,12 @@
             const {
                 data
             } =
-                supabase
-                    .storage
+                state.supabase.storage
                     .from(
                         STORAGE_BUCKET
                     )
                     .getPublicUrl(
-                        path
+                        filePath
                     );
 
             const url =
@@ -3703,99 +3644,278 @@
 
             if (!url) {
                 throw new Error(
-                    "Voice URL unavailable."
+                    "Voice note URL was not created."
                 );
             }
 
-            const {
-                error
-            } =
-                await supabase
-                    .from(
-                        "chat_messages"
-                    )
-                    .insert({
-                        channel_id:
-                            state.selectedChannel.id,
+            await insertMessage({
+                content: url,
+                message_type: "voice"
+            });
 
-                        user_id:
-                            state.user.id,
+            await loadChannelData();
 
-                        content:
-                            url,
-
-                        message_type:
-                            "voice"
-                    });
-
-            if (error) {
-                throw error;
-            }
+            scrollMessagesToBottom();
 
         } catch (error) {
 
             console.error(
-                "Voice upload error:",
+                "Voice note upload failed:",
                 error
             );
 
-            toast(
-                "Could not send voice note.",
-                "error"
+            showToast(
+                "Voice note could not be uploaded."
             );
         }
     }
+
+
+    /* =====================================================
+       MEMBERS
+       ===================================================== */
+
+    async function loadMembers() {
+
+        if (!state.selectedCommunity) {
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await state.supabase
+                .from(
+                    "chat_community_members"
+                )
+                .select("*")
+                .eq(
+                    "community_id",
+                    state.selectedCommunity.id
+                )
+                .eq(
+                    "is_banned",
+                    false
+                );
+
+        if (error) {
+
+            console.warn(
+                "Member load warning:",
+                error
+            );
+
+            return;
+        }
+
+        state.members =
+            data || [];
+
+        await loadMemberProfiles();
+
+        renderMembers();
+    }
+
+
+    async function loadMemberProfiles() {
+
+        const ids =
+            state.members
+                .map(
+                    member =>
+                        member.user_id
+                )
+                .filter(Boolean);
+
+        if (!ids.length) {
+            return;
+        }
+
+        const {
+            data,
+            error
+        } =
+            await state.supabase
+                .from("students")
+                .select("*")
+                .in(
+                    "id",
+                    ids
+                );
+
+        if (error) {
+
+            console.warn(
+                "Member profiles warning:",
+                error
+            );
+
+            return;
+        }
+
+        const map =
+            new Map(
+                state.publicProfiles.map(
+                    profile =>
+                        [
+                            String(profile.id),
+                            profile
+                        ]
+                )
+            );
+
+        for (
+            const profile of
+            data || []
+        ) {
+
+            map.set(
+                String(profile.id),
+                profile
+            );
+
+        }
+
+        state.publicProfiles =
+            Array.from(
+                map.values()
+            );
+    }
+
+
+    function renderMembers() {
+
+        const list =
+            $("memberList");
+
+        if (!list) {
+            return;
+        }
+
+        const count =
+            $("memberCount");
+
+        if (count) {
+
+            count.textContent =
+                `${state.members.length} ${
+                    state.members.length === 1
+                        ? "member"
+                        : "members"
+                }`;
+
+        }
+
+        list.innerHTML =
+            state.members
+                .map(member => {
+
+                    const profile =
+                        getMessageProfile(
+                            member.user_id
+                        );
+
+                    const name =
+                        profile?.full_name ||
+                        profile?.name ||
+                        member.nickname ||
+                        "Student";
+
+                    const avatar =
+                        getProfileAvatar(
+                            profile
+                        );
+
+                    const isCurrent =
+                        String(
+                            member.user_id
+                        ) ===
+                        String(
+                            state.user?.id
+                        );
+
+                    return `
+                        <div class="member-item">
+
+                            <div class="member-avatar">
+
+                                ${
+                                    safeUrl(avatar)
+                                        ? `
+                                            <img
+                                                src="${escapeHtml(
+                                                    safeUrl(avatar)
+                                                )}"
+                                                alt=""
+                                            >
+                                        `
+                                        : escapeHtml(
+                                            initials(name)
+                                        )
+                                }
+
+                            </div>
+
+                            <div class="member-details">
+
+                                <strong>
+                                    ${escapeHtml(
+                                        isCurrent
+                                            ? `${name} (You)`
+                                            : name
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHtml(
+                                        member.role ||
+                                        "Student"
+                                    )}
+                                </span>
+
+                            </div>
+
+                            <span class="online-dot"></span>
+
+                        </div>
+                    `;
+
+                })
+                .join("");
+    }
+
 
     /* =====================================================
        REALTIME
        ===================================================== */
 
-    function clearRealtime() {
+    function subscribeToRealtime() {
 
-        if (!supabase) {
+        if (!state.supabase) {
             return;
         }
 
-        state.realtimeChannels
-            .forEach(
-                channel => {
+        if (!state.selectedChannel) {
+            return;
+        }
 
-                    try {
+        if (state.realtimeChannel) {
 
-                        supabase
-                            .removeChannel(
-                                channel
-                            );
-
-                    } catch {
-                        // Ignore cleanup errors.
-                    }
-                }
+            state.supabase.removeChannel(
+                state.realtimeChannel
             );
 
-        state.realtimeChannels =
-            [];
-    }
-
-    function subscribeToChannel() {
-
-        if (
-            !supabase ||
-            !state.selectedChannel
-        ) {
-            return;
+            state.realtimeChannel =
+                null;
         }
 
-        clearRealtime();
+        const channelName =
+            `community-chat-${state.selectedChannel.id}`;
 
-        const channelId =
-            state.selectedChannel.id;
-
-        const realtime =
-            supabase
-                .channel(
-                    `community-${channelId}`
-                )
+        state.realtimeChannel =
+            state.supabase
+                .channel(channelName)
 
                 .on(
                     "postgres_changes",
@@ -3804,94 +3924,19 @@
                         schema: "public",
                         table: "chat_messages",
                         filter:
-                            `channel_id=eq.${channelId}`
+                            `channel_id=eq.${state.selectedChannel.id}`
                     },
                     async payload => {
 
-                        if (
-                            payload.eventType ===
-                            "INSERT"
-                        ) {
+                        console.log(
+                            "Community message realtime:",
+                            payload.eventType
+                        );
 
-                            if (
-                                !state.messages
-                                    .some(
-                                        message =>
-                                            message.id ===
-                                            payload.new.id
-                                    )
-                            ) {
+                        await loadChannelData();
 
-                                state.messages
-                                    .push(
-                                        payload.new
-                                    );
+                        scrollMessagesToBottom();
 
-                                if (
-                                    state.messages
-                                        .length >
-                                    MESSAGE_PAGE_SIZE *
-                                        2
-                                ) {
-
-                                    state.messages =
-                                        state.messages
-                                            .slice(
-                                                -MESSAGE_PAGE_SIZE *
-                                                    2
-                                            );
-                                }
-
-                                await loadMessageRelatedData();
-
-                                renderMessages();
-
-                                scrollMessagesToBottom();
-                            }
-
-                        } else if (
-                            payload.eventType ===
-                            "UPDATE"
-                        ) {
-
-                            const index =
-                                state.messages
-                                    .findIndex(
-                                        message =>
-                                            message.id ===
-                                            payload.new.id
-                                    );
-
-                            if (
-                                index !==
-                                -1
-                            ) {
-
-                                state.messages[
-                                    index
-                                ] =
-                                    payload.new;
-
-                                await loadMessageRelatedData();
-
-                                renderMessages();
-                            }
-
-                        } else if (
-                            payload.eventType ===
-                            "DELETE"
-                        ) {
-
-                            state.messages =
-                                state.messages
-                                    .filter(
-                                        message =>
-                                            message.id !==
-                                            payload.old.id
-                                    );
-
-                            renderMessages();
-                        }
                     }
                 )
 
@@ -3905,9 +3950,10 @@
                     },
                     async () => {
 
-                        await loadMessageRelatedData();
+                        await loadReactions();
 
                         renderMessages();
+
                     }
                 )
 
@@ -3921,9 +3967,10 @@
                     },
                     async () => {
 
-                        await loadMessageRelatedData();
+                        await loadAttachments();
 
                         renderMessages();
+
                     }
                 )
 
@@ -3934,250 +3981,116 @@
                             "Community realtime:",
                             status
                         );
+
                     }
                 );
-
-        state.realtimeChannels
-            .push(
-                realtime
-            );
     }
+
 
     /* =====================================================
-       MESSAGE SCROLL
+       GENERAL CALL BRIDGE
+       -----------------------------------------------------
+       community.js does not perform WebRTC.
+       It only tells call.js what the user requested.
        ===================================================== */
 
-    function scrollMessagesToBottom() {
-
-        const container =
-            $("#messageList");
-
-        if (!container) {
-            return;
-        }
-
-        requestAnimationFrame(
-            () => {
-
-                container.scrollTop =
-                    container.scrollHeight;
-            }
-        );
-    }
-
-    function setupMessageScroll() {
-
-        const container =
-            $("#messageList");
-
-        if (!container) {
-            return;
-        }
-
-        container.addEventListener(
-            "scroll",
-            async () => {
-
-                if (
-                    container.scrollTop <
-                    120
-                ) {
-
-                    await loadOlderMessages();
-                }
-            }
-        );
-    }
-
-    /* =====================================================
-       COMPOSER
-       ===================================================== */
-
-    function setupComposer() {
-
-        const input =
-            $("#messageInput");
-
-        const sendButton =
-            $("#sendMessageButton");
-
-        if (input) {
-
-            input.addEventListener(
-                "input",
-                resizeMessageInput
-            );
-
-            input.addEventListener(
-                "keydown",
-                event => {
-
-                    if (
-                        event.key ===
-                            "Enter" &&
-                        !event.shiftKey
-                    ) {
-
-                        event.preventDefault();
-
-                        sendMessage();
-                    }
-                }
-            );
-        }
-
-        if (sendButton) {
-
-            sendButton.onclick =
-                sendMessage;
-        }
-    }
-
-    /* =====================================================
-       ATTACH BUTTON
-       ===================================================== */
-
-    function setupAttachButton() {
+    function setupGeneralCall() {
 
         const button =
-            $("#attachButton");
-
-        if (!button) {
-            return;
-        }
-
-        button.onclick =
-            () => {
-
-                const input =
-                    $("#communityFileInput");
-
-                if (input) {
-                    input.click();
-                }
-            };
-    }
-
-    /* =====================================================
-       GENERAL CALL
-       ===================================================== */
-
-    function setupGeneralCallButton() {
-
-        const button =
-            $("#generalCallButton");
-
-        if (!button) {
-            return;
-        }
-
-        button.onclick =
-            () => {
-
-                openGeneralCallModal();
-            };
-    }
-
-    function openGeneralCallModal() {
+            $("generalCallButton");
 
         const modal =
-            $("#generalCallModal");
+            $("generalCallModal");
 
-        if (!modal) {
+        if (!button || !modal) {
             return;
         }
 
-        modal.classList.add(
-            "open"
+        button.addEventListener(
+            "click",
+            () => {
+
+                modal.classList.remove(
+                    "hidden"
+                );
+
+                $("generalCallUserInput")
+                    ?.focus();
+
+            }
         );
 
-        modal.classList.remove(
-            "hidden"
-        );
 
-        modal.style.display =
-            "flex";
+        $("closeGeneralCallModal")
+            ?.addEventListener(
+                "click",
+                closeGeneralCallModal
+            );
+
+
+        $("cancelGeneralCallButton")
+            ?.addEventListener(
+                "click",
+                closeGeneralCallModal
+            );
+
+
+        $("startGeneralVoiceCall")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    requestGeneralCall(
+                        "voice"
+                    );
+
+                }
+            );
+
+
+        $("startGeneralVideoCall")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    requestGeneralCall(
+                        "video"
+                    );
+
+                }
+            );
     }
+
 
     function closeGeneralCallModal() {
 
-        const modal =
-            $("#generalCallModal");
+        $("generalCallModal")
+            ?.classList.add(
+                "hidden"
+            );
 
-        if (!modal) {
-            return;
-        }
-
-        modal.classList.remove(
-            "open"
+        setMessage(
+            "generalCallMessage",
+            ""
         );
-
-        modal.classList.add(
-            "hidden"
-        );
-
-        modal.style.display =
-            "none";
     }
 
-    function setupGeneralCallModal() {
 
-        const cancel =
-            $("#cancelGeneralCallButton");
-
-        const close =
-            $("#closeGeneralCallButton");
-
-        if (cancel) {
-            cancel.onclick =
-                closeGeneralCallModal;
-        }
-
-        if (close) {
-            close.onclick =
-                closeGeneralCallModal;
-        }
-
-        const voice =
-            $("#startGeneralVoiceCallButton");
-
-        const video =
-            $("#startGeneralVideoCallButton");
-
-        if (voice) {
-
-            voice.onclick =
-                () =>
-                    dispatchGeneralCall(
-                        "audio"
-                    );
-        }
-
-        if (video) {
-
-            video.onclick =
-                () =>
-                    dispatchGeneralCall(
-                        "video"
-                    );
-        }
-    }
-
-    function dispatchGeneralCall(
+    function requestGeneralCall(
         mode
     ) {
 
         const input =
-            $("#generalCallUserInput");
+            $("generalCallUserInput");
 
         const targetUserId =
-            input?.value?.trim();
+            input?.value.trim() || "";
 
         if (!targetUserId) {
 
-            toast(
-                "Enter the user ID for now.",
-                "error"
+            setMessage(
+                "generalCallMessage",
+                "Enter the recipient user ID."
             );
 
             return;
@@ -4196,175 +4109,411 @@
         );
 
         closeGeneralCallModal();
+
     }
 
+
     /* =====================================================
-       NAVIGATION
+       UI EVENTS
        ===================================================== */
 
-    function setupNavigation() {
+    function setupUI() {
 
-        const dashboard =
-            $("#backToDashboard");
+        $("openCommunityModal")
+            ?.addEventListener(
+                "click",
+                openCommunityModal
+            );
 
-        if (dashboard) {
+        $("closeCommunityModal")
+            ?.addEventListener(
+                "click",
+                closeCommunityModal
+            );
 
-            dashboard.onclick =
-                () => {
+        $("openCommunityMenu")
+            ?.addEventListener(
+                "click",
+                openCommunityModal
+            );
 
-                    window.location.href =
-                        "./dashboard.html";
-                };
-        }
 
-        const profile =
-            $("#profileButton");
+        $("toggleMembersButton")
+            ?.addEventListener(
+                "click",
+                toggleMembers
+            );
 
-        if (profile) {
+        $("closeMembersButton")
+            ?.addEventListener(
+                "click",
+                closeMembers
+            );
 
-            profile.onclick =
+
+        $("profileButton")
+            ?.addEventListener(
+                "click",
                 () => {
 
                     window.location.href =
                         "./profile.html";
-                };
-        }
-    }
 
-    /* =====================================================
-       COMMUNITY MODAL BUTTON
-       ===================================================== */
+                }
+            );
 
-    function setupCommunityModal() {
 
-        const openButton =
-            $("#communitySwitcherButton") ||
-            $("#selectedCommunityButton");
+        $("channelSearch")
+            ?.addEventListener(
+                "input",
+                event => {
 
-        if (openButton) {
-
-            openButton.onclick =
-                () =>
-                    openCommunityModal(
-                        true
+                    renderChannels(
+                        event.target.value
                     );
-        }
 
-        const closeButton =
-            $("#closeCommunityModal");
+                }
+            );
 
-        if (closeButton) {
 
-            closeButton.onclick =
-                closeCommunityModal;
-        }
-
-        const search =
-            $("#communitySearch");
-
-        if (search) {
-
-            search.oninput =
-                () =>
-                    renderCommunityModal(
-                        search.value
-                    );
-        }
-
-        const modal =
-            $("#communityModal");
-
-        if (modal) {
-
-            modal.addEventListener(
+        $("sendMessageButton")
+            ?.addEventListener(
                 "click",
+                sendMessage
+            );
+
+
+        $("messageInput")
+            ?.addEventListener(
+                "keydown",
                 event => {
 
                     if (
-                        event.target ===
-                        modal
+                        event.key === "Enter" &&
+                        !event.shiftKey
                     ) {
 
-                        closeCommunityModal();
+                        event.preventDefault();
+
+                        sendMessage();
+
                     }
+
                 }
             );
-        }
-    }
 
-    /* =====================================================
-       OUTSIDE CLICK / ESCAPE
-       ===================================================== */
 
-    function setupGlobalKeyboard() {
+        $("messageInput")
+            ?.addEventListener(
+                "input",
+                event => {
+
+                    autoResizeTextarea(
+                        event.target
+                    );
+
+                }
+            );
+
+
+        $("cancelReplyButton")
+            ?.addEventListener(
+                "click",
+                cancelReply
+            );
+
+
+        document.addEventListener(
+            "click",
+            event => {
+
+                const emoji =
+                    $("emojiPicker");
+
+                const gif =
+                    $("gifPicker");
+
+                const emojiButton =
+                    $("emojiButton");
+
+                const gifButton =
+                    $("gifButton");
+
+                if (
+                    emoji &&
+                    !emoji.classList.contains(
+                        "hidden"
+                    ) &&
+                    !emoji.contains(
+                        event.target
+                    ) &&
+                    event.target !==
+                        emojiButton
+                ) {
+
+                    emoji.classList.add(
+                        "hidden"
+                    );
+
+                    state.emojiOpen =
+                        false;
+                }
+
+                if (
+                    gif &&
+                    !gif.classList.contains(
+                        "hidden"
+                    ) &&
+                    !gif.contains(
+                        event.target
+                    ) &&
+                    event.target !==
+                        gifButton
+                ) {
+
+                    gif.classList.add(
+                        "hidden"
+                    );
+
+                    state.gifOpen =
+                        false;
+                }
+
+            }
+        );
+
 
         document.addEventListener(
             "keydown",
             event => {
 
                 if (
-                    event.key ===
-                    "Escape"
+                    event.key === "Escape"
                 ) {
 
-                    closeEmojiPicker();
-
-                    closeGifPicker();
+                    closePickerMenus();
 
                     closeCommunityModal();
 
                     closeGeneralCallModal();
+
+                    cancelReply();
+
                 }
+
             }
         );
+
+
+        $("messageList")
+            ?.addEventListener(
+                "scroll",
+                async event => {
+
+                    const element =
+                        event.currentTarget;
+
+                    if (
+                        element.scrollTop <
+                            100 &&
+                        state.hasMoreMessages &&
+                        !state.loadingMessages
+                    ) {
+
+                        const previousHeight =
+                            element.scrollHeight;
+
+                        await loadMessages(
+                            false
+                        );
+
+                        const newHeight =
+                            element.scrollHeight;
+
+                        element.scrollTop =
+                            newHeight -
+                            previousHeight;
+
+                    }
+
+                }
+            );
+
+
+        $("channelCallButton")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    window.dispatchEvent(
+                        new CustomEvent(
+                            "mwaniki:channel-call",
+                            {
+                                detail: {
+                                    communityId:
+                                        state.selectedCommunity
+                                            ?.id,
+                                    channelId:
+                                        state.selectedChannel
+                                            ?.id,
+                                    mode:
+                                        "voice"
+                                }
+                            }
+                        )
+                    );
+
+                }
+            );
+
+
+        $("channelSearchButton")
+            ?.addEventListener(
+                "click",
+                () => {
+
+                    $("channelSearch")
+                        ?.focus();
+
+                }
+            );
+
     }
 
-    /* =====================================================
-       AUTH STATE
-       ===================================================== */
 
-    function setupAuthListener() {
+    function autoResizeTextarea(
+        textarea
+    ) {
 
-        if (!supabase) {
+        if (!textarea) {
             return;
         }
 
-        supabase.auth.onAuthStateChange(
-            async (
-                event,
-                session
-            ) => {
+        textarea.style.height =
+            "auto";
 
-                console.log(
-                    "Community auth:",
-                    event
-                );
+        textarea.style.height =
+            Math.min(
+                textarea.scrollHeight,
+                140
+            ) + "px";
+    }
 
-                if (
-                    event ===
-                    "SIGNED_OUT"
-                ) {
 
-                    clearRealtime();
+    function toggleMembers() {
 
-                    state.user =
-                        null;
+        const sidebar =
+            $("memberSidebar");
 
-                    return;
-                }
+        if (!sidebar) {
+            return;
+        }
 
-                if (
-                    event ===
-                    "SIGNED_IN"
-                ) {
+        state.memberSidebarOpen =
+            !state.memberSidebarOpen;
 
-                    state.user =
-                        session?.user ||
-                        null;
-                }
+        if (
+            window.innerWidth <= 1200
+        ) {
+
+            sidebar.style.display =
+                state.memberSidebarOpen
+                    ? "flex"
+                    : "none";
+        }
+
+    }
+
+
+    function closeMembers() {
+
+        const sidebar =
+            $("memberSidebar");
+
+        if (!sidebar) {
+            return;
+        }
+
+        if (
+            window.innerWidth <= 1200
+        ) {
+
+            sidebar.style.display =
+                "none";
+        }
+    }
+
+
+    /* =====================================================
+       MODALS
+       ===================================================== */
+
+    function openCommunityModal() {
+
+        $("communityModal")
+            ?.classList.remove(
+                "hidden"
+            );
+    }
+
+
+    function closeCommunityModal() {
+
+        $("communityModal")
+            ?.classList.add(
+                "hidden"
+            );
+    }
+
+
+    /* =====================================================
+       SCROLL
+       ===================================================== */
+
+    function scrollMessagesToBottom() {
+
+        const list =
+            $("messageList");
+
+        if (!list) {
+            return;
+        }
+
+        requestAnimationFrame(
+            () => {
+
+                list.scrollTop =
+                    list.scrollHeight;
+
             }
         );
     }
+
+
+    /* =====================================================
+       DEBOUNCE
+       ===================================================== */
+
+    function debounce(
+        callback,
+        delay
+    ) {
+
+        let timer = null;
+
+        return (...args) => {
+
+            clearTimeout(timer);
+
+            timer =
+                setTimeout(
+                    () => callback(...args),
+                    delay
+                );
+
+        };
+    }
+
 
     /* =====================================================
        INITIALIZATION
@@ -4383,105 +4532,55 @@
             "Community starting"
         );
 
-        supabase =
-            getSupabase();
+        try {
 
-        if (!supabase) {
+            state.supabase =
+                await waitForSupabase();
+
+            console.log(
+                "Supabase client ready"
+            );
+
+            setupUI();
+
+            setupRules();
+
+            setupFileUpload();
+
+            setupEmoji();
+
+            setupGif();
+
+            setupVoiceRecording();
+
+            setupGeneralCall();
+
+            await loadAuthenticatedUser();
+
+            await loadProfile();
+
+            await loadCommunities();
+
+            showRulesGate();
+
+            console.log(
+                "Community loaded"
+            );
+
+        } catch (error) {
 
             console.error(
-                "Supabase client ready check failed."
+                "Community initialization failed:",
+                error
             );
 
-            toast(
-                "Supabase is not available.",
-                "error"
+            showToast(
+                error.message ||
+                "Community could not be loaded."
             );
-
-            return;
         }
-
-        console.log(
-            "Supabase client ready"
-        );
-
-        const authenticated =
-            await requireAuthentication();
-
-        if (!authenticated) {
-            return;
-        }
-
-        console.log(
-            "Authenticated session"
-        );
-
-        await loadOwnProfile();
-
-        setupRules();
-
-        setupComposer();
-
-        setupMessageScroll();
-
-        setupAttachmentInput();
-
-        setupAttachButton();
-
-        setupEmojiPicker();
-
-        setupGifPicker();
-
-        setupVoiceRecorder();
-
-        setupGeneralCallButton();
-
-        setupGeneralCallModal();
-
-        setupNavigation();
-
-        setupCommunityModal();
-
-        setupGlobalKeyboard();
-
-        setupAuthListener();
-
-        await loadCommunities();
-
-        console.log(
-            "Community loaded"
-        );
     }
 
-    /* =====================================================
-       PUBLIC API
-       ===================================================== */
-
-    window.MwanikiCommunity = {
-
-        state,
-
-        reloadCommunities:
-            loadCommunities,
-
-        reloadChannels:
-            loadChannels,
-
-        reloadMessages:
-            loadMessages,
-
-        sendMessage,
-
-        sendGif,
-
-        closeEmojiPicker,
-
-        closeGifPicker,
-
-        openCommunityModal,
-
-        closeCommunityModal
-
-    };
 
     /* =====================================================
        START
@@ -4503,6 +4602,8 @@
     } else {
 
         initialize();
+
     }
+
 
 })();
