@@ -1,49 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <meta
         name="description"
         content="Mwaniki Scholars Community - academic discussion, collaboration, contests and calls."
     >
 
-    <meta name="theme-color" content="#087f73">
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
 
     <title>Mwaniki Scholars Community</title>
 
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./community.css">
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="./community.css"
+    >
+
 </head>
+
 
 <body>
 
-<div id="app" class="community-app">
+<div
+    id="app"
+    class="community-app"
+>
+
 
     <!-- =====================================================
-         TOP BAR
+         HEADER
          ===================================================== -->
 
     <header class="community-header">
 
         <div class="brand-area">
+
             <button
                 id="mobileSidebarButton"
                 class="icon-button mobile-only"
                 type="button"
                 aria-label="Open menu"
+                title="Open menu"
             >
                 ☰
             </button>
 
-            <div class="brand-mark">🎓</div>
 
-            <div>
-                <h1>Mwaniki Scholars</h1>
-                <span>Community</span>
+            <!-- HOME -->
+
+            <button
+                id="communityHomeButton"
+                class="community-home-button"
+                type="button"
+                title="Back to Dashboard"
+                aria-label="Back to Dashboard"
+            >
+
+                <span class="home-button-icon">
+                    ⌂
+                </span>
+
+                <span class="home-button-text">
+                    Home
+                </span>
+
+            </button>
+
+
+            <div class="brand-mark">
+                🎓
             </div>
+
+
+            <div class="community-brand-text">
+
+                <h1>
+                    Mwaniki Scholars
+                </h1>
+
+                <span>
+                    Community
+                </span>
+
+            </div>
+
         </div>
+
 
         <div class="header-actions">
 
@@ -55,6 +113,7 @@
                 📜 Rules
             </button>
 
+
             <button
                 id="ticketButton"
                 class="header-button"
@@ -63,14 +122,24 @@
                 🎫 Tickets
             </button>
 
+
             <button
                 id="friendsButton"
                 class="header-button"
                 type="button"
             >
+
                 👥 Friends
-                <span id="friendRequestBadge" class="count-badge hidden">0</span>
+
+                <span
+                    id="friendRequestBadge"
+                    class="count-badge hidden"
+                >
+                    0
+                </span>
+
             </button>
+
 
             <button
                 id="generalCallButton"
@@ -80,11 +149,13 @@
                 📞 Call
             </button>
 
+
             <button
                 id="profileButton"
                 class="profile-button"
                 type="button"
             >
+
                 <span
                     id="headerProfileAvatar"
                     class="avatar avatar-small"
@@ -92,17 +163,21 @@
                     👤
                 </span>
 
-                <span id="headerProfileName">Account</span>
+                <span id="headerProfileName">
+                    Account
+                </span>
 
                 <span
                     id="headerPresenceDot"
                     class="presence-dot offline"
                 ></span>
+
             </button>
 
         </div>
 
     </header>
+
 
 
     <!-- =====================================================
@@ -111,15 +186,26 @@
 
     <main class="community-layout">
 
+
         <!-- COMMUNITY RAIL -->
 
-        <aside id="communityRail" class="community-rail">
+        <aside
+            id="communityRail"
+            class="community-rail"
+        >
 
             <div class="rail-heading">
-                <span>Communities</span>
+                <span>
+                    Communities
+                </span>
             </div>
 
-            <div id="communityRailList" class="community-rail-list"></div>
+
+            <div
+                id="communityRailList"
+                class="community-rail-list"
+            ></div>
+
 
             <button
                 id="addCommunityButton"
@@ -133,9 +219,13 @@
         </aside>
 
 
+
         <!-- CHANNEL SIDEBAR -->
 
-        <aside id="channelSidebar" class="channel-sidebar">
+        <aside
+            id="channelSidebar"
+            class="channel-sidebar"
+        >
 
             <div class="selected-community">
 
@@ -146,13 +236,18 @@
                     🎓
                 </div>
 
+
                 <div class="selected-community-info">
 
-                    <strong id="selectedCommunityName">
+                    <strong
+                        id="selectedCommunityName"
+                    >
                         Mwaniki Scholars
                     </strong>
 
-                    <span id="selectedCommunityDescription">
+                    <span
+                        id="selectedCommunityDescription"
+                    >
                         Academic community
                     </span>
 
@@ -168,8 +263,15 @@
                     class="community-call-button"
                     type="button"
                 >
-                    <span>📞</span>
-                    <span>Community Call</span>
+
+                    <span>
+                        📞
+                    </span>
+
+                    <span>
+                        Community Call
+                    </span>
+
                 </button>
 
             </div>
@@ -177,10 +279,13 @@
 
             <div class="channel-scroll">
 
+
                 <section class="channel-group">
 
                     <div class="channel-group-title">
-                        <span>INFORMATION</span>
+                        <span>
+                            INFORMATION
+                        </span>
                     </div>
 
                     <div
@@ -191,10 +296,13 @@
                 </section>
 
 
+
                 <section class="channel-group">
 
                     <div class="channel-group-title">
-                        <span>COURSES</span>
+                        <span>
+                            COURSES
+                        </span>
                     </div>
 
                     <div
@@ -205,10 +313,13 @@
                 </section>
 
 
+
                 <section class="channel-group">
 
                     <div class="channel-group-title">
-                        <span>COMMUNITY</span>
+                        <span>
+                            COMMUNITY
+                        </span>
                     </div>
 
                     <div
@@ -219,10 +330,13 @@
                 </section>
 
 
+
                 <section class="channel-group">
 
                     <div class="channel-group-title">
-                        <span>CONTESTS</span>
+                        <span>
+                            CONTESTS
+                        </span>
                     </div>
 
                     <button
@@ -230,8 +344,15 @@
                         class="special-channel-button"
                         type="button"
                     >
-                        <span>🏆</span>
-                        <span>Contests & Tests</span>
+
+                        <span>
+                            🏆
+                        </span>
+
+                        <span>
+                            Contests & Tests
+                        </span>
+
                     </button>
 
                 </section>
@@ -241,9 +362,13 @@
         </aside>
 
 
-        <!-- CHAT AREA -->
+
+        <!-- =================================================
+             CHAT
+             ================================================= -->
 
         <section class="chat-area">
+
 
             <header class="chat-header">
 
@@ -277,10 +402,11 @@
                         id="channelSearchButton"
                         class="icon-button"
                         type="button"
-                        title="Search"
+                        title="Search messages"
                     >
                         🔎
                     </button>
+
 
                     <button
                         id="channelMembersButton"
@@ -296,7 +422,6 @@
             </header>
 
 
-            <!-- MESSAGE LIST -->
 
             <div
                 id="messageList"
@@ -314,7 +439,6 @@
             </div>
 
 
-            <!-- TYPING -->
 
             <div
                 id="typingIndicator"
@@ -324,9 +448,11 @@
             </div>
 
 
+
             <!-- COMPOSER -->
 
             <footer class="composer-area">
+
 
                 <div
                     id="attachmentPreview"
@@ -336,14 +462,16 @@
 
                 <div class="composer">
 
+
                     <button
                         id="attachButton"
                         class="composer-button"
                         type="button"
-                        title="Attach"
+                        title="Attach file"
                     >
                         📎
                     </button>
+
 
                     <button
                         id="emojiButton"
@@ -354,6 +482,7 @@
                         😊
                     </button>
 
+
                     <button
                         id="stickerButton"
                         class="composer-button"
@@ -363,6 +492,7 @@
                         🏷️
                     </button>
 
+
                     <button
                         id="gifButton"
                         class="composer-button"
@@ -371,6 +501,7 @@
                     >
                         GIF
                     </button>
+
 
                     <button
                         id="voiceNoteButton"
@@ -401,6 +532,7 @@
                 </div>
 
 
+
                 <input
                     id="attachmentInput"
                     type="file"
@@ -417,11 +549,13 @@
                         application/vnd.openxmlformats-officedocument.presentationml.presentation,
                         application/vnd.ms-excel,
                         application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,
-                        audio/*"
+                        audio/*
+                    "
                 >
 
 
-                <!-- EMOJI PANEL -->
+
+                <!-- EMOJI -->
 
                 <div
                     id="emojiPanel"
@@ -429,7 +563,11 @@
                 >
 
                     <div class="picker-title">
-                        <strong>Emoji</strong>
+
+                        <strong>
+                            Emoji
+                        </strong>
+
                         <button
                             class="picker-close"
                             type="button"
@@ -437,7 +575,9 @@
                         >
                             ×
                         </button>
+
                     </div>
+
 
                     <input
                         id="emojiSearch"
@@ -446,10 +586,12 @@
                         placeholder="Search emoji..."
                     >
 
+
                     <div
                         id="emojiCategories"
                         class="emoji-categories"
                     ></div>
+
 
                     <div
                         id="emojiGrid"
@@ -459,7 +601,8 @@
                 </div>
 
 
-                <!-- STICKER PANEL -->
+
+                <!-- STICKERS -->
 
                 <div
                     id="stickerPanel"
@@ -467,7 +610,10 @@
                 >
 
                     <div class="picker-title">
-                        <strong>Stickers</strong>
+
+                        <strong>
+                            Stickers
+                        </strong>
 
                         <button
                             class="picker-close"
@@ -476,7 +622,9 @@
                         >
                             ×
                         </button>
+
                     </div>
+
 
                     <div
                         id="stickerGrid"
@@ -486,7 +634,8 @@
                 </div>
 
 
-                <!-- GIF PANEL -->
+
+                <!-- GIF -->
 
                 <div
                     id="gifPanel"
@@ -495,7 +644,9 @@
 
                     <div class="picker-title">
 
-                        <strong>GIFs</strong>
+                        <strong>
+                            GIFs
+                        </strong>
 
                         <button
                             class="picker-close"
@@ -507,12 +658,14 @@
 
                     </div>
 
+
                     <input
                         id="gifSearch"
                         class="picker-search"
                         type="search"
                         placeholder="Search GIFs..."
                     >
+
 
                     <div
                         id="gifGrid"
@@ -532,6 +685,7 @@
         </section>
 
 
+
         <!-- MEMBER SIDEBAR -->
 
         <aside
@@ -541,7 +695,9 @@
 
             <div class="member-sidebar-header">
 
-                <strong>Members</strong>
+                <strong>
+                    Members
+                </strong>
 
                 <span id="memberCount">
                     0
@@ -562,19 +718,23 @@
 </div>
 
 
-<!-- =====================================================
-     FILE PREVIEW MODAL
-     ===================================================== -->
+
+<!-- =========================================================
+     FILE PREVIEW
+     ========================================================= -->
 
 <div
     id="filePreviewModal"
     class="modal hidden"
 >
+
     <div class="modal-card">
 
         <div class="modal-header">
 
-            <h2>Send attachment</h2>
+            <h2>
+                Send attachment
+            </h2>
 
             <button
                 class="modal-close"
@@ -586,10 +746,12 @@
 
         </div>
 
+
         <div
             id="filePreviewContent"
             class="modal-body"
         ></div>
+
 
         <div class="modal-actions">
 
@@ -612,22 +774,27 @@
         </div>
 
     </div>
+
 </div>
 
 
-<!-- =====================================================
-     FRIENDS MODAL
-     ===================================================== -->
+
+<!-- =========================================================
+     FRIENDS
+     ========================================================= -->
 
 <div
     id="friendsModal"
     class="modal hidden"
 >
+
     <div class="modal-card large-modal">
 
         <div class="modal-header">
 
-            <h2>Friends</h2>
+            <h2>
+                Friends
+            </h2>
 
             <button
                 class="modal-close"
@@ -639,6 +806,7 @@
 
         </div>
 
+
         <div class="friends-tabs">
 
             <button
@@ -649,16 +817,21 @@
                 Friends
             </button>
 
+
             <button
                 class="friend-tab"
                 data-friend-tab="requests"
                 type="button"
             >
+
                 Requests
+
                 <span id="friendRequestsCount"></span>
+
             </button>
 
         </div>
+
 
         <div
             id="friendsContent"
@@ -666,22 +839,27 @@
         ></div>
 
     </div>
+
 </div>
 
 
-<!-- =====================================================
-     TICKET MODAL
-     ===================================================== -->
+
+<!-- =========================================================
+     TICKET
+     ========================================================= -->
 
 <div
     id="ticketModal"
     class="modal hidden"
 >
+
     <div class="modal-card">
 
         <div class="modal-header">
 
-            <h2>🎫 Raise a Concern</h2>
+            <h2>
+                🎫 Raise a Concern
+            </h2>
 
             <button
                 class="modal-close"
@@ -693,12 +871,16 @@
 
         </div>
 
+
         <form id="ticketForm">
 
             <label>
                 Concern type
 
-                <select id="ticketType" required>
+                <select
+                    id="ticketType"
+                    required
+                >
 
                     <option value="">
                         Select concern
@@ -785,22 +967,27 @@
         </form>
 
     </div>
+
 </div>
 
 
-<!-- =====================================================
-     RULES MODAL
-     ===================================================== -->
+
+<!-- =========================================================
+     RULES
+     ========================================================= -->
 
 <div
     id="rulesModal"
     class="modal hidden"
 >
+
     <div class="modal-card large-modal">
 
         <div class="modal-header">
 
-            <h2>📜 Community Rules</h2>
+            <h2>
+                📜 Community Rules
+            </h2>
 
             <button
                 class="modal-close"
@@ -811,6 +998,7 @@
             </button>
 
         </div>
+
 
         <div class="rules-content">
 
@@ -853,17 +1041,20 @@
         </div>
 
     </div>
+
 </div>
 
 
-<!-- =====================================================
-     PROFILE CARD
-     ===================================================== -->
+
+<!-- =========================================================
+     PROFILE
+     ========================================================= -->
 
 <div
     id="profileModal"
     class="modal hidden"
 >
+
     <div class="modal-card profile-card-modal">
 
         <button
@@ -874,28 +1065,34 @@
             ×
         </button>
 
+
         <div
             id="profileModalContent"
             class="profile-modal-content"
         ></div>
 
     </div>
+
 </div>
 
 
-<!-- =====================================================
-     CALL MODAL
-     ===================================================== -->
+
+<!-- =========================================================
+     CALL CHOICE
+     ========================================================= -->
 
 <div
     id="callModal"
     class="modal hidden"
 >
+
     <div class="modal-card">
 
         <div class="modal-header">
 
-            <h2>📞 Start a Call</h2>
+            <h2>
+                📞 Start a Call
+            </h2>
 
             <button
                 class="modal-close"
@@ -907,6 +1104,7 @@
 
         </div>
 
+
         <div class="call-choice">
 
             <button
@@ -914,30 +1112,49 @@
                 class="call-choice-button"
                 type="button"
             >
+
                 👤
-                <strong>Specific person</strong>
-                <span>Choose someone to call</span>
+
+                <strong>
+                    Specific person
+                </strong>
+
+                <span>
+                    Choose someone to call
+                </span>
+
             </button>
+
 
             <button
                 id="callWholeCommunityButton"
                 class="call-choice-button"
                 type="button"
             >
+
                 👥
-                <strong>Whole community</strong>
-                <span>Invite eligible community members</span>
+
+                <strong>
+                    Whole community
+                </strong>
+
+                <span>
+                    Invite eligible community members
+                </span>
+
             </button>
 
         </div>
 
     </div>
+
 </div>
 
 
-<!-- =====================================================
-     ACTIVE CALL OVERLAY
-     ===================================================== -->
+
+<!-- =========================================================
+     ACTIVE CALL
+     ========================================================= -->
 
 <div
     id="activeCallOverlay"
@@ -959,6 +1176,7 @@
                 </span>
 
             </div>
+
 
             <button
                 id="leaveCallButton"
@@ -982,28 +1200,35 @@
             <button
                 id="toggleMicrophoneButton"
                 type="button"
+                title="Microphone"
             >
                 🎙️
             </button>
 
+
             <button
                 id="toggleCameraButton"
                 type="button"
+                title="Camera"
             >
                 📹
             </button>
 
+
             <button
                 id="shareScreenButton"
                 type="button"
+                title="Share screen"
             >
                 🖥️
             </button>
+
 
             <button
                 id="leaveCallButtonBottom"
                 class="danger-button"
                 type="button"
+                title="End call"
             >
                 ☎
             </button>
@@ -1015,18 +1240,23 @@
 </div>
 
 
-<!-- =====================================================
+
+<!-- =========================================================
      INCOMING CALL
-     ===================================================== -->
+     ========================================================= -->
 
 <div
     id="incomingCallToast"
     class="incoming-call hidden"
 >
 
-    <div class="incoming-call-avatar">
+    <div
+        id="incomingCallAvatar"
+        class="incoming-call-avatar"
+    >
         📞
     </div>
+
 
     <div>
 
@@ -1040,6 +1270,7 @@
 
     </div>
 
+
     <div class="incoming-call-actions">
 
         <button
@@ -1049,6 +1280,7 @@
         >
             ✓
         </button>
+
 
         <button
             id="rejectCallButton"
@@ -1063,9 +1295,6 @@
 </div>
 
 
-<!-- =====================================================
-     TOAST
-     ===================================================== -->
 
 <div
     id="toast"
@@ -1073,14 +1302,6 @@
 ></div>
 
 
-<!-- =====================================================
-     SCRIPTS
-     ===================================================== -->
-
-<script
-    type="module"
-    src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"
-></script>
 
 <script
     type="module"
@@ -1097,5 +1318,7 @@
     src="./call.js"
 ></script>
 
+
 </body>
+
 </html>
