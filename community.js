@@ -4,11 +4,16 @@
    =========================================================
 
    Handles:
+   - Authentication
+   - Community rules gate
    - Communities
+   - Community switching
    - Channels
+   - Channel search
    - Real student names
    - Real student profile photos
    - Message history
+   - Older message loading
    - Sending messages
    - Replies
    - Message deletion
@@ -16,16 +21,15 @@
    - Emoji picker
    - Photo/document attachments
    - GIF URL sharing
-   - Channel search
-   - Community switching
    - Profile display
-   - Rules gate
+   - Read status
    - Realtime messages
    - Realtime reactions
+   - Realtime attachments
 
    CALLING:
-   This file DOES NOT implement calls.
-   The independent call.js handles calling.
+   This file DOES NOT implement calling.
+   call.js remains completely independent.
 
    Required:
    supabase.js must load before this file.
@@ -46,6 +50,7 @@
         window.sb ||
         window.mwanikiSupabase;
 
+
     if (!supabase) {
 
         console.error(
@@ -60,14 +65,25 @@
        CONSTANTS
        ===================================================== */
 
+    /*
+       IMPORTANT:
+       This is the ONLY RULES_VERSION declaration
+       in this file.
+    */
     const RULES_VERSION =
-        "mwaniki-community-rules-v1";
+        "mwaniki-community-rules-v2";
+
 
     const ATTACHMENT_BUCKET =
         "chat-attachments";
 
+
     const PAGE_SIZE =
         100;
+
+
+    const MAX_FILE_SIZE =
+        25 * 1024 * 1024;
 
 
     /* =====================================================
@@ -110,7 +126,11 @@
 
         rulesAccepted: false,
 
-        initialized: false
+        initialized: false,
+
+        rulesListenersReady: false,
+
+        eventListenersReady: false
 
     };
 
@@ -130,8 +150,14 @@
     const app =
         $("communityApp");
 
+    const messageArea =
+        $("messageArea");
+
     const messageList =
         $("messageList");
+
+    const messageEmptyState =
+        $("messageEmptyState");
 
     const messageForm =
         $("messageForm");
@@ -145,8 +171,41 @@
     const attachButton =
         $("attachButton");
 
+    const attachmentInput =
+        $("attachmentInput");
+
     const emojiButton =
         $("emojiButton");
+
+    const emojiPicker =
+        $("emojiPicker");
+
+    const emojiGrid =
+        $("emojiGrid");
+
+    const closeEmojiButton =
+        $("closeEmojiButton");
+
+    const gifButton =
+        $("gifButton");
+
+    const gifPicker =
+        $("gifPicker");
+
+    const closeGifButton =
+        $("closeGifButton");
+
+    const gifUrlInput =
+        $("gifUrlInput");
+
+    const previewGifButton =
+        $("previewGifButton");
+
+    const gifPreview =
+        $("gifPreview");
+
+    const sendGifButton =
+        $("sendGifButton");
 
     const channelSearchInput =
         $("channelSearchInput");
@@ -166,6 +225,9 @@
     const selectedCommunityDescription =
         $("selectedCommunityDescription");
 
+    const mainChannelIcon =
+        $("mainChannelIcon");
+
     const mainChannelTitle =
         $("mainChannelTitle");
 
@@ -174,6 +236,18 @@
 
     const communityToast =
         $("communityToast");
+
+    const communityModal =
+        $("communityModal");
+
+    const communityChoiceList =
+        $("communityChoiceList");
+
+    const communityModalSearch =
+        $("communityModalSearch");
+
+    const accessibilityAnnouncer =
+        $("accessibilityAnnouncer");
 
 
     /* =====================================================
@@ -192,16 +266,20 @@
             return;
         }
 
+
         communityToast.textContent =
             message;
+
 
         communityToast.classList.add(
             "show"
         );
 
+
         clearTimeout(
             showToast.timer
         );
+
 
         showToast.timer =
             setTimeout(() => {
@@ -215,32 +293,73 @@
     }
 
 
-    function escapeHtml(value = "") {
+    function announce(message) {
 
-        return String(value)
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+        if (!accessibilityAnnouncer) {
+            return;
+        }
+
+
+        accessibilityAnnouncer.textContent =
+            "";
+
+
+        setTimeout(() => {
+
+            accessibilityAnnouncer.textContent =
+                message;
+
+        }, 20);
 
     }
 
 
-    function getInitials(name = "Student") {
+    function escapeHtml(value = "") {
+
+        return String(value)
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+            .replace(
+                /</g,
+                "&lt;"
+            )
+            .replace(
+                />/g,
+                "&gt;"
+            )
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    function getInitials(
+        name = "Student"
+    ) {
 
         const clean =
             String(name)
                 .trim();
 
+
         if (!clean) {
             return "S";
         }
+
 
         const parts =
             clean
                 .split(/\s+/)
                 .filter(Boolean);
+
 
         if (parts.length === 1) {
 
@@ -250,6 +369,7 @@
 
         }
 
+
         return (
             parts[0][0] +
             parts[parts.length - 1][0]
@@ -258,22 +378,29 @@
     }
 
 
-    function formatMessageTime(dateValue) {
+    function formatMessageTime(
+        dateValue
+    ) {
 
         if (!dateValue) {
             return "";
         }
 
+
         const date =
             new Date(dateValue);
+
 
         if (
             Number.isNaN(
                 date.getTime()
             )
         ) {
+
             return "";
+
         }
+
 
         return date.toLocaleString(
             [],
@@ -286,12 +413,15 @@
     }
 
 
-    function isValidHttpUrl(value) {
+    function isValidHttpUrl(
+        value
+    ) {
 
         try {
 
             const url =
                 new URL(value);
+
 
             return (
                 url.protocol === "http:" ||
@@ -307,14 +437,18 @@
     }
 
 
-    function isGifUrl(value) {
+    function isGifUrl(
+        value
+    ) {
 
         if (!isValidHttpUrl(value)) {
             return false;
         }
 
+
         const lower =
             value.toLowerCase();
+
 
         return (
             lower.includes(".gif") ||
@@ -323,6 +457,23 @@
             lower.includes("media.giphy") ||
             lower.includes("media.tenor")
         );
+
+    }
+
+
+    function scrollMessagesToBottom() {
+
+        if (!messageArea) {
+            return;
+        }
+
+
+        requestAnimationFrame(() => {
+
+            messageArea.scrollTop =
+                messageArea.scrollHeight;
+
+        });
 
     }
 
@@ -339,6 +490,7 @@
         } =
             await supabase.auth.getUser();
 
+
         if (error) {
 
             console.error(
@@ -349,8 +501,10 @@
             return null;
         }
 
+
         state.user =
             data?.user || null;
+
 
         return state.user;
 
@@ -358,7 +512,7 @@
 
 
     /* =====================================================
-       REAL STUDENT PROFILE
+       STUDENT PROFILE
        ===================================================== */
 
     async function loadStudentProfile(
@@ -368,16 +522,24 @@
         if (!userId) {
 
             return {
+
                 id: null,
-                full_name: "Student",
-                photo_url: null
+
+                full_name:
+                    "Student",
+
+                photo_url:
+                    null
+
             };
 
         }
 
 
         if (
-            state.profiles.has(userId)
+            state.profiles.has(
+                userId
+            )
         ) {
 
             return state.profiles.get(
@@ -389,7 +551,8 @@
 
         const fallback = {
 
-            id: userId,
+            id:
+                userId,
 
             full_name:
                 "Student",
@@ -478,10 +641,12 @@
                 error
             );
 
+
             state.profiles.set(
                 userId,
                 fallback
             );
+
 
             return fallback;
 
@@ -489,10 +654,6 @@
 
     }
 
-
-    /* =====================================================
-       LOAD MULTIPLE MESSAGE PROFILES
-       ===================================================== */
 
     async function loadMessageProfiles(
         messages = []
@@ -590,10 +751,6 @@
     }
 
 
-    /* =====================================================
-       CREATE AVATAR
-       ===================================================== */
-
     function createAvatar(
         profile,
         className = "message-avatar"
@@ -603,6 +760,7 @@
             document.createElement(
                 "div"
             );
+
 
         avatar.className =
             className;
@@ -620,11 +778,14 @@
                     "img"
                 );
 
+
             image.src =
                 profile.photo_url;
 
+
             image.alt =
                 name;
+
 
             image.loading =
                 "lazy";
@@ -662,22 +823,21 @@
     }
 
 
-    /* =====================================================
-       CURRENT PROFILE
-       ===================================================== */
-
     async function loadMyProfile() {
 
         if (!state.user) {
             return null;
         }
 
+
         state.profile =
             await loadStudentProfile(
                 state.user.id
             );
 
+
         updateProfileUI();
+
 
         return state.profile;
 
@@ -688,6 +848,7 @@
 
         const profile =
             state.profile;
+
 
         if (!profile) {
             return;
@@ -717,22 +878,18 @@
         }
 
 
-        const avatarElements = [
-
-            $("sidebarProfileAvatar"),
+        const imageElements = [
 
             $("railProfileAvatar"),
 
-            $("headerProfileAvatar"),
-
-            $("profileLargeAvatar")
+            $("sidebarProfileAvatar")
 
         ];
 
 
         for (
             const element
-            of avatarElements
+            of imageElements
         ) {
 
             if (!element) {
@@ -740,185 +897,172 @@
             }
 
 
-            element.innerHTML =
-                "";
+            /*
+               These are actual <img> elements
+               in the current HTML.
+            */
+
+            if (
+                element.tagName ===
+                "IMG"
+            ) {
+
+                element.src =
+                    profile.photo_url ||
+                    "";
 
 
-            const avatar =
-                createAvatar(
-                    profile,
-                    "profile-avatar"
-                );
+                element.alt =
+                    profile.full_name ||
+                    "Profile";
 
 
-            element.appendChild(
-                avatar
-            );
+                element.onerror =
+                    () => {
+
+                        element.removeAttribute(
+                            "src"
+                        );
+
+                    };
+
+            }
 
         }
 
     }
 
 
-  
-/* =========================================================
-   COMMUNITY RULES GATE
-   ========================================================= */
+    /* =====================================================
+       RULES GATE
+       ===================================================== */
 
-const RULES_VERSION =
-    "mwaniki-community-rules-v2";
+    function hasAcceptedRules() {
 
-
-function hasAcceptedRules() {
-
-    return (
-        localStorage.getItem(
-            RULES_VERSION
-        ) === "true"
-    );
-
-}
-
-
-function setupRulesModal() {
-
-    const modal =
-        document.getElementById(
-            "communityRulesModal"
+        return (
+            localStorage.getItem(
+                RULES_VERSION
+            ) === "true"
         );
 
-    const checkbox =
-        document.getElementById(
-            "communityRulesAgree"
-        );
-
-    const continueButton =
-        document.getElementById(
-            "communityRulesContinue"
-        );
+    }
 
 
-    if (!modal) {
+    function setupRulesGate() {
 
-        console.warn(
-            "⚠️ communityRulesModal was not found."
-        );
+        if (
+            state.rulesListenersReady
+        ) {
+
+            state.rulesAccepted =
+                hasAcceptedRules();
+
+            return;
+
+        }
+
+
+        const gate =
+            $("communityRulesGate");
+
+
+        const checkbox =
+            $("communityRulesAgreement");
+
+
+        const continueButton =
+            $("acceptCommunityRulesButton");
+
+
+        const gateMessage =
+            $("rulesGateMessage");
+
+
+        if (!gate) {
+
+            console.error(
+                "❌ communityRulesGate was not found."
+            );
+
+            state.rulesAccepted =
+                false;
+
+            return;
+
+        }
+
 
         state.rulesAccepted =
-            true;
-
-        return;
-
-    }
+            hasAcceptedRules();
 
 
-    if (!checkbox) {
+        if (state.rulesAccepted) {
 
-        console.warn(
-            "⚠️ communityRulesAgree was not found."
-        );
+            gate.classList.add(
+                "hidden"
+            );
 
-    }
+            state.rulesListenersReady =
+                true;
 
+            return;
 
-    if (!continueButton) {
-
-        console.warn(
-            "⚠️ communityRulesContinue was not found."
-        );
-
-    }
+        }
 
 
-    state.rulesAccepted =
-        hasAcceptedRules();
-
-
-    /* -----------------------------------------------------
-       ALREADY ACCEPTED
-       ----------------------------------------------------- */
-
-    if (state.rulesAccepted) {
-
-        modal.classList.add(
+        gate.classList.remove(
             "hidden"
         );
 
-        return;
 
-    }
+        if (checkbox) {
 
+            checkbox.checked =
+                false;
 
-    /* -----------------------------------------------------
-       SHOW RULES
-       ----------------------------------------------------- */
-
-    modal.classList.remove(
-        "hidden"
-    );
+        }
 
 
-    if (checkbox) {
+        if (continueButton) {
 
-        checkbox.checked =
-            false;
+            continueButton.disabled =
+                true;
 
-    }
+        }
 
-
-    if (continueButton) {
-
-        continueButton.disabled =
-            true;
-
-
-        /* Remove old listener safely by cloning */
-
-        const newButton =
-            continueButton.cloneNode(
-                true
-            );
-
-
-        continueButton.parentNode.replaceChild(
-            newButton,
-            continueButton
-        );
-
-
-        const activeButton =
-            document.getElementById(
-                "communityRulesContinue"
-            );
-
-
-        /* -------------------------------------------------
-           CHECKBOX
-           ------------------------------------------------- */
 
         checkbox?.addEventListener(
             "change",
             () => {
 
-                activeButton.disabled =
-                    !checkbox.checked;
+                const accepted =
+                    checkbox.checked;
 
-                activeButton.classList.toggle(
-                    "enabled",
-                    checkbox.checked
-                );
+
+                if (continueButton) {
+
+                    continueButton.disabled =
+                        !accepted;
+
+                }
+
+
+                if (gateMessage) {
+
+                    gateMessage.textContent =
+                        accepted
+                            ? ""
+                            : "You must agree to the rules before continuing.";
+
+                }
 
             }
         );
 
 
-        /* -------------------------------------------------
-           CONTINUE
-           ------------------------------------------------- */
-
-        activeButton.addEventListener(
+        continueButton?.addEventListener(
             "click",
-            (event) => {
+            async event => {
 
                 event.preventDefault();
                 event.stopPropagation();
@@ -929,16 +1073,17 @@ function setupRulesModal() {
                     !checkbox.checked
                 ) {
 
-                    showToast(
-                        "Please agree to the community rules first."
-                    );
+                    if (gateMessage) {
+
+                        gateMessage.textContent =
+                            "Please read and agree to the community rules first.";
+
+                    }
 
                     return;
 
                 }
 
-
-                /* Save acceptance */
 
                 localStorage.setItem(
                     RULES_VERSION,
@@ -950,25 +1095,13 @@ function setupRulesModal() {
                     true;
 
 
-                /* Hide modal */
-
-                modal.classList.add(
+                gate.classList.add(
                     "hidden"
                 );
 
 
-                /* Make sure no element keeps focus */
-
-                if (
-                    document.activeElement &&
-                    modal.contains(
-                        document.activeElement
-                    )
-                ) {
-
-                    document.activeElement.blur();
-
-                }
+                checkbox.blur();
+                continueButton.blur();
 
 
                 announce(
@@ -981,89 +1114,73 @@ function setupRulesModal() {
                 );
 
 
-                /* -------------------------------------------------
-                   NOW LOAD THE COMMUNITY
-                   ------------------------------------------------- */
+                try {
 
-                loadCommunities()
-                    .catch(
-                        error => {
+                    await loadCommunities();
 
-                            console.error(
-                                "Community loading after rules:",
-                                error
-                            );
+                } catch (error) {
 
-                            showToast(
-                                "Community could not be loaded."
-                            );
-
-                        }
+                    console.error(
+                        "Community loading after rules:",
+                        error
                     );
+
+                    showToast(
+                        "Community could not be loaded."
+                    );
+
+                }
 
             }
         );
 
-    }
 
-}
-
-
-function requireRules() {
-
-    if (
-        state.rulesAccepted
-    ) {
-
-        return true;
+        state.rulesListenersReady =
+            true;
 
     }
 
 
-    const modal =
-        document.getElementById(
-            "communityRulesModal"
-        );
+    function requireRules() {
 
+        if (
+            state.rulesAccepted
+        ) {
 
-    modal?.classList.remove(
-        "hidden"
-    );
-
-
-    showToast(
-        "Please read and accept the community rules first."
-    );
-
-
-    return false;
-
-}
-
-    /* =====================================================
-       ACCESSIBILITY
-       ===================================================== */
-
-    function announce(message) {
-
-        const element =
-            $("accessibilityAnnouncer");
-
-        if (element) {
-
-            element.textContent =
-                message;
+            return true;
 
         }
 
+
+        const gate =
+            $("communityRulesGate");
+
+
+        gate?.classList.remove(
+            "hidden"
+        );
+
+
+        showToast(
+            "Please read and accept the community rules first."
+        );
+
+
+        return false;
+
     }
 
 
     /* =====================================================
-       LOAD COMMUNITIES
+       COMMUNITY LOADING
        ===================================================== */
 
     async function loadCommunities() {
+
+        if (!state.user) {
+            return;
+        }
+
 
         const {
             data,
@@ -1077,6 +1194,7 @@ function requireRules() {
                     slug,
                     description,
                     icon_url,
+                    banner_url,
                     is_public,
                     is_active,
                     created_at
@@ -1100,9 +1218,11 @@ function requireRules() {
                 error
             );
 
+
             showToast(
                 "Unable to load communities."
             );
+
 
             return;
 
@@ -1114,25 +1234,119 @@ function requireRules() {
 
 
         renderCommunityRail();
+        renderCommunityChoices();
+
+
+        if (!state.communities.length) {
+
+            state.currentCommunity =
+                null;
+
+
+            state.currentChannel =
+                null;
+
+
+            clearMessages();
+
+
+            showToast(
+                "No active communities are available yet."
+            );
+
+
+            return;
+
+        }
 
 
         if (
-            !state.currentCommunity &&
-            state.communities.length
+            state.currentCommunity
         ) {
 
-            await selectCommunity(
-                state.communities[0]
-            );
+            const matching =
+                state.communities.find(
+                    community =>
+                        community.id ===
+                        state.currentCommunity.id
+                );
+
+
+            if (matching) {
+
+                await selectCommunity(
+                    matching
+                );
+
+                return;
+
+            }
 
         }
+
+
+        await selectCommunity(
+            state.communities[0]
+        );
 
     }
 
 
     /* =====================================================
-       COMMUNITY ICON
+       COMMUNITY ICONS
        ===================================================== */
+
+    function getCommunityEmoji(
+        community
+    ) {
+
+        const text =
+            (
+                community?.name ||
+                ""
+            ).toLowerCase();
+
+
+        if (
+            text.includes("game")
+        ) {
+
+            return "🎮";
+
+        }
+
+
+        if (
+            text.includes("meme")
+        ) {
+
+            return "😂";
+
+        }
+
+
+        if (
+            text.includes("general")
+        ) {
+
+            return "💬";
+
+        }
+
+
+        if (
+            text.includes("medical")
+        ) {
+
+            return "🩺";
+
+        }
+
+
+        return "🎓";
+
+    }
+
 
     function renderIcon(
         container,
@@ -1148,6 +1362,11 @@ function requireRules() {
             "";
 
 
+        /*
+           Emoji/text icons stay as text.
+           Only real HTTP URLs become images.
+        */
+
         if (
             icon &&
             isValidHttpUrl(icon)
@@ -1158,14 +1377,18 @@ function requireRules() {
                     "img"
                 );
 
+
             image.src =
                 icon;
+
 
             image.alt =
                 "Community";
 
+
             image.loading =
                 "lazy";
+
 
             image.onerror =
                 () => {
@@ -1177,9 +1400,11 @@ function requireRules() {
 
                 };
 
+
             container.appendChild(
                 image
             );
+
 
             return;
 
@@ -1218,11 +1443,17 @@ function requireRules() {
                     "button"
                 );
 
+
             button.type =
                 "button";
 
+
             button.className =
                 "community-rail-item";
+
+
+            button.title =
+                community.name;
 
 
             if (
@@ -1237,14 +1468,11 @@ function requireRules() {
             }
 
 
-            button.title =
-                community.name;
-
-
             const icon =
                 document.createElement(
                     "span"
                 );
+
 
             icon.className =
                 "community-rail-icon";
@@ -1272,6 +1500,7 @@ function requireRules() {
                         return;
                     }
 
+
                     await selectCommunity(
                         community
                     );
@@ -1289,74 +1518,232 @@ function requireRules() {
     }
 
 
-    function getCommunityEmoji(
-        community
-    ) {
+    /* =====================================================
+       COMMUNITY CHOICE MODAL
+       ===================================================== */
 
-        const text =
-            (
-                community.name ||
-                ""
-            ).toLowerCase();
+    function renderCommunityChoices() {
 
-
-        if (
-            text.includes("game")
-        ) {
-            return "🎮";
+        if (!communityChoiceList) {
+            return;
         }
 
 
-        if (
-            text.includes("meme")
+        const search =
+            communityModalSearch
+                ?.value
+                ?.trim()
+                .toLowerCase() ||
+            "";
+
+
+        communityChoiceList.innerHTML =
+            "";
+
+
+        const communities =
+            state.communities.filter(
+                community => {
+
+                    if (!search) {
+                        return true;
+                    }
+
+
+                    return (
+                        community.name
+                            ?.toLowerCase()
+                            .includes(search) ||
+                        community.description
+                            ?.toLowerCase()
+                            .includes(search)
+                    );
+
+                }
+            );
+
+
+        for (
+            const community
+            of communities
         ) {
-            return "😂";
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "community-choice-item";
+
+
+            if (
+                state.currentCommunity?.id ===
+                community.id
+            ) {
+
+                button.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            const icon =
+                document.createElement(
+                    "span"
+                );
+
+
+            icon.className =
+                "community-choice-icon";
+
+
+            renderIcon(
+                icon,
+                community.icon_url ||
+                getCommunityEmoji(
+                    community
+                )
+            );
+
+
+            const details =
+                document.createElement(
+                    "span"
+                );
+
+
+            details.className =
+                "community-choice-details";
+
+
+            const name =
+                document.createElement(
+                    "strong"
+                );
+
+
+            name.textContent =
+                community.name;
+
+
+            const description =
+                document.createElement(
+                    "small"
+                );
+
+
+            description.textContent =
+                community.description ||
+                "Mwaniki Scholars Community";
+
+
+            details.appendChild(
+                name
+            );
+
+
+            details.appendChild(
+                description
+            );
+
+
+            button.appendChild(
+                icon
+            );
+
+
+            button.appendChild(
+                details
+            );
+
+
+            button.addEventListener(
+                "click",
+                async () => {
+
+                    if (!requireRules()) {
+                        return;
+                    }
+
+
+                    closeCommunityModal();
+
+
+                    await selectCommunity(
+                        community
+                    );
+
+                }
+            );
+
+
+            communityChoiceList.appendChild(
+                button
+            );
+
         }
 
 
-        if (
-            text.includes("general")
-        ) {
-            return "💬";
+        if (!communities.length) {
+
+            const empty =
+                document.createElement(
+                    "div"
+                );
+
+
+            empty.className =
+                "channel-empty";
+
+
+            empty.textContent =
+                "No communities found.";
+
+
+            communityChoiceList.appendChild(
+                empty
+            );
+
         }
-
-
-        if (
-            text.includes("medical")
-        ) {
-            return "🩺";
-        }
-
-
-        return "🎓";
 
     }
 
 
-    /* =====================================================
-       SELECT COMMUNITY
-       ===================================================== */
-
-    async function selectCommunity(
-        community
-    ) {
+    function openCommunityModal() {
 
         if (!requireRules()) {
             return;
         }
 
 
-        state.currentCommunity =
-            community;
+        renderCommunityChoices();
 
 
-        updateSelectedCommunityUI();
+        communityModal?.classList.remove(
+            "hidden"
+        );
 
-        renderCommunityRail();
+
+        setTimeout(() => {
+
+            communityModalSearch?.focus();
+
+        }, 50);
+
+    }
 
 
-        await loadChannels(
-            community.id
+    function closeCommunityModal() {
+
+        communityModal?.classList.add(
+            "hidden"
         );
 
     }
@@ -1376,18 +1763,17 @@ function requireRules() {
         if (selectedCommunityName) {
 
             selectedCommunityName.textContent =
-                community.name;
+                community.name ||
+                "Community";
 
         }
 
 
-        if (
-            selectedCommunityDescription
-        ) {
+        if (selectedCommunityDescription) {
 
             selectedCommunityDescription.textContent =
                 community.description ||
-                "";
+                "Mwaniki Scholars";
 
         }
 
@@ -1404,11 +1790,47 @@ function requireRules() {
 
         }
 
+
+        renderCommunityRail();
+        renderCommunityChoices();
+
     }
 
 
     /* =====================================================
-       LOAD CHANNELS
+       SELECT COMMUNITY
+       ===================================================== */
+
+    async function selectCommunity(
+        community
+    ) {
+
+        if (!community) {
+            return;
+        }
+
+
+        if (!requireRules()) {
+            return;
+        }
+
+
+        state.currentCommunity =
+            community;
+
+
+        updateSelectedCommunityUI();
+
+
+        await loadChannels(
+            community.id
+        );
+
+    }
+
+
+    /* =====================================================
+       CHANNEL LOADING
        ===================================================== */
 
     async function loadChannels(
@@ -1469,9 +1891,11 @@ function requireRules() {
                 error
             );
 
+
             showToast(
                 "Unable to load channels."
             );
+
 
             return;
 
@@ -1484,43 +1908,68 @@ function requireRules() {
 
         await filterPrivateChannels();
 
+
         renderChannels();
 
 
-        if (
-            !state.currentChannel ||
-            state.currentChannel.community_id !==
-                communityId
-        ) {
+        const currentBelongs =
+            state.currentChannel &&
+            state.currentChannel.community_id ===
+                communityId &&
+            state.channels.some(
+                channel =>
+                    channel.id ===
+                    state.currentChannel.id
+            );
 
-            const general =
+
+        if (currentBelongs) {
+
+            await selectChannel(
                 state.channels.find(
                     channel =>
-                        channel.slug ===
-                        "general"
-                );
+                        channel.id ===
+                        state.currentChannel.id
+                )
+            );
 
 
-            const first =
-                general ||
-                state.channels[0];
+            return;
+
+        }
 
 
-            if (first) {
+        const general =
+            state.channels.find(
+                channel =>
+                    channel.slug ===
+                    "general"
+            );
 
-                await selectChannel(
-                    first
-                );
 
-            } else {
+        const first =
+            general ||
+            state.channels[0];
 
-                clearMessages();
 
-                updateMainChannelUI(
-                    null
-                );
+        if (first) {
 
-            }
+            await selectChannel(
+                first
+            );
+
+        } else {
+
+            state.currentChannel =
+                null;
+
+
+            clearMessages();
+
+
+            updateMainChannelUI(
+                null
+            );
 
         }
 
@@ -1528,7 +1977,7 @@ function requireRules() {
 
 
     /* =====================================================
-       PRIVATE CHANNEL FILTER
+       PRIVATE CHANNELS
        ===================================================== */
 
     async function filterPrivateChannels() {
@@ -1583,11 +2032,13 @@ function requireRules() {
                 error
             );
 
+
             state.channels =
                 state.channels.filter(
                     channel =>
                         !channel.is_private
                 );
+
 
             return;
 
@@ -1617,7 +2068,7 @@ function requireRules() {
 
 
     /* =====================================================
-       RENDER CHANNELS
+       CHANNEL RENDERING
        ===================================================== */
 
     function renderChannels() {
@@ -1647,9 +2098,10 @@ function requireRules() {
                         return true;
                     }
 
+
                     return (
                         channel.name
-                            .toLowerCase()
+                            ?.toLowerCase()
                             .includes(search) ||
                         channel.description
                             ?.toLowerCase()
@@ -1670,8 +2122,10 @@ function requireRules() {
                     "button"
                 );
 
+
             button.type =
                 "button";
+
 
             button.className =
                 "channel-item";
@@ -1694,8 +2148,10 @@ function requireRules() {
                     "span"
                 );
 
+
             icon.className =
                 "channel-icon";
+
 
             icon.textContent =
                 channel.icon ||
@@ -1712,8 +2168,10 @@ function requireRules() {
                     "span"
                 );
 
+
             text.className =
                 "channel-item-text";
+
 
             text.textContent =
                 channel.name;
@@ -1722,6 +2180,7 @@ function requireRules() {
             button.appendChild(
                 icon
             );
+
 
             button.appendChild(
                 text
@@ -1737,11 +2196,14 @@ function requireRules() {
                         "span"
                     );
 
+
                 lock.className =
                     "channel-lock";
 
+
                 lock.textContent =
                     "🔒";
+
 
                 button.appendChild(
                     lock
@@ -1776,11 +2238,14 @@ function requireRules() {
                     "div"
                 );
 
+
             empty.className =
                 "channel-empty";
 
+
             empty.textContent =
                 "No channels found.";
+
 
             channelList.appendChild(
                 empty
@@ -1792,12 +2257,17 @@ function requireRules() {
 
 
     /* =====================================================
-       SELECT CHANNEL
+       CHANNEL SELECTION
        ===================================================== */
 
     async function selectChannel(
         channel
     ) {
+
+        if (!channel) {
+            return;
+        }
+
 
         if (!requireRules()) {
             return;
@@ -1811,10 +2281,13 @@ function requireRules() {
         state.messages =
             [];
 
+
         state.reactions.clear();
+
 
         state.oldestMessageDate =
             null;
+
 
         state.hasOlderMessages =
             true;
@@ -1823,6 +2296,7 @@ function requireRules() {
         updateMainChannelUI(
             channel
         );
+
 
         renderChannels();
 
@@ -1838,7 +2312,7 @@ function requireRules() {
         );
 
 
-        markChannelRead();
+        await markChannelRead();
 
     }
 
@@ -1849,17 +2323,45 @@ function requireRules() {
 
         if (!channel) {
 
+            if (mainChannelIcon) {
+
+                mainChannelIcon.textContent =
+                    "#";
+
+            }
+
+
             if (mainChannelTitle) {
+
                 mainChannelTitle.textContent =
                     "No channel";
+
             }
+
 
             if (mainChannelDescription) {
+
                 mainChannelDescription.textContent =
                     "";
+
             }
 
+
             return;
+
+        }
+
+
+        if (mainChannelIcon) {
+
+            mainChannelIcon.textContent =
+                channel.icon ||
+                (
+                    channel.channel_type ===
+                    "voice"
+                        ? "🔊"
+                        : "#"
+                );
 
         }
 
@@ -1896,7 +2398,9 @@ function requireRules() {
             state.loadingMessages ||
             state.loadingOlder
         ) {
+
             return;
+
         }
 
 
@@ -1904,7 +2408,9 @@ function requireRules() {
             older &&
             !state.hasOlderMessages
         ) {
+
             return;
+
         }
 
 
@@ -1984,9 +2490,11 @@ function requireRules() {
                     error
                 );
 
+
                 showToast(
                     "Unable to load messages."
                 );
+
 
                 return;
 
@@ -2049,10 +2557,18 @@ function requireRules() {
 
             renderMessages();
 
+
+            if (!older) {
+
+                scrollMessagesToBottom();
+
+            }
+
         } finally {
 
             state.loadingMessages =
                 false;
+
 
             state.loadingOlder =
                 false;
@@ -2063,7 +2579,7 @@ function requireRules() {
 
 
     /* =====================================================
-       LOAD REACTIONS
+       REACTIONS LOADING
        ===================================================== */
 
     async function loadReactionsForMessages(
@@ -2089,7 +2605,9 @@ function requireRules() {
             error
         } =
             await supabase
-                .from("chat_message_reactions")
+                .from(
+                    "chat_message_reactions"
+                )
                 .select(
                     "id,message_id,user_id,reaction"
                 )
@@ -2106,7 +2624,21 @@ function requireRules() {
                 error
             );
 
+
             return;
+
+        }
+
+
+        for (
+            const id
+            of ids
+        ) {
+
+            state.reactions.set(
+                id,
+                []
+            );
 
         }
 
@@ -2144,7 +2676,7 @@ function requireRules() {
 
 
     /* =====================================================
-       RENDER ALL MESSAGES
+       RENDER MESSAGES
        ===================================================== */
 
     function renderMessages() {
@@ -2168,11 +2700,14 @@ function requireRules() {
                     "button"
                 );
 
+
             olderButton.type =
                 "button";
 
+
             olderButton.className =
                 "load-older-button";
+
 
             olderButton.textContent =
                 "Load older messages";
@@ -2182,10 +2717,16 @@ function requireRules() {
                 "click",
                 async () => {
 
-                    await loadMessages(
-                        state.currentChannel.id,
-                        true
-                    );
+                    if (
+                        state.currentChannel
+                    ) {
+
+                        await loadMessages(
+                            state.currentChannel.id,
+                            true
+                        );
+
+                    }
 
                 }
             );
@@ -2205,17 +2746,42 @@ function requireRules() {
                     "div"
                 );
 
+
             empty.className =
                 "messages-empty";
 
-            empty.textContent =
-                "No messages yet. Start the conversation.";
+
+            empty.innerHTML = `
+                <div class="empty-icon">💬</div>
+                <strong>No messages yet</strong>
+                <span>Start the conversation.</span>
+            `;
+
 
             messageList.appendChild(
                 empty
             );
 
+
+            if (messageEmptyState) {
+
+                messageEmptyState.classList.remove(
+                    "hidden"
+                );
+
+            }
+
+
             return;
+
+        }
+
+
+        if (messageEmptyState) {
+
+            messageEmptyState.classList.add(
+                "hidden"
+            );
 
         }
 
@@ -2230,10 +2796,6 @@ function requireRules() {
             );
 
         }
-
-
-        messageList.scrollTop =
-            messageList.scrollHeight;
 
     }
 
@@ -2267,6 +2829,7 @@ function requireRules() {
             document.createElement(
                 "article"
             );
+
 
         article.className =
             "chat-message";
@@ -2305,6 +2868,7 @@ function requireRules() {
                 "div"
             );
 
+
         body.className =
             "message-body";
 
@@ -2313,6 +2877,7 @@ function requireRules() {
             document.createElement(
                 "div"
             );
+
 
         header.className =
             "message-header";
@@ -2323,8 +2888,10 @@ function requireRules() {
                 "strong"
             );
 
+
         sender.className =
             "message-sender";
+
 
         sender.textContent =
             profile.full_name ||
@@ -2336,8 +2903,10 @@ function requireRules() {
                 "time"
             );
 
+
         timestamp.className =
             "message-time";
+
 
         timestamp.textContent =
             formatMessageTime(
@@ -2348,6 +2917,7 @@ function requireRules() {
         header.appendChild(
             sender
         );
+
 
         header.appendChild(
             timestamp
@@ -2361,11 +2931,14 @@ function requireRules() {
                     "span"
                 );
 
+
             edited.className =
                 "edited-label";
 
+
             edited.textContent =
                 "(edited)";
+
 
             header.appendChild(
                 edited
@@ -2379,9 +2952,9 @@ function requireRules() {
         );
 
 
-        /* -------------------------------------------------
+        /* =================================================
            REPLY PREVIEW
-           ------------------------------------------------- */
+           ================================================= */
 
         if (
             message.parent_message_id
@@ -2408,6 +2981,7 @@ function requireRules() {
                         "div"
                     );
 
+
                 reply.className =
                     "message-reply-preview";
 
@@ -2416,6 +2990,7 @@ function requireRules() {
                     document.createElement(
                         "strong"
                     );
+
 
                 replyName.textContent =
                     parentProfile?.full_name ||
@@ -2426,6 +3001,7 @@ function requireRules() {
                     document.createElement(
                         "span"
                     );
+
 
                 replyText.textContent =
                     parent.is_deleted
@@ -2440,11 +3016,13 @@ function requireRules() {
                     replyName
                 );
 
+
                 reply.appendChild(
                     document.createTextNode(
                         ": "
                     )
                 );
+
 
                 reply.appendChild(
                     replyText
@@ -2460,52 +3038,70 @@ function requireRules() {
         }
 
 
-        /* -------------------------------------------------
-           MESSAGE CONTENT
-           ------------------------------------------------- */
-
-        const content =
-            document.createElement(
-                "div"
-            );
-
-        content.className =
-            "message-content";
-
+        /* =================================================
+           CONTENT
+           ================================================= */
 
         if (message.is_deleted) {
 
-            content.classList.add(
-                "deleted-message"
-            );
+            const deleted =
+                document.createElement(
+                    "div"
+                );
 
-            content.textContent =
+
+            deleted.className =
+                "message-content deleted-message";
+
+
+            deleted.textContent =
                 "This message was deleted.";
 
-        }
 
-        else if (
+            body.appendChild(
+                deleted
+            );
+
+        } else if (
             message.message_type ===
-                "gif" &&
+            "gif" &&
             message.content
         ) {
+
+            const content =
+                document.createElement(
+                    "div"
+                );
+
+
+            content.className =
+                "message-content";
+
 
             const gif =
                 document.createElement(
                     "img"
                 );
 
+
             gif.className =
                 "message-gif";
+
 
             gif.src =
                 message.content;
 
+
             gif.alt =
                 "GIF";
 
+
             gif.loading =
                 "lazy";
+
+
+            gif.referrerPolicy =
+                "no-referrer";
 
 
             gif.onerror =
@@ -2513,16 +3109,19 @@ function requireRules() {
 
                     gif.remove();
 
-                    const text =
+
+                    const unavailable =
                         document.createElement(
                             "span"
                         );
 
-                    text.textContent =
+
+                    unavailable.textContent =
                         "GIF unavailable.";
 
+
                     content.appendChild(
-                        text
+                        unavailable
                     );
 
                 };
@@ -2532,52 +3131,53 @@ function requireRules() {
                 gif
             );
 
-        }
 
-        else {
+            body.appendChild(
+                content
+            );
 
-            content.textContent =
-                message.content ||
-                "";
-
-        }
-
-
-        if (
-            !message.is_deleted &&
+        } else if (
             message.content
         ) {
 
+            const content =
+                document.createElement(
+                    "div"
+                );
+
+
+            content.className =
+                "message-content";
+
+
+            content.textContent =
+                message.content;
+
+
             body.appendChild(
                 content
             );
 
         }
 
-        else if (
-            message.message_type ===
-            "gif" &&
-            !message.is_deleted
-        ) {
 
-            body.appendChild(
-                content
-            );
-
-        }
-
-
-        /* -------------------------------------------------
+        /* =================================================
            ATTACHMENTS
-           ------------------------------------------------- */
+           ================================================= */
 
         const attachmentContainer =
             document.createElement(
                 "div"
             );
 
+
         attachmentContainer.className =
             "message-attachments";
+
+
+        body.appendChild(
+            attachmentContainer
+        );
 
 
         loadAttachments(
@@ -2586,34 +3186,26 @@ function requireRules() {
         );
 
 
-        body.appendChild(
-            attachmentContainer
-        );
-
-
-        /* -------------------------------------------------
+        /* =================================================
            REACTIONS
-           ------------------------------------------------- */
+           ================================================= */
 
-        const reactionBar =
+        body.appendChild(
             createReactionBar(
                 message
-            );
-
-
-        body.appendChild(
-            reactionBar
+            )
         );
 
 
-        /* -------------------------------------------------
+        /* =================================================
            ACTIONS
-           ------------------------------------------------- */
+           ================================================= */
 
         const actions =
             document.createElement(
                 "div"
             );
+
 
         actions.className =
             "message-actions";
@@ -2626,18 +3218,25 @@ function requireRules() {
                     "button"
                 );
 
+
             replyButton.type =
                 "button";
+
 
             replyButton.className =
                 "message-action-button";
 
+
             replyButton.textContent =
                 "↩ Reply";
 
+
             replyButton.addEventListener(
                 "click",
-                () => {
+                event => {
+
+                    event.stopPropagation();
+
 
                     startReply(
                         message
@@ -2657,14 +3256,18 @@ function requireRules() {
                     "button"
                 );
 
+
             reactButton.type =
                 "button";
+
 
             reactButton.className =
                 "message-action-button";
 
+
             reactButton.textContent =
                 "😊";
+
 
             reactButton.title =
                 "Add reaction";
@@ -2675,6 +3278,7 @@ function requireRules() {
                 event => {
 
                     event.stopPropagation();
+
 
                     openReactionPicker(
                         message.id,
@@ -2704,11 +3308,14 @@ function requireRules() {
                     "button"
                 );
 
+
             deleteButton.type =
                 "button";
 
+
             deleteButton.className =
                 "message-action-button danger";
+
 
             deleteButton.textContent =
                 "Delete";
@@ -2716,7 +3323,10 @@ function requireRules() {
 
             deleteButton.addEventListener(
                 "click",
-                async () => {
+                async event => {
+
+                    event.stopPropagation();
+
 
                     await deleteMessage(
                         message.id
@@ -2742,6 +3352,7 @@ function requireRules() {
             avatar
         );
 
+
         article.appendChild(
             body
         );
@@ -2755,7 +3366,7 @@ function requireRules() {
 
 
     /* =====================================================
-       ATTACHMENTS
+       ATTACHMENTS - LOAD
        ===================================================== */
 
     async function loadAttachments(
@@ -2776,7 +3387,8 @@ function requireRules() {
                     file_path,
                     file_url,
                     mime_type,
-                    file_size
+                    file_size,
+                    created_at
                 `)
                 .eq(
                     "message_id",
@@ -2796,6 +3408,7 @@ function requireRules() {
                 "Attachment loading error:",
                 error
             );
+
 
             return;
 
@@ -2827,6 +3440,7 @@ function requireRules() {
                 "div"
             );
 
+
         wrapper.className =
             "message-attachment";
 
@@ -2847,14 +3461,18 @@ function requireRules() {
                     "img"
                 );
 
+
             image.src =
                 url;
+
 
             image.alt =
                 attachment.file_name;
 
+
             image.loading =
                 "lazy";
+
 
             image.className =
                 "chat-image";
@@ -2885,14 +3503,18 @@ function requireRules() {
                     "a"
                 );
 
+
             link.href =
                 url || "#";
+
 
             link.target =
                 "_blank";
 
+
             link.rel =
                 "noopener noreferrer";
+
 
             link.className =
                 "chat-file";
@@ -2902,6 +3524,7 @@ function requireRules() {
                 document.createElement(
                     "span"
                 );
+
 
             icon.textContent =
                 getFileIcon(
@@ -2914,6 +3537,7 @@ function requireRules() {
                     "span"
                 );
 
+
             name.textContent =
                 attachment.file_name;
 
@@ -2921,6 +3545,7 @@ function requireRules() {
             link.appendChild(
                 icon
             );
+
 
             link.appendChild(
                 name
@@ -2945,48 +3570,66 @@ function requireRules() {
         mimeType = ""
     ) {
 
+        const type =
+            mimeType.toLowerCase();
+
+
         if (
-            mimeType.includes("pdf")
+            type.includes("pdf")
         ) {
+
             return "📕";
+
         }
 
+
         if (
-            mimeType.includes("word") ||
-            mimeType.includes("document")
+            type.includes("word") ||
+            type.includes("document")
         ) {
+
             return "📘";
+
         }
 
+
         if (
-            mimeType.includes("sheet") ||
-            mimeType.includes("excel")
+            type.includes("sheet") ||
+            type.includes("excel")
         ) {
+
             return "📗";
+
         }
 
+
         if (
-            mimeType.includes("presentation") ||
-            mimeType.includes("powerpoint")
+            type.includes("presentation") ||
+            type.includes("powerpoint")
         ) {
+
             return "📙";
+
         }
 
+
         if (
-            mimeType.startsWith(
-                "image/"
-            )
+            type.startsWith("image/")
         ) {
+
             return "🖼️";
+
         }
 
+
         if (
-            mimeType.startsWith(
-                "video/"
-            )
+            type.startsWith("video/")
         ) {
+
             return "🎬";
+
         }
+
 
         return "📎";
 
@@ -2994,849 +3637,51 @@ function requireRules() {
 
 
     /* =====================================================
-       REACTION BAR
-       ===================================================== */
-
-    function createReactionBar(
-        message
-    ) {
-
-        const bar =
-            document.createElement(
-                "div"
-            );
-
-        bar.className =
-            "reaction-bar";
-
-
-        const reactions =
-            state.reactions.get(
-                message.id
-            ) || [];
-
-
-        const grouped =
-            new Map();
-
-
-        for (
-            const reaction
-            of reactions
-        ) {
-
-            if (
-                !grouped.has(
-                    reaction.reaction
-                )
-            ) {
-
-                grouped.set(
-                    reaction.reaction,
-                    {
-                        count: 0,
-                        mine: false
-                    }
-                );
-
-            }
-
-
-            const item =
-                grouped.get(
-                    reaction.reaction
-                );
-
-
-            item.count++;
-
-
-            if (
-                state.user &&
-                reaction.user_id ===
-                    state.user.id
-            ) {
-
-                item.mine =
-                    true;
-
-            }
-
-        }
-
-
-        for (
-            const [
-                emoji,
-                info
-            ]
-            of grouped
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-            button.type =
-                "button";
-
-            button.className =
-                "reaction-button";
-
-
-            if (info.mine) {
-
-                button.classList.add(
-                    "mine"
-                );
-
-            }
-
-
-            button.textContent =
-                `${emoji} ${info.count}`;
-
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    await toggleReaction(
-                        message.id,
-                        emoji
-                    );
-
-                }
-            );
-
-
-            bar.appendChild(
-                button
-            );
-
-        }
-
-
-        return bar;
-
-    }
-
-
-    /* =====================================================
-       REACTION PICKER
-       ===================================================== */
-
-    function openReactionPicker(
-        messageId,
-        anchor
-    ) {
-
-        closeReactionPicker();
-
-
-        const picker =
-            document.createElement(
-                "div"
-            );
-
-        picker.className =
-            "reaction-picker";
-
-
-        const emojis = [
-            "👍",
-            "❤️",
-            "😂",
-            "😮",
-            "😢",
-            "👏",
-            "🔥",
-            "🎉",
-            "💯",
-            "🙏"
-        ];
-
-
-        for (
-            const emoji
-            of emojis
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-            button.type =
-                "button";
-
-            button.textContent =
-                emoji;
-
-
-            button.addEventListener(
-                "click",
-                async event => {
-
-                    event.stopPropagation();
-
-                    await toggleReaction(
-                        messageId,
-                        emoji
-                    );
-
-                    picker.remove();
-
-                }
-            );
-
-
-            picker.appendChild(
-                button
-            );
-
-        }
-
-
-        document.body.appendChild(
-            picker
-        );
-
-
-        const rect =
-            anchor.getBoundingClientRect();
-
-
-        picker.style.position =
-            "fixed";
-
-        picker.style.left =
-            `${rect.left}px`;
-
-        picker.style.top =
-            `${rect.bottom + 5}px`;
-
-
-        setTimeout(() => {
-
-            document.addEventListener(
-                "click",
-                closeReactionPicker,
-                {
-                    once: true
-                }
-            );
-
-        }, 0);
-
-    }
-
-
-    function closeReactionPicker() {
-
-        document
-            .querySelectorAll(
-                ".reaction-picker"
-            )
-            .forEach(
-                picker =>
-                    picker.remove()
-            );
-
-    }
-
-
-    /* =====================================================
-       TOGGLE REACTION
-       ===================================================== */
-
-    async function toggleReaction(
-        messageId,
-        reaction
-    ) {
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        if (!state.user) {
-            return;
-        }
-
-
-        const {
-            data: existing,
-            error: findError
-        } =
-            await supabase
-                .from(
-                    "chat_message_reactions"
-                )
-                .select(
-                    "id"
-                )
-                .eq(
-                    "message_id",
-                    messageId
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                )
-                .eq(
-                    "reaction",
-                    reaction
-                )
-                .maybeSingle();
-
-
-        if (findError) {
-
-            console.error(
-                "Reaction lookup error:",
-                findError
-            );
-
-            return;
-
-        }
-
-
-        if (existing) {
-
-            const {
-                error
-            } =
-                await supabase
-                    .from(
-                        "chat_message_reactions"
-                    )
-                    .delete()
-                    .eq(
-                        "id",
-                        existing.id
-                    );
-
-
-            if (error) {
-
-                console.error(
-                    "Reaction delete error:",
-                    error
-                );
-
-                return;
-
-            }
-
-        } else {
-
-            const {
-                error
-            } =
-                await supabase
-                    .from(
-                        "chat_message_reactions"
-                    )
-                    .insert({
-
-                        message_id:
-                            messageId,
-
-                        user_id:
-                            state.user.id,
-
-                        reaction
-
-                    });
-
-
-            if (error) {
-
-                console.error(
-                    "Reaction insert error:",
-                    error
-                );
-
-                return;
-
-            }
-
-        }
-
-
-        await refreshCurrentChannel();
-
-    }
-
-
-    /* =====================================================
-       SEND MESSAGE
-       ===================================================== */
-
-    async function sendMessage(
-        event
-    ) {
-
-        event?.preventDefault();
-
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        if (
-            !state.user ||
-            !state.currentChannel
-        ) {
-
-            showToast(
-                "Select a channel first."
-            );
-
-            return;
-
-        }
-
-
-        const content =
-            messageInput
-                ?.value
-                ?.trim() ||
-            "";
-
-
-        if (
-            !content &&
-            !state.selectedAttachment
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            sendMessageButton
-        ) {
-
-            sendMessageButton.disabled =
-                true;
-
-        }
-
-
-        try {
-
-            const {
-                data: message,
-                error
-            } =
-                await supabase
-                    .from("chat_messages")
-                    .insert({
-
-                        channel_id:
-                            state.currentChannel.id,
-
-                        user_id:
-                            state.user.id,
-
-                        content:
-                            content || null,
-
-                        message_type:
-                            "text",
-
-                        parent_message_id:
-                            state.replyingTo?.id ||
-                            null
-
-                    })
-                    .select()
-                    .single();
-
-
-            if (error) {
-
-                console.error(
-                    "Send message error:",
-                    error
-                );
-
-                showToast(
-                    "Message could not be sent."
-                );
-
-                return;
-
-            }
-
-
-            if (message) {
-
-                state.profiles.set(
-                    state.user.id,
-                    state.profile
-                );
-
-
-                if (
-                    state.selectedAttachment
-                ) {
-
-                    await uploadAttachment(
-                        message.id,
-                        state.selectedAttachment
-                    );
-
-                }
-
-
-                clearComposer();
-
-                await refreshCurrentChannel();
-
-            }
-
-        } finally {
-
-            if (
-                sendMessageButton
-            ) {
-
-                sendMessageButton.disabled =
-                    false;
-
-            }
-
-        }
-
-    }
-
-
-    /* =====================================================
-       REFRESH CURRENT CHANNEL
-       ===================================================== */
-
-    async function refreshCurrentChannel() {
-
-        if (
-            !state.currentChannel
-        ) {
-            return;
-        }
-
-
-        state.messages =
-            [];
-
-        state.reactions.clear();
-
-        state.oldestMessageDate =
-            null;
-
-        state.hasOlderMessages =
-            true;
-
-
-        await loadMessages(
-            state.currentChannel.id,
-            false
-        );
-
-    }
-
-
-    /* =====================================================
-       REPLY
-       ===================================================== */
-
-    function startReply(
-        message
-    ) {
-
-        state.replyingTo =
-            message;
-
-
-        const composer =
-            document.getElementById(
-                "messageForm"
-            );
-
-
-        let indicator =
-            document.getElementById(
-                "replyIndicator"
-            );
-
-
-        if (!indicator) {
-
-            indicator =
-                document.createElement(
-                    "div"
-                );
-
-            indicator.id =
-                "replyIndicator";
-
-            indicator.className =
-                "reply-indicator";
-
-
-            const input =
-                document.getElementById(
-                    "messageInput"
-                );
-
-
-            input?.parentElement
-                ?.insertBefore(
-                    indicator,
-                    input
-                );
-
-        }
-
-
-        const profile =
-            state.profiles.get(
-                message.user_id
-            );
-
-
-        indicator.textContent =
-            `Replying to ${
-                profile?.full_name ||
-                "Student"
-            }: ${
-                message.content ||
-                "Attachment"
-            }`;
-
-
-        const cancel =
-            document.createElement(
-                "button"
-            );
-
-        cancel.type =
-            "button";
-
-        cancel.textContent =
-            "×";
-
-
-        cancel.addEventListener(
-            "click",
-            cancelReply
-        );
-
-
-        indicator.appendChild(
-            cancel
-        );
-
-
-        messageInput?.focus();
-
-    }
-
-
-    function cancelReply() {
-
-        state.replyingTo =
-            null;
-
-
-        const indicator =
-            document.getElementById(
-                "replyIndicator"
-            );
-
-
-        indicator?.remove();
-
-    }
-
-
-    /* =====================================================
-       DELETE MESSAGE
-       ===================================================== */
-
-    async function deleteMessage(
-        messageId
-    ) {
-
-        if (!state.user) {
-            return;
-        }
-
-
-        const message =
-            state.messages.find(
-                item =>
-                    item.id ===
-                    messageId
-            );
-
-
-        if (!message) {
-            return;
-        }
-
-
-        if (
-            message.user_id !==
-            state.user.id
-        ) {
-
-            showToast(
-                "You can only delete your own messages."
-            );
-
-            return;
-
-        }
-
-
-        const confirmed =
-            window.confirm(
-                "Delete this message?"
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        const {
-            error
-        } =
-            await supabase
-                .from("chat_messages")
-                .update({
-
-                    is_deleted:
-                        true,
-
-                    deleted_at:
-                        new Date().toISOString(),
-
-                    updated_at:
-                        new Date().toISOString(),
-
-                    content:
-                        null
-
-                })
-                .eq(
-                    "id",
-                    messageId
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Delete message error:",
-                error
-            );
-
-            showToast(
-                "Message could not be deleted."
-            );
-
-            return;
-
-        }
-
-
-        showToast(
-            "Message deleted."
-        );
-
-
-        await refreshCurrentChannel();
-
-    }
-
-
-    /* =====================================================
-       ATTACHMENT BUTTON
+       ATTACHMENTS - SELECT
        ===================================================== */
 
     function setupAttachmentButton() {
 
-        if (!attachButton) {
+        if (
+            !attachButton ||
+            !attachmentInput
+        ) {
+
+            console.warn(
+                "Attachment controls were not found."
+            );
+
+
             return;
-        }
-
-
-        let fileInput =
-            document.getElementById(
-                "communityFileInput"
-            );
-
-
-        if (!fileInput) {
-
-            fileInput =
-                document.createElement(
-                    "input"
-                );
-
-            fileInput.type =
-                "file";
-
-            fileInput.id =
-                "communityFileInput";
-
-            fileInput.accept =
-                "image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip";
-
-
-            fileInput.style.display =
-                "none";
-
-
-            document.body.appendChild(
-                fileInput
-            );
 
         }
 
 
         attachButton.addEventListener(
             "click",
-            () => {
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
 
                 if (!requireRules()) {
                     return;
                 }
 
-                fileInput.click();
+
+                attachmentInput.click();
 
             }
         );
 
 
-        fileInput.addEventListener(
+        attachmentInput.addEventListener(
             "change",
             () => {
 
                 const file =
-                    fileInput.files?.[0];
+                    attachmentInput.files?.[0];
 
 
                 if (!file) {
@@ -3846,15 +3691,17 @@ function requireRules() {
 
                 if (
                     file.size >
-                    25 * 1024 * 1024
+                    MAX_FILE_SIZE
                 ) {
 
                     showToast(
                         "Files must be 25 MB or smaller."
                     );
 
-                    fileInput.value =
+
+                    attachmentInput.value =
                         "";
+
 
                     return;
 
@@ -3880,9 +3727,7 @@ function requireRules() {
     ) {
 
         let preview =
-            document.getElementById(
-                "attachmentPreview"
-            );
+            $("attachmentPreview");
 
 
         if (!preview) {
@@ -3892,8 +3737,10 @@ function requireRules() {
                     "div"
                 );
 
+
             preview.id =
                 "attachmentPreview";
+
 
             preview.className =
                 "attachment-preview";
@@ -3915,6 +3762,7 @@ function requireRules() {
                 "span"
             );
 
+
         text.textContent =
             `📎 ${file.name}`;
 
@@ -3924,30 +3772,39 @@ function requireRules() {
                 "button"
             );
 
+
         remove.type =
             "button";
+
 
         remove.textContent =
             "×";
 
 
+        remove.title =
+            "Remove attachment";
+
+
         remove.addEventListener(
             "click",
-            () => {
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
 
                 state.selectedAttachment =
                     null;
 
+
                 preview.remove();
 
-                const input =
-                    document.getElementById(
-                        "communityFileInput"
-                    );
 
-                if (input) {
-                    input.value =
+                if (attachmentInput) {
+
+                    attachmentInput.value =
                         "";
+
                 }
 
             }
@@ -3958,6 +3815,7 @@ function requireRules() {
             text
         );
 
+
         preview.appendChild(
             remove
         );
@@ -3966,7 +3824,7 @@ function requireRules() {
 
 
     /* =====================================================
-       UPLOAD ATTACHMENT
+       ATTACHMENT UPLOAD
        ===================================================== */
 
     async function uploadAttachment(
@@ -3974,17 +3832,21 @@ function requireRules() {
         file
     ) {
 
-        if (!file || !state.user) {
-            return;
+        if (
+            !file ||
+            !state.user
+        ) {
+
+            return false;
+
         }
 
 
         const safeName =
-            file.name
-                .replace(
-                    /[^a-zA-Z0-9._-]/g,
-                    "_"
-                );
+            file.name.replace(
+                /[^a-zA-Z0-9._-]/g,
+                "_"
+            );
 
 
         const unique =
@@ -3998,9 +3860,7 @@ function requireRules() {
 
 
         const path =
-            `${state.user.id}/${
-                Date.now()
-            }-${unique}-${safeName}`;
+            `${state.user.id}/${Date.now()}-${unique}-${safeName}`;
 
 
         const {
@@ -4032,11 +3892,13 @@ function requireRules() {
                 uploadError
             );
 
+
             showToast(
                 "File upload failed."
             );
 
-            return;
+
+            return false;
 
         }
 
@@ -4100,110 +3962,81 @@ function requireRules() {
                 attachmentError
             );
 
+
             showToast(
                 "Attachment record could not be saved."
             );
 
+
+            return false;
+
         }
+
+
+        return true;
 
     }
 
 
     /* =====================================================
-       EMOJI
+       EMOJI PICKER
        ===================================================== */
 
-    function setupEmojiButton() {
+    const EMOJIS = [
 
-        if (!emojiButton) {
+        "😀",
+        "😂",
+        "🤣",
+        "😊",
+        "😍",
+        "🥰",
+        "😎",
+        "🤔",
+        "😮",
+        "😢",
+        "😭",
+        "😡",
+        "👍",
+        "👎",
+        "👏",
+        "🙏",
+        "❤️",
+        "🔥",
+        "🎉",
+        "💯",
+        "🩺",
+        "🧪",
+        "💊",
+        "📚",
+        "🎓",
+        "🧠",
+        "🎮",
+        "⚽",
+        "🏆",
+        "✨",
+        "✅",
+        "❌",
+        "💡",
+        "🚀",
+        "❤️‍🔥"
+
+    ];
+
+
+    function buildEmojiPicker() {
+
+        if (!emojiGrid) {
             return;
         }
 
 
-        emojiButton.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-                if (!requireRules()) {
-                    return;
-                }
-
-                toggleEmojiPicker();
-
-            }
-        );
-
-    }
-
-
-    function toggleEmojiPicker() {
-
-        let picker =
-            document.getElementById(
-                "communityEmojiPicker"
-            );
-
-
-        if (picker) {
-
-            closeEmojiPicker();
-
-            return;
-
-        }
-
-
-        picker =
-            document.createElement(
-                "div"
-            );
-
-        picker.id =
-            "communityEmojiPicker";
-
-        picker.className =
-            "emoji-picker";
-
-
-        const emojis = [
-            "😀",
-            "😂",
-            "🤣",
-            "😊",
-            "😍",
-            "🥰",
-            "😎",
-            "🤔",
-            "😮",
-            "😢",
-            "😭",
-            "😡",
-            "👍",
-            "👎",
-            "👏",
-            "🙏",
-            "❤️",
-            "🔥",
-            "🎉",
-            "💯",
-            "🩺",
-            "🧪",
-            "💊",
-            "📚",
-            "🎓",
-            "🧠",
-            "😂",
-            "🎮",
-            "⚽",
-            "🏆"
-        ];
+        emojiGrid.innerHTML =
+            "";
 
 
         for (
             const emoji
-            of emojis
+            of EMOJIS
         ) {
 
             const button =
@@ -4211,8 +4044,14 @@ function requireRules() {
                     "button"
                 );
 
+
             button.type =
                 "button";
+
+
+            button.className =
+                "emoji-choice";
+
 
             button.textContent =
                 emoji;
@@ -4222,7 +4061,9 @@ function requireRules() {
                 "click",
                 event => {
 
+                    event.preventDefault();
                     event.stopPropagation();
+
 
                     insertEmoji(
                         emoji
@@ -4232,34 +4073,39 @@ function requireRules() {
             );
 
 
-            picker.appendChild(
+            emojiGrid.appendChild(
                 button
             );
 
         }
 
+    }
 
-        document.body.appendChild(
-            picker
+
+    function openEmojiPicker() {
+
+        if (!emojiPicker) {
+            return;
+        }
+
+
+        if (!requireRules()) {
+            return;
+        }
+
+
+        buildEmojiPicker();
+
+
+        emojiPicker.classList.remove(
+            "hidden"
         );
 
 
-        const rect =
-            emojiButton.getBoundingClientRect();
-
-
-        picker.style.position =
-            "fixed";
-
-        picker.style.left =
-            `${rect.left}px`;
-
-        picker.style.bottom =
-            `${
-                window.innerHeight -
-                rect.top +
-                8
-            }px`;
+        emojiButton?.setAttribute(
+            "aria-expanded",
+            "true"
+        );
 
 
         setTimeout(() => {
@@ -4274,69 +4120,75 @@ function requireRules() {
     }
 
 
-    function handleEmojiOutsideClick(
-        event
-    ) {
-
-        const picker =
-            document.getElementById(
-                "communityEmojiPicker"
-            );
-
-
-        if (!picker) {
-            return;
-        }
-
-
-        if (
-            picker.contains(
-                event.target
-            ) ||
-            emojiButton?.contains(
-                event.target
-            )
-        ) {
-            return;
-        }
-
-
-        closeEmojiPicker();
-
-    }
-
-
     function closeEmojiPicker() {
 
-        const picker =
-            document.getElementById(
-                "communityEmojiPicker"
-            );
-
-
-        if (!picker) {
+        if (!emojiPicker) {
             return;
         }
 
 
-        if (
-            picker.contains(
-                document.activeElement
-            )
-        ) {
-
-            document.activeElement.blur();
-
-        }
+        emojiPicker.classList.add(
+            "hidden"
+        );
 
 
-        picker.remove();
+        emojiButton?.setAttribute(
+            "aria-expanded",
+            "false"
+        );
 
 
         document.removeEventListener(
             "click",
             handleEmojiOutsideClick
         );
+
+    }
+
+
+    function toggleEmojiPicker() {
+
+        if (
+            emojiPicker?.classList.contains(
+                "hidden"
+            )
+        ) {
+
+            openEmojiPicker();
+
+        } else {
+
+            closeEmojiPicker();
+
+        }
+
+    }
+
+
+    function handleEmojiOutsideClick(
+        event
+    ) {
+
+        if (!emojiPicker) {
+            return;
+        }
+
+
+        if (
+            emojiPicker.contains(
+                event.target
+            ) ||
+            emojiButton?.contains(
+                event.target
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        closeEmojiPicker();
 
     }
 
@@ -4371,12 +4223,12 @@ function requireRules() {
             );
 
 
-        messageInput.focus();
-
-
         const cursor =
             start +
             emoji.length;
+
+
+        messageInput.focus();
 
 
         messageInput.setSelectionRange(
@@ -4384,68 +4236,52 @@ function requireRules() {
             cursor
         );
 
+
+        closeEmojiPicker();
+
     }
 
 
-    /* =====================================================
-       GIF
-       ===================================================== */
+    function setupEmojiButton() {
 
-    function setupGifButton() {
-
-        let button =
-            document.getElementById(
-                "gifButton"
-            );
-
-
-        if (!button) {
-
-            button =
-                document.createElement(
-                    "button"
-                );
-
-            button.type =
-                "button";
-
-            button.id =
-                "gifButton";
-
-            button.className =
-                "composer-extra-button";
-
-            button.textContent =
-                "GIF";
-
-            button.title =
-                "Share GIF";
-
-
-            const form =
-                document.getElementById(
-                    "messageForm"
-                );
-
-
-            if (form) {
-                form.appendChild(
-                    button
-                );
-            }
-
+        if (!emojiButton) {
+            return;
         }
 
 
-        button.addEventListener(
+        emojiButton.addEventListener(
             "click",
-            () => {
+            event => {
 
-                if (!requireRules()) {
-                    return;
-                }
+                event.preventDefault();
+                event.stopPropagation();
 
-                openGifModal();
+
+                toggleEmojiPicker();
+
+            }
+        );
+
+
+        closeEmojiButton?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+
+                closeEmojiPicker();
+
+            }
+        );
+
+
+        emojiPicker?.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
 
             }
         );
@@ -4453,83 +4289,1090 @@ function requireRules() {
     }
 
 
-    function openGifModal() {
+    /* =====================================================
+       GIF PICKER
+       ===================================================== */
 
-        let modal =
-            document.getElementById(
-                "communityGifModal"
+    function setupGifPicker() {
+
+        if (!gifButton) {
+            return;
+        }
+
+
+        gifButton.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+
+                if (!requireRules()) {
+                    return;
+                }
+
+
+                openGifPicker();
+
+            }
+        );
+
+
+        closeGifButton?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+
+                closeGifPicker();
+
+            }
+        );
+
+
+        previewGifButton?.addEventListener(
+            "click",
+            event => {
+
+                event.preventDefault();
+
+
+                previewGif();
+
+            }
+        );
+
+
+        sendGifButton?.addEventListener(
+            "click",
+            async event => {
+
+                event.preventDefault();
+
+
+                await sendGifFromPicker();
+
+            }
+        );
+
+
+        gifUrlInput?.addEventListener(
+            "input",
+            () => {
+
+                updateGifPreviewState();
+
+            }
+        );
+
+
+        gifPicker?.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+
+            }
+        );
+
+    }
+
+
+    function openGifPicker() {
+
+        if (!gifPicker) {
+            return;
+        }
+
+
+        gifPicker.classList.remove(
+            "hidden"
+        );
+
+
+        if (gifUrlInput) {
+
+            gifUrlInput.focus();
+
+        }
+
+
+        updateGifPreviewState();
+
+    }
+
+
+    function closeGifPicker() {
+
+        gifPicker?.classList.add(
+            "hidden"
+        );
+
+
+        if (gifPreview) {
+
+            gifPreview.innerHTML =
+                "";
+
+        }
+
+
+        if (gifUrlInput) {
+
+            gifUrlInput.value =
+                "";
+
+        }
+
+
+        if (sendGifButton) {
+
+            sendGifButton.disabled =
+                true;
+
+        }
+
+    }
+
+
+    function updateGifPreviewState() {
+
+        const url =
+            gifUrlInput
+                ?.value
+                ?.trim() ||
+            "";
+
+
+        if (sendGifButton) {
+
+            sendGifButton.disabled =
+                !isGifUrl(url);
+
+        }
+
+    }
+
+
+    function previewGif() {
+
+        const url =
+            gifUrlInput
+                ?.value
+                ?.trim() ||
+            "";
+
+
+        if (!isGifUrl(url)) {
+
+            showToast(
+                "Please enter a valid GIF URL."
             );
 
-
-        if (modal) {
-
-            modal.classList.remove(
-                "hidden"
-            );
 
             return;
 
         }
 
 
-        modal =
+        if (!gifPreview) {
+            return;
+        }
+
+
+        gifPreview.innerHTML =
+            "";
+
+
+        const image =
+            document.createElement(
+                "img"
+            );
+
+
+        image.src =
+            url;
+
+
+        image.alt =
+            "GIF preview";
+
+
+        image.className =
+            "gif-preview-image";
+
+
+        image.onload =
+            () => {
+
+                if (sendGifButton) {
+
+                    sendGifButton.disabled =
+                        false;
+
+                }
+
+            };
+
+
+        image.onerror =
+            () => {
+
+                gifPreview.textContent =
+                    "The GIF could not be loaded.";
+
+
+                if (sendGifButton) {
+
+                    sendGifButton.disabled =
+                        true;
+
+                }
+
+            };
+
+
+        gifPreview.appendChild(
+            image
+        );
+
+    }
+
+
+    async function sendGifFromPicker() {
+
+        const url =
+            gifUrlInput
+                ?.value
+                ?.trim() ||
+            "";
+
+
+        if (!isGifUrl(url)) {
+
+            showToast(
+                "Please enter a valid GIF URL."
+            );
+
+
+            return;
+
+        }
+
+
+        if (
+            !state.user ||
+            !state.currentChannel
+        ) {
+
+            showToast(
+                "Select a channel first."
+            );
+
+
+            return;
+
+        }
+
+
+        if (sendGifButton) {
+
+            sendGifButton.disabled =
+                true;
+
+        }
+
+
+        try {
+
+            const {
+                error
+            } =
+                await supabase
+                    .from("chat_messages")
+                    .insert({
+
+                        channel_id:
+                            state.currentChannel.id,
+
+                        user_id:
+                            state.user.id,
+
+                        content:
+                            url,
+
+                        message_type:
+                            "gif",
+
+                        parent_message_id:
+                            state.replyingTo?.id ||
+                            null
+
+                    });
+
+
+            if (error) {
+
+                console.error(
+                    "GIF send error:",
+                    error
+                );
+
+
+                showToast(
+                    "GIF could not be sent."
+                );
+
+
+                return;
+
+            }
+
+
+            cancelReply();
+
+
+            closeGifPicker();
+
+
+            await refreshCurrentChannel();
+
+
+        } finally {
+
+            if (sendGifButton) {
+
+                sendGifButton.disabled =
+                    false;
+
+            }
+
+        }
+
+    }
+
+
+    /* =====================================================
+       REACTION BAR
+       ===================================================== */
+
+    function createReactionBar(
+        message
+    ) {
+
+        const bar =
             document.createElement(
                 "div"
             );
 
-        modal.id =
-            "communityGifModal";
 
-        modal.className =
-            "community-modal hidden";
+        bar.className =
+            "reaction-bar";
 
 
-        const box =
+        const reactions =
+            state.reactions.get(
+                message.id
+            ) || [];
+
+
+        const grouped =
+            new Map();
+
+
+        for (
+            const reaction
+            of reactions
+        ) {
+
+            if (
+                !grouped.has(
+                    reaction.reaction
+                )
+            ) {
+
+                grouped.set(
+                    reaction.reaction,
+                    {
+                        count: 0,
+                        mine: false
+                    }
+                );
+
+            }
+
+
+            const info =
+                grouped.get(
+                    reaction.reaction
+                );
+
+
+            info.count++;
+
+
+            if (
+                state.user &&
+                reaction.user_id ===
+                    state.user.id
+            ) {
+
+                info.mine =
+                    true;
+
+            }
+
+        }
+
+
+        for (
+            const [
+                emoji,
+                info
+            ]
+            of grouped
+        ) {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.className =
+                "reaction-button";
+
+
+            if (info.mine) {
+
+                button.classList.add(
+                    "mine"
+                );
+
+            }
+
+
+            button.textContent =
+                `${emoji} ${info.count}`;
+
+
+            button.addEventListener(
+                "click",
+                async event => {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+
+                    await toggleReaction(
+                        message.id,
+                        emoji
+                    );
+
+                }
+            );
+
+
+            bar.appendChild(
+                button
+            );
+
+        }
+
+
+        return bar;
+
+    }
+
+
+    /* =====================================================
+       REACTION PICKER
+       ===================================================== */
+
+    function openReactionPicker(
+        messageId,
+        anchor
+    ) {
+
+        closeReactionPicker();
+
+
+        const picker =
             document.createElement(
                 "div"
             );
 
-        box.className =
-            "gif-modal-box";
+
+        picker.className =
+            "reaction-picker";
 
 
-        const title =
-            document.createElement(
-                "h3"
+        const emojis = [
+
+            "👍",
+            "❤️",
+            "😂",
+            "😮",
+            "😢",
+            "👏",
+            "🔥",
+            "🎉",
+            "💯",
+            "🙏"
+
+        ];
+
+
+        for (
+            const emoji
+            of emojis
+        ) {
+
+            const button =
+                document.createElement(
+                    "button"
+                );
+
+
+            button.type =
+                "button";
+
+
+            button.textContent =
+                emoji;
+
+
+            button.addEventListener(
+                "click",
+                async event => {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+
+                    await toggleReaction(
+                        messageId,
+                        emoji
+                    );
+
+
+                    closeReactionPicker();
+
+                }
             );
 
-        title.textContent =
-            "Share a GIF";
 
-
-        const input =
-            document.createElement(
-                "input"
+            picker.appendChild(
+                button
             );
 
-        input.type =
-            "url";
-
-        input.placeholder =
-            "Paste a GIF URL";
+        }
 
 
-        const help =
-            document.createElement(
-                "p"
+        document.body.appendChild(
+            picker
+        );
+
+
+        const rect =
+            anchor.getBoundingClientRect();
+
+
+        picker.style.position =
+            "fixed";
+
+
+        picker.style.left =
+            `${Math.max(
+                8,
+                Math.min(
+                    rect.left,
+                    window.innerWidth - 250
+                )
+            )}px`;
+
+
+        picker.style.top =
+            `${Math.min(
+                rect.bottom + 6,
+                window.innerHeight - 70
+            )}px`;
+
+
+        setTimeout(() => {
+
+            document.addEventListener(
+                "click",
+                handleReactionOutsideClick
             );
 
-        help.textContent =
-            "Paste a GIF link from a service such as Giphy or Tenor.";
+        }, 0);
+
+    }
 
 
-        const buttons =
-            document.createElement(
-                "div"
+    function handleReactionOutsideClick(
+        event
+    ) {
+
+        const picker =
+            document.querySelector(
+                ".reaction-picker"
             );
 
-        buttons.className =
-            "modal-actions";
+
+        if (!picker) {
+            return;
+        }
+
+
+        if (
+            picker.contains(
+                event.target
+            )
+        ) {
+
+            return;
+
+        }
+
+
+        closeReactionPicker();
+
+    }
+
+
+    function closeReactionPicker() {
+
+        document
+            .querySelectorAll(
+                ".reaction-picker"
+            )
+            .forEach(
+                picker =>
+                    picker.remove()
+            );
+
+
+        document.removeEventListener(
+            "click",
+            handleReactionOutsideClick
+        );
+
+    }
+
+
+    /* =====================================================
+       TOGGLE REACTION
+       ===================================================== */
+
+    async function toggleReaction(
+        messageId,
+        reaction
+    ) {
+
+        if (!requireRules()) {
+            return;
+        }
+
+
+        if (!state.user) {
+            return;
+        }
+
+
+        const {
+            data: existing,
+            error: findError
+        } =
+            await supabase
+                .from(
+                    "chat_message_reactions"
+                )
+                .select(
+                    "id"
+                )
+                .eq(
+                    "message_id",
+                    messageId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                )
+                .eq(
+                    "reaction",
+                    reaction
+                )
+                .maybeSingle();
+
+
+        if (findError) {
+
+            console.error(
+                "Reaction lookup error:",
+                findError
+            );
+
+
+            showToast(
+                "Reaction could not be changed."
+            );
+
+
+            return;
+
+        }
+
+
+        if (existing) {
+
+            const {
+                error
+            } =
+                await supabase
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        existing.id
+                    );
+
+
+            if (error) {
+
+                console.error(
+                    "Reaction delete error:",
+                    error
+                );
+
+
+                showToast(
+                    "Reaction could not be removed."
+                );
+
+
+                return;
+
+            }
+
+        } else {
+
+            const {
+                error
+            } =
+                await supabase
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .insert({
+
+                        message_id:
+                            messageId,
+
+                        user_id:
+                            state.user.id,
+
+                        reaction
+
+                    });
+
+
+            if (error) {
+
+                console.error(
+                    "Reaction insert error:",
+                    error
+                );
+
+
+                showToast(
+                    "Reaction could not be added."
+                );
+
+
+                return;
+
+            }
+
+        }
+
+
+        await refreshCurrentChannel();
+
+    }
+
+
+    /* =====================================================
+       SEND MESSAGE
+       ===================================================== */
+
+    async function sendMessage(
+        event
+    ) {
+
+        event?.preventDefault();
+
+
+        if (!requireRules()) {
+            return;
+        }
+
+
+        if (
+            !state.user ||
+            !state.currentChannel
+        ) {
+
+            showToast(
+                "Select a channel first."
+            );
+
+
+            return;
+
+        }
+
+
+        const content =
+            messageInput
+                ?.value
+                ?.trim() ||
+            "";
+
+
+        if (
+            !content &&
+            !state.selectedAttachment
+        ) {
+
+            return;
+
+        }
+
+
+        if (sendMessageButton) {
+
+            sendMessageButton.disabled =
+                true;
+
+        }
+
+
+        try {
+
+            const {
+                data: message,
+                error
+            } =
+                await supabase
+                    .from("chat_messages")
+                    .insert({
+
+                        channel_id:
+                            state.currentChannel.id,
+
+                        user_id:
+                            state.user.id,
+
+                        content:
+                            content || null,
+
+                        message_type:
+                            "text",
+
+                        parent_message_id:
+                            state.replyingTo?.id ||
+                            null
+
+                    })
+                    .select()
+                    .single();
+
+
+            if (error) {
+
+                console.error(
+                    "Send message error:",
+                    error
+                );
+
+
+                showToast(
+                    "Message could not be sent."
+                );
+
+
+                return;
+
+            }
+
+
+            if (message) {
+
+                state.profiles.set(
+                    state.user.id,
+                    state.profile || {
+
+                        id:
+                            state.user.id,
+
+                        full_name:
+                            "Student",
+
+                        photo_url:
+                            null
+
+                    }
+                );
+
+
+                if (
+                    state.selectedAttachment
+                ) {
+
+                    await uploadAttachment(
+                        message.id,
+                        state.selectedAttachment
+                    );
+
+                }
+
+
+                clearComposer();
+
+
+                await refreshCurrentChannel();
+
+            }
+
+        } finally {
+
+            if (sendMessageButton) {
+
+                sendMessageButton.disabled =
+                    false;
+
+            }
+
+        }
+
+    }
+
+
+    /* =====================================================
+       REFRESH CURRENT CHANNEL
+       ===================================================== */
+
+    async function refreshCurrentChannel() {
+
+        if (!state.currentChannel) {
+            return;
+        }
+
+
+        state.messages =
+            [];
+
+
+        state.reactions.clear();
+
+
+        state.oldestMessageDate =
+            null;
+
+
+        state.hasOlderMessages =
+            true;
+
+
+        await loadMessages(
+            state.currentChannel.id,
+            false
+        );
+
+
+        await markChannelRead();
+
+    }
+
+
+    /* =====================================================
+       REPLY
+       ===================================================== */
+
+    function startReply(
+        message
+    ) {
+
+        if (!message) {
+            return;
+        }
+
+
+        state.replyingTo =
+            message;
+
+
+        let indicator =
+            $("replyIndicator");
+
+
+        if (!indicator) {
+
+            indicator =
+                document.createElement(
+                    "div"
+                );
+
+
+            indicator.id =
+                "replyIndicator";
+
+
+            indicator.className =
+                "reply-indicator";
+
+
+            messageForm?.prepend(
+                indicator
+            );
+
+        }
+
+
+        indicator.innerHTML =
+            "";
+
+
+        const profile =
+            state.profiles.get(
+                message.user_id
+            );
+
+
+        const text =
+            document.createElement(
+                "span"
+            );
+
+
+        text.textContent =
+            `Replying to ${
+                profile?.full_name ||
+                "Student"
+            }: ${
+                message.content ||
+                "Attachment"
+            }`;
 
 
         const cancel =
@@ -4537,154 +5380,106 @@ function requireRules() {
                 "button"
             );
 
+
         cancel.type =
             "button";
 
+
         cancel.textContent =
-            "Cancel";
+            "×";
 
 
-        const share =
-            document.createElement(
-                "button"
-            );
-
-        share.type =
-            "button";
-
-        share.textContent =
-            "Share GIF";
+        cancel.title =
+            "Cancel reply";
 
 
         cancel.addEventListener(
             "click",
-            () => {
-
-                modal.classList.add(
-                    "hidden"
-                );
-
-            }
+            cancelReply
         );
 
 
-        share.addEventListener(
-            "click",
-            async () => {
-
-                const url =
-                    input.value.trim();
-
-
-                if (
-                    !isGifUrl(url)
-                ) {
-
-                    showToast(
-                        "Please enter a valid GIF URL."
-                    );
-
-                    return;
-
-                }
-
-
-                await sendGif(
-                    url
-                );
-
-
-                modal.classList.add(
-                    "hidden"
-                );
-
-
-                input.value =
-                    "";
-
-            }
+        indicator.appendChild(
+            text
         );
 
 
-        buttons.appendChild(
+        indicator.appendChild(
             cancel
         );
 
-        buttons.appendChild(
-            share
-        );
+
+        messageInput?.focus();
+
+    }
 
 
-        box.appendChild(
-            title
-        );
+    function cancelReply() {
 
-        box.appendChild(
-            input
-        );
-
-        box.appendChild(
-            help
-        );
-
-        box.appendChild(
-            buttons
-        );
+        state.replyingTo =
+            null;
 
 
-        modal.appendChild(
-            box
-        );
-
-
-        document.body.appendChild(
-            modal
-        );
-
-
-        modal.classList.remove(
-            "hidden"
-        );
-
-
-        input.focus();
-
-
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    modal
-                ) {
-
-                    modal.classList.add(
-                        "hidden"
-                    );
-
-                }
-
-            }
-        );
+        $("replyIndicator")
+            ?.remove();
 
     }
 
 
     /* =====================================================
-       SEND GIF
+       DELETE MESSAGE
        ===================================================== */
 
-    async function sendGif(
-        url
+    async function deleteMessage(
+        messageId
     ) {
 
-        if (
-            !state.user ||
-            !state.currentChannel
-        ) {
+        if (!state.user) {
             return;
         }
+
+
+        const message =
+            state.messages.find(
+                item =>
+                    item.id ===
+                    messageId
+            );
+
+
+        if (!message) {
+            return;
+        }
+
+
+        if (
+            message.user_id !==
+            state.user.id
+        ) {
+
+            showToast(
+                "You can only delete your own messages."
+            );
+
+
+            return;
+
+        }
+
+
+        const confirmed =
+            window.confirm(
+                "Delete this message?"
+            );
+
+
+        if (!confirmed) {
+            return;
+        }
+
+
+        const now =
+            new Date().toISOString();
 
 
         const {
@@ -4692,44 +5487,53 @@ function requireRules() {
         } =
             await supabase
                 .from("chat_messages")
-                .insert({
+                .update({
 
-                    channel_id:
-                        state.currentChannel.id,
+                    is_deleted:
+                        true,
 
-                    user_id:
-                        state.user.id,
+                    deleted_at:
+                        now,
+
+                    updated_at:
+                        now,
 
                     content:
-                        url,
-
-                    message_type:
-                        "gif",
-
-                    parent_message_id:
-                        state.replyingTo?.id ||
                         null
 
-                });
+                })
+                .eq(
+                    "id",
+                    messageId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
 
 
         if (error) {
 
             console.error(
-                "GIF send error:",
+                "Delete message error:",
                 error
             );
 
+
             showToast(
-                "GIF could not be sent."
+                "Message could not be deleted."
             );
+
 
             return;
 
         }
 
 
-        cancelReply();
+        showToast(
+            "Message deleted."
+        );
+
 
         await refreshCurrentChannel();
 
@@ -4743,8 +5547,10 @@ function requireRules() {
     function clearComposer() {
 
         if (messageInput) {
+
             messageInput.value =
                 "";
+
         }
 
 
@@ -4752,28 +5558,75 @@ function requireRules() {
             null;
 
 
-        const preview =
-            document.getElementById(
-                "attachmentPreview"
-            );
+        $("attachmentPreview")
+            ?.remove();
 
 
-        preview?.remove();
+        if (attachmentInput) {
 
-
-        const fileInput =
-            document.getElementById(
-                "communityFileInput"
-            );
-
-
-        if (fileInput) {
-            fileInput.value =
+            attachmentInput.value =
                 "";
+
         }
 
 
         cancelReply();
+
+
+        closeEmojiPicker();
+        closeGifPicker();
+
+    }
+
+
+    /* =====================================================
+       MESSAGE INPUT
+       ===================================================== */
+
+    function setupMessageInput() {
+
+        if (!messageInput) {
+            return;
+        }
+
+
+        messageInput.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Enter" &&
+                    !event.shiftKey
+                ) {
+
+                    event.preventDefault();
+
+
+                    sendMessage();
+
+                }
+
+            }
+        );
+
+
+        messageInput.addEventListener(
+            "input",
+            () => {
+
+                messageInput.style.height =
+                    "auto";
+
+
+                messageInput.style.height =
+                    `${Math.min(
+                        messageInput.scrollHeight,
+                        160
+                    )}px`;
+
+            }
+        );
 
     }
 
@@ -4798,7 +5651,7 @@ function requireRules() {
             } catch (error) {
 
                 console.warn(
-                    "Realtime cleanup:",
+                    "Realtime cleanup error:",
                     error
                 );
 
@@ -4820,6 +5673,11 @@ function requireRules() {
         removeRealtimeChannels();
 
 
+        if (!channelId) {
+            return;
+        }
+
+
         const realtime =
             supabase
                 .channel(
@@ -4828,12 +5686,18 @@ function requireRules() {
                 .on(
                     "postgres_changes",
                     {
-                        event: "INSERT",
-                        schema: "public",
+                        event:
+                            "INSERT",
+
+                        schema:
+                            "public",
+
                         table:
                             "chat_messages",
+
                         filter:
                             `channel_id=eq.${channelId}`
+
                     },
                     async payload => {
 
@@ -4846,12 +5710,18 @@ function requireRules() {
                 .on(
                     "postgres_changes",
                     {
-                        event: "UPDATE",
-                        schema: "public",
+                        event:
+                            "UPDATE",
+
+                        schema:
+                            "public",
+
                         table:
                             "chat_messages",
+
                         filter:
                             `channel_id=eq.${channelId}`
+
                     },
                     async payload => {
 
@@ -4864,32 +5734,72 @@ function requireRules() {
                 .on(
                     "postgres_changes",
                     {
-                        event: "*",
-                        schema: "public",
+                        event:
+                            "*",
+
+                        schema:
+                            "public",
+
                         table:
                             "chat_message_reactions"
+
                     },
                     async () => {
 
-                        await refreshCurrentChannel();
+                        if (
+                            state.currentChannel?.id ===
+                            channelId
+                        ) {
+
+                            await refreshCurrentChannel();
+
+                        }
 
                     }
                 )
                 .on(
                     "postgres_changes",
                     {
-                        event: "*",
-                        schema: "public",
+                        event:
+                            "*",
+
+                        schema:
+                            "public",
+
                         table:
                             "chat_attachments"
+
                     },
                     async () => {
 
-                        await refreshCurrentChannel();
+                        if (
+                            state.currentChannel?.id ===
+                            channelId
+                        ) {
+
+                            await refreshCurrentChannel();
+
+                        }
 
                     }
                 )
-                .subscribe();
+                .subscribe(
+                    status => {
+
+                        if (
+                            status ===
+                            "SUBSCRIBED"
+                        ) {
+
+                            console.log(
+                                "✅ Community realtime connected:",
+                                channelId
+                            );
+
+                        }
+
+                    }
+                );
 
 
         state.realtimeChannels.push(
@@ -4908,13 +5818,10 @@ function requireRules() {
             message.channel_id !==
                 state.currentChannel?.id
         ) {
+
             return;
+
         }
-
-
-        await loadMessageProfiles(
-            [message]
-        );
 
 
         const exists =
@@ -4925,23 +5832,30 @@ function requireRules() {
             );
 
 
-        if (!exists) {
-
-            state.messages.push(
-                message
-            );
-
-            state.messages.sort(
-                (a, b) =>
-                    new Date(
-                        a.created_at
-                    ) -
-                    new Date(
-                        b.created_at
-                    )
-            );
-
+        if (exists) {
+            return;
         }
+
+
+        await loadMessageProfiles(
+            [message]
+        );
+
+
+        state.messages.push(
+            message
+        );
+
+
+        state.messages.sort(
+            (a, b) =>
+                new Date(
+                    a.created_at
+                ) -
+                new Date(
+                    b.created_at
+                )
+        );
 
 
         await loadReactionsForMessages(
@@ -4951,12 +5865,28 @@ function requireRules() {
 
         renderMessages();
 
+
+        scrollMessagesToBottom();
+
+
+        await markChannelRead();
+
     }
 
 
     async function handleRealtimeMessageUpdate(
         message
     ) {
+
+        if (
+            message.channel_id !==
+            state.currentChannel?.id
+        ) {
+
+            return;
+
+        }
+
 
         const index =
             state.messages.findIndex(
@@ -4994,7 +5924,9 @@ function requireRules() {
             !state.user ||
             !state.currentChannel
         ) {
+
             return;
+
         }
 
 
@@ -5004,8 +5936,9 @@ function requireRules() {
             ];
 
 
-        try {
-
+        const {
+            error
+        } =
             await supabase
                 .from("chat_read_status")
                 .upsert(
@@ -5031,7 +5964,8 @@ function requireRules() {
                     }
                 );
 
-        } catch (error) {
+
+        if (error) {
 
             console.warn(
                 "Read status error:",
@@ -5044,13 +5978,22 @@ function requireRules() {
 
 
     /* =====================================================
-       GENERAL CHANNEL
+       GENERAL CHAT
        ===================================================== */
 
     async function openGeneralChat() {
 
         if (!requireRules()) {
             return;
+        }
+
+
+        if (!state.communities.length) {
+
+            await loadCommunities();
+
+            return;
+
         }
 
 
@@ -5062,82 +6005,124 @@ function requireRules() {
             );
 
 
-        if (!general) {
+        if (general) {
 
-            for (
-                const community
-                of state.communities
-            ) {
-
-                const {
-                    data
-                } =
-                    await supabase
-                        .from(
-                            "chat_channels"
-                        )
-                        .select(`
-                            id,
-                            community_id,
-                            name,
-                            slug,
-                            description,
-                            channel_type,
-                            icon,
-                            position,
-                            is_private,
-                            is_archived,
-                            is_active,
-                            course_id,
-                            unit_id
-                        `)
-                        .eq(
-                            "community_id",
-                            community.id
-                        )
-                        .eq(
-                            "slug",
-                            "general"
-                        )
-                        .eq(
-                            "is_active",
-                            true
-                        )
-                        .maybeSingle();
-
-
-                if (data) {
-
-                    await selectCommunity(
-                        community
-                    );
-
-                    general =
-                        data;
-
-                    break;
-
-                }
-
-            }
-
-        }
-
-
-        if (!general) {
-
-            showToast(
-                "The general chat channel has not been created yet."
+            await selectChannel(
+                general
             );
+
 
             return;
 
         }
 
 
-        await selectChannel(
-            general
+        /*
+           Search all communities for a general channel.
+        */
+
+        for (
+            const community
+            of state.communities
+        ) {
+
+            const {
+                data,
+                error
+            } =
+                await supabase
+                    .from(
+                        "chat_channels"
+                    )
+                    .select(`
+                        id,
+                        community_id,
+                        name,
+                        slug,
+                        description,
+                        channel_type,
+                        icon,
+                        position,
+                        is_private,
+                        is_archived,
+                        is_active,
+                        course_id,
+                        unit_id
+                    `)
+                    .eq(
+                        "community_id",
+                        community.id
+                    )
+                    .eq(
+                        "slug",
+                        "general"
+                    )
+                    .eq(
+                        "is_active",
+                        true
+                    )
+                    .eq(
+                        "is_archived",
+                        false
+                    )
+                    .maybeSingle();
+
+
+            if (error) {
+
+                console.warn(
+                    "General channel search:",
+                    error
+                );
+
+
+                continue;
+
+            }
+
+
+            if (data) {
+
+                await selectCommunity(
+                    community
+                );
+
+
+                await selectChannel(
+                    data
+                );
+
+
+                return;
+
+            }
+
+        }
+
+
+        showToast(
+            "The General Chat channel has not been created yet."
         );
+
+    }
+
+
+    /* =====================================================
+       NAVIGATION
+       ===================================================== */
+
+    function goToDashboard() {
+
+        window.location.href =
+            "./dashboard.html";
+
+    }
+
+
+    function goToProfile() {
+
+        window.location.href =
+            "./profile.html";
 
     }
 
@@ -5148,22 +6133,97 @@ function requireRules() {
 
     function setupEvents() {
 
+        if (
+            state.eventListenersReady
+        ) {
+
+            return;
+
+        }
+
+
         messageForm?.addEventListener(
             "submit",
             sendMessage
         );
 
 
-        sendMessageButton?.addEventListener(
-            "click",
-            sendMessage
-        );
+        /*
+           Do NOT attach a second send handler to
+           sendMessageButton because the form already
+           handles submission.
+        */
 
 
         channelSearchInput?.addEventListener(
             "input",
             renderChannels
         );
+
+
+        communityModalSearch?.addEventListener(
+            "input",
+            renderCommunityChoices
+        );
+
+
+        $("openCommunityButton")
+            ?.addEventListener(
+                "click",
+                openCommunityModal
+            );
+
+
+        $("headerCommunityButton")
+            ?.addEventListener(
+                "click",
+                openCommunityModal
+            );
+
+
+        $("closeCommunityModal")
+            ?.addEventListener(
+                "click",
+                closeCommunityModal
+            );
+
+
+        communityModal?.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target ===
+                    communityModal
+                ) {
+
+                    closeCommunityModal();
+
+                }
+
+            }
+        );
+
+
+        $("dashboardButton")
+            ?.addEventListener(
+                "click",
+                goToDashboard
+            );
+
+
+        $("homeButton")
+            ?.addEventListener(
+                "click",
+                goToDashboard
+            );
+
+
+        $("railHomeButton")
+            ?.addEventListener(
+                "click",
+                goToDashboard
+            );
 
 
         $("railGeneralButton")
@@ -5173,17 +6233,17 @@ function requireRules() {
             );
 
 
-        $("railHomeButton")
+        $("railProfileButton")
             ?.addEventListener(
                 "click",
-                openGeneralChat
+                goToProfile
             );
 
 
-        $("homeButton")
+        $("sidebarProfileButton")
             ?.addEventListener(
                 "click",
-                openGeneralChat
+                goToProfile
             );
 
 
@@ -5191,6 +6251,11 @@ function requireRules() {
             ?.addEventListener(
                 "click",
                 () => {
+
+                    if (!requireRules()) {
+                        return;
+                    }
+
 
                     messageInput?.focus();
 
@@ -5202,7 +6267,9 @@ function requireRules() {
 
         setupEmojiButton();
 
-        setupGifButton();
+        setupGifPicker();
+
+        setupMessageInput();
 
 
         document.addEventListener(
@@ -5218,14 +6285,9 @@ function requireRules() {
 
                     closeReactionPicker();
 
-                    const gif =
-                        document.getElementById(
-                            "communityGifModal"
-                        );
+                    closeGifPicker();
 
-                    gif?.classList.add(
-                        "hidden"
-                    );
+                    closeCommunityModal();
 
                 }
 
@@ -5242,17 +6304,156 @@ function requireRules() {
             }
         );
 
+
+        state.eventListenersReady =
+            true;
+
     }
 
 
     /* =====================================================
-       START
+       AUTH STATE
+       ===================================================== */
+
+    function setupAuthListener() {
+
+        supabase.auth.onAuthStateChange(
+            async (
+                event,
+                session
+            ) => {
+
+                if (
+                    event ===
+                    "SIGNED_IN"
+                ) {
+
+                    state.user =
+                        session?.user ||
+                        null;
+
+
+                    if (state.user) {
+
+                        await loadMyProfile();
+
+
+                        if (
+                            state.rulesAccepted
+                        ) {
+
+                            await loadCommunities();
+
+                        }
+
+                    }
+
+                }
+
+
+                if (
+                    event ===
+                    "SIGNED_OUT"
+                ) {
+
+                    state.user =
+                        null;
+
+
+                    state.profile =
+                        null;
+
+
+                    state.profiles.clear();
+
+
+                    state.communities =
+                        [];
+
+
+                    state.currentCommunity =
+                        null;
+
+
+                    state.channels =
+                        [];
+
+
+                    state.currentChannel =
+                        null;
+
+
+                    state.messages =
+                        [];
+
+
+                    removeRealtimeChannels();
+
+
+                    renderCommunityRail();
+                    renderChannels();
+                    clearMessages();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* =====================================================
+       CLEAR MESSAGES
+       ===================================================== */
+
+    function clearMessages() {
+
+        state.messages =
+            [];
+
+
+        state.reactions.clear();
+
+
+        state.oldestMessageDate =
+            null;
+
+
+        state.hasOlderMessages =
+            true;
+
+
+        if (messageList) {
+
+            messageList.innerHTML =
+                "";
+
+        }
+
+
+        if (messageEmptyState) {
+
+            messageEmptyState.classList.remove(
+                "hidden"
+            );
+
+        }
+
+    }
+
+
+    /* =====================================================
+       INITIALIZATION
        ===================================================== */
 
     async function initialize() {
 
-        if (state.initialized) {
+        if (
+            state.initialized
+        ) {
+
             return;
+
         }
 
 
@@ -5265,6 +6466,18 @@ function requireRules() {
         );
 
 
+        /*
+           Set up UI first so the rules gate is
+           immediately usable.
+        */
+
+        setupRulesGate();
+
+        setupEvents();
+
+        setupAuthListener();
+
+
         const user =
             await loadCurrentUser();
 
@@ -5275,9 +6488,11 @@ function requireRules() {
                 "Please sign in to use the community."
             );
 
+
             console.warn(
-                "No authenticated community user."
+                "⚠️ No authenticated community user."
             );
+
 
             return;
 
@@ -5287,17 +6502,17 @@ function requireRules() {
         await loadMyProfile();
 
 
-        setupRulesModal();
-
-
-        setupEvents();
-
+        /*
+           The rules gate blocks all community
+           activity until accepted.
+        */
 
         if (!state.rulesAccepted) {
 
             console.log(
                 "Community waiting for rules acceptance."
             );
+
 
             return;
 
@@ -5312,64 +6527,6 @@ function requireRules() {
         );
 
     }
-
-
-    /* =====================================================
-       AUTH STATE
-       ===================================================== */
-
-    supabase.auth.onAuthStateChange(
-        async (
-            event,
-            session
-        ) => {
-
-            if (
-                event ===
-                "SIGNED_IN"
-            ) {
-
-                state.user =
-                    session?.user ||
-                    null;
-
-
-                if (state.user) {
-
-                    await loadMyProfile();
-
-                    if (
-                        state.rulesAccepted
-                    ) {
-
-                        await loadCommunities();
-
-                    }
-
-                }
-
-            }
-
-
-            if (
-                event ===
-                "SIGNED_OUT"
-            ) {
-
-                state.user =
-                    null;
-
-                state.profile =
-                    null;
-
-                state.profiles.clear();
-
-                removeRealtimeChannels();
-
-            }
-
-        }
-    );
 
 
     /* =====================================================
@@ -5429,13 +6586,50 @@ function requireRules() {
                 userId
             );
 
+        },
+
+
+        openCommunityModal() {
+
+            return openCommunityModal();
+
+        },
+
+
+        closeCommunityModal() {
+
+            return closeCommunityModal();
+
+        },
+
+
+        acceptRules() {
+
+            localStorage.setItem(
+                RULES_VERSION,
+                "true"
+            );
+
+
+            state.rulesAccepted =
+                true;
+
+
+            $("communityRulesGate")
+                ?.classList.add(
+                    "hidden"
+                );
+
+
+            return loadCommunities();
+
         }
 
     };
 
 
     /* =====================================================
-       INIT
+       START
        ===================================================== */
 
     if (
