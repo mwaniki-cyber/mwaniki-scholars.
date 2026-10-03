@@ -1,73 +1,67 @@
 /* =========================================================
    MWANIKI SCHOLARS COMMUNITY
-   COMPLETE SAFE DROP-IN COMMUNITY.CSS
-
-   Designed strictly for the supplied community.html.
-
-   IMPORTANT:
-   - Does not modify the DOM.
-   - Does not require extra HTML classes.
-   - Does not require JS-generated "open" classes.
-   - Correctly handles .hidden elements outside .community-app.
-   - Styles the existing call, modal, picker, chat and
-     community structures.
+   community.css
+   Safe drop-in stylesheet for the current community.html
    ========================================================= */
-
 
 /* =========================================================
-   1. COMMUNITY VARIABLES
+   1. ROOT / RESET
    ========================================================= */
 
-.community-app {
-    --ms-primary: #087f73;
-    --ms-primary-dark: #066b61;
-    --ms-accent: #0b7285;
+:root {
+    --community-primary: #087f73;
+    --community-primary-dark: #05665d;
+    --community-primary-light: #e7f7f5;
 
-    --ms-bg: #eef3f4;
-    --ms-surface: #ffffff;
-    --ms-surface-soft: #f6faf9;
-    --ms-surface-hover: #edf7f5;
+    --community-accent: #0b7285;
+    --community-accent-light: #e8f7fa;
 
-    --ms-text: #18302d;
-    --ms-text-soft: #61726f;
-    --ms-text-muted: #8b9a98;
+    --community-bg: #f5f7f9;
+    --community-panel: #ffffff;
+    --community-panel-soft: #f8fafb;
 
-    --ms-border: #dfe8e6;
-    --ms-border-strong: #ccd9d6;
+    --community-border: #e1e7eb;
+    --community-border-dark: #cbd5db;
 
-    --ms-success: #20a66a;
-    --ms-danger: #d94b4b;
-    --ms-warning: #d99a26;
+    --community-text: #18232c;
+    --community-text-soft: #64727d;
+    --community-text-muted: #8a969f;
 
-    --ms-header-height: 76px;
+    --community-success: #16a34a;
+    --community-warning: #f59e0b;
+    --community-danger: #dc3545;
 
-    min-height: 100vh;
+    --community-shadow:
+        0 8px 28px rgba(20, 36, 48, 0.08);
 
-    color: var(--ms-text);
+    --community-shadow-small:
+        0 3px 12px rgba(20, 36, 48, 0.08);
 
-    background:
-        radial-gradient(
-            circle at 10% 0%,
-            rgba(8, 127, 115, 0.08),
-            transparent 30%
-        ),
-        linear-gradient(
-            135deg,
-            #edf3f4 0%,
-            #f8faf9 100%
-        );
+    --community-radius: 14px;
+    --community-radius-small: 10px;
+
+    --community-header-height: 70px;
+    --community-rail-width: 82px;
+    --community-sidebar-width: 275px;
+    --community-member-width: 245px;
 }
 
-
-/* =========================================================
-   2. SAFE BOX MODEL
-   ========================================================= */
 
 .community-app *,
 .community-app *::before,
 .community-app *::after {
     box-sizing: border-box;
 }
+
+
+.community-app {
+    min-height: 100vh;
+    width: 100%;
+    background: var(--community-bg);
+    color: var(--community-text);
+    overflow: hidden;
+}
+
 
 .community-app button,
 .community-app input,
@@ -76,19 +70,27 @@
     font: inherit;
 }
 
+
 .community-app button {
-    -webkit-tap-highlight-color: transparent;
+    cursor: pointer;
+}
+
+
+.community-app img {
+    max-width: 100%;
 }
 
 
 /* =========================================================
-   3. HIDDEN ELEMENTS
+   2. HIDDEN STATE
    IMPORTANT:
-   Modals and overlays in community.html are outside
-   .community-app, so they are explicitly handled here.
+   Several overlays/modals are outside .community-app.
    ========================================================= */
 
 .community-app .hidden,
+.modal.hidden,
+.call-overlay.hidden,
+.toast.hidden,
 #filePreviewModal.hidden,
 #friendsModal.hidden,
 #ticketModal.hidden,
@@ -96,2585 +98,2426 @@
 #profileModal.hidden,
 #callModal.hidden,
 #activeCallOverlay.hidden,
-#incomingCallToast.hidden,
-#toast.hidden {
+#incomingCallToast.hidden {
     display: none !important;
 }
 
 
 /* =========================================================
-   4. FOCUS STATES
-   ========================================================= */
-
-.community-app button:focus-visible,
-.community-app input:focus-visible,
-.community-app textarea:focus-visible,
-.community-app select:focus-visible,
-.modal button:focus-visible,
-.modal input:focus-visible,
-.modal textarea:focus-visible,
-.modal select:focus-visible {
-    outline: 3px solid rgba(8, 127, 115, 0.18);
-    outline-offset: 2px;
-}
-
-
-/* =========================================================
-   5. HEADER
+   3. COMMUNITY HEADER
    ========================================================= */
 
 .community-header {
+    height: var(--community-header-height);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    background: var(--community-panel);
+    border-bottom: 1px solid var(--community-border);
+    box-shadow: 0 2px 10px rgba(20, 36, 48, 0.05);
     position: relative;
     z-index: 100;
-
-    min-height: var(--ms-header-height);
-
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-
-    gap: 16px;
-
-    padding: 10px 18px;
-
-    background: rgba(255, 255, 255, 0.97);
-
-    border-bottom: 1px solid var(--ms-border);
-
-    box-shadow:
-        0 3px 18px rgba(20, 45, 43, 0.07);
 }
 
 
-/* =========================================================
-   6. BRAND AREA
-   ========================================================= */
+.community-header-left,
+.community-header-center,
+.community-header-right {
+    display: flex;
+    align-items: center;
+}
 
-.brand-area {
+
+.community-header-left {
+    flex: 1;
     min-width: 0;
-
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
 }
 
-.brand-mark {
-    width: 44px;
-    height: 44px;
 
-    flex: 0 0 44px;
-
-    display: flex;
-    align-items: center;
+.community-header-center {
     justify-content: center;
-
-    border-radius: 13px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
-
-    color: #ffffff;
-
-    font-size: 21px;
-
-    box-shadow:
-        0 7px 18px rgba(8, 127, 115, 0.20);
+    flex: 1;
 }
 
-.community-brand-text {
-    min-width: 0;
-}
 
-.community-brand-text h1 {
-    margin: 0;
-
-    color: var(--ms-text);
-
-    font-size: 16px;
-    font-weight: 800;
-
-    line-height: 1.15;
-}
-
-.community-brand-text span {
-    display: block;
-
-    margin-top: 4px;
-
-    color: var(--ms-primary);
-
-    font-size: 10px;
-    font-weight: 800;
-
-    text-transform: uppercase;
-    letter-spacing: 1.1px;
+.community-header-right {
+    flex: 1;
+    justify-content: flex-end;
+    gap: 7px;
 }
 
 
 /* =========================================================
-   7. HOME BUTTON
+   4. HEADER BUTTONS
    ========================================================= */
 
-.community-home-button {
-    min-height: 42px;
-
+.community-home-button,
+#communityRulesButton,
+#ticketButton,
+#friendsButton,
+#generalCallButton,
+#profileButton,
+#mobileSidebarButton {
+    border: 0;
+    background: transparent;
+    color: var(--community-text-soft);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    gap: 8px;
-
-    padding: 0 13px;
-
-    border: 1px solid rgba(8, 127, 115, 0.18);
-    border-radius: 11px;
-
-    background: #ffffff;
-
-    color: var(--ms-primary);
-
-    cursor: pointer;
-
-    font-size: 13px;
-    font-weight: 800;
-
     transition:
         background 0.18s ease,
         color 0.18s ease,
-        border-color 0.18s ease,
-        transform 0.18s ease,
-        box-shadow 0.18s ease;
+        transform 0.18s ease;
 }
 
-.community-home-button:hover {
-    background: var(--ms-primary);
 
-    color: #ffffff;
-
-    border-color: var(--ms-primary);
-
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 6px 16px rgba(8, 127, 115, 0.20);
+.community-home-button:hover,
+#communityRulesButton:hover,
+#ticketButton:hover,
+#friendsButton:hover,
+#generalCallButton:hover,
+#profileButton:hover,
+#mobileSidebarButton:hover {
+    background: var(--community-primary-light);
+    color: var(--community-primary);
 }
+
+
+.community-home-button {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    margin-right: 4px;
+    font-size: 20px;
+}
+
 
 .community-home-button:active {
-    transform: translateY(0);
+    transform: scale(0.95);
 }
 
-.home-button-icon {
-    width: 21px;
-    height: 21px;
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
+#mobileSidebarButton {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
     font-size: 20px;
-    line-height: 1;
 }
 
-.home-button-text {
-    line-height: 1;
+
+#communityRulesButton,
+#ticketButton,
+#friendsButton,
+#generalCallButton {
+    min-width: 40px;
+    height: 40px;
+    padding: 0 10px;
+    border-radius: 10px;
+}
+
+
+#profileButton {
+    min-height: 42px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    gap: 8px;
 }
 
 
 /* =========================================================
-   8. HEADER ACTIONS
+   5. BRAND
    ========================================================= */
 
-.header-actions {
-    min-width: 0;
-
+.brand-mark {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    border-radius: 12px;
+    background: linear-gradient(
+        145deg,
+        var(--community-primary),
+        var(--community-accent)
+    );
+    color: #ffffff;
     display: flex;
     align-items: center;
-
-    gap: 5px;
-}
-
-.header-button {
-    position: relative;
-
-    min-height: 39px;
-
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-
-    gap: 5px;
-
-    padding: 0 10px;
-
-    border: 1px solid transparent;
-    border-radius: 10px;
-
-    background: transparent;
-
-    color: #596b68;
-
-    cursor: pointer;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    transition:
-        background 0.16s ease,
-        color 0.16s ease,
-        transform 0.16s ease;
-}
-
-.header-button:hover {
-    background: #eaf5f3;
-
-    color: var(--ms-primary);
-
-    transform: translateY(-1px);
-}
-
-.header-button.call-button {
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
-
-    color: #ffffff;
-
-    box-shadow:
-        0 5px 14px rgba(8, 127, 115, 0.18);
-}
-
-.header-button.call-button:hover {
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary-dark),
-            #096578
-        );
-
-    color: #ffffff;
+    font-size: 21px;
+    font-weight: 800;
+    box-shadow: 0 5px 14px rgba(8, 127, 115, 0.22);
 }
 
 
-/* =========================================================
-   9. PROFILE BUTTON
-   ========================================================= */
-
-.profile-button {
-    min-height: 43px;
-
-    display: inline-flex;
-    align-items: center;
-
-    gap: 7px;
-
-    padding: 4px 9px 4px 5px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 12px;
-
-    background: #ffffff;
-
-    color: var(--ms-text);
-
-    cursor: pointer;
-
-    font-size: 12px;
-    font-weight: 750;
-
-    transition:
-        background 0.16s ease,
-        border-color 0.16s ease,
-        box-shadow 0.16s ease;
-}
-
-.profile-button:hover {
-    background: var(--ms-surface-hover);
-
-    border-color: rgba(8, 127, 115, 0.25);
-
-    box-shadow:
-        0 4px 12px rgba(20, 45, 43, 0.07);
+.community-brand-text {
+    margin-left: 10px;
+    min-width: 0;
 }
 
 
-/* =========================================================
-   10. AVATARS
-   ========================================================= */
-
-.avatar {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    overflow: hidden;
-
-    border-radius: 50%;
-
-    background:
-        linear-gradient(
-            135deg,
-            #e4f5f1,
-            #d8eeeb
-        );
-
-    color: var(--ms-primary);
-}
-
-.avatar-small {
-    width: 34px;
-    height: 34px;
-
-    font-size: 16px;
-}
-
-.avatar img {
-    width: 100%;
-    height: 100%;
-
+.community-brand-text strong {
     display: block;
-
-    object-fit: cover;
+    color: var(--community-text);
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.15;
 }
 
-.presence-dot {
+
+.community-brand-text span {
+    display: block;
+    color: var(--community-text-muted);
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+
+/* =========================================================
+   6. HEADER PROFILE
+   ========================================================= */
+
+#headerProfileAvatar,
+#profileLargeAvatar,
+#incomingCallAvatar {
+    object-fit: cover;
+    border-radius: 50%;
+    background: var(--community-primary-light);
+}
+
+
+#headerProfileAvatar {
+    width: 36px;
+    height: 36px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 1px var(--community-border);
+}
+
+
+#headerProfileName {
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--community-text);
+}
+
+
+#headerPresenceDot {
     width: 9px;
     height: 9px;
-
-    flex: 0 0 9px;
-
-    border: 2px solid #ffffff;
-
     border-radius: 50%;
-
-    background: #9aa8a6;
-}
-
-.presence-dot.online {
-    background: var(--ms-success);
-}
-
-.presence-dot.offline {
-    background: #9aa8a6;
-}
-
-.presence-dot.away {
-    background: var(--ms-warning);
+    background: var(--community-success);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
 }
 
 
 /* =========================================================
-   11. COUNT BADGE
+   7. BADGES
    ========================================================= */
 
-.count-badge {
+#friendRequestBadge,
+#notificationBadge,
+#friendRequestsCount {
     min-width: 18px;
     height: 18px;
-
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--community-danger);
+    color: #ffffff;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-
-    padding: 0 5px;
-
-    border-radius: 999px;
-
-    background: var(--ms-danger);
-
-    color: #ffffff;
-
     font-size: 10px;
     font-weight: 800;
 }
 
 
+#friendRequestBadge {
+    margin-left: -8px;
+    margin-top: -18px;
+}
+
+
 /* =========================================================
-   12. MAIN COMMUNITY LAYOUT
+   8. MAIN COMMUNITY LAYOUT
    ========================================================= */
 
 .community-layout {
-    min-height: calc(100vh - var(--ms-header-height));
-
+    height: calc(100vh - var(--community-header-height));
+    min-height: 500px;
     display: grid;
-
     grid-template-columns:
-        76px
-        260px
+        var(--community-rail-width)
+        var(--community-sidebar-width)
         minmax(0, 1fr)
-        250px;
-
+        var(--community-member-width);
     overflow: hidden;
 }
 
 
 /* =========================================================
-   13. COMMUNITY RAIL
+   9. COMMUNITY RAIL
    ========================================================= */
 
 .community-rail {
-    min-width: 0;
-    min-height: 0;
+    width: var(--community-rail-width);
+    height: 100%;
+    padding: 14px 10px;
+    background: #f0f4f5;
+    border-right: 1px solid var(--community-border);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 
+
+.community-rail::-webkit-scrollbar,
+.channel-sidebar::-webkit-scrollbar,
+.member-sidebar::-webkit-scrollbar,
+.message-list::-webkit-scrollbar,
+#emojiGrid::-webkit-scrollbar,
+#stickerGrid::-webkit-scrollbar,
+#gifGrid::-webkit-scrollbar {
+    width: 6px;
+}
+
+
+.community-rail::-webkit-scrollbar-thumb,
+.channel-sidebar::-webkit-scrollbar-thumb,
+.member-sidebar::-webkit-scrollbar-thumb,
+.message-list::-webkit-scrollbar-thumb,
+#emojiGrid::-webkit-scrollbar-thumb,
+#stickerGrid::-webkit-scrollbar-thumb,
+#gifGrid::-webkit-scrollbar-thumb {
+    background: #cbd5db;
+    border-radius: 20px;
+}
+
+
+.community-rail-list {
     display: flex;
     flex-direction: column;
     align-items: center;
-
-    padding: 14px 9px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #172b29,
-            #142522
-        );
-
-    border-right: 1px solid rgba(255, 255, 255, 0.04);
-
-    overflow-y: auto;
+    gap: 11px;
 }
 
-.rail-heading {
-    width: 100%;
-
-    margin-bottom: 13px;
-
-    color: rgba(255, 255, 255, 0.45);
-
-    font-size: 9px;
-    font-weight: 800;
-
-    text-align: center;
-
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-}
-
-.community-rail-list {
-    width: 100%;
-}
-
-
-/* =========================================================
-   14. COMMUNITY RAIL ITEMS
-   ========================================================= */
 
 .community-rail-item {
-    position: relative;
-
-    width: 52px;
-    height: 52px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin: 0 auto 10px;
-
+    width: 56px;
+    height: 56px;
+    flex: 0 0 56px;
     padding: 0;
-
     border: 0;
     border-radius: 16px;
-
-    background: #263d3a;
-
-    color: #ffffff;
-
-    cursor: pointer;
-
-    overflow: visible;
-
-    transition:
-        background 0.16s ease,
-        border-radius 0.16s ease,
-        transform 0.16s ease,
-        box-shadow 0.16s ease;
-}
-
-.community-rail-item:hover {
-    background: #35514d;
-
-    border-radius: 14px;
-
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 7px 16px rgba(0, 0, 0, 0.18);
-}
-
-.community-rail-item.active {
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
-
-    border-radius: 14px;
-
-    box-shadow:
-        0 7px 18px rgba(8, 127, 115, 0.30);
-}
-
-
-/* =========================================================
-   15. COMMUNITY ICONS
-   ========================================================= */
-
-.community-rail-icon {
-    width: 100%;
-    height: 100%;
-
+    background: #ffffff;
+    color: var(--community-text);
     display: flex;
     align-items: center;
     justify-content: center;
+    position: relative;
+    transition:
+        transform 0.18s ease,
+        border-radius 0.18s ease,
+        background 0.18s ease,
+        box-shadow 0.18s ease;
+    box-shadow: var(--community-shadow-small);
+}
 
+
+.community-rail-item:hover {
+    transform: translateY(-2px);
+    border-radius: 14px;
+    background: var(--community-primary-light);
+}
+
+
+.community-rail-item.active {
+    background: var(--community-primary);
+    color: #ffffff;
+    border-radius: 14px;
+    box-shadow:
+        0 8px 18px rgba(8, 127, 115, 0.25);
+}
+
+
+.community-rail-icon {
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     overflow: hidden;
-
-    border-radius: inherit;
-
-    font-size: 26px;
+    border-radius: 13px;
+    font-size: 30px;
     line-height: 1;
 }
+
 
 .community-rail-icon img {
     width: 100%;
     height: 100%;
-
     display: block;
-
     object-fit: cover;
-
-    border-radius: inherit;
+    border-radius: 13px;
 }
 
-.community-rail-icon-fallback {
-    width: 100%;
-    height: 100%;
 
+.community-rail-icon-fallback {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    border-radius: inherit;
-
-    background:
-        radial-gradient(
-            circle at 35% 25%,
-            rgba(255, 255, 255, 0.12),
-            transparent 38%
-        ),
-        #29433f;
-
-    font-size: 27px;
+    width: 100%;
+    height: 100%;
+    font-size: 30px;
+    line-height: 1;
 }
 
-.community-rail-item.active
-.community-rail-icon-fallback {
+
+/* =========================================================
+   10. ADD COMMUNITY BUTTON
+   ========================================================= */
+
+#addCommunityButton {
+    width: 56px;
+    height: 56px;
+    margin: 13px auto 0;
+    border: 2px dashed var(--community-border-dark);
+    border-radius: 16px;
     background: transparent;
-}
-
-
-/* =========================================================
-   16. COMMUNITY TOOLTIP
-   ========================================================= */
-
-.community-rail-item[data-community-name]::after {
-    content: attr(data-community-name);
-
-    position: absolute;
-
-    left: calc(100% + 10px);
-    top: 50%;
-
-    padding: 7px 10px;
-
-    border-radius: 7px;
-
-    background: #142220;
-
-    color: #ffffff;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    white-space: nowrap;
-
-    opacity: 0;
-
-    pointer-events: none;
-
-    transform:
-        translateY(-50%)
-        translateX(-5px);
-
-    box-shadow:
-        0 7px 20px rgba(0, 0, 0, 0.22);
-
+    color: var(--community-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
     transition:
-        opacity 0.15s ease,
-        transform 0.15s ease;
-
-    z-index: 1500;
-}
-
-.community-rail-item[data-community-name]:hover::after {
-    opacity: 1;
-
-    transform:
-        translateY(-50%)
-        translateX(0);
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease;
 }
 
 
-/* =========================================================
-   17. ADD COMMUNITY
-   ========================================================= */
-
-.rail-add-button {
-    width: 47px;
-    height: 47px;
-
-    margin-top: auto;
-
-    border: 1px dashed rgba(255, 255, 255, 0.25);
-    border-radius: 15px;
-
-    background: rgba(255, 255, 255, 0.04);
-
-    color: rgba(255, 255, 255, 0.70);
-
-    cursor: pointer;
-
-    font-size: 24px;
-
-    transition:
-        background 0.16s ease,
-        color 0.16s ease,
-        transform 0.16s ease;
-}
-
-.rail-add-button:hover {
-    background: rgba(255, 255, 255, 0.10);
-
-    color: #ffffff;
-
-    transform: translateY(-1px);
+#addCommunityButton:hover {
+    background: var(--community-primary-light);
+    border-color: var(--community-primary);
+    transform: translateY(-2px);
 }
 
 
 /* =========================================================
-   18. CHANNEL SIDEBAR
+   11. CHANNEL SIDEBAR
    ========================================================= */
 
 .channel-sidebar {
     min-width: 0;
-    min-height: 0;
+    height: 100%;
+    background: var(--community-panel);
+    border-right: 1px solid var(--community-border);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
 
-    display: flex;
-    flex-direction: column;
 
+.selected-community-header {
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--community-border);
     background:
         linear-gradient(
-            180deg,
-            #f9fbfb,
-            #f1f6f5
+            145deg,
+            #ffffff,
+            #f6fbfa
         );
-
-    border-right: 1px solid var(--ms-border);
 }
 
-.selected-community {
-    min-height: 76px;
 
+.selected-community-info {
     display: flex;
     align-items: center;
-
-    gap: 10px;
-
-    padding: 11px 13px;
-
-    background: #ffffff;
-
-    border-bottom: 1px solid var(--ms-border);
+    gap: 12px;
 }
 
+
 .selected-community-icon {
-    width: 44px;
-    height: 44px;
-
-    flex: 0 0 44px;
-
+    width: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+    border-radius: 14px;
+    background: var(--community-primary-light);
     display: flex;
     align-items: center;
     justify-content: center;
-
     overflow: hidden;
-
-    border-radius: 13px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
-
-    color: #ffffff;
-
-    font-size: 21px;
-
-    box-shadow:
-        0 5px 14px rgba(8, 127, 115, 0.18);
+    font-size: 25px;
 }
+
 
 .selected-community-icon img {
     width: 100%;
     height: 100%;
-
-    display: block;
-
     object-fit: cover;
+    border-radius: 14px;
 }
 
-.selected-community-info {
-    min-width: 0;
+
+.selected-community-icon-fallback {
+    font-size: 25px;
+    line-height: 1;
 }
 
-.selected-community-info strong {
-    display: block;
 
-    overflow: hidden;
-
-    color: var(--ms-text);
-
-    font-size: 13px;
+#selectedCommunityName {
+    margin: 0;
+    font-size: 15px;
     font-weight: 800;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.selected-community-info span {
-    display: block;
-
-    margin-top: 4px;
-
-    overflow: hidden;
-
-    color: var(--ms-text-muted);
-
-    font-size: 10px;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    color: var(--community-text);
 }
 
 
-/* =========================================================
-   19. COMMUNITY CALL BUTTON
-   ========================================================= */
-
-.sidebar-call-area {
-    padding: 11px;
-
-    border-bottom: 1px solid var(--ms-border);
-
-    background: #ffffff;
+#selectedCommunityDescription {
+    margin: 4px 0 0;
+    color: var(--community-text-muted);
+    font-size: 11px;
+    line-height: 1.45;
 }
 
-.community-call-button {
+
+#communityCallButton {
     width: 100%;
-    min-height: 42px;
-
+    min-height: 40px;
+    margin-top: 14px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--community-primary);
+    color: #ffffff;
+    font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    gap: 7px;
-
-    border: 1px solid rgba(8, 127, 115, 0.18);
-    border-radius: 10px;
-
-    background:
-        linear-gradient(
-            135deg,
-            #e8f7f4,
-            #e8f5f8
-        );
-
-    color: var(--ms-primary);
-
-    cursor: pointer;
-
-    font-size: 11px;
-    font-weight: 800;
-
+    gap: 8px;
     transition:
-        background 0.16s ease,
-        color 0.16s ease,
-        transform 0.16s ease,
-        box-shadow 0.16s ease;
+        background 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
 }
 
-.community-call-button:hover {
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
 
-    color: #ffffff;
+#communityCallButton:hover {
+    background: var(--community-primary-dark);
+    box-shadow: 0 7px 16px rgba(8, 127, 115, 0.22);
+}
 
-    transform: translateY(-1px);
 
-    box-shadow:
-        0 6px 15px rgba(8, 127, 115, 0.18);
+#communityCallButton:active {
+    transform: scale(0.98);
 }
 
 
 /* =========================================================
-   20. CHANNEL SCROLL
+   12. CHANNEL GROUPS
    ========================================================= */
 
-.channel-scroll {
-    min-height: 0;
-
-    flex: 1;
-
-    overflow-y: auto;
-
-    padding: 12px 9px 18px;
-}
-
 .channel-group {
-    margin-bottom: 18px;
+    padding: 14px 10px 4px;
 }
+
 
 .channel-group-title {
     padding: 0 8px 7px;
-
-    color: #879592;
-
-    font-size: 9px;
-    font-weight: 850;
-
-    letter-spacing: 1px;
+    color: var(--community-text-muted);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
-.channel-list {
+
+#informationChannels,
+#courseChannels,
+#communityChannels {
     display: flex;
     flex-direction: column;
-
-    gap: 2px;
+    gap: 3px;
 }
 
 
-/* =========================================================
-   21. CONTEST BUTTON
-   ========================================================= */
-
-.special-channel-button {
+.channel-item,
+#contestChannelButton {
     width: 100%;
-    min-height: 36px;
-
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--community-text-soft);
     display: flex;
     align-items: center;
-
-    gap: 8px;
-
-    padding: 0 10px;
-
-    border: 0;
-    border-radius: 8px;
-
-    background: transparent;
-
-    color: #647470;
-
-    cursor: pointer;
-
+    gap: 9px;
     text-align: left;
-
-    font-size: 11px;
-    font-weight: 700;
-
     transition:
-        background 0.15s ease,
-        color 0.15s ease;
+        background 0.16s ease,
+        color 0.16s ease;
 }
 
-.special-channel-button:hover {
-    background: #fff5dc;
 
-    color: #956914;
+.channel-item:hover,
+#contestChannelButton:hover {
+    background: var(--community-panel-soft);
+    color: var(--community-text);
+}
+
+
+.channel-item.active,
+#contestChannelButton.active {
+    background: var(--community-primary-light);
+    color: var(--community-primary);
+    font-weight: 700;
+}
+
+
+.channel-item-icon {
+    width: 22px;
+    text-align: center;
+    flex: 0 0 22px;
+}
+
+
+.channel-item-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+
+#contestChannelButton {
+    margin-top: 6px;
 }
 
 
 /* =========================================================
-   22. CHAT AREA
+   13. CHAT AREA
    ========================================================= */
 
 .chat-area {
     min-width: 0;
     min-height: 0;
-
+    height: 100%;
     display: flex;
     flex-direction: column;
-
     background: #ffffff;
 }
 
 
-/* =========================================================
-   23. CHAT HEADER
-   ========================================================= */
-
 .chat-header {
-    min-height: 69px;
-
+    min-height: 66px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--community-border);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-
     gap: 12px;
-
-    padding: 9px 15px;
-
-    background: rgba(255, 255, 255, 0.97);
-
-    border-bottom: 1px solid var(--ms-border);
-
-    box-shadow:
-        0 2px 9px rgba(20, 45, 43, 0.04);
+    background: #ffffff;
 }
 
-.chat-channel-info {
-    min-width: 0;
 
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-}
-
-.channel-header-icon {
-    width: 39px;
-    height: 39px;
-
-    flex: 0 0 39px;
-
+.current-channel-icon {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+    border-radius: 11px;
+    background: var(--community-primary-light);
+    color: var(--community-primary);
     display: flex;
     align-items: center;
     justify-content: center;
-
-    border-radius: 11px;
-
-    background: var(--ms-surface-hover);
-
-    color: var(--ms-primary);
-
-    font-size: 20px;
+    font-size: 19px;
     font-weight: 800;
 }
 
-.chat-channel-info h2 {
+
+.chat-header-info {
+    min-width: 0;
+    flex: 1;
+}
+
+
+#currentChannelName {
     margin: 0;
-
-    overflow: hidden;
-
-    color: var(--ms-text);
-
-    font-size: 14px;
-    font-weight: 850;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--community-text);
 }
 
-.chat-channel-info p {
-    margin: 4px 0 0;
 
-    overflow: hidden;
-
-    color: var(--ms-text-muted);
-
-    font-size: 10px;
-
-    text-overflow: ellipsis;
+#currentChannelDescription {
+    margin: 3px 0 0;
+    color: var(--community-text-muted);
+    font-size: 11px;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.chat-header-actions {
+
+#channelSearchButton,
+#channelMembersButton {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--community-text-soft);
     display: flex;
     align-items: center;
-
-    gap: 3px;
-}
-
-
-/* =========================================================
-   24. ICON BUTTONS
-   ========================================================= */
-
-.icon-button {
-    width: 37px;
-    height: 37px;
-
-    display: inline-flex;
-    align-items: center;
     justify-content: center;
-
-    padding: 0;
-
-    border: 0;
-    border-radius: 9px;
-
-    background: transparent;
-
-    color: #71817e;
-
-    cursor: pointer;
-
-    font-size: 15px;
-
-    transition:
-        background 0.15s ease,
-        color 0.15s ease;
 }
 
-.icon-button:hover {
-    background: var(--ms-surface-hover);
 
-    color: var(--ms-primary);
+#channelSearchButton:hover,
+#channelMembersButton:hover {
+    background: var(--community-primary-light);
+    color: var(--community-primary);
 }
 
 
 /* =========================================================
-   25. MESSAGE AREA
+   14. MESSAGE LIST
    ========================================================= */
 
 .message-list {
-    min-height: 0;
-
     flex: 1;
-
+    min-height: 0;
+    padding: 18px 18px 12px;
     overflow-y: auto;
-
-    padding: 17px 17px 10px;
-
+    overflow-x: hidden;
+    scroll-behavior: smooth;
     background:
-        radial-gradient(
-            circle at 70% 0%,
-            rgba(8, 127, 115, 0.035),
-            transparent 35%
-        ),
-        #ffffff;
+        linear-gradient(
+            180deg,
+            #ffffff 0%,
+            #fbfcfd 100%
+        );
 }
 
+
 .message-loading {
-    padding: 35px 15px;
-
-    color: var(--ms-text-muted);
-
-    font-size: 12px;
-
+    padding: 25px;
     text-align: center;
+    color: var(--community-text-muted);
+    font-size: 13px;
 }
 
 
 /* =========================================================
-   26. TYPING INDICATOR
+   15. MESSAGE
    ========================================================= */
 
-.typing-indicator {
-    flex: 0 0 auto;
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 17px;
+    position: relative;
+}
 
-    padding: 0 18px 6px;
 
-    color: var(--ms-primary);
+.message-avatar,
+.message-user-avatar {
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--community-primary-light);
+}
 
+
+.message-content {
+    min-width: 0;
+    max-width: min(760px, 82%);
+}
+
+
+.message-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+
+.message-author {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--community-text);
+}
+
+
+.message-time {
+    color: var(--community-text-muted);
     font-size: 10px;
+}
+
+
+.message-body {
+    color: var(--community-text);
+    font-size: 13px;
+    line-height: 1.55;
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+}
+
+
+.message-body.deleted,
+.message.deleted .message-body {
+    color: var(--community-text-muted);
+    font-style: italic;
+}
+
+
+.message-actions {
+    opacity: 0;
+    position: absolute;
+    right: 8px;
+    top: -6px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--community-border);
+    border-radius: 9px;
+    background: #ffffff;
+    box-shadow: var(--community-shadow-small);
+    transition: opacity 0.16s ease;
+}
+
+
+.message:hover .message-actions {
+    opacity: 1;
+}
+
+
+.message-actions button {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--community-text-soft);
+}
+
+
+.message-actions button:hover {
+    background: var(--community-primary-light);
+    color: var(--community-primary);
+}
+
+
+.message-actions .delete-message-button:hover {
+    background: #fff0f1;
+    color: var(--community-danger);
+}
+
+
+/* =========================================================
+   16. ATTACHMENTS INSIDE MESSAGES
+   ========================================================= */
+
+.message-attachment {
+    margin-top: 8px;
+    border: 1px solid var(--community-border);
+    border-radius: 11px;
+    overflow: hidden;
+    background: var(--community-panel-soft);
+}
+
+
+.message-attachment img {
+    max-width: min(420px, 100%);
+    max-height: 320px;
+    display: block;
+    object-fit: contain;
+}
+
+
+.message-attachment-file {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: var(--community-accent);
+    font-size: 12px;
     font-weight: 700;
 }
 
 
 /* =========================================================
-   27. COMPOSER
+   17. TYPING INDICATOR
+   ========================================================= */
+
+#typingIndicator {
+    min-height: 20px;
+    padding: 0 18px 4px;
+    color: var(--community-text-muted);
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   18. COMPOSER AREA
    ========================================================= */
 
 .composer-area {
     position: relative;
-
-    flex: 0 0 auto;
-
-    padding: 8px 14px 13px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #ffffff,
-            #f7faf9
-        );
-
-    border-top: 1px solid var(--ms-border);
+    padding: 10px 14px 14px;
+    border-top: 1px solid var(--community-border);
+    background: #ffffff;
 }
+
 
 .composer {
     min-height: 50px;
-
     display: flex;
     align-items: flex-end;
-
-    gap: 3px;
-
-    padding: 5px;
-
-    border: 1px solid var(--ms-border-strong);
-    border-radius: 14px;
-
-    background: #ffffff;
-
-    box-shadow:
-        0 4px 15px rgba(20, 45, 43, 0.05);
-
+    gap: 6px;
+    padding: 6px;
+    border: 1px solid var(--community-border);
+    border-radius: 15px;
+    background: #f9fbfc;
     transition:
-        border-color 0.16s ease,
-        box-shadow 0.16s ease;
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
 }
+
 
 .composer:focus-within {
-    border-color: rgba(8, 127, 115, 0.38);
-
-    box-shadow:
-        0 5px 18px rgba(8, 127, 115, 0.09);
+    border-color: rgba(8, 127, 115, 0.45);
+    box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.08);
 }
 
-.composer textarea {
-    min-width: 0;
-    min-height: 36px;
-    max-height: 150px;
 
-    flex: 1;
+.composer button {
+    flex: 0 0 auto;
+}
 
-    resize: none;
 
-    padding: 8px 6px;
-
+#attachButton,
+#emojiButton,
+#stickerButton,
+#gifButton,
+#voiceNoteButton {
+    width: 38px;
+    height: 38px;
     border: 0;
-
-    outline: 0;
-
-    background: transparent;
-
-    color: var(--ms-text);
-
-    font-size: 12px;
-
-    line-height: 1.5;
-}
-
-.composer textarea::placeholder {
-    color: #9aa8a6;
-}
-
-
-/* =========================================================
-   28. COMPOSER BUTTONS
-   ========================================================= */
-
-.composer-button {
-    width: 36px;
-    height: 36px;
-
-    flex: 0 0 36px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border: 0;
-    border-radius: 9px;
-
-    background: transparent;
-
-    color: #71817e;
-
-    cursor: pointer;
-
-    font-size: 14px;
-    font-weight: 800;
-
-    transition:
-        background 0.15s ease,
-        color 0.15s ease,
-        transform 0.15s ease;
-}
-
-.composer-button:hover {
-    background: var(--ms-surface-hover);
-
-    color: var(--ms-primary);
-
-    transform: translateY(-1px);
-}
-
-
-/* =========================================================
-   29. SEND BUTTON
-   ========================================================= */
-
-.send-button {
-    min-width: 62px;
-    height: 36px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0 12px;
-
-    border: 0;
-    border-radius: 9px;
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
-
-    color: #ffffff;
-
-    cursor: pointer;
-
-    font-size: 11px;
-    font-weight: 800;
-
-    box-shadow:
-        0 5px 13px rgba(8, 127, 115, 0.18);
-
-    transition:
-        transform 0.15s ease,
-        box-shadow 0.15s ease;
-}
-
-.send-button:hover {
-    transform: translateY(-1px);
-
-    box-shadow:
-        0 7px 17px rgba(8, 127, 115, 0.25);
-}
-
-
-/* =========================================================
-   30. ATTACHMENT PREVIEW
-   ========================================================= */
-
-.attachment-preview {
-    margin-bottom: 7px;
-
-    padding: 7px;
-
-    border: 1px solid var(--ms-border);
-
     border-radius: 10px;
+    background: transparent;
+    color: var(--community-text-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
 
-    background: var(--ms-surface-soft);
+
+#attachButton:hover,
+#emojiButton:hover,
+#stickerButton:hover,
+#gifButton:hover,
+#voiceNoteButton:hover {
+    background: var(--community-primary-light);
+    color: var(--community-primary);
+}
+
+
+#messageInput {
+    flex: 1;
+    min-width: 0;
+    min-height: 38px;
+    max-height: 140px;
+    resize: none;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--community-text);
+    padding: 9px 6px;
+    line-height: 1.4;
+}
+
+
+#messageInput::placeholder {
+    color: var(--community-text-muted);
+}
+
+
+#sendMessageButton {
+    width: 42px;
+    height: 42px;
+    border: 0;
+    border-radius: 11px;
+    background: var(--community-primary);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+#sendMessageButton:hover {
+    background: var(--community-primary-dark);
+}
+
+
+#sendMessageButton:active {
+    transform: scale(0.95);
+}
+
+
+#sendMessageButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 
 /* =========================================================
-   31. PICKER PANELS
+   19. ATTACHMENT PREVIEW
    ========================================================= */
 
-.picker-panel {
-    position: absolute;
+#attachmentPreview {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 7px;
+}
 
-    left: 14px;
-    bottom: calc(100% - 2px);
 
-    width: min(390px, calc(100vw - 28px));
-    max-height: 410px;
-
-    overflow: hidden;
-
-    border: 1px solid var(--ms-border);
-
-    border-radius: 15px;
-
+.attachment-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 280px;
+    padding: 6px 9px;
+    border: 1px solid var(--community-border);
+    border-radius: 9px;
     background: #ffffff;
-
-    box-shadow:
-        0 18px 50px rgba(12, 35, 33, 0.18);
-
-    z-index: 500;
+    font-size: 11px;
 }
 
-.picker-title {
+
+.attachment-preview-item img {
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 7px;
+}
+
+
+.attachment-preview-remove {
+    width: 22px;
+    height: 22px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff0f1;
+    color: var(--community-danger);
+}
+
+
+/* =========================================================
+   20. PICKER PANELS
+   ========================================================= */
+
+#emojiPanel,
+#stickerPanel,
+#gifPanel {
+    position: absolute;
+    z-index: 300;
+    left: 12px;
+    bottom: 78px;
+    width: min(390px, calc(100vw - 30px));
+    max-height: 420px;
+    overflow: hidden;
+    border: 1px solid var(--community-border);
+    border-radius: 15px;
+    background: #ffffff;
+    box-shadow: 0 18px 50px rgba(20, 36, 48, 0.18);
+}
+
+
+.picker-header {
     min-height: 48px;
-
+    padding: 8px 10px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-
-    padding: 0 12px;
-
-    border-bottom: 1px solid var(--ms-border);
-
-    background: #fbfdfd;
+    gap: 8px;
+    border-bottom: 1px solid var(--community-border);
 }
 
-.picker-title strong {
-    color: var(--ms-text);
 
-    font-size: 12px;
-    font-weight: 850;
+.picker-header input,
+#emojiSearch,
+#gifSearch {
+    flex: 1;
+    min-width: 0;
+    height: 34px;
+    border: 1px solid var(--community-border);
+    border-radius: 8px;
+    padding: 0 10px;
+    outline: 0;
 }
 
-.picker-close {
-    width: 30px;
-    height: 30px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+#emojiSearch:focus,
+#gifSearch:focus {
+    border-color: var(--community-primary);
+}
 
+
+.picker-close,
+[data-close-picker] {
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: 8px;
-
     background: transparent;
-
-    color: #71817e;
-
-    cursor: pointer;
-
-    font-size: 20px;
-}
-
-.picker-close:hover {
-    background: #fff0f0;
-
-    color: var(--ms-danger);
-}
-
-.picker-search {
-    width: calc(100% - 20px);
-    height: 36px;
-
-    margin: 9px 10px;
-
-    padding: 0 10px;
-
-    border: 1px solid var(--ms-border);
-
-    border-radius: 9px;
-
-    outline: 0;
-
-    background: #f8fbfa;
-
-    color: var(--ms-text);
-
-    font-size: 11px;
-}
-
-.picker-search:focus {
-    border-color: rgba(8, 127, 115, 0.40);
-
-    background: #ffffff;
-}
-
-
-/* =========================================================
-   32. EMOJI
-   ========================================================= */
-
-.emoji-categories {
+    color: var(--community-text-soft);
     display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
+
+.picker-close:hover,
+[data-close-picker]:hover {
+    background: #fff0f1;
+    color: var(--community-danger);
+}
+
+
+/* =========================================================
+   21. EMOJI
+   ========================================================= */
+
+#emojiCategories {
+    display: flex;
     gap: 4px;
-
-    padding: 0 9px 7px;
-
+    padding: 7px 9px;
     overflow-x: auto;
-}
-
-.emoji-grid {
-    max-height: 285px;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(8, 1fr);
-
-    gap: 2px;
-
-    padding: 5px 9px 11px;
-
-    overflow-y: auto;
+    border-bottom: 1px solid var(--community-border);
 }
 
 
-/* =========================================================
-   33. STICKERS
-   ========================================================= */
-
-.sticker-grid {
-    display: grid;
-
-    grid-template-columns:
-        repeat(4, 1fr);
-
-    gap: 8px;
-
-    padding: 11px;
-
-    overflow-y: auto;
+#emojiCategories button {
+    min-width: 34px;
+    height: 32px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
 }
 
 
-/* =========================================================
-   34. GIFS
-   ========================================================= */
+#emojiCategories button:hover,
+#emojiCategories button.active {
+    background: var(--community-primary-light);
+}
 
-.gif-grid {
-    min-height: 150px;
 
+#emojiGrid,
+#stickerGrid,
+#gifGrid {
     padding: 10px;
-
+    max-height: 320px;
     overflow-y: auto;
 }
 
-.empty-picker {
-    padding: 30px 15px;
 
-    color: var(--ms-text-muted);
+#emojiGrid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
 
-    font-size: 11px;
 
-    text-align: center;
+.emoji-option {
+    min-height: 38px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 22px;
+}
+
+
+.emoji-option:hover {
+    background: var(--community-primary-light);
 }
 
 
 /* =========================================================
-   35. MEMBER SIDEBAR
+   22. STICKERS
+   ========================================================= */
+
+#stickerGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+
+.sticker-option {
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: #f7f9fa;
+    padding: 5px;
+}
+
+
+.sticker-option:hover {
+    border-color: var(--community-primary);
+    background: var(--community-primary-light);
+}
+
+
+.sticker-option img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+}
+
+
+/* =========================================================
+   23. GIF
+   ========================================================= */
+
+#gifGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+
+.gif-option {
+    border: 1px solid var(--community-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f7f9fa;
+}
+
+
+.gif-option:hover {
+    border-color: var(--community-primary);
+}
+
+
+.gif-option img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+}
+
+
+/* =========================================================
+   24. MEMBER SIDEBAR
    ========================================================= */
 
 .member-sidebar {
     min-width: 0;
-    min-height: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    background:
-        linear-gradient(
-            180deg,
-            #f9fbfb,
-            #f1f6f5
-        );
-
-    border-left: 1px solid var(--ms-border);
+    height: 100%;
+    overflow-y: auto;
+    background: #f8fafb;
+    border-left: 1px solid var(--community-border);
+    padding: 15px 11px;
 }
 
-.member-sidebar-header {
-    min-height: 69px;
 
+.member-sidebar-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    padding: 0 14px;
-
-    background: #ffffff;
-
-    border-bottom: 1px solid var(--ms-border);
+    padding: 4px 7px 12px;
 }
 
-.member-sidebar-header strong {
-    color: var(--ms-text);
 
-    font-size: 12px;
-    font-weight: 850;
+.member-sidebar-header h3 {
+    margin: 0;
+    font-size: 11px;
+    color: var(--community-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
 }
 
-.member-sidebar-header span {
+
+#memberCount {
     min-width: 22px;
     height: 22px;
-
-    display: inline-flex;
+    padding: 0 7px;
+    border-radius: 999px;
+    background: var(--community-primary-light);
+    color: var(--community-primary);
+    display: flex;
     align-items: center;
     justify-content: center;
-
-    padding: 0 5px;
-
-    border-radius: 999px;
-
-    background: var(--ms-surface-hover);
-
-    color: var(--ms-primary);
-
     font-size: 10px;
     font-weight: 800;
 }
 
-.member-list {
-    min-height: 0;
 
-    flex: 1;
+#memberList {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
 
-    overflow-y: auto;
 
-    padding: 9px;
+.member-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px;
+    border-radius: 9px;
+}
+
+
+.member-item:hover {
+    background: #ffffff;
+}
+
+
+.member-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--community-primary-light);
+}
+
+
+.member-info {
+    min-width: 0;
+}
+
+
+.member-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--community-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.member-status {
+    margin-top: 2px;
+    color: var(--community-text-muted);
+    font-size: 10px;
+}
+
+
+.member-online-dot {
+    width: 8px;
+    height: 8px;
+    flex: 0 0 8px;
+    border-radius: 50%;
+    background: var(--community-success);
 }
 
 
 /* =========================================================
-   36. MODALS
-   NOTE: These are OUTSIDE .community-app.
+   25. MODAL BASE
    ========================================================= */
 
 .modal {
     position: fixed;
-
     inset: 0;
-
-    z-index: 2000;
-
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
-
     padding: 20px;
-
-    background:
-        rgba(13, 31, 29, 0.54);
-
-    backdrop-filter: blur(7px);
+    background: rgba(12, 24, 32, 0.58);
+    backdrop-filter: blur(3px);
 }
 
-.modal.hidden {
-    display: none !important;
-}
 
-.modal-card {
-    position: relative;
-
-    width: min(480px, 100%);
-    max-height: calc(100vh - 40px);
-
+.modal-content {
+    width: min(620px, 100%);
+    max-height: min(760px, calc(100vh - 40px));
     overflow-y: auto;
-
-    border: 1px solid rgba(255, 255, 255, 0.70);
-
-    border-radius: 17px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #ffffff,
-            #f8fbfa
-        );
-
-    box-shadow:
-        0 24px 70px rgba(9, 30, 28, 0.25);
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow: 0 25px 80px rgba(12, 24, 32, 0.25);
 }
 
-.large-modal {
-    width: min(700px, 100%);
-}
-
-
-/* =========================================================
-   37. MODAL HEADER
-   ========================================================= */
 
 .modal-header {
-    min-height: 59px;
-
+    min-height: 58px;
+    padding: 12px 17px;
+    border-bottom: 1px solid var(--community-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    padding: 0 16px;
-
-    border-bottom: 1px solid var(--ms-border);
-
-    background: #ffffff;
 }
 
-.modal-header h2 {
+
+.modal-header h2,
+.modal-header h3 {
     margin: 0;
-
-    color: var(--ms-text);
-
-    font-size: 15px;
-    font-weight: 850;
+    font-size: 17px;
+    color: var(--community-text);
 }
 
-.modal-close {
+
+.modal-close,
+.modal-header button {
     width: 34px;
     height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
     border: 0;
     border-radius: 9px;
-
-    background: #f1f5f4;
-
-    color: #687976;
-
-    cursor: pointer;
-
-    font-size: 20px;
-}
-
-.modal-close:hover {
-    background: #fff0f0;
-
-    color: var(--ms-danger);
-}
-
-.floating-close {
-    position: absolute;
-
-    top: 10px;
-    right: 10px;
-
-    z-index: 2;
+    background: transparent;
+    color: var(--community-text-soft);
 }
 
 
-/* =========================================================
-   38. MODAL BODY
-   ========================================================= */
+.modal-close:hover,
+.modal-header button:hover {
+    background: #fff0f1;
+    color: var(--community-danger);
+}
+
 
 .modal-body {
-    padding: 16px;
-}
-
-.modal-actions {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-
-    gap: 8px;
-
-    padding: 13px 16px;
-
-    border-top: 1px solid var(--ms-border);
+    padding: 17px;
 }
 
 
 /* =========================================================
-   39. RULES
+   26. RULES MODAL
    ========================================================= */
 
-.rules-content {
-    padding: 18px 20px;
+#rulesModal .modal-content {
+    width: min(680px, 100%);
 }
 
-.rules-content ol {
-    margin: 0;
 
-    padding-left: 22px;
+.rules-content,
+#rulesModal .modal-body {
+    line-height: 1.6;
+    color: var(--community-text-soft);
+    font-size: 13px;
 }
 
-.rules-content li {
-    margin-bottom: 11px;
 
-    color: #526461;
+.rules-content h3,
+.rules-content h4 {
+    color: var(--community-text);
+}
 
+
+.rules-agree-area {
+    margin-top: 18px;
+    padding: 13px;
+    border-radius: 11px;
+    background: var(--community-primary-light);
+}
+
+
+.rules-agree-area label {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    color: var(--community-text);
     font-size: 12px;
+}
 
-    line-height: 1.65;
+
+.rules-agree-area input[type="checkbox"] {
+    margin-top: 3px;
+    accent-color: var(--community-primary);
 }
 
 
 /* =========================================================
-   40. FRIENDS
+   27. PROFILE MODAL
    ========================================================= */
 
-.friends-tabs {
-    display: flex;
-
-    gap: 5px;
-
-    padding: 10px 13px;
-
-    border-bottom: 1px solid var(--ms-border);
-
-    background: #ffffff;
-}
-
-.friend-tab {
-    min-height: 35px;
-
-    padding: 0 12px;
-
-    border: 0;
-    border-radius: 8px;
-
-    background: transparent;
-
-    color: var(--ms-text-muted);
-
-    cursor: pointer;
-
-    font-size: 11px;
-    font-weight: 750;
-}
-
-.friend-tab:hover {
-    background: var(--ms-surface-hover);
-
-    color: var(--ms-primary);
-}
-
-.friend-tab.active {
-    background: var(--ms-surface-hover);
-
-    color: var(--ms-primary);
-}
-
-.friends-content {
-    min-height: 220px;
-
-    padding: 14px;
+#profileModal .modal-content {
+    width: min(500px, 100%);
 }
 
 
-/* =========================================================
-   41. FORM ELEMENTS
-   ========================================================= */
-
-.modal-card form {
-    padding: 16px;
-}
-
-.modal-card form label {
+#profileLargeAvatar {
+    width: 100px;
+    height: 100px;
     display: block;
-
-    margin-bottom: 13px;
-
-    color: var(--ms-text);
-
-    font-size: 11px;
-    font-weight: 750;
+    margin: 8px auto 15px;
+    border: 4px solid #ffffff;
+    box-shadow:
+        0 0 0 1px var(--community-border),
+        0 10px 28px rgba(20, 36, 48, 0.12);
 }
 
-.modal-card form input,
-.modal-card form select,
-.modal-card form textarea {
+
+/* =========================================================
+   28. FORMS
+   ========================================================= */
+
+.community-app input,
+.community-app textarea,
+.community-app select,
+.modal input,
+.modal textarea,
+.modal select {
+    font-size: 13px;
+}
+
+
+.modal input,
+.modal textarea,
+.modal select {
     width: 100%;
-
-    margin-top: 6px;
-
+    border: 1px solid var(--community-border);
+    border-radius: 10px;
     padding: 10px 11px;
-
-    border: 1px solid var(--ms-border);
-
-    border-radius: 9px;
-
-    outline: none;
-
+    outline: 0;
+    color: var(--community-text);
     background: #ffffff;
-
-    color: var(--ms-text);
-
-    font-size: 12px;
 }
 
-.modal-card form input,
-.modal-card form select {
-    min-height: 40px;
+
+.modal input:focus,
+.modal textarea:focus,
+.modal select:focus {
+    border-color: var(--community-primary);
+    box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.08);
 }
 
-.modal-card form textarea {
-    min-height: 120px;
 
+.modal textarea {
+    min-height: 110px;
     resize: vertical;
 }
 
-.modal-card form input:focus,
-.modal-card form select:focus,
-.modal-card form textarea:focus {
-    border-color: rgba(8, 127, 115, 0.42);
 
-    box-shadow:
-        0 0 0 3px rgba(8, 127, 115, 0.07);
+/* =========================================================
+   29. TICKET FORM
+   ========================================================= */
+
+#ticketForm {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 
-/* =========================================================
-   42. STANDARD MODAL BUTTONS
-   ========================================================= */
+#ticketForm label {
+    color: var(--community-text);
+    font-size: 12px;
+    font-weight: 700;
+}
 
-.primary-button,
-.secondary-button,
-.danger-button {
-    min-height: 38px;
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0 14px;
-
-    border-radius: 9px;
-
-    cursor: pointer;
-
-    font-size: 11px;
+#ticketForm button[type="submit"] {
+    min-height: 42px;
+    border: 0;
+    border-radius: 10px;
+    background: var(--community-primary);
+    color: #ffffff;
     font-weight: 800;
 }
 
-.primary-button {
-    border: 1px solid var(--ms-primary);
-
-    background:
-        linear-gradient(
-            135deg,
-            var(--ms-primary),
-            var(--ms-accent)
-        );
-
-    color: #ffffff;
-}
-
-.primary-button:hover {
-    filter: brightness(0.96);
-}
-
-.secondary-button {
-    border: 1px solid var(--ms-border);
-
-    background: #ffffff;
-
-    color: var(--ms-text-soft);
-}
-
-.secondary-button:hover {
-    background: #f0f5f4;
-}
-
-.danger-button {
-    border: 1px solid rgba(217, 75, 75, 0.20);
-
-    background: #fff0f0;
-
-    color: var(--ms-danger);
-}
-
-.danger-button:hover {
-    background: var(--ms-danger);
-
-    color: #ffffff;
-}
-
 
 /* =========================================================
-   43. CALL CHOICE MODAL
+   30. FRIENDS MODAL
    ========================================================= */
 
-.call-choice {
-    display: grid;
-
-    grid-template-columns:
-        repeat(2, minmax(0, 1fr));
-
-    gap: 12px;
-
-    padding: 16px;
-}
-
-.call-choice-button {
-    min-height: 140px;
-
+.friend-tabs {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    gap: 7px;
-
-    padding: 16px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 14px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff,
-            #f4f9f8
-        );
-
-    color: var(--ms-text);
-
-    cursor: pointer;
-
-    transition:
-        border-color 0.16s ease,
-        background 0.16s ease,
-        transform 0.16s ease,
-        box-shadow 0.16s ease;
+    gap: 5px;
+    border-bottom: 1px solid var(--community-border);
+    padding: 0 14px;
 }
 
-.call-choice-button:hover {
-    border-color: rgba(8, 127, 115, 0.30);
 
-    background:
-        linear-gradient(
-            145deg,
-            #eefaf7,
-            #edf8f8
-        );
-
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 9px 22px rgba(20, 45, 43, 0.09);
-}
-
-.call-choice-button strong {
-    color: var(--ms-text);
-
+.friend-tab {
+    position: relative;
+    border: 0;
+    background: transparent;
+    color: var(--community-text-soft);
+    padding: 11px 12px;
     font-size: 12px;
+    font-weight: 700;
 }
 
-.call-choice-button span {
-    color: var(--ms-text-muted);
 
-    font-size: 10px;
+.friend-tab:hover,
+.friend-tab.active {
+    color: var(--community-primary);
+}
 
-    text-align: center;
+
+.friend-tab.active::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+    height: 2px;
+    background: var(--community-primary);
+}
+
+
+#friendsContent {
+    padding: 15px;
 }
 
 
 /* =========================================================
-   44. ACTIVE CALL OVERLAY
+   31. CALL CHOICE MODAL
+   ========================================================= */
+
+#callModal .modal-content {
+    width: min(520px, 100%);
+}
+
+
+.call-choice-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+
+#callSpecificPersonButton,
+#callWholeCommunityButton {
+    min-height: 100px;
+    border: 1px solid var(--community-border);
+    border-radius: 14px;
+    background: #ffffff;
+    color: var(--community-text);
+    font-weight: 800;
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+
+#callSpecificPersonButton:hover,
+#callWholeCommunityButton:hover {
+    border-color: var(--community-primary);
+    background: var(--community-primary-light);
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   32. CALL USER PICKER
+   ========================================================= */
+
+.call-user-picker {
+    max-height: 330px;
+    overflow-y: auto;
+    margin-top: 12px;
+    border: 1px solid var(--community-border);
+    border-radius: 12px;
+}
+
+
+.call-user-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--community-border);
+}
+
+
+.call-user-item:last-child {
+    border-bottom: 0;
+}
+
+
+.call-user-item:hover {
+    background: var(--community-panel-soft);
+}
+
+
+.call-user-item input[type="checkbox"] {
+    width: auto;
+    accent-color: var(--community-primary);
+}
+
+
+.call-user-avatar {
+    width: 35px;
+    height: 35px;
+    flex: 0 0 35px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+
+.call-user-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.call-user-status {
+    font-size: 10px;
+    color: var(--community-success);
+}
+
+
+/* =========================================================
+   33. ACTIVE CALL OVERLAY
    ========================================================= */
 
 .call-overlay {
     position: fixed;
-
     inset: 0;
-
-    z-index: 3000;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 20px;
-
+    z-index: 2000;
     background:
-        rgba(7, 20, 19, 0.90);
-
-    backdrop-filter: blur(12px);
-}
-
-.call-overlay.hidden {
-    display: none !important;
-}
-
-.active-call-window {
-    width: min(1050px, 100%);
-    height: min(720px, calc(100vh - 40px));
-
+        radial-gradient(
+            circle at top,
+            #19363d 0%,
+            #091417 55%,
+            #05090b 100%
+        );
+    color: #ffffff;
     display: flex;
     flex-direction: column;
-
-    overflow: hidden;
-
-    border: 1px solid rgba(255, 255, 255, 0.09);
-
-    border-radius: 19px;
-
-    background:
-        linear-gradient(
-            145deg,
-            #182825,
-            #101a18
-        );
-
-    box-shadow:
-        0 30px 90px rgba(0, 0, 0, 0.42);
 }
 
 
-/* =========================================================
-   45. ACTIVE CALL HEADER
-   ========================================================= */
-
-.active-call-header {
-    min-height: 65px;
-
+.call-overlay-header {
+    min-height: 70px;
+    padding: 12px 18px;
     display: flex;
     align-items: center;
     justify-content: space-between;
-
-    padding: 0 15px;
-
-    color: #ffffff;
-
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.active-call-header strong {
-    display: block;
-
-    font-size: 14px;
-}
-
-.active-call-header span {
-    display: block;
-
-    margin-top: 3px;
-
-    color: rgba(255, 255, 255, 0.50);
-
-    font-size: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 
-/* =========================================================
-   46. PARTICIPANT GRID
-   ========================================================= */
-
-.call-participant-grid {
-    min-height: 0;
-
-    flex: 1;
-
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(210px, 1fr)
-        );
-
-    gap: 10px;
-
-    padding: 12px;
-
-    overflow-y: auto;
-}
-
-
-/* =========================================================
-   47. CALL CONTROLS
-   ========================================================= */
-
-.call-controls {
-    min-height: 76px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 9px;
-
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.call-controls button {
-    width: 45px;
-    height: 45px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 1px solid rgba(255, 255, 255, 0.10);
-    border-radius: 50%;
-
-    background: #263734;
-
-    color: #ffffff;
-
-    cursor: pointer;
-
-    font-size: 16px;
-
-    transition:
-        background 0.15s ease,
-        transform 0.15s ease;
-}
-
-.call-controls button:hover {
-    background: #344845;
-
-    transform: translateY(-1px);
-}
-
-.call-controls .danger-button {
-    background: var(--ms-danger);
-
-    color: #ffffff;
-
-    border-color: transparent;
-}
-
-
-/* =========================================================
-   48. INCOMING CALL
-   ========================================================= */
-
-.incoming-call {
-    position: fixed;
-
-    top: 88px;
-    right: 18px;
-
-    z-index: 3500;
-
-    width: min(370px, calc(100vw - 30px));
-
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-
-    padding: 11px;
-
-    border: 1px solid rgba(8, 127, 115, 0.18);
-
-    border-radius: 14px;
-
-    background:
-        rgba(255, 255, 255, 0.97);
-
-    box-shadow:
-        0 18px 45px rgba(10, 30, 28, 0.20);
-
-    backdrop-filter: blur(10px);
-}
-
-.incoming-call-avatar {
-    width: 42px;
-    height: 42px;
-
-    flex: 0 0 42px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    overflow: hidden;
-
-    border-radius: 12px;
-
-    background: var(--ms-surface-hover);
-
-    color: var(--ms-primary);
-
-    font-size: 20px;
-}
-
-.incoming-call-avatar img {
-    width: 100%;
-    height: 100%;
-
-    display: block;
-
-    object-fit: cover;
-}
-
-.incoming-call > div:nth-child(2) {
-    min-width: 0;
-
-    flex: 1;
-}
-
-.incoming-call > div:nth-child(2) strong {
-    display: block;
-
-    overflow: hidden;
-
-    color: var(--ms-text);
-
-    font-size: 12px;
-
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.incoming-call > div:nth-child(2) span {
-    display: block;
-
-    margin-top: 3px;
-
-    color: var(--ms-text-muted);
-
-    font-size: 10px;
-}
-
-.incoming-call-actions {
-    display: flex;
-
-    gap: 5px;
-}
-
-.accept-call,
-.reject-call {
-    width: 35px;
-    height: 35px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border: 0;
-    border-radius: 50%;
-
-    color: #ffffff;
-
-    cursor: pointer;
-
-    font-size: 16px;
+#activeCallTitle {
+    margin: 0;
+    font-size: 17px;
     font-weight: 800;
 }
 
-.accept-call {
-    background: var(--ms-success);
+
+#activeCallStatus {
+    margin-top: 3px;
+    color: rgba(255,255,255,0.65);
+    font-size: 11px;
 }
 
-.reject-call {
-    background: var(--ms-danger);
+
+#callParticipantGrid {
+    flex: 1;
+    min-height: 0;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit,
+        minmax(220px, 1fr)
+    );
+    gap: 12px;
+    overflow-y: auto;
+    align-content: center;
+}
+
+
+.call-participant-card {
+    min-height: 180px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    background: #17272b;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+
+.call-participant-card video {
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+    display: block;
+    object-fit: cover;
+    background: #10191c;
+}
+
+
+.call-participant-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #132428;
+}
+
+
+.call-participant-avatar {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+
+.call-participant-name {
+    position: absolute;
+    left: 9px;
+    bottom: 9px;
+    padding: 5px 8px;
+    border-radius: 7px;
+    background: rgba(0,0,0,0.55);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+
+.call-controls {
+    min-height: 82px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+
+#toggleMicrophoneButton,
+#toggleCameraButton,
+#shareScreenButton,
+#leaveCallButton,
+#leaveCallButtonBottom {
+    min-width: 46px;
+    height: 46px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 12px;
+    background: #25383d;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+
+#toggleMicrophoneButton:hover,
+#toggleCameraButton:hover,
+#shareScreenButton:hover {
+    background: #355158;
+}
+
+
+#leaveCallButton,
+#leaveCallButtonBottom {
+    background: var(--community-danger);
+}
+
+
+#leaveCallButton:hover,
+#leaveCallButtonBottom:hover {
+    background: #b42332;
 }
 
 
 /* =========================================================
-   49. TOAST
+   34. INCOMING CALL TOAST
+   ========================================================= */
+
+#incomingCallToast {
+    position: fixed;
+    right: 20px;
+    top: 85px;
+    z-index: 2500;
+    width: min(360px, calc(100vw - 30px));
+    padding: 13px;
+    border: 1px solid var(--community-border);
+    border-radius: 15px;
+    background: #ffffff;
+    box-shadow: 0 18px 50px rgba(20, 36, 48, 0.2);
+}
+
+
+.incoming-call-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+
+#incomingCallAvatar {
+    width: 45px;
+    height: 45px;
+    flex: 0 0 45px;
+}
+
+
+#incomingCallerName {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--community-text);
+}
+
+
+#incomingCallType {
+    margin-top: 2px;
+    color: var(--community-text-muted);
+    font-size: 10px;
+}
+
+
+.incoming-call-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 11px;
+}
+
+
+#acceptCallButton,
+#rejectCallButton {
+    flex: 1;
+    min-height: 38px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+
+#acceptCallButton {
+    background: var(--community-success);
+    color: #ffffff;
+}
+
+
+#rejectCallButton {
+    background: #fff0f1;
+    color: var(--community-danger);
+}
+
+
+/* =========================================================
+   35. FILE PREVIEW MODAL
+   ========================================================= */
+
+#filePreviewModal .modal-content {
+    width: min(800px, 100%);
+}
+
+
+#filePreviewModal img,
+#filePreviewModal video {
+    max-width: 100%;
+    max-height: 65vh;
+    display: block;
+    margin: auto;
+    border-radius: 10px;
+}
+
+
+/* =========================================================
+   36. TOAST
    ========================================================= */
 
 .toast {
     position: fixed;
-
-    left: 50%;
-    bottom: 24px;
-
-    z-index: 5000;
-
-    max-width: calc(100vw - 30px);
-
-    padding: 10px 15px;
-
-    border-radius: 10px;
-
-    background:
-        rgba(23, 35, 33, 0.96);
-
+    right: 20px;
+    bottom: 20px;
+    z-index: 3000;
+    max-width: min(380px, calc(100vw - 30px));
+    padding: 12px 15px;
+    border-radius: 11px;
+    background: #182a30;
     color: #ffffff;
-
-    font-size: 11px;
-    font-weight: 700;
-
-    box-shadow:
-        0 10px 30px rgba(0, 0, 0, 0.20);
-
-    transform: translateX(-50%);
-}
-
-.toast.hidden {
-    display: none !important;
+    box-shadow: 0 12px 30px rgba(20, 36, 48, 0.2);
+    font-size: 12px;
+    line-height: 1.45;
 }
 
 
-/* =========================================================
-   50. SCROLLBARS
-   ========================================================= */
-
-.community-app *,
-.modal *,
-.call-overlay * {
-    scrollbar-width: thin;
-
-    scrollbar-color:
-        rgba(8, 127, 115, 0.25)
-        transparent;
+.toast.success {
+    background: var(--community-success);
 }
 
-.community-app *::-webkit-scrollbar,
-.modal *::-webkit-scrollbar,
-.call-overlay *::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+
+.toast.error {
+    background: var(--community-danger);
 }
 
-.community-app *::-webkit-scrollbar-track,
-.modal *::-webkit-scrollbar-track,
-.call-overlay *::-webkit-scrollbar-track {
-    background: transparent;
-}
 
-.community-app *::-webkit-scrollbar-thumb,
-.modal *::-webkit-scrollbar-thumb,
-.call-overlay *::-webkit-scrollbar-thumb {
-    background: rgba(8, 127, 115, 0.22);
-
-    border-radius: 999px;
-}
-
-.community-app *::-webkit-scrollbar-thumb:hover,
-.modal *::-webkit-scrollbar-thumb:hover,
-.call-overlay *::-webkit-scrollbar-thumb:hover {
-    background: rgba(8, 127, 115, 0.38);
+.toast.warning {
+    background: #a16207;
 }
 
 
 /* =========================================================
-   51. MOBILE MENU BUTTON
+   37. EMPTY STATES
    ========================================================= */
 
-.mobile-only {
-    display: none;
+.empty-state {
+    padding: 45px 20px;
+    text-align: center;
+    color: var(--community-text-muted);
+}
+
+
+.empty-state-icon {
+    font-size: 38px;
+    margin-bottom: 10px;
+}
+
+
+.empty-state-title {
+    color: var(--community-text);
+    font-size: 14px;
+    font-weight: 800;
+}
+
+
+.empty-state-text {
+    margin-top: 5px;
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 
 /* =========================================================
-   52. TABLET
+   38. LOADING
    ========================================================= */
 
-@media (max-width: 1200px) {
+.loading-spinner {
+    width: 28px;
+    height: 28px;
+    margin: auto;
+    border: 3px solid var(--community-border);
+    border-top-color: var(--community-primary);
+    border-radius: 50%;
+    animation: communitySpin 0.8s linear infinite;
+}
+
+
+@keyframes communitySpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   39. GENERAL LINKS
+   ========================================================= */
+
+.community-app a {
+    color: var(--community-primary);
+    text-decoration: none;
+}
+
+
+.community-app a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   40. SELECTION
+   ========================================================= */
+
+.community-app ::selection {
+    background: rgba(8, 127, 115, 0.18);
+}
+
+
+/* =========================================================
+   41. MOBILE SIDEBAR BEHAVIOUR
+   ========================================================= */
+
+@media (max-width: 1100px) {
 
     .community-layout {
         grid-template-columns:
-            70px
-            235px
+            var(--community-rail-width)
+            var(--community-sidebar-width)
             minmax(0, 1fr);
     }
 
     .member-sidebar {
         display: none;
     }
-}
 
-
-/* =========================================================
-   53. SMALL TABLET
-   ========================================================= */
-
-@media (max-width: 900px) {
-
-    .community-header {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-
-    .community-layout {
-        grid-template-columns:
-            65px
-            minmax(0, 1fr);
-    }
-
-    .community-brand-text {
+    .community-header-center {
         display: none;
     }
 
-    .mobile-only {
-        display: inline-flex;
+    .community-header-left {
+        flex: 1;
     }
 
-    /*
-       The channel sidebar remains part of the DOM and can be
-       controlled by community.js. It is not deleted or
-       display:none'd here, preventing CSS from breaking the
-       existing mobile-sidebar JavaScript.
-    */
+    .community-header-right {
+        flex: 1;
+    }
 }
 
 
 /* =========================================================
-   54. MOBILE
+   42. TABLET
    ========================================================= */
 
-@media (max-width: 650px) {
+@media (max-width: 800px) {
 
-    .community-header {
-        min-height: 66px;
-
-        padding: 8px;
+    :root {
+        --community-rail-width: 70px;
+        --community-sidebar-width: 255px;
     }
 
     .community-layout {
-        min-height: calc(100vh - 66px);
-
         grid-template-columns:
-            56px
+            var(--community-rail-width)
+            var(--community-sidebar-width)
             minmax(0, 1fr);
     }
 
     .community-rail {
-        padding-left: 5px;
-        padding-right: 5px;
+        padding-left: 7px;
+        padding-right: 7px;
     }
 
-    .community-rail-item {
-        width: 44px;
-        height: 44px;
-
-        border-radius: 14px;
+    .community-rail-item,
+    #addCommunityButton {
+        width: 52px;
+        height: 52px;
+        flex-basis: 52px;
     }
 
     .community-rail-icon {
-        font-size: 22px;
+        width: 43px;
+        height: 43px;
+        font-size: 27px;
     }
 
     .community-rail-icon-fallback {
+        font-size: 27px;
+    }
+
+    .selected-community-icon {
+        width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+    }
+
+    .selected-community-icon-fallback {
         font-size: 23px;
-    }
-
-    .rail-add-button {
-        width: 42px;
-        height: 42px;
-    }
-
-    .community-rail-item[data-community-name]::after {
-        display: none;
-    }
-
-    .header-button:not(.call-button) {
-        display: none;
-    }
-
-    .profile-button {
-        padding-right: 5px;
     }
 
     #headerProfileName {
         display: none;
     }
 
-    .chat-header {
-        min-height: 62px;
-
-        padding: 8px 10px;
-    }
-
-    .message-list {
-        padding-left: 9px;
-        padding-right: 9px;
-    }
-
-    .composer-area {
-        padding-left: 7px;
-        padding-right: 7px;
-    }
-
-    .picker-panel {
-        left: 7px;
-
-        width: calc(100vw - 14px);
-    }
-
-    .emoji-grid {
-        grid-template-columns:
-            repeat(7, 1fr);
-    }
-
-    .call-choice {
-        grid-template-columns: 1fr;
-    }
-
-    .call-overlay {
-        padding: 10px;
-    }
-
-    .active-call-window {
-        height: calc(100vh - 20px);
-
-        border-radius: 15px;
-    }
-
-    .call-participant-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+    .message-content {
+        max-width: 88%;
     }
 }
 
 
 /* =========================================================
-   55. VERY SMALL MOBILE
+   43. PHONE
+   ========================================================= */
+
+@media (max-width: 650px) {
+
+    :root {
+        --community-header-height: 62px;
+    }
+
+    .community-header {
+        height: var(--community-header-height);
+        padding: 0 9px;
+        gap: 6px;
+    }
+
+    .brand-mark {
+        width: 37px;
+        height: 37px;
+        flex-basis: 37px;
+        border-radius: 10px;
+        font-size: 18px;
+    }
+
+    .community-brand-text {
+        margin-left: 6px;
+    }
+
+    .community-brand-text strong {
+        font-size: 13px;
+    }
+
+    .community-brand-text span {
+        display: none;
+    }
+
+    .community-header-right {
+        gap: 2px;
+    }
+
+    #communityRulesButton,
+    #ticketButton,
+    #friendsButton,
+    #generalCallButton,
+    #profileButton {
+        min-width: 36px;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+    }
+
+    #profileButton {
+        width: 38px;
+    }
+
+    .community-layout {
+        height: calc(100vh - var(--community-header-height));
+        grid-template-columns:
+            64px
+            minmax(0, 1fr);
+    }
+
+    .community-rail {
+        width: 64px;
+    }
+
+    .community-rail-item,
+    #addCommunityButton {
+        width: 48px;
+        height: 48px;
+        flex-basis: 48px;
+        border-radius: 13px;
+    }
+
+    .community-rail-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 25px;
+    }
+
+    .community-rail-icon-fallback {
+        font-size: 25px;
+    }
+
+    .channel-sidebar {
+        position: fixed;
+        left: 64px;
+        top: var(--community-header-height);
+        bottom: 0;
+        width: min(290px, calc(100vw - 64px));
+        z-index: 500;
+        transform: translateX(-110%);
+        box-shadow: 12px 0 35px rgba(20, 36, 48, 0.15);
+        transition: transform 0.2s ease;
+    }
+
+    .channel-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    .chat-header {
+        min-height: 58px;
+        padding: 8px 10px;
+    }
+
+    .current-channel-icon {
+        width: 35px;
+        height: 35px;
+        flex-basis: 35px;
+        font-size: 17px;
+    }
+
+    #currentChannelName {
+        font-size: 13px;
+    }
+
+    #currentChannelDescription {
+        display: none;
+    }
+
+    .message-list {
+        padding: 13px 10px 8px;
+    }
+
+    .message {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .message-avatar,
+    .message-user-avatar {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+
+    .message-content {
+        max-width: calc(100% - 44px);
+    }
+
+    .message-actions {
+        opacity: 1;
+        position: static;
+        margin-top: 5px;
+        width: fit-content;
+    }
+
+    .composer-area {
+        padding: 7px;
+    }
+
+    .composer {
+        border-radius: 13px;
+    }
+
+    #stickerButton,
+    #gifButton,
+    #voiceNoteButton {
+        display: none;
+    }
+
+    #emojiPanel,
+    #stickerPanel,
+    #gifPanel {
+        left: 7px;
+        right: 7px;
+        width: auto;
+        bottom: 70px;
+    }
+
+    #emojiGrid {
+        grid-template-columns: repeat(7, 1fr);
+    }
+
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-content {
+        max-height: calc(100vh - 20px);
+        border-radius: 15px;
+    }
+
+    .call-choice-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    #callParticipantGrid {
+        grid-template-columns: 1fr;
+        padding: 10px;
+    }
+
+    .call-participant-card {
+        min-height: 220px;
+    }
+
+    .call-participant-card video,
+    .call-participant-placeholder {
+        min-height: 220px;
+    }
+
+    .call-controls {
+        flex-wrap: wrap;
+        min-height: 75px;
+    }
+
+    #incomingCallToast {
+        right: 10px;
+        top: 72px;
+    }
+}
+
+
+/* =========================================================
+   44. VERY SMALL PHONES
    ========================================================= */
 
 @media (max-width: 420px) {
 
     .community-layout {
-        grid-template-columns:
-            51px
-            minmax(0, 1fr);
+        grid-template-columns: 58px minmax(0, 1fr);
     }
 
-    .community-rail-item {
-        width: 42px;
-        height: 42px;
+    .community-rail {
+        width: 58px;
+        padding-left: 5px;
+        padding-right: 5px;
     }
 
-    .home-button-text {
+    .community-rail-item,
+    #addCommunityButton {
+        width: 46px;
+        height: 46px;
+        flex-basis: 46px;
+    }
+
+    .community-rail-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 23px;
+    }
+
+    .community-rail-icon-fallback {
+        font-size: 23px;
+    }
+
+    .channel-sidebar {
+        left: 58px;
+        width: calc(100vw - 58px);
+    }
+
+    .community-brand-text {
         display: none;
     }
 
-    .community-home-button {
-        width: 40px;
-
-        padding-left: 0;
-        padding-right: 0;
+    #communityRulesButton,
+    #ticketButton {
+        display: none;
     }
 
-    .brand-mark {
-        width: 38px;
-        height: 38px;
-
-        flex-basis: 38px;
+    #emojiGrid {
+        grid-template-columns: repeat(6, 1fr);
     }
 
-    .call-participant-grid {
-        grid-template-columns: 1fr;
+    #attachButton,
+    #emojiButton {
+        width: 34px;
     }
 
-    .incoming-call {
-        top: 74px;
-        right: 8px;
-        left: 8px;
-
-        width: auto;
+    #messageInput {
+        font-size: 12px;
     }
 }
 
 
 /* =========================================================
-   56. REDUCED MOTION
+   45. ACCESSIBILITY / REDUCED MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
     .community-app *,
     .community-app *::before,
-    .community-app *::after,
-    .modal *,
-    .call-overlay * {
+    .community-app *::after {
         scroll-behavior: auto !important;
-
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
+        transition: none !important;
+        animation: none !important;
     }
 }
