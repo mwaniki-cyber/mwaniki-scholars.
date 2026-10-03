@@ -760,146 +760,285 @@
     }
 
 
-    /* =====================================================
-       RULES
-       ===================================================== */
+  
+/* =========================================================
+   COMMUNITY RULES GATE
+   ========================================================= */
 
-    function hasAcceptedRules() {
+const RULES_VERSION =
+    "mwaniki-community-rules-v2";
 
-        return (
-            localStorage.getItem(
-                RULES_VERSION
-            ) === "true"
+
+function hasAcceptedRules() {
+
+    return (
+        localStorage.getItem(
+            RULES_VERSION
+        ) === "true"
+    );
+
+}
+
+
+function setupRulesModal() {
+
+    const modal =
+        document.getElementById(
+            "communityRulesModal"
         );
 
-    }
+    const checkbox =
+        document.getElementById(
+            "communityRulesAgree"
+        );
+
+    const continueButton =
+        document.getElementById(
+            "communityRulesContinue"
+        );
 
 
-    function setupRulesModal() {
+    if (!modal) {
 
-        const modal =
-            $("communityRulesModal");
-
-        if (!modal) {
-            return;
-        }
-
-
-        const checkbox =
-            $("communityRulesAgree");
-
-        const continueButton =
-            $("communityRulesContinue");
-
-
-        const accepted =
-            hasAcceptedRules();
-
+        console.warn(
+            "⚠️ communityRulesModal was not found."
+        );
 
         state.rulesAccepted =
-            accepted;
+            true;
 
-
-        if (accepted) {
-
-            modal.classList.add(
-                "hidden"
-            );
-
-            return;
-
-        }
-
-
-        modal.classList.remove(
-            "hidden"
-        );
-
-
-        if (checkbox) {
-
-            checkbox.checked =
-                false;
-
-        }
-
-
-        if (continueButton) {
-
-            continueButton.disabled =
-                true;
-
-
-            checkbox?.addEventListener(
-                "change",
-                () => {
-
-                    continueButton.disabled =
-                        !checkbox.checked;
-
-                }
-            );
-
-
-            continueButton.addEventListener(
-                "click",
-                () => {
-
-                    if (
-                        !checkbox?.checked
-                    ) {
-                        return;
-                    }
-
-
-                    localStorage.setItem(
-                        RULES_VERSION,
-                        "true"
-                    );
-
-
-                    state.rulesAccepted =
-                        true;
-
-
-                    modal.classList.add(
-                        "hidden"
-                    );
-
-
-                    announce(
-                        "Community rules accepted."
-                    );
-
-                }
-            );
-
-        }
+        return;
 
     }
 
 
-    function requireRules() {
+    if (!checkbox) {
 
-        if (state.rulesAccepted) {
-            return true;
-        }
-
-        const modal =
-            $("communityRulesModal");
-
-        modal?.classList.remove(
-            "hidden"
+        console.warn(
+            "⚠️ communityRulesAgree was not found."
         );
-
-        showToast(
-            "Please read and accept the community rules first."
-        );
-
-        return false;
 
     }
 
+
+    if (!continueButton) {
+
+        console.warn(
+            "⚠️ communityRulesContinue was not found."
+        );
+
+    }
+
+
+    state.rulesAccepted =
+        hasAcceptedRules();
+
+
+    /* -----------------------------------------------------
+       ALREADY ACCEPTED
+       ----------------------------------------------------- */
+
+    if (state.rulesAccepted) {
+
+        modal.classList.add(
+            "hidden"
+        );
+
+        return;
+
+    }
+
+
+    /* -----------------------------------------------------
+       SHOW RULES
+       ----------------------------------------------------- */
+
+    modal.classList.remove(
+        "hidden"
+    );
+
+
+    if (checkbox) {
+
+        checkbox.checked =
+            false;
+
+    }
+
+
+    if (continueButton) {
+
+        continueButton.disabled =
+            true;
+
+
+        /* Remove old listener safely by cloning */
+
+        const newButton =
+            continueButton.cloneNode(
+                true
+            );
+
+
+        continueButton.parentNode.replaceChild(
+            newButton,
+            continueButton
+        );
+
+
+        const activeButton =
+            document.getElementById(
+                "communityRulesContinue"
+            );
+
+
+        /* -------------------------------------------------
+           CHECKBOX
+           ------------------------------------------------- */
+
+        checkbox?.addEventListener(
+            "change",
+            () => {
+
+                activeButton.disabled =
+                    !checkbox.checked;
+
+                activeButton.classList.toggle(
+                    "enabled",
+                    checkbox.checked
+                );
+
+            }
+        );
+
+
+        /* -------------------------------------------------
+           CONTINUE
+           ------------------------------------------------- */
+
+        activeButton.addEventListener(
+            "click",
+            (event) => {
+
+                event.preventDefault();
+                event.stopPropagation();
+
+
+                if (
+                    !checkbox ||
+                    !checkbox.checked
+                ) {
+
+                    showToast(
+                        "Please agree to the community rules first."
+                    );
+
+                    return;
+
+                }
+
+
+                /* Save acceptance */
+
+                localStorage.setItem(
+                    RULES_VERSION,
+                    "true"
+                );
+
+
+                state.rulesAccepted =
+                    true;
+
+
+                /* Hide modal */
+
+                modal.classList.add(
+                    "hidden"
+                );
+
+
+                /* Make sure no element keeps focus */
+
+                if (
+                    document.activeElement &&
+                    modal.contains(
+                        document.activeElement
+                    )
+                ) {
+
+                    document.activeElement.blur();
+
+                }
+
+
+                announce(
+                    "Community rules accepted."
+                );
+
+
+                showToast(
+                    "Welcome to Mwaniki Scholars Community."
+                );
+
+
+                /* -------------------------------------------------
+                   NOW LOAD THE COMMUNITY
+                   ------------------------------------------------- */
+
+                loadCommunities()
+                    .catch(
+                        error => {
+
+                            console.error(
+                                "Community loading after rules:",
+                                error
+                            );
+
+                            showToast(
+                                "Community could not be loaded."
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+
+}
+
+
+function requireRules() {
+
+    if (
+        state.rulesAccepted
+    ) {
+
+        return true;
+
+    }
+
+
+    const modal =
+        document.getElementById(
+            "communityRulesModal"
+        );
+
+
+    modal?.classList.remove(
+        "hidden"
+    );
+
+
+    showToast(
+        "Please read and accept the community rules first."
+    );
+
+
+    return false;
+
+}
 
     /* =====================================================
        ACCESSIBILITY
