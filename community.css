@@ -1,2156 +1,1991 @@
-/* =========================================================
+/* ============================================================
    MWANIKI SCHOLARS COMMUNITY
-   community.css
-   Safe drop-in stylesheet for the current community.html
-   ========================================================= */
-
-/* =========================================================
-   1. ROOT / RESET
-   ========================================================= */
+   CLEAN COMMUNITY-FIRST UI
+   ============================================================ */
 
 :root {
-    --community-primary: #087f73;
-    --community-primary-dark: #05665d;
-    --community-primary-light: #e7f7f5;
+    --ms-primary: #087f73;
+    --ms-primary-dark: #05665d;
+    --ms-accent: #0b7285;
 
-    --community-accent: #0b7285;
-    --community-accent-light: #e8f7fa;
+    --ms-bg: #f4f7f8;
+    --ms-panel: #ffffff;
+    --ms-panel-soft: #f8fafb;
 
-    --community-bg: #f5f7f9;
-    --community-panel: #ffffff;
-    --community-panel-soft: #f8fafb;
+    --ms-border: #e1e8ea;
 
-    --community-border: #e1e7eb;
-    --community-border-dark: #cbd5db;
+    --ms-text: #17252a;
+    --ms-muted: #6d7c82;
 
-    --community-text: #18232c;
-    --community-text-soft: #64727d;
-    --community-text-muted: #8a969f;
+    --ms-danger: #d64545;
+    --ms-success: #16845b;
 
-    --community-success: #16a34a;
-    --community-warning: #f59e0b;
-    --community-danger: #dc3545;
+    --ms-radius-sm: 8px;
+    --ms-radius-md: 12px;
+    --ms-radius-lg: 16px;
 
-    --community-shadow:
-        0 8px 28px rgba(20, 36, 48, 0.08);
-
-    --community-shadow-small:
-        0 3px 12px rgba(20, 36, 48, 0.08);
-
-    --community-radius: 14px;
-    --community-radius-small: 10px;
-
-    --community-header-height: 70px;
-    --community-rail-width: 82px;
-    --community-sidebar-width: 275px;
-    --community-member-width: 245px;
+    --community-header-height: 72px;
 }
 
 
-.community-app *,
-.community-app *::before,
-.community-app *::after {
+/* ============================================================
+   BASE
+   ============================================================ */
+
+* {
     box-sizing: border-box;
 }
 
-
-.community-app {
-    min-height: 100vh;
+html,
+body {
+    margin: 0;
     width: 100%;
-    background: var(--community-bg);
-    color: var(--community-text);
-    overflow: hidden;
+    min-height: 100%;
 }
 
+body {
+    background: var(--ms-bg);
+    color: var(--ms-text);
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
 
-.community-app button,
-.community-app input,
-.community-app textarea,
-.community-app select {
+button,
+input,
+textarea,
+select {
     font: inherit;
 }
 
-
-.community-app button {
+button {
     cursor: pointer;
 }
 
-
-.community-app img {
-    max-width: 100%;
-}
-
-
-/* =========================================================
-   2. HIDDEN STATE
-   IMPORTANT:
-   Several overlays/modals are outside .community-app.
-   ========================================================= */
-
-.community-app .hidden,
-.modal.hidden,
-.call-overlay.hidden,
-.toast.hidden,
-#filePreviewModal.hidden,
-#friendsModal.hidden,
-#ticketModal.hidden,
-#rulesModal.hidden,
-#profileModal.hidden,
-#callModal.hidden,
-#activeCallOverlay.hidden,
-#incomingCallToast.hidden {
+.hidden {
     display: none !important;
 }
 
 
-/* =========================================================
-   3. COMMUNITY HEADER
-   ========================================================= */
+/* ============================================================
+   APP
+   ============================================================ */
+
+.community-app {
+    width: 100%;
+    height: 100vh;
+    min-height: 650px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
 
 .community-header {
     height: var(--community-header-height);
-    width: 100%;
+    flex: 0 0 var(--community-header-height);
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 22px;
+
+    background: #ffffff;
+    border-bottom: 1px solid var(--ms-border);
+
+    position: relative;
+    z-index: 50;
+}
+
+.brand-area {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 0 16px;
-    background: var(--community-panel);
-    border-bottom: 1px solid var(--community-border);
-    box-shadow: 0 2px 10px rgba(20, 36, 48, 0.05);
-    position: relative;
-    z-index: 100;
-}
-
-
-.community-header-left,
-.community-header-center,
-.community-header-right {
-    display: flex;
-    align-items: center;
-}
-
-
-.community-header-left {
-    flex: 1;
     min-width: 0;
 }
-
-
-.community-header-center {
-    justify-content: center;
-    flex: 1;
-}
-
-
-.community-header-right {
-    flex: 1;
-    justify-content: flex-end;
-    gap: 7px;
-}
-
-
-/* =========================================================
-   4. HEADER BUTTONS
-   ========================================================= */
-
-.community-home-button,
-#communityRulesButton,
-#ticketButton,
-#friendsButton,
-#generalCallButton,
-#profileButton,
-#mobileSidebarButton {
-    border: 0;
-    background: transparent;
-    color: var(--community-text-soft);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition:
-        background 0.18s ease,
-        color 0.18s ease,
-        transform 0.18s ease;
-}
-
-
-.community-home-button:hover,
-#communityRulesButton:hover,
-#ticketButton:hover,
-#friendsButton:hover,
-#generalCallButton:hover,
-#profileButton:hover,
-#mobileSidebarButton:hover {
-    background: var(--community-primary-light);
-    color: var(--community-primary);
-}
-
-
-.community-home-button {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    margin-right: 4px;
-    font-size: 20px;
-}
-
-
-.community-home-button:active {
-    transform: scale(0.95);
-}
-
-
-#mobileSidebarButton {
-    width: 42px;
-    height: 42px;
-    border-radius: 12px;
-    font-size: 20px;
-}
-
-
-#communityRulesButton,
-#ticketButton,
-#friendsButton,
-#generalCallButton {
-    min-width: 40px;
-    height: 40px;
-    padding: 0 10px;
-    border-radius: 10px;
-}
-
-
-#profileButton {
-    min-height: 42px;
-    padding: 4px 8px;
-    border-radius: 12px;
-    gap: 8px;
-}
-
-
-/* =========================================================
-   5. BRAND
-   ========================================================= */
 
 .brand-mark {
     width: 42px;
     height: 42px;
-    flex: 0 0 42px;
-    border-radius: 12px;
-    background: linear-gradient(
-        145deg,
-        var(--community-primary),
-        var(--community-accent)
-    );
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 21px;
-    font-weight: 800;
-    box-shadow: 0 5px 14px rgba(8, 127, 115, 0.22);
-}
 
+    display: grid;
+    place-items: center;
+
+    border-radius: 12px;
+    background: #e7f5f2;
+
+    font-size: 23px;
+}
 
 .community-brand-text {
-    margin-left: 10px;
-    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
 }
 
-
-.community-brand-text strong {
-    display: block;
-    color: var(--community-text);
-    font-size: 15px;
+.community-brand-text h1 {
+    margin: 0;
+    font-size: 16px;
     font-weight: 800;
-    line-height: 1.15;
 }
-
 
 .community-brand-text span {
-    display: block;
-    color: var(--community-text-muted);
-    font-size: 11px;
-    margin-top: 3px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--ms-muted);
 }
 
+.community-home-button {
+    height: 40px;
 
-/* =========================================================
-   6. HEADER PROFILE
-   ========================================================= */
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 
-#headerProfileAvatar,
-#profileLargeAvatar,
-#incomingCallAvatar {
-    object-fit: cover;
+    padding: 0 13px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 10px;
+
+    background: #fff;
+    color: var(--ms-text);
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        transform .18s ease;
+}
+
+.community-home-button:hover {
+    background: #f1f8f7;
+    border-color: #c5dfdb;
+    transform: translateY(-1px);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-button {
+    min-height: 40px;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    padding: 0 13px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 10px;
+
+    background: #fff;
+    color: var(--ms-text);
+}
+
+.header-button:hover {
+    background: #f4f8f8;
+}
+
+.call-button {
+    color: #fff;
+    background: var(--ms-primary);
+    border-color: var(--ms-primary);
+}
+
+.call-button:hover {
+    background: var(--ms-primary-dark);
+}
+
+.profile-button {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    padding: 4px 10px 4px 5px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 22px;
+
+    background: #fff;
+}
+
+.avatar {
+    width: 34px;
+    height: 34px;
+
     border-radius: 50%;
-    background: var(--community-primary-light);
-}
 
+    display: grid;
+    place-items: center;
 
-#headerProfileAvatar {
-    width: 36px;
-    height: 36px;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1px var(--community-border);
-}
+    background: #e5f3f1;
+    color: var(--ms-primary);
 
-
-#headerProfileName {
-    max-width: 130px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--community-text);
+
+    font-weight: 800;
 }
 
+.avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-#headerPresenceDot {
+.avatar-small {
+    width: 34px;
+    height: 34px;
+}
+
+.presence-dot {
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: var(--community-success);
-    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+    border: 2px solid #fff;
 }
 
+.presence-dot.online {
+    background: #20a66a;
+}
 
-/* =========================================================
-   7. BADGES
-   ========================================================= */
+.presence-dot.offline {
+    background: #9ca8ac;
+}
 
-#friendRequestBadge,
-#notificationBadge,
-#friendRequestsCount {
-    min-width: 18px;
-    height: 18px;
+.count-badge {
+    min-width: 20px;
+    height: 20px;
+
+    display: inline-grid;
+    place-items: center;
+
     padding: 0 5px;
-    border-radius: 999px;
-    background: var(--community-danger);
-    color: #ffffff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
+
+    border-radius: 10px;
+
+    color: #fff;
+    background: var(--ms-danger);
+
+    font-size: 11px;
     font-weight: 800;
 }
 
 
-#friendRequestBadge {
-    margin-left: -8px;
-    margin-top: -18px;
-}
-
-
-/* =========================================================
-   8. MAIN COMMUNITY LAYOUT
-   ========================================================= */
+/* ============================================================
+   MAIN GRID
+   ============================================================ */
 
 .community-layout {
-    height: calc(100vh - var(--community-header-height));
-    min-height: 500px;
+    flex: 1;
+    min-height: 0;
+
     display: grid;
+
     grid-template-columns:
-        var(--community-rail-width)
-        var(--community-sidebar-width)
+        88px
+        minmax(245px, 290px)
         minmax(0, 1fr)
-        var(--community-member-width);
+        250px;
+
+    gap: 0;
+
     overflow: hidden;
 }
 
 
-/* =========================================================
-   9. COMMUNITY RAIL
-   ========================================================= */
+/* ============================================================
+   COMMUNITY RAIL
+   ============================================================ */
 
 .community-rail {
-    width: var(--community-rail-width);
-    height: 100%;
-    padding: 14px 10px;
-    background: #f0f4f5;
-    border-right: 1px solid var(--community-border);
-    overflow-y: auto;
-    overflow-x: hidden;
-}
+    min-height: 0;
 
-
-.community-rail::-webkit-scrollbar,
-.channel-sidebar::-webkit-scrollbar,
-.member-sidebar::-webkit-scrollbar,
-.message-list::-webkit-scrollbar,
-#emojiGrid::-webkit-scrollbar,
-#stickerGrid::-webkit-scrollbar,
-#gifGrid::-webkit-scrollbar {
-    width: 6px;
-}
-
-
-.community-rail::-webkit-scrollbar-thumb,
-.channel-sidebar::-webkit-scrollbar-thumb,
-.member-sidebar::-webkit-scrollbar-thumb,
-.message-list::-webkit-scrollbar-thumb,
-#emojiGrid::-webkit-scrollbar-thumb,
-#stickerGrid::-webkit-scrollbar-thumb,
-#gifGrid::-webkit-scrollbar-thumb {
-    background: #cbd5db;
-    border-radius: 20px;
-}
-
-
-.community-rail-list {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 11px;
+
+    padding: 18px 10px;
+
+    background: #f0f5f5;
+    border-right: 1px solid var(--ms-border);
+
+    overflow-y: auto;
 }
 
+.rail-heading {
+    margin-bottom: 14px;
+
+    color: var(--ms-muted);
+
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+
+    text-align: center;
+}
+
+.community-rail-list {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 13px;
+}
 
 .community-rail-item {
     width: 56px;
     height: 56px;
-    flex: 0 0 56px;
-    padding: 0;
-    border: 0;
-    border-radius: 16px;
-    background: #ffffff;
-    color: var(--community-text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    transition:
-        transform 0.18s ease,
-        border-radius 0.18s ease,
-        background 0.18s ease,
-        box-shadow 0.18s ease;
-    box-shadow: var(--community-shadow-small);
-}
 
+    position: relative;
+
+    border: 0;
+    border-radius: 17px;
+
+    background: #fff;
+
+    display: grid;
+    place-items: center;
+
+    transition:
+        border-radius .18s ease,
+        transform .18s ease,
+        box-shadow .18s ease;
+}
 
 .community-rail-item:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     border-radius: 14px;
-    background: var(--community-primary-light);
+    box-shadow: 0 5px 18px rgba(0,0,0,.08);
 }
-
 
 .community-rail-item.active {
-    background: var(--community-primary);
-    color: #ffffff;
     border-radius: 14px;
     box-shadow:
-        0 8px 18px rgba(8, 127, 115, 0.25);
+        0 0 0 3px rgba(8,127,115,.14),
+        0 6px 18px rgba(0,0,0,.08);
 }
 
+.community-rail-item.active::before {
+    content: "";
+
+    position: absolute;
+    left: -10px;
+
+    width: 4px;
+    height: 30px;
+
+    border-radius: 0 5px 5px 0;
+
+    background: var(--ms-primary);
+}
 
 .community-rail-icon {
     width: 46px;
     height: 46px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+
+    display: grid;
+    place-items: center;
+
     overflow: hidden;
     border-radius: 13px;
-    font-size: 30px;
-    line-height: 1;
-}
 
+    background: #e8f4f2;
+
+    font-size: 25px;
+}
 
 .community-rail-icon img {
     width: 100%;
     height: 100%;
-    display: block;
     object-fit: cover;
-    border-radius: 13px;
 }
-
 
 .community-rail-icon-fallback {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100%;
-    font-size: 30px;
-    line-height: 1;
+    display: grid;
+    place-items: center;
 }
 
+.community-rail-name {
+    position: absolute;
+    left: 68px;
 
-/* =========================================================
-   10. ADD COMMUNITY BUTTON
-   ========================================================= */
+    display: none;
 
-#addCommunityButton {
-    width: 56px;
-    height: 56px;
-    margin: 13px auto 0;
-    border: 2px dashed var(--community-border-dark);
-    border-radius: 16px;
-    background: transparent;
-    color: var(--community-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    transition:
-        background 0.18s ease,
-        border-color 0.18s ease,
-        transform 0.18s ease;
+    white-space: nowrap;
+
+    padding: 7px 10px;
+
+    border-radius: 8px;
+
+    color: #fff;
+    background: #182326;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    z-index: 100;
 }
 
-
-#addCommunityButton:hover {
-    background: var(--community-primary-light);
-    border-color: var(--community-primary);
-    transform: translateY(-2px);
+.community-rail-item:hover .community-rail-name {
+    display: block;
 }
 
+.rail-add-button {
+    width: 48px;
+    height: 48px;
 
-/* =========================================================
-   11. CHANNEL SIDEBAR
-   ========================================================= */
+    margin-top: 14px;
 
-.channel-sidebar {
-    min-width: 0;
-    height: 100%;
-    background: var(--community-panel);
-    border-right: 1px solid var(--community-border);
-    overflow-y: auto;
-    overflow-x: hidden;
-}
+    border: 1px dashed #a8c1bd;
+    border-radius: 15px;
 
+    color: var(--ms-primary);
+    background: #fff;
 
-.selected-community-header {
-    padding: 18px 16px;
-    border-bottom: 1px solid var(--community-border);
-    background:
-        linear-gradient(
-            145deg,
-            #ffffff,
-            #f6fbfa
-        );
-}
-
-
-.selected-community-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-
-.selected-community-icon {
-    width: 50px;
-    height: 50px;
-    flex: 0 0 50px;
-    border-radius: 14px;
-    background: var(--community-primary-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
     font-size: 25px;
 }
 
+.rail-add-button:hover {
+    border-style: solid;
+    background: #e9f5f3;
+}
+
+
+/* ============================================================
+   CHANNEL SIDEBAR
+   ============================================================ */
+
+.channel-sidebar {
+    min-width: 0;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #fff;
+    border-right: 1px solid var(--ms-border);
+}
+
+.selected-community {
+    min-height: 82px;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    padding: 16px;
+
+    border-bottom: 1px solid var(--ms-border);
+}
+
+.selected-community-icon {
+    width: 46px;
+    height: 46px;
+
+    flex: 0 0 46px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 13px;
+
+    background: #e7f4f2;
+
+    font-size: 23px;
+
+    overflow: hidden;
+}
 
 .selected-community-icon img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 14px;
 }
 
+.selected-community-info {
+    min-width: 0;
 
-.selected-community-icon-fallback {
-    font-size: 25px;
-    line-height: 1;
+    display: flex;
+    flex-direction: column;
 }
 
+.selected-community-info strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 
-#selectedCommunityName {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--community-text);
+    font-size: 14px;
 }
 
+.selected-community-info span {
+    margin-top: 4px;
 
-#selectedCommunityDescription {
-    margin: 4px 0 0;
-    color: var(--community-text-muted);
+    color: var(--ms-muted);
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
     font-size: 11px;
-    line-height: 1.45;
 }
 
+.sidebar-call-area {
+    padding: 13px 14px;
 
-#communityCallButton {
+    border-bottom: 1px solid var(--ms-border);
+}
+
+.community-call-button {
     width: 100%;
-    min-height: 40px;
-    margin-top: 14px;
-    border: 0;
-    border-radius: 10px;
-    background: var(--community-primary);
-    color: #ffffff;
-    font-weight: 700;
+    min-height: 43px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    transition:
-        background 0.18s ease,
-        transform 0.18s ease,
-        box-shadow 0.18s ease;
+    gap: 9px;
+
+    border: 0;
+    border-radius: 10px;
+
+    color: #fff;
+    background: var(--ms-primary);
+
+    font-weight: 750;
 }
 
-
-#communityCallButton:hover {
-    background: var(--community-primary-dark);
-    box-shadow: 0 7px 16px rgba(8, 127, 115, 0.22);
+.community-call-button:hover {
+    background: var(--ms-primary-dark);
 }
 
+.channel-scroll {
+    flex: 1;
+    min-height: 0;
 
-#communityCallButton:active {
-    transform: scale(0.98);
+    overflow-y: auto;
+
+    padding: 16px 12px 24px;
 }
-
-
-/* =========================================================
-   12. CHANNEL GROUPS
-   ========================================================= */
 
 .channel-group {
-    padding: 14px 10px 4px;
+    margin-bottom: 23px;
 }
-
 
 .channel-group-title {
-    padding: 0 8px 7px;
-    color: var(--community-text-muted);
+    padding: 0 8px 9px;
+
+    color: #89969a;
+
     font-size: 10px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: .08em;
 }
 
-
-#informationChannels,
-#courseChannels,
-#communityChannels {
+.channel-list {
     display: flex;
     flex-direction: column;
     gap: 3px;
 }
 
-
-.channel-item,
-#contestChannelButton {
+.channel-button,
+.special-channel-button {
     width: 100%;
-    min-height: 38px;
-    padding: 7px 10px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--community-text-soft);
+    min-height: 40px;
+
     display: flex;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
+
+    padding: 0 10px;
+
+    border: 0;
+    border-radius: 9px;
+
+    color: #526167;
+    background: transparent;
+
     text-align: left;
-    transition:
-        background 0.16s ease,
-        color 0.16s ease;
 }
 
-
-.channel-item:hover,
-#contestChannelButton:hover {
-    background: var(--community-panel-soft);
-    color: var(--community-text);
+.channel-button:hover,
+.special-channel-button:hover {
+    background: #f0f6f5;
+    color: var(--ms-text);
 }
 
-
-.channel-item.active,
-#contestChannelButton.active {
-    background: var(--community-primary-light);
-    color: var(--community-primary);
-    font-weight: 700;
+.channel-button.active {
+    color: var(--ms-primary);
+    background: #e8f5f3;
+    font-weight: 750;
 }
 
+.channel-icon {
+    width: 24px;
+    flex: 0 0 24px;
 
-.channel-item-icon {
-    width: 22px;
+    color: #829095;
+
     text-align: center;
-    flex: 0 0 22px;
 }
 
+.channel-button.active .channel-icon {
+    color: var(--ms-primary);
+}
 
-.channel-item-name {
+.channel-name {
     min-width: 0;
+
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
+.special-channel-button {
+    color: #7a5d16;
+}
 
-#contestChannelButton {
-    margin-top: 6px;
+.special-channel-button span:first-child {
+    width: 24px;
+    text-align: center;
 }
 
 
-/* =========================================================
-   13. CHAT AREA
-   ========================================================= */
+/* ============================================================
+   CHAT
+   ============================================================ */
 
 .chat-area {
     min-width: 0;
     min-height: 0;
-    height: 100%;
+
     display: flex;
     flex-direction: column;
-    background: #ffffff;
+
+    background: #fff;
 }
 
-
 .chat-header {
-    min-height: 66px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--community-border);
+    min-height: 76px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 12px 22px;
+
+    border-bottom: 1px solid var(--ms-border);
+}
+
+.chat-channel-info {
+    min-width: 0;
+
     display: flex;
     align-items: center;
     gap: 12px;
-    background: #ffffff;
 }
 
-
-.current-channel-icon {
+.channel-header-icon {
     width: 40px;
     height: 40px;
-    flex: 0 0 40px;
+
+    display: grid;
+    place-items: center;
+
     border-radius: 11px;
-    background: var(--community-primary-light);
-    color: var(--community-primary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 19px;
-    font-weight: 800;
+
+    color: var(--ms-primary);
+    background: #eaf5f3;
+
+    font-size: 20px;
+    font-weight: 900;
 }
 
-
-.chat-header-info {
-    min-width: 0;
-    flex: 1;
-}
-
-
-#currentChannelName {
+.chat-channel-info h2 {
     margin: 0;
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--community-text);
+
+    font-size: 16px;
 }
 
+.chat-channel-info p {
+    margin: 4px 0 0;
 
-#currentChannelDescription {
-    margin: 3px 0 0;
-    color: var(--community-text-muted);
-    font-size: 11px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    color: var(--ms-muted);
+
+    font-size: 12px;
 }
 
-
-#channelSearchButton,
-#channelMembersButton {
-    width: 38px;
-    height: 38px;
-    border: 0;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--community-text-soft);
+.chat-header-actions {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    gap: 7px;
 }
 
+.icon-button {
+    width: 39px;
+    height: 39px;
 
-#channelSearchButton:hover,
-#channelMembersButton:hover {
-    background: var(--community-primary-light);
-    color: var(--community-primary);
+    display: grid;
+    place-items: center;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 9px;
+
+    background: #fff;
 }
 
-
-/* =========================================================
-   14. MESSAGE LIST
-   ========================================================= */
+.icon-button:hover {
+    background: #f2f7f6;
+}
 
 .message-list {
     flex: 1;
     min-height: 0;
-    padding: 18px 18px 12px;
+
     overflow-y: auto;
-    overflow-x: hidden;
-    scroll-behavior: smooth;
+
+    padding: 24px 28px 18px;
+
     background:
         linear-gradient(
             180deg,
             #ffffff 0%,
-            #fbfcfd 100%
+            #fbfdfd 100%
         );
 }
 
-
 .message-loading {
-    padding: 25px;
+    padding: 30px;
+
+    color: var(--ms-muted);
+
     text-align: center;
-    color: var(--community-text-muted);
-    font-size: 13px;
 }
-
-
-/* =========================================================
-   15. MESSAGE
-   ========================================================= */
 
 .message {
     display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 17px;
-    position: relative;
+    gap: 12px;
+
+    margin-bottom: 18px;
+
+    max-width: 980px;
 }
-
-
-.message-avatar,
-.message-user-avatar {
-    width: 38px;
-    height: 38px;
-    flex: 0 0 38px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: var(--community-primary-light);
-}
-
-
-.message-content {
-    min-width: 0;
-    max-width: min(760px, 82%);
-}
-
-
-.message-header {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    margin-bottom: 4px;
-}
-
-
-.message-author {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--community-text);
-}
-
-
-.message-time {
-    color: var(--community-text-muted);
-    font-size: 10px;
-}
-
-
-.message-body {
-    color: var(--community-text);
-    font-size: 13px;
-    line-height: 1.55;
-    word-wrap: break-word;
-    overflow-wrap: anywhere;
-}
-
-
-.message-body.deleted,
-.message.deleted .message-body {
-    color: var(--community-text-muted);
-    font-style: italic;
-}
-
-
-.message-actions {
-    opacity: 0;
-    position: absolute;
-    right: 8px;
-    top: -6px;
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    padding: 3px;
-    border: 1px solid var(--community-border);
-    border-radius: 9px;
-    background: #ffffff;
-    box-shadow: var(--community-shadow-small);
-    transition: opacity 0.16s ease;
-}
-
 
 .message:hover .message-actions {
     opacity: 1;
 }
 
+.message-avatar {
+    width: 38px;
+    height: 38px;
 
-.message-actions button {
-    width: 28px;
-    height: 28px;
-    border: 0;
-    border-radius: 7px;
-    background: transparent;
-    color: var(--community-text-soft);
-}
+    flex: 0 0 38px;
 
+    display: grid;
+    place-items: center;
 
-.message-actions button:hover {
-    background: var(--community-primary-light);
-    color: var(--community-primary);
-}
+    border-radius: 50%;
 
-
-.message-actions .delete-message-button:hover {
-    background: #fff0f1;
-    color: var(--community-danger);
-}
-
-
-/* =========================================================
-   16. ATTACHMENTS INSIDE MESSAGES
-   ========================================================= */
-
-.message-attachment {
-    margin-top: 8px;
-    border: 1px solid var(--community-border);
-    border-radius: 11px;
     overflow: hidden;
-    background: var(--community-panel-soft);
+
+    color: var(--ms-primary);
+    background: #e5f2f0;
+
+    font-size: 12px;
+    font-weight: 800;
 }
 
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 
-.message-attachment img {
-    max-width: min(420px, 100%);
-    max-height: 320px;
+.message-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.message-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+
+    margin-bottom: 4px;
+}
+
+.message-author {
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.message-time {
+    color: #9aa5a9;
+    font-size: 10px;
+}
+
+.message-body {
+    color: #35454a;
+
+    line-height: 1.55;
+    font-size: 14px;
+
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.message.deleted .message-body {
+    color: #9aa5a9;
+    font-style: italic;
+}
+
+.message-actions {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+
+    opacity: 0;
+
+    transition: opacity .15s ease;
+}
+
+.message-action-button {
+    width: 30px;
+    height: 30px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 7px;
+
+    background: #fff;
+
+    font-size: 13px;
+}
+
+.message-action-button:hover {
+    background: #f3f7f7;
+}
+
+.attachment-card {
+    max-width: 430px;
+
+    margin-top: 8px;
+    padding: 10px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 12px;
+
+    background: #f9fbfb;
+}
+
+.attachment-card img {
     display: block;
-    object-fit: contain;
+
+    max-width: 100%;
+    max-height: 320px;
+
+    border-radius: 8px;
 }
 
-
-.message-attachment-file {
-    padding: 10px 12px;
+.attachment-file {
     display: flex;
     align-items: center;
-    gap: 9px;
-    color: var(--community-accent);
-    font-size: 12px;
+    gap: 10px;
+}
+
+.attachment-file-icon {
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 9px;
+
+    background: #e8f4f2;
+}
+
+.attachment-file-name {
+    min-width: 0;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 13px;
     font-weight: 700;
 }
 
+.voice-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 
-/* =========================================================
-   17. TYPING INDICATOR
-   ========================================================= */
+    width: min(430px, 100%);
 
-#typingIndicator {
-    min-height: 20px;
-    padding: 0 18px 4px;
-    color: var(--community-text-muted);
+    padding: 10px 12px;
+
+    border: 1px solid #d8e7e4;
+    border-radius: 12px;
+
+    background: #f2f8f7;
+}
+
+.voice-message audio {
+    width: 100%;
+    height: 36px;
+}
+
+.typing-indicator {
+    padding: 0 28px 8px;
+
+    color: var(--ms-muted);
+
     font-size: 11px;
 }
 
 
-/* =========================================================
-   18. COMPOSER AREA
-   ========================================================= */
+/* ============================================================
+   COMPOSER
+   ============================================================ */
 
 .composer-area {
     position: relative;
-    padding: 10px 14px 14px;
-    border-top: 1px solid var(--community-border);
-    background: #ffffff;
-}
 
+    padding: 13px 20px 18px;
+
+    border-top: 1px solid var(--ms-border);
+
+    background: #fff;
+}
 
 .composer {
-    min-height: 50px;
+    min-height: 52px;
+
     display: flex;
     align-items: flex-end;
-    gap: 6px;
-    padding: 6px;
-    border: 1px solid var(--community-border);
-    border-radius: 15px;
-    background: #f9fbfc;
-    transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease;
-}
+    gap: 7px;
 
+    padding: 6px;
+
+    border: 1px solid #d7e1e3;
+    border-radius: 14px;
+
+    background: #f9fbfb;
+}
 
 .composer:focus-within {
-    border-color: rgba(8, 127, 115, 0.45);
-    box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.08);
+    border-color: #8bbdb7;
+    box-shadow: 0 0 0 3px rgba(8,127,115,.07);
 }
 
-
-.composer button {
-    flex: 0 0 auto;
-}
-
-
-#attachButton,
-#emojiButton,
-#stickerButton,
-#gifButton,
-#voiceNoteButton {
+.composer-button {
     width: 38px;
     height: 38px;
+
+    flex: 0 0 38px;
+
+    display: grid;
+    place-items: center;
+
     border: 0;
-    border-radius: 10px;
+    border-radius: 9px;
+
     background: transparent;
-    color: var(--community-text-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
 }
 
-
-#attachButton:hover,
-#emojiButton:hover,
-#stickerButton:hover,
-#gifButton:hover,
-#voiceNoteButton:hover {
-    background: var(--community-primary-light);
-    color: var(--community-primary);
+.composer-button:hover {
+    background: #e9f3f2;
 }
-
 
 #messageInput {
-    flex: 1;
     min-width: 0;
+    flex: 1;
+
     min-height: 38px;
     max-height: 140px;
+
     resize: none;
+
+    padding: 9px 5px;
+
     border: 0;
     outline: 0;
+
     background: transparent;
-    color: var(--community-text);
-    padding: 9px 6px;
+
+    color: var(--ms-text);
+
     line-height: 1.4;
 }
 
+.send-button {
+    min-height: 38px;
 
-#messageInput::placeholder {
-    color: var(--community-text-muted);
-}
+    padding: 0 17px;
 
-
-#sendMessageButton {
-    width: 42px;
-    height: 42px;
     border: 0;
-    border-radius: 11px;
-    background: var(--community-primary);
-    color: #ffffff;
+    border-radius: 9px;
+
+    color: #fff;
+    background: var(--ms-primary);
+
+    font-weight: 800;
+}
+
+.send-button:hover {
+    background: var(--ms-primary-dark);
+}
+
+.attachment-preview {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 17px;
-    transition:
-        background 0.18s ease,
-        transform 0.18s ease;
-}
-
-
-#sendMessageButton:hover {
-    background: var(--community-primary-dark);
-}
-
-
-#sendMessageButton:active {
-    transform: scale(0.95);
-}
-
-
-#sendMessageButton:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-
-/* =========================================================
-   19. ATTACHMENT PREVIEW
-   ========================================================= */
-
-#attachmentPreview {
-    display: flex;
-    align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 7px;
-}
 
+    margin-bottom: 8px;
+}
 
 .attachment-preview-item {
     display: flex;
     align-items: center;
     gap: 8px;
-    max-width: 280px;
-    padding: 6px 9px;
-    border: 1px solid var(--community-border);
-    border-radius: 9px;
-    background: #ffffff;
+
+    padding: 7px 9px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 8px;
+
+    background: #f8fafb;
+
     font-size: 11px;
 }
 
 
-.attachment-preview-item img {
-    width: 34px;
-    height: 34px;
-    object-fit: cover;
-    border-radius: 7px;
-}
+/* ============================================================
+   PICKERS
+   ============================================================ */
 
-
-.attachment-preview-remove {
-    width: 22px;
-    height: 22px;
-    border: 0;
-    border-radius: 50%;
-    background: #fff0f1;
-    color: var(--community-danger);
-}
-
-
-/* =========================================================
-   20. PICKER PANELS
-   ========================================================= */
-
-#emojiPanel,
-#stickerPanel,
-#gifPanel {
+.picker-panel {
     position: absolute;
-    z-index: 300;
-    left: 12px;
-    bottom: 78px;
-    width: min(390px, calc(100vw - 30px));
-    max-height: 420px;
-    overflow: hidden;
-    border: 1px solid var(--community-border);
+
+    right: 20px;
+    bottom: calc(100% + 10px);
+
+    width: min(410px, calc(100vw - 30px));
+    max-height: 430px;
+
+    display: flex;
+    flex-direction: column;
+
+    padding: 13px;
+
+    border: 1px solid var(--ms-border);
     border-radius: 15px;
-    background: #ffffff;
-    box-shadow: 0 18px 50px rgba(20, 36, 48, 0.18);
+
+    background: #fff;
+
+    box-shadow:
+        0 18px 50px rgba(20,35,38,.16);
+
+    z-index: 100;
 }
 
-
-.picker-header {
-    min-height: 48px;
-    padding: 8px 10px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    border-bottom: 1px solid var(--community-border);
-}
-
-
-.picker-header input,
-#emojiSearch,
-#gifSearch {
-    flex: 1;
-    min-width: 0;
-    height: 34px;
-    border: 1px solid var(--community-border);
-    border-radius: 8px;
-    padding: 0 10px;
-    outline: 0;
-}
-
-
-#emojiSearch:focus,
-#gifSearch:focus {
-    border-color: var(--community-primary);
-}
-
-
-.picker-close,
-[data-close-picker] {
-    width: 32px;
-    height: 32px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--community-text-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-
-.picker-close:hover,
-[data-close-picker]:hover {
-    background: #fff0f1;
-    color: var(--community-danger);
-}
-
-
-/* =========================================================
-   21. EMOJI
-   ========================================================= */
-
-#emojiCategories {
-    display: flex;
-    gap: 4px;
-    padding: 7px 9px;
-    overflow-x: auto;
-    border-bottom: 1px solid var(--community-border);
-}
-
-
-#emojiCategories button {
-    min-width: 34px;
-    height: 32px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-}
-
-
-#emojiCategories button:hover,
-#emojiCategories button.active {
-    background: var(--community-primary-light);
-}
-
-
-#emojiGrid,
-#stickerGrid,
-#gifGrid {
-    padding: 10px;
-    max-height: 320px;
-    overflow-y: auto;
-}
-
-
-#emojiGrid {
-    display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    gap: 4px;
-}
-
-
-.emoji-option {
-    min-height: 38px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    font-size: 22px;
-}
-
-
-.emoji-option:hover {
-    background: var(--community-primary-light);
-}
-
-
-/* =========================================================
-   22. STICKERS
-   ========================================================= */
-
-#stickerGrid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
-}
-
-
-.sticker-option {
-    border: 1px solid transparent;
-    border-radius: 10px;
-    background: #f7f9fa;
-    padding: 5px;
-}
-
-
-.sticker-option:hover {
-    border-color: var(--community-primary);
-    background: var(--community-primary-light);
-}
-
-
-.sticker-option img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: contain;
-}
-
-
-/* =========================================================
-   23. GIF
-   ========================================================= */
-
-#gifGrid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-}
-
-
-.gif-option {
-    border: 1px solid var(--community-border);
-    border-radius: 10px;
-    overflow: hidden;
-    background: #f7f9fa;
-}
-
-
-.gif-option:hover {
-    border-color: var(--community-primary);
-}
-
-
-.gif-option img {
-    width: 100%;
-    display: block;
-    aspect-ratio: 16 / 10;
-    object-fit: cover;
-}
-
-
-/* =========================================================
-   24. MEMBER SIDEBAR
-   ========================================================= */
-
-.member-sidebar {
-    min-width: 0;
-    height: 100%;
-    overflow-y: auto;
-    background: #f8fafb;
-    border-left: 1px solid var(--community-border);
-    padding: 15px 11px;
-}
-
-
-.member-sidebar-header {
+.picker-title {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 4px 7px 12px;
+
+    margin-bottom: 10px;
+}
+
+.picker-close {
+    width: 30px;
+    height: 30px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #f2f6f6;
+
+    font-size: 20px;
+}
+
+.picker-search {
+    width: 100%;
+    height: 38px;
+
+    margin-bottom: 10px;
+
+    padding: 0 11px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 9px;
+
+    outline: none;
+}
+
+.emoji-categories {
+    display: flex;
+    gap: 4px;
+
+    overflow-x: auto;
+
+    padding-bottom: 8px;
+}
+
+.emoji-category {
+    min-width: 34px;
+    height: 32px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: #f3f7f7;
+}
+
+.emoji-category.active {
+    color: #fff;
+    background: var(--ms-primary);
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+
+    gap: 4px;
+
+    overflow-y: auto;
+
+    padding: 4px;
+}
+
+.emoji-item {
+    min-width: 0;
+    aspect-ratio: 1;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+
+    font-size: 23px;
+}
+
+.emoji-item:hover {
+    background: #eef5f4;
+}
+
+.sticker-grid,
+.gif-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 8px;
+
+    overflow-y: auto;
+}
+
+.sticker-item,
+.gif-item {
+    min-height: 85px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 10px;
+
+    background: #f7fafa;
+
+    font-size: 30px;
+}
+
+.empty-picker {
+    grid-column: 1 / -1;
+
+    padding: 35px 15px;
+
+    color: var(--ms-muted);
+
+    text-align: center;
+    font-size: 12px;
 }
 
 
-.member-sidebar-header h3 {
-    margin: 0;
-    font-size: 11px;
-    color: var(--community-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
+/* ============================================================
+   VOICE RECORDER
+   ============================================================ */
+
+.voice-recorder {
+    margin-top: 10px;
+
+    padding: 14px;
+
+    border: 1px solid #cce0dc;
+    border-radius: 14px;
+
+    background: #f5faf9;
 }
 
-
-#memberCount {
-    min-width: 22px;
-    height: 22px;
-    padding: 0 7px;
-    border-radius: 999px;
-    background: var(--community-primary-light);
-    color: var(--community-primary);
+.voice-recorder-top {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 10px;
+    gap: 9px;
+
+    margin-bottom: 10px;
+}
+
+.voice-live-dot {
+    width: 10px;
+    height: 10px;
+
+    border-radius: 50%;
+
+    background: #d64545;
+
+    animation: voicePulse 1s infinite;
+}
+
+@keyframes voicePulse {
+    50% {
+        transform: scale(.65);
+        opacity: .45;
+    }
+}
+
+.voice-recorder-top strong {
+    flex: 1;
+    font-size: 13px;
+}
+
+#voiceTimer {
+    font-variant-numeric: tabular-nums;
     font-weight: 800;
 }
 
+.voice-waveform {
+    display: block;
 
-#memberList {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    width: 100%;
+    height: 90px;
+
+    border-radius: 10px;
+
+    background: #e9f4f2;
 }
 
+.voice-preview-audio {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.voice-recorder-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    margin-top: 10px;
+}
+
+
+/* ============================================================
+   MEMBER SIDEBAR
+   ============================================================ */
+
+.member-sidebar {
+    min-width: 0;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #fff;
+    border-left: 1px solid var(--ms-border);
+}
+
+.member-sidebar-header {
+    min-height: 76px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 18px;
+
+    border-bottom: 1px solid var(--ms-border);
+}
+
+.member-sidebar-header span {
+    min-width: 25px;
+    height: 25px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 13px;
+
+    background: #eef5f4;
+
+    color: var(--ms-primary);
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.member-list {
+    flex: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 14px;
+}
 
 .member-item {
     display: flex;
     align-items: center;
-    gap: 9px;
-    padding: 7px;
+    gap: 10px;
+
+    padding: 8px;
+
     border-radius: 9px;
 }
 
-
 .member-item:hover {
-    background: #ffffff;
+    background: #f5f8f8;
 }
-
 
 .member-avatar {
-    width: 34px;
-    height: 34px;
-    flex: 0 0 34px;
+    position: relative;
+
+    width: 36px;
+    height: 36px;
+
+    flex: 0 0 36px;
+
+    display: grid;
+    place-items: center;
+
     border-radius: 50%;
+
+    overflow: hidden;
+
+    background: #e5f2f0;
+    color: var(--ms-primary);
+
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.member-avatar img {
+    width: 100%;
+    height: 100%;
     object-fit: cover;
-    background: var(--community-primary-light);
 }
 
+.member-online {
+    position: absolute;
 
-.member-info {
-    min-width: 0;
+    right: 0;
+    bottom: 0;
+
+    width: 9px;
+    height: 9px;
+
+    border: 2px solid #fff;
+    border-radius: 50%;
+
+    background: #20a66a;
 }
-
 
 .member-name {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--community-text);
-    white-space: nowrap;
+    min-width: 0;
+
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+
+    font-size: 12px;
+    font-weight: 700;
 }
 
 
-.member-status {
-    margin-top: 2px;
-    color: var(--community-text-muted);
-    font-size: 10px;
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.primary-button,
+.secondary-button,
+.danger-button {
+    min-height: 40px;
+
+    padding: 0 14px;
+
+    border-radius: 9px;
+
+    font-weight: 750;
+}
+
+.primary-button {
+    border: 0;
+    color: #fff;
+    background: var(--ms-primary);
+}
+
+.primary-button:hover {
+    background: var(--ms-primary-dark);
+}
+
+.secondary-button {
+    border: 1px solid var(--ms-border);
+    color: var(--ms-text);
+    background: #fff;
+}
+
+.secondary-button:hover {
+    background: #f3f7f7;
+}
+
+.danger-button {
+    border: 0;
+    color: #fff;
+    background: var(--ms-danger);
+}
+
+.danger-button:hover {
+    filter: brightness(.92);
 }
 
 
-.member-online-dot {
-    width: 8px;
-    height: 8px;
-    flex: 0 0 8px;
-    border-radius: 50%;
-    background: var(--community-success);
-}
-
-
-/* =========================================================
-   25. MODAL BASE
-   ========================================================= */
+/* ============================================================
+   MODALS
+   ============================================================ */
 
 .modal {
     position: fixed;
     inset: 0;
-    z-index: 1000;
+
     display: flex;
     align-items: center;
     justify-content: center;
+
     padding: 20px;
-    background: rgba(12, 24, 32, 0.58);
-    backdrop-filter: blur(3px);
+
+    background: rgba(13,25,28,.52);
+
+    z-index: 1000;
 }
 
+.modal-card {
+    width: min(520px, 100%);
+    max-height: min(800px, 92vh);
 
-.modal-content {
-    width: min(620px, 100%);
-    max-height: min(760px, calc(100vh - 40px));
     overflow-y: auto;
-    border-radius: 18px;
-    background: #ffffff;
-    box-shadow: 0 25px 80px rgba(12, 24, 32, 0.25);
-}
 
+    padding: 20px;
 
-.modal-header {
-    min-height: 58px;
-    padding: 12px 17px;
-    border-bottom: 1px solid var(--community-border);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+    border-radius: 17px;
 
+    background: #fff;
 
-.modal-header h2,
-.modal-header h3 {
-    margin: 0;
-    font-size: 17px;
-    color: var(--community-text);
-}
-
-
-.modal-close,
-.modal-header button {
-    width: 34px;
-    height: 34px;
-    border: 0;
-    border-radius: 9px;
-    background: transparent;
-    color: var(--community-text-soft);
-}
-
-
-.modal-close:hover,
-.modal-header button:hover {
-    background: #fff0f1;
-    color: var(--community-danger);
-}
-
-
-.modal-body {
-    padding: 17px;
-}
-
-
-/* =========================================================
-   26. RULES MODAL
-   ========================================================= */
-
-#rulesModal .modal-content {
-    width: min(680px, 100%);
-}
-
-
-.rules-content,
-#rulesModal .modal-body {
-    line-height: 1.6;
-    color: var(--community-text-soft);
-    font-size: 13px;
-}
-
-
-.rules-content h3,
-.rules-content h4 {
-    color: var(--community-text);
-}
-
-
-.rules-agree-area {
-    margin-top: 18px;
-    padding: 13px;
-    border-radius: 11px;
-    background: var(--community-primary-light);
-}
-
-
-.rules-agree-area label {
-    display: flex;
-    align-items: flex-start;
-    gap: 9px;
-    color: var(--community-text);
-    font-size: 12px;
-}
-
-
-.rules-agree-area input[type="checkbox"] {
-    margin-top: 3px;
-    accent-color: var(--community-primary);
-}
-
-
-/* =========================================================
-   27. PROFILE MODAL
-   ========================================================= */
-
-#profileModal .modal-content {
-    width: min(500px, 100%);
-}
-
-
-#profileLargeAvatar {
-    width: 100px;
-    height: 100px;
-    display: block;
-    margin: 8px auto 15px;
-    border: 4px solid #ffffff;
     box-shadow:
-        0 0 0 1px var(--community-border),
-        0 10px 28px rgba(20, 36, 48, 0.12);
+        0 25px 80px rgba(0,0,0,.2);
 }
 
-
-/* =========================================================
-   28. FORMS
-   ========================================================= */
-
-.community-app input,
-.community-app textarea,
-.community-app select,
-.modal input,
-.modal textarea,
-.modal select {
-    font-size: 13px;
+.large-modal {
+    width: min(700px, 100%);
 }
 
-
-.modal input,
-.modal textarea,
-.modal select {
-    width: 100%;
-    border: 1px solid var(--community-border);
-    border-radius: 10px;
-    padding: 10px 11px;
-    outline: 0;
-    color: var(--community-text);
-    background: #ffffff;
-}
-
-
-.modal input:focus,
-.modal textarea:focus,
-.modal select:focus {
-    border-color: var(--community-primary);
-    box-shadow: 0 0 0 3px rgba(8, 127, 115, 0.08);
-}
-
-
-.modal textarea {
-    min-height: 110px;
-    resize: vertical;
-}
-
-
-/* =========================================================
-   29. TICKET FORM
-   ========================================================= */
-
-#ticketForm {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-
-#ticketForm label {
-    color: var(--community-text);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-
-#ticketForm button[type="submit"] {
-    min-height: 42px;
-    border: 0;
-    border-radius: 10px;
-    background: var(--community-primary);
-    color: #ffffff;
-    font-weight: 800;
-}
-
-
-/* =========================================================
-   30. FRIENDS MODAL
-   ========================================================= */
-
-.friend-tabs {
-    display: flex;
-    gap: 5px;
-    border-bottom: 1px solid var(--community-border);
-    padding: 0 14px;
-}
-
-
-.friend-tab {
-    position: relative;
-    border: 0;
-    background: transparent;
-    color: var(--community-text-soft);
-    padding: 11px 12px;
-    font-size: 12px;
-    font-weight: 700;
-}
-
-
-.friend-tab:hover,
-.friend-tab.active {
-    color: var(--community-primary);
-}
-
-
-.friend-tab.active::after {
-    content: "";
-    position: absolute;
-    left: 10px;
-    right: 10px;
-    bottom: -1px;
-    height: 2px;
-    background: var(--community-primary);
-}
-
-
-#friendsContent {
-    padding: 15px;
-}
-
-
-/* =========================================================
-   31. CALL CHOICE MODAL
-   ========================================================= */
-
-#callModal .modal-content {
+.profile-card-modal {
     width: min(520px, 100%);
 }
 
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 
-.call-choice-buttons {
+    margin-bottom: 18px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.modal-close {
+    width: 34px;
+    height: 34px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: #f1f5f5;
+
+    font-size: 21px;
+}
+
+.modal-body {
+    padding: 5px 0 15px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+
+    margin-top: 15px;
+}
+
+.modal-card label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    margin-bottom: 14px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.modal-card input,
+.modal-card textarea,
+.modal-card select {
+    width: 100%;
+
+    padding: 10px 11px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 9px;
+
+    outline: none;
+}
+
+.modal-card textarea {
+    resize: vertical;
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus,
+.modal-card select:focus {
+    border-color: #8bbdb7;
+    box-shadow: 0 0 0 3px rgba(8,127,115,.07);
+}
+
+.floating-close {
+    position: absolute;
+    margin-left: 455px;
+}
+
+.rules-content {
+    color: #4d5d62;
+    line-height: 1.7;
+}
+
+.rules-content li {
+    margin-bottom: 9px;
+}
+
+
+/* ============================================================
+   FRIENDS
+   ============================================================ */
+
+.friends-tabs {
+    display: flex;
+    gap: 6px;
+
+    margin-bottom: 15px;
+
+    border-bottom: 1px solid var(--ms-border);
+}
+
+.friend-tab {
+    padding: 10px 14px;
+
+    border: 0;
+    border-bottom: 2px solid transparent;
+
+    background: transparent;
+
+    color: var(--ms-muted);
+}
+
+.friend-tab.active {
+    border-bottom-color: var(--ms-primary);
+    color: var(--ms-primary);
+    font-weight: 800;
+}
+
+.friends-content {
+    min-height: 200px;
+}
+
+
+/* ============================================================
+   CALL CHOICE
+   ============================================================ */
+
+.call-choice {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
 }
 
+.call-choice-button {
+    min-height: 170px;
 
-#callSpecificPersonButton,
-#callWholeCommunityButton {
-    min-height: 100px;
-    border: 1px solid var(--community-border);
-    border-radius: 14px;
-    background: #ffffff;
-    color: var(--community-text);
-    font-weight: 800;
-    transition:
-        border-color 0.18s ease,
-        background 0.18s ease,
-        transform 0.18s ease;
-}
-
-
-#callSpecificPersonButton:hover,
-#callWholeCommunityButton:hover {
-    border-color: var(--community-primary);
-    background: var(--community-primary-light);
-    transform: translateY(-2px);
-}
-
-
-/* =========================================================
-   32. CALL USER PICKER
-   ========================================================= */
-
-.call-user-picker {
-    max-height: 330px;
-    overflow-y: auto;
-    margin-top: 12px;
-    border: 1px solid var(--community-border);
-    border-radius: 12px;
-}
-
-
-.call-user-item {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 9px 11px;
-    border-bottom: 1px solid var(--community-border);
+    justify-content: center;
+    gap: 8px;
+
+    padding: 20px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 14px;
+
+    background: #f9fbfb;
+
+    color: var(--ms-text);
+
+    text-align: center;
 }
 
-
-.call-user-item:last-child {
-    border-bottom: 0;
+.call-choice-button:hover {
+    border-color: #8bbdb7;
+    background: #f1f8f7;
 }
 
-
-.call-user-item:hover {
-    background: var(--community-panel-soft);
+.call-choice-icon {
+    font-size: 35px;
 }
 
-
-.call-user-item input[type="checkbox"] {
-    width: auto;
-    accent-color: var(--community-primary);
-}
-
-
-.call-user-avatar {
-    width: 35px;
-    height: 35px;
-    flex: 0 0 35px;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-
-.call-user-name {
-    flex: 1;
-    min-width: 0;
+.call-choice-button span:last-child {
+    color: var(--ms-muted);
     font-size: 12px;
-    font-weight: 700;
 }
 
 
-.call-user-status {
-    font-size: 10px;
-    color: var(--community-success);
-}
-
-
-/* =========================================================
-   33. ACTIVE CALL OVERLAY
-   ========================================================= */
+/* ============================================================
+   ACTIVE CALL
+   ============================================================ */
 
 .call-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2000;
-    background:
-        radial-gradient(
-            circle at top,
-            #19363d 0%,
-            #091417 55%,
-            #05090b 100%
-        );
-    color: #ffffff;
+
     display: flex;
-    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+
+    padding: 25px;
+
+    background: rgba(7,20,22,.82);
+
+    z-index: 2000;
 }
 
+.active-call-window {
+    width: min(1250px, 100%);
+    height: 100%;
 
-.call-overlay-header {
-    min-height: 70px;
-    padding: 12px 18px;
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    border-radius: 18px;
+
+    background: #101a1c;
+    color: #fff;
+}
+
+.active-call-header {
+    min-height: 72px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+
+    padding: 0 20px;
+
+    border-bottom: 1px solid rgba(255,255,255,.1);
 }
 
-
-#activeCallTitle {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 800;
+.active-call-header > div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-
-#activeCallStatus {
-    margin-top: 3px;
-    color: rgba(255,255,255,0.65);
-    font-size: 11px;
+.active-call-header span {
+    color: #aeb9bb;
+    font-size: 12px;
 }
 
-
-#callParticipantGrid {
+.call-participant-grid {
     flex: 1;
     min-height: 0;
-    padding: 18px;
+
     display: grid;
     grid-template-columns: repeat(
         auto-fit,
-        minmax(220px, 1fr)
+        minmax(260px, 1fr)
     );
-    gap: 12px;
+
+    gap: 14px;
+
+    padding: 18px;
+
     overflow-y: auto;
-    align-content: center;
 }
 
+.call-participant-tile {
+    min-height: 220px;
 
-.call-participant-card {
-    min-height: 180px;
     position: relative;
+
+    display: flex;
+    flex-direction: column;
+
     overflow: hidden;
-    border-radius: 15px;
-    background: #17272b;
-    border: 1px solid rgba(255,255,255,0.08);
+
+    border-radius: 14px;
+
+    background: #1b282b;
 }
 
+.call-participant-media {
+    flex: 1;
+    min-height: 0;
 
-.call-participant-card video {
+    display: grid;
+    place-items: center;
+
+    overflow: hidden;
+}
+
+.call-participant-video {
     width: 100%;
     height: 100%;
-    min-height: 180px;
-    display: block;
+
     object-fit: cover;
-    background: #10191c;
 }
 
+.call-audio-avatar {
+    width: 85px;
+    height: 85px;
 
-.call-participant-placeholder {
-    width: 100%;
-    height: 100%;
-    min-height: 180px;
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    color: #fff;
+    background: var(--ms-primary);
+
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.call-participant-label {
+    min-height: 42px;
+
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: #132428;
-}
 
+    padding: 0 13px;
 
-.call-participant-avatar {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    object-fit: cover;
-}
+    background: rgba(0,0,0,.35);
 
-
-.call-participant-name {
-    position: absolute;
-    left: 9px;
-    bottom: 9px;
-    padding: 5px 8px;
-    border-radius: 7px;
-    background: rgba(0,0,0,0.55);
-    color: #ffffff;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
 }
-
 
 .call-controls {
-    min-height: 82px;
-    padding: 12px;
+    min-height: 80px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    border-top: 1px solid rgba(255,255,255,0.1);
+
+    gap: 12px;
+
+    padding: 12px;
+
+    border-top: 1px solid rgba(255,255,255,.1);
 }
 
+.call-controls button {
+    width: 48px;
+    height: 48px;
 
-#toggleMicrophoneButton,
-#toggleCameraButton,
-#shareScreenButton,
-#leaveCallButton,
-#leaveCallButtonBottom {
-    min-width: 46px;
-    height: 46px;
-    padding: 0 14px;
     border: 0;
-    border-radius: 12px;
-    background: #25383d;
-    color: #ffffff;
-    font-weight: 700;
+    border-radius: 50%;
+
+    color: #fff;
+    background: #26363a;
+
+    font-size: 18px;
+}
+
+.call-controls button:hover {
+    background: #35484c;
+}
+
+.call-controls .danger-button {
+    background: var(--ms-danger);
 }
 
 
-#toggleMicrophoneButton:hover,
-#toggleCameraButton:hover,
-#shareScreenButton:hover {
-    background: #355158;
-}
+/* ============================================================
+   INCOMING CALL
+   ============================================================ */
 
-
-#leaveCallButton,
-#leaveCallButtonBottom {
-    background: var(--community-danger);
-}
-
-
-#leaveCallButton:hover,
-#leaveCallButtonBottom:hover {
-    background: #b42332;
-}
-
-
-/* =========================================================
-   34. INCOMING CALL TOAST
-   ========================================================= */
-
-#incomingCallToast {
+.incoming-call {
     position: fixed;
-    right: 20px;
-    top: 85px;
-    z-index: 2500;
-    width: min(360px, calc(100vw - 30px));
-    padding: 13px;
-    border: 1px solid var(--community-border);
-    border-radius: 15px;
-    background: #ffffff;
-    box-shadow: 0 18px 50px rgba(20, 36, 48, 0.2);
-}
 
+    right: 25px;
+    bottom: 25px;
 
-.incoming-call-content {
+    width: min(380px, calc(100vw - 30px));
+
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+
+    padding: 14px;
+
+    border: 1px solid var(--ms-border);
+    border-radius: 15px;
+
+    background: #fff;
+
+    box-shadow:
+        0 18px 55px rgba(0,0,0,.2);
+
+    z-index: 2100;
 }
 
+.incoming-call-avatar {
+    width: 48px;
+    height: 48px;
 
-#incomingCallAvatar {
-    width: 45px;
-    height: 45px;
-    flex: 0 0 45px;
+    flex: 0 0 48px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 50%;
+
+    background: #e8f4f2;
+
+    font-size: 21px;
 }
 
+.incoming-call-information {
+    min-width: 0;
+    flex: 1;
 
-#incomingCallerName {
-    font-size: 13px;
-    font-weight: 800;
-    color: var(--community-text);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-
-#incomingCallType {
-    margin-top: 2px;
-    color: var(--community-text-muted);
-    font-size: 10px;
+.incoming-call-information strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
+.incoming-call-information span {
+    color: var(--ms-muted);
+    font-size: 11px;
+}
 
 .incoming-call-actions {
     display: flex;
-    gap: 6px;
-    margin-top: 11px;
+    gap: 7px;
 }
 
+.accept-call,
+.reject-call {
+    width: 40px;
+    height: 40px;
 
-#acceptCallButton,
-#rejectCallButton {
-    flex: 1;
-    min-height: 38px;
     border: 0;
-    border-radius: 9px;
-    font-size: 12px;
-    font-weight: 800;
+    border-radius: 50%;
+
+    color: #fff;
+
+    font-size: 18px;
+    font-weight: 900;
+}
+
+.accept-call {
+    background: #16845b;
+}
+
+.reject-call {
+    background: var(--ms-danger);
 }
 
 
-#acceptCallButton {
-    background: var(--community-success);
-    color: #ffffff;
-}
-
-
-#rejectCallButton {
-    background: #fff0f1;
-    color: var(--community-danger);
-}
-
-
-/* =========================================================
-   35. FILE PREVIEW MODAL
-   ========================================================= */
-
-#filePreviewModal .modal-content {
-    width: min(800px, 100%);
-}
-
-
-#filePreviewModal img,
-#filePreviewModal video {
-    max-width: 100%;
-    max-height: 65vh;
-    display: block;
-    margin: auto;
-    border-radius: 10px;
-}
-
-
-/* =========================================================
-   36. TOAST
-   ========================================================= */
+/* ============================================================
+   TOAST
+   ============================================================ */
 
 .toast {
     position: fixed;
-    right: 20px;
-    bottom: 20px;
+
+    left: 50%;
+    bottom: 25px;
+
+    transform: translateX(-50%);
+
+    max-width: min(500px, calc(100vw - 30px));
+
+    padding: 11px 16px;
+
+    border-radius: 10px;
+
+    color: #fff;
+    background: #1b292c;
+
+    box-shadow: 0 10px 35px rgba(0,0,0,.2);
+
+    font-size: 12px;
+
     z-index: 3000;
-    max-width: min(380px, calc(100vw - 30px));
-    padding: 12px 15px;
-    border-radius: 11px;
-    background: #182a30;
-    color: #ffffff;
-    box-shadow: 0 12px 30px rgba(20, 36, 48, 0.2);
-    font-size: 12px;
-    line-height: 1.45;
 }
 
 
-.toast.success {
-    background: var(--community-success);
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+.mobile-only {
+    display: none;
 }
 
-
-.toast.error {
-    background: var(--community-danger);
-}
-
-
-.toast.warning {
-    background: #a16207;
-}
-
-
-/* =========================================================
-   37. EMPTY STATES
-   ========================================================= */
-
-.empty-state {
-    padding: 45px 20px;
-    text-align: center;
-    color: var(--community-text-muted);
-}
-
-
-.empty-state-icon {
-    font-size: 38px;
-    margin-bottom: 10px;
-}
-
-
-.empty-state-title {
-    color: var(--community-text);
-    font-size: 14px;
-    font-weight: 800;
-}
-
-
-.empty-state-text {
-    margin-top: 5px;
-    font-size: 12px;
-    line-height: 1.5;
-}
-
-
-/* =========================================================
-   38. LOADING
-   ========================================================= */
-
-.loading-spinner {
-    width: 28px;
-    height: 28px;
-    margin: auto;
-    border: 3px solid var(--community-border);
-    border-top-color: var(--community-primary);
-    border-radius: 50%;
-    animation: communitySpin 0.8s linear infinite;
-}
-
-
-@keyframes communitySpin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
-/* =========================================================
-   39. GENERAL LINKS
-   ========================================================= */
-
-.community-app a {
-    color: var(--community-primary);
-    text-decoration: none;
-}
-
-
-.community-app a:hover {
-    text-decoration: underline;
-}
-
-
-/* =========================================================
-   40. SELECTION
-   ========================================================= */
-
-.community-app ::selection {
-    background: rgba(8, 127, 115, 0.18);
-}
-
-
-/* =========================================================
-   41. MOBILE SIDEBAR BEHAVIOUR
-   ========================================================= */
-
-@media (max-width: 1100px) {
+@media (max-width: 1150px) {
 
     .community-layout {
         grid-template-columns:
-            var(--community-rail-width)
-            var(--community-sidebar-width)
+            76px
+            245px
             minmax(0, 1fr);
     }
 
@@ -2158,366 +1993,174 @@
         display: none;
     }
 
-    .community-header-center {
+    .header-button {
+        padding: 0 10px;
+    }
+
+    .header-button:not(.call-button) {
+        font-size: 0;
+    }
+
+    .header-button:not(.call-button)::first-letter {
+        font-size: 15px;
+    }
+
+}
+
+@media (max-width: 820px) {
+
+    .community-header {
+        padding: 0 12px;
+    }
+
+    .community-brand-text {
         display: none;
     }
 
-    .community-header-left {
-        flex: 1;
+    .header-actions {
+        gap: 5px;
     }
 
-    .community-header-right {
-        flex: 1;
-    }
-}
-
-
-/* =========================================================
-   42. TABLET
-   ========================================================= */
-
-@media (max-width: 800px) {
-
-    :root {
-        --community-rail-width: 70px;
-        --community-sidebar-width: 255px;
+    .profile-button span:nth-child(2) {
+        display: none;
     }
 
     .community-layout {
         grid-template-columns:
-            var(--community-rail-width)
-            var(--community-sidebar-width)
+            68px
+            minmax(220px, 270px)
             minmax(0, 1fr);
     }
 
-    .community-rail {
-        padding-left: 7px;
-        padding-right: 7px;
-    }
-
-    .community-rail-item,
-    #addCommunityButton {
-        width: 52px;
-        height: 52px;
-        flex-basis: 52px;
-    }
-
-    .community-rail-icon {
-        width: 43px;
-        height: 43px;
-        font-size: 27px;
-    }
-
-    .community-rail-icon-fallback {
-        font-size: 27px;
-    }
-
-    .selected-community-icon {
-        width: 46px;
-        height: 46px;
-        flex-basis: 46px;
-    }
-
-    .selected-community-icon-fallback {
-        font-size: 23px;
-    }
-
-    #headerProfileName {
-        display: none;
-    }
-
-    .message-content {
-        max-width: 88%;
-    }
 }
-
-
-/* =========================================================
-   43. PHONE
-   ========================================================= */
 
 @media (max-width: 650px) {
 
-    :root {
-        --community-header-height: 62px;
+    .community-app {
+        min-height: 100vh;
     }
 
     .community-header {
-        height: var(--community-header-height);
-        padding: 0 9px;
-        gap: 6px;
+        height: 62px;
+        flex-basis: 62px;
+    }
+
+    .mobile-only {
+        display: grid;
+    }
+
+    .community-home-button span:last-child {
+        display: none;
+    }
+
+    .community-home-button {
+        width: 40px;
+        padding: 0;
+        justify-content: center;
     }
 
     .brand-mark {
-        width: 37px;
-        height: 37px;
-        flex-basis: 37px;
-        border-radius: 10px;
-        font-size: 18px;
-    }
-
-    .community-brand-text {
-        margin-left: 6px;
-    }
-
-    .community-brand-text strong {
-        font-size: 13px;
-    }
-
-    .community-brand-text span {
-        display: none;
-    }
-
-    .community-header-right {
-        gap: 2px;
-    }
-
-    #communityRulesButton,
-    #ticketButton,
-    #friendsButton,
-    #generalCallButton,
-    #profileButton {
-        min-width: 36px;
-        width: 36px;
-        height: 36px;
-        padding: 0;
-    }
-
-    #profileButton {
         width: 38px;
+        height: 38px;
     }
 
-    .community-layout {
-        height: calc(100vh - var(--community-header-height));
-        grid-template-columns:
-            64px
-            minmax(0, 1fr);
+    .header-button {
+        width: 39px;
+        padding: 0;
+        justify-content: center;
+        font-size: 0;
     }
 
-    .community-rail {
-        width: 64px;
-    }
-
-    .community-rail-item,
-    #addCommunityButton {
-        width: 48px;
-        height: 48px;
-        flex-basis: 48px;
-        border-radius: 13px;
-    }
-
-    .community-rail-icon {
-        width: 40px;
-        height: 40px;
-        font-size: 25px;
-    }
-
-    .community-rail-icon-fallback {
-        font-size: 25px;
-    }
-
-    .channel-sidebar {
-        position: fixed;
-        left: 64px;
-        top: var(--community-header-height);
-        bottom: 0;
-        width: min(290px, calc(100vw - 64px));
-        z-index: 500;
-        transform: translateX(-110%);
-        box-shadow: 12px 0 35px rgba(20, 36, 48, 0.15);
-        transition: transform 0.2s ease;
-    }
-
-    .channel-sidebar.mobile-open {
-        transform: translateX(0);
-    }
-
-    .chat-header {
-        min-height: 58px;
-        padding: 8px 10px;
-    }
-
-    .current-channel-icon {
-        width: 35px;
-        height: 35px;
-        flex-basis: 35px;
+    .call-button {
         font-size: 17px;
     }
 
-    #currentChannelName {
-        font-size: 13px;
-    }
-
-    #currentChannelDescription {
-        display: none;
-    }
-
-    .message-list {
-        padding: 13px 10px 8px;
-    }
-
-    .message {
-        gap: 8px;
-        margin-bottom: 14px;
-    }
-
-    .message-avatar,
-    .message-user-avatar {
-        width: 34px;
-        height: 34px;
-        flex-basis: 34px;
-    }
-
-    .message-content {
-        max-width: calc(100% - 44px);
-    }
-
-    .message-actions {
-        opacity: 1;
-        position: static;
-        margin-top: 5px;
-        width: fit-content;
-    }
-
-    .composer-area {
-        padding: 7px;
-    }
-
-    .composer {
-        border-radius: 13px;
-    }
-
-    #stickerButton,
-    #gifButton,
-    #voiceNoteButton {
-        display: none;
-    }
-
-    #emojiPanel,
-    #stickerPanel,
-    #gifPanel {
-        left: 7px;
-        right: 7px;
-        width: auto;
-        bottom: 70px;
-    }
-
-    #emojiGrid {
-        grid-template-columns: repeat(7, 1fr);
-    }
-
-    .modal {
-        padding: 10px;
-    }
-
-    .modal-content {
-        max-height: calc(100vh - 20px);
-        border-radius: 15px;
-    }
-
-    .call-choice-buttons {
-        grid-template-columns: 1fr;
-    }
-
-    #callParticipantGrid {
-        grid-template-columns: 1fr;
-        padding: 10px;
-    }
-
-    .call-participant-card {
-        min-height: 220px;
-    }
-
-    .call-participant-card video,
-    .call-participant-placeholder {
-        min-height: 220px;
-    }
-
-    .call-controls {
-        flex-wrap: wrap;
-        min-height: 75px;
-    }
-
-    #incomingCallToast {
-        right: 10px;
-        top: 72px;
-    }
-}
-
-
-/* =========================================================
-   44. VERY SMALL PHONES
-   ========================================================= */
-
-@media (max-width: 420px) {
-
     .community-layout {
-        grid-template-columns: 58px minmax(0, 1fr);
+        display: block;
+        position: relative;
+    }
+
+    .community-rail,
+    .channel-sidebar {
+        position: fixed;
+        top: 62px;
+        bottom: 0;
+
+        z-index: 80;
     }
 
     .community-rail {
-        width: 58px;
-        padding-left: 5px;
-        padding-right: 5px;
-    }
-
-    .community-rail-item,
-    #addCommunityButton {
-        width: 46px;
-        height: 46px;
-        flex-basis: 46px;
-    }
-
-    .community-rail-icon {
-        width: 38px;
-        height: 38px;
-        font-size: 23px;
-    }
-
-    .community-rail-icon-fallback {
-        font-size: 23px;
+        left: 0;
+        width: 68px;
     }
 
     .channel-sidebar {
-        left: 58px;
-        width: calc(100vw - 58px);
+        left: 68px;
+        width: min(270px, calc(100vw - 68px));
+
+        transform: translateX(-110%);
+
+        transition: transform .2s ease;
+
+        box-shadow: 10px 0 35px rgba(0,0,0,.12);
     }
 
-    .community-brand-text {
-        display: none;
+    .community-app.mobile-menu-open .channel-sidebar {
+        transform: translateX(0);
     }
 
-    #communityRulesButton,
-    #ticketButton {
-        display: none;
+    .chat-area {
+        width: 100%;
+        height: calc(100vh - 62px);
     }
 
-    #emojiGrid {
-        grid-template-columns: repeat(6, 1fr);
+    .chat-header {
+        min-height: 65px;
+        padding: 10px 13px;
     }
 
-    #attachButton,
-    #emojiButton {
+    .message-list {
+        padding: 18px 14px 10px;
+    }
+
+    .composer-area {
+        padding: 9px 9px 12px;
+    }
+
+    .composer-button {
         width: 34px;
+        flex-basis: 34px;
     }
 
-    #messageInput {
-        font-size: 12px;
+    .send-button {
+        padding: 0 11px;
     }
-}
 
+    .call-choice {
+        grid-template-columns: 1fr;
+    }
 
-/* =========================================================
-   45. ACCESSIBILITY / REDUCED MOTION
-   ========================================================= */
+    .call-overlay {
+        padding: 0;
+    }
 
-@media (prefers-reduced-motion: reduce) {
+    .active-call-window {
+        border-radius: 0;
+    }
 
-    .community-app *,
-    .community-app *::before,
-    .community-app *::after {
-        scroll-behavior: auto !important;
-        transition: none !important;
-        animation: none !important;
+    .call-participant-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .incoming-call {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        width: auto;
+    }
+
+    .picker-panel {
+        right: 8px;
+        bottom: calc(100% + 7px);
     }
 }
