@@ -1,57 +1,66 @@
 /* =========================================================
    MWANIKI SCHOLARS COMMUNITY
-   SAFE DROP-IN COMMUNITY CSS
-   Based strictly on the supplied community.html
+   COMPLETE SAFE DROP-IN COMMUNITY.CSS
+
+   Designed strictly for the supplied community.html.
+
+   IMPORTANT:
+   - Does not modify the DOM.
+   - Does not require extra HTML classes.
+   - Does not require JS-generated "open" classes.
+   - Correctly handles .hidden elements outside .community-app.
+   - Styles the existing call, modal, picker, chat and
+     community structures.
    ========================================================= */
 
 
 /* =========================================================
-   1. ROOT / BASE
+   1. COMMUNITY VARIABLES
    ========================================================= */
 
 .community-app {
-    --primary: #087f73;
-    --primary-dark: #066b61;
-    --accent: #0b7285;
+    --ms-primary: #087f73;
+    --ms-primary-dark: #066b61;
+    --ms-accent: #0b7285;
 
-    --page: #eef3f4;
-    --surface: #ffffff;
-    --surface-soft: #f7faf9;
-    --surface-hover: #edf7f5;
+    --ms-bg: #eef3f4;
+    --ms-surface: #ffffff;
+    --ms-surface-soft: #f6faf9;
+    --ms-surface-hover: #edf7f5;
 
-    --text: #18302d;
-    --text-soft: #61726f;
-    --text-muted: #8b9a98;
+    --ms-text: #18302d;
+    --ms-text-soft: #61726f;
+    --ms-text-muted: #8b9a98;
 
-    --border: #dfe8e6;
-    --border-strong: #ccd9d6;
+    --ms-border: #dfe8e6;
+    --ms-border-strong: #ccd9d6;
 
-    --success: #20a66a;
-    --danger: #d94b4b;
-    --warning: #d99a26;
+    --ms-success: #20a66a;
+    --ms-danger: #d94b4b;
+    --ms-warning: #d99a26;
 
-    --header-height: 76px;
+    --ms-header-height: 76px;
 
     min-height: 100vh;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     background:
         radial-gradient(
-            circle at 15% 0%,
+            circle at 10% 0%,
             rgba(8, 127, 115, 0.08),
             transparent 30%
         ),
         linear-gradient(
             135deg,
-            #edf3f4,
-            #f7f9f9
+            #edf3f4 0%,
+            #f8faf9 100%
         );
 }
 
 
 /* =========================================================
-   2. SAFE RESET
+   2. SAFE BOX MODEL
    ========================================================= */
 
 .community-app *,
@@ -71,28 +80,54 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.community-app button:focus-visible,
-.community-app input:focus-visible,
-.community-app textarea:focus-visible,
-.community-app select:focus-visible {
-    outline: 3px solid rgba(8, 127, 115, 0.18);
-    outline-offset: 2px;
-}
 
-.community-app .hidden {
+/* =========================================================
+   3. HIDDEN ELEMENTS
+   IMPORTANT:
+   Modals and overlays in community.html are outside
+   .community-app, so they are explicitly handled here.
+   ========================================================= */
+
+.community-app .hidden,
+#filePreviewModal.hidden,
+#friendsModal.hidden,
+#ticketModal.hidden,
+#rulesModal.hidden,
+#profileModal.hidden,
+#callModal.hidden,
+#activeCallOverlay.hidden,
+#incomingCallToast.hidden,
+#toast.hidden {
     display: none !important;
 }
 
 
 /* =========================================================
-   3. HEADER
+   4. FOCUS STATES
+   ========================================================= */
+
+.community-app button:focus-visible,
+.community-app input:focus-visible,
+.community-app textarea:focus-visible,
+.community-app select:focus-visible,
+.modal button:focus-visible,
+.modal input:focus-visible,
+.modal textarea:focus-visible,
+.modal select:focus-visible {
+    outline: 3px solid rgba(8, 127, 115, 0.18);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   5. HEADER
    ========================================================= */
 
 .community-header {
     position: relative;
     z-index: 100;
 
-    min-height: var(--header-height);
+    min-height: var(--ms-header-height);
 
     display: flex;
     align-items: center;
@@ -102,10 +137,9 @@
 
     padding: 10px 18px;
 
-    background:
-        rgba(255, 255, 255, 0.96);
+    background: rgba(255, 255, 255, 0.97);
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 
     box-shadow:
         0 3px 18px rgba(20, 45, 43, 0.07);
@@ -113,7 +147,7 @@
 
 
 /* =========================================================
-   4. BRAND AREA
+   6. BRAND AREA
    ========================================================= */
 
 .brand-area {
@@ -126,10 +160,10 @@
 }
 
 .brand-mark {
-    width: 43px;
-    height: 43px;
+    width: 44px;
+    height: 44px;
 
-    flex: 0 0 43px;
+    flex: 0 0 44px;
 
     display: flex;
     align-items: center;
@@ -140,8 +174,8 @@
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     color: #ffffff;
@@ -159,7 +193,7 @@
 .community-brand-text h1 {
     margin: 0;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 16px;
     font-weight: 800;
@@ -172,7 +206,7 @@
 
     margin-top: 4px;
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     font-size: 10px;
     font-weight: 800;
@@ -183,7 +217,7 @@
 
 
 /* =========================================================
-   5. HOME BUTTON
+   7. HOME BUTTON
    ========================================================= */
 
 .community-home-button {
@@ -202,7 +236,7 @@
 
     background: #ffffff;
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     cursor: pointer;
 
@@ -218,11 +252,11 @@
 }
 
 .community-home-button:hover {
-    background: var(--primary);
+    background: var(--ms-primary);
 
     color: #ffffff;
 
-    border-color: var(--primary);
+    border-color: var(--ms-primary);
 
     transform: translateY(-1px);
 
@@ -252,7 +286,7 @@
 
 
 /* =========================================================
-   6. HEADER ACTIONS
+   8. HEADER ACTIONS
    ========================================================= */
 
 .header-actions {
@@ -298,7 +332,7 @@
 .header-button:hover {
     background: #eaf5f3;
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     transform: translateY(-1px);
 }
@@ -307,8 +341,8 @@
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     color: #ffffff;
@@ -318,19 +352,19 @@
 }
 
 .header-button.call-button:hover {
-    color: #ffffff;
-
     background:
         linear-gradient(
             135deg,
-            var(--primary-dark),
+            var(--ms-primary-dark),
             #096578
         );
+
+    color: #ffffff;
 }
 
 
 /* =========================================================
-   7. PROFILE
+   9. PROFILE BUTTON
    ========================================================= */
 
 .profile-button {
@@ -343,12 +377,12 @@
 
     padding: 4px 9px 4px 5px;
 
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
     border-radius: 12px;
 
     background: #ffffff;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     cursor: pointer;
 
@@ -362,13 +396,18 @@
 }
 
 .profile-button:hover {
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
     border-color: rgba(8, 127, 115, 0.25);
 
     box-shadow:
         0 4px 12px rgba(20, 45, 43, 0.07);
 }
+
+
+/* =========================================================
+   10. AVATARS
+   ========================================================= */
 
 .avatar {
     display: inline-flex;
@@ -386,7 +425,7 @@
             #d8eeeb
         );
 
-    color: var(--primary);
+    color: var(--ms-primary);
 }
 
 .avatar-small {
@@ -409,6 +448,8 @@
     width: 9px;
     height: 9px;
 
+    flex: 0 0 9px;
+
     border: 2px solid #ffffff;
 
     border-radius: 50%;
@@ -417,7 +458,7 @@
 }
 
 .presence-dot.online {
-    background: var(--success);
+    background: var(--ms-success);
 }
 
 .presence-dot.offline {
@@ -425,12 +466,12 @@
 }
 
 .presence-dot.away {
-    background: var(--warning);
+    background: var(--ms-warning);
 }
 
 
 /* =========================================================
-   8. HEADER BADGE
+   11. COUNT BADGE
    ========================================================= */
 
 .count-badge {
@@ -445,7 +486,7 @@
 
     border-radius: 999px;
 
-    background: var(--danger);
+    background: var(--ms-danger);
 
     color: #ffffff;
 
@@ -455,11 +496,11 @@
 
 
 /* =========================================================
-   9. MAIN LAYOUT
+   12. MAIN COMMUNITY LAYOUT
    ========================================================= */
 
 .community-layout {
-    min-height: calc(100vh - var(--header-height));
+    min-height: calc(100vh - var(--ms-header-height));
 
     display: grid;
 
@@ -474,7 +515,7 @@
 
 
 /* =========================================================
-   10. COMMUNITY RAIL
+   13. COMMUNITY RAIL
    ========================================================= */
 
 .community-rail {
@@ -520,8 +561,9 @@
 }
 
 
-/* Existing JS may create these buttons dynamically.
-   These styles do not require additional JS classes. */
+/* =========================================================
+   14. COMMUNITY RAIL ITEMS
+   ========================================================= */
 
 .community-rail-item {
     position: relative;
@@ -546,7 +588,7 @@
 
     cursor: pointer;
 
-    overflow: hidden;
+    overflow: visible;
 
     transition:
         background 0.16s ease,
@@ -570,8 +612,8 @@
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     border-radius: 14px;
@@ -579,6 +621,11 @@
     box-shadow:
         0 7px 18px rgba(8, 127, 115, 0.30);
 }
+
+
+/* =========================================================
+   15. COMMUNITY ICONS
+   ========================================================= */
 
 .community-rail-icon {
     width: 100%;
@@ -603,6 +650,8 @@
     display: block;
 
     object-fit: cover;
+
+    border-radius: inherit;
 }
 
 .community-rail-icon-fallback {
@@ -612,6 +661,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+
+    border-radius: inherit;
 
     background:
         radial-gradient(
@@ -630,9 +681,11 @@
 }
 
 
-/* Tooltip */
+/* =========================================================
+   16. COMMUNITY TOOLTIP
+   ========================================================= */
 
-.community-rail-item::after {
+.community-rail-item[data-community-name]::after {
     content: attr(data-community-name);
 
     position: absolute;
@@ -641,10 +694,6 @@
     top: 50%;
 
     padding: 7px 10px;
-
-    transform:
-        translateY(-50%)
-        translateX(-5px);
 
     border-radius: 7px;
 
@@ -661,6 +710,10 @@
 
     pointer-events: none;
 
+    transform:
+        translateY(-50%)
+        translateX(-5px);
+
     box-shadow:
         0 7px 20px rgba(0, 0, 0, 0.22);
 
@@ -668,16 +721,21 @@
         opacity 0.15s ease,
         transform 0.15s ease;
 
-    z-index: 1000;
+    z-index: 1500;
 }
 
-.community-rail-item:hover::after {
+.community-rail-item[data-community-name]:hover::after {
     opacity: 1;
 
     transform:
         translateY(-50%)
         translateX(0);
 }
+
+
+/* =========================================================
+   17. ADD COMMUNITY
+   ========================================================= */
 
 .rail-add-button {
     width: 47px;
@@ -712,7 +770,7 @@
 
 
 /* =========================================================
-   11. CHANNEL SIDEBAR
+   18. CHANNEL SIDEBAR
    ========================================================= */
 
 .channel-sidebar {
@@ -729,7 +787,7 @@
             #f1f6f5
         );
 
-    border-right: 1px solid var(--border);
+    border-right: 1px solid var(--ms-border);
 }
 
 .selected-community {
@@ -744,7 +802,7 @@
 
     background: #ffffff;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 }
 
 .selected-community-icon {
@@ -764,8 +822,8 @@
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     color: #ffffff;
@@ -794,7 +852,7 @@
 
     overflow: hidden;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 13px;
     font-weight: 800;
@@ -810,7 +868,7 @@
 
     overflow: hidden;
 
-    color: var(--text-muted);
+    color: var(--ms-text-muted);
 
     font-size: 10px;
 
@@ -820,13 +878,13 @@
 
 
 /* =========================================================
-   12. COMMUNITY CALL AREA
+   19. COMMUNITY CALL BUTTON
    ========================================================= */
 
 .sidebar-call-area {
     padding: 11px;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 
     background: #ffffff;
 }
@@ -851,7 +909,7 @@
             #e8f5f8
         );
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     cursor: pointer;
 
@@ -869,8 +927,8 @@
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     color: #ffffff;
@@ -883,7 +941,7 @@
 
 
 /* =========================================================
-   13. CHANNEL SCROLL
+   20. CHANNEL SCROLL
    ========================================================= */
 
 .channel-scroll {
@@ -917,6 +975,11 @@
 
     gap: 2px;
 }
+
+
+/* =========================================================
+   21. CONTEST BUTTON
+   ========================================================= */
 
 .special-channel-button {
     width: 100%;
@@ -956,7 +1019,7 @@
 
 
 /* =========================================================
-   14. CHAT AREA
+   22. CHAT AREA
    ========================================================= */
 
 .chat-area {
@@ -971,7 +1034,7 @@
 
 
 /* =========================================================
-   15. CHAT HEADER
+   23. CHAT HEADER
    ========================================================= */
 
 .chat-header {
@@ -985,10 +1048,9 @@
 
     padding: 9px 15px;
 
-    background:
-        rgba(255, 255, 255, 0.97);
+    background: rgba(255, 255, 255, 0.97);
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 
     box-shadow:
         0 2px 9px rgba(20, 45, 43, 0.04);
@@ -1015,9 +1077,9 @@
 
     border-radius: 11px;
 
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     font-size: 20px;
     font-weight: 800;
@@ -1028,7 +1090,7 @@
 
     overflow: hidden;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 14px;
     font-weight: 850;
@@ -1042,7 +1104,7 @@
 
     overflow: hidden;
 
-    color: var(--text-muted);
+    color: var(--ms-text-muted);
 
     font-size: 10px;
 
@@ -1059,7 +1121,7 @@
 
 
 /* =========================================================
-   16. ICON BUTTON
+   24. ICON BUTTONS
    ========================================================= */
 
 .icon-button {
@@ -1089,14 +1151,14 @@
 }
 
 .icon-button:hover {
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 }
 
 
 /* =========================================================
-   17. MESSAGE LIST
+   25. MESSAGE AREA
    ========================================================= */
 
 .message-list {
@@ -1120,7 +1182,7 @@
 .message-loading {
     padding: 35px 15px;
 
-    color: var(--text-muted);
+    color: var(--ms-text-muted);
 
     font-size: 12px;
 
@@ -1129,7 +1191,7 @@
 
 
 /* =========================================================
-   18. TYPING INDICATOR
+   26. TYPING INDICATOR
    ========================================================= */
 
 .typing-indicator {
@@ -1137,7 +1199,7 @@
 
     padding: 0 18px 6px;
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     font-size: 10px;
     font-weight: 700;
@@ -1145,7 +1207,7 @@
 
 
 /* =========================================================
-   19. COMPOSER AREA
+   27. COMPOSER
    ========================================================= */
 
 .composer-area {
@@ -1162,7 +1224,7 @@
             #f7faf9
         );
 
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--ms-border);
 }
 
 .composer {
@@ -1175,7 +1237,7 @@
 
     padding: 5px;
 
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--ms-border-strong);
     border-radius: 14px;
 
     background: #ffffff;
@@ -1194,6 +1256,39 @@
     box-shadow:
         0 5px 18px rgba(8, 127, 115, 0.09);
 }
+
+.composer textarea {
+    min-width: 0;
+    min-height: 36px;
+    max-height: 150px;
+
+    flex: 1;
+
+    resize: none;
+
+    padding: 8px 6px;
+
+    border: 0;
+
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--ms-text);
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.composer textarea::placeholder {
+    color: #9aa8a6;
+}
+
+
+/* =========================================================
+   28. COMPOSER BUTTONS
+   ========================================================= */
 
 .composer-button {
     width: 36px;
@@ -1226,39 +1321,17 @@
 }
 
 .composer-button:hover {
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     transform: translateY(-1px);
 }
 
-.composer textarea {
-    min-width: 0;
-    min-height: 36px;
-    max-height: 150px;
 
-    flex: 1;
-
-    resize: none;
-
-    padding: 8px 6px;
-
-    border: 0;
-    outline: 0;
-
-    background: transparent;
-
-    color: var(--text);
-
-    font-size: 12px;
-
-    line-height: 1.5;
-}
-
-.composer textarea::placeholder {
-    color: #9aa8a6;
-}
+/* =========================================================
+   29. SEND BUTTON
+   ========================================================= */
 
 .send-button {
     min-width: 62px;
@@ -1276,8 +1349,8 @@
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     color: #ffffff;
@@ -1304,7 +1377,7 @@
 
 
 /* =========================================================
-   20. ATTACHMENT PREVIEW
+   30. ATTACHMENT PREVIEW
    ========================================================= */
 
 .attachment-preview {
@@ -1312,16 +1385,16 @@
 
     padding: 7px;
 
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
 
     border-radius: 10px;
 
-    background: var(--surface-soft);
+    background: var(--ms-surface-soft);
 }
 
 
 /* =========================================================
-   21. PICKER PANELS
+   31. PICKER PANELS
    ========================================================= */
 
 .picker-panel {
@@ -1335,7 +1408,7 @@
 
     overflow: hidden;
 
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
 
     border-radius: 15px;
 
@@ -1356,13 +1429,13 @@
 
     padding: 0 12px;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 
     background: #fbfdfd;
 }
 
 .picker-title strong {
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 12px;
     font-weight: 850;
@@ -1391,7 +1464,7 @@
 .picker-close:hover {
     background: #fff0f0;
 
-    color: var(--danger);
+    color: var(--ms-danger);
 }
 
 .picker-search {
@@ -1402,7 +1475,7 @@
 
     padding: 0 10px;
 
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
 
     border-radius: 9px;
 
@@ -1410,7 +1483,7 @@
 
     background: #f8fbfa;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 11px;
 }
@@ -1423,7 +1496,7 @@
 
 
 /* =========================================================
-   22. EMOJI PANEL
+   32. EMOJI
    ========================================================= */
 
 .emoji-categories {
@@ -1453,7 +1526,7 @@
 
 
 /* =========================================================
-   23. STICKER PANEL
+   33. STICKERS
    ========================================================= */
 
 .sticker-grid {
@@ -1471,7 +1544,7 @@
 
 
 /* =========================================================
-   24. GIF PANEL
+   34. GIFS
    ========================================================= */
 
 .gif-grid {
@@ -1485,7 +1558,7 @@
 .empty-picker {
     padding: 30px 15px;
 
-    color: var(--text-muted);
+    color: var(--ms-text-muted);
 
     font-size: 11px;
 
@@ -1494,7 +1567,7 @@
 
 
 /* =========================================================
-   25. MEMBER SIDEBAR
+   35. MEMBER SIDEBAR
    ========================================================= */
 
 .member-sidebar {
@@ -1511,7 +1584,7 @@
             #f1f6f5
         );
 
-    border-left: 1px solid var(--border);
+    border-left: 1px solid var(--ms-border);
 }
 
 .member-sidebar-header {
@@ -1525,11 +1598,11 @@
 
     background: #ffffff;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 }
 
 .member-sidebar-header strong {
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 12px;
     font-weight: 850;
@@ -1547,9 +1620,9 @@
 
     border-radius: 999px;
 
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     font-size: 10px;
     font-weight: 800;
@@ -1567,7 +1640,8 @@
 
 
 /* =========================================================
-   26. MODALS
+   36. MODALS
+   NOTE: These are OUTSIDE .community-app.
    ========================================================= */
 
 .modal {
@@ -1587,6 +1661,10 @@
         rgba(13, 31, 29, 0.54);
 
     backdrop-filter: blur(7px);
+}
+
+.modal.hidden {
+    display: none !important;
 }
 
 .modal-card {
@@ -1616,6 +1694,11 @@
     width: min(700px, 100%);
 }
 
+
+/* =========================================================
+   37. MODAL HEADER
+   ========================================================= */
+
 .modal-header {
     min-height: 59px;
 
@@ -1625,7 +1708,7 @@
 
     padding: 0 16px;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 
     background: #ffffff;
 }
@@ -1633,7 +1716,7 @@
 .modal-header h2 {
     margin: 0;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 15px;
     font-weight: 850;
@@ -1664,8 +1747,22 @@
 .modal-close:hover {
     background: #fff0f0;
 
-    color: var(--danger);
+    color: var(--ms-danger);
 }
+
+.floating-close {
+    position: absolute;
+
+    top: 10px;
+    right: 10px;
+
+    z-index: 2;
+}
+
+
+/* =========================================================
+   38. MODAL BODY
+   ========================================================= */
 
 .modal-body {
     padding: 16px;
@@ -1680,12 +1777,12 @@
 
     padding: 13px 16px;
 
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--ms-border);
 }
 
 
 /* =========================================================
-   27. RULES
+   39. RULES
    ========================================================= */
 
 .rules-content {
@@ -1704,12 +1801,13 @@
     color: #526461;
 
     font-size: 12px;
+
     line-height: 1.65;
 }
 
 
 /* =========================================================
-   28. FRIENDS
+   40. FRIENDS
    ========================================================= */
 
 .friends-tabs {
@@ -1719,7 +1817,7 @@
 
     padding: 10px 13px;
 
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--ms-border);
 
     background: #ffffff;
 }
@@ -1734,7 +1832,7 @@
 
     background: transparent;
 
-    color: var(--text-muted);
+    color: var(--ms-text-muted);
 
     cursor: pointer;
 
@@ -1743,15 +1841,15 @@
 }
 
 .friend-tab:hover {
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 }
 
 .friend-tab.active {
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 }
 
 .friends-content {
@@ -1762,7 +1860,7 @@
 
 
 /* =========================================================
-   29. FORMS
+   41. FORM ELEMENTS
    ========================================================= */
 
 .modal-card form {
@@ -1774,7 +1872,7 @@
 
     margin-bottom: 13px;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 11px;
     font-weight: 750;
@@ -1789,7 +1887,7 @@
 
     padding: 10px 11px;
 
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
 
     border-radius: 9px;
 
@@ -1797,7 +1895,7 @@
 
     background: #ffffff;
 
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 12px;
 }
@@ -1824,7 +1922,7 @@
 
 
 /* =========================================================
-   30. BUTTONS INSIDE MODALS
+   42. STANDARD MODAL BUTTONS
    ========================================================= */
 
 .primary-button,
@@ -1847,24 +1945,28 @@
 }
 
 .primary-button {
-    border: 1px solid var(--primary);
+    border: 1px solid var(--ms-primary);
 
     background:
         linear-gradient(
             135deg,
-            var(--primary),
-            var(--accent)
+            var(--ms-primary),
+            var(--ms-accent)
         );
 
     color: #ffffff;
 }
 
+.primary-button:hover {
+    filter: brightness(0.96);
+}
+
 .secondary-button {
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
 
     background: #ffffff;
 
-    color: var(--text-soft);
+    color: var(--ms-text-soft);
 }
 
 .secondary-button:hover {
@@ -1876,18 +1978,18 @@
 
     background: #fff0f0;
 
-    color: var(--danger);
+    color: var(--ms-danger);
 }
 
 .danger-button:hover {
-    background: var(--danger);
+    background: var(--ms-danger);
 
     color: #ffffff;
 }
 
 
 /* =========================================================
-   31. CALL CHOICE
+   43. CALL CHOICE MODAL
    ========================================================= */
 
 .call-choice {
@@ -1913,7 +2015,7 @@
 
     padding: 16px;
 
-    border: 1px solid var(--border);
+    border: 1px solid var(--ms-border);
     border-radius: 14px;
 
     background:
@@ -1923,7 +2025,7 @@
             #f4f9f8
         );
 
-    color: var(--text);
+    color: var(--ms-text);
 
     cursor: pointer;
 
@@ -1951,13 +2053,13 @@
 }
 
 .call-choice-button strong {
-    color: var(--text);
+    color: var(--ms-text);
 
     font-size: 12px;
 }
 
 .call-choice-button span {
-    color: var(--text-muted);
+    color: var(--ms-text-muted);
 
     font-size: 10px;
 
@@ -1966,7 +2068,7 @@
 
 
 /* =========================================================
-   32. ACTIVE CALL
+   44. ACTIVE CALL OVERLAY
    ========================================================= */
 
 .call-overlay {
@@ -1986,6 +2088,10 @@
         rgba(7, 20, 19, 0.90);
 
     backdrop-filter: blur(12px);
+}
+
+.call-overlay.hidden {
+    display: none !important;
 }
 
 .active-call-window {
@@ -2011,6 +2117,11 @@
     box-shadow:
         0 30px 90px rgba(0, 0, 0, 0.42);
 }
+
+
+/* =========================================================
+   45. ACTIVE CALL HEADER
+   ========================================================= */
 
 .active-call-header {
     min-height: 65px;
@@ -2042,6 +2153,11 @@
     font-size: 10px;
 }
 
+
+/* =========================================================
+   46. PARTICIPANT GRID
+   ========================================================= */
+
 .call-participant-grid {
     min-height: 0;
 
@@ -2061,6 +2177,11 @@
 
     overflow-y: auto;
 }
+
+
+/* =========================================================
+   47. CALL CONTROLS
+   ========================================================= */
 
 .call-controls {
     min-height: 76px;
@@ -2092,14 +2213,20 @@
     cursor: pointer;
 
     font-size: 16px;
+
+    transition:
+        background 0.15s ease,
+        transform 0.15s ease;
 }
 
 .call-controls button:hover {
     background: #344845;
+
+    transform: translateY(-1px);
 }
 
 .call-controls .danger-button {
-    background: var(--danger);
+    background: var(--ms-danger);
 
     color: #ffffff;
 
@@ -2108,7 +2235,7 @@
 
 
 /* =========================================================
-   33. INCOMING CALL
+   48. INCOMING CALL
    ========================================================= */
 
 .incoming-call {
@@ -2151,13 +2278,53 @@
     align-items: center;
     justify-content: center;
 
+    overflow: hidden;
+
     border-radius: 12px;
 
-    background: var(--surface-hover);
+    background: var(--ms-surface-hover);
 
-    color: var(--primary);
+    color: var(--ms-primary);
 
     font-size: 20px;
+}
+
+.incoming-call-avatar img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+}
+
+.incoming-call > div:nth-child(2) {
+    min-width: 0;
+
+    flex: 1;
+}
+
+.incoming-call > div:nth-child(2) strong {
+    display: block;
+
+    overflow: hidden;
+
+    color: var(--ms-text);
+
+    font-size: 12px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.incoming-call > div:nth-child(2) span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: var(--ms-text-muted);
+
+    font-size: 10px;
 }
 
 .incoming-call-actions {
@@ -2187,16 +2354,16 @@
 }
 
 .accept-call {
-    background: var(--success);
+    background: var(--ms-success);
 }
 
 .reject-call {
-    background: var(--danger);
+    background: var(--ms-danger);
 }
 
 
 /* =========================================================
-   34. TOAST
+   49. TOAST
    ========================================================= */
 
 .toast {
@@ -2227,12 +2394,18 @@
     transform: translateX(-50%);
 }
 
+.toast.hidden {
+    display: none !important;
+}
+
 
 /* =========================================================
-   35. SCROLLBARS
+   50. SCROLLBARS
    ========================================================= */
 
-.community-app * {
+.community-app *,
+.modal *,
+.call-overlay * {
     scrollbar-width: thin;
 
     scrollbar-color:
@@ -2240,28 +2413,45 @@
         transparent;
 }
 
-.community-app *::-webkit-scrollbar {
+.community-app *::-webkit-scrollbar,
+.modal *::-webkit-scrollbar,
+.call-overlay *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
-.community-app *::-webkit-scrollbar-track {
+.community-app *::-webkit-scrollbar-track,
+.modal *::-webkit-scrollbar-track,
+.call-overlay *::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.community-app *::-webkit-scrollbar-thumb {
+.community-app *::-webkit-scrollbar-thumb,
+.modal *::-webkit-scrollbar-thumb,
+.call-overlay *::-webkit-scrollbar-thumb {
     background: rgba(8, 127, 115, 0.22);
 
     border-radius: 999px;
 }
 
-.community-app *::-webkit-scrollbar-thumb:hover {
+.community-app *::-webkit-scrollbar-thumb:hover,
+.modal *::-webkit-scrollbar-thumb:hover,
+.call-overlay *::-webkit-scrollbar-thumb:hover {
     background: rgba(8, 127, 115, 0.38);
 }
 
 
 /* =========================================================
-   36. TABLET
+   51. MOBILE MENU BUTTON
+   ========================================================= */
+
+.mobile-only {
+    display: none;
+}
+
+
+/* =========================================================
+   52. TABLET
    ========================================================= */
 
 @media (max-width: 1200px) {
@@ -2270,25 +2460,17 @@
         grid-template-columns:
             70px
             235px
-            minmax(0, 1fr)
-            220px;
+            minmax(0, 1fr);
     }
 
     .member-sidebar {
         display: none;
     }
-
-    .community-layout {
-        grid-template-columns:
-            70px
-            235px
-            minmax(0, 1fr);
-    }
 }
 
 
 /* =========================================================
-   37. SMALL TABLET
+   53. SMALL TABLET
    ========================================================= */
 
 @media (max-width: 900px) {
@@ -2304,23 +2486,6 @@
             minmax(0, 1fr);
     }
 
-    .channel-sidebar {
-        position: fixed;
-
-        top: var(--header-height);
-        left: 65px;
-        bottom: 0;
-
-        width: 260px;
-
-        z-index: 1200;
-
-        transform: translateX(-110%);
-
-        box-shadow:
-            10px 0 35px rgba(0, 0, 0, 0.15);
-    }
-
     .community-brand-text {
         display: none;
     }
@@ -2328,19 +2493,24 @@
     .mobile-only {
         display: inline-flex;
     }
+
+    /*
+       The channel sidebar remains part of the DOM and can be
+       controlled by community.js. It is not deleted or
+       display:none'd here, preventing CSS from breaking the
+       existing mobile-sidebar JavaScript.
+    */
 }
 
 
 /* =========================================================
-   38. MOBILE
+   54. MOBILE
    ========================================================= */
 
 @media (max-width: 650px) {
 
     .community-header {
         min-height: 66px;
-
-        --header-height: 66px;
 
         padding: 8px;
     }
@@ -2365,10 +2535,6 @@
         border-radius: 14px;
     }
 
-    .community-rail-item::after {
-        display: none;
-    }
-
     .community-rail-icon {
         font-size: 22px;
     }
@@ -2382,13 +2548,8 @@
         height: 42px;
     }
 
-    .channel-sidebar {
-        left: 56px;
-    }
-
-    .header-button {
-        padding-left: 7px;
-        padding-right: 7px;
+    .community-rail-item[data-community-name]::after {
+        display: none;
     }
 
     .header-button:not(.call-button) {
@@ -2452,7 +2613,7 @@
 
 
 /* =========================================================
-   39. VERY SMALL MOBILE
+   55. VERY SMALL MOBILE
    ========================================================= */
 
 @media (max-width: 420px) {
@@ -2466,10 +2627,6 @@
     .community-rail-item {
         width: 42px;
         height: 42px;
-    }
-
-    .channel-sidebar {
-        left: 51px;
     }
 
     .home-button-text {
@@ -2505,14 +2662,16 @@
 
 
 /* =========================================================
-   40. REDUCED MOTION
+   56. REDUCED MOTION
    ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
     .community-app *,
     .community-app *::before,
-    .community-app *::after {
+    .community-app *::after,
+    .modal *,
+    .call-overlay * {
         scroll-behavior: auto !important;
 
         transition-duration: 0.01ms !important;
