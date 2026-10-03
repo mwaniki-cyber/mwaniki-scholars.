@@ -1,85 +1,50 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+// =========================================================
+// MWANIKI SCHOLARS SUPABASE CLIENT
+// =========================================================
 
-/*
-===========================================================
- MWANIKI SCHOLARS — SUPABASE CLIENT
-===========================================================
-*/
+import { createClient } from
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const SUPABASE_URL =
     "https://bazixdwtysmkkdeloerx.supabase.co";
 
-/*
- * IMPORTANT:
- * Paste the CURRENT publishable/anon key from:
- *
- * Supabase Dashboard
- * → Project Settings
- * → API
- *
- * Do NOT use a secret/service-role key here.
- */
 const SUPABASE_ANON_KEY =
-    "PASTE_YOUR_CURRENT_SUPABASE_PUBLISHABLE_KEY_HERE";
+    "sb_publishable_LfHAT9AAQ03BAyo1bQhVTg_Ag7MmjB";
+
+const supabase = createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY,
+    {
+        auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            flowType: "pkce"
+        }
+    }
+);
 
 
-if (
-    !SUPABASE_URL ||
-    !SUPABASE_ANON_KEY ||
-    SUPABASE_ANON_KEY.includes("PASTE_YOUR")
-) {
+// ---------------------------------------------------------
+// GLOBAL REFERENCES
+// ---------------------------------------------------------
 
-    console.error(
-        "❌ Supabase configuration is incomplete."
-    );
-
-} else {
-
-    const supabase =
-        createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY,
-            {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true,
-                    flowType: "pkce"
-                }
-            }
-        );
+window.supabase = supabase;
+window.supabaseClient = supabase;
+window.sb = supabase;
+window.mwanikiSupabase = supabase;
 
 
-    /*
-    =======================================================
-     GLOBAL CLIENT REFERENCES
-    =======================================================
-    */
+// ---------------------------------------------------------
+// STATUS
+// ---------------------------------------------------------
 
-    window.supabase = supabase;
-
-    window.supabaseClient = supabase;
-
-    window.sb = supabase;
-
-    window.mwanikiSupabase = supabase;
+console.log("✅ Mwaniki Scholars Supabase Connected");
+console.log("✅ Global Supabase client available");
 
 
-    /*
-    =======================================================
-     EXPORT
-    =======================================================
-    */
+// ---------------------------------------------------------
+// EXPORT
+// ---------------------------------------------------------
 
-    export { supabase };
-
-
-    console.log(
-        "✅ Mwaniki Scholars Supabase Connected"
-    );
-
-    console.log(
-        "✅ Global Supabase client available"
-    );
-
-}
+export { supabase };
