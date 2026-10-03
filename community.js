@@ -1,6654 +1,3056 @@
 /* =========================================================
-   MWANIKI SCHOLARS
-   COMMUNITY ENGINE
-   =========================================================
-
-   Handles:
-   - Authentication
-   - Community rules gate
-   - Communities
-   - Community switching
-   - Channels
-   - Channel search
-   - Real student names
-   - Real student profile photos
-   - Message history
-   - Older message loading
-   - Sending messages
-   - Replies
-   - Message deletion
-   - Reactions
-   - Emoji picker
-   - Photo/document attachments
-   - GIF URL sharing
-   - Profile display
-   - Read status
-   - Realtime messages
-   - Realtime reactions
-   - Realtime attachments
-
-   CALLING:
-   This file DOES NOT implement calling.
-   call.js remains completely independent.
-
-   Required:
-   supabase.js must load before this file.
+   MWANIKI SCHOLARS COMMUNITY
+   community.js
    ========================================================= */
 
-(() => {
+const RULES_VERSION = "mwaniki-community-rules-v1";
+const RULES_STORAGE_KEY = "mwanikiCommunityRulesAccepted";
 
-    "use strict";
+const supabase = window.supabase;
 
+if (!supabase) {
+    console.error("❌ Supabase client was not found.");
+    throw new Error("Supabase client unavailable.");
+}
 
-    /* =====================================================
-       SUPABASE
-       ===================================================== */
-
-    const supabase =
-        window.supabase ||
-        window.supabaseClient ||
-        window.sb ||
-        window.mwanikiSupabase;
+console.log("🚀 Mwaniki Scholars community engine loaded");
 
 
-    if (!supabase) {
+/* =========================================================
+   STATE
+   ========================================================= */
 
+const state = {
+    user: null,
+    profile: null,
+
+    communities: [],
+    selectedCommunity: null,
+    selectedChannel: null,
+
+    channels: [],
+    messages: [],
+
+    profiles: new Map(),
+    reactions: new Map(),
+
+    messagePageSize: 50,
+    loadingMessages: false,
+    loadingOlderMessages: false,
+    hasOlderMessages: false,
+
+    realtimeChannel: null,
+    rulesAccepted: false,
+
+    reactionPickerMessageId: null,
+    reactionOutsideHandler: null,
+
+    selectedGifUrl: "",
+    selectedGifPreview: "",
+
+    selectedCallMode: "voice"
+};
+
+
+/* =========================================================
+   DOM HELPERS
+   ========================================================= */
+
+const $ = (id) => document.getElementById(id);
+
+function showElement(element) {
+    if (element) {
+        element.classList.remove("hidden");
+    }
+}
+
+function hideElement(element) {
+    if (element) {
+        element.classList.add("hidden");
+    }
+}
+
+function setText(id, value) {
+    const element = $(id);
+
+    if (element) {
+        element.textContent = value ?? "";
+    }
+}
+
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+function escapeAttribute(value) {
+    return escapeHtml(value);
+}
+
+function announce(message) {
+    const element = $("communityStatus");
+
+    if (element) {
+        element.textContent = message;
+    }
+}
+
+function toast(message, type = "info") {
+    const element = $("communityToast");
+
+    if (!element) {
+        console.log(message);
+        return;
+    }
+
+    element.textContent = message;
+    element.dataset.type = type;
+
+    clearTimeout(toast.timer);
+
+    toast.timer = setTimeout(() => {
+        element.textContent = "";
+        element.dataset.type = "";
+    }, 3500);
+}
+
+
+/* =========================================================
+   INITIALIZATION
+   ========================================================= */
+
+document.addEventListener("DOMContentLoaded", initializeCommunity);
+
+async function initializeCommunity() {
+    try {
+        wireInterface();
+
+        state.rulesAccepted = readRulesAgreement();
+
+        if (!state.rulesAccepted) {
+            showRulesGate();
+        } else {
+            hideRulesGate();
+        }
+
+        const {
+            data: {
+                session
+            },
+            error
+        } = await supabase.auth.getSession();
+
+        if (error) {
+            console.error("Session error:", error);
+        }
+
+        state.user = session?.user || null;
+
+        if (!state.user) {
+            toast("Please sign in to use the community.", "error");
+            return;
+        }
+
+        await loadOwnProfile();
+
+        await loadCommunities();
+
+        if (state.rulesAccepted) {
+            await enterCommunity();
+        }
+
+        setupAuthListener();
+
+        console.log("✅ Community initialized");
+
+    } catch (error) {
+        console.error("❌ Community initialization failed:", error);
+        toast("The community could not be loaded.", "error");
+    }
+}
+
+
+/* =========================================================
+   AUTH
+   ========================================================= */
+
+function setupAuthListener() {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+        state.user = session?.user || null;
+
+        if (event === "SIGNED_OUT") {
+            state.profile = null;
+            state.profiles.clear();
+            window.location.href = "./index.html";
+            return;
+        }
+
+        if (event === "SIGNED_IN") {
+            await loadOwnProfile();
+
+            if (state.rulesAccepted) {
+                await loadCommunities();
+                await enterCommunity();
+            }
+        }
+    });
+}
+
+
+/* =========================================================
+   PROFILE SYSTEM
+   ========================================================= */
+
+async function loadOwnProfile() {
+    if (!state.user) {
+        return null;
+    }
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from("students")
+        .select("id,full_name,email,course,level,photo_url")
+        .eq("id", state.user.id)
+        .maybeSingle();
+
+    if (error) {
+        console.error("❌ Could not load own student profile:", error);
+        return null;
+    }
+
+    if (!data) {
+        console.warn("⚠️ No student profile found for current user.");
+        return null;
+    }
+
+    state.profile = data;
+
+    state.profiles.set(data.id, {
+        id: data.id,
+        full_name: data.full_name,
+        photo_url: data.photo_url
+    });
+
+    updateProfileInterface();
+
+    return data;
+}
+
+
+async function loadProfilesForUsers(userIds) {
+    const ids = [
+        ...new Set(
+            (userIds || [])
+                .filter(Boolean)
+                .map(String)
+        )
+    ];
+
+    if (!ids.length) {
+        return;
+    }
+
+    const missingIds = ids.filter(
+        id => !state.profiles.has(id)
+    );
+
+    if (!missingIds.length) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from("chat_public_profiles")
+        .select("id,full_name,photo_url")
+        .in("id", missingIds);
+
+    if (error) {
         console.error(
-            "❌ Supabase client was not found."
+            "❌ Could not load community profiles:",
+            error
+        );
+
+        for (const id of missingIds) {
+            state.profiles.set(id, {
+                id,
+                full_name: "Student",
+                photo_url: ""
+            });
+        }
+
+        return;
+    }
+
+    for (const profile of data || []) {
+        state.profiles.set(profile.id, {
+            id: profile.id,
+            full_name: profile.full_name || "Student",
+            photo_url: profile.photo_url || ""
+        });
+    }
+
+    for (const id of missingIds) {
+        if (!state.profiles.has(id)) {
+            state.profiles.set(id, {
+                id,
+                full_name: "Student",
+                photo_url: ""
+            });
+        }
+    }
+}
+
+
+function getProfile(userId) {
+    return state.profiles.get(userId) || {
+        id: userId,
+        full_name: "Student",
+        photo_url: ""
+    };
+}
+
+
+function getInitials(name) {
+    const clean = String(name || "Student")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (!clean.length) {
+        return "S";
+    }
+
+    if (clean.length === 1) {
+        return clean[0].substring(0, 2).toUpperCase();
+    }
+
+    return (
+        clean[0].charAt(0) +
+        clean[clean.length - 1].charAt(0)
+    ).toUpperCase();
+}
+
+
+function updateProfileInterface() {
+    if (!state.profile) {
+        return;
+    }
+
+    const name =
+        state.profile.full_name ||
+        "Student";
+
+    const photo =
+        state.profile.photo_url ||
+        "";
+
+    const imageIds = [
+        "railProfileAvatar",
+        "sidebarProfileAvatar"
+    ];
+
+    for (const id of imageIds) {
+        const image = $(id);
+
+        if (!image) {
+            continue;
+        }
+
+        if (photo) {
+            image.src = photo;
+            image.alt = name;
+        } else {
+            image.removeAttribute("src");
+            image.alt = getInitials(name);
+        }
+    }
+
+    setText("sidebarProfileName", name);
+}
+
+
+/* =========================================================
+   RULES
+   ========================================================= */
+
+function readRulesAgreement() {
+    try {
+        return localStorage.getItem(RULES_STORAGE_KEY) === RULES_VERSION;
+    } catch {
+        return false;
+    }
+}
+
+
+function saveRulesAgreement() {
+    try {
+        localStorage.setItem(
+            RULES_STORAGE_KEY,
+            RULES_VERSION
+        );
+    } catch (error) {
+        console.warn("Could not save community rules:", error);
+    }
+
+    state.rulesAccepted = true;
+}
+
+
+function showRulesGate() {
+    const gate = $("communityRulesGate");
+
+    if (gate) {
+        gate.classList.remove("hidden");
+    }
+
+    document.body.classList.add("community-rules-open");
+}
+
+
+function hideRulesGate() {
+    const gate = $("communityRulesGate");
+
+    if (gate) {
+        gate.classList.add("hidden");
+    }
+
+    document.body.classList.remove("community-rules-open");
+}
+
+
+function handleRulesAgreement() {
+    const checkbox = $("communityRulesAgreement");
+    const button = $("acceptCommunityRulesButton");
+
+    if (button) {
+        button.disabled = !checkbox?.checked;
+    }
+}
+
+
+async function acceptCommunityRules() {
+    const checkbox = $("communityRulesAgreement");
+
+    if (!checkbox?.checked) {
+        return;
+    }
+
+    saveRulesAgreement();
+    hideRulesGate();
+
+    const message = $("rulesGateMessage");
+
+    if (message) {
+        message.textContent = "";
+    }
+
+    await enterCommunity();
+}
+
+
+/* =========================================================
+   COMMUNITIES
+   ========================================================= */
+
+async function loadCommunities() {
+    const {
+        data,
+        error
+    } = await supabase
+        .from("chat_communities")
+        .select(`
+            id,
+            name,
+            slug,
+            description,
+            icon_url,
+            banner_url,
+            is_public,
+            is_active,
+            created_by,
+            created_at,
+            updated_at
+        `)
+        .eq("is_active", true)
+        .order("name", {
+            ascending: true
+        });
+
+    if (error) {
+        console.error("❌ Failed to load communities:", error);
+        toast("Could not load communities.", "error");
+        return;
+    }
+
+    state.communities = data || [];
+
+    renderCommunityRail();
+    renderCommunityChoices();
+
+    if (!state.selectedCommunity && state.communities.length) {
+        state.selectedCommunity = state.communities[0];
+    }
+}
+
+
+function renderCommunityRail() {
+    const container = $("communityRailList");
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = "";
+
+    for (const community of state.communities) {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "rail-community-button";
+
+        if (
+            state.selectedCommunity &&
+            community.id === state.selectedCommunity.id
+        ) {
+            button.classList.add("active");
+        }
+
+        button.title = community.name;
+
+        button.innerHTML = renderCommunityIcon(
+            community.icon_url,
+            community.name
+        );
+
+        button.addEventListener("click", async () => {
+            await selectCommunity(community.id);
+        });
+
+        container.appendChild(button);
+    }
+}
+
+
+function renderCommunityChoices(filter = "") {
+    const container = $("communityChoiceList");
+
+    if (!container) {
+        return;
+    }
+
+    const search = String(filter)
+        .trim()
+        .toLowerCase();
+
+    const communities = state.communities.filter(community => {
+        if (!search) {
+            return true;
+        }
+
+        return (
+            community.name?.toLowerCase().includes(search) ||
+            community.description?.toLowerCase().includes(search)
+        );
+    });
+
+    container.innerHTML = "";
+
+    if (!communities.length) {
+        container.innerHTML = `
+            <div class="empty-list">
+                No communities found.
+            </div>
+        `;
+        return;
+    }
+
+    for (const community of communities) {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "community-choice";
+
+        button.innerHTML = `
+            <span class="community-choice-icon">
+                ${renderCommunityIcon(
+                    community.icon_url,
+                    community.name
+                )}
+            </span>
+
+            <span class="community-choice-info">
+                <strong>${escapeHtml(community.name)}</strong>
+                <small>${escapeHtml(
+                    community.description || "Community"
+                )}</small>
+            </span>
+        `;
+
+        button.addEventListener("click", async () => {
+            await selectCommunity(community.id);
+            closeCommunityModal();
+        });
+
+        container.appendChild(button);
+    }
+}
+
+
+function renderCommunityIcon(icon, name) {
+    if (
+        icon &&
+        (
+            icon.startsWith("http://") ||
+            icon.startsWith("https://") ||
+            icon.startsWith("/")
+        )
+    ) {
+        return `
+            <img
+                src="${escapeAttribute(icon)}"
+                alt="${escapeAttribute(name || "Community")}"
+                class="community-icon-image"
+            >
+        `;
+    }
+
+    return escapeHtml(icon || "🌐");
+}
+
+
+async function selectCommunity(communityId) {
+    const community = state.communities.find(
+        item => item.id === communityId
+    );
+
+    if (!community) {
+        return;
+    }
+
+    state.selectedCommunity = community;
+    state.selectedChannel = null;
+    state.channels = [];
+    state.messages = [];
+
+    renderCommunityRail();
+
+    updateSelectedCommunityInterface();
+
+    await loadChannels(community.id);
+}
+
+
+function updateSelectedCommunityInterface() {
+    const community = state.selectedCommunity;
+
+    if (!community) {
+        return;
+    }
+
+    setText(
+        "selectedCommunityName",
+        community.name
+    );
+
+    setText(
+        "selectedCommunityDescription",
+        community.description || "Community"
+    );
+
+    const icon = $("selectedCommunityIcon");
+
+    if (icon) {
+        icon.innerHTML = renderCommunityIcon(
+            community.icon_url,
+            community.name
+        );
+    }
+
+    setText(
+        "communityBrandTitle",
+        "Mwaniki Scholars"
+    );
+
+    setText(
+        "communityBrandSubtitle",
+        community.name
+    );
+}
+
+
+/* =========================================================
+   CHANNELS
+   ========================================================= */
+
+async function loadChannels(communityId) {
+    const {
+        data,
+        error
+    } = await supabase
+        .from("chat_channels")
+        .select(`
+            id,
+            community_id,
+            name,
+            slug,
+            description,
+            channel_type,
+            icon,
+            position,
+            is_private,
+            is_archived,
+            is_active,
+            course_id,
+            unit_id,
+            created_by,
+            created_at,
+            updated_at
+        `)
+        .eq("community_id", communityId)
+        .eq("is_active", true)
+        .eq("is_archived", false)
+        .order("position", {
+            ascending: true
+        })
+        .order("name", {
+            ascending: true
+        });
+
+    if (error) {
+        console.error("❌ Failed to load channels:", error);
+        toast("Could not load channels.", "error");
+        return;
+    }
+
+    state.channels = data || [];
+
+    renderChannels();
+
+    if (!state.channels.length) {
+        clearChannelInterface();
+        return;
+    }
+
+    await selectChannel(state.channels[0].id);
+}
+
+
+function renderChannels(filter = "") {
+    const container = $("channelList");
+
+    if (!container) {
+        return;
+    }
+
+    const search = String(filter)
+        .trim()
+        .toLowerCase();
+
+    const channels = state.channels.filter(channel => {
+        if (!search) {
+            return true;
+        }
+
+        return (
+            channel.name?.toLowerCase().includes(search) ||
+            channel.description?.toLowerCase().includes(search)
+        );
+    });
+
+    container.innerHTML = "";
+
+    if (!channels.length) {
+        container.innerHTML = `
+            <div class="channel-empty">
+                No channels found.
+            </div>
+        `;
+        return;
+    }
+
+    for (const channel of channels) {
+        const button = document.createElement("button");
+
+        button.type = "button";
+        button.className = "channel-button";
+
+        if (
+            state.selectedChannel &&
+            channel.id === state.selectedChannel.id
+        ) {
+            button.classList.add("active");
+        }
+
+        button.innerHTML = `
+            <span class="channel-button-icon">
+                ${escapeHtml(channel.icon || "#")}
+            </span>
+            <span class="channel-button-name">
+                ${escapeHtml(channel.name)}
+            </span>
+        `;
+
+        button.addEventListener("click", async () => {
+            await selectChannel(channel.id);
+        });
+
+        container.appendChild(button);
+    }
+}
+
+
+async function selectChannel(channelId) {
+    const channel = state.channels.find(
+        item => item.id === channelId
+    );
+
+    if (!channel) {
+        return;
+    }
+
+    state.selectedChannel = channel;
+    state.messages = [];
+    state.reactions.clear();
+
+    renderChannels();
+    updateSelectedChannelInterface();
+
+    await loadMessages(true);
+    await subscribeToChannel(channel.id);
+}
+
+
+function updateSelectedChannelInterface() {
+    const channel = state.selectedChannel;
+
+    if (!channel) {
+        return;
+    }
+
+    setText(
+        "mainChannelTitle",
+        channel.name
+    );
+
+    setText(
+        "mainChannelDescription",
+        channel.description ||
+        "Community discussion"
+    );
+
+    setText(
+        "mainChannelIcon",
+        channel.icon || "#"
+    );
+
+    const input = $("messageInput");
+
+    if (input) {
+        input.placeholder =
+            `Message #${channel.name}`;
+    }
+}
+
+
+function clearChannelInterface() {
+    setText("mainChannelTitle", "No channels");
+    setText(
+        "mainChannelDescription",
+        "This community has no available channels."
+    );
+
+    const messageList = $("messageList");
+
+    if (messageList) {
+        messageList.innerHTML = "";
+    }
+
+    showElement($("messageEmptyState"));
+}
+
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+async function loadMessages(reset = true) {
+    if (!state.selectedChannel || state.loadingMessages) {
+        return;
+    }
+
+    state.loadingMessages = true;
+
+    try {
+        let query = supabase
+            .from("chat_messages")
+            .select(`
+                id,
+                channel_id,
+                user_id,
+                parent_message_id,
+                content,
+                message_type,
+                is_edited,
+                is_deleted,
+                is_pinned,
+                edited_at,
+                deleted_at,
+                created_at,
+                updated_at
+            `)
+            .eq(
+                "channel_id",
+                state.selectedChannel.id
+            )
+            .order("created_at", {
+                ascending: false
+            })
+            .limit(state.messagePageSize + 1);
+
+        if (!reset && state.messages.length) {
+            const oldest = state.messages[0];
+
+            query = query.lt(
+                "created_at",
+                oldest.created_at
+            );
+        }
+
+        const {
+            data,
+            error
+        } = await query;
+
+        if (error) {
+            console.error("❌ Failed to load messages:", error);
+            toast("Could not load messages.", "error");
+            return;
+        }
+
+        const rows = data || [];
+
+        state.hasOlderMessages =
+            rows.length > state.messagePageSize;
+
+        const page = rows
+            .slice(0, state.messagePageSize)
+            .reverse();
+
+        if (reset) {
+            state.messages = page;
+        } else {
+            state.messages = [
+                ...page,
+                ...state.messages
+            ];
+        }
+
+        await loadProfilesForUsers(
+            state.messages.map(message => message.user_id)
+        );
+
+        await loadReactionsForMessages(
+            state.messages.map(message => message.id)
+        );
+
+        renderMessages();
+
+    } finally {
+        state.loadingMessages = false;
+    }
+}
+
+
+async function loadOlderMessages() {
+    if (
+        state.loadingOlderMessages ||
+        !state.hasOlderMessages
+    ) {
+        return;
+    }
+
+    state.loadingOlderMessages = true;
+
+    const messageList = $("messageList");
+
+    const previousHeight =
+        messageList?.scrollHeight || 0;
+
+    const previousTop =
+        messageList?.scrollTop || 0;
+
+    try {
+        await loadMessages(false);
+
+        if (messageList) {
+            const newHeight =
+                messageList.scrollHeight;
+
+            messageList.scrollTop =
+                newHeight -
+                previousHeight +
+                previousTop;
+        }
+    } finally {
+        state.loadingOlderMessages = false;
+    }
+}
+
+
+/* =========================================================
+   MESSAGE RENDERING
+   ========================================================= */
+
+function renderMessages() {
+    const container = $("messageList");
+    const emptyState = $("messageEmptyState");
+
+    if (!container) {
+        return;
+    }
+
+    if (!state.messages.length) {
+        container.innerHTML = "";
+
+        if (emptyState) {
+            showElement(emptyState);
+        }
+
+        updateOlderMessagesButton();
+        return;
+    }
+
+    if (emptyState) {
+        hideElement(emptyState);
+    }
+
+    const shouldStickToBottom =
+        isNearBottom(container);
+
+    container.innerHTML = state.messages
+        .map(renderMessage)
+        .join("");
+
+    bindMessageActions();
+
+    updateOlderMessagesButton();
+
+    if (shouldStickToBottom) {
+        requestAnimationFrame(() => {
+            scrollToBottom();
+        });
+    }
+}
+
+
+function renderMessage(message) {
+    const profile = getProfile(message.user_id);
+
+    const name =
+        profile.full_name ||
+        "Student";
+
+    const ownMessage =
+        state.user &&
+        message.user_id === state.user.id;
+
+    const deleted =
+        Boolean(message.is_deleted);
+
+    const timestamp =
+        formatMessageTime(message.created_at);
+
+    const avatar = renderAvatar(
+        profile,
+        name
+    );
+
+    const content = deleted
+        ? `<div class="message-deleted">This message was deleted.</div>`
+        : renderMessageContent(message);
+
+    const edited = message.is_edited && !deleted
+        ? `<span class="message-edited">(edited)</span>`
+        : "";
+
+    return `
+        <article
+            class="message-row ${ownMessage ? "own-message" : ""}"
+            data-message-id="${escapeAttribute(message.id)}"
+        >
+
+            <div class="message-avatar">
+                ${avatar}
+            </div>
+
+            <div class="message-body">
+
+                <div class="message-meta">
+                    <strong class="message-author">
+                        ${escapeHtml(name)}
+                    </strong>
+
+                    <span class="message-time">
+                        ${escapeHtml(timestamp)}
+                    </span>
+
+                    ${edited}
+                </div>
+
+                <div class="message-content">
+                    ${content}
+                </div>
+
+                ${
+                    renderMessageAttachments(message.id)
+                }
+
+                ${
+                    renderReactions(message.id)
+                }
+
+                <div class="message-actions">
+
+                    <button
+                        type="button"
+                        class="message-action-button"
+                        data-action="reply"
+                        data-message-id="${escapeAttribute(message.id)}"
+                    >
+                        Reply
+                    </button>
+
+                    <button
+                        type="button"
+                        class="message-action-button"
+                        data-action="react"
+                        data-message-id="${escapeAttribute(message.id)}"
+                    >
+                        React
+                    </button>
+
+                    ${
+                        ownMessage && !deleted
+                            ? `
+                                <button
+                                    type="button"
+                                    class="message-action-button danger"
+                                    data-action="delete"
+                                    data-message-id="${escapeAttribute(message.id)}"
+                                >
+                                    Delete
+                                </button>
+                            `
+                            : ""
+                    }
+
+                </div>
+
+                <div
+                    class="reaction-picker hidden"
+                    data-reaction-picker="${escapeAttribute(message.id)}"
+                >
+                    ${renderReactionButtons(message.id)}
+                </div>
+
+            </div>
+        </article>
+    `;
+}
+
+
+function renderAvatar(profile, name) {
+    if (profile.photo_url) {
+        return `
+            <img
+                src="${escapeAttribute(profile.photo_url)}"
+                alt="${escapeAttribute(name)}"
+                loading="lazy"
+                onerror="this.style.display='none'; this.nextElementSibling?.classList.remove('hidden');"
+            >
+            <span class="avatar-initials hidden">
+                ${escapeHtml(getInitials(name))}
+            </span>
+        `;
+    }
+
+    return `
+        <span class="avatar-initials">
+            ${escapeHtml(getInitials(name))}
+        </span>
+    `;
+}
+
+
+function renderMessageContent(message) {
+    const content =
+        String(message.content || "");
+
+    if (
+        message.message_type === "gif" &&
+        isSafeImageUrl(content)
+    ) {
+        return `
+            <div class="message-gif">
+                <img
+                    src="${escapeAttribute(content)}"
+                    alt="GIF"
+                    loading="lazy"
+                >
+            </div>
+        `;
+    }
+
+    return `
+        <div class="message-text">
+            ${formatMessageText(content)}
+        </div>
+    `;
+}
+
+
+function formatMessageText(text) {
+    const escaped = escapeHtml(text);
+
+    return escaped
+        .replace(/\n/g, "<br>")
+        .replace(
+            /(https?:\/\/[^\s<]+)/g,
+            `<a
+                href="$1"
+                target="_blank"
+                rel="noopener noreferrer"
+            >$1</a>`
+        );
+}
+
+
+function isSafeImageUrl(url) {
+    try {
+        const parsed = new URL(url);
+
+        return (
+            parsed.protocol === "https:" ||
+            parsed.protocol === "http:"
+        );
+    } catch {
+        return false;
+    }
+}
+
+
+function renderMessageAttachments(messageId) {
+    const attachments =
+        messageAttachments.get(messageId) || [];
+
+    if (!attachments.length) {
+        return "";
+    }
+
+    return `
+        <div class="message-attachments">
+            ${attachments.map(attachment => {
+                const image =
+                    attachment.mime_type?.startsWith("image/");
+
+                if (image && attachment.file_url) {
+                    return `
+                        <a
+                            class="attachment-image"
+                            href="${escapeAttribute(attachment.file_url)}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <img
+                                src="${escapeAttribute(attachment.file_url)}"
+                                alt="${escapeAttribute(
+                                    attachment.file_name
+                                )}"
+                                loading="lazy"
+                            >
+                        </a>
+                    `;
+                }
+
+                return `
+                    <a
+                        class="attachment-file"
+                        href="${escapeAttribute(
+                            attachment.file_url || "#"
+                        )}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        📎
+                        <span>
+                            ${escapeHtml(
+                                attachment.file_name ||
+                                "Attachment"
+                            )}
+                        </span>
+                    </a>
+                `;
+            }).join("")}
+        </div>
+    `;
+}
+
+
+const messageAttachments = new Map();
+
+
+async function loadAttachmentsForMessage(messageId) {
+    const {
+        data,
+        error
+    } = await supabase
+        .from("chat_attachments")
+        .select(`
+            id,
+            message_id,
+            uploaded_by,
+            file_name,
+            file_path,
+            file_url,
+            mime_type,
+            file_size,
+            created_at
+        `)
+        .eq("message_id", messageId)
+        .order("created_at", {
+            ascending: true
+        });
+
+    if (error) {
+        console.error(
+            "Could not load attachments:",
+            error
+        );
+        return;
+    }
+
+    messageAttachments.set(
+        messageId,
+        data || []
+    );
+}
+
+
+async function loadAttachmentsForMessages(messages) {
+    const ids = messages.map(message => message.id);
+
+    if (!ids.length) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from("chat_attachments")
+        .select(`
+            id,
+            message_id,
+            uploaded_by,
+            file_name,
+            file_path,
+            file_url,
+            mime_type,
+            file_size,
+            created_at
+        `)
+        .in("message_id", ids)
+        .order("created_at", {
+            ascending: true
+        });
+
+    if (error) {
+        console.error(
+            "Could not load message attachments:",
+            error
+        );
+        return;
+    }
+
+    messageAttachments.clear();
+
+    for (const attachment of data || []) {
+        if (!messageAttachments.has(attachment.message_id)) {
+            messageAttachments.set(
+                attachment.message_id,
+                []
+            );
+        }
+
+        messageAttachments
+            .get(attachment.message_id)
+            .push(attachment);
+    }
+}
+
+
+/* =========================================================
+   REACTIONS
+   ========================================================= */
+
+async function loadReactionsForMessages(messageIds) {
+    state.reactions.clear();
+
+    const ids = [
+        ...new Set(messageIds || [])
+    ];
+
+    if (!ids.length) {
+        return;
+    }
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from("chat_message_reactions")
+        .select(`
+            id,
+            message_id,
+            user_id,
+            reaction,
+            created_at
+        `)
+        .in("message_id", ids);
+
+    if (error) {
+        console.error(
+            "❌ Failed to load reactions:",
+            error
+        );
+        return;
+    }
+
+    for (const reaction of data || []) {
+        if (!state.reactions.has(reaction.message_id)) {
+            state.reactions.set(
+                reaction.message_id,
+                []
+            );
+        }
+
+        state.reactions
+            .get(reaction.message_id)
+            .push(reaction);
+    }
+}
+
+
+function renderReactions(messageId) {
+    const reactions =
+        state.reactions.get(messageId) || [];
+
+    if (!reactions.length) {
+        return "";
+    }
+
+    const grouped = new Map();
+
+    for (const reaction of reactions) {
+        if (!grouped.has(reaction.reaction)) {
+            grouped.set(
+                reaction.reaction,
+                []
+            );
+        }
+
+        grouped
+            .get(reaction.reaction)
+            .push(reaction.user_id);
+    }
+
+    return `
+        <div class="message-reactions">
+            ${[...grouped.entries()]
+                .map(([emoji, users]) => `
+                    <button
+                        type="button"
+                        class="reaction-chip ${
+                            users.includes(state.user?.id)
+                                ? "selected"
+                                : ""
+                        }"
+                        data-reaction="${escapeAttribute(emoji)}"
+                        data-message-id="${escapeAttribute(messageId)}"
+                    >
+                        ${escapeHtml(emoji)}
+                        <span>${users.length}</span>
+                    </button>
+                `)
+                .join("")}
+        </div>
+    `;
+}
+
+
+function renderReactionButtons(messageId) {
+    const emojis = [
+        "👍",
+        "❤️",
+        "😂",
+        "🎉",
+        "👏",
+        "🔥",
+        "💯",
+        "🙏"
+    ];
+
+    return emojis.map(emoji => `
+        <button
+            type="button"
+            class="reaction-choice"
+            data-reaction="${escapeAttribute(emoji)}"
+            data-message-id="${escapeAttribute(messageId)}"
+        >
+            ${emoji}
+        </button>
+    `).join("");
+}
+
+
+function openReactionPicker(messageId) {
+    closeReactionPicker();
+
+    const picker =
+        document.querySelector(
+            `[data-reaction-picker="${CSS.escape(messageId)}"]`
+        );
+
+    if (!picker) {
+        return;
+    }
+
+    picker.classList.remove("hidden");
+
+    state.reactionPickerMessageId =
+        messageId;
+
+    state.reactionOutsideHandler = event => {
+        if (
+            picker.contains(event.target) ||
+            event.target.closest(
+                `[data-action="react"][data-message-id="${CSS.escape(messageId)}"]`
+            )
+        ) {
+            return;
+        }
+
+        closeReactionPicker();
+    };
+
+    setTimeout(() => {
+        document.addEventListener(
+            "click",
+            state.reactionOutsideHandler
+        );
+    }, 0);
+}
+
+
+function closeReactionPicker() {
+    document
+        .querySelectorAll(".reaction-picker")
+        .forEach(element => {
+            element.classList.add("hidden");
+        });
+
+    if (state.reactionOutsideHandler) {
+        document.removeEventListener(
+            "click",
+            state.reactionOutsideHandler
+        );
+    }
+
+    state.reactionOutsideHandler = null;
+    state.reactionPickerMessageId = null;
+}
+
+
+async function toggleReaction(messageId, reaction) {
+    if (!state.user) {
+        return;
+    }
+
+    const {
+        data: existing,
+        error: lookupError
+    } = await supabase
+        .from("chat_message_reactions")
+        .select("id")
+        .eq("message_id", messageId)
+        .eq("user_id", state.user.id)
+        .eq("reaction", reaction)
+        .maybeSingle();
+
+    if (lookupError) {
+        console.error(
+            "Reaction lookup failed:",
+            lookupError
+        );
+        return;
+    }
+
+    if (existing) {
+        const {
+            error
+        } = await supabase
+            .from("chat_message_reactions")
+            .delete()
+            .eq("id", existing.id);
+
+        if (error) {
+            console.error(
+                "Reaction removal failed:",
+                error
+            );
+            return;
+        }
+    } else {
+        const {
+            error
+        } = await supabase
+            .from("chat_message_reactions")
+            .insert({
+                message_id: messageId,
+                user_id: state.user.id,
+                reaction
+            });
+
+        if (error) {
+            console.error(
+                "Reaction insertion failed:",
+                error
+            );
+            return;
+        }
+    }
+
+    await loadReactionsForMessages(
+        state.messages.map(message => message.id)
+    );
+
+    renderMessages();
+}
+
+
+/* =========================================================
+   MESSAGE ACTIONS
+   ========================================================= */
+
+function bindMessageActions() {
+    document
+        .querySelectorAll("[data-action]")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                handleMessageAction
+            );
+        });
+
+    document
+        .querySelectorAll(".reaction-choice")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                async event => {
+                    event.stopPropagation();
+
+                    const messageId =
+                        button.dataset.messageId;
+
+                    const reaction =
+                        button.dataset.reaction;
+
+                    closeReactionPicker();
+
+                    await toggleReaction(
+                        messageId,
+                        reaction
+                    );
+                }
+            );
+        });
+
+    document
+        .querySelectorAll(".reaction-chip")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                async () => {
+                    await toggleReaction(
+                        button.dataset.messageId,
+                        button.dataset.reaction
+                    );
+                }
+            );
+        });
+}
+
+
+async function handleMessageAction(event) {
+    const button = event.currentTarget;
+
+    const action =
+        button.dataset.action;
+
+    const messageId =
+        button.dataset.messageId;
+
+    if (!messageId) {
+        return;
+    }
+
+    if (action === "react") {
+        event.stopPropagation();
+        openReactionPicker(messageId);
+        return;
+    }
+
+    if (action === "reply") {
+        beginReply(messageId);
+        return;
+    }
+
+    if (action === "delete") {
+        await deleteMessage(messageId);
+    }
+}
+
+
+function beginReply(messageId) {
+    const message =
+        state.messages.find(
+            item => item.id === messageId
+        );
+
+    if (!message) {
+        return;
+    }
+
+    const input = $("messageInput");
+
+    if (!input) {
+        return;
+    }
+
+    input.dataset.replyTo = messageId;
+
+    const profile =
+        getProfile(message.user_id);
+
+    input.placeholder =
+        `Reply to ${profile.full_name || "Student"}...`;
+
+    input.focus();
+
+    toast("Reply mode enabled.");
+}
+
+
+/* =========================================================
+   DELETE MESSAGE
+   ========================================================= */
+
+async function deleteMessage(messageId) {
+    const message =
+        state.messages.find(
+            item => item.id === messageId
+        );
+
+    if (!message || !state.user) {
+        return;
+    }
+
+    if (message.user_id !== state.user.id) {
+        toast(
+            "You can only delete your own messages.",
+            "error"
+        );
+        return;
+    }
+
+    const confirmed =
+        window.confirm(
+            "Delete this message?"
+        );
+
+    if (!confirmed) {
+        return;
+    }
+
+    const {
+        error
+    } = await supabase
+        .from("chat_messages")
+        .update({
+            is_deleted: true,
+            deleted_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", messageId)
+        .eq("user_id", state.user.id);
+
+    if (error) {
+        console.error(
+            "❌ Message deletion failed:",
+            error
+        );
+
+        toast(
+            "The message could not be deleted.",
+            "error"
         );
 
         return;
     }
 
-
-    /* =====================================================
-       CONSTANTS
-       ===================================================== */
-
-    /*
-       IMPORTANT:
-       This is the ONLY RULES_VERSION declaration
-       in this file.
-    */
-    const RULES_VERSION =
-        "mwaniki-community-rules-v2";
+    toast("Message deleted.");
+}
 
 
-    const ATTACHMENT_BUCKET =
-        "chat-attachments";
+/* =========================================================
+   SEND MESSAGE
+   ========================================================= */
 
+async function sendMessage(event) {
+    event?.preventDefault();
 
-    const PAGE_SIZE =
-        100;
+    if (!state.rulesAccepted) {
+        showRulesGate();
+        return;
+    }
 
+    if (!state.selectedChannel) {
+        toast("Select a channel first.", "error");
+        return;
+    }
 
-    const MAX_FILE_SIZE =
-        25 * 1024 * 1024;
+    if (!state.user) {
+        toast("You must be signed in.", "error");
+        return;
+    }
 
+    const input = $("messageInput");
 
-    /* =====================================================
-       STATE
-       ===================================================== */
+    if (!input) {
+        return;
+    }
 
-    const state = {
+    const content =
+        input.value.trim();
 
-        user: null,
+    const files =
+        [...($("attachmentInput")?.files || [])];
 
-        profile: null,
+    if (!content && !files.length) {
+        return;
+    }
 
-        communities: [],
-
-        currentCommunity: null,
-
-        channels: [],
-
-        currentChannel: null,
-
-        messages: [],
-
-        reactions: new Map(),
-
-        profiles: new Map(),
-
-        realtimeChannels: [],
-
-        oldestMessageDate: null,
-
-        loadingMessages: false,
-
-        loadingOlder: false,
-
-        hasOlderMessages: true,
-
-        replyingTo: null,
-
-        selectedAttachment: null,
-
-        rulesAccepted: false,
-
-        initialized: false,
-
-        rulesListenersReady: false,
-
-        eventListenersReady: false
-
-    };
-
-
-    /* =====================================================
-       DOM HELPER
-       ===================================================== */
-
-    const $ = id =>
-        document.getElementById(id);
-
-
-    /* =====================================================
-       DOM REFERENCES
-       ===================================================== */
-
-    const app =
-        $("communityApp");
-
-    const messageArea =
-        $("messageArea");
-
-    const messageList =
-        $("messageList");
-
-    const messageEmptyState =
-        $("messageEmptyState");
-
-    const messageForm =
-        $("messageForm");
-
-    const messageInput =
-        $("messageInput");
-
-    const sendMessageButton =
+    const sendButton =
         $("sendMessageButton");
 
-    const attachButton =
-        $("attachButton");
-
-    const attachmentInput =
-        $("attachmentInput");
-
-    const emojiButton =
-        $("emojiButton");
-
-    const emojiPicker =
-        $("emojiPicker");
-
-    const emojiGrid =
-        $("emojiGrid");
-
-    const closeEmojiButton =
-        $("closeEmojiButton");
-
-    const gifButton =
-        $("gifButton");
-
-    const gifPicker =
-        $("gifPicker");
-
-    const closeGifButton =
-        $("closeGifButton");
-
-    const gifUrlInput =
-        $("gifUrlInput");
-
-    const previewGifButton =
-        $("previewGifButton");
-
-    const gifPreview =
-        $("gifPreview");
-
-    const sendGifButton =
-        $("sendGifButton");
-
-    const channelSearchInput =
-        $("channelSearchInput");
-
-    const channelList =
-        $("channelList");
-
-    const communityRailList =
-        $("communityRailList");
-
-    const selectedCommunityIcon =
-        $("selectedCommunityIcon");
-
-    const selectedCommunityName =
-        $("selectedCommunityName");
-
-    const selectedCommunityDescription =
-        $("selectedCommunityDescription");
-
-    const mainChannelIcon =
-        $("mainChannelIcon");
-
-    const mainChannelTitle =
-        $("mainChannelTitle");
-
-    const mainChannelDescription =
-        $("mainChannelDescription");
-
-    const communityToast =
-        $("communityToast");
-
-    const communityModal =
-        $("communityModal");
-
-    const communityChoiceList =
-        $("communityChoiceList");
-
-    const communityModalSearch =
-        $("communityModalSearch");
-
-    const accessibilityAnnouncer =
-        $("accessibilityAnnouncer");
-
-
-    /* =====================================================
-       UTILITY
-       ===================================================== */
-
-    function showToast(message) {
-
-        if (!communityToast) {
-
-            console.log(
-                "[Community]",
-                message
-            );
-
-            return;
-        }
-
-
-        communityToast.textContent =
-            message;
-
-
-        communityToast.classList.add(
-            "show"
-        );
-
-
-        clearTimeout(
-            showToast.timer
-        );
-
-
-        showToast.timer =
-            setTimeout(() => {
-
-                communityToast.classList.remove(
-                    "show"
-                );
-
-            }, 3000);
-
+    if (sendButton) {
+        sendButton.disabled = true;
     }
 
-
-    function announce(message) {
-
-        if (!accessibilityAnnouncer) {
-            return;
-        }
-
-
-        accessibilityAnnouncer.textContent =
-            "";
-
-
-        setTimeout(() => {
-
-            accessibilityAnnouncer.textContent =
-                message;
-
-        }, 20);
-
-    }
-
-
-    function escapeHtml(value = "") {
-
-        return String(value)
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
-
-    }
-
-
-    function getInitials(
-        name = "Student"
-    ) {
-
-        const clean =
-            String(name)
-                .trim();
-
-
-        if (!clean) {
-            return "S";
-        }
-
-
-        const parts =
-            clean
-                .split(/\s+/)
-                .filter(Boolean);
-
-
-        if (parts.length === 1) {
-
-            return parts[0]
-                .substring(0, 2)
-                .toUpperCase();
-
-        }
-
-
-        return (
-            parts[0][0] +
-            parts[parts.length - 1][0]
-        ).toUpperCase();
-
-    }
-
-
-    function formatMessageTime(
-        dateValue
-    ) {
-
-        if (!dateValue) {
-            return "";
-        }
-
-
-        const date =
-            new Date(dateValue);
-
-
-        if (
-            Number.isNaN(
-                date.getTime()
-            )
-        ) {
-
-            return "";
-
-        }
-
-
-        return date.toLocaleString(
-            [],
-            {
-                dateStyle: "short",
-                timeStyle: "short"
-            }
-        );
-
-    }
-
-
-    function isValidHttpUrl(
-        value
-    ) {
-
-        try {
-
-            const url =
-                new URL(value);
-
-
-            return (
-                url.protocol === "http:" ||
-                url.protocol === "https:"
-            );
-
-        } catch {
-
-            return false;
-
-        }
-
-    }
-
-
-    function isGifUrl(
-        value
-    ) {
-
-        if (!isValidHttpUrl(value)) {
-            return false;
-        }
-
-
-        const lower =
-            value.toLowerCase();
-
-
-        return (
-            lower.includes(".gif") ||
-            lower.includes("giphy.com") ||
-            lower.includes("tenor.com") ||
-            lower.includes("media.giphy") ||
-            lower.includes("media.tenor")
-        );
-
-    }
-
-
-    function scrollMessagesToBottom() {
-
-        if (!messageArea) {
-            return;
-        }
-
-
-        requestAnimationFrame(() => {
-
-            messageArea.scrollTop =
-                messageArea.scrollHeight;
-
-        });
-
-    }
-
-
-    /* =====================================================
-       AUTH
-       ===================================================== */
-
-    async function loadCurrentUser() {
+    try {
+        const replyTo =
+            input.dataset.replyTo || null;
 
         const {
-            data,
+            data: message,
             error
-        } =
-            await supabase.auth.getUser();
+        } = await supabase
+            .from("chat_messages")
+            .insert({
+                channel_id:
+                    state.selectedChannel.id,
 
+                user_id:
+                    state.user.id,
+
+                parent_message_id:
+                    replyTo,
+
+                content:
+                    content || null,
+
+                message_type:
+                    files.length
+                        ? "file"
+                        : "text"
+            })
+            .select(`
+                id,
+                channel_id,
+                user_id,
+                parent_message_id,
+                content,
+                message_type,
+                is_edited,
+                is_deleted,
+                is_pinned,
+                edited_at,
+                deleted_at,
+                created_at,
+                updated_at
+            `)
+            .single();
 
         if (error) {
-
             console.error(
-                "Authentication error:",
+                "❌ Message send failed:",
                 error
             );
 
-            return null;
-        }
-
-
-        state.user =
-            data?.user || null;
-
-
-        return state.user;
-
-    }
-
-
-    /* =====================================================
-       STUDENT PROFILE
-       ===================================================== */
-
-    async function loadStudentProfile(
-        userId
-    ) {
-
-        if (!userId) {
-
-            return {
-
-                id: null,
-
-                full_name:
-                    "Student",
-
-                photo_url:
-                    null
-
-            };
-
-        }
-
-
-        if (
-            state.profiles.has(
-                userId
-            )
-        ) {
-
-            return state.profiles.get(
-                userId
+            toast(
+                "Message could not be sent.",
+                "error"
             );
 
-        }
-
-
-        const fallback = {
-
-            id:
-                userId,
-
-            full_name:
-                "Student",
-
-            photo_url:
-                null
-
-        };
-
-
-        try {
-
-            const {
-                data,
-                error
-            } =
-                await supabase
-                    .from("students")
-                    .select(
-                        "id,full_name,photo_url"
-                    )
-                    .eq(
-                        "id",
-                        userId
-                    )
-                    .maybeSingle();
-
-
-            if (error) {
-
-                console.error(
-                    "Student profile error:",
-                    error
-                );
-
-                state.profiles.set(
-                    userId,
-                    fallback
-                );
-
-                return fallback;
-
-            }
-
-
-            if (!data) {
-
-                state.profiles.set(
-                    userId,
-                    fallback
-                );
-
-                return fallback;
-
-            }
-
-
-            const profile = {
-
-                id:
-                    data.id,
-
-                full_name:
-                    data.full_name?.trim() ||
-                    "Student",
-
-                photo_url:
-                    data.photo_url ||
-                    null
-
-            };
-
-
-            state.profiles.set(
-                userId,
-                profile
-            );
-
-
-            return profile;
-
-        } catch (error) {
-
-            console.error(
-                "Profile exception:",
-                error
-            );
-
-
-            state.profiles.set(
-                userId,
-                fallback
-            );
-
-
-            return fallback;
-
-        }
-
-    }
-
-
-    async function loadMessageProfiles(
-        messages = []
-    ) {
-
-        const ids = [
-            ...new Set(
-                messages
-                    .map(
-                        message =>
-                            message.user_id
-                    )
-                    .filter(Boolean)
-            )
-        ];
-
-
-        const missing =
-            ids.filter(
-                id =>
-                    !state.profiles.has(
-                        id
-                    )
-            );
-
-
-        if (!missing.length) {
             return;
         }
 
+        if (files.length) {
+            await uploadAttachments(
+                message.id,
+                files
+            );
+        }
 
+        input.value = "";
+        delete input.dataset.replyTo;
+
+        input.placeholder =
+            `Message #${state.selectedChannel.name}`;
+
+        const attachmentInput =
+            $("attachmentInput");
+
+        if (attachmentInput) {
+            attachmentInput.value = "";
+        }
+
+        await loadMessages(true);
+
+        scrollToBottom();
+
+    } finally {
+        if (sendButton) {
+            sendButton.disabled = false;
+        }
+    }
+}
+
+
+/* =========================================================
+   ATTACHMENTS
+   ========================================================= */
+
+async function uploadAttachments(messageId, files) {
+    for (const file of files) {
         try {
+            const safeName =
+                sanitizeFileName(file.name);
+
+            const path =
+                `chat/${state.selectedChannel.id}/${messageId}/${Date.now()}-${safeName}`;
 
             const {
-                data,
-                error
-            } =
-                await supabase
-                    .from("students")
-                    .select(
-                        "id,full_name,photo_url"
-                    )
-                    .in(
-                        "id",
-                        missing
-                    );
+                error: uploadError
+            } = await supabase.storage
+                .from("chat-attachments")
+                .upload(path, file, {
+                    cacheControl: "3600",
+                    upsert: false
+                });
 
-
-            if (error) {
-
+            if (uploadError) {
                 console.error(
-                    "Batch profile error:",
-                    error
+                    "Attachment upload failed:",
+                    uploadError
                 );
 
-                return;
-
-            }
-
-
-            for (
-                const profile
-                of data || []
-            ) {
-
-                state.profiles.set(
-                    profile.id,
-                    {
-
-                        id:
-                            profile.id,
-
-                        full_name:
-                            profile.full_name?.trim() ||
-                            "Student",
-
-                        photo_url:
-                            profile.photo_url ||
-                            null
-
-                    }
+                toast(
+                    `Could not upload ${file.name}.`,
+                    "error"
                 );
 
-            }
-
-        } catch (error) {
-
-            console.error(
-                "Batch profile exception:",
-                error
-            );
-
-        }
-
-    }
-
-
-    function createAvatar(
-        profile,
-        className = "message-avatar"
-    ) {
-
-        const avatar =
-            document.createElement(
-                "div"
-            );
-
-
-        avatar.className =
-            className;
-
-
-        const name =
-            profile?.full_name ||
-            "Student";
-
-
-        if (profile?.photo_url) {
-
-            const image =
-                document.createElement(
-                    "img"
-                );
-
-
-            image.src =
-                profile.photo_url;
-
-
-            image.alt =
-                name;
-
-
-            image.loading =
-                "lazy";
-
-
-            image.onerror =
-                () => {
-
-                    image.remove();
-
-                    avatar.textContent =
-                        getInitials(
-                            name
-                        );
-
-                };
-
-
-            avatar.appendChild(
-                image
-            );
-
-        } else {
-
-            avatar.textContent =
-                getInitials(
-                    name
-                );
-
-        }
-
-
-        return avatar;
-
-    }
-
-
-    async function loadMyProfile() {
-
-        if (!state.user) {
-            return null;
-        }
-
-
-        state.profile =
-            await loadStudentProfile(
-                state.user.id
-            );
-
-
-        updateProfileUI();
-
-
-        return state.profile;
-
-    }
-
-
-    function updateProfileUI() {
-
-        const profile =
-            state.profile;
-
-
-        if (!profile) {
-            return;
-        }
-
-
-        const nameElements = [
-
-            $("sidebarProfileName")
-
-        ];
-
-
-        for (
-            const element
-            of nameElements
-        ) {
-
-            if (element) {
-
-                element.textContent =
-                    profile.full_name ||
-                    "Student";
-
-            }
-
-        }
-
-
-        const imageElements = [
-
-            $("railProfileAvatar"),
-
-            $("sidebarProfileAvatar")
-
-        ];
-
-
-        for (
-            const element
-            of imageElements
-        ) {
-
-            if (!element) {
                 continue;
             }
 
-
-            /*
-               These are actual <img> elements
-               in the current HTML.
-            */
-
-            if (
-                element.tagName ===
-                "IMG"
-            ) {
-
-                element.src =
-                    profile.photo_url ||
-                    "";
-
-
-                element.alt =
-                    profile.full_name ||
-                    "Profile";
-
-
-                element.onerror =
-                    () => {
-
-                        element.removeAttribute(
-                            "src"
-                        );
-
-                    };
-
-            }
-
-        }
-
-    }
-
-
-    /* =====================================================
-       RULES GATE
-       ===================================================== */
-
-    function hasAcceptedRules() {
-
-        return (
-            localStorage.getItem(
-                RULES_VERSION
-            ) === "true"
-        );
-
-    }
-
-
-    function setupRulesGate() {
-
-        if (
-            state.rulesListenersReady
-        ) {
-
-            state.rulesAccepted =
-                hasAcceptedRules();
-
-            return;
-
-        }
-
-
-        const gate =
-            $("communityRulesGate");
-
-
-        const checkbox =
-            $("communityRulesAgreement");
-
-
-        const continueButton =
-            $("acceptCommunityRulesButton");
-
-
-        const gateMessage =
-            $("rulesGateMessage");
-
-
-        if (!gate) {
-
-            console.error(
-                "❌ communityRulesGate was not found."
-            );
-
-            state.rulesAccepted =
-                false;
-
-            return;
-
-        }
-
-
-        state.rulesAccepted =
-            hasAcceptedRules();
-
-
-        if (state.rulesAccepted) {
-
-            gate.classList.add(
-                "hidden"
-            );
-
-            state.rulesListenersReady =
-                true;
-
-            return;
-
-        }
-
-
-        gate.classList.remove(
-            "hidden"
-        );
-
-
-        if (checkbox) {
-
-            checkbox.checked =
-                false;
-
-        }
-
-
-        if (continueButton) {
-
-            continueButton.disabled =
-                true;
-
-        }
-
-
-        checkbox?.addEventListener(
-            "change",
-            () => {
-
-                const accepted =
-                    checkbox.checked;
-
-
-                if (continueButton) {
-
-                    continueButton.disabled =
-                        !accepted;
-
-                }
-
-
-                if (gateMessage) {
-
-                    gateMessage.textContent =
-                        accepted
-                            ? ""
-                            : "You must agree to the rules before continuing.";
-
-                }
-
-            }
-        );
-
-
-        continueButton?.addEventListener(
-            "click",
-            async event => {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                if (
-                    !checkbox ||
-                    !checkbox.checked
-                ) {
-
-                    if (gateMessage) {
-
-                        gateMessage.textContent =
-                            "Please read and agree to the community rules first.";
-
-                    }
-
-                    return;
-
-                }
-
-
-                localStorage.setItem(
-                    RULES_VERSION,
-                    "true"
-                );
-
-
-                state.rulesAccepted =
-                    true;
-
-
-                gate.classList.add(
-                    "hidden"
-                );
-
-
-                checkbox.blur();
-                continueButton.blur();
-
-
-                announce(
-                    "Community rules accepted."
-                );
-
-
-                showToast(
-                    "Welcome to Mwaniki Scholars Community."
-                );
-
-
-                try {
-
-                    await loadCommunities();
-
-                } catch (error) {
-
-                    console.error(
-                        "Community loading after rules:",
-                        error
-                    );
-
-                    showToast(
-                        "Community could not be loaded."
-                    );
-
-                }
-
-            }
-        );
-
-
-        state.rulesListenersReady =
-            true;
-
-    }
-
-
-    function requireRules() {
-
-        if (
-            state.rulesAccepted
-        ) {
-
-            return true;
-
-        }
-
-
-        const gate =
-            $("communityRulesGate");
-
-
-        gate?.classList.remove(
-            "hidden"
-        );
-
-
-        showToast(
-            "Please read and accept the community rules first."
-        );
-
-
-        return false;
-
-    }
-
-
-    /* =====================================================
-       COMMUNITY LOADING
-       ===================================================== */
-
-    async function loadCommunities() {
-
-        if (!state.user) {
-            return;
-        }
-
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("chat_communities")
-                .select(`
-                    id,
-                    name,
-                    slug,
-                    description,
-                    icon_url,
-                    banner_url,
-                    is_public,
-                    is_active,
-                    created_at
-                `)
-                .eq(
-                    "is_active",
-                    true
-                )
-                .order(
-                    "name",
-                    {
-                        ascending: true
-                    }
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Community loading error:",
-                error
-            );
-
-
-            showToast(
-                "Unable to load communities."
-            );
-
-
-            return;
-
-        }
-
-
-        state.communities =
-            data || [];
-
-
-        renderCommunityRail();
-        renderCommunityChoices();
-
-
-        if (!state.communities.length) {
-
-            state.currentCommunity =
-                null;
-
-
-            state.currentChannel =
-                null;
-
-
-            clearMessages();
-
-
-            showToast(
-                "No active communities are available yet."
-            );
-
-
-            return;
-
-        }
-
-
-        if (
-            state.currentCommunity
-        ) {
-
-            const matching =
-                state.communities.find(
-                    community =>
-                        community.id ===
-                        state.currentCommunity.id
-                );
-
-
-            if (matching) {
-
-                await selectCommunity(
-                    matching
-                );
-
-                return;
-
-            }
-
-        }
-
-
-        await selectCommunity(
-            state.communities[0]
-        );
-
-    }
-
-
-    /* =====================================================
-       COMMUNITY ICONS
-       ===================================================== */
-
-    function getCommunityEmoji(
-        community
-    ) {
-
-        const text =
-            (
-                community?.name ||
-                ""
-            ).toLowerCase();
-
-
-        if (
-            text.includes("game")
-        ) {
-
-            return "🎮";
-
-        }
-
-
-        if (
-            text.includes("meme")
-        ) {
-
-            return "😂";
-
-        }
-
-
-        if (
-            text.includes("general")
-        ) {
-
-            return "💬";
-
-        }
-
-
-        if (
-            text.includes("medical")
-        ) {
-
-            return "🩺";
-
-        }
-
-
-        return "🎓";
-
-    }
-
-
-    function renderIcon(
-        container,
-        icon
-    ) {
-
-        if (!container) {
-            return;
-        }
-
-
-        container.innerHTML =
-            "";
-
-
-        /*
-           Emoji/text icons stay as text.
-           Only real HTTP URLs become images.
-        */
-
-        if (
-            icon &&
-            isValidHttpUrl(icon)
-        ) {
-
-            const image =
-                document.createElement(
-                    "img"
-                );
-
-
-            image.src =
-                icon;
-
-
-            image.alt =
-                "Community";
-
-
-            image.loading =
-                "lazy";
-
-
-            image.onerror =
-                () => {
-
-                    image.remove();
-
-                    container.textContent =
-                        "💬";
-
-                };
-
-
-            container.appendChild(
-                image
-            );
-
-
-            return;
-
-        }
-
-
-        container.textContent =
-            icon ||
-            "💬";
-
-    }
-
-
-    /* =====================================================
-       COMMUNITY RAIL
-       ===================================================== */
-
-    function renderCommunityRail() {
-
-        if (!communityRailList) {
-            return;
-        }
-
-
-        communityRailList.innerHTML =
-            "";
-
-
-        for (
-            const community
-            of state.communities
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "community-rail-item";
-
-
-            button.title =
-                community.name;
-
-
-            if (
-                state.currentCommunity?.id ===
-                community.id
-            ) {
-
-                button.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            const icon =
-                document.createElement(
-                    "span"
-                );
-
-
-            icon.className =
-                "community-rail-icon";
-
-
-            renderIcon(
-                icon,
-                community.icon_url ||
-                getCommunityEmoji(
-                    community
-                )
-            );
-
-
-            button.appendChild(
-                icon
-            );
-
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    if (!requireRules()) {
-                        return;
-                    }
-
-
-                    await selectCommunity(
-                        community
-                    );
-
-                }
-            );
-
-
-            communityRailList.appendChild(
-                button
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       COMMUNITY CHOICE MODAL
-       ===================================================== */
-
-    function renderCommunityChoices() {
-
-        if (!communityChoiceList) {
-            return;
-        }
-
-
-        const search =
-            communityModalSearch
-                ?.value
-                ?.trim()
-                .toLowerCase() ||
-            "";
-
-
-        communityChoiceList.innerHTML =
-            "";
-
-
-        const communities =
-            state.communities.filter(
-                community => {
-
-                    if (!search) {
-                        return true;
-                    }
-
-
-                    return (
-                        community.name
-                            ?.toLowerCase()
-                            .includes(search) ||
-                        community.description
-                            ?.toLowerCase()
-                            .includes(search)
-                    );
-
-                }
-            );
-
-
-        for (
-            const community
-            of communities
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "community-choice-item";
-
-
-            if (
-                state.currentCommunity?.id ===
-                community.id
-            ) {
-
-                button.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            const icon =
-                document.createElement(
-                    "span"
-                );
-
-
-            icon.className =
-                "community-choice-icon";
-
-
-            renderIcon(
-                icon,
-                community.icon_url ||
-                getCommunityEmoji(
-                    community
-                )
-            );
-
-
-            const details =
-                document.createElement(
-                    "span"
-                );
-
-
-            details.className =
-                "community-choice-details";
-
-
-            const name =
-                document.createElement(
-                    "strong"
-                );
-
-
-            name.textContent =
-                community.name;
-
-
-            const description =
-                document.createElement(
-                    "small"
-                );
-
-
-            description.textContent =
-                community.description ||
-                "Mwaniki Scholars Community";
-
-
-            details.appendChild(
-                name
-            );
-
-
-            details.appendChild(
-                description
-            );
-
-
-            button.appendChild(
-                icon
-            );
-
-
-            button.appendChild(
-                details
-            );
-
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    if (!requireRules()) {
-                        return;
-                    }
-
-
-                    closeCommunityModal();
-
-
-                    await selectCommunity(
-                        community
-                    );
-
-                }
-            );
-
-
-            communityChoiceList.appendChild(
-                button
-            );
-
-        }
-
-
-        if (!communities.length) {
-
-            const empty =
-                document.createElement(
-                    "div"
-                );
-
-
-            empty.className =
-                "channel-empty";
-
-
-            empty.textContent =
-                "No communities found.";
-
-
-            communityChoiceList.appendChild(
-                empty
-            );
-
-        }
-
-    }
-
-
-    function openCommunityModal() {
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        renderCommunityChoices();
-
-
-        communityModal?.classList.remove(
-            "hidden"
-        );
-
-
-        setTimeout(() => {
-
-            communityModalSearch?.focus();
-
-        }, 50);
-
-    }
-
-
-    function closeCommunityModal() {
-
-        communityModal?.classList.add(
-            "hidden"
-        );
-
-    }
-
-
-    function updateSelectedCommunityUI() {
-
-        const community =
-            state.currentCommunity;
-
-
-        if (!community) {
-            return;
-        }
-
-
-        if (selectedCommunityName) {
-
-            selectedCommunityName.textContent =
-                community.name ||
-                "Community";
-
-        }
-
-
-        if (selectedCommunityDescription) {
-
-            selectedCommunityDescription.textContent =
-                community.description ||
-                "Mwaniki Scholars";
-
-        }
-
-
-        if (selectedCommunityIcon) {
-
-            renderIcon(
-                selectedCommunityIcon,
-                community.icon_url ||
-                getCommunityEmoji(
-                    community
-                )
-            );
-
-        }
-
-
-        renderCommunityRail();
-        renderCommunityChoices();
-
-    }
-
-
-    /* =====================================================
-       SELECT COMMUNITY
-       ===================================================== */
-
-    async function selectCommunity(
-        community
-    ) {
-
-        if (!community) {
-            return;
-        }
-
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        state.currentCommunity =
-            community;
-
-
-        updateSelectedCommunityUI();
-
-
-        await loadChannels(
-            community.id
-        );
-
-    }
-
-
-    /* =====================================================
-       CHANNEL LOADING
-       ===================================================== */
-
-    async function loadChannels(
-        communityId
-    ) {
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("chat_channels")
-                .select(`
-                    id,
-                    community_id,
-                    name,
-                    slug,
-                    description,
-                    channel_type,
-                    icon,
-                    position,
-                    is_private,
-                    is_archived,
-                    is_active,
-                    course_id,
-                    unit_id
-                `)
-                .eq(
-                    "community_id",
-                    communityId
-                )
-                .eq(
-                    "is_active",
-                    true
-                )
-                .eq(
-                    "is_archived",
-                    false
-                )
-                .order(
-                    "position",
-                    {
-                        ascending: true
-                    }
-                )
-                .order(
-                    "name",
-                    {
-                        ascending: true
-                    }
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Channel loading error:",
-                error
-            );
-
-
-            showToast(
-                "Unable to load channels."
-            );
-
-
-            return;
-
-        }
-
-
-        state.channels =
-            data || [];
-
-
-        await filterPrivateChannels();
-
-
-        renderChannels();
-
-
-        const currentBelongs =
-            state.currentChannel &&
-            state.currentChannel.community_id ===
-                communityId &&
-            state.channels.some(
-                channel =>
-                    channel.id ===
-                    state.currentChannel.id
-            );
-
-
-        if (currentBelongs) {
-
-            await selectChannel(
-                state.channels.find(
-                    channel =>
-                        channel.id ===
-                        state.currentChannel.id
-                )
-            );
-
-
-            return;
-
-        }
-
-
-        const general =
-            state.channels.find(
-                channel =>
-                    channel.slug ===
-                    "general"
-            );
-
-
-        const first =
-            general ||
-            state.channels[0];
-
-
-        if (first) {
-
-            await selectChannel(
-                first
-            );
-
-        } else {
-
-            state.currentChannel =
-                null;
-
-
-            clearMessages();
-
-
-            updateMainChannelUI(
-                null
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       PRIVATE CHANNELS
-       ===================================================== */
-
-    async function filterPrivateChannels() {
-
-        if (!state.user) {
-            return;
-        }
-
-
-        const privateChannels =
-            state.channels.filter(
-                channel =>
-                    channel.is_private
-            );
-
-
-        if (!privateChannels.length) {
-            return;
-        }
-
-
-        const ids =
-            privateChannels.map(
-                channel =>
-                    channel.id
-            );
-
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from("chat_channel_members")
-                .select(
-                    "channel_id"
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                )
-                .in(
-                    "channel_id",
-                    ids
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Private channel access error:",
-                error
-            );
-
-
-            state.channels =
-                state.channels.filter(
-                    channel =>
-                        !channel.is_private
-                );
-
-
-            return;
-
-        }
-
-
-        const allowed =
-            new Set(
-                (data || [])
-                    .map(
-                        row =>
-                            row.channel_id
-                    )
-            );
-
-
-        state.channels =
-            state.channels.filter(
-                channel =>
-                    !channel.is_private ||
-                    allowed.has(
-                        channel.id
-                    )
-            );
-
-    }
-
-
-    /* =====================================================
-       CHANNEL RENDERING
-       ===================================================== */
-
-    function renderChannels() {
-
-        if (!channelList) {
-            return;
-        }
-
-
-        const search =
-            channelSearchInput
-                ?.value
-                ?.trim()
-                .toLowerCase() ||
-            "";
-
-
-        channelList.innerHTML =
-            "";
-
-
-        const channels =
-            state.channels.filter(
-                channel => {
-
-                    if (!search) {
-                        return true;
-                    }
-
-
-                    return (
-                        channel.name
-                            ?.toLowerCase()
-                            .includes(search) ||
-                        channel.description
-                            ?.toLowerCase()
-                            .includes(search)
-                    );
-
-                }
-            );
-
-
-        for (
-            const channel
-            of channels
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "channel-item";
-
-
-            if (
-                state.currentChannel?.id ===
-                channel.id
-            ) {
-
-                button.classList.add(
-                    "active"
-                );
-
-            }
-
-
-            const icon =
-                document.createElement(
-                    "span"
-                );
-
-
-            icon.className =
-                "channel-icon";
-
-
-            icon.textContent =
-                channel.icon ||
-                (
-                    channel.channel_type ===
-                    "voice"
-                        ? "🔊"
-                        : "#"
-                );
-
-
-            const text =
-                document.createElement(
-                    "span"
-                );
-
-
-            text.className =
-                "channel-item-text";
-
-
-            text.textContent =
-                channel.name;
-
-
-            button.appendChild(
-                icon
-            );
-
-
-            button.appendChild(
-                text
-            );
-
-
-            if (
-                channel.is_private
-            ) {
-
-                const lock =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                lock.className =
-                    "channel-lock";
-
-
-                lock.textContent =
-                    "🔒";
-
-
-                button.appendChild(
-                    lock
-                );
-
-            }
-
-
-            button.addEventListener(
-                "click",
-                async () => {
-
-                    await selectChannel(
-                        channel
-                    );
-
-                }
-            );
-
-
-            channelList.appendChild(
-                button
-            );
-
-        }
-
-
-        if (!channels.length) {
-
-            const empty =
-                document.createElement(
-                    "div"
-                );
-
-
-            empty.className =
-                "channel-empty";
-
-
-            empty.textContent =
-                "No channels found.";
-
-
-            channelList.appendChild(
-                empty
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       CHANNEL SELECTION
-       ===================================================== */
-
-    async function selectChannel(
-        channel
-    ) {
-
-        if (!channel) {
-            return;
-        }
-
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        state.currentChannel =
-            channel;
-
-
-        state.messages =
-            [];
-
-
-        state.reactions.clear();
-
-
-        state.oldestMessageDate =
-            null;
-
-
-        state.hasOlderMessages =
-            true;
-
-
-        updateMainChannelUI(
-            channel
-        );
-
-
-        renderChannels();
-
-
-        await loadMessages(
-            channel.id,
-            false
-        );
-
-
-        subscribeToChannel(
-            channel.id
-        );
-
-
-        await markChannelRead();
-
-    }
-
-
-    function updateMainChannelUI(
-        channel
-    ) {
-
-        if (!channel) {
-
-            if (mainChannelIcon) {
-
-                mainChannelIcon.textContent =
-                    "#";
-
-            }
-
-
-            if (mainChannelTitle) {
-
-                mainChannelTitle.textContent =
-                    "No channel";
-
-            }
-
-
-            if (mainChannelDescription) {
-
-                mainChannelDescription.textContent =
-                    "";
-
-            }
-
-
-            return;
-
-        }
-
-
-        if (mainChannelIcon) {
-
-            mainChannelIcon.textContent =
-                channel.icon ||
-                (
-                    channel.channel_type ===
-                    "voice"
-                        ? "🔊"
-                        : "#"
-                );
-
-        }
-
-
-        if (mainChannelTitle) {
-
-            mainChannelTitle.textContent =
-                `# ${channel.name}`;
-
-        }
-
-
-        if (mainChannelDescription) {
-
-            mainChannelDescription.textContent =
-                channel.description ||
-                "";
-
-        }
-
-    }
-
-
-    /* =====================================================
-       MESSAGE HISTORY
-       ===================================================== */
-
-    async function loadMessages(
-        channelId,
-        older = false
-    ) {
-
-        if (
-            state.loadingMessages ||
-            state.loadingOlder
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            older &&
-            !state.hasOlderMessages
-        ) {
-
-            return;
-
-        }
-
-
-        if (older) {
-
-            state.loadingOlder =
-                true;
-
-        } else {
-
-            state.loadingMessages =
-                true;
-
-        }
-
-
-        try {
-
-            let query =
-                supabase
-                    .from("chat_messages")
-                    .select(`
-                        id,
-                        channel_id,
-                        user_id,
-                        parent_message_id,
-                        content,
-                        message_type,
-                        is_edited,
-                        is_deleted,
-                        is_pinned,
-                        edited_at,
-                        deleted_at,
-                        created_at,
-                        updated_at
-                    `)
-                    .eq(
-                        "channel_id",
-                        channelId
-                    );
-
-
-            if (
-                older &&
-                state.oldestMessageDate
-            ) {
-
-                query =
-                    query.lt(
-                        "created_at",
-                        state.oldestMessageDate
-                    );
-
-            }
-
+            const {
+                data: publicData
+            } = supabase.storage
+                .from("chat-attachments")
+                .getPublicUrl(path);
+
+            const fileUrl =
+                publicData?.publicUrl || "";
 
             const {
-                data,
-                error
-            } =
-                await query
-                    .order(
-                        "created_at",
-                        {
-                            ascending: false
-                        }
-                    )
-                    .limit(
-                        PAGE_SIZE
-                    );
-
-
-            if (error) {
-
-                console.error(
-                    "Message history error:",
-                    error
-                );
-
-
-                showToast(
-                    "Unable to load messages."
-                );
-
-
-                return;
-
-            }
-
-
-            const rows =
-                data || [];
-
-
-            if (
-                rows.length <
-                PAGE_SIZE
-            ) {
-
-                state.hasOlderMessages =
-                    false;
-
-            }
-
-
-            const ordered =
-                rows.reverse();
-
-
-            await loadMessageProfiles(
-                ordered
-            );
-
-
-            await loadReactionsForMessages(
-                ordered
-            );
-
-
-            if (older) {
-
-                state.messages =
-                    [
-                        ...ordered,
-                        ...state.messages
-                    ];
-
-            } else {
-
-                state.messages =
-                    ordered;
-
-            }
-
-
-            if (state.messages.length) {
-
-                state.oldestMessageDate =
-                    state.messages[0]
-                        .created_at;
-
-            }
-
-
-            renderMessages();
-
-
-            if (!older) {
-
-                scrollMessagesToBottom();
-
-            }
-
-        } finally {
-
-            state.loadingMessages =
-                false;
-
-
-            state.loadingOlder =
-                false;
-
-        }
-
-    }
-
-
-    /* =====================================================
-       REACTIONS LOADING
-       ===================================================== */
-
-    async function loadReactionsForMessages(
-        messages
-    ) {
-
-        const ids =
-            messages
-                .map(
-                    message =>
-                        message.id
-                )
-                .filter(Boolean);
-
-
-        if (!ids.length) {
-            return;
-        }
-
-
-        const {
-            data,
-            error
-        } =
-            await supabase
-                .from(
-                    "chat_message_reactions"
-                )
-                .select(
-                    "id,message_id,user_id,reaction"
-                )
-                .in(
-                    "message_id",
-                    ids
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Reaction loading error:",
-                error
-            );
-
-
-            return;
-
-        }
-
-
-        for (
-            const id
-            of ids
-        ) {
-
-            state.reactions.set(
-                id,
-                []
-            );
-
-        }
-
-
-        for (
-            const reaction
-            of data || []
-        ) {
-
-            if (
-                !state.reactions.has(
-                    reaction.message_id
-                )
-            ) {
-
-                state.reactions.set(
-                    reaction.message_id,
-                    []
-                );
-
-            }
-
-
-            state.reactions
-                .get(
-                    reaction.message_id
-                )
-                .push(
-                    reaction
-                );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       RENDER MESSAGES
-       ===================================================== */
-
-    function renderMessages() {
-
-        if (!messageList) {
-            return;
-        }
-
-
-        messageList.innerHTML =
-            "";
-
-
-        if (
-            state.hasOlderMessages &&
-            state.messages.length
-        ) {
-
-            const olderButton =
-                document.createElement(
-                    "button"
-                );
-
-
-            olderButton.type =
-                "button";
-
-
-            olderButton.className =
-                "load-older-button";
-
-
-            olderButton.textContent =
-                "Load older messages";
-
-
-            olderButton.addEventListener(
-                "click",
-                async () => {
-
-                    if (
-                        state.currentChannel
-                    ) {
-
-                        await loadMessages(
-                            state.currentChannel.id,
-                            true
-                        );
-
-                    }
-
-                }
-            );
-
-
-            messageList.appendChild(
-                olderButton
-            );
-
-        }
-
-
-        if (!state.messages.length) {
-
-            const empty =
-                document.createElement(
-                    "div"
-                );
-
-
-            empty.className =
-                "messages-empty";
-
-
-            empty.innerHTML = `
-                <div class="empty-icon">💬</div>
-                <strong>No messages yet</strong>
-                <span>Start the conversation.</span>
-            `;
-
-
-            messageList.appendChild(
-                empty
-            );
-
-
-            if (messageEmptyState) {
-
-                messageEmptyState.classList.remove(
-                    "hidden"
-                );
-
-            }
-
-
-            return;
-
-        }
-
-
-        if (messageEmptyState) {
-
-            messageEmptyState.classList.add(
-                "hidden"
-            );
-
-        }
-
-
-        for (
-            const message
-            of state.messages
-        ) {
-
-            renderMessage(
-                message
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       RENDER ONE MESSAGE
-       ===================================================== */
-
-    function renderMessage(
-        message
-    ) {
-
-        const profile =
-            state.profiles.get(
-                message.user_id
-            ) || {
-
-                id:
-                    message.user_id,
-
-                full_name:
-                    "Student",
-
-                photo_url:
-                    null
-
-            };
-
-
-        const article =
-            document.createElement(
-                "article"
-            );
-
-
-        article.className =
-            "chat-message";
-
-
-        article.dataset.messageId =
-            message.id;
-
-
-        article.dataset.userId =
-            message.user_id || "";
-
-
-        if (
-            state.user &&
-            message.user_id ===
-                state.user.id
-        ) {
-
-            article.classList.add(
-                "own-message"
-            );
-
-        }
-
-
-        const avatar =
-            createAvatar(
-                profile,
-                "message-avatar"
-            );
-
-
-        const body =
-            document.createElement(
-                "div"
-            );
-
-
-        body.className =
-            "message-body";
-
-
-        const header =
-            document.createElement(
-                "div"
-            );
-
-
-        header.className =
-            "message-header";
-
-
-        const sender =
-            document.createElement(
-                "strong"
-            );
-
-
-        sender.className =
-            "message-sender";
-
-
-        sender.textContent =
-            profile.full_name ||
-            "Student";
-
-
-        const timestamp =
-            document.createElement(
-                "time"
-            );
-
-
-        timestamp.className =
-            "message-time";
-
-
-        timestamp.textContent =
-            formatMessageTime(
-                message.created_at
-            );
-
-
-        header.appendChild(
-            sender
-        );
-
-
-        header.appendChild(
-            timestamp
-        );
-
-
-        if (message.is_edited) {
-
-            const edited =
-                document.createElement(
-                    "span"
-                );
-
-
-            edited.className =
-                "edited-label";
-
-
-            edited.textContent =
-                "(edited)";
-
-
-            header.appendChild(
-                edited
-            );
-
-        }
-
-
-        body.appendChild(
-            header
-        );
-
-
-        /* =================================================
-           REPLY PREVIEW
-           ================================================= */
-
-        if (
-            message.parent_message_id
-        ) {
-
-            const parent =
-                state.messages.find(
-                    item =>
-                        item.id ===
-                        message.parent_message_id
-                );
-
-
-            if (parent) {
-
-                const parentProfile =
-                    state.profiles.get(
-                        parent.user_id
-                    );
-
-
-                const reply =
-                    document.createElement(
-                        "div"
-                    );
-
-
-                reply.className =
-                    "message-reply-preview";
-
-
-                const replyName =
-                    document.createElement(
-                        "strong"
-                    );
-
-
-                replyName.textContent =
-                    parentProfile?.full_name ||
-                    "Student";
-
-
-                const replyText =
-                    document.createElement(
-                        "span"
-                    );
-
-
-                replyText.textContent =
-                    parent.is_deleted
-                        ? "Message deleted"
-                        : (
-                            parent.content ||
-                            "Attachment"
-                        );
-
-
-                reply.appendChild(
-                    replyName
-                );
-
-
-                reply.appendChild(
-                    document.createTextNode(
-                        ": "
-                    )
-                );
-
-
-                reply.appendChild(
-                    replyText
-                );
-
-
-                body.appendChild(
-                    reply
-                );
-
-            }
-
-        }
-
-
-        /* =================================================
-           CONTENT
-           ================================================= */
-
-        if (message.is_deleted) {
-
-            const deleted =
-                document.createElement(
-                    "div"
-                );
-
-
-            deleted.className =
-                "message-content deleted-message";
-
-
-            deleted.textContent =
-                "This message was deleted.";
-
-
-            body.appendChild(
-                deleted
-            );
-
-        } else if (
-            message.message_type ===
-            "gif" &&
-            message.content
-        ) {
-
-            const content =
-                document.createElement(
-                    "div"
-                );
-
-
-            content.className =
-                "message-content";
-
-
-            const gif =
-                document.createElement(
-                    "img"
-                );
-
-
-            gif.className =
-                "message-gif";
-
-
-            gif.src =
-                message.content;
-
-
-            gif.alt =
-                "GIF";
-
-
-            gif.loading =
-                "lazy";
-
-
-            gif.referrerPolicy =
-                "no-referrer";
-
-
-            gif.onerror =
-                () => {
-
-                    gif.remove();
-
-
-                    const unavailable =
-                        document.createElement(
-                            "span"
-                        );
-
-
-                    unavailable.textContent =
-                        "GIF unavailable.";
-
-
-                    content.appendChild(
-                        unavailable
-                    );
-
-                };
-
-
-            content.appendChild(
-                gif
-            );
-
-
-            body.appendChild(
-                content
-            );
-
-        } else if (
-            message.content
-        ) {
-
-            const content =
-                document.createElement(
-                    "div"
-                );
-
-
-            content.className =
-                "message-content";
-
-
-            content.textContent =
-                message.content;
-
-
-            body.appendChild(
-                content
-            );
-
-        }
-
-
-        /* =================================================
-           ATTACHMENTS
-           ================================================= */
-
-        const attachmentContainer =
-            document.createElement(
-                "div"
-            );
-
-
-        attachmentContainer.className =
-            "message-attachments";
-
-
-        body.appendChild(
-            attachmentContainer
-        );
-
-
-        loadAttachments(
-            message.id,
-            attachmentContainer
-        );
-
-
-        /* =================================================
-           REACTIONS
-           ================================================= */
-
-        body.appendChild(
-            createReactionBar(
-                message
-            )
-        );
-
-
-        /* =================================================
-           ACTIONS
-           ================================================= */
-
-        const actions =
-            document.createElement(
-                "div"
-            );
-
-
-        actions.className =
-            "message-actions";
-
-
-        if (!message.is_deleted) {
-
-            const replyButton =
-                document.createElement(
-                    "button"
-                );
-
-
-            replyButton.type =
-                "button";
-
-
-            replyButton.className =
-                "message-action-button";
-
-
-            replyButton.textContent =
-                "↩ Reply";
-
-
-            replyButton.addEventListener(
-                "click",
-                event => {
-
-                    event.stopPropagation();
-
-
-                    startReply(
-                        message
-                    );
-
-                }
-            );
-
-
-            actions.appendChild(
-                replyButton
-            );
-
-
-            const reactButton =
-                document.createElement(
-                    "button"
-                );
-
-
-            reactButton.type =
-                "button";
-
-
-            reactButton.className =
-                "message-action-button";
-
-
-            reactButton.textContent =
-                "😊";
-
-
-            reactButton.title =
-                "Add reaction";
-
-
-            reactButton.addEventListener(
-                "click",
-                event => {
-
-                    event.stopPropagation();
-
-
-                    openReactionPicker(
-                        message.id,
-                        reactButton
-                    );
-
-                }
-            );
-
-
-            actions.appendChild(
-                reactButton
-            );
-
-        }
-
-
-        if (
-            state.user &&
-            message.user_id ===
-                state.user.id &&
-            !message.is_deleted
-        ) {
-
-            const deleteButton =
-                document.createElement(
-                    "button"
-                );
-
-
-            deleteButton.type =
-                "button";
-
-
-            deleteButton.className =
-                "message-action-button danger";
-
-
-            deleteButton.textContent =
-                "Delete";
-
-
-            deleteButton.addEventListener(
-                "click",
-                async event => {
-
-                    event.stopPropagation();
-
-
-                    await deleteMessage(
-                        message.id
-                    );
-
-                }
-            );
-
-
-            actions.appendChild(
-                deleteButton
-            );
-
-        }
-
-
-        body.appendChild(
-            actions
-        );
-
-
-        article.appendChild(
-            avatar
-        );
-
-
-        article.appendChild(
-            body
-        );
-
-
-        messageList.appendChild(
-            article
-        );
-
-    }
-
-
-    /* =====================================================
-       ATTACHMENTS - LOAD
-       ===================================================== */
-
-    async function loadAttachments(
-        messageId,
-        container
-    ) {
-
-        const {
-            data,
-            error
-        } =
-            await supabase
+                error: attachmentError
+            } = await supabase
                 .from("chat_attachments")
-                .select(`
-                    id,
-                    message_id,
-                    file_name,
-                    file_path,
-                    file_url,
-                    mime_type,
-                    file_size,
-                    created_at
-                `)
-                .eq(
-                    "message_id",
-                    messageId
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending: true
-                    }
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Attachment loading error:",
-                error
-            );
-
-
-            return;
-
-        }
-
-
-        for (
-            const attachment
-            of data || []
-        ) {
-
-            renderAttachment(
-                container,
-                attachment
-            );
-
-        }
-
-    }
-
-
-    function renderAttachment(
-        container,
-        attachment
-    ) {
-
-        const wrapper =
-            document.createElement(
-                "div"
-            );
-
-
-        wrapper.className =
-            "message-attachment";
-
-
-        const url =
-            attachment.file_url;
-
-
-        if (
-            attachment.mime_type?.startsWith(
-                "image/"
-            ) &&
-            url
-        ) {
-
-            const image =
-                document.createElement(
-                    "img"
-                );
-
-
-            image.src =
-                url;
-
-
-            image.alt =
-                attachment.file_name;
-
-
-            image.loading =
-                "lazy";
-
-
-            image.className =
-                "chat-image";
-
-
-            image.addEventListener(
-                "click",
-                () => {
-
-                    window.open(
-                        url,
-                        "_blank",
-                        "noopener,noreferrer"
-                    );
-
-                }
-            );
-
-
-            wrapper.appendChild(
-                image
-            );
-
-        } else {
-
-            const link =
-                document.createElement(
-                    "a"
-                );
-
-
-            link.href =
-                url || "#";
-
-
-            link.target =
-                "_blank";
-
-
-            link.rel =
-                "noopener noreferrer";
-
-
-            link.className =
-                "chat-file";
-
-
-            const icon =
-                document.createElement(
-                    "span"
-                );
-
-
-            icon.textContent =
-                getFileIcon(
-                    attachment.mime_type
-                );
-
-
-            const name =
-                document.createElement(
-                    "span"
-                );
-
-
-            name.textContent =
-                attachment.file_name;
-
-
-            link.appendChild(
-                icon
-            );
-
-
-            link.appendChild(
-                name
-            );
-
-
-            wrapper.appendChild(
-                link
-            );
-
-        }
-
-
-        container.appendChild(
-            wrapper
-        );
-
-    }
-
-
-    function getFileIcon(
-        mimeType = ""
-    ) {
-
-        const type =
-            mimeType.toLowerCase();
-
-
-        if (
-            type.includes("pdf")
-        ) {
-
-            return "📕";
-
-        }
-
-
-        if (
-            type.includes("word") ||
-            type.includes("document")
-        ) {
-
-            return "📘";
-
-        }
-
-
-        if (
-            type.includes("sheet") ||
-            type.includes("excel")
-        ) {
-
-            return "📗";
-
-        }
-
-
-        if (
-            type.includes("presentation") ||
-            type.includes("powerpoint")
-        ) {
-
-            return "📙";
-
-        }
-
-
-        if (
-            type.startsWith("image/")
-        ) {
-
-            return "🖼️";
-
-        }
-
-
-        if (
-            type.startsWith("video/")
-        ) {
-
-            return "🎬";
-
-        }
-
-
-        return "📎";
-
-    }
-
-
-    /* =====================================================
-       ATTACHMENTS - SELECT
-       ===================================================== */
-
-    function setupAttachmentButton() {
-
-        if (
-            !attachButton ||
-            !attachmentInput
-        ) {
-
-            console.warn(
-                "Attachment controls were not found."
-            );
-
-
-            return;
-
-        }
-
-
-        attachButton.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                if (!requireRules()) {
-                    return;
-                }
-
-
-                attachmentInput.click();
-
-            }
-        );
-
-
-        attachmentInput.addEventListener(
-            "change",
-            () => {
-
-                const file =
-                    attachmentInput.files?.[0];
-
-
-                if (!file) {
-                    return;
-                }
-
-
-                if (
-                    file.size >
-                    MAX_FILE_SIZE
-                ) {
-
-                    showToast(
-                        "Files must be 25 MB or smaller."
-                    );
-
-
-                    attachmentInput.value =
-                        "";
-
-
-                    return;
-
-                }
-
-
-                state.selectedAttachment =
-                    file;
-
-
-                showAttachmentPreview(
-                    file
-                );
-
-            }
-        );
-
-    }
-
-
-    function showAttachmentPreview(
-        file
-    ) {
-
-        let preview =
-            $("attachmentPreview");
-
-
-        if (!preview) {
-
-            preview =
-                document.createElement(
-                    "div"
-                );
-
-
-            preview.id =
-                "attachmentPreview";
-
-
-            preview.className =
-                "attachment-preview";
-
-
-            messageForm?.prepend(
-                preview
-            );
-
-        }
-
-
-        preview.innerHTML =
-            "";
-
-
-        const text =
-            document.createElement(
-                "span"
-            );
-
-
-        text.textContent =
-            `📎 ${file.name}`;
-
-
-        const remove =
-            document.createElement(
-                "button"
-            );
-
-
-        remove.type =
-            "button";
-
-
-        remove.textContent =
-            "×";
-
-
-        remove.title =
-            "Remove attachment";
-
-
-        remove.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                state.selectedAttachment =
-                    null;
-
-
-                preview.remove();
-
-
-                if (attachmentInput) {
-
-                    attachmentInput.value =
-                        "";
-
-                }
-
-            }
-        );
-
-
-        preview.appendChild(
-            text
-        );
-
-
-        preview.appendChild(
-            remove
-        );
-
-    }
-
-
-    /* =====================================================
-       ATTACHMENT UPLOAD
-       ===================================================== */
-
-    async function uploadAttachment(
-        messageId,
-        file
-    ) {
-
-        if (
-            !file ||
-            !state.user
-        ) {
-
-            return false;
-
-        }
-
-
-        const safeName =
-            file.name.replace(
-                /[^a-zA-Z0-9._-]/g,
-                "_"
-            );
-
-
-        const unique =
-            typeof crypto !==
-                "undefined" &&
-            crypto.randomUUID
-                ? crypto.randomUUID()
-                : `${Date.now()}-${Math.random()
-                    .toString(36)
-                    .slice(2)}`;
-
-
-        const path =
-            `${state.user.id}/${Date.now()}-${unique}-${safeName}`;
-
-
-        const {
-            error: uploadError
-        } =
-            await supabase
-                .storage
-                .from(
-                    ATTACHMENT_BUCKET
-                )
-                .upload(
-                    path,
-                    file,
-                    {
-                        cacheControl:
-                            "3600",
-
-                        upsert:
-                            false
-
-                    }
-                );
-
-
-        if (uploadError) {
-
-            console.error(
-                "Attachment upload error:",
-                uploadError
-            );
-
-
-            showToast(
-                "File upload failed."
-            );
-
-
-            return false;
-
-        }
-
-
-        const {
-            data: publicData
-        } =
-            supabase
-                .storage
-                .from(
-                    ATTACHMENT_BUCKET
-                )
-                .getPublicUrl(
-                    path
-                );
-
-
-        const fileUrl =
-            publicData?.publicUrl ||
-            null;
-
-
-        const {
-            error: attachmentError
-        } =
-            await supabase
-                .from(
-                    "chat_attachments"
-                )
                 .insert({
-
-                    message_id:
-                        messageId,
-
-                    uploaded_by:
-                        state.user.id,
-
-                    file_name:
-                        file.name,
-
-                    file_path:
-                        path,
-
-                    file_url:
-                        fileUrl,
-
-                    mime_type:
-                        file.type ||
-                        "application/octet-stream",
-
-                    file_size:
-                        file.size
-
+                    message_id: messageId,
+                    uploaded_by: state.user.id,
+                    file_name: file.name,
+                    file_path: path,
+                    file_url: fileUrl,
+                    mime_type: file.type || "application/octet-stream",
+                    file_size: file.size
                 });
 
-
-        if (attachmentError) {
-
-            console.error(
-                "Attachment database error:",
-                attachmentError
-            );
-
-
-            showToast(
-                "Attachment record could not be saved."
-            );
-
-
-            return false;
-
-        }
-
-
-        return true;
-
-    }
-
-
-    /* =====================================================
-       EMOJI PICKER
-       ===================================================== */
-
-    const EMOJIS = [
-
-        "😀",
-        "😂",
-        "🤣",
-        "😊",
-        "😍",
-        "🥰",
-        "😎",
-        "🤔",
-        "😮",
-        "😢",
-        "😭",
-        "😡",
-        "👍",
-        "👎",
-        "👏",
-        "🙏",
-        "❤️",
-        "🔥",
-        "🎉",
-        "💯",
-        "🩺",
-        "🧪",
-        "💊",
-        "📚",
-        "🎓",
-        "🧠",
-        "🎮",
-        "⚽",
-        "🏆",
-        "✨",
-        "✅",
-        "❌",
-        "💡",
-        "🚀",
-        "❤️‍🔥"
-
-    ];
-
-
-    function buildEmojiPicker() {
-
-        if (!emojiGrid) {
-            return;
-        }
-
-
-        emojiGrid.innerHTML =
-            "";
-
-
-        for (
-            const emoji
-            of EMOJIS
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
+            if (attachmentError) {
+                console.error(
+                    "Attachment database record failed:",
+                    attachmentError
                 );
+            }
 
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "emoji-choice";
-
-
-            button.textContent =
-                emoji;
-
-
-            button.addEventListener(
-                "click",
-                event => {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-
-                    insertEmoji(
-                        emoji
-                    );
-
-                }
+        } catch (error) {
+            console.error(
+                "Attachment error:",
+                error
             );
+        }
+    }
+}
 
 
-            emojiGrid.appendChild(
-                button
-            );
+function sanitizeFileName(name) {
+    return String(name || "file")
+        .replace(/[^a-zA-Z0-9._-]/g, "_")
+        .substring(0, 180);
+}
 
+
+/* =========================================================
+   GIF
+   ========================================================= */
+
+function previewGif() {
+    const input = $("gifUrlInput");
+    const preview = $("gifPreview");
+    const sendButton = $("sendGifButton");
+
+    const url =
+        input?.value.trim() || "";
+
+    state.selectedGifUrl = "";
+    state.selectedGifPreview = "";
+
+    if (!url || !isSafeImageUrl(url)) {
+        if (preview) {
+            preview.innerHTML =
+                "<p>Enter a valid image/GIF URL.</p>";
         }
 
+        if (sendButton) {
+            sendButton.disabled = true;
+        }
+
+        return;
     }
 
+    state.selectedGifUrl = url;
+    state.selectedGifPreview = url;
 
-    function openEmojiPicker() {
+    if (preview) {
+        preview.innerHTML = `
+            <img
+                src="${escapeAttribute(url)}"
+                alt="GIF preview"
+            >
+        `;
+    }
 
-        if (!emojiPicker) {
-            return;
-        }
+    if (sendButton) {
+        sendButton.disabled = false;
+    }
+}
 
 
-        if (!requireRules()) {
-            return;
-        }
+async function sendGif() {
+    if (!state.rulesAccepted) {
+        showRulesGate();
+        return;
+    }
 
+    if (!state.selectedChannel || !state.user) {
+        return;
+    }
 
-        buildEmojiPicker();
+    const url =
+        state.selectedGifUrl ||
+        $("gifUrlInput")?.value.trim();
 
+    if (!url || !isSafeImageUrl(url)) {
+        toast(
+            "Enter a valid GIF URL.",
+            "error"
+        );
+        return;
+    }
 
-        emojiPicker.classList.remove(
-            "hidden"
+    const {
+        error
+    } = await supabase
+        .from("chat_messages")
+        .insert({
+            channel_id:
+                state.selectedChannel.id,
+
+            user_id:
+                state.user.id,
+
+            content:
+                url,
+
+            message_type:
+                "gif"
+        });
+
+    if (error) {
+        console.error(
+            "GIF send failed:",
+            error
         );
 
+        toast(
+            "Could not send GIF.",
+            "error"
+        );
 
-        emojiButton?.setAttribute(
+        return;
+    }
+
+    closeGifPicker();
+
+    await loadMessages(true);
+    scrollToBottom();
+}
+
+
+/* =========================================================
+   EMOJI
+   ========================================================= */
+
+const EMOJIS = [
+    "😀", "😃", "😄", "😁", "😆", "😅",
+    "😂", "🤣", "😊", "😇", "🙂", "🙃",
+    "😉", "😌", "😍", "🥰", "😘", "😎",
+    "🤓", "🧐", "🤔", "🤨", "😐", "😑",
+    "😶", "🙄", "😏", "😴", "🤗", "🤭",
+    "🤫", "🤥", "😮", "😯", "😲", "😳",
+    "🥳", "😇", "😭", "😢", "😡", "🤯",
+    "👍", "👎", "👏", "🙌", "🙏", "💪",
+    "❤️", "💙", "💚", "💛", "🧡", "💜",
+    "🔥", "✨", "🎉", "💯", "✅", "❌"
+];
+
+
+function populateEmojiPicker() {
+    const grid = $("emojiGrid");
+
+    if (!grid || grid.children.length) {
+        return;
+    }
+
+    grid.innerHTML = EMOJIS
+        .map(emoji => `
+            <button
+                type="button"
+                class="emoji-choice"
+                data-emoji="${escapeAttribute(emoji)}"
+            >
+                ${emoji}
+            </button>
+        `)
+        .join("");
+
+    grid.querySelectorAll(".emoji-choice")
+        .forEach(button => {
+            button.addEventListener(
+                "click",
+                () => {
+                    insertEmoji(
+                        button.dataset.emoji
+                    );
+                }
+            );
+        });
+}
+
+
+function insertEmoji(emoji) {
+    const input = $("messageInput");
+
+    if (!input) {
+        return;
+    }
+
+    const start =
+        input.selectionStart ??
+        input.value.length;
+
+    const end =
+        input.selectionEnd ??
+        input.value.length;
+
+    input.value =
+        input.value.substring(0, start) +
+        emoji +
+        input.value.substring(end);
+
+    const position =
+        start + emoji.length;
+
+    input.selectionStart = position;
+    input.selectionEnd = position;
+
+    input.focus();
+}
+
+
+function toggleEmojiPicker() {
+    const picker = $("emojiPicker");
+    const gifPicker = $("gifPicker");
+    const button = $("emojiButton");
+
+    if (!picker) {
+        return;
+    }
+
+    const isOpen =
+        !picker.classList.contains("hidden");
+
+    closeGifPicker();
+
+    if (isOpen) {
+        closeEmojiPicker();
+        return;
+    }
+
+    populateEmojiPicker();
+
+    picker.classList.remove("hidden");
+
+    if (button) {
+        button.setAttribute(
             "aria-expanded",
             "true"
         );
+    }
+}
 
 
-        setTimeout(() => {
+function closeEmojiPicker() {
+    const picker = $("emojiPicker");
+    const button = $("emojiButton");
 
-            document.addEventListener(
-                "click",
-                handleEmojiOutsideClick
-            );
-
-        }, 0);
-
+    if (picker) {
+        picker.classList.add("hidden");
     }
 
-
-    function closeEmojiPicker() {
-
-        if (!emojiPicker) {
-            return;
-        }
-
-
-        emojiPicker.classList.add(
-            "hidden"
-        );
-
-
-        emojiButton?.setAttribute(
+    if (button) {
+        button.setAttribute(
             "aria-expanded",
             "false"
         );
+    }
+}
 
 
-        document.removeEventListener(
-            "click",
-            handleEmojiOutsideClick
-        );
+/* =========================================================
+   GIF UI
+   ========================================================= */
 
+function toggleGifPicker() {
+    const picker = $("gifPicker");
+
+    if (!picker) {
+        return;
     }
 
+    const open =
+        !picker.classList.contains("hidden");
 
-    function toggleEmojiPicker() {
+    closeEmojiPicker();
 
-        if (
-            emojiPicker?.classList.contains(
-                "hidden"
-            )
-        ) {
-
-            openEmojiPicker();
-
-        } else {
-
-            closeEmojiPicker();
-
-        }
-
-    }
-
-
-    function handleEmojiOutsideClick(
-        event
-    ) {
-
-        if (!emojiPicker) {
-            return;
-        }
-
-
-        if (
-            emojiPicker.contains(
-                event.target
-            ) ||
-            emojiButton?.contains(
-                event.target
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        closeEmojiPicker();
-
-    }
-
-
-    function insertEmoji(
-        emoji
-    ) {
-
-        if (!messageInput) {
-            return;
-        }
-
-
-        const start =
-            messageInput.selectionStart ??
-            messageInput.value.length;
-
-
-        const end =
-            messageInput.selectionEnd ??
-            messageInput.value.length;
-
-
-        messageInput.value =
-            messageInput.value.slice(
-                0,
-                start
-            ) +
-            emoji +
-            messageInput.value.slice(
-                end
-            );
-
-
-        const cursor =
-            start +
-            emoji.length;
-
-
-        messageInput.focus();
-
-
-        messageInput.setSelectionRange(
-            cursor,
-            cursor
-        );
-
-
-        closeEmojiPicker();
-
-    }
-
-
-    function setupEmojiButton() {
-
-        if (!emojiButton) {
-            return;
-        }
-
-
-        emojiButton.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                toggleEmojiPicker();
-
-            }
-        );
-
-
-        closeEmojiButton?.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                closeEmojiPicker();
-
-            }
-        );
-
-
-        emojiPicker?.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-            }
-        );
-
-    }
-
-
-    /* =====================================================
-       GIF PICKER
-       ===================================================== */
-
-    function setupGifPicker() {
-
-        if (!gifButton) {
-            return;
-        }
-
-
-        gifButton.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-                event.stopPropagation();
-
-
-                if (!requireRules()) {
-                    return;
-                }
-
-
-                openGifPicker();
-
-            }
-        );
-
-
-        closeGifButton?.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-
-
-                closeGifPicker();
-
-            }
-        );
-
-
-        previewGifButton?.addEventListener(
-            "click",
-            event => {
-
-                event.preventDefault();
-
-
-                previewGif();
-
-            }
-        );
-
-
-        sendGifButton?.addEventListener(
-            "click",
-            async event => {
-
-                event.preventDefault();
-
-
-                await sendGifFromPicker();
-
-            }
-        );
-
-
-        gifUrlInput?.addEventListener(
-            "input",
-            () => {
-
-                updateGifPreviewState();
-
-            }
-        );
-
-
-        gifPicker?.addEventListener(
-            "click",
-            event => {
-
-                event.stopPropagation();
-
-            }
-        );
-
-    }
-
-
-    function openGifPicker() {
-
-        if (!gifPicker) {
-            return;
-        }
-
-
-        gifPicker.classList.remove(
-            "hidden"
-        );
-
-
-        if (gifUrlInput) {
-
-            gifUrlInput.focus();
-
-        }
-
-
-        updateGifPreviewState();
-
-    }
-
-
-    function closeGifPicker() {
-
-        gifPicker?.classList.add(
-            "hidden"
-        );
-
-
-        if (gifPreview) {
-
-            gifPreview.innerHTML =
-                "";
-
-        }
-
-
-        if (gifUrlInput) {
-
-            gifUrlInput.value =
-                "";
-
-        }
-
-
-        if (sendGifButton) {
-
-            sendGifButton.disabled =
-                true;
-
-        }
-
-    }
-
-
-    function updateGifPreviewState() {
-
-        const url =
-            gifUrlInput
-                ?.value
-                ?.trim() ||
-            "";
-
-
-        if (sendGifButton) {
-
-            sendGifButton.disabled =
-                !isGifUrl(url);
-
-        }
-
-    }
-
-
-    function previewGif() {
-
-        const url =
-            gifUrlInput
-                ?.value
-                ?.trim() ||
-            "";
-
-
-        if (!isGifUrl(url)) {
-
-            showToast(
-                "Please enter a valid GIF URL."
-            );
-
-
-            return;
-
-        }
-
-
-        if (!gifPreview) {
-            return;
-        }
-
-
-        gifPreview.innerHTML =
-            "";
-
-
-        const image =
-            document.createElement(
-                "img"
-            );
-
-
-        image.src =
-            url;
-
-
-        image.alt =
-            "GIF preview";
-
-
-        image.className =
-            "gif-preview-image";
-
-
-        image.onload =
-            () => {
-
-                if (sendGifButton) {
-
-                    sendGifButton.disabled =
-                        false;
-
-                }
-
-            };
-
-
-        image.onerror =
-            () => {
-
-                gifPreview.textContent =
-                    "The GIF could not be loaded.";
-
-
-                if (sendGifButton) {
-
-                    sendGifButton.disabled =
-                        true;
-
-                }
-
-            };
-
-
-        gifPreview.appendChild(
-            image
-        );
-
-    }
-
-
-    async function sendGifFromPicker() {
-
-        const url =
-            gifUrlInput
-                ?.value
-                ?.trim() ||
-            "";
-
-
-        if (!isGifUrl(url)) {
-
-            showToast(
-                "Please enter a valid GIF URL."
-            );
-
-
-            return;
-
-        }
-
-
-        if (
-            !state.user ||
-            !state.currentChannel
-        ) {
-
-            showToast(
-                "Select a channel first."
-            );
-
-
-            return;
-
-        }
-
-
-        if (sendGifButton) {
-
-            sendGifButton.disabled =
-                true;
-
-        }
-
-
-        try {
-
-            const {
-                error
-            } =
-                await supabase
-                    .from("chat_messages")
-                    .insert({
-
-                        channel_id:
-                            state.currentChannel.id,
-
-                        user_id:
-                            state.user.id,
-
-                        content:
-                            url,
-
-                        message_type:
-                            "gif",
-
-                        parent_message_id:
-                            state.replyingTo?.id ||
-                            null
-
-                    });
-
-
-            if (error) {
-
-                console.error(
-                    "GIF send error:",
-                    error
-                );
-
-
-                showToast(
-                    "GIF could not be sent."
-                );
-
-
-                return;
-
-            }
-
-
-            cancelReply();
-
-
-            closeGifPicker();
-
-
-            await refreshCurrentChannel();
-
-
-        } finally {
-
-            if (sendGifButton) {
-
-                sendGifButton.disabled =
-                    false;
-
-            }
-
-        }
-
-    }
-
-
-    /* =====================================================
-       REACTION BAR
-       ===================================================== */
-
-    function createReactionBar(
-        message
-    ) {
-
-        const bar =
-            document.createElement(
-                "div"
-            );
-
-
-        bar.className =
-            "reaction-bar";
-
-
-        const reactions =
-            state.reactions.get(
-                message.id
-            ) || [];
-
-
-        const grouped =
-            new Map();
-
-
-        for (
-            const reaction
-            of reactions
-        ) {
-
-            if (
-                !grouped.has(
-                    reaction.reaction
-                )
-            ) {
-
-                grouped.set(
-                    reaction.reaction,
-                    {
-                        count: 0,
-                        mine: false
-                    }
-                );
-
-            }
-
-
-            const info =
-                grouped.get(
-                    reaction.reaction
-                );
-
-
-            info.count++;
-
-
-            if (
-                state.user &&
-                reaction.user_id ===
-                    state.user.id
-            ) {
-
-                info.mine =
-                    true;
-
-            }
-
-        }
-
-
-        for (
-            const [
-                emoji,
-                info
-            ]
-            of grouped
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button.className =
-                "reaction-button";
-
-
-            if (info.mine) {
-
-                button.classList.add(
-                    "mine"
-                );
-
-            }
-
-
-            button.textContent =
-                `${emoji} ${info.count}`;
-
-
-            button.addEventListener(
-                "click",
-                async event => {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-
-                    await toggleReaction(
-                        message.id,
-                        emoji
-                    );
-
-                }
-            );
-
-
-            bar.appendChild(
-                button
-            );
-
-        }
-
-
-        return bar;
-
-    }
-
-
-    /* =====================================================
-       REACTION PICKER
-       ===================================================== */
-
-    function openReactionPicker(
-        messageId,
-        anchor
-    ) {
-
-        closeReactionPicker();
-
-
-        const picker =
-            document.createElement(
-                "div"
-            );
-
-
-        picker.className =
-            "reaction-picker";
-
-
-        const emojis = [
-
-            "👍",
-            "❤️",
-            "😂",
-            "😮",
-            "😢",
-            "👏",
-            "🔥",
-            "🎉",
-            "💯",
-            "🙏"
-
-        ];
-
-
-        for (
-            const emoji
-            of emojis
-        ) {
-
-            const button =
-                document.createElement(
-                    "button"
-                );
-
-
-            button.type =
-                "button";
-
-
-            button.textContent =
-                emoji;
-
-
-            button.addEventListener(
-                "click",
-                async event => {
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-
-                    await toggleReaction(
-                        messageId,
-                        emoji
-                    );
-
-
-                    closeReactionPicker();
-
-                }
-            );
-
-
-            picker.appendChild(
-                button
-            );
-
-        }
-
-
-        document.body.appendChild(
-            picker
-        );
-
-
-        const rect =
-            anchor.getBoundingClientRect();
-
-
-        picker.style.position =
-            "fixed";
-
-
-        picker.style.left =
-            `${Math.max(
-                8,
-                Math.min(
-                    rect.left,
-                    window.innerWidth - 250
-                )
-            )}px`;
-
-
-        picker.style.top =
-            `${Math.min(
-                rect.bottom + 6,
-                window.innerHeight - 70
-            )}px`;
-
-
-        setTimeout(() => {
-
-            document.addEventListener(
-                "click",
-                handleReactionOutsideClick
-            );
-
-        }, 0);
-
-    }
-
-
-    function handleReactionOutsideClick(
-        event
-    ) {
-
-        const picker =
-            document.querySelector(
-                ".reaction-picker"
-            );
-
-
-        if (!picker) {
-            return;
-        }
-
-
-        if (
-            picker.contains(
-                event.target
-            )
-        ) {
-
-            return;
-
-        }
-
-
-        closeReactionPicker();
-
-    }
-
-
-    function closeReactionPicker() {
-
-        document
-            .querySelectorAll(
-                ".reaction-picker"
-            )
-            .forEach(
-                picker =>
-                    picker.remove()
-            );
-
-
-        document.removeEventListener(
-            "click",
-            handleReactionOutsideClick
-        );
-
-    }
-
-
-    /* =====================================================
-       TOGGLE REACTION
-       ===================================================== */
-
-    async function toggleReaction(
-        messageId,
-        reaction
-    ) {
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        if (!state.user) {
-            return;
-        }
-
-
-        const {
-            data: existing,
-            error: findError
-        } =
-            await supabase
-                .from(
-                    "chat_message_reactions"
-                )
-                .select(
-                    "id"
-                )
-                .eq(
-                    "message_id",
-                    messageId
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                )
-                .eq(
-                    "reaction",
-                    reaction
-                )
-                .maybeSingle();
-
-
-        if (findError) {
-
-            console.error(
-                "Reaction lookup error:",
-                findError
-            );
-
-
-            showToast(
-                "Reaction could not be changed."
-            );
-
-
-            return;
-
-        }
-
-
-        if (existing) {
-
-            const {
-                error
-            } =
-                await supabase
-                    .from(
-                        "chat_message_reactions"
-                    )
-                    .delete()
-                    .eq(
-                        "id",
-                        existing.id
-                    );
-
-
-            if (error) {
-
-                console.error(
-                    "Reaction delete error:",
-                    error
-                );
-
-
-                showToast(
-                    "Reaction could not be removed."
-                );
-
-
-                return;
-
-            }
-
-        } else {
-
-            const {
-                error
-            } =
-                await supabase
-                    .from(
-                        "chat_message_reactions"
-                    )
-                    .insert({
-
-                        message_id:
-                            messageId,
-
-                        user_id:
-                            state.user.id,
-
-                        reaction
-
-                    });
-
-
-            if (error) {
-
-                console.error(
-                    "Reaction insert error:",
-                    error
-                );
-
-
-                showToast(
-                    "Reaction could not be added."
-                );
-
-
-                return;
-
-            }
-
-        }
-
-
-        await refreshCurrentChannel();
-
-    }
-
-
-    /* =====================================================
-       SEND MESSAGE
-       ===================================================== */
-
-    async function sendMessage(
-        event
-    ) {
-
-        event?.preventDefault();
-
-
-        if (!requireRules()) {
-            return;
-        }
-
-
-        if (
-            !state.user ||
-            !state.currentChannel
-        ) {
-
-            showToast(
-                "Select a channel first."
-            );
-
-
-            return;
-
-        }
-
-
-        const content =
-            messageInput
-                ?.value
-                ?.trim() ||
-            "";
-
-
-        if (
-            !content &&
-            !state.selectedAttachment
-        ) {
-
-            return;
-
-        }
-
-
-        if (sendMessageButton) {
-
-            sendMessageButton.disabled =
-                true;
-
-        }
-
-
-        try {
-
-            const {
-                data: message,
-                error
-            } =
-                await supabase
-                    .from("chat_messages")
-                    .insert({
-
-                        channel_id:
-                            state.currentChannel.id,
-
-                        user_id:
-                            state.user.id,
-
-                        content:
-                            content || null,
-
-                        message_type:
-                            "text",
-
-                        parent_message_id:
-                            state.replyingTo?.id ||
-                            null
-
-                    })
-                    .select()
-                    .single();
-
-
-            if (error) {
-
-                console.error(
-                    "Send message error:",
-                    error
-                );
-
-
-                showToast(
-                    "Message could not be sent."
-                );
-
-
-                return;
-
-            }
-
-
-            if (message) {
-
-                state.profiles.set(
-                    state.user.id,
-                    state.profile || {
-
-                        id:
-                            state.user.id,
-
-                        full_name:
-                            "Student",
-
-                        photo_url:
-                            null
-
-                    }
-                );
-
-
-                if (
-                    state.selectedAttachment
-                ) {
-
-                    await uploadAttachment(
-                        message.id,
-                        state.selectedAttachment
-                    );
-
-                }
-
-
-                clearComposer();
-
-
-                await refreshCurrentChannel();
-
-            }
-
-        } finally {
-
-            if (sendMessageButton) {
-
-                sendMessageButton.disabled =
-                    false;
-
-            }
-
-        }
-
-    }
-
-
-    /* =====================================================
-       REFRESH CURRENT CHANNEL
-       ===================================================== */
-
-    async function refreshCurrentChannel() {
-
-        if (!state.currentChannel) {
-            return;
-        }
-
-
-        state.messages =
-            [];
-
-
-        state.reactions.clear();
-
-
-        state.oldestMessageDate =
-            null;
-
-
-        state.hasOlderMessages =
-            true;
-
-
-        await loadMessages(
-            state.currentChannel.id,
-            false
-        );
-
-
-        await markChannelRead();
-
-    }
-
-
-    /* =====================================================
-       REPLY
-       ===================================================== */
-
-    function startReply(
-        message
-    ) {
-
-        if (!message) {
-            return;
-        }
-
-
-        state.replyingTo =
-            message;
-
-
-        let indicator =
-            $("replyIndicator");
-
-
-        if (!indicator) {
-
-            indicator =
-                document.createElement(
-                    "div"
-                );
-
-
-            indicator.id =
-                "replyIndicator";
-
-
-            indicator.className =
-                "reply-indicator";
-
-
-            messageForm?.prepend(
-                indicator
-            );
-
-        }
-
-
-        indicator.innerHTML =
-            "";
-
-
-        const profile =
-            state.profiles.get(
-                message.user_id
-            );
-
-
-        const text =
-            document.createElement(
-                "span"
-            );
-
-
-        text.textContent =
-            `Replying to ${
-                profile?.full_name ||
-                "Student"
-            }: ${
-                message.content ||
-                "Attachment"
-            }`;
-
-
-        const cancel =
-            document.createElement(
-                "button"
-            );
-
-
-        cancel.type =
-            "button";
-
-
-        cancel.textContent =
-            "×";
-
-
-        cancel.title =
-            "Cancel reply";
-
-
-        cancel.addEventListener(
-            "click",
-            cancelReply
-        );
-
-
-        indicator.appendChild(
-            text
-        );
-
-
-        indicator.appendChild(
-            cancel
-        );
-
-
-        messageInput?.focus();
-
-    }
-
-
-    function cancelReply() {
-
-        state.replyingTo =
-            null;
-
-
-        $("replyIndicator")
-            ?.remove();
-
-    }
-
-
-    /* =====================================================
-       DELETE MESSAGE
-       ===================================================== */
-
-    async function deleteMessage(
-        messageId
-    ) {
-
-        if (!state.user) {
-            return;
-        }
-
-
-        const message =
-            state.messages.find(
-                item =>
-                    item.id ===
-                    messageId
-            );
-
-
-        if (!message) {
-            return;
-        }
-
-
-        if (
-            message.user_id !==
-            state.user.id
-        ) {
-
-            showToast(
-                "You can only delete your own messages."
-            );
-
-
-            return;
-
-        }
-
-
-        const confirmed =
-            window.confirm(
-                "Delete this message?"
-            );
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        const now =
-            new Date().toISOString();
-
-
-        const {
-            error
-        } =
-            await supabase
-                .from("chat_messages")
-                .update({
-
-                    is_deleted:
-                        true,
-
-                    deleted_at:
-                        now,
-
-                    updated_at:
-                        now,
-
-                    content:
-                        null
-
-                })
-                .eq(
-                    "id",
-                    messageId
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                );
-
-
-        if (error) {
-
-            console.error(
-                "Delete message error:",
-                error
-            );
-
-
-            showToast(
-                "Message could not be deleted."
-            );
-
-
-            return;
-
-        }
-
-
-        showToast(
-            "Message deleted."
-        );
-
-
-        await refreshCurrentChannel();
-
-    }
-
-
-    /* =====================================================
-       CLEAR COMPOSER
-       ===================================================== */
-
-    function clearComposer() {
-
-        if (messageInput) {
-
-            messageInput.value =
-                "";
-
-        }
-
-
-        state.selectedAttachment =
-            null;
-
-
-        $("attachmentPreview")
-            ?.remove();
-
-
-        if (attachmentInput) {
-
-            attachmentInput.value =
-                "";
-
-        }
-
-
-        cancelReply();
-
-
-        closeEmojiPicker();
+    if (open) {
         closeGifPicker();
-
+        return;
     }
 
-
-    /* =====================================================
-       MESSAGE INPUT
-       ===================================================== */
-
-    function setupMessageInput() {
-
-        if (!messageInput) {
-            return;
-        }
+    picker.classList.remove("hidden");
+}
 
 
-        messageInput.addEventListener(
-            "keydown",
-            event => {
+function closeGifPicker() {
+    const picker = $("gifPicker");
 
-                if (
-                    event.key ===
-                    "Enter" &&
-                    !event.shiftKey
-                ) {
-
-                    event.preventDefault();
+    if (picker) {
+        picker.classList.add("hidden");
+    }
+}
 
 
-                    sendMessage();
+/* =========================================================
+   ATTACHMENT UI
+   ========================================================= */
 
+function openAttachmentPicker() {
+    const input = $("attachmentInput");
+
+    if (input) {
+        input.click();
+    }
+}
+
+
+function handleAttachmentSelection() {
+    const input = $("attachmentInput");
+
+    if (!input?.files?.length) {
+        return;
+    }
+
+    const count = input.files.length;
+
+    toast(
+        `${count} file${count === 1 ? "" : "s"} ready to send.`
+    );
+}
+
+
+/* =========================================================
+   REALTIME
+   ========================================================= */
+
+async function subscribeToChannel(channelId) {
+    if (state.realtimeChannel) {
+        await supabase.removeChannel(
+            state.realtimeChannel
+        );
+
+        state.realtimeChannel = null;
+    }
+
+    const realtimeName =
+        `community-messages-${channelId}-${Date.now()}`;
+
+    state.realtimeChannel =
+        supabase
+            .channel(realtimeName)
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_messages",
+                    filter: `channel_id=eq.${channelId}`
+                },
+                async payload => {
+                    console.log(
+                        "💬 Message realtime:",
+                        payload.eventType
+                    );
+
+                    await loadMessages(true);
                 }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_message_reactions"
+                },
+                async () => {
+                    await loadReactionsForMessages(
+                        state.messages.map(
+                            message => message.id
+                        )
+                    );
 
+                    renderMessages();
+                }
+            )
+            .on(
+                "postgres_changes",
+                {
+                    event: "*",
+                    schema: "public",
+                    table: "chat_attachments"
+                },
+                async () => {
+                    await loadAttachmentsForMessages(
+                        state.messages
+                    );
+
+                    renderMessages();
+                }
+            )
+            .subscribe(status => {
+                console.log(
+                    `📡 Community realtime: ${status}`
+                );
+            });
+}
+
+
+/* =========================================================
+   NAVIGATION
+   ========================================================= */
+
+function goToDashboard() {
+    window.location.href =
+        "./dashboard.html";
+}
+
+
+function goToProfile() {
+    window.location.href =
+        "./studentProfile.html";
+}
+
+
+function goHome() {
+    window.location.href =
+        "./dashboard.html";
+}
+
+
+/* =========================================================
+   COMMUNITY MODAL
+   ========================================================= */
+
+function openCommunityModal() {
+    const modal =
+        $("communityModal");
+
+    if (!modal) {
+        return;
+    }
+
+    renderCommunityChoices();
+
+    modal.classList.remove("hidden");
+
+    $("communityModalSearch")?.focus();
+}
+
+
+function closeCommunityModal() {
+    const modal =
+        $("communityModal");
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+}
+
+
+/* =========================================================
+   GENERAL CALL
+   Call engine remains in call.js.
+   ========================================================= */
+
+function openGeneralCallModal() {
+    const modal =
+        $("generalCallModal");
+
+    if (modal) {
+        modal.classList.remove("hidden");
+    }
+}
+
+
+function closeGeneralCallModal() {
+    const modal =
+        $("generalCallModal");
+
+    if (modal) {
+        modal.classList.add("hidden");
+    }
+
+    setText(
+        "generalCallMessage",
+        ""
+    );
+}
+
+
+function setGeneralCallMode(mode) {
+    state.selectedCallMode = mode;
+
+    const voice =
+        $("generalVoiceCallButton");
+
+    const video =
+        $("generalVideoCallButton");
+
+    voice?.classList.toggle(
+        "active",
+        mode === "voice"
+    );
+
+    video?.classList.toggle(
+        "active",
+        mode === "video"
+    );
+}
+
+
+function startGeneralCall() {
+    const input =
+        $("generalCallUserInput");
+
+    const targetUserId =
+        input?.value.trim();
+
+    if (!targetUserId) {
+        setText(
+            "generalCallMessage",
+            "Enter the user UUID."
+        );
+        return;
+    }
+
+    /*
+       call.js owns the actual WebRTC call engine.
+
+       We dispatch a custom event so community.js
+       does not duplicate call logic.
+    */
+
+    window.dispatchEvent(
+        new CustomEvent(
+            "mwaniki:start-general-call",
+            {
+                detail: {
+                    targetUserId,
+                    mode: state.selectedCallMode
+                }
             }
-        );
+        )
+    );
+
+    closeGeneralCallModal();
+}
 
 
-        messageInput.addEventListener(
-            "input",
-            () => {
+/* =========================================================
+   MESSAGE LIST HELPERS
+   ========================================================= */
 
-                messageInput.style.height =
-                    "auto";
+function scrollToBottom() {
+    const container =
+        $("messageList");
 
-
-                messageInput.style.height =
-                    `${Math.min(
-                        messageInput.scrollHeight,
-                        160
-                    )}px`;
-
-            }
-        );
-
+    if (!container) {
+        return;
     }
 
-
-    /* =====================================================
-       REALTIME
-       ===================================================== */
-
-    function removeRealtimeChannels() {
-
-        for (
-            const channel
-            of state.realtimeChannels
-        ) {
-
-            try {
-
-                supabase.removeChannel(
-                    channel
-                );
-
-            } catch (error) {
-
-                console.warn(
-                    "Realtime cleanup error:",
-                    error
-                );
-
-            }
-
-        }
+    container.scrollTop =
+        container.scrollHeight;
+}
 
 
-        state.realtimeChannels =
-            [];
-
+function isNearBottom(container) {
+    if (!container) {
+        return true;
     }
 
-
-    function subscribeToChannel(
-        channelId
-    ) {
-
-        removeRealtimeChannels();
-
-
-        if (!channelId) {
-            return;
-        }
+    return (
+        container.scrollHeight -
+        container.scrollTop -
+        container.clientHeight
+    ) < 180;
+}
 
 
-        const realtime =
-            supabase
-                .channel(
-                    `community-channel-${channelId}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "INSERT",
+function updateOlderMessagesButton() {
+    const button =
+        $("loadOlderMessagesButton");
 
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_messages",
-
-                        filter:
-                            `channel_id=eq.${channelId}`
-
-                    },
-                    async payload => {
-
-                        await handleRealtimeMessage(
-                            payload.new
-                        );
-
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "UPDATE",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_messages",
-
-                        filter:
-                            `channel_id=eq.${channelId}`
-
-                    },
-                    async payload => {
-
-                        await handleRealtimeMessageUpdate(
-                            payload.new
-                        );
-
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "*",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_message_reactions"
-
-                    },
-                    async () => {
-
-                        if (
-                            state.currentChannel?.id ===
-                            channelId
-                        ) {
-
-                            await refreshCurrentChannel();
-
-                        }
-
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "*",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_attachments"
-
-                    },
-                    async () => {
-
-                        if (
-                            state.currentChannel?.id ===
-                            channelId
-                        ) {
-
-                            await refreshCurrentChannel();
-
-                        }
-
-                    }
-                )
-                .subscribe(
-                    status => {
-
-                        if (
-                            status ===
-                            "SUBSCRIBED"
-                        ) {
-
-                            console.log(
-                                "✅ Community realtime connected:",
-                                channelId
-                            );
-
-                        }
-
-                    }
-                );
-
-
-        state.realtimeChannels.push(
-            realtime
-        );
-
+    if (!button) {
+        return;
     }
 
-
-    async function handleRealtimeMessage(
-        message
-    ) {
-
-        if (
-            !message ||
-            message.channel_id !==
-                state.currentChannel?.id
-        ) {
-
-            return;
-
-        }
+    button.classList.toggle(
+        "hidden",
+        !state.hasOlderMessages
+    );
+}
 
 
-        const exists =
-            state.messages.some(
-                item =>
-                    item.id ===
-                    message.id
-            );
-
-
-        if (exists) {
-            return;
-        }
-
-
-        await loadMessageProfiles(
-            [message]
-        );
-
-
-        state.messages.push(
-            message
-        );
-
-
-        state.messages.sort(
-            (a, b) =>
-                new Date(
-                    a.created_at
-                ) -
-                new Date(
-                    b.created_at
-                )
-        );
-
-
-        await loadReactionsForMessages(
-            [message]
-        );
-
-
-        renderMessages();
-
-
-        scrollMessagesToBottom();
-
-
-        await markChannelRead();
-
+function formatMessageTime(dateValue) {
+    if (!dateValue) {
+        return "";
     }
 
+    const date =
+        new Date(dateValue);
 
-    async function handleRealtimeMessageUpdate(
-        message
-    ) {
-
-        if (
-            message.channel_id !==
-            state.currentChannel?.id
-        ) {
-
-            return;
-
-        }
-
-
-        const index =
-            state.messages.findIndex(
-                item =>
-                    item.id ===
-                    message.id
-            );
-
-
-        if (index >= 0) {
-
-            state.messages[index] =
-                message;
-
-        }
-
-
-        await loadMessageProfiles(
-            [message]
-        );
-
-
-        renderMessages();
-
+    if (Number.isNaN(date.getTime())) {
+        return "";
     }
 
-
-    /* =====================================================
-       READ STATUS
-       ===================================================== */
-
-    async function markChannelRead() {
-
-        if (
-            !state.user ||
-            !state.currentChannel
-        ) {
-
-            return;
-
+    return date.toLocaleTimeString(
+        [],
+        {
+            hour: "2-digit",
+            minute: "2-digit"
         }
+    );
+}
 
 
-        const latest =
-            state.messages[
-                state.messages.length - 1
-            ];
+/* =========================================================
+   ENTER COMMUNITY
+   ========================================================= */
 
-
-        const {
-            error
-        } =
-            await supabase
-                .from("chat_read_status")
-                .upsert(
-                    {
-
-                        channel_id:
-                            state.currentChannel.id,
-
-                        user_id:
-                            state.user.id,
-
-                        last_read_message_id:
-                            latest?.id ||
-                            null,
-
-                        last_read_at:
-                            new Date().toISOString()
-
-                    },
-                    {
-                        onConflict:
-                            "channel_id,user_id"
-                    }
-                );
-
-
-        if (error) {
-
-            console.warn(
-                "Read status error:",
-                error
-            );
-
-        }
-
+async function enterCommunity() {
+    if (!state.user) {
+        return;
     }
 
+    if (!state.communities.length) {
+        await loadCommunities();
+    }
 
-    /* =====================================================
-       GENERAL CHAT
-       ===================================================== */
-
-    async function openGeneralChat() {
-
-        if (!requireRules()) {
-            return;
-        }
-
-
+    if (!state.selectedCommunity) {
         if (!state.communities.length) {
-
-            await loadCommunities();
-
-            return;
-
-        }
-
-
-        let general =
-            state.channels.find(
-                channel =>
-                    channel.slug ===
-                    "general"
+            toast(
+                "No active communities are available.",
+                "error"
             );
-
-
-        if (general) {
-
-            await selectChannel(
-                general
-            );
-
-
             return;
-
         }
 
+        state.selectedCommunity =
+            state.communities[0];
+    }
 
-        /*
-           Search all communities for a general channel.
-        */
+    updateSelectedCommunityInterface();
 
-        for (
-            const community
-            of state.communities
-        ) {
-
-            const {
-                data,
-                error
-            } =
-                await supabase
-                    .from(
-                        "chat_channels"
-                    )
-                    .select(`
-                        id,
-                        community_id,
-                        name,
-                        slug,
-                        description,
-                        channel_type,
-                        icon,
-                        position,
-                        is_private,
-                        is_archived,
-                        is_active,
-                        course_id,
-                        unit_id
-                    `)
-                    .eq(
-                        "community_id",
-                        community.id
-                    )
-                    .eq(
-                        "slug",
-                        "general"
-                    )
-                    .eq(
-                        "is_active",
-                        true
-                    )
-                    .eq(
-                        "is_archived",
-                        false
-                    )
-                    .maybeSingle();
+    await loadChannels(
+        state.selectedCommunity.id
+    );
+}
 
 
-            if (error) {
+/* =========================================================
+   INPUT BEHAVIOR
+   ========================================================= */
 
-                console.warn(
-                    "General channel search:",
-                    error
-                );
+function resizeMessageInput() {
+    const input =
+        $("messageInput");
 
+    if (!input) {
+        return;
+    }
 
-                continue;
+    input.style.height = "auto";
 
-            }
-
-
-            if (data) {
-
-                await selectCommunity(
-                    community
-                );
-
-
-                await selectChannel(
-                    data
-                );
+    input.style.height =
+        `${Math.min(
+            input.scrollHeight,
+            160
+        )}px`;
+}
 
 
-                return;
+function handleMessageKeydown(event) {
+    if (
+        event.key === "Enter" &&
+        !event.shiftKey
+    ) {
+        event.preventDefault();
 
-            }
+        $("messageForm")?.requestSubmit();
+    }
+}
 
-        }
+
+/* =========================================================
+   GLOBAL ESCAPE HANDLER
+   ========================================================= */
+
+function handleEscapeKey(event) {
+    if (event.key !== "Escape") {
+        return;
+    }
+
+    closeEmojiPicker();
+    closeGifPicker();
+    closeReactionPicker();
+    closeCommunityModal();
+    closeGeneralCallModal();
+}
 
 
-        showToast(
-            "The General Chat channel has not been created yet."
+/* =========================================================
+   INTERFACE WIRING
+   ========================================================= */
+
+function wireInterface() {
+
+    /* Rules */
+
+    $("communityRulesAgreement")
+        ?.addEventListener(
+            "change",
+            handleRulesAgreement
         );
 
-    }
+    $("acceptCommunityRulesButton")
+        ?.addEventListener(
+            "click",
+            acceptCommunityRules
+        );
 
 
-    /* =====================================================
-       NAVIGATION
-       ===================================================== */
+    /* Message */
 
-    function goToDashboard() {
-
-        window.location.href =
-            "./dashboard.html";
-
-    }
-
-
-    function goToProfile() {
-
-        window.location.href =
-            "./profile.html";
-
-    }
-
-
-    /* =====================================================
-       UI EVENTS
-       ===================================================== */
-
-    function setupEvents() {
-
-        if (
-            state.eventListenersReady
-        ) {
-
-            return;
-
-        }
-
-
-        messageForm?.addEventListener(
+    $("messageForm")
+        ?.addEventListener(
             "submit",
             sendMessage
         );
 
-
-        /*
-           Do NOT attach a second send handler to
-           sendMessageButton because the form already
-           handles submission.
-        */
-
-
-        channelSearchInput?.addEventListener(
+    $("messageInput")
+        ?.addEventListener(
             "input",
-            renderChannels
+            resizeMessageInput
+        );
+
+    $("messageInput")
+        ?.addEventListener(
+            "keydown",
+            handleMessageKeydown
         );
 
 
-        communityModalSearch?.addEventListener(
-            "input",
-            renderCommunityChoices
+    /* Attachment */
+
+    $("attachButton")
+        ?.addEventListener(
+            "click",
+            openAttachmentPicker
+        );
+
+    $("attachmentInput")
+        ?.addEventListener(
+            "change",
+            handleAttachmentSelection
         );
 
 
-        $("openCommunityButton")
-            ?.addEventListener(
-                "click",
-                openCommunityModal
-            );
+    /* Emoji */
 
-
-        $("headerCommunityButton")
-            ?.addEventListener(
-                "click",
-                openCommunityModal
-            );
-
-
-        $("closeCommunityModal")
-            ?.addEventListener(
-                "click",
-                closeCommunityModal
-            );
-
-
-        communityModal?.addEventListener(
+    $("emojiButton")
+        ?.addEventListener(
             "click",
             event => {
-
-                if (
-                    event.target ===
-                    communityModal
-                ) {
-
-                    closeCommunityModal();
-
-                }
-
+                event.stopPropagation();
+                toggleEmojiPicker();
             }
         );
 
-
-        $("dashboardButton")
-            ?.addEventListener(
-                "click",
-                goToDashboard
-            );
-
-
-        $("homeButton")
-            ?.addEventListener(
-                "click",
-                goToDashboard
-            );
+    $("closeEmojiButton")
+        ?.addEventListener(
+            "click",
+            closeEmojiPicker
+        );
 
 
-        $("railHomeButton")
-            ?.addEventListener(
-                "click",
-                goToDashboard
-            );
+    /* GIF */
 
-
-        $("railGeneralButton")
-            ?.addEventListener(
-                "click",
-                openGeneralChat
-            );
-
-
-        $("railProfileButton")
-            ?.addEventListener(
-                "click",
-                goToProfile
-            );
-
-
-        $("sidebarProfileButton")
-            ?.addEventListener(
-                "click",
-                goToProfile
-            );
-
-
-        $("welcomeStartButton")
-            ?.addEventListener(
-                "click",
-                () => {
-
-                    if (!requireRules()) {
-                        return;
-                    }
-
-
-                    messageInput?.focus();
-
-                }
-            );
-
-
-        setupAttachmentButton();
-
-        setupEmojiButton();
-
-        setupGifPicker();
-
-        setupMessageInput();
-
-
-        document.addEventListener(
-            "keydown",
+    $("gifButton")
+        ?.addEventListener(
+            "click",
             event => {
+                event.stopPropagation();
+                toggleGifPicker();
+            }
+        );
 
-                if (
-                    event.key ===
-                    "Escape"
-                ) {
+    $("closeGifButton")
+        ?.addEventListener(
+            "click",
+            closeGifPicker
+        );
 
-                    closeEmojiPicker();
+    $("previewGifButton")
+        ?.addEventListener(
+            "click",
+            previewGif
+        );
 
-                    closeReactionPicker();
+    $("sendGifButton")
+        ?.addEventListener(
+            "click",
+            sendGif
+        );
 
-                    closeGifPicker();
 
-                    closeCommunityModal();
+    /* Older messages */
 
-                }
+    $("loadOlderMessagesButton")
+        ?.addEventListener(
+            "click",
+            loadOlderMessages
+        );
 
+
+    /* Community */
+
+    $("openCommunityButton")
+        ?.addEventListener(
+            "click",
+            openCommunityModal
+        );
+
+    $("headerCommunityButton")
+        ?.addEventListener(
+            "click",
+            openCommunityModal
+        );
+
+    $("closeCommunityModal")
+        ?.addEventListener(
+            "click",
+            closeCommunityModal
+        );
+
+    $("communityModalSearch")
+        ?.addEventListener(
+            "input",
+            event => {
+                renderCommunityChoices(
+                    event.target.value
+                );
             }
         );
 
 
-        window.addEventListener(
-            "beforeunload",
+    /* Navigation */
+
+    $("homeButton")
+        ?.addEventListener(
+            "click",
+            goHome
+        );
+
+    $("railHomeButton")
+        ?.addEventListener(
+            "click",
+            goToDashboard
+        );
+
+    $("dashboardButton")
+        ?.addEventListener(
+            "click",
+            goToDashboard
+        );
+
+    $("railProfileButton")
+        ?.addEventListener(
+            "click",
+            goToProfile
+        );
+
+    $("sidebarProfileButton")
+        ?.addEventListener(
+            "click",
+            goToProfile
+        );
+
+
+    /* Channel search */
+
+    $("channelSearchInput")
+        ?.addEventListener(
+            "input",
+            event => {
+                renderChannels(
+                    event.target.value
+                );
+            }
+        );
+
+
+    /* Welcome button */
+
+    $("welcomeStartButton")
+        ?.addEventListener(
+            "click",
             () => {
-
-                removeRealtimeChannels();
-
+                $("messageInput")?.focus();
             }
         );
 
 
-        state.eventListenersReady =
-            true;
+    /* General Call */
 
-    }
+    $("generalCallButton")
+        ?.addEventListener(
+            "click",
+            openGeneralCallModal
+        );
 
+    $("closeGeneralCallModalButton")
+        ?.addEventListener(
+            "click",
+            closeGeneralCallModal
+        );
 
-    /* =====================================================
-       AUTH STATE
-       ===================================================== */
+    $("cancelGeneralCallButton")
+        ?.addEventListener(
+            "click",
+            closeGeneralCallModal
+        );
 
-    function setupAuthListener() {
-
-        supabase.auth.onAuthStateChange(
-            async (
-                event,
-                session
-            ) => {
-
-                if (
-                    event ===
-                    "SIGNED_IN"
-                ) {
-
-                    state.user =
-                        session?.user ||
-                        null;
-
-
-                    if (state.user) {
-
-                        await loadMyProfile();
-
-
-                        if (
-                            state.rulesAccepted
-                        ) {
-
-                            await loadCommunities();
-
-                        }
-
-                    }
-
-                }
-
-
-                if (
-                    event ===
-                    "SIGNED_OUT"
-                ) {
-
-                    state.user =
-                        null;
-
-
-                    state.profile =
-                        null;
-
-
-                    state.profiles.clear();
-
-
-                    state.communities =
-                        [];
-
-
-                    state.currentCommunity =
-                        null;
-
-
-                    state.channels =
-                        [];
-
-
-                    state.currentChannel =
-                        null;
-
-
-                    state.messages =
-                        [];
-
-
-                    removeRealtimeChannels();
-
-
-                    renderCommunityRail();
-                    renderChannels();
-                    clearMessages();
-
-                }
-
+    $("generalVoiceCallButton")
+        ?.addEventListener(
+            "click",
+            () => {
+                setGeneralCallMode("voice");
             }
         );
 
-    }
+    $("generalVideoCallButton")
+        ?.addEventListener(
+            "click",
+            () => {
+                setGeneralCallMode("video");
+            }
+        );
 
-
-    /* =====================================================
-       CLEAR MESSAGES
-       ===================================================== */
-
-    function clearMessages() {
-
-        state.messages =
-            [];
-
-
-        state.reactions.clear();
-
-
-        state.oldestMessageDate =
-            null;
-
-
-        state.hasOlderMessages =
-            true;
-
-
-        if (messageList) {
-
-            messageList.innerHTML =
-                "";
-
-        }
-
-
-        if (messageEmptyState) {
-
-            messageEmptyState.classList.remove(
-                "hidden"
-            );
-
-        }
-
-    }
-
-
-    /* =====================================================
-       INITIALIZATION
-       ===================================================== */
-
-    async function initialize() {
-
-        if (
-            state.initialized
-        ) {
-
-            return;
-
-        }
-
-
-        state.initialized =
-            true;
-
-
-        console.log(
-            "🚀 Mwaniki Scholars Community loading..."
+    $("startGeneralCallButton")
+        ?.addEventListener(
+            "click",
+            startGeneralCall
         );
 
 
-        /*
-           Set up UI first so the rules gate is
-           immediately usable.
-        */
+    /* Escape */
 
-        setupRulesGate();
-
-        setupEvents();
-
-        setupAuthListener();
+    document.addEventListener(
+        "keydown",
+        handleEscapeKey
+    );
 
 
-        const user =
-            await loadCurrentUser();
+    /* Close pickers when clicking elsewhere */
 
+    document.addEventListener(
+        "click",
+        event => {
 
-        if (!user) {
+            const emojiPicker =
+                $("emojiPicker");
 
-            showToast(
-                "Please sign in to use the community."
-            );
+            const emojiButton =
+                $("emojiButton");
 
+            const gifPicker =
+                $("gifPicker");
 
-            console.warn(
-                "⚠️ No authenticated community user."
-            );
+            const gifButton =
+                $("gifButton");
 
+            if (
+                emojiPicker &&
+                !emojiPicker.contains(event.target) &&
+                !emojiButton?.contains(event.target)
+            ) {
+                closeEmojiPicker();
+            }
 
-            return;
-
+            if (
+                gifPicker &&
+                !gifPicker.contains(event.target) &&
+                !gifButton?.contains(event.target)
+            ) {
+                closeGifPicker();
+            }
         }
+    );
+}
 
 
-        await loadMyProfile();
+/* =========================================================
+   LOAD ATTACHMENTS WITH MESSAGES
+   ========================================================= */
+
+const originalLoadMessages =
+    loadMessages;
+
+loadMessages = async function(reset = true) {
+
+    await originalLoadMessages(reset);
+
+    await loadAttachmentsForMessages(
+        state.messages
+    );
+
+    renderMessages();
+};
 
 
-        /*
-           The rules gate blocks all community
-           activity until accepted.
-        */
+/* =========================================================
+   CLEANUP
+   ========================================================= */
 
-        if (!state.rulesAccepted) {
+window.addEventListener(
+    "beforeunload",
+    async () => {
 
-            console.log(
-                "Community waiting for rules acceptance."
+        if (state.realtimeChannel) {
+            await supabase.removeChannel(
+                state.realtimeChannel
             );
-
-
-            return;
-
         }
+    }
+);
 
 
+/* =========================================================
+   DEBUG ACCESS
+   ========================================================= */
+
+window.mwanikiCommunity = {
+    state,
+    reload: async () => {
         await loadCommunities();
 
-
-        console.log(
-            "✅ Mwaniki Scholars Community ready"
-        );
-
-    }
-
-
-    /* =====================================================
-       PUBLIC API
-       ===================================================== */
-
-    window.MwanikiCommunity = {
-
-        getState() {
-
-            return state;
-
-        },
-
-
-        refresh() {
-
-            return refreshCurrentChannel();
-
-        },
-
-
-        selectCommunity(
-            community
-        ) {
-
-            return selectCommunity(
-                community
+        if (state.selectedCommunity) {
+            await loadChannels(
+                state.selectedCommunity.id
             );
-
-        },
-
-
-        selectChannel(
-            channel
-        ) {
-
-            return selectChannel(
-                channel
-            );
-
-        },
-
-
-        sendMessage() {
-
-            return sendMessage();
-
-        },
-
-
-        loadProfile(
-            userId
-        ) {
-
-            return loadStudentProfile(
-                userId
-            );
-
-        },
-
-
-        openCommunityModal() {
-
-            return openCommunityModal();
-
-        },
-
-
-        closeCommunityModal() {
-
-            return closeCommunityModal();
-
-        },
-
-
-        acceptRules() {
-
-            localStorage.setItem(
-                RULES_VERSION,
-                "true"
-            );
-
-
-            state.rulesAccepted =
-                true;
-
-
-            $("communityRulesGate")
-                ?.classList.add(
-                    "hidden"
-                );
-
-
-            return loadCommunities();
-
         }
-
-    };
-
-
-    /* =====================================================
-       START
-       ===================================================== */
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-
-        document.addEventListener(
-            "DOMContentLoaded",
-            initialize,
-            {
-                once: true
-            }
-        );
-
-    } else {
-
-        initialize();
-
     }
+};
 
-})();
+console.log(
+    "✅ Mwaniki Scholars community.js loaded successfully"
+);
