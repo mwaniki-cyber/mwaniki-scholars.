@@ -408,18 +408,20 @@ function announce(message) {
 
 
 /* =========================================================
-   RULES
+   COMMUNITY RULES
    ========================================================= */
 
 function getRulesAccepted() {
 
     try {
-
         return localStorage.getItem(
             RULES_VERSION
         ) === "true";
-
     } catch (error) {
+        console.warn(
+            "Could not read rules state:",
+            error
+        );
 
         return false;
     }
@@ -435,36 +437,184 @@ function setRulesAccepted() {
             "true"
         );
 
-    } catch (error) {}
+    } catch (error) {
+
+        console.warn(
+            "Could not save rules state:",
+            error
+        );
+    }
 
     state.rulesAccepted = true;
 }
 
 
+function closeRulesGate() {
+
+    const gate =
+        $("#rulesGate");
+
+    if (!gate) {
+        return;
+    }
+
+    gate.classList.add("hidden");
+
+    gate.style.display = "none";
+    gate.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    announce(
+        "Community rules accepted."
+    );
+}
+
+
 function showRulesGate() {
 
-    const gate = $("#rulesGate");
+    const gate =
+        $("#rulesGate");
 
-    if (!gate) return;
+    if (!gate) {
+
+        console.warn(
+            "⚠️ #rulesGate was not found."
+        );
+
+        return;
+    }
 
     gate.classList.remove("hidden");
 
-    const acceptButton =
-        $("#acceptRulesButton");
+    gate.style.display = "";
+    gate.setAttribute(
+        "aria-hidden",
+        "false"
+    );
 
-    if (acceptButton) {
 
-        acceptButton.onclick = () => {
+    /*
+     * Support the expected button ID first.
+     */
+
+    const possibleButtons = [
+        "#acceptRulesButton",
+        "#agreeRulesButton",
+        "#agreeAndContinueButton",
+        "#continueRulesButton",
+        "#rulesAgreeButton"
+    ];
+
+
+    let button = null;
+
+    for (const selector of possibleButtons) {
+
+        const candidate =
+            $(selector);
+
+        if (candidate) {
+
+            button = candidate;
+            break;
+        }
+    }
+
+
+    /*
+     * If the ID isn't present, find the button
+     * from inside the rules gate.
+     */
+
+    if (!button) {
+
+        button =
+            gate.querySelector(
+                "button[type='button']"
+            ) ||
+            gate.querySelector(
+                "button"
+            );
+    }
+
+
+    if (!button) {
+
+        console.error(
+            "❌ No Agree and Continue button found inside #rulesGate."
+        );
+
+        return;
+    }
+
+
+    /*
+     * Remove an old listener by replacing the
+     * button with a clone.
+     *
+     * This prevents duplicate listeners.
+     */
+
+    const cleanButton =
+        button.cloneNode(true);
+
+    button.replaceWith(
+        cleanButton
+    );
+
+
+    cleanButton.disabled = false;
+
+    cleanButton.removeAttribute(
+        "disabled"
+    );
+
+    cleanButton.style.pointerEvents =
+        "auto";
+
+    cleanButton.style.cursor =
+        "pointer";
+
+
+    cleanButton.addEventListener(
+        "click",
+        function handleRulesAccept(event) {
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            console.log(
+                "✅ Community rules accepted."
+            );
 
             setRulesAccepted();
 
-            gate.classList.add("hidden");
+            closeRulesGate();
+        }
+    );
 
-            announce(
-                "Community rules accepted."
-            );
-        };
-    }
+
+    /*
+     * Also support keyboard activation.
+     */
+
+    cleanButton.addEventListener(
+        "keydown",
+        function handleRulesKeyboard(event) {
+
+            if (
+                event.key === "Enter" ||
+                event.key === " "
+            ) {
+
+                event.preventDefault();
+
+                cleanButton.click();
+            }
+        }
+    );
 }
 
 
@@ -473,11 +623,31 @@ function initializeRules() {
     state.rulesAccepted =
         getRulesAccepted();
 
-    if (!state.rulesAccepted) {
-        showRulesGate();
-    }
-}
+    if (state.rulesAccepted) {
 
+        const gate =
+            $("#rulesGate");
+
+        if (gate) {
+
+            gate.classList.add(
+                "hidden"
+            );
+
+            gate.style.display =
+                "none";
+
+            gate.setAttribute(
+                "aria-hidden",
+                "true"
+            );
+        }
+
+        return;
+    }
+
+    showRulesGate();
+}
 
 /* =========================================================
    PROFILE
