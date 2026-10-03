@@ -1,404 +1,119 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
+    <meta charset="UTF-8">
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-<meta charset="UTF-8">
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
 
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
+    <title>Mwaniki Scholars Community</title>
 
-<meta
-    name="description"
-    content="Mwaniki Scholars academic community."
->
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
 
-<meta
-    name="theme-color"
-    content="#087f73"
->
-
-<title>
-    Community | Mwaniki Scholars
-</title>
-
-
-<!-- =====================================================
-     MAIN STYLES
-     ===================================================== -->
-
-<link
-    rel="stylesheet"
-    href="./style.css"
->
-
-<link
-    rel="stylesheet"
-    href="./community.css"
->
-
-
-<!-- =====================================================
-     EMOJI PICKER
-     ===================================================== -->
-
-<script
-    type="module"
-    src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"
-></script>
-```
-
+    <link
+        rel="stylesheet"
+        href="./community.css"
+    >
 </head>
 
 <body>
 
-```
-<!-- =====================================================
-     ACCESSIBILITY
-     ===================================================== -->
+    <div id="communityApp" class="community-app">
 
-<div
-    id="accessibilityAnnouncer"
-    class="sr-only"
-    aria-live="polite"
-    aria-atomic="true"
-></div>
-
-
-<!-- =====================================================
-     TOAST
-     ===================================================== -->
-
-<div
-    id="communityToast"
-    class="community-toast"
-    role="status"
-    aria-live="polite"
-></div>
-
-
-<!-- =====================================================
-     COMMUNITY RULES GATE
-     ===================================================== -->
-
-<section
-    id="rulesGate"
-    class="rules-gate"
-    aria-hidden="true"
->
-
-    <div class="rules-card">
-
-        <div class="rules-icon">
-            🛡️
-        </div>
-
-        <h1>
-            Mwaniki Scholars Community
-        </h1>
-
-        <p class="rules-intro">
-            Please read and agree to the community rules
-            before participating.
-        </p>
-
-
-        <div class="community-rules">
-
-            <div class="rule-item">
-                <strong>1. Respect everyone</strong>
-                <span>
-                    Keep discussions respectful and academic.
-                </span>
-            </div>
-
-            <div class="rule-item">
-                <strong>2. Keep content appropriate</strong>
-                <span>
-                    Do not post harmful, illegal or inappropriate
-                    material.
-                </span>
-            </div>
-
-            <div class="rule-item">
-                <strong>3. Protect privacy</strong>
-                <span>
-                    Do not share another person's private
-                    information without permission.
-                </span>
-            </div>
-
-            <div class="rule-item">
-                <strong>4. Keep discussions relevant</strong>
-                <span>
-                    Use the appropriate community and channel.
-                </span>
-            </div>
-
-            <div class="rule-item">
-                <strong>5. No spam</strong>
-                <span>
-                    Avoid repeated messages, advertisements
-                    and disruptive content.
-                </span>
-            </div>
-
-        </div>
-
-
-        <label class="rules-checkbox">
-
-            <input
-                type="checkbox"
-                id="communityRulesAgreement"
-            >
-
-            <span>
-                I have read and agree to the community rules.
-            </span>
-
-        </label>
-
-
-        <p
-            id="rulesGateMessage"
-            class="rules-gate-message"
-        ></p>
-
-
-        <button
-            type="button"
-            id="acceptRulesButton"
-            class="primary-button"
-            disabled
-        >
-            Enter Community
-        </button>
-
-    </div>
-
-</section>
-
-
-<!-- =====================================================
-     APPLICATION
-     ===================================================== -->
-
-<div
-    id="communityApp"
-    class="community-app"
->
-
-
-    <!-- =================================================
-         TOP HEADER
-         ================================================= -->
-
-    <header class="community-header">
-
-        <div class="community-header-left">
-
-            <button
-                type="button"
-                id="homeButton"
-                class="header-icon-button"
-                title="Dashboard"
-                aria-label="Dashboard"
-            >
-                🏠
-            </button>
-
-
-            <div class="community-brand">
-
-                <div
-                    id="selectedCommunityIcon"
-                    class="community-brand-icon"
-                >
-                    🎓
-                </div>
-
-                <div class="community-brand-text">
-
-                    <strong
-                        id="communityBrandTitle"
-                    >
-                        Mwaniki Scholars
-                    </strong>
-
-                    <span>
-                        Community
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <div class="community-header-center">
-
-            <button
-                type="button"
-                id="headerCommunityButton"
-                class="community-selector-button"
-            >
-
-                <span
-                    id="selectedCommunityName"
-                >
-                    Mwaniki Scholars
-                </span>
-
-                <span>
-                    ▾
-                </span>
-
-            </button>
-
-        </div>
-
-
-        <div class="community-header-right">
-
-            <button
-                type="button"
-                id="generalCallButton"
-                class="header-action-button"
-                title="General Call"
-            >
-                📞
-                <span>
-                    Call
-                </span>
-            </button>
-
-
-            <button
-                type="button"
-                id="dashboardButton"
-                class="header-action-button"
-            >
-                Dashboard
-            </button>
-
-        </div>
-
-    </header>
-
-
-    <!-- =================================================
-         MAIN COMMUNITY LAYOUT
-         ================================================= -->
-
-    <main class="community-layout">
-
-
-        <!-- =============================================
+        <!-- =====================================================
              COMMUNITY RAIL
-             ============================================= -->
+             ===================================================== -->
 
-        <aside
-            class="community-rail"
-            aria-label="Communities"
-        >
+        <aside class="community-rail">
 
-            <button
-                type="button"
-                id="railHomeButton"
-                class="rail-button"
-                title="Dashboard"
-                aria-label="Dashboard"
-            >
-                🏠
-            </button>
-
+            <div class="rail-brand">
+                <div class="rail-logo">MS</div>
+            </div>
 
             <div
                 id="communityRailList"
                 class="community-rail-list"
             ></div>
 
-
-            <div class="rail-divider"></div>
-
-
             <button
+                id="openCommunityModal"
+                class="rail-add-button"
                 type="button"
-                id="openCommunityButton"
-                class="rail-button"
                 title="Browse communities"
-                aria-label="Browse communities"
             >
                 +
             </button>
 
-
             <button
+                id="generalCallButton"
+                class="rail-call-button"
                 type="button"
-                id="railProfileButton"
-                class="rail-profile-button"
-                title="Profile"
-                aria-label="Profile"
+                title="General call"
             >
-
-                <img
-                    id="railProfileAvatar"
-                    alt=""
-                >
-
+                ☎
             </button>
 
         </aside>
 
 
-        <!-- =============================================
+        <!-- =====================================================
              CHANNEL SIDEBAR
-             ============================================= -->
+             ===================================================== -->
 
         <aside class="channel-sidebar">
 
+            <div class="sidebar-header">
 
-            <div class="channel-sidebar-header">
+                <div class="community-heading">
 
-                <div>
-
-                    <strong
-                        id="selectedCommunityName"
+                    <div
+                        id="selectedCommunityIcon"
+                        class="selected-community-icon"
                     >
-                        Mwaniki Scholars
-                    </strong>
+                        🎓
+                    </div>
 
-                    <p
-                        id="selectedCommunityDescription"
-                    >
-                        Academic Community
-                    </p>
+                    <div class="community-heading-text">
+
+                        <h1 id="selectedCommunityName">
+                            Mwaniki Scholars
+                        </h1>
+
+                        <p id="selectedCommunityDescription">
+                            Medical Learning Community
+                        </p>
+
+                    </div>
 
                 </div>
 
                 <button
+                    id="openCommunityMenu"
+                    class="icon-button"
                     type="button"
-                    id="openCommunityButtonSidebar"
-                    class="small-icon-button"
-                    title="Browse communities"
+                    aria-label="Community options"
                 >
-                    +
+                    ⋮
                 </button>
 
             </div>
 
 
-            <div class="channel-search">
+            <div class="sidebar-search">
 
                 <input
+                    id="channelSearch"
                     type="search"
-                    id="channelSearchInput"
                     placeholder="Search channels..."
                     autocomplete="off"
                 >
@@ -406,89 +121,99 @@
             </div>
 
 
-            <div class="channel-section-title">
+            <div class="channel-section">
 
-                <span>
-                    CHANNELS
-                </span>
+                <div class="section-heading">
+
+                    <span>CHANNELS</span>
+
+                    <button
+                        id="createChannelButton"
+                        type="button"
+                        title="Create channel"
+                    >
+                        +
+                    </button>
+
+                </div>
+
+                <div
+                    id="channelList"
+                    class="channel-list"
+                ></div>
 
             </div>
 
 
-            <nav
-                id="channelList"
-                class="channel-list"
-                aria-label="Community channels"
-            ></nav>
+            <div class="sidebar-footer">
 
-
-            <!-- =========================================
-                 PROFILE
-                 ========================================= -->
-
-            <button
-                type="button"
-                id="sidebarProfileButton"
-                class="sidebar-profile"
-            >
-
-                <img
-                    id="sidebarProfileAvatar"
-                    class="sidebar-profile-avatar"
-                    alt=""
+                <div
+                    id="currentUserProfile"
+                    class="current-user-profile"
                 >
 
-                <span class="sidebar-profile-info">
-
-                    <strong
-                        id="sidebarProfileName"
+                    <div
+                        id="currentUserAvatar"
+                        class="avatar avatar-small"
                     >
-                        Student
-                    </strong>
+                        ?
+                    </div>
 
-                    <small>
-                        Online
-                    </small>
+                    <div class="current-user-details">
 
-                </span>
+                        <strong id="currentUserName">
+                            Student
+                        </strong>
 
-            </button>
+                        <span id="currentUserStatus">
+                            Online
+                        </span>
+
+                    </div>
+
+                    <button
+                        id="profileButton"
+                        class="profile-settings-button"
+                        type="button"
+                        title="Profile"
+                    >
+                        ⚙
+                    </button>
+
+                </div>
+
+            </div>
 
         </aside>
 
 
-        <!-- =============================================
-             MAIN CHAT
-             ============================================= -->
+        <!-- =====================================================
+             MAIN COMMUNITY AREA
+             ===================================================== -->
 
-        <section class="community-chat">
+        <main class="community-main">
 
+            <!-- CHANNEL HEADER -->
 
-            <!-- CHAT HEADER -->
+            <header class="channel-header">
 
-            <header class="chat-header">
+                <div class="channel-title-area">
 
-                <div class="chat-header-left">
-
-                    <div
-                        id="mainChannelIcon"
-                        class="main-channel-icon"
+                    <span
+                        id="selectedChannelIcon"
+                        class="channel-title-icon"
                     >
                         #
-                    </div>
+                    </span>
 
                     <div>
 
-                        <h1
-                            id="mainChannelTitle"
-                        >
+                        <h2 id="selectedChannelName">
                             General
-                        </h1>
+                        </h2>
 
-                        <p
-                            id="mainChannelDescription"
-                        >
-                            Community discussion
+                        <p id="selectedChannelDescription">
+                            Welcome to Mwaniki Scholars.
                         </p>
 
                     </div>
@@ -496,15 +221,33 @@
                 </div>
 
 
-                <div class="chat-header-actions">
+                <div class="channel-actions">
 
                     <button
+                        id="channelSearchButton"
+                        class="header-action"
                         type="button"
-                        id="chatCallButton"
-                        class="chat-header-button"
-                        title="Start call"
+                        title="Search messages"
+                    >
+                        🔎
+                    </button>
+
+                    <button
+                        id="channelCallButton"
+                        class="header-action"
+                        type="button"
+                        title="Start channel call"
                     >
                         📞
+                    </button>
+
+                    <button
+                        id="toggleMembersButton"
+                        class="header-action"
+                        type="button"
+                        title="Members"
+                    >
+                        👥
                     </button>
 
                 </div>
@@ -512,49 +255,29 @@
             </header>
 
 
-            <!-- =========================================
-                 MESSAGES
-                 ========================================= -->
+            <!-- MESSAGE AREA -->
 
-            <div
+            <section
                 id="messageArea"
                 class="message-area"
             >
 
-
-                <button
-                    type="button"
-                    id="loadOlderMessagesButton"
-                    class="load-older-button hidden"
-                >
-                    Load older messages
-                </button>
-
-
                 <div
-                    id="messageEmptyState"
-                    class="message-empty-state"
+                    id="messageWelcome"
+                    class="message-welcome"
                 >
 
-                    <div class="empty-icon">
-                        💬
+                    <div class="welcome-icon">
+                        #
                     </div>
 
-                    <h2>
-                        Welcome to the community
+                    <h2 id="messageWelcomeTitle">
+                        Welcome to General
                     </h2>
 
-                    <p>
-                        Start a conversation in this channel.
+                    <p id="messageWelcomeText">
+                        This is the beginning of this channel.
                     </p>
-
-                    <button
-                        type="button"
-                        id="welcomeStartButton"
-                        class="primary-button"
-                    >
-                        Start chatting
-                    </button>
 
                 </div>
 
@@ -562,528 +285,624 @@
                 <div
                     id="messageList"
                     class="message-list"
+                    aria-live="polite"
                 ></div>
 
-            </div>
-
-
-            <!-- =========================================
-                 VOICE RECORDING BAR
-                 ========================================= -->
-
-            <div
-                id="voiceRecorderBar"
-                class="voice-recorder-bar hidden"
-            >
-
-                <div class="voice-recorder-status">
-
-                    <span class="recording-dot"></span>
-
-                    <strong>
-                        Recording voice note
-                    </strong>
-
-                    <span
-                        id="voiceRecorderTimer"
-                    >
-                        00:00
-                    </span>
-
+                <div
+                    id="messageLoading"
+                    class="message-loading hidden"
+                >
+                    Loading messages...
                 </div>
 
-
-                <div class="voice-recorder-actions">
-
-                    <button
-                        type="button"
-                        id="cancelVoiceNoteButton"
-                        class="secondary-button"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        id="stopVoiceNoteButton"
-                        class="primary-button"
-                    >
-                        Stop & Send
-                    </button>
-
-                </div>
-
-            </div>
+            </section>
 
 
-            <div
-                id="voiceUploadStatus"
-                class="voice-upload-status hidden"
-            ></div>
-
-
-            <!-- =========================================
-                 MESSAGE COMPOSER
-                 ========================================= -->
+            <!-- =================================================
+                 COMPOSER
+                 ================================================= -->
 
             <div class="composer-wrapper">
 
-
-                <!-- EMOJI PICKER -->
-
                 <div
-                    id="emojiPicker"
-                    class="picker-panel emoji-picker-panel hidden"
+                    id="replyPreview"
+                    class="reply-preview hidden"
                 >
-
-                    <div class="picker-header">
-
-                        <strong>
-                            Emoji
+                    <div>
+                        <strong id="replyPreviewName">
+                            Reply
                         </strong>
 
-                        <button
-                            type="button"
-                            id="closeEmojiButton"
-                            class="picker-close-button"
-                            aria-label="Close emoji picker"
-                        >
-                            ×
-                        </button>
-
+                        <span id="replyPreviewText"></span>
                     </div>
 
-
-                    <emoji-picker></emoji-picker>
-
+                    <button
+                        id="cancelReplyButton"
+                        type="button"
+                    >
+                        ×
+                    </button>
                 </div>
 
 
-                <!-- GIF PICKER -->
+                <div class="composer">
 
-                <div
-                    id="gifPicker"
-                    class="picker-panel gif-picker-panel hidden"
-                >
+                    <button
+                        id="attachButton"
+                        class="composer-button"
+                        type="button"
+                        title="Attach file"
+                    >
+                        +
+                    </button>
 
-                    <div class="picker-header">
-
-                        <strong>
-                            Send a GIF
-                        </strong>
-
-                        <button
-                            type="button"
-                            id="closeGifButton"
-                            class="picker-close-button"
-                            aria-label="Close GIF picker"
-                        >
-                            ×
-                        </button>
-
-                    </div>
+                    <input
+                        id="attachmentInput"
+                        type="file"
+                        hidden
+                        multiple
+                    >
 
 
-                    <div class="gif-picker-content">
-
-                        <input
-                            type="url"
-                            id="gifUrlInput"
-                            placeholder="Paste GIF image URL..."
-                            autocomplete="off"
-                        >
-
-
-                        <div
-                            id="gifPreview"
-                            class="gif-preview"
-                        ></div>
+                    <button
+                        id="gifButton"
+                        class="composer-button"
+                        type="button"
+                        title="GIF"
+                    >
+                        GIF
+                    </button>
 
 
-                        <div class="gif-actions">
-
-                            <button
-                                type="button"
-                                id="previewGifButton"
-                                class="secondary-button"
-                            >
-                                Preview
-                            </button>
-
-                            <button
-                                type="button"
-                                id="sendGifButton"
-                                class="primary-button"
-                                disabled
-                            >
-                                Send GIF
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- COMPOSER -->
-
-                <form
-                    id="messageForm"
-                    class="message-composer"
-                >
-
-
-                    <div class="composer-tools">
-
-                        <button
-                            type="button"
-                            id="attachButton"
-                            class="composer-button"
-                            title="Attach photo or document"
-                            aria-label="Attach photo or document"
-                        >
-                            📎
-                        </button>
-
-
-                        <input
-                            type="file"
-                            id="attachmentInput"
-                            hidden
-                            multiple
-                            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip"
-                        >
-
-
-                        <button
-                            type="button"
-                            id="emojiButton"
-                            class="composer-button"
-                            title="Emoji"
-                            aria-label="Emoji"
-                            aria-expanded="false"
-                        >
-                            😊
-                        </button>
-
-
-                        <button
-                            type="button"
-                            id="gifButton"
-                            class="composer-button"
-                            title="GIF"
-                            aria-label="GIF"
-                        >
-                            GIF
-                        </button>
-
-
-                        <button
-                            type="button"
-                            id="voiceNoteButton"
-                            class="composer-button"
-                            title="Voice note"
-                            aria-label="Voice note"
-                        >
-                            🎙️
-                        </button>
-
-                    </div>
+                    <button
+                        id="emojiButton"
+                        class="composer-button"
+                        type="button"
+                        title="Emoji"
+                    >
+                        ☺
+                    </button>
 
 
                     <textarea
                         id="messageInput"
                         rows="1"
-                        maxlength="5000"
-                        placeholder="Message this channel..."
+                        placeholder="Message #general"
                         autocomplete="off"
                     ></textarea>
 
 
                     <button
-                        type="submit"
+                        id="voiceNoteButton"
+                        class="composer-button"
+                        type="button"
+                        title="Voice note"
+                    >
+                        🎙
+                    </button>
+
+
+                    <button
                         id="sendMessageButton"
-                        class="send-message-button"
+                        class="send-button"
+                        type="button"
                         title="Send message"
-                        aria-label="Send message"
                     >
                         ➤
                     </button>
 
-                </form>
+                </div>
+
+
+                <!-- EMOJI -->
+
+                <div
+                    id="emojiPicker"
+                    class="picker-panel emoji-panel hidden"
+                >
+                    <emoji-picker></emoji-picker>
+                </div>
+
+
+                <!-- GIF -->
+
+                <div
+                    id="gifPicker"
+                    class="picker-panel gif-panel hidden"
+                >
+
+                    <div class="gif-header">
+
+                        <strong>GIFs</strong>
+
+                        <button
+                            id="closeGifButton"
+                            type="button"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+                    <input
+                        id="gifSearchInput"
+                        type="search"
+                        placeholder="Search GIFs..."
+                        autocomplete="off"
+                    >
+
+                    <div
+                        id="gifResults"
+                        class="gif-results"
+                    ></div>
+
+                </div>
+
+
+                <!-- VOICE RECORDING -->
+
+                <div
+                    id="voiceRecorderBar"
+                    class="voice-recorder-bar hidden"
+                >
+
+                    <span class="recording-dot"></span>
+
+                    <span id="recordingTimer">
+                        00:00
+                    </span>
+
+                    <span class="recording-label">
+                        Recording voice note
+                    </span>
+
+                    <button
+                        id="cancelVoiceButton"
+                        type="button"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        id="stopVoiceButton"
+                        type="button"
+                    >
+                        Send
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="attachmentPreview"
+                    class="attachment-preview hidden"
+                ></div>
 
             </div>
 
-        </section>
+        </main>
 
 
-        <!-- =============================================
-             MEMBER SIDEBAR
-             ============================================= -->
+        <!-- =====================================================
+             MEMBERS SIDEBAR
+             ===================================================== -->
 
         <aside
             id="memberSidebar"
             class="member-sidebar"
         >
 
-            <div class="member-sidebar-header">
+            <div class="member-header">
 
-                <strong>
-                    Community
-                </strong>
+                <div>
+                    <h3>Members</h3>
+                    <span id="memberCount">
+                        0 members
+                    </span>
+                </div>
+
+                <button
+                    id="closeMembersButton"
+                    type="button"
+                >
+                    ×
+                </button>
 
             </div>
 
-
-            <div class="community-about-card">
-
-                <div
-                    id="memberCommunityIcon"
-                    class="member-community-icon"
-                >
-                    🎓
-                </div>
-
-                <h2
-                    id="memberCommunityName"
-                >
-                    Mwaniki Scholars
-                </h2>
-
-                <p>
-                    Academic discussion,
-                    collaboration and learning.
-                </p>
-
-            </div>
-
-
-            <div class="member-section">
-
-                <div class="member-section-title">
-                    ONLINE MEMBERS
-                </div>
-
-                <div
-                    id="onlineMembersList"
-                    class="online-members-list"
-                >
-
-                    <div class="member-placeholder">
-                        Members will appear here.
-                    </div>
-
-                </div>
-
-            </div>
+            <div
+                id="memberList"
+                class="member-list"
+            ></div>
 
         </aside>
 
-    </main>
-
-</div>
+    </div>
 
 
-<!-- =====================================================
-     COMMUNITY SELECTION MODAL
-     ===================================================== -->
-
-<div
-    id="communityModal"
-    class="modal-overlay hidden"
-    aria-hidden="true"
->
+    <!-- =========================================================
+         COMMUNITY MODAL
+         ========================================================= -->
 
     <div
-        class="modal-card community-modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="communityModalTitle"
+        id="communityModal"
+        class="modal-backdrop hidden"
     >
 
-        <div class="modal-header">
+        <div
+            class="community-modal modal-card"
+            role="dialog"
+            aria-modal="true"
+        >
 
-            <div>
+            <div class="modal-header">
 
-                <h2 id="communityModalTitle">
-                    Communities
-                </h2>
+                <div>
+                    <span class="modal-eyebrow">
+                        Mwaniki Scholars
+                    </span>
 
-                <p>
-                    Choose a community
-                </p>
+                    <h2>
+                        Communities
+                    </h2>
+                </div>
+
+                <button
+                    id="closeCommunityModal"
+                    type="button"
+                >
+                    ×
+                </button>
 
             </div>
 
-            <button
-                type="button"
-                id="closeCommunityModal"
-                class="modal-close-button"
-                aria-label="Close"
-            >
-                ×
-            </button>
+            <div
+                id="communityChoiceList"
+                class="community-choice-list"
+            ></div>
 
         </div>
-
-
-        <div class="modal-search">
-
-            <input
-                type="search"
-                id="communityModalSearch"
-                placeholder="Search communities..."
-                autocomplete="off"
-            >
-
-        </div>
-
-
-        <div
-            id="communityChoiceList"
-            class="community-choice-list"
-        ></div>
 
     </div>
 
-</div>
 
-
-<!-- =====================================================
-     GENERAL CALL MODAL
-     ===================================================== -->
-
-<div
-    id="generalCallModal"
-    class="modal-overlay hidden"
-    aria-hidden="true"
->
+    <!-- =========================================================
+         RULES GATE
+         ========================================================= -->
 
     <div
-        class="modal-card call-modal-card"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="generalCallTitle"
+        id="rulesGate"
+        class="modal-backdrop hidden"
     >
 
-        <div class="modal-header">
+        <div class="modal-card rules-card">
 
-            <div>
+            <div class="rules-icon">
+                ✓
+            </div>
 
-                <h2 id="generalCallTitle">
-                    Start a General Call
-                </h2>
+            <span class="modal-eyebrow">
+                Community Guidelines
+            </span>
 
-                <p>
-                    Call another Mwaniki Scholars member.
-                </p>
+            <h2>
+                Before you join
+            </h2>
+
+            <p>
+                Mwaniki Scholars Community is an academic space for
+                learning, discussion and collaboration.
+            </p>
+
+            <ul class="rules-list">
+
+                <li>
+                    Respect other students, tutors and moderators.
+                </li>
+
+                <li>
+                    Keep discussions academic and constructive.
+                </li>
+
+                <li>
+                    Do not share harmful, abusive or inappropriate content.
+                </li>
+
+                <li>
+                    Protect your personal information and the privacy of others.
+                </li>
+
+            </ul>
+
+            <label class="rules-checkbox">
+
+                <input
+                    id="communityRulesAgreement"
+                    type="checkbox"
+                >
+
+                <span>
+                    I agree to follow the community guidelines.
+                </span>
+
+            </label>
+
+            <p
+                id="rulesGateMessage"
+                class="form-message"
+            ></p>
+
+            <button
+                id="acceptRulesButton"
+                class="primary-button"
+                type="button"
+            >
+                Enter Community
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         GENERAL CALL MODAL
+         ========================================================= -->
+
+    <div
+        id="generalCallModal"
+        class="modal-backdrop hidden"
+    >
+
+        <div class="modal-card call-start-card">
+
+            <div class="modal-header">
+
+                <div>
+                    <span class="modal-eyebrow">
+                        Mwaniki Calls
+                    </span>
+
+                    <h2>
+                        Start a call
+                    </h2>
+                </div>
+
+                <button
+                    id="closeGeneralCallModal"
+                    type="button"
+                >
+                    ×
+                </button>
 
             </div>
 
-            <button
-                type="button"
-                id="closeGeneralCallModalButton"
-                class="modal-close-button"
-                aria-label="Close"
-            >
-                ×
-            </button>
 
-        </div>
+            <div class="call-mode-grid">
 
-
-        <div class="call-mode-selector">
-
-            <button
-                type="button"
-                id="generalVoiceCallButton"
-                class="call-mode-button active"
-            >
-                📞
-                <span>
-                    Voice
-                </span>
-            </button>
+                <button
+                    id="startGeneralVoiceCall"
+                    class="call-mode-button"
+                    type="button"
+                >
+                    <span>📞</span>
+                    <strong>Voice call</strong>
+                    <small>Audio only</small>
+                </button>
 
 
-            <button
-                type="button"
-                id="generalVideoCallButton"
-                class="call-mode-button"
-            >
-                📹
-                <span>
-                    Video
-                </span>
-            </button>
+                <button
+                    id="startGeneralVideoCall"
+                    class="call-mode-button"
+                    type="button"
+                >
+                    <span>📹</span>
+                    <strong>Video call</strong>
+                    <small>Audio and video</small>
+                </button>
 
-        </div>
-
-
-        <label
-            for="generalCallUserInput"
-            class="form-label"
-        >
-            Member ID
-        </label>
+            </div>
 
 
-        <input
-            type="text"
-            id="generalCallUserInput"
-            class="form-input"
-            placeholder="Enter member UUID"
-            autocomplete="off"
-        >
+            <div class="call-user-area">
 
+                <label for="generalCallUserInput">
+                    User ID
+                </label>
 
-        <p
-            id="generalCallMessage"
-            class="form-message"
-        ></p>
+                <input
+                    id="generalCallUserInput"
+                    type="text"
+                    placeholder="Enter recipient user ID"
+                    autocomplete="off"
+                >
 
+                <p id="generalCallMessage"></p>
 
-        <div class="modal-actions">
+            </div>
+
 
             <button
-                type="button"
                 id="cancelGeneralCallButton"
                 class="secondary-button"
+                type="button"
             >
                 Cancel
             </button>
 
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         ACTIVE CALL OVERLAY
+         call.js controls this area
+         ========================================================= -->
+
+    <div
+        id="callOverlay"
+        class="call-overlay hidden"
+    >
+
+        <div class="call-overlay-inner">
+
+            <div class="call-topbar">
+
+                <div>
+                    <span class="call-status-label">
+                        Mwaniki Call
+                    </span>
+
+                    <strong id="callRoomName">
+                        Connecting...
+                    </strong>
+                </div>
+
+                <span id="callDuration">
+                    00:00
+                </span>
+
+            </div>
+
+
+            <div
+                id="remoteVideoGrid"
+                class="remote-video-grid"
+            ></div>
+
+
+            <video
+                id="localVideo"
+                class="local-video"
+                autoplay
+                muted
+                playsinline
+            ></video>
+
+
+            <div class="call-controls">
+
+                <button
+                    id="toggleMuteButton"
+                    type="button"
+                    title="Mute"
+                >
+                    🎙
+                </button>
+
+                <button
+                    id="toggleCameraButton"
+                    type="button"
+                    title="Camera"
+                >
+                    📹
+                </button>
+
+                <button
+                    id="toggleScreenShareButton"
+                    type="button"
+                    title="Share screen"
+                >
+                    🖥
+                </button>
+
+                <button
+                    id="leaveCallButton"
+                    class="leave-call-button"
+                    type="button"
+                    title="Leave call"
+                >
+                    ☎
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         INCOMING CALL
+         ========================================================= -->
+
+    <div
+        id="incomingCallToast"
+        class="incoming-call-toast hidden"
+    >
+
+        <div class="incoming-call-avatar">
+            📞
+        </div>
+
+        <div class="incoming-call-content">
+
+            <strong id="incomingCallerName">
+                Incoming call
+            </strong>
+
+            <span id="incomingCallType">
+                Voice call
+            </span>
+
+        </div>
+
+        <div class="incoming-call-actions">
+
             <button
+                id="acceptIncomingCallButton"
                 type="button"
-                id="startGeneralCallButton"
-                class="primary-button"
             >
-                Start Call
+                ✓
+            </button>
+
+            <button
+                id="rejectIncomingCallButton"
+                type="button"
+            >
+                ×
             </button>
 
         </div>
 
     </div>
 
-</div>
+
+    <!-- =========================================================
+         TOAST
+         ========================================================= -->
+
+    <div
+        id="communityToast"
+        class="community-toast hidden"
+    ></div>
 
 
-<!-- =====================================================
-     JAVASCRIPT
-     ===================================================== -->
+    <!-- =========================================================
+         SCRIPTS
+         IMPORTANT: ALL ARE MODULES
+         ========================================================= -->
 
-<script
-    src="./supabase.js"
-></script>
+    <script
+        type="module"
+        src="https://cdn.jsdelivr.net/npm/emoji-picker-element@^1/index.js"
+    ></script>
 
+    <script
+        type="module"
+        src="./supabase.js"
+    ></script>
 
-<script
-    src="./community.js"
-    defer
-></script>
+    <script
+        type="module"
+        src="./community.js"
+    ></script>
 
+    <script
+        type="module"
+        src="./call.js"
+    ></script>
 
 </body>
-
 </html>
