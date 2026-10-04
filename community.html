@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
 
@@ -10,122 +9,94 @@
     >
 
     <meta
-        name="description"
-        content="Mwaniki Scholars Community"
-    >
-
-    <meta
         name="theme-color"
         content="#087f73"
     >
 
     <title>Mwaniki Scholars Community</title>
 
-    <link
-        rel="stylesheet"
-        href="./style.css"
-    >
-
-    <link
-        rel="stylesheet"
-        href="./community.css"
-    >
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./community.css">
 </head>
 
-<body>
+<body class="community-page">
 
 <div class="community-app">
 
     <!-- =====================================================
-         HEADER
+         TOP HEADER
          ===================================================== -->
 
     <header class="community-header">
 
-        <div class="brand-area">
-
+        <div class="community-brand">
             <button
                 id="mobileSidebarButton"
-                class="icon-button mobile-only"
+                class="header-icon-button"
                 type="button"
-                aria-label="Open communities"
+                aria-label="Open community navigation"
             >
                 ☰
             </button>
 
             <button
                 id="communityHomeButton"
-                class="brand-button"
+                class="community-logo-button"
                 type="button"
             >
-                <span class="brand-logo">MS</span>
+                <span class="community-logo">🎓</span>
 
                 <span>
                     <strong>Mwaniki Scholars</strong>
                     <small>Community</small>
                 </span>
             </button>
-
         </div>
 
-
-        <div class="header-actions">
+        <div class="community-header-actions">
 
             <button
                 id="communityRulesButton"
-                class="header-button"
+                class="header-icon-button"
                 type="button"
+                title="Community rules"
             >
-                📜 Rules
-            </button>
-
-            <button
-                id="ticketButton"
-                class="header-button"
-                type="button"
-            >
-                🎫 Ticket
+                📜
             </button>
 
             <button
                 id="friendsButton"
-                class="header-button"
+                class="header-icon-button notification-button"
                 type="button"
+                title="Friends"
             >
-                👥 Friends
-
+                👥
                 <span
                     id="friendRequestBadge"
-                    class="count-badge hidden"
-                >
-                    0
-                </span>
+                    class="notification-badge hidden"
+                >0</span>
             </button>
 
             <button
                 id="generalCallButton"
-                class="header-button call-header-button"
+                class="header-call-button"
                 type="button"
             >
-                📞 General Call
+                📞 <span>General Call</span>
             </button>
 
             <button
                 id="profileButton"
-                class="profile-header-button"
+                class="header-profile-button"
                 type="button"
             >
-                <span
+                <img
                     id="headerProfileAvatar"
-                    class="avatar avatar-small"
+                    class="header-avatar"
+                    alt="Profile"
                 >
-                    👤
-                </span>
 
-                <span
-                    id="headerProfileName"
-                    class="header-profile-name"
-                >
+                <span id="headerProfileName">
                     Student
                 </span>
 
@@ -141,32 +112,32 @@
 
 
     <!-- =====================================================
-         MAIN COMMUNITY WORKSPACE
+         MAIN COMMUNITY LAYOUT
          ===================================================== -->
 
     <main class="community-layout">
 
-        <!-- COMMUNITY RAIL -->
+        <!-- =================================================
+             COMMUNITY RAIL
+             ================================================= -->
 
         <aside
             id="communityRail"
             class="community-rail"
         >
 
-            <div class="rail-heading">
-                <span>Communities</span>
-            </div>
-
             <div
                 id="communityRailList"
                 class="community-rail-list"
             ></div>
 
+            <div class="community-rail-divider"></div>
+
             <button
                 id="addCommunityButton"
                 class="rail-add-button"
                 type="button"
-                title="Communities"
+                title="Add community"
             >
                 +
             </button>
@@ -174,7 +145,9 @@
         </aside>
 
 
-        <!-- CHANNEL SIDEBAR -->
+        <!-- =================================================
+             CHANNEL SIDEBAR
+             ================================================= -->
 
         <aside
             id="channelSidebar"
@@ -191,16 +164,23 @@
                 </div>
 
                 <div class="selected-community-info">
-
                     <strong id="selectedCommunityName">
                         Mwaniki Scholars
                     </strong>
 
-                    <small id="selectedCommunityDescription">
+                    <span id="selectedCommunityDescription">
                         Academic community
-                    </small>
-
+                    </span>
                 </div>
+
+                <button
+                    id="communityMenuButton"
+                    class="small-icon-button"
+                    type="button"
+                    title="Community options"
+                >
+                    ⋮
+                </button>
 
             </div>
 
@@ -211,13 +191,26 @@
                 type="button"
             >
                 <span>📞</span>
-                <span>Community Call</span>
+                <span>Call Community</span>
             </button>
+
+
+            <div class="channel-search-wrapper">
+
+                <input
+                    id="channelSearchInput"
+                    class="channel-search-input"
+                    type="search"
+                    placeholder="Search channels..."
+                    autocomplete="off"
+                >
+
+            </div>
 
 
             <!-- INFORMATION -->
 
-            <div class="channel-section">
+            <section class="channel-section">
 
                 <div class="channel-section-title">
                     <span>INFORMATION</span>
@@ -228,12 +221,12 @@
                     class="channel-list"
                 ></div>
 
-            </div>
+            </section>
 
 
             <!-- COURSES -->
 
-            <div class="channel-section">
+            <section class="channel-section">
 
                 <div class="channel-section-title">
                     <span>COURSES</span>
@@ -244,15 +237,15 @@
                     class="channel-list"
                 ></div>
 
-            </div>
+            </section>
 
 
-            <!-- COMMUNITY -->
+            <!-- DISCUSSION / COMMUNITY -->
 
-            <div class="channel-section">
+            <section class="channel-section">
 
                 <div class="channel-section-title">
-                    <span>COMMUNITY</span>
+                    <span>DISCUSSION</span>
                 </div>
 
                 <div
@@ -260,15 +253,15 @@
                     class="channel-list"
                 ></div>
 
-            </div>
+            </section>
 
 
             <!-- CONTEST -->
 
-            <div class="channel-section">
+            <section class="channel-section">
 
                 <div class="channel-section-title">
-                    <span>ACTIVITIES</span>
+                    <span>EVENTS</span>
                 </div>
 
                 <button
@@ -276,17 +269,19 @@
                     class="channel-button contest-button"
                     type="button"
                 >
-                    <span>🏆</span>
-                    <span>Contests</span>
+                    <span class="channel-icon">🏆</span>
+                    <span class="channel-name">
+                        Contests
+                    </span>
                 </button>
 
-            </div>
+            </section>
 
         </aside>
 
 
         <!-- =================================================
-             CHAT AREA
+             CHAT
              ================================================= -->
 
         <section class="chat-area">
@@ -299,19 +294,17 @@
                         id="currentChannelIcon"
                         class="channel-title-icon"
                     >
-                        💬
+                        #
                     </span>
 
                     <div>
+                        <strong id="currentChannelName">
+                            discussion
+                        </strong>
 
-                        <h1 id="currentChannelName">
-                            Select a channel
-                        </h1>
-
-                        <p id="currentChannelDescription">
-                            Choose a community and channel.
-                        </p>
-
+                        <span id="currentChannelDescription">
+                            Community discussion
+                        </span>
                     </div>
 
                 </div>
@@ -321,7 +314,7 @@
 
                     <button
                         id="channelSearchButton"
-                        class="icon-button"
+                        class="header-icon-button"
                         type="button"
                         title="Search messages"
                     >
@@ -330,7 +323,7 @@
 
                     <button
                         id="channelMembersButton"
-                        class="icon-button"
+                        class="header-icon-button"
                         type="button"
                         title="Members"
                     >
@@ -342,20 +335,43 @@
             </header>
 
 
+            <!-- MESSAGE SEARCH -->
+
+            <div
+                id="messageSearchBar"
+                class="message-search-bar hidden"
+            >
+
+                <input
+                    id="messageSearchInput"
+                    type="search"
+                    placeholder="Search messages..."
+                    autocomplete="off"
+                >
+
+                <button
+                    id="closeMessageSearchButton"
+                    type="button"
+                >
+                    ✕
+                </button>
+
+            </div>
+
+
             <!-- MESSAGES -->
 
             <div
                 id="messageList"
                 class="message-list"
+            ></div>
+
+
+            <div
+                id="messageLoading"
+                class="message-loading hidden"
             >
-
-                <div
-                    id="messageLoading"
-                    class="empty-state"
-                >
-                    Select a channel to begin.
-                </div>
-
+                Loading messages...
             </div>
 
 
@@ -363,7 +379,115 @@
                 id="typingIndicator"
                 class="typing-indicator hidden"
             >
-                Someone is typing…
+                Someone is typing...
+            </div>
+
+
+            <!-- =================================================
+                 ATTACHMENT PREVIEW
+                 ================================================= -->
+
+            <div
+                id="attachmentPreview"
+                class="attachment-preview hidden"
+            ></div>
+
+
+            <!-- =================================================
+                 PICKERS
+                 ================================================= -->
+
+            <div
+                id="emojiPanel"
+                class="picker-panel hidden"
+            >
+
+                <div class="picker-header">
+                    <strong>Emoji</strong>
+
+                    <button
+                        id="closeEmojiButton"
+                        class="picker-close"
+                        type="button"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <input
+                    id="emojiSearch"
+                    class="picker-search"
+                    type="search"
+                    placeholder="Search emoji..."
+                >
+
+                <div
+                    id="emojiCategories"
+                    class="emoji-categories"
+                ></div>
+
+                <div
+                    id="emojiGrid"
+                    class="emoji-grid"
+                ></div>
+
+            </div>
+
+
+            <div
+                id="stickerPanel"
+                class="picker-panel hidden"
+            >
+
+                <div class="picker-header">
+                    <strong>Stickers</strong>
+
+                    <button
+                        id="closeStickerButton"
+                        class="picker-close"
+                        type="button"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <div
+                    id="stickerGrid"
+                    class="sticker-grid"
+                ></div>
+
+            </div>
+
+
+            <div
+                id="gifPanel"
+                class="picker-panel hidden"
+            >
+
+                <div class="picker-header">
+                    <strong>GIFs</strong>
+
+                    <button
+                        id="closeGifButton"
+                        class="picker-close"
+                        type="button"
+                    >
+                        ✕
+                    </button>
+                </div>
+
+                <input
+                    id="gifSearch"
+                    class="picker-search"
+                    type="search"
+                    placeholder="Search GIFs..."
+                >
+
+                <div
+                    id="gifGrid"
+                    class="gif-grid"
+                ></div>
+
             </div>
 
 
@@ -371,121 +495,22 @@
                  COMPOSER
                  ================================================= -->
 
-            <div class="composer-area">
-
-                <div
-                    id="attachmentPreview"
-                    class="attachment-preview hidden"
-                ></div>
-
-
-                <div
-                    id="emojiPanel"
-                    class="picker-panel hidden"
-                >
-
-                    <div class="picker-header">
-
-                        <strong>Emoji</strong>
-
-                        <button
-                            class="picker-close"
-                            type="button"
-                            data-close-picker="emojiPanel"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-                    <input
-                        id="emojiSearch"
-                        class="picker-search"
-                        type="search"
-                        placeholder="Search emoji"
-                    >
-
-                    <div
-                        id="emojiCategories"
-                        class="emoji-categories"
-                    ></div>
-
-                    <div
-                        id="emojiGrid"
-                        class="emoji-grid"
-                    ></div>
-
-                </div>
-
-
-                <div
-                    id="stickerPanel"
-                    class="picker-panel hidden"
-                >
-
-                    <div class="picker-header">
-
-                        <strong>Stickers</strong>
-
-                        <button
-                            class="picker-close"
-                            type="button"
-                            data-close-picker="stickerPanel"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="stickerGrid"
-                        class="sticker-grid"
-                    ></div>
-
-                </div>
-
-
-                <div
-                    id="gifPanel"
-                    class="picker-panel hidden"
-                >
-
-                    <div class="picker-header">
-
-                        <strong>GIFs</strong>
-
-                        <button
-                            class="picker-close"
-                            type="button"
-                            data-close-picker="gifPanel"
-                        >
-                            ×
-                        </button>
-
-                    </div>
-
-                    <input
-                        id="gifSearch"
-                        class="picker-search"
-                        type="search"
-                        placeholder="Search GIFs"
-                    >
-
-                    <div
-                        id="gifGrid"
-                        class="gif-grid"
-                    ></div>
-
-                </div>
-
+            <footer class="composer-area">
 
                 <div class="composer">
+
+                    <input
+                        id="attachmentInput"
+                        type="file"
+                        hidden
+                        multiple
+                    >
 
                     <button
                         id="attachButton"
                         class="composer-button"
                         type="button"
-                        title="Attach file"
+                        title="Attach"
                     >
                         📎
                     </button>
@@ -505,7 +530,7 @@
                         type="button"
                         title="Stickers"
                     >
-                        🧩
+                        🏷️
                     </button>
 
                     <button
@@ -517,24 +542,23 @@
                         GIF
                     </button>
 
-                    <button
-                        id="voiceNoteButton"
-                        class="composer-button voice-button"
-                        type="button"
-                        title="Voice note"
-                    >
-                        🎙️
-                    </button>
-
 
                     <textarea
                         id="messageInput"
                         class="message-input"
                         rows="1"
-                        maxlength="5000"
                         placeholder="Message this channel..."
                     ></textarea>
 
+
+                    <button
+                        id="voiceNoteButton"
+                        class="composer-button voice-button"
+                        type="button"
+                        title="Record voice note"
+                    >
+                        🎙️
+                    </button>
 
                     <button
                         id="sendMessageButton"
@@ -547,16 +571,7 @@
 
                 </div>
 
-
-                <input
-                    id="attachmentInput"
-                    type="file"
-                    hidden
-                    multiple
-                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,audio/*"
-                >
-
-            </div>
+            </footer>
 
         </section>
 
@@ -573,11 +588,26 @@
             <div class="member-sidebar-header">
 
                 <strong>
-                    Members —
+                    MEMBERS —
                     <span id="memberCount">0</span>
                 </strong>
 
+                <button
+                    id="closeMemberSidebarButton"
+                    class="small-icon-button"
+                    type="button"
+                >
+                    ✕
+                </button>
+
             </div>
+
+            <input
+                id="memberSearchInput"
+                class="member-search-input"
+                type="search"
+                placeholder="Search members..."
+            >
 
             <div
                 id="memberList"
@@ -592,324 +622,238 @@
 
 
 <!-- =========================================================
-     FILE PREVIEW
+     FILE PREVIEW MODAL
      ========================================================= -->
 
 <div
     id="filePreviewModal"
-    class="modal hidden"
+    class="modal-overlay hidden"
 >
-
-    <div class="modal-card medium">
+    <div class="modal-card">
 
         <div class="modal-header">
-
-            <h2>Attachment</h2>
+            <strong>Attachment</strong>
 
             <button
+                id="closeFilePreviewButton"
                 class="modal-close"
-                data-close-modal="filePreviewModal"
                 type="button"
             >
-                ×
+                ✕
             </button>
-
         </div>
 
         <div
             id="filePreviewContent"
-            class="modal-body"
+            class="modal-content"
         ></div>
 
-        <div class="modal-footer">
+        <div class="modal-actions">
+
+            <button
+                id="cancelAttachmentButton"
+                class="secondary-button"
+                type="button"
+            >
+                Cancel
+            </button>
 
             <button
                 id="confirmAttachmentButton"
                 class="primary-button"
                 type="button"
             >
-                Upload
+                Send
             </button>
 
         </div>
 
     </div>
-
 </div>
 
 
 <!-- =========================================================
-     FRIENDS
+     FRIENDS MODAL
      ========================================================= -->
 
 <div
     id="friendsModal"
-    class="modal hidden"
+    class="modal-overlay hidden"
 >
-
-    <div class="modal-card large">
+    <div class="modal-card large-modal">
 
         <div class="modal-header">
 
-            <h2>Friends & Online Students</h2>
+            <strong>Friends</strong>
 
             <button
+                id="closeFriendsButton"
                 class="modal-close"
-                data-close-modal="friendsModal"
                 type="button"
             >
-                ×
+                ✕
             </button>
 
         </div>
 
-        <div class="friend-tabs">
+        <div class="friends-tabs">
 
             <button
-                class="friend-tab active"
+                class="friends-tab active"
+                data-friends-tab="friends"
                 type="button"
-                data-friend-tab="online"
             >
-                Online
+                Friends
             </button>
 
             <button
-                class="friend-tab"
+                class="friends-tab"
+                data-friends-tab="requests"
                 type="button"
-                data-friend-tab="requests"
             >
                 Requests
-                <span id="friendRequestsCount">0</span>
+            </button>
+
+            <button
+                class="friends-tab"
+                data-friends-tab="online"
+                type="button"
+            >
+                Online
             </button>
 
         </div>
 
         <div
             id="friendsContent"
-            class="modal-body"
+            class="friends-content"
         ></div>
 
     </div>
-
 </div>
 
 
 <!-- =========================================================
-     TICKET
-     ========================================================= -->
-
-<div
-    id="ticketModal"
-    class="modal hidden"
->
-
-    <div class="modal-card medium">
-
-        <div class="modal-header">
-
-            <h2>Support Ticket</h2>
-
-            <button
-                class="modal-close"
-                data-close-modal="ticketModal"
-                type="button"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <form id="ticketForm">
-
-            <div class="form-group">
-
-                <label for="ticketType">
-                    Type
-                </label>
-
-                <select id="ticketType">
-
-                    <option value="technical">
-                        Technical issue
-                    </option>
-
-                    <option value="community">
-                        Community issue
-                    </option>
-
-                    <option value="report">
-                        Report
-                    </option>
-
-                    <option value="other">
-                        Other
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="ticketSubject">
-                    Subject
-                </label>
-
-                <input
-                    id="ticketSubject"
-                    required
-                >
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label for="ticketDescription">
-                    Description
-                </label>
-
-                <textarea
-                    id="ticketDescription"
-                    rows="6"
-                    required
-                ></textarea>
-
-            </div>
-
-
-            <button
-                class="primary-button"
-                type="submit"
-            >
-                Submit Ticket
-            </button>
-
-        </form>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     RULES
+     RULES MODAL
      ========================================================= -->
 
 <div
     id="rulesModal"
-    class="modal hidden"
+    class="modal-overlay hidden"
 >
-
-    <div class="modal-card large">
+    <div class="modal-card">
 
         <div class="modal-header">
 
-            <h2>Community Rules</h2>
+            <strong>Community Rules</strong>
 
             <button
+                id="closeRulesButton"
                 class="modal-close"
-                data-close-modal="rulesModal"
                 type="button"
             >
-                ×
+                ✕
             </button>
 
         </div>
 
         <div
             id="rulesContent"
-            class="rules-content"
-        ></div>
+            class="modal-content"
+        >
+            <h3>Respect the community</h3>
+
+            <p>
+                Keep Mwaniki Scholars educational,
+                respectful and useful to everyone.
+            </p>
+
+            <ul>
+                <li>Respect other members.</li>
+                <li>No harassment or spam.</li>
+                <li>Keep academic discussions constructive.</li>
+                <li>Do not impersonate other members.</li>
+                <li>Respect moderators and community rules.</li>
+            </ul>
+        </div>
 
     </div>
-
 </div>
 
 
 <!-- =========================================================
-     PROFILE
+     PROFILE MODAL
      ========================================================= -->
 
 <div
     id="profileModal"
-    class="modal hidden"
+    class="modal-overlay hidden"
 >
-
-    <div class="modal-card medium">
+    <div class="modal-card">
 
         <div class="modal-header">
 
-            <h2>Your Profile</h2>
+            <strong>Profile</strong>
 
             <button
+                id="closeProfileButton"
                 class="modal-close"
-                data-close-modal="profileModal"
                 type="button"
             >
-                ×
+                ✕
             </button>
 
         </div>
 
         <div
             id="profileModalContent"
-            class="profile-modal-content"
+            class="modal-content"
         ></div>
 
     </div>
-
 </div>
 
 
 <!-- =========================================================
-     CONTEST
+     CONTEST MODAL
      ========================================================= -->
 
 <div
     id="contestModal"
-    class="modal hidden"
+    class="modal-overlay hidden"
 >
-
-    <div class="modal-card extra-large">
+    <div class="modal-card large-modal">
 
         <div class="modal-header">
 
-            <div>
-
-                <h2>🏆 Course Contest</h2>
-
-                <p id="contestCourseName">
-                    Select a course contest.
-                </p>
-
-            </div>
+            <strong>Community Contest</strong>
 
             <button
+                id="closeContestButton"
                 class="modal-close"
-                data-close-modal="contestModal"
                 type="button"
             >
-                ×
+                ✕
             </button>
 
         </div>
 
+        <div class="modal-content">
 
-        <div
-            id="contestCourseSelector"
-            class="contest-course-selector"
-        ></div>
+            <p id="contestCourseName">
+                Select a course
+            </p>
 
+            <select
+                id="contestCourseSelector"
+                class="modal-select"
+            ></select>
 
-        <div
-            id="contestQuestionArea"
-            class="contest-question-area"
-        ></div>
+            <div id="contestQuestionArea"></div>
+
+        </div>
 
     </div>
-
 </div>
 
 
@@ -927,24 +871,13 @@
      SCRIPTS
      ========================================================= -->
 
-<script
-    type="module"
-    src="./supabase.js"
-></script>
+<script type="module" src="./supabase.js"></script>
 
-<script
-    src="./community.js"
-></script>
+<!-- IMPORTANT: community.js is a MODULE -->
+<script type="module" src="./community.js"></script>
 
-<!--
-    IMPORTANT:
-    community-calls.js is loaded on the community page so it
-    can hear incoming calls even before the call screen opens.
--->
-<script
-    src="./community-calls.js"
-></script>
+<!-- Calling engine -->
+<script src="./community-calls.js"></script>
 
 </body>
-
 </html>
