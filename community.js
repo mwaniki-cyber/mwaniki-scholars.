@@ -3027,35 +3027,30 @@ import { supabase } from "./supabase.js";
     }
 
 
-    async function markChannelRead() {
+async function markChannelRead(channelId) {
+    if (!state.user || !channelId || !supabase) return;
 
-        if (
-            !state.user ||
-            !state.currentChannel
-        ) return;
+    try {
+        const { error } = await supabase
+            .from("chat_read_status")
+            .upsert(
+                {
+                    channel_id: channelId,
+                    user_id: state.user.id,
+                    last_read_at: new Date().toISOString()
+                },
+                {
+                    onConflict: "channel_id,user_id"
+                }
+            );
 
-        /*
-         * Read-status table is intentionally
-         * best-effort because installations
-         * may have different extra columns.
-         */
-        try {
-
-            await db
-                .from("chat_read_status")
-                .upsert({
-                    user_id:
-                        state.user.id,
-
-                    channel_id:
-                        state.currentChannel.id,
-
-                    last_read_at:
-                        new Date().toISOString()
-                });
-
-        } catch {}
+        if (error) {
+            console.warn("⚠️ Could not update read status:", error);
+        }
+    } catch (error) {
+        console.warn("⚠️ Read status update failed:", error);
     }
+}
 
 
     /* =========================================================
