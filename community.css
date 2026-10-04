@@ -2893,3 +2893,187 @@ button:disabled {
     }
 
 }
+/* ============================================================
+   FINAL CHAT VIEWPORT FIX
+   Keeps the message composer permanently at the bottom.
+   Only the message list scrolls.
+   ============================================================ */
+
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+body {
+    background: var(--ms-bg);
+}
+
+.community-app {
+    width: 100%;
+    height: 100vh;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.community-layout {
+    height: calc(100vh - 76px);
+    min-height: 0;
+    overflow: hidden;
+
+    grid-template-columns:
+        82px
+        minmax(230px, 290px)
+        minmax(0, 1fr)
+        minmax(210px, 260px);
+}
+
+.chat-area {
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.message-list {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.composer-area {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 20;
+}
+
+/* Never allow emoji to become image URLs */
+.community-rail-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    overflow: hidden;
+    border-radius: 14px;
+}
+
+.community-rail-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.community-rail-icon-fallback {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 23px;
+    line-height: 1;
+}
+
+/* Voice message */
+.voice-message {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+}
+
+.voice-message audio {
+    max-width: min(360px, 100%);
+}
+
+/* Deleted message */
+.message-deleted {
+    color: #87949e;
+    font-style: italic;
+    padding: 4px 0;
+}
+
+/* Recording state */
+#voiceNoteButton.recording {
+    background: #c62828;
+    color: #fff;
+    animation: mwaniki-recording-pulse 1.2s infinite;
+}
+
+@keyframes mwaniki-recording-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(198, 40, 40, .35);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(198, 40, 40, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(198, 40, 40, 0);
+    }
+}
+
+/* Online member indicator */
+.member-presence {
+    width: 9px;
+    height: 9px;
+    min-width: 9px;
+    border-radius: 50%;
+    background: #aab4bc;
+}
+
+.member-presence.online {
+    background: #18a957;
+    box-shadow: 0 0 0 3px rgba(24, 169, 87, .12);
+}
+
+/* Smaller screens */
+@media (max-width: 1100px) {
+
+    .community-layout {
+        grid-template-columns:
+            76px
+            minmax(220px, 250px)
+            minmax(0, 1fr);
+    }
+
+    .member-sidebar {
+        display: none;
+    }
+}
+
+@media (max-width: 780px) {
+
+    .community-layout {
+        height: calc(100vh - 76px);
+        min-height: 0;
+        display: block;
+        overflow: hidden;
+    }
+
+    .community-rail,
+    .channel-sidebar {
+        display: none;
+    }
+
+    .chat-area {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+    }
+
+    .message-list {
+        min-height: 0;
+        overflow-y: auto;
+    }
+
+    .composer-area {
+        flex-shrink: 0;
+    }
+}
