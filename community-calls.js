@@ -1,672 +1,552 @@
-/* ============================================================
-   MWANIKI SCHOLARS
-   call.js
-
-   SINGLE REAL WEBRTC ENGINE
-
-   community.js = community/chat
-   call.js      = WebRTC only
-
-   Supports:
-   - direct calls
-   - general calls
-   - community calls
-   - audio
-   - video
-   - microphone
-   - camera
-   - screen sharing
-   - incoming calls
-   - multiple peers
-   - independent rooms
-
-   Supabase Broadcast is used for WebRTC signaling.
-   Every participant in a room joins the SAME room channel.
-   ============================================================ */
+import { supabase } from "./supabase.js";
 
 (() => {
+
     "use strict";
 
-    console.log(
-        "📞 Mwaniki Scholars call engine loading..."
-    );
 
+    /* =====================================================
+       WEBRTC CALL ENGINE
+       ===================================================== */
 
-    /* =========================================================
-       CONFIG
-       ========================================================= */
+    const state = {
 
-    const CONFIG = {
-        iceServers: [
-            {
-                urls: [
-                    "stun:stun.l.google.com:19302",
-                    "stun:stun1.l.google.com:19302"
-                ]
-            }
-        ],
+        user: null,
+        profile: null,
 
-        ringTimeout: 45000,
+        active: false,
 
-        audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true
-        },
+        roomId: null,
+        inviteId: null,
 
-        video: {
-            width: {
-                ideal: 1280
-            },
+        scope: "direct",
 
-            height: {
-                ideal: 720
-            },
+        mode: "audio",
 
-            frameRate: {
-                ideal: 30,
-                max: 30
-            }
-        }
+        communityId: null,
+
+        participants: new Map(),
+
+        peers: new Map(),
+
+        pendingCandidates: new Map(),
+
+        localStream: null,
+
+        screenTrack: null,
+
+        roomChannel: null,
+
+        incomingChannel: null,
+
+        incomingCall: null,
+
+        timer: null,
+
+        startedAt: null,
+
+        microphoneEnabled: true,
+
+        cameraEnabled: true,
+
+        screenSharing: false
     };
 
 
-    /* =========================================================
-       STATE
-       ========================================================= */
-
-    let db = null;
-    let currentUser = null;
-
-    let currentRoom = null;
-
-    let currentScope =
-        "general";
-
-    let currentMode =
-        "audio";
-
-    let localStream = null;
-
-    let screenStream = null;
-    let screenTrack = null;
-
-    let microphoneEnabled = true;
-    let cameraEnabled = false;
-    let screenSharing = false;
-
-    let signalChannel = null;
-    let incomingChannel = null;
-
-    let ringTimer = null;
-
-    let incomingInvite = null;
-
-    const peers =
-        new Map();
-
-    const pendingCandidates =
-        new Map();
-
-    const elements = {};
-
-
-    /* =========================================================
-       DOM
-       ========================================================= */
-
     const $ =
-        id =>
-            document.getElementById(id);
+        id => document.getElementById(id);
 
 
-    function cacheElements() {
-        [
-            "generalCallButton",
-            "communityCallButton",
-
-            "callModal",
-            "callSpecificPersonButton",
-            "callWholeCommunityButton",
-
-            "activeCallOverlay",
-            "activeCallTitle",
-            "activeCallStatus",
-            "callParticipantGrid",
-
-            "toggleMicrophoneButton",
-            "toggleCameraButton",
-            "shareScreenButton",
-
-            "leaveCallButton",
-            "leaveCallButtonBottom",
-
-            "incomingCallToast",
-            "incomingCallerName",
-            "incomingCallType",
-            "incomingCallAvatar",
-
-            "acceptCallButton",
-            "rejectCallButton"
-        ].forEach(
-            id => {
-                elements[id] =
-                    $(id);
-            }
-        );
-    }
-
-
-    /* =========================================================
-       SUPABASE
-       ========================================================= */
-
-    async function waitForSupabase() {
-        const started =
-            Date.now();
-
-        while (
-            Date.now() -
-            started <
-            15000
-        ) {
-            const client =
-                window.supabaseClient ||
-                window.mwanikiSupabase ||
-                window.sb ||
-                window.supabase;
-
-            if (
-                client &&
-                typeof client.from ===
-                    "function"
-            ) {
-                return client;
-            }
-
-            await new Promise(
-                resolve =>
-                    setTimeout(
-                        resolve,
-                        100
-                    )
-            );
-        }
-
-        return null;
-    }
-
-
-    async function initializeSupabase() {
-        db =
-            await waitForSupabase();
-
-        if (!db) {
-            console.error(
-                "❌ Supabase unavailable for calls."
-            );
-
-            return false;
-        }
-
-        const {
-            data,
-            error
-        } =
-            await db.auth.getSession();
-
-        if (error) {
-            console.error(
-                error
-            );
-
-            return false;
-        }
-
-        currentUser =
-            data?.session?.user ||
-            null;
-
-        if (!currentUser) {
-            console.warn(
-                "⚠️ No authenticated user."
-            );
-
-            return false;
-        }
-
-        console.log(
-            "📞 Call authenticated:",
-            currentUser.id
-        );
-
-        return true;
-    }
-
-
-    /* =========================================================
+    /* =====================================================
        HELPERS
-       ========================================================= */
+       ===================================================== */
 
-    function escapeHtml(value) {
+    function escapeHTML(value) {
+
         return String(value ?? "")
-            .replace(
-                /&/g,
-                "&amp;"
-            )
-            .replace(
-                /</g,
-                "&lt;"
-            )
-            .replace(
-                />/g,
-                "&gt;"
-            )
-            .replace(
-                /"/g,
-                "&quot;"
-            )
-            .replace(
-                /'/g,
-                "&#039;"
-            );
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
     }
 
 
-    function initials(name) {
-        const parts =
-            String(
-                name ||
-                "Mwaniki Scholar"
-            )
-                .trim()
-                .split(/\s+/);
+    function showNotice(message) {
 
-        if (
-            parts.length === 1
-        ) {
-            return parts[0]
-                .slice(0, 2)
-                .toUpperCase();
-        }
+        const toast = $("toast");
 
-        return (
-            parts[0][0] +
-            parts[
-                parts.length - 1
-            ][0]
-        ).toUpperCase();
-    }
+        if (!toast) return;
 
+        toast.textContent = message;
 
-    function notice(message) {
-        const toast =
-            $("toast");
+        toast.classList.remove("hidden");
 
-        if (!toast) {
-            console.info(
-                "📞",
-                message
-            );
+        clearTimeout(showNotice.timer);
 
-            return;
-        }
-
-        toast.textContent =
-            message;
-
-        toast.classList.remove(
-            "hidden"
-        );
-
-        clearTimeout(
-            toast._callTimer
-        );
-
-        toast._callTimer =
+        showNotice.timer =
             setTimeout(
-                () => {
+                () =>
                     toast.classList.add(
                         "hidden"
-                    );
-                },
+                    ),
                 3500
             );
     }
 
 
-    async function getIdentity(
-        userId
-    ) {
+    function avatarUrl(profile) {
+
+        if (!profile?.avatar_url) {
+            return "";
+        }
+
         try {
-            const {
-                data
-            } = await db
-                .from(
-                    "chat_public_profiles"
-                )
-                .select("*")
-                .eq(
-                    "id",
-                    userId
-                )
-                .maybeSingle();
 
-            if (data) {
-                return {
-                    name:
-                        data.display_name ||
-                        data.full_name ||
-                        data.name ||
-                        data.username ||
-                        "Mwaniki Scholar",
+            const url =
+                new URL(
+                    profile.avatar_url
+                );
 
-                    avatar:
-                        data.avatar_url ||
-                        data.photo_url ||
-                        data.profile_image ||
-                        ""
-                };
-            }
-        } catch (_) {}
+            return (
+                url.protocol === "https:" ||
+                url.protocol === "http:"
+            )
+                ? url.href
+                : "";
 
-        return {
-            name:
-                "Mwaniki Scholar",
-            avatar: ""
+        } catch {
+
+            return "";
+        }
+    }
+
+
+    async function getIdentity(userId) {
+
+        const {
+            data
+        } = await supabase
+            .from("chat_public_profiles")
+            .select("*")
+            .eq("id", userId)
+            .maybeSingle();
+
+        return data || {
+            id: userId,
+            display_name: "Member"
         };
     }
 
 
-    /* =========================================================
-       COMMUNITY
-       ========================================================= */
+    /* =====================================================
+       AUTH
+       ===================================================== */
 
-    function getCommunityId() {
-        if (
-            window.MwanikiCommunity &&
-            typeof
-                window.MwanikiCommunity
-                    .getCurrentCommunityId ===
-                "function"
-        ) {
-            return window
-                .MwanikiCommunity
-                .getCurrentCommunityId();
-        }
+    async function loadUser() {
 
-        return (
-            localStorage.getItem(
-                "mwanikiCommunityId"
-            ) ||
-            null
-        );
+        const {
+            data
+        } = await supabase.auth.getSession();
+
+        state.user =
+            data.session?.user || null;
+
+        if (!state.user) return false;
+
+        state.profile =
+            await getIdentity(
+                state.user.id
+            );
+
+        return true;
     }
 
 
-    /* =========================================================
-       MODAL
-       ========================================================= */
+    /* =====================================================
+       PERSONAL INCOMING CHANNEL
+       ===================================================== */
 
-    function openCallModal() {
-        elements.callModal
-            ?.classList.remove(
-                "hidden"
+    async function setupIncomingChannel() {
+
+        if (!state.user) return;
+
+        if (state.incomingChannel) {
+
+            await supabase.removeChannel(
+                state.incomingChannel
+            );
+        }
+
+
+        state.incomingChannel =
+            supabase.channel(
+                `mwaniki-incoming-user-${state.user.id}`,
+                {
+                    config: {
+                        broadcast: {
+                            self: false
+                        }
+                    }
+                }
+            );
+
+
+        state.incomingChannel
+            .on(
+                "broadcast",
+                {
+                    event: "incoming-call"
+                },
+                async ({ payload }) => {
+
+                    console.log(
+                        "Incoming call:",
+                        payload
+                    );
+
+                    await receiveIncomingCall(
+                        payload
+                    );
+                }
+            )
+            .on(
+                "broadcast",
+                {
+                    event: "cancel-incoming-call"
+                },
+                ({ payload }) => {
+
+                    if (
+                        state.incomingCall
+                        &&
+                        state.incomingCall.roomId ===
+                            payload.roomId
+                    ) {
+
+                        hideIncomingCall();
+                    }
+                }
+            )
+            .subscribe(
+                status => {
+
+                    console.log(
+                        "Incoming call channel:",
+                        status
+                    );
+                }
             );
     }
 
 
-    function closeCallModal() {
-        elements.callModal
-            ?.classList.add(
-                "hidden"
-            );
-    }
+    async function sendIncomingRing(
+        receiverId,
+        payload
+    ) {
 
-
-    /* =========================================================
-       ROOM CREATION
-       ========================================================= */
-
-    async function createRoom({
-        scope,
-        communityId,
-        userIds,
-        mode
-    }) {
-        if (
-            !currentUser ||
-            !db
-        ) {
-            notice(
-                "Please sign in before making a call."
+        const channel =
+            supabase.channel(
+                `mwaniki-incoming-user-${receiverId}`,
+                {
+                    config: {
+                        broadcast: {
+                            self: false
+                        }
+                    }
+                }
             );
 
-            return;
-        }
 
-        const recipients =
-            Array.from(
-                new Set(
-                    (
-                        userIds ||
-                        []
-                    )
-                        .map(
-                            id =>
-                                String(
-                                    id
-                                )
-                        )
-                        .filter(
-                            id =>
-                                id &&
-                                id !==
-                                    String(
-                                        currentUser.id
-                                    )
-                        )
-                )
+        await new Promise(resolve => {
+
+            let finished = false;
+
+            const done = () => {
+
+                if (finished) return;
+
+                finished = true;
+
+                resolve();
+            };
+
+
+            channel.subscribe(
+                status => {
+
+                    if (
+                        status ===
+                        "SUBSCRIBED"
+                    ) {
+
+                        done();
+                    }
+                }
             );
-
-        if (!recipients.length) {
-            notice(
-                "Select at least one other member."
-            );
-
-            return;
-        }
-
-        try {
-            closeCallModal();
-
-            const {
-                data:
-                    room,
-                error
-            } = await db
-                .from(
-                    "chat_call_rooms"
-                )
-                .insert({
-                    community_id:
-                        communityId ||
-                        null,
-
-                    created_by:
-                        currentUser.id,
-
-                    target_user_id:
-                        scope ===
-                        "direct"
-                            ? recipients[0]
-                            : null,
-
-                    room_status:
-                        "ringing",
-
-                    call_scope:
-                        scope,
-
-                    max_participants:
-                        Math.max(
-                            2,
-                            recipients.length +
-                                1
-                        )
-                })
-                .select("*")
-                .single();
-
-            if (error) {
-                throw error;
-            }
-
-            currentRoom =
-                room;
-
-            currentScope =
-                scope;
-
-            currentMode =
-                mode ||
-                "audio";
-
-            await joinParticipant(
-                room.id,
-                currentUser.id,
-                "joined"
-            );
-
-            for (
-                const userId of
-                recipients
-            ) {
-                await joinParticipant(
-                    room.id,
-                    userId,
-                    "invited"
-                );
-
-                await createInvite(
-                    room.id,
-                    userId
-                );
-            }
-
-            await startLocalMedia(
-                currentMode
-            );
-
-            await joinSignalRoom(
-                room.id
-            );
-
-            showCallOverlay(
-                "Calling..."
-            );
-
-            startRingTimer();
-
-            /*
-             * Give the signaling subscription a moment
-             * before offers can be generated.
-             */
 
             setTimeout(
-                async () => {
-                    await announcePresence();
-                },
-                500
+                done,
+                3000
             );
+        });
 
-            console.log(
-                "📞 Room created:",
-                room.id
-            );
 
-        } catch (error) {
-            console.error(
-                "❌ Call creation failed:",
-                error
-            );
+        try {
 
-            await cleanupCall(
-                false
-            );
+            await channel.send({
+                type: "broadcast",
+                event: "incoming-call",
+                payload
+            });
 
-            notice(
-                error?.message ||
-                "Unable to start call."
+        } finally {
+
+            setTimeout(
+                () =>
+                    supabase.removeChannel(
+                        channel
+                    ),
+                1500
             );
         }
     }
 
 
-    /* =========================================================
-       PARTICIPANTS
-       ========================================================= */
+    /* =====================================================
+       CREATE ROOM
+       ===================================================== */
 
-    async function joinParticipant(
+    async function createRoom({
+        userIds,
+        mode,
+        scope,
+        communityId
+    }) {
+
+        if (!state.user) return;
+
+        const uniqueUsers = [
+            ...new Set(
+                (userIds || [])
+                    .filter(
+                        id =>
+                            id &&
+                            id !==
+                            state.user.id
+                    )
+            )
+        ];
+
+        if (!uniqueUsers.length) {
+
+            showNotice(
+                "No recipient selected."
+            );
+
+            return;
+        }
+
+
+        const {
+            data: room,
+            error
+        } = await supabase
+            .from("chat_call_rooms")
+            .insert({
+                community_id:
+                    communityId || null,
+
+                created_by:
+                    state.user.id,
+
+                target_user_id:
+                    scope === "direct"
+                        ? uniqueUsers[0]
+                        : null,
+
+                call_scope:
+                    scope,
+
+                room_status:
+                    "ringing",
+
+                max_participants:
+                    Math.max(
+                        uniqueUsers.length + 1,
+                        2
+                    )
+            })
+            .select()
+            .single();
+
+
+        if (error) {
+
+            console.error(
+                "Room creation:",
+                error
+            );
+
+            showNotice(
+                error.message ||
+                "Could not create call room."
+            );
+
+            return;
+        }
+
+
+        state.roomId =
+            room.id;
+
+        state.scope =
+            scope;
+
+        state.mode =
+            mode;
+
+        state.communityId =
+            communityId || null;
+
+        state.active =
+            true;
+
+
+        /*
+         * Caller joins first.
+         */
+
+        await insertParticipant(
+            room.id,
+            state.user.id,
+            "joined"
+        );
+
+
+        await openRoomChannel();
+
+
+        /*
+         * Caller media.
+         */
+
+        await prepareLocalMedia(
+            mode
+        );
+
+
+        /*
+         * Invite recipients.
+         */
+
+        for (
+            const receiverId
+            of uniqueUsers
+        ) {
+
+            const {
+                data: invite,
+                error: inviteError
+            } = await supabase
+                .from("chat_call_invites")
+                .insert({
+                    room_id:
+                        room.id,
+
+                    sender_id:
+                        state.user.id,
+
+                    receiver_id:
+                        receiverId,
+
+                    status:
+                        "ringing"
+                })
+                .select()
+                .single();
+
+
+            if (inviteError) {
+
+                console.error(
+                    "Invite:",
+                    inviteError
+                );
+
+                continue;
+            }
+
+
+            await insertParticipant(
+                room.id,
+                receiverId,
+                "invited"
+            );
+
+
+            const senderProfile =
+                state.profile;
+
+
+            await sendIncomingRing(
+                receiverId,
+                {
+                    roomId:
+                        room.id,
+
+                    inviteId:
+                        invite.id,
+
+                    senderId:
+                        state.user.id,
+
+                    senderName:
+                        senderProfile?.display_name ||
+                        senderProfile?.full_name ||
+                        "Member",
+
+                    senderAvatar:
+                        avatarUrl(
+                            senderProfile
+                        ),
+
+                    callType:
+                        mode,
+
+                    scope,
+
+                    communityId:
+                        communityId || null,
+
+                    room
+                }
+            );
+        }
+
+
+        showActiveCall(
+            "Calling..."
+        );
+
+        startCallTimer();
+    }
+
+
+    /* =====================================================
+       PARTICIPANTS
+       ===================================================== */
+
+    async function insertParticipant(
         roomId,
         userId,
         status
     ) {
-        /*
-         * Do not rely on an upsert constraint existing.
-         */
 
         const {
-            data:
-                existing
-        } = await db
-            .from(
-                "chat_call_participants"
-            )
-            .select("id")
-            .eq(
-                "room_id",
-                roomId
-            )
-            .eq(
-                "user_id",
-                userId
-            )
-            .maybeSingle();
-
-        if (existing) {
-            await db
-                .from(
-                    "chat_call_participants"
-                )
-                .update({
-                    status,
-
-                    joined_at:
-                        status ===
-                        "joined"
-                            ? new Date()
-                                .toISOString()
-                            : undefined,
-
-                    left_at:
-                        status ===
-                        "joined"
-                            ? null
-                            : undefined
-                })
-                .eq(
-                    "id",
-                    existing.id
-                );
-
-            return;
-        }
-
-        await db
-            .from(
-                "chat_call_participants"
-            )
+            error
+        } = await supabase
+            .from("chat_call_participants")
             .insert({
                 room_id:
                     roomId,
@@ -676,948 +556,887 @@
 
                 status,
 
+                is_muted:
+                    false,
+
+                camera:
+                    state.mode === "video",
+
+                screen_share:
+                    false,
+
                 joined_at:
-                    status ===
-                    "joined"
-                        ? new Date()
-                            .toISOString()
+                    status === "joined"
+                        ? new Date().toISOString()
                         : null
             });
+
+
+        if (
+            error &&
+            !String(error.message)
+                .toLowerCase()
+                .includes("duplicate")
+        ) {
+
+            console.warn(
+                "Participant:",
+                error
+            );
+        }
     }
 
 
-    async function leaveParticipant() {
+    /* =====================================================
+       ROOM BROADCAST
+       ===================================================== */
+
+    async function openRoomChannel() {
+
+        if (state.roomChannel) {
+
+            await supabase.removeChannel(
+                state.roomChannel
+            );
+        }
+
+
+        state.roomChannel =
+            supabase.channel(
+                `mwaniki-call-room-${state.roomId}`,
+                {
+                    config: {
+                        broadcast: {
+                            self: false
+                        }
+                    }
+                }
+            );
+
+
+        state.roomChannel
+            .on(
+                "broadcast",
+                {
+                    event: "participant-joined"
+                },
+                async ({ payload }) => {
+
+                    if (
+                        !payload?.userId ||
+                        payload.userId ===
+                            state.user.id
+                    ) {
+                        return;
+                    }
+
+                    await handleRemoteJoined(
+                        payload.userId
+                    );
+                }
+            )
+            .on(
+                "broadcast",
+                {
+                    event: "signal"
+                },
+                async ({ payload }) => {
+
+                    await handleSignal(
+                        payload
+                    );
+                }
+            )
+            .on(
+                "broadcast",
+                {
+                    event: "participant-left"
+                },
+                ({ payload }) => {
+
+                    if (
+                        payload?.userId
+                    ) {
+
+                        removePeer(
+                            payload.userId
+                        );
+                    }
+                }
+            )
+            .on(
+                "broadcast",
+                {
+                    event: "call-ended"
+                },
+                ({ payload }) => {
+
+                    if (
+                        payload?.userId !==
+                        state.user.id
+                    ) {
+
+                        finishCall(
+                            false
+                        );
+                    }
+                }
+            )
+            .subscribe(
+                async status => {
+
+                    console.log(
+                        "Call room:",
+                        status
+                    );
+
+                    if (
+                        status ===
+                        "SUBSCRIBED"
+                    ) {
+
+                        await broadcastRoomEvent(
+                            "participant-joined",
+                            {
+                                userId:
+                                    state.user.id,
+
+                                mode:
+                                    state.mode
+                            }
+                        );
+                    }
+                }
+            );
+    }
+
+
+    async function broadcastRoomEvent(
+        event,
+        payload
+    ) {
+
+        if (!state.roomChannel) return;
+
+        await state.roomChannel.send({
+            type: "broadcast",
+            event,
+            payload
+        });
+    }
+
+
+    /* =====================================================
+       INCOMING CALL
+       ===================================================== */
+
+    async function receiveIncomingCall(
+        payload
+    ) {
+
         if (
-            !currentRoom ||
-            !currentUser
+            state.active ||
+            state.incomingCall
         ) {
             return;
         }
 
-        await db
-            .from(
-                "chat_call_participants"
-            )
-            .update({
-                status:
-                    "left",
+        state.incomingCall =
+            payload;
 
-                left_at:
-                    new Date()
-                        .toISOString()
-            })
-            .eq(
-                "room_id",
-                currentRoom.id
-            )
-            .eq(
-                "user_id",
-                currentUser.id
-            );
+        $("incomingCallerName")
+            .textContent =
+            payload.senderName ||
+            "Incoming call";
+
+        $("incomingCallType")
+            .textContent =
+            payload.callType === "video"
+                ? "Incoming video call"
+                : "Incoming audio call";
+
+
+        if (
+            payload.senderAvatar
+        ) {
+
+            $("incomingCallAvatar")
+                .innerHTML = `
+                    <img
+                        src="${escapeHTML(
+                            payload.senderAvatar
+                        )}"
+                        alt=""
+                        style="
+                            width:100%;
+                            height:100%;
+                            object-fit:cover;
+                        "
+                    >
+                `;
+        } else {
+
+            $("incomingCallAvatar")
+                .textContent = "👤";
+        }
+
+
+        $("incomingCallToast")
+            .classList
+            .remove("hidden");
     }
 
 
-    /* =========================================================
-       INVITES
-       ========================================================= */
+    function hideIncomingCall() {
 
-    async function createInvite(
-        roomId,
-        receiverId
-    ) {
-        const {
-            error
-        } = await db
-            .from(
-                "chat_call_invites"
-            )
-            .insert({
-                room_id:
-                    roomId,
+        $("incomingCallToast")
+            .classList
+            .add("hidden");
 
-                sender_id:
-                    currentUser.id,
-
-                receiver_id:
-                    receiverId,
-
-                status:
-                    "pending"
-            });
-
-        if (error) {
-            console.warn(
-                "Invite error:",
-                error
-            );
-        }
+        state.incomingCall = null;
     }
 
 
-    /* =========================================================
-       INCOMING CALLS
-       ========================================================= */
+    async function acceptIncomingCall() {
 
-    async function subscribeIncoming() {
-        if (
-            incomingChannel
-        ) {
-            await db.removeChannel(
-                incomingChannel
-            );
-        }
+        const incoming =
+            state.incomingCall;
 
-        incomingChannel =
-            db.channel(
-                `mwaniki-incoming-${currentUser.id}`
-            );
+        if (!incoming) return;
 
-        incomingChannel
-            .on(
-                "postgres_changes",
-                {
-                    event: "INSERT",
-                    schema: "public",
-                    table:
-                        "chat_call_invites",
-                    filter:
-                        `receiver_id=eq.${currentUser.id}`
-                },
-                async payload => {
-                    const invite =
-                        payload.new;
-
-                    if (
-                        invite.status !==
-                        "pending"
-                    ) {
-                        return;
-                    }
-
-                    if (
-                        currentRoom
-                    ) {
-                        return;
-                    }
-
-                    await showIncoming(
-                        invite
-                    );
-                }
-            )
-            .subscribe(
-                status => {
-                    console.log(
-                        "📞 Incoming calls:",
-                        status
-                    );
-                }
-            );
-    }
+        hideIncomingCall();
 
 
-    async function showIncoming(
-        invite
-    ) {
-        incomingInvite =
-            invite;
+        state.roomId =
+            incoming.roomId;
 
-        const identity =
-            await getIdentity(
-                invite.sender_id
-            );
+        state.inviteId =
+            incoming.inviteId;
 
-        if (
-            elements.incomingCallerName
-        ) {
-            elements.incomingCallerName
-                .textContent =
-                identity.name;
-        }
+        state.scope =
+            incoming.scope ||
+            "direct";
 
-        if (
-            elements.incomingCallType
-        ) {
-            elements.incomingCallType
-                .textContent =
-                "Incoming voice call";
-        }
+        state.mode =
+            incoming.callType ||
+            "audio";
 
-        if (
-            elements.incomingCallAvatar
-        ) {
-            elements.incomingCallAvatar
-                .innerHTML =
-                identity.avatar
-                    ? `
-                        <img
-                            src="${escapeHtml(
-                                identity.avatar
-                            )}"
-                            alt=""
-                            style="
-                                width:100%;
-                                height:100%;
-                                object-fit:cover;
-                                border-radius:50%;
-                            "
-                        >
-                    `
-                    : escapeHtml(
-                        initials(
-                            identity.name
-                        )
-                    );
-        }
-
-        elements.incomingCallToast
-            ?.classList.remove(
-                "hidden"
-            );
-    }
-
-
-    function hideIncoming() {
-        elements.incomingCallToast
-            ?.classList.add(
-                "hidden"
-            );
-
-        incomingInvite =
+        state.communityId =
+            incoming.communityId ||
             null;
-    }
+
+        state.active =
+            true;
 
 
-    async function acceptIncoming() {
-        const invite =
-            incomingInvite;
+        /*
+         * Update invite.
+         */
 
-        if (!invite) return;
+        if (incoming.inviteId) {
 
-        hideIncoming();
-
-        try {
-            const {
-                data:
-                    room,
-                error
-            } = await db
-                .from(
-                    "chat_call_rooms"
-                )
-                .select("*")
-                .eq(
-                    "id",
-                    invite.room_id
-                )
-                .single();
-
-            if (error) {
-                throw error;
-            }
-
-            if (
-                room.room_status ===
-                "ended"
-            ) {
-                notice(
-                    "This call has already ended."
-                );
-
-                return;
-            }
-
-            currentRoom =
-                room;
-
-            currentScope =
-                room.call_scope ||
-                "general";
-
-            currentMode =
-                "audio";
-
-            await db
-                .from(
-                    "chat_call_invites"
-                )
+            await supabase
+                .from("chat_call_invites")
                 .update({
                     status:
                         "accepted",
 
                     responded_at:
-                        new Date()
-                            .toISOString()
+                        new Date().toISOString()
                 })
                 .eq(
                     "id",
-                    invite.id
+                    incoming.inviteId
                 );
-
-            await joinParticipant(
-                room.id,
-                currentUser.id,
-                "joined"
-            );
-
-            await startLocalMedia(
-                "audio"
-            );
-
-            await joinSignalRoom(
-                room.id
-            );
-
-            showCallOverlay(
-                "Connected"
-            );
-
-            await announcePresence();
-
-        } catch (error) {
-            console.error(
-                error
-            );
-
-            notice(
-                "Unable to join the call."
-            );
         }
+
+
+        /*
+         * Recipient becomes a real participant.
+         */
+
+        await insertParticipant(
+            state.roomId,
+            state.user.id,
+            "joined"
+        );
+
+
+        await prepareLocalMedia(
+            state.mode
+        );
+
+
+        await openRoomChannel();
+
+
+        showActiveCall(
+            "Connecting..."
+        );
+
+        startCallTimer();
     }
 
 
-    async function rejectIncoming() {
-        const invite =
-            incomingInvite;
+    async function rejectIncomingCall() {
 
-        if (!invite) return;
+        const incoming =
+            state.incomingCall;
 
-        hideIncoming();
+        if (!incoming) return;
 
-        await db
-            .from(
-                "chat_call_invites"
-            )
-            .update({
-                status:
-                    "rejected",
+        hideIncomingCall();
 
-                responded_at:
-                    new Date()
-                        .toISOString()
-            })
-            .eq(
-                "id",
-                invite.id
+
+        if (incoming.inviteId) {
+
+            await supabase
+                .from("chat_call_invites")
+                .update({
+                    status:
+                        "rejected",
+
+                    responded_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "id",
+                    incoming.inviteId
+                );
+        }
+
+
+        const channel =
+            supabase.channel(
+                `mwaniki-call-room-${incoming.roomId}`
             );
+
+        await new Promise(resolve => {
+
+            let done = false;
+
+            channel.subscribe(
+                status => {
+
+                    if (
+                        status ===
+                        "SUBSCRIBED" &&
+                        !done
+                    ) {
+
+                        done = true;
+
+                        channel.send({
+                            type: "broadcast",
+                            event: "participant-left",
+                            payload: {
+                                userId:
+                                    state.user.id,
+
+                                reason:
+                                    "rejected"
+                            }
+                        });
+
+                        setTimeout(
+                            resolve,
+                            100
+                        );
+                    }
+                }
+            );
+
+            setTimeout(
+                () => {
+
+                    if (!done) {
+                        done = true;
+                        resolve();
+                    }
+
+                },
+                1500
+            );
+        });
+
+        await supabase.removeChannel(
+            channel
+        );
     }
 
 
-    /* =========================================================
+    /* =====================================================
        LOCAL MEDIA
-       ========================================================= */
+       ===================================================== */
 
-    async function startLocalMedia(
+    async function prepareLocalMedia(
         mode
     ) {
-        stopLocalMedia();
-
-        const video =
-            mode === "video";
 
         try {
-            localStream =
+
+            const constraints =
+                mode === "video"
+                    ? {
+                        audio: true,
+                        video: {
+                            width: {
+                                ideal: 1280
+                            },
+
+                            height: {
+                                ideal: 720
+                            },
+
+                            frameRate: {
+                                ideal: 30,
+                                max: 30
+                            }
+                        }
+                    }
+                    : {
+                        audio: true,
+                        video: false
+                    };
+
+
+            state.localStream =
                 await navigator
                     .mediaDevices
-                    .getUserMedia({
-                        audio:
-                            CONFIG.audio,
+                    .getUserMedia(
+                        constraints
+                    );
 
-                        video:
-                            video
-                                ? CONFIG.video
-                                : false
-                    });
-
-            microphoneEnabled =
+            state.microphoneEnabled =
                 true;
 
-            cameraEnabled =
-                video;
+            state.cameraEnabled =
+                mode === "video";
 
-            renderLocalTile();
 
-            updateControls();
+            createLocalTile();
 
         } catch (error) {
+
             console.error(
-                "Media permission error:",
+                "Local media:",
                 error
             );
 
-            throw new Error(
-                video
-                    ? "Camera and microphone permission was denied."
-                    : "Microphone permission was denied."
+            showNotice(
+                "Microphone/camera permission is required for the call."
             );
+
+            throw error;
         }
     }
 
 
-    function stopLocalMedia() {
-        if (!localStream) {
+    function createLocalTile() {
+
+        const grid =
+            $("callParticipantGrid");
+
+        let tile =
+            document.querySelector(
+                '[data-call-user="local"]'
+            );
+
+        if (!tile) {
+
+            tile =
+                document.createElement(
+                    "div"
+                );
+
+            tile.className =
+                "call-participant";
+
+            tile.dataset.callUser =
+                "local";
+
+            grid.prepend(tile);
+        }
+
+
+        const hasVideo =
+            state.localStream
+                ?.getVideoTracks()
+                .length > 0;
+
+
+        if (hasVideo) {
+
+            tile.classList
+                .remove("audio-only");
+
+            tile.innerHTML = `
+                <video
+                    autoplay
+                    muted
+                    playsinline
+                ></video>
+
+                <span class="call-participant-name">
+                    You
+                </span>
+            `;
+
+            tile.querySelector(
+                "video"
+            ).srcObject =
+                state.localStream;
+
+        } else {
+
+            tile.classList
+                .add("audio-only");
+
+            tile.innerHTML = `
+                <div class="call-participant-avatar">
+                    👤
+                </div>
+
+                <span class="call-participant-name">
+                    You
+                </span>
+            `;
+        }
+    }
+
+
+    /* =====================================================
+       PEER CONNECTION
+       ===================================================== */
+
+    async function handleRemoteJoined(
+        remoteUserId
+    ) {
+
+        if (
+            remoteUserId ===
+            state.user.id
+        ) {
             return;
         }
 
-        localStream
-            .getTracks()
-            .forEach(
-                track => {
-                    try {
-                        track.stop();
-                    } catch (_) {}
+
+        /*
+         * Deterministic offerer:
+         * only the lexicographically smaller
+         * user ID creates the offer.
+         */
+
+        if (
+            state.user.id <
+            remoteUserId
+        ) {
+
+            const peer =
+                await createPeer(
+                    remoteUserId
+                );
+
+            const offer =
+                await peer.createOffer();
+
+            await peer.setLocalDescription(
+                offer
+            );
+
+            await sendSignal(
+                remoteUserId,
+                {
+                    type: "offer",
+                    sdp: offer
                 }
             );
-
-        localStream =
-            null;
+        }
     }
 
 
-    /* =========================================================
-       CALL UI
-       ========================================================= */
-
-    function showCallOverlay(
-        status
+    async function createPeer(
+        remoteUserId
     ) {
-        const overlay =
-            elements.activeCallOverlay;
-
-        if (!overlay) return;
-
-        overlay.classList.remove(
-            "hidden"
-        );
 
         if (
-            elements.activeCallTitle
-        ) {
-            elements.activeCallTitle
-                .textContent =
-                currentScope ===
-                    "community"
-                    ? "Community Call"
-                    : currentScope ===
-                        "direct"
-                    ? "Private Call"
-                    : "General Call";
-        }
-
-        updateStatus(
-            status
-        );
-    }
-
-
-    function hideCallOverlay() {
-        elements.activeCallOverlay
-            ?.classList.add(
-                "hidden"
-            );
-
-        if (
-            elements.callParticipantGrid
-        ) {
-            elements.callParticipantGrid
-                .innerHTML = "";
-        }
-    }
-
-
-    function updateStatus(
-        text
-    ) {
-        if (
-            elements.activeCallStatus
-        ) {
-            elements.activeCallStatus
-                .textContent =
-                text;
-        }
-    }
-
-
-    function renderLocalTile() {
-        const grid =
-            elements.callParticipantGrid;
-
-        if (!grid) return;
-
-        let tile =
-            grid.querySelector(
-                '[data-local-call-tile="true"]'
-            );
-
-        if (!tile) {
-            tile =
-                document.createElement(
-                    "div"
-                );
-
-            tile.className =
-                "call-participant-tile";
-
-            tile.dataset.localCallTile =
-                "true";
-
-            tile.innerHTML = `
-                <div class="call-participant-media"></div>
-
-                <div class="call-participant-label">
-                    You
-                </div>
-            `;
-
-            grid.prepend(
-                tile
-            );
-        }
-
-        const media =
-            tile.querySelector(
-                ".call-participant-media"
-            );
-
-        media.innerHTML = "";
-
-        if (
-            localStream &&
-            localStream.getVideoTracks()
-                .length
-        ) {
-            const video =
-                document.createElement(
-                    "video"
-                );
-
-            video.autoplay =
-                true;
-
-            video.muted =
-                true;
-
-            video.playsInline =
-                true;
-
-            video.srcObject =
-                localStream;
-
-            video.className =
-                "call-participant-video";
-
-            media.appendChild(
-                video
-            );
-
-        } else {
-            media.innerHTML = `
-                <div class="call-audio-avatar">
-                    ${escapeHtml(
-                        initials(
-                            "You"
-                        )
-                    )}
-                </div>
-            `;
-        }
-    }
-
-
-    async function renderRemoteTile(
-        userId,
-        stream
-    ) {
-        const grid =
-            elements.callParticipantGrid;
-
-        if (!grid) return;
-
-        let tile =
-            grid.querySelector(
-                `[data-remote-user="${CSS.escape(
-                    String(
-                        userId
-                    )
-                )}"]`
-            );
-
-        if (!tile) {
-            const identity =
-                await getIdentity(
-                    userId
-                );
-
-            tile =
-                document.createElement(
-                    "div"
-                );
-
-            tile.className =
-                "call-participant-tile";
-
-            tile.dataset.remoteUser =
-                userId;
-
-            tile.innerHTML = `
-                <div class="call-participant-media">
-                    <div class="call-audio-avatar">
-                        ${escapeHtml(
-                            initials(
-                                identity.name
-                            )
-                        )}
-                    </div>
-                </div>
-
-                <div class="call-participant-label">
-                    ${escapeHtml(
-                        identity.name
-                    )}
-                </div>
-            `;
-
-            grid.appendChild(
-                tile
-            );
-        }
-
-        const media =
-            tile.querySelector(
-                ".call-participant-media"
-            );
-
-        let video =
-            media.querySelector(
-                "video"
-            );
-
-        if (!video) {
-            media.innerHTML = "";
-
-            video =
-                document.createElement(
-                    "video"
-                );
-
-            video.autoplay =
-                true;
-
-            video.playsInline =
-                true;
-
-            video.className =
-                "call-participant-video";
-
-            media.appendChild(
-                video
-            );
-        }
-
-        video.srcObject =
-            stream;
-    }
-
-
-    function removeRemoteTile(
-        userId
-    ) {
-        const tile =
-            document.querySelector(
-                `[data-remote-user="${CSS.escape(
-                    String(
-                        userId
-                    )
-                )}"]`
-            );
-
-        tile?.remove();
-    }
-
-
-    /* =========================================================
-       WEBRTC PEER
-       ========================================================= */
-
-    function getPeer(
-        userId
-    ) {
-        if (
-            peers.has(
-                String(userId)
+            state.peers.has(
+                remoteUserId
             )
         ) {
-            return peers.get(
-                String(userId)
+
+            return state.peers.get(
+                remoteUserId
             );
         }
 
-        const connection =
+
+        const peer =
             new RTCPeerConnection({
-                iceServers:
-                    CONFIG.iceServers
+                iceServers: [
+                    {
+                        urls: [
+                            "stun:stun.l.google.com:19302",
+                            "stun:stun1.l.google.com:19302",
+                            "stun:stun2.l.google.com:19302"
+                        ]
+                    }
+                ]
             });
 
-        const peer = {
-            connection,
-            remoteDescriptionSet:
-                false
-        };
 
-        peers.set(
-            String(userId),
+        state.peers.set(
+            remoteUserId,
             peer
         );
 
-        if (localStream) {
-            localStream
-                .getTracks()
-                .forEach(
-                    track => {
-                        connection.addTrack(
-                            track,
-                            localStream
-                        );
-                    }
+
+        if (state.localStream) {
+
+            for (
+                const track
+                of state.localStream.getTracks()
+            ) {
+
+                peer.addTrack(
+                    track,
+                    state.localStream
                 );
+            }
         }
 
-        connection.onicecandidate =
-            event => {
-                if (
-                    !event.candidate
-                ) {
-                    return;
-                }
 
-                sendSignal(
-                    userId,
-                    "ice",
-                    {
-                        candidate:
-                            event.candidate
-                    }
-                );
+        peer.onicecandidate =
+            async event => {
+
+                if (
+                    event.candidate
+                ) {
+
+                    await sendSignal(
+                        remoteUserId,
+                        {
+                            type:
+                                "ice",
+
+                            candidate:
+                                event.candidate
+                        }
+                    );
+                }
             };
 
-        connection.ontrack =
+
+        peer.ontrack =
             event => {
+
                 const stream =
-                    event.streams?.[0];
+                    event.streams[0];
 
                 if (stream) {
-                    renderRemoteTile(
-                        userId,
+
+                    renderRemoteStream(
+                        remoteUserId,
                         stream
                     );
                 }
             };
 
-        connection.onconnectionstatechange =
+
+        peer.onconnectionstatechange =
             () => {
-                const status =
-                    connection.connectionState;
 
                 console.log(
-                    `📞 ${userId}: ${status}`
+                    remoteUserId,
+                    peer.connectionState
                 );
 
                 if (
-                    status ===
+                    peer.connectionState ===
                     "connected"
                 ) {
-                    clearRingTimer();
 
-                    updateStatus(
-                        "Connected"
-                    );
+                    $("activeCallStatus")
+                        .textContent =
+                        "Connected";
                 }
 
+
                 if (
-                    status ===
-                        "failed" ||
-                    status ===
-                        "closed"
+                    [
+                        "failed",
+                        "closed",
+                        "disconnected"
+                    ].includes(
+                        peer.connectionState
+                    )
                 ) {
+
                     removePeer(
-                        userId
+                        remoteUserId
                     );
                 }
             };
+
 
         return peer;
     }
 
 
-    async function createOffer(
-        userId
+    async function sendSignal(
+        receiverId,
+        signal
     ) {
-        const peer =
-            getPeer(
-                userId
-            );
+
+        if (!state.roomChannel) return;
+
+        await state.roomChannel.send({
+            type: "broadcast",
+            event: "signal",
+            payload: {
+                senderId:
+                    state.user.id,
+
+                receiverId,
+
+                ...signal
+            }
+        });
+    }
+
+
+    /* =====================================================
+       SIGNAL HANDLING
+       ===================================================== */
+
+    async function handleSignal(
+        payload
+    ) {
+
+        if (!payload) return;
 
         if (
-            peer.connection.signalingState !==
-            "stable"
+            payload.receiverId &&
+            payload.receiverId !==
+                state.user.id
         ) {
             return;
         }
 
-        const offer =
-            await peer.connection
-                .createOffer();
 
-        await peer.connection
-            .setLocalDescription(
-                offer
-            );
+        const senderId =
+            payload.senderId;
 
-        await sendSignal(
-            userId,
-            "offer",
-            {
-                offer:
-                    peer.connection
-                        .localDescription
-            }
-        );
-    }
+        if (!senderId) return;
 
 
-    async function handleOffer(
-        senderId,
-        offer
-    ) {
         const peer =
-            getPeer(
+            await createPeer(
                 senderId
             );
 
-        await peer.connection
-            .setRemoteDescription(
+
+        if (
+            payload.type ===
+            "offer"
+        ) {
+
+            await peer.setRemoteDescription(
                 new RTCSessionDescription(
-                    offer
+                    payload.sdp
                 )
             );
 
-        peer.remoteDescriptionSet =
-            true;
 
-        await flushCandidates(
-            senderId
-        );
+            const answer =
+                await peer.createAnswer();
 
-        const answer =
-            await peer.connection
-                .createAnswer();
-
-        await peer.connection
-            .setLocalDescription(
+            await peer.setLocalDescription(
                 answer
             );
 
-        await sendSignal(
-            senderId,
-            "answer",
-            {
-                answer:
-                    peer.connection
-                        .localDescription
-            }
-        );
-    }
 
+            await sendSignal(
+                senderId,
+                {
+                    type:
+                        "answer",
 
-    async function handleAnswer(
-        senderId,
-        answer
-    ) {
-        const peer =
-            peers.get(
-                String(
-                    senderId
-                )
+                    sdp:
+                        answer
+                }
             );
 
-        if (!peer) {
-            return;
+
+            await flushCandidates(
+                senderId
+            );
         }
 
-        await peer.connection
-            .setRemoteDescription(
-                new RTCSessionDescription(
-                    answer
-                )
-            );
 
-        peer.remoteDescriptionSet =
-            true;
-
-        await flushCandidates(
-            senderId
-        );
-    }
-
-
-    async function handleIce(
-        senderId,
-        candidate
-    ) {
-        const peer =
-            peers.get(
-                String(
-                    senderId
-                )
-            );
-
-        if (
-            !peer ||
-            !peer.remoteDescriptionSet
+        else if (
+            payload.type ===
+            "answer"
         ) {
-            const list =
-                pendingCandidates.get(
-                    String(
-                        senderId
-                    )
-                ) || [];
 
-            list.push(
-                candidate
+            await peer.setRemoteDescription(
+                new RTCSessionDescription(
+                    payload.sdp
+                )
             );
 
-            pendingCandidates.set(
-                String(
-                    senderId
-                ),
-                list
-            );
 
-            return;
+            await flushCandidates(
+                senderId
+            );
         }
 
-        try {
-            await peer.connection
-                .addIceCandidate(
-                    new RTCIceCandidate(
-                        candidate
-                    )
-                );
-        } catch (error) {
-            console.warn(
-                "ICE error:",
-                error
-            );
+
+        else if (
+            payload.type ===
+            "ice"
+        ) {
+
+            if (
+                peer.remoteDescription
+            ) {
+
+                try {
+
+                    await peer.addIceCandidate(
+                        new RTCIceCandidate(
+                            payload.candidate
+                        )
+                    );
+
+                } catch (error) {
+
+                    console.warn(
+                        "ICE candidate:",
+                        error
+                    );
+                }
+
+            } else {
+
+                if (
+                    !state.pendingCandidates
+                        .has(senderId)
+                ) {
+
+                    state.pendingCandidates
+                        .set(
+                            senderId,
+                            []
+                        );
+                }
+
+                state.pendingCandidates
+                    .get(senderId)
+                    .push(
+                        payload.candidate
+                    );
+            }
         }
     }
 
@@ -1625,569 +1444,396 @@
     async function flushCandidates(
         userId
     ) {
-        const key =
-            String(
-                userId
-            );
 
-        const list =
-            pendingCandidates.get(
-                key
-            );
-
-        if (!list?.length) {
-            return;
-        }
+        const candidates =
+            state.pendingCandidates
+                .get(userId) || [];
 
         const peer =
-            peers.get(
-                key
-            );
+            state.peers.get(userId);
 
-        if (!peer) {
-            return;
-        }
+        if (!peer) return;
 
         for (
-            const candidate of list
+            const candidate
+            of candidates
         ) {
+
             try {
-                await peer.connection
-                    .addIceCandidate(
-                        new RTCIceCandidate(
-                            candidate
-                        )
-                    );
-            } catch (_) {}
+
+                await peer.addIceCandidate(
+                    new RTCIceCandidate(
+                        candidate
+                    )
+                );
+
+            } catch {}
         }
 
-        pendingCandidates.delete(
-            key
-        );
+        state.pendingCandidates
+            .delete(userId);
+    }
+
+
+    /* =====================================================
+       REMOTE VIDEO
+       ===================================================== */
+
+    function renderRemoteStream(
+        userId,
+        stream
+    ) {
+
+        const grid =
+            $("callParticipantGrid");
+
+        let tile =
+            document.querySelector(
+                `[data-call-user="${CSS.escape(
+                    userId
+                )}"]`
+            );
+
+
+        if (!tile) {
+
+            tile =
+                document.createElement(
+                    "div"
+                );
+
+            tile.className =
+                "call-participant";
+
+            tile.dataset.callUser =
+                userId;
+
+            tile.innerHTML = `
+                <video
+                    autoplay
+                    playsinline
+                ></video>
+
+                <span class="call-participant-name">
+                    Member
+                </span>
+            `;
+
+            grid.appendChild(tile);
+
+            getIdentity(
+                userId
+            ).then(profile => {
+
+                const name =
+                    profile.display_name ||
+                    profile.full_name ||
+                    "Member";
+
+                tile.querySelector(
+                    ".call-participant-name"
+                ).textContent =
+                    name;
+            });
+        }
+
+
+        const video =
+            tile.querySelector(
+                "video"
+            );
+
+        if (video) {
+
+            video.srcObject =
+                stream;
+        }
     }
 
 
     function removePeer(
         userId
     ) {
-        const key =
-            String(
+
+        const peer =
+            state.peers.get(
                 userId
             );
 
-        const peer =
-            peers.get(
-                key
-            );
-
         if (peer) {
+
             try {
-                peer.connection.close();
-            } catch (_) {}
+                peer.close();
+            } catch {}
         }
 
-        peers.delete(
-            key
+        state.peers.delete(
+            userId
         );
 
-        pendingCandidates.delete(
-            key
-        );
+        state.pendingCandidates
+            .delete(
+                userId
+            );
 
-        removeRemoteTile(
-            key
-        );
+
+        document
+            .querySelector(
+                `[data-call-user="${CSS.escape(
+                    userId
+                )}"]`
+            )
+            ?.remove();
     }
 
 
-    /* =========================================================
-       SIGNALING
-       ========================================================= */
+    /* =====================================================
+       ACTIVE CALL UI
+       ===================================================== */
 
-    async function joinSignalRoom(
-        roomId
+    function showActiveCall(
+        title
     ) {
-        if (
-            signalChannel
-        ) {
-            await db.removeChannel(
-                signalChannel
-            );
-        }
 
-        /*
-         * CRITICAL:
-         *
-         * Do NOT put user ID in the channel name.
-         *
-         * Every participant must join exactly:
-         *
-         * mwaniki-call-room-{roomId}
-         */
+        $("activeCallTitle")
+            .textContent =
+            title;
 
-        signalChannel =
-            db.channel(
-                `mwaniki-call-room-${roomId}`
-            );
+        $("activeCallStatus")
+            .textContent =
+            "Connecting...";
 
-        signalChannel
-            .on(
-                "broadcast",
-                {
-                    event:
-                        "webrtc"
-                },
-                async event => {
-                    const message =
-                        event.payload;
+        $("activeCallOverlay")
+            .classList
+            .remove("hidden");
+    }
 
-                    if (!message) {
-                        return;
-                    }
 
-                    if (
-                        String(
-                            message.senderId
-                        ) ===
-                        String(
-                            currentUser.id
-                        )
-                    ) {
-                        return;
-                    }
+    function startCallTimer() {
 
-                    if (
-                        message.receiverId &&
-                        String(
-                            message.receiverId
-                        ) !==
-                        String(
-                            currentUser.id
-                        )
-                    ) {
-                        return;
-                    }
+        clearInterval(
+            state.timer
+        );
 
-                    if (
-                        String(
-                            message.roomId
-                        ) !==
-                        String(
-                            currentRoom?.id
-                        )
-                    ) {
-                        return;
-                    }
+        state.startedAt =
+            Date.now();
 
-                    try {
-                        switch (
-                            message.type
-                        ) {
-                            case "presence":
-                                await handlePresence(
-                                    message.senderId
-                                );
-                                break;
+        state.timer =
+            setInterval(
+                () => {
 
-                            case "offer":
-                                await handleOffer(
-                                    message.senderId,
-                                    message.data
-                                        ?.offer
-                                );
-                                break;
-
-                            case "answer":
-                                await handleAnswer(
-                                    message.senderId,
-                                    message.data
-                                        ?.answer
-                                );
-                                break;
-
-                            case "ice":
-                                await handleIce(
-                                    message.senderId,
-                                    message.data
-                                        ?.candidate
-                                );
-                                break;
-
-                            case "hangup":
-                                removePeer(
-                                    message.senderId
-                                );
-                                break;
-                        }
-                    } catch (error) {
-                        console.error(
-                            "Signal handling error:",
-                            error
+                    const seconds =
+                        Math.floor(
+                            (
+                                Date.now() -
+                                state.startedAt
+                            ) / 1000
                         );
-                    }
-                }
-            )
-            .subscribe(
-                status => {
-                    console.log(
-                        "📞 WebRTC signaling:",
-                        status
-                    );
-                }
+
+                    const minutes =
+                        Math.floor(
+                            seconds / 60
+                        );
+
+                    const remaining =
+                        seconds % 60;
+
+                    $("activeCallTimer")
+                        .textContent =
+                        `${String(
+                            minutes
+                        ).padStart(
+                            2,
+                            "0"
+                        )}:${String(
+                            remaining
+                        ).padStart(
+                            2,
+                            "0"
+                        )}`;
+
+                },
+                1000
             );
-
-        /*
-         * Wait until the channel is subscribed.
-         */
-
-        await waitForChannelSubscribed();
     }
 
 
-    function waitForChannelSubscribed() {
-        return new Promise(
-            resolve => {
-                let done = false;
-
-                const timer =
-                    setTimeout(
-                        () => {
-                            if (!done) {
-                                done = true;
-                                resolve();
-                            }
-                        },
-                        5000
-                    );
-
-                if (
-                    signalChannel
-                ) {
-                    signalChannel.on(
-                        "system",
-                        {},
-                        payload => {
-                            if (
-                                payload?.status ===
-                                "ok" &&
-                                !done
-                            ) {
-                                done = true;
-
-                                clearTimeout(
-                                    timer
-                                );
-
-                                resolve();
-                            }
-                        }
-                    );
-                } else {
-                    clearTimeout(
-                        timer
-                    );
-
-                    resolve();
-                }
-            }
-        );
-    }
-
-
-    async function sendSignal(
-        receiverId,
-        type,
-        data
-    ) {
-        if (
-            !signalChannel ||
-            !currentRoom
-        ) {
-            return;
-        }
-
-        await signalChannel.send({
-            type:
-                "broadcast",
-
-            event:
-                "webrtc",
-
-            payload: {
-                roomId:
-                    currentRoom.id,
-
-                senderId:
-                    currentUser.id,
-
-                receiverId:
-                    receiverId ||
-                    null,
-
-                type,
-
-                data:
-                    data || {}
-            }
-        });
-    }
-
-
-    async function announcePresence() {
-        if (
-            !currentRoom ||
-            !signalChannel
-        ) {
-            return;
-        }
-
-        await sendSignal(
-            null,
-            "presence",
-            {}
-        );
-    }
-
-
-    async function handlePresence(
-        remoteUserId
-    ) {
-        /*
-         * Deterministic offerer:
-         *
-         * Smaller UUID creates the offer.
-         * This prevents both sides from creating
-         * competing offers.
-         */
-
-        if (
-            String(
-                currentUser.id
-            ) <
-            String(
-                remoteUserId
-            )
-        ) {
-            await createOffer(
-                remoteUserId
-            );
-        }
-    }
-
-
-    /* =========================================================
+    /* =====================================================
        MICROPHONE
-       ========================================================= */
+       ===================================================== */
 
     function toggleMicrophone() {
-        if (!localStream) {
-            return;
-        }
+
+        if (!state.localStream) return;
 
         const tracks =
-            localStream
+            state.localStream
                 .getAudioTracks();
 
-        if (!tracks.length) {
-            return;
-        }
+        if (!tracks.length) return;
 
-        microphoneEnabled =
-            !microphoneEnabled;
+        state.microphoneEnabled =
+            !state.microphoneEnabled;
 
         tracks.forEach(
-            track => {
+            track =>
                 track.enabled =
-                    microphoneEnabled;
-            }
+                    state.microphoneEnabled
         );
 
-        updateControls();
+        $("toggleMicrophoneButton")
+            .classList
+            .toggle(
+                "active",
+                state.microphoneEnabled
+            );
     }
 
 
-    /* =========================================================
+    /* =====================================================
        CAMERA
-       ========================================================= */
+       ===================================================== */
 
-    async function toggleCamera() {
-        if (!currentRoom) {
-            return;
-        }
+    function toggleCamera() {
 
-        if (!localStream) {
-            return;
-        }
+        if (!state.localStream) return;
 
-        let videoTracks =
-            localStream
+        let tracks =
+            state.localStream
                 .getVideoTracks();
 
-        if (!videoTracks.length) {
-            try {
-                const stream =
-                    await navigator
-                        .mediaDevices
-                        .getUserMedia({
-                            audio: false,
-                            video:
-                                CONFIG.video
-                        });
+        if (!tracks.length) return;
 
-                const track =
-                    stream.getVideoTracks()[0];
+        state.cameraEnabled =
+            !state.cameraEnabled;
 
-                if (!track) {
-                    return;
-                }
-
-                localStream.addTrack(
-                    track
-                );
-
-                cameraEnabled =
-                    true;
-
-                for (
-                    const peer of
-                    peers.values()
-                ) {
-                    const sender =
-                        peer.connection
-                            .getSenders()
-                            .find(
-                                item =>
-                                    item.track &&
-                                    item.track.kind ===
-                                        "video"
-                            );
-
-                    if (sender) {
-                        await sender.replaceTrack(
-                            track
-                        );
-                    } else {
-                        peer.connection.addTrack(
-                            track,
-                            localStream
-                        );
-                    }
-                }
-
-                renderLocalTile();
-
-                updateControls();
-
-                return;
-
-            } catch (error) {
-                notice(
-                    "Camera permission was denied."
-                );
-
-                return;
-            }
-        }
-
-        cameraEnabled =
-            !cameraEnabled;
-
-        videoTracks.forEach(
-            track => {
+        tracks.forEach(
+            track =>
                 track.enabled =
-                    cameraEnabled;
-            }
+                    state.cameraEnabled
         );
 
-        updateControls();
+        $("toggleCameraButton")
+            .classList
+            .toggle(
+                "active",
+                state.cameraEnabled
+            );
     }
 
 
-    /* =========================================================
-       SCREEN SHARE
-       ========================================================= */
+    /* =====================================================
+       SCREEN SHARING
+       ===================================================== */
 
     async function toggleScreenShare() {
-        if (!currentRoom) {
-            return;
-        }
 
-        if (
-            screenSharing
-        ) {
+        if (!state.localStream) return;
+
+        if (state.screenSharing) {
+
             await stopScreenShare();
 
             return;
         }
 
+
         if (
-            !navigator
-                .mediaDevices
+            !navigator.mediaDevices
                 ?.getDisplayMedia
         ) {
-            notice(
+
+            showNotice(
                 "Screen sharing is not supported by this browser."
             );
 
             return;
         }
 
+
         try {
-            screenStream =
-                await navigator
-                    .mediaDevices
+
+            const screenStream =
+                await navigator.mediaDevices
                     .getDisplayMedia({
                         video: true,
                         audio: false
                     });
 
-            screenTrack =
-                screenStream
-                    .getVideoTracks()[0];
+            const screenTrack =
+                screenStream.getVideoTracks()[0];
 
-            if (!screenTrack) {
-                return;
-            }
+            if (!screenTrack) return;
+
+            state.screenTrack =
+                screenTrack;
+
+            state.screenSharing =
+                true;
+
 
             for (
-                const peer of
-                peers.values()
+                const peer
+                of state.peers.values()
             ) {
+
                 const sender =
-                    peer.connection
+                    peer
                         .getSenders()
                         .find(
                             item =>
-                                item.track &&
-                                item.track.kind ===
-                                    "video"
+                                item
+                                    .track
+                                    ?.kind ===
+                                "video"
                         );
 
                 if (sender) {
+
                     await sender.replaceTrack(
                         screenTrack
                     );
+
                 } else {
-                    peer.connection.addTrack(
+
+                    peer.addTrack(
                         screenTrack,
                         screenStream
                     );
                 }
             }
 
-            screenSharing =
-                true;
 
-            updateControls();
+            const localVideo =
+                document.querySelector(
+                    '[data-call-user="local"] video'
+                );
+
+            if (localVideo) {
+
+                localVideo.srcObject =
+                    screenStream;
+            }
+
 
             screenTrack.onended =
-                () => {
+                () =>
                     stopScreenShare();
-                };
+
+
+            $("shareScreenButton")
+                .classList
+                .add("active");
+
+
+            showNotice(
+                "Screen sharing started."
+            );
 
         } catch (error) {
-            console.warn(
-                "Screen share cancelled:",
+
+            console.error(
+                "Screen share:",
                 error
             );
         }
@@ -2195,636 +1841,428 @@
 
 
     async function stopScreenShare() {
-        if (!screenSharing) {
-            return;
-        }
+
+        if (!state.screenTrack) return;
+
+        const screenTrack =
+            state.screenTrack;
+
+        screenTrack.stop();
+
 
         const cameraTrack =
-            localStream
-                ?.getVideoTracks()
-                ?.find(
-                    track =>
-                        track.kind ===
-                        "video"
-                ) ||
+            state.localStream
+                ?.getVideoTracks()[0] ||
             null;
 
+
         for (
-            const peer of
-            peers.values()
+            const peer
+            of state.peers.values()
         ) {
+
             const sender =
-                peer.connection
+                peer
                     .getSenders()
                     .find(
                         item =>
-                            item.track &&
-                            item.track.kind ===
-                                "video"
+                            item
+                                .track
+                                ?.kind ===
+                            "video"
                     );
 
             if (sender) {
-                try {
-                    await sender.replaceTrack(
-                        cameraTrack
-                    );
-                } catch (_) {}
+
+                await sender.replaceTrack(
+                    cameraTrack
+                );
             }
         }
 
-        screenStream
-            ?.getTracks()
-            .forEach(
-                track => {
-                    try {
-                        track.stop();
-                    } catch (_) {}
+
+        createLocalTile();
+
+
+        state.screenTrack =
+            null;
+
+        state.screenSharing =
+            false;
+
+        $("shareScreenButton")
+            .classList
+            .remove("active");
+    }
+
+
+    /* =====================================================
+       LEAVE
+       ===================================================== */
+
+    async function leaveCall() {
+
+        if (!state.active) return;
+
+
+        try {
+
+            await broadcastRoomEvent(
+                "call-ended",
+                {
+                    userId:
+                        state.user.id
                 }
             );
 
-        screenStream =
-            null;
+        } catch {}
 
-        screenTrack =
-            null;
 
-        screenSharing =
-            false;
-
-        updateControls();
+        await finishCall(
+            true
+        );
     }
 
 
-    /* =========================================================
-       CONTROLS
-       ========================================================= */
+    async function finishCall(
+        notify
+    ) {
 
-    function updateControls() {
-        const mic =
-            elements.toggleMicrophoneButton;
+        clearInterval(
+            state.timer
+        );
 
-        const camera =
-            elements.toggleCameraButton;
+        state.timer = null;
 
-        const screen =
-            elements.shareScreenButton;
 
-        if (mic) {
-            mic.textContent =
-                microphoneEnabled
-                    ? "🎙️"
-                    : "🔇";
+        if (state.screenTrack) {
 
-            mic.title =
-                microphoneEnabled
-                    ? "Mute microphone"
-                    : "Unmute microphone";
+            try {
+                state.screenTrack.stop();
+            } catch {}
         }
 
-        if (camera) {
-            camera.textContent =
-                cameraEnabled
-                    ? "📹"
-                    : "🚫";
 
-            camera.title =
-                cameraEnabled
-                    ? "Turn camera off"
-                    : "Turn camera on";
-        }
-
-        if (screen) {
-            screen.textContent =
-                screenSharing
-                    ? "⛶"
-                    : "🖥️";
-
-            screen.title =
-                screenSharing
-                    ? "Stop screen sharing"
-                    : "Share screen";
-        }
-    }
-
-
-    /* =========================================================
-       TIMER
-       ========================================================= */
-
-    function startRingTimer() {
-        clearRingTimer();
-
-        ringTimer =
-            setTimeout(
-                async () => {
-                    if (
-                        currentRoom &&
-                        peers.size ===
-                            0
-                    ) {
-                        notice(
-                            "No one answered the call."
-                        );
-
-                        await endCall();
-                    }
-                },
-                CONFIG.ringTimeout
-            );
-    }
-
-
-    function clearRingTimer() {
-        if (ringTimer) {
-            clearTimeout(
-                ringTimer
+        state.localStream
+            ?.getTracks()
+            .forEach(
+                track => track.stop()
             );
 
-            ringTimer =
-                null;
-        }
-    }
-
-
-    /* =========================================================
-       END CALL
-       ========================================================= */
-
-    async function endCall() {
-        if (!currentRoom) {
-            hideCallOverlay();
-
-            return;
-        }
-
-        clearRingTimer();
-
-        const room =
-            currentRoom;
-
-        /*
-         * Notify peers.
-         */
 
         for (
-            const userId of
-            peers.keys()
+            const peer
+            of state.peers.values()
         ) {
+
             try {
-                await sendSignal(
-                    userId,
-                    "hangup",
-                    {}
-                );
-            } catch (_) {}
+                peer.close();
+            } catch {}
         }
 
-        await leaveParticipant();
 
-        /*
-         * Creator ends room.
-         */
+        state.peers.clear();
+
+
+        if (state.roomChannel) {
+
+            try {
+
+                await supabase.removeChannel(
+                    state.roomChannel
+                );
+
+            } catch {}
+        }
+
 
         if (
-            String(
-                room.created_by
-            ) ===
-            String(
-                currentUser.id
-            )
+            state.roomId &&
+            state.user
         ) {
-            await db
+
+            await supabase
                 .from(
-                    "chat_call_rooms"
+                    "chat_call_participants"
                 )
+                .update({
+                    status:
+                        "left",
+
+                    left_at:
+                        new Date().toISOString()
+                })
+                .eq(
+                    "room_id",
+                    state.roomId
+                )
+                .eq(
+                    "user_id",
+                    state.user.id
+                );
+
+
+            /*
+             * Creator can close the room.
+             */
+
+            await supabase
+                .from("chat_call_rooms")
                 .update({
                     room_status:
                         "ended"
                 })
                 .eq(
                     "id",
-                    room.id
+                    state.roomId
+                )
+                .eq(
+                    "created_by",
+                    state.user.id
                 );
         }
 
-        await cleanupCall(
-            true
-        );
 
-        notice(
-            "Call ended."
-        );
+        $("activeCallOverlay")
+            .classList
+            .add("hidden");
+
+
+        $("callParticipantGrid")
+            .innerHTML = "";
+
+
+        state.active = false;
+
+        state.roomId = null;
+
+        state.inviteId = null;
+
+        state.localStream = null;
+
+        state.screenTrack = null;
+
+        state.screenSharing = false;
+
+        state.pendingCandidates
+            .clear();
+
+
+        if (notify) {
+
+            showNotice(
+                "Call ended."
+            );
+        }
     }
 
 
-    async function cleanupCall(
-        hide = true
-    ) {
-        clearRingTimer();
+    /* =====================================================
+       EVENTS FROM COMMUNITY.JS
+       ===================================================== */
 
-        for (
-            const userId of
-            peers.keys()
-        ) {
-            removePeer(
-                userId
-            );
+    window.addEventListener(
+        "mwaniki:call-user",
+        async event => {
+
+            const userId =
+                event.detail?.userId;
+
+            const mode =
+                event.detail?.mode ||
+                "audio";
+
+            if (!userId) return;
+
+            await createRoom({
+                userIds: [userId],
+                mode,
+                scope: "direct",
+                communityId:
+                    window
+                        .MwanikiCommunity
+                        ?.getCurrentCommunityId()
+            });
         }
+    );
 
-        peers.clear();
 
-        pendingCandidates.clear();
+    window.addEventListener(
+        "mwaniki:start-general-call",
+        async event => {
 
-        await stopScreenShare();
+            const userIds =
+                event.detail?.userIds || [];
 
-        stopLocalMedia();
+            const mode =
+                event.detail?.mode ||
+                "audio";
 
-        if (
-            signalChannel &&
-            db
-        ) {
-            try {
-                await db.removeChannel(
-                    signalChannel
-                );
-            } catch (_) {}
+            if (!userIds.length) return;
 
-            signalChannel =
+            await createRoom({
+                userIds,
+                mode,
+                scope: "general",
+                communityId: null
+            });
+        }
+    );
+
+
+    window.addEventListener(
+        "mwaniki:start-community-call",
+        async event => {
+
+            let userIds =
+                event.detail?.userIds || [];
+
+            const mode =
+                event.detail?.mode ||
+                "audio";
+
+            const communityId =
+                event.detail?.communityId ||
                 null;
-        }
-
-        currentRoom =
-            null;
-
-        currentScope =
-            "general";
-
-        currentMode =
-            "audio";
-
-        microphoneEnabled =
-            true;
-
-        cameraEnabled =
-            false;
-
-        screenSharing =
-            false;
-
-        if (hide) {
-            hideCallOverlay();
-        }
-
-        updateControls();
-    }
 
 
-    /* =========================================================
-       EVENTS
-       ========================================================= */
+            /*
+             * "Whole community" means all current
+             * members except caller.
+             */
 
-    function setupEvents() {
+            if (
+                event.detail?.wholeCommunity
+            ) {
 
-        elements.generalCallButton
-            ?.addEventListener(
-                "click",
-                () => {
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            "mwaniki:open-general-call-picker"
-                        )
+                const {
+                    data: members
+                } = await supabase
+                    .from(
+                        "chat_community_members"
+                    )
+                    .select("user_id")
+                    .eq(
+                        "community_id",
+                        communityId
                     );
-                }
-            );
 
-
-        elements.communityCallButton
-            ?.addEventListener(
-                "click",
-                () => {
-                    const communityId =
-                        getCommunityId();
-
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            "mwaniki:community-call-picker-needed",
-                            {
-                                detail: {
-                                    communityId
-                                }
-                            }
+                userIds =
+                    (members || [])
+                        .map(
+                            member =>
+                                member.user_id
                         )
-                    );
-                }
-            );
-
-
-        elements.callSpecificPersonButton
-            ?.addEventListener(
-                "click",
-                () => {
-                    closeCallModal();
-
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            "mwaniki:call-person-picker"
-                        )
-                    );
-                }
-            );
-
-
-        elements.callWholeCommunityButton
-            ?.addEventListener(
-                "click",
-                () => {
-                    closeCallModal();
-
-                    window.dispatchEvent(
-                        new CustomEvent(
-                            "mwaniki:community-call-picker-needed",
-                            {
-                                detail: {
-                                    communityId:
-                                        getCommunityId()
-                                }
-                            }
-                        )
-                    );
-                }
-            );
-
-
-        elements.toggleMicrophoneButton
-            ?.addEventListener(
-                "click",
-                toggleMicrophone
-            );
-
-
-        elements.toggleCameraButton
-            ?.addEventListener(
-                "click",
-                toggleCamera
-            );
-
-
-        elements.shareScreenButton
-            ?.addEventListener(
-                "click",
-                toggleScreenShare
-            );
-
-
-        elements.leaveCallButton
-            ?.addEventListener(
-                "click",
-                endCall
-            );
-
-
-        elements.leaveCallButtonBottom
-            ?.addEventListener(
-                "click",
-                endCall
-            );
-
-
-        elements.acceptCallButton
-            ?.addEventListener(
-                "click",
-                acceptIncoming
-            );
-
-
-        elements.rejectCallButton
-            ?.addEventListener(
-                "click",
-                rejectIncoming
-            );
-
-
-        window.addEventListener(
-            "mwaniki:call-user",
-            event => {
-                const detail =
-                    event.detail ||
-                    {};
-
-                if (
-                    detail.userId
-                ) {
-                    createRoom({
-                        scope:
-                            "direct",
-
-                        communityId:
-                            null,
-
-                        userIds: [
-                            detail.userId
-                        ],
-
-                        mode:
-                            detail.mode ||
-                            "audio"
-                    });
-                }
+                        .filter(
+                            id =>
+                                id !==
+                                state.user.id
+                        );
             }
-        );
 
 
-        window.addEventListener(
-            "mwaniki:start-general-call",
-            event => {
-                const detail =
-                    event.detail ||
-                    {};
+            if (!userIds.length) {
 
-                createRoom({
-                    scope:
-                        "general",
+                showNotice(
+                    "No community members are available."
+                );
 
-                    communityId:
-                        null,
-
-                    userIds:
-                        detail.userIds ||
-                        [],
-
-                    mode:
-                        detail.mode ||
-                        "audio"
-                });
+                return;
             }
-        );
 
 
-        window.addEventListener(
-            "mwaniki:start-community-call",
-            event => {
-                const detail =
-                    event.detail ||
-                    {};
-
-                createRoom({
-                    scope:
-                        "community",
-
-                    communityId:
-                        detail.communityId ||
-                        getCommunityId(),
-
-                    userIds:
-                        detail.userIds ||
-                        [],
-
-                    mode:
-                        detail.mode ||
-                        "audio"
-                });
-            }
-        );
-
-
-        window.addEventListener(
-            "beforeunload",
-            () => {
-                stopScreenShare();
-                stopLocalMedia();
-            }
-        );
-    }
-
-
-    /* =========================================================
-       PUBLIC API
-       ========================================================= */
-
-    window.MwanikiCalls = {
-
-        openCallModal,
-
-        closeCallModal,
-
-        startDirectCall(
-            userId,
-            mode = "audio"
-        ) {
-            return createRoom({
-                scope:
-                    "direct",
-
-                communityId:
-                    null,
-
-                userIds: [
-                    userId
-                ],
-
-                mode
-            });
-        },
-
-        startGeneralCall(
-            userIds,
-            mode = "audio"
-        ) {
-            return createRoom({
-                scope:
-                    "general",
-
-                communityId:
-                    null,
-
+            await createRoom({
                 userIds,
-
-                mode
+                mode,
+                scope: "community",
+                communityId
             });
-        },
+        }
+    );
 
-        startCommunityCall(
-            communityId,
-            userIds,
-            mode = "audio"
-        ) {
-            return createRoom({
-                scope:
-                    "community",
 
-                communityId,
+    /* =====================================================
+       BUTTONS
+       ===================================================== */
 
-                userIds,
+    $("acceptCallButton")
+        ?.addEventListener(
+            "click",
+            acceptIncomingCall
+        );
 
-                mode
-            });
-        },
 
-        acceptIncomingCall:
-            acceptIncoming,
+    $("rejectCallButton")
+        ?.addEventListener(
+            "click",
+            rejectIncomingCall
+        );
 
-        rejectIncomingCall:
-            rejectIncoming,
 
-        endCall,
+    $("leaveCallButton")
+        ?.addEventListener(
+            "click",
+            leaveCall
+        );
 
-        toggleMicrophone,
 
-        toggleCamera,
+    $("leaveCallButtonBottom")
+        ?.addEventListener(
+            "click",
+            leaveCall
+        );
 
-        toggleScreenShare,
 
-        getCurrentRoom() {
-            return currentRoom;
-        },
+    $("toggleMicrophoneButton")
+        ?.addEventListener(
+            "click",
+            toggleMicrophone
+        );
 
-        isInCall() {
-            return Boolean(
-                currentRoom
+
+    $("toggleCameraButton")
+        ?.addEventListener(
+            "click",
+            toggleCamera
+        );
+
+
+    $("shareScreenButton")
+        ?.addEventListener(
+            "click",
+            toggleScreenShare
+        );
+
+
+    /* =====================================================
+       START
+       ===================================================== */
+
+    async function init() {
+
+        try {
+
+            const ok =
+                await loadUser();
+
+            if (!ok) return;
+
+            await setupIncomingChannel();
+
+            console.log(
+                "Mwaniki WebRTC call engine ready."
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Call engine:",
+                error
             );
         }
-    };
-
-
-    /* =========================================================
-       INIT
-       ========================================================= */
-
-    async function initialize() {
-        cacheElements();
-
-        setupEvents();
-
-        const ready =
-            await initializeSupabase();
-
-        if (!ready) {
-            return;
-        }
-
-        await subscribeIncoming();
-
-        updateControls();
-
-        console.log(
-            "✅ Mwaniki Scholars single WebRTC engine ready."
-        );
     }
 
 
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            initialize,
-            {
-                once: true
-            }
-        );
-    } else {
-        initialize();
-    }
+    init();
 
 })();
