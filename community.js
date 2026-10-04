@@ -1,52 +1,90 @@
 /* ============================================================
    MWANIKI SCHOLARS COMMUNITY
+   CONSOLIDATED COMMUNITY + CALL ENGINE
    ============================================================
-   FILE: community.js
 
-   ONE CONSOLIDATED COMMUNITY + CALL ENGINE
+   REQUIRED:
+   - ./supabase.js
+   - ./community.js
 
-   Requires:
-       ./supabase.js
+   DO NOT LOAD:
+   - community-calls.js
 
-   HTML:
-       <script type="module" src="./supabase.js"></script>
-       <script type="module" src="./community.js"></script>
-
-   Do NOT load community-calls.js separately.
+   FEATURES:
+   - Communities
+   - Channels
+   - Course channels
+   - Messages
+   - Attachments
+   - Voice notes
+   - Emoji / stickers / GIF panels
+   - Reactions
+   - Message deletion
+   - Presence
+   - Members
+   - Search
+   - General calls
+   - Direct calls
+   - Community calls
+   - Incoming call UI
+   - WebRTC audio/video
+   - Screen sharing
+   - One consolidated call engine
    ============================================================ */
-
-import { supabase } from "./supabase.js";
 
 (() => {
     "use strict";
 
-    /* ========================================================
+    /* ============================================================
        SUPABASE
-       ======================================================== */
+       ============================================================ */
 
-    const db = supabase;
+    const db =
+        window.supabase ||
+        window.supabaseClient ||
+        window.sb ||
+        window.mwanikiSupabase;
 
-    console.log("🚀 Mwaniki Scholars Community starting...");
-    console.log("✅ Supabase client ready");
+    if (!db) {
+        console.error(
+            "❌ Supabase client was not found."
+        );
+        return;
+    }
+
+    console.log(
+        "🚀 Mwaniki Scholars Community starting..."
+    );
+
+    console.log(
+        "✅ Supabase client ready"
+    );
 
 
-    /* ========================================================
+    /* ============================================================
        CONSTANTS
-       ======================================================== */
+       ============================================================ */
 
-    const CALL_PAGE = "./community-calls.html";
+    const CALL_PAGE =
+        "./community-calls.html";
 
-    const CALL_RING_TIMEOUT = 45000;
+    const CALL_RING_TIMEOUT =
+        45000;
 
-    const PRESENCE_TIMEOUT = 120000;
+    const PRESENCE_TIMEOUT =
+        5 * 60 * 1000;
 
-    const ROOM_PREFIX = "mwaniki-call-";
+    const ROOM_PREFIX =
+        "call-room-";
 
-    const INCOMING_PREFIX = "mwaniki-incoming-";
+    const INCOMING_PREFIX =
+        "incoming-call-";
 
-    const MESSAGE_PAGE_SIZE = 80;
+    const MESSAGE_PAGE_SIZE =
+        80;
 
-    const MAX_ATTACHMENT_SIZE = 25 * 1024 * 1024;
+    const MAX_ATTACHMENT_SIZE =
+        25 * 1024 * 1024;
 
     const VOICE_MIME_TYPES = [
         "audio/webm;codecs=opus",
@@ -56,42 +94,67 @@ import { supabase } from "./supabase.js";
     ];
 
     const EMOJIS = [
-        "😀","😃","😄","😁","😆","😅","😂","🤣",
-        "😊","😇","🙂","🙃","😉","😌","😍","🥰",
-        "😘","😗","😙","😚","😋","😛","😝","😜",
-        "🤪","🤨","🧐","🤓","😎","🤩","🥳","😏",
-        "😒","😞","😔","😟","😕","🙁","☹️","😣",
-        "😖","😫","😩","🥺","😢","😭","😤","😠",
-        "😡","🤬","🤯","😳","🥵","🥶","😱","😨",
-        "😰","😥","😓","🤗","🤔","🤭","🤫","🤥",
-        "😶","😐","😑","😬","🙄","😯","😦","😧",
-        "😮","😲","🥱","😴","🤤","😪","😵","🤐",
-        "🤢","🤮","🤧","😷","🤒","🤕","👍","👎",
-        "👏","🙌","🙏","🤝","💪","❤️","🧡","💛",
-        "💚","💙","💜","🖤","🤍","🤎","💔","🔥",
-        "⭐","🎉","🎊","💯","😂","🤣","😭","😅"
+        "😀",
+        "😂",
+        "🤣",
+        "😊",
+        "😍",
+        "🥰",
+        "😘",
+        "😎",
+        "🤔",
+        "😢",
+        "😭",
+        "😡",
+        "😮",
+        "😱",
+        "🙌",
+        "👏",
+        "👍",
+        "👎",
+        "❤️",
+        "🔥",
+        "🎉",
+        "💯",
+        "🙏",
+        "💡",
+        "📚",
+        "🧪",
+        "🩺",
+        "🧬",
+        "🦠",
+        "💊",
+        "🎓"
     ];
 
 
-    /* ========================================================
+    /* ============================================================
        STATE
-       ======================================================== */
+       ============================================================ */
 
     const state = {
         user: null,
+
         profile: null,
 
-        communities: [],
         courses: [],
+
+        communities: [],
+
         channels: [],
+
         members: [],
+
         messages: [],
 
         currentCommunity: null,
+
         currentChannel: null,
 
         messageSearch: "",
+
         memberSearch: "",
+
         channelSearch: "",
 
         pendingAttachment: null,
@@ -100,52 +163,78 @@ import { supabase } from "./supabase.js";
 
         realtimeChannels: [],
 
-        communityRealtime: null,
-        messageRealtime: null,
+        communityChannel: null,
+
+        messageChannel: null,
+
         presenceChannel: null,
 
         presenceTimer: null,
 
         recording: false,
+
         recorder: null,
+
         voiceChunks: [],
 
         incomingChannel: null,
+
         incomingCallVisible: false,
+
         incomingCall: null,
 
         call: {
             currentRoom: null,
+
             currentInvite: null,
+
             role: null,
+
             mode: "audio",
+
             communityId: null,
 
             localStream: null,
+
             screenStream: null,
 
-            peerConnections: new Map(),
-            remoteStreams: new Map(),
-            pendingIce: new Map(),
+            peerConnections:
+                new Map(),
+
+            remoteStreams:
+                new Map(),
+
+            pendingIce:
+                new Map(),
 
             roomChannel: null,
 
             microphoneEnabled: true,
-            cameraEnabled: true,
+
+            cameraEnabled: false,
+
             screenSharing: false,
 
             started: false,
+
             ending: false
         }
     };
 
 
-    /* ========================================================
-       GENERIC HELPERS
-       ======================================================== */
+    /* ============================================================
+       BASIC HELPERS
+       ============================================================ */
 
     function $(id) {
         return document.getElementById(id);
+    }
+
+
+    function safeArray(value) {
+        return Array.isArray(value)
+            ? value
+            : [];
     }
 
 
@@ -160,17 +249,23 @@ import { supabase } from "./supabase.js";
 
 
     function initialsForName(name) {
-        const parts = String(name || "User")
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
+        const text =
+            String(name || "Mwaniki Scholar")
+                .trim();
 
-        if (!parts.length) {
-            return "U";
+        if (!text) {
+            return "MS";
         }
 
+        const parts =
+            text
+                .split(/\s+/)
+                .filter(Boolean);
+
         if (parts.length === 1) {
-            return parts[0].slice(0, 2).toUpperCase();
+            return parts[0]
+                .substring(0, 2)
+                .toUpperCase();
         }
 
         return (
@@ -180,28 +275,21 @@ import { supabase } from "./supabase.js";
     }
 
 
-    function randomId(length = 12) {
-        const chars =
-            "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
-        let output = "";
-
-        for (let i = 0; i < length; i++) {
-            output += chars[
-                Math.floor(Math.random() * chars.length)
-            ];
-        }
-
-        return output;
+    function randomId(length = 10) {
+        return Math.random()
+            .toString(36)
+            .substring(2, 2 + length);
     }
 
 
     function generateRoomCode() {
         return (
-            ROOM_PREFIX +
-            Date.now().toString(36) +
+            "MW-" +
+            Date.now()
+                .toString(36)
+                .toUpperCase() +
             "-" +
-            randomId(10)
+            randomId(8).toUpperCase()
         );
     }
 
@@ -212,10 +300,11 @@ import { supabase } from "./supabase.js";
         }
 
         return (
-            profile.full_name ||
             profile.display_name ||
+            profile.full_name ||
             profile.username ||
             profile.name ||
+            profile.email ||
             "Mwaniki Scholar"
         );
     }
@@ -229,8 +318,9 @@ import { supabase } from "./supabase.js";
         return (
             profile.avatar_url ||
             profile.photo_url ||
-            profile.avatar ||
+            profile.profile_photo ||
             profile.image_url ||
+            profile.avatar ||
             ""
         );
     }
@@ -241,192 +331,291 @@ import { supabase } from "./supabase.js";
             return "";
         }
 
-        try {
-            return new Date(value).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit"
-            });
-        } catch {
+        const date =
+            new Date(value);
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
             return "";
         }
+
+        return date.toLocaleTimeString(
+            [],
+            {
+                hour: "2-digit",
+                minute: "2-digit"
+            }
+        );
     }
 
 
-    function showToast(message, type = "info") {
-        const toast = $("toast");
+    function showToast(
+        message,
+        type = "info"
+    ) {
+        let toast =
+            $("mwanikiToast");
 
         if (!toast) {
-            console.log(`[${type}] ${message}`);
-            return;
+            toast =
+                document.createElement(
+                    "div"
+                );
+
+            toast.id =
+                "mwanikiToast";
+
+            toast.className =
+                "mwaniki-toast";
+
+            document.body.appendChild(
+                toast
+            );
         }
 
-        toast.textContent = message;
-        toast.className = `toast ${type} show`;
+        toast.textContent =
+            message;
 
-        clearTimeout(showToast.timer);
+        toast.dataset.type =
+            type;
 
-        showToast.timer = setTimeout(() => {
-            toast.classList.remove("show");
-        }, 3500);
+        toast.classList.add(
+            "show"
+        );
+
+        clearTimeout(
+            toast._timer
+        );
+
+        toast._timer =
+            setTimeout(() => {
+                toast.classList.remove(
+                    "show"
+                );
+            }, 3500);
     }
 
 
     function openElement(element) {
-        if (!element) return;
+        if (!element) {
+            return;
+        }
 
         element.hidden = false;
-        element.classList.add("open");
-        element.classList.remove("hidden");
+
+        element.classList.add(
+            "open",
+            "active"
+        );
     }
 
 
     function closeElement(element) {
-        if (!element) return;
+        if (!element) {
+            return;
+        }
+
+        element.classList.remove(
+            "open",
+            "active"
+        );
 
         element.hidden = true;
-        element.classList.remove("open");
-        element.classList.add("hidden");
     }
 
 
-    function safeArray(value) {
-        return Array.isArray(value) ? value : [];
+    /* ============================================================
+       AUTHENTICATION
+       ============================================================ */
+
+    async function requireAuthentication() {
+        try {
+            const {
+                data,
+                error
+            } = await db.auth.getSession();
+
+            if (error) {
+                console.error(
+                    "❌ Session error:",
+                    error
+                );
+
+                return false;
+            }
+
+            if (!data?.session?.user) {
+                showToast(
+                    "You must be signed in.",
+                    "error"
+                );
+
+                return false;
+            }
+
+            state.user =
+                data.session.user;
+
+            console.log(
+                "✅ Authenticated:",
+                state.user.id
+            );
+
+            await loadCurrentProfile();
+
+            return true;
+
+        } catch (error) {
+            console.error(
+                "❌ Authentication failed:",
+                error
+            );
+
+            return false;
+        }
     }
 
-
-    /* ========================================================
-       PROFILE
-       ======================================================== */
 
     async function loadCurrentProfile() {
         if (!state.user?.id) {
             return null;
         }
 
-        let profile = null;
-
         try {
-            const result = await db
-                .from("chat_public_profiles")
-                .select("*")
-                .eq("id", state.user.id)
-                .maybeSingle();
+            let profile = null;
 
-            if (!result.error && result.data) {
-                profile = result.data;
-            }
-        } catch (error) {
-            console.warn("Public profile lookup failed:", error);
-        }
-
-        if (!profile) {
-            try {
-                const result = await db
-                    .from("students")
+            const result =
+                await db
+                    .from(
+                        "chat_public_profiles"
+                    )
                     .select("*")
-                    .eq("id", state.user.id)
+                    .eq(
+                        "id",
+                        state.user.id
+                    )
                     .maybeSingle();
 
-                if (!result.error && result.data) {
-                    profile = result.data;
+            if (!result.error) {
+                profile =
+                    result.data;
+            }
+
+            if (!profile) {
+                const studentResult =
+                    await db
+                        .from("students")
+                        .select("*")
+                        .eq(
+                            "id",
+                            state.user.id
+                        )
+                        .maybeSingle();
+
+                if (
+                    !studentResult.error
+                ) {
+                    profile =
+                        studentResult.data;
                 }
-            } catch (error) {
-                console.warn("Student profile lookup failed:", error);
             }
-        }
 
-        state.profile = profile || {
-            id: state.user.id,
-            full_name:
-                state.user.user_metadata?.full_name ||
-                state.user.user_metadata?.name ||
-                state.user.email?.split("@")[0] ||
-                "Mwaniki Scholar",
-            avatar_url:
-                state.user.user_metadata?.avatar_url ||
-                ""
-        };
+            state.profile =
+                profile || {
+                    id:
+                        state.user.id,
 
-        renderHeaderProfile();
+                    full_name:
+                        state.user.user_metadata
+                            ?.full_name ||
+                        state.user.user_metadata
+                            ?.name ||
+                        state.user.email
+                };
 
-        return state.profile;
-    }
+            updateProfileUI();
 
+            return state.profile;
 
-    function renderHeaderProfile() {
-        const nameElement = $("headerProfileName");
-        const avatarElement = $("headerProfileAvatar");
-        const presenceDot = $("headerPresenceDot");
-
-        const name = displayName(state.profile);
-        const avatar = avatarURL(state.profile);
-
-        if (nameElement) {
-            nameElement.textContent = name;
-        }
-
-        if (avatarElement) {
-            if (avatar) {
-                avatarElement.src = avatar;
-                avatarElement.alt = name;
-            } else {
-                avatarElement.removeAttribute("src");
-                avatarElement.alt = name;
-                avatarElement.dataset.initials =
-                    initialsForName(name);
-            }
-        }
-
-        if (presenceDot) {
-            presenceDot.classList.add("online");
-        }
-    }
-
-
-    /* ========================================================
-       AUTH
-       ======================================================== */
-
-    async function getSession() {
-        const {
-            data,
-            error
-        } = await db.auth.getSession();
-
-        if (error) {
-            console.error("❌ Session error:", error);
-            return null;
-        }
-
-        return data?.session || null;
-    }
-
-
-    async function requireAuthentication() {
-        const session = await getSession();
-
-        if (!session?.user) {
-            console.warn("⚠️ No authenticated user.");
-
-            showToast(
-                "You must be signed in to use the community.",
-                "error"
+        } catch (error) {
+            console.warn(
+                "Profile loading:",
+                error
             );
 
-            return false;
+            state.profile = {
+                id:
+                    state.user.id,
+
+                full_name:
+                    state.user.user_metadata
+                        ?.full_name ||
+                    state.user.email
+            };
+
+            return state.profile;
         }
-
-        state.user = session.user;
-
-        await loadCurrentProfile();
-
-        return true;
     }
 
 
-    /* ========================================================
+    function updateProfileUI() {
+        const name =
+            displayName(
+                state.profile
+            );
+
+        const avatar =
+            avatarURL(
+                state.profile
+            );
+
+        const avatarElements = [
+            $("headerProfileAvatar"),
+            $("profileLargeAvatar")
+        ];
+
+        avatarElements.forEach(
+            element => {
+                if (!element) {
+                    return;
+                }
+
+                if (avatar) {
+                    if (
+                        element.tagName
+                            .toLowerCase() ===
+                        "img"
+                    ) {
+                        element.src =
+                            avatar;
+
+                        element.alt =
+                            name;
+                    } else {
+                        element.innerHTML =
+                            `<img src="${escapeHTML(
+                                avatar
+                            )}" alt="${escapeHTML(
+                                name
+                            )}">`;
+                    }
+                } else {
+                    element.textContent =
+                        initialsForName(
+                            name
+                        );
+                }
+            }
+        );
+    }
+
+
+    /* ============================================================
        COURSES
-       ======================================================== */
+       ============================================================ */
 
     async function loadCourses() {
         try {
@@ -436,31 +625,43 @@ import { supabase } from "./supabase.js";
             } = await db
                 .from("courses")
                 .select("*")
-                .order("id", {
-                    ascending: true
-                });
+                .order(
+                    "id",
+                    {
+                        ascending: true
+                    }
+                );
 
             if (error) {
-                console.warn("Course loading failed:", error);
+                console.warn(
+                    "Course loading:",
+                    error
+                );
+
                 state.courses = [];
+
                 return [];
             }
 
-            state.courses = data || [];
+            state.courses =
+                safeArray(data);
 
             return state.courses;
 
         } catch (error) {
-            console.error("loadCourses:", error);
-            state.courses = [];
+            console.warn(
+                "loadCourses:",
+                error
+            );
+
             return [];
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        COMMUNITIES
-       ======================================================== */
+       ============================================================ */
 
     async function loadCommunities() {
         try {
@@ -468,25 +669,32 @@ import { supabase } from "./supabase.js";
                 data,
                 error
             } = await db
-                .from("chat_communities")
+                .from(
+                    "chat_communities"
+                )
                 .select("*")
-                .eq("is_active", true)
-                .order("name", {
-                    ascending: true
-                });
+                .eq(
+                    "is_active",
+                    true
+                )
+                .order(
+                    "name",
+                    {
+                        ascending: true
+                    }
+                );
 
             if (error) {
                 console.error(
-                    "❌ Communities query failed:",
+                    "❌ Communities loading:",
                     error
                 );
-
-                state.communities = [];
 
                 return [];
             }
 
-            state.communities = data || [];
+            state.communities =
+                safeArray(data);
 
             console.log(
                 "🏠 Communities loaded:",
@@ -498,9 +706,10 @@ import { supabase } from "./supabase.js";
             return state.communities;
 
         } catch (error) {
-            console.error("loadCommunities:", error);
-
-            state.communities = [];
+            console.error(
+                "loadCommunities:",
+                error
+            );
 
             return [];
         }
@@ -511,15 +720,24 @@ import { supabase } from "./supabase.js";
         return (
             state.communities.find(
                 community =>
-                    String(community.name || "")
+                    String(
+                        community.name ||
+                        ""
+                    )
                         .toLowerCase()
-                        .includes("mwaniki scholars")
+                        .trim() ===
+                    "mwaniki scholars"
             ) ||
             state.communities.find(
                 community =>
-                    String(community.slug || "")
+                    String(
+                        community.slug ||
+                        ""
+                    )
                         .toLowerCase()
-                        .includes("scholar")
+                        .includes(
+                            "mwaniki-scholars"
+                        )
             ) ||
             state.communities[0] ||
             null
@@ -528,173 +746,146 @@ import { supabase } from "./supabase.js";
 
 
     function renderCommunityRail() {
-        const rail = $("communityRailList");
+        const rail =
+            $("communityRail");
 
         if (!rail) {
             return;
         }
 
-        if (!state.communities.length) {
-            rail.innerHTML = `
-                <div class="empty-communities">
-                    No communities available.
-                </div>
-            `;
+        rail.innerHTML =
+            state.communities
+                .map(
+                    community => {
+                        const active =
+                            state.currentCommunity
+                                ?.id ===
+                            community.id;
 
-            return;
-        }
+                        const name =
+                            community.name ||
+                            "Community";
 
-        rail.innerHTML = state.communities
-            .map(community => {
-                const active =
-                    state.currentCommunity?.id === community.id;
+                        const icon =
+                            community.icon_url;
 
-                const name =
-                    community.name ||
-                    "Community";
-
-                const icon =
-                    community.icon_url ||
-                    community.image ||
-                    "";
-
-                return `
-                    <button
-                        type="button"
-                        class="community-rail-item ${active ? "active" : ""}"
-                        data-community-id="${escapeHTML(community.id)}"
-                        title="${escapeHTML(name)}"
-                    >
-                        ${
-                            icon
-                                ? `
-                                    <img
-                                        src="${escapeHTML(icon)}"
-                                        alt="${escapeHTML(name)}"
-                                    >
-                                `
-                                : `
-                                    <span>
-                                        ${escapeHTML(
-                                            initialsForName(name)
-                                        )}
-                                    </span>
-                                `
-                        }
-                    </button>
-                `;
-            })
-            .join("");
+                        return `
+                            <button
+                                type="button"
+                                class="community-rail-item ${
+                                    active
+                                        ? "active"
+                                        : ""
+                                }"
+                                data-community-id="${escapeHTML(
+                                    community.id
+                                )}"
+                                title="${escapeHTML(
+                                    name
+                                )}"
+                            >
+                                ${
+                                    icon
+                                        ? `
+                                            <img
+                                                src="${escapeHTML(
+                                                    icon
+                                                )}"
+                                                alt=""
+                                            >
+                                        `
+                                        : `
+                                            <span>
+                                                ${escapeHTML(
+                                                    initialsForName(
+                                                        name
+                                                    )
+                                                )}
+                                            </span>
+                                        `
+                                }
+                            </button>
+                        `;
+                    }
+                )
+                .join("");
 
         rail
-            .querySelectorAll("[data-community-id]")
-            .forEach(button => {
-                button.addEventListener("click", () => {
-                    selectCommunity(
-                        button.dataset.communityId
-                    );
-                });
-            });
+            .querySelectorAll(
+                "[data-community-id]"
+            )
+            .forEach(
+                button => {
+                    button.onclick =
+                        () =>
+                            selectCommunity(
+                                button.dataset
+                                    .communityId
+                            );
+                }
+            );
     }
 
 
-    async function selectCommunity(communityId) {
+    async function selectCommunity(
+        communityId
+    ) {
         const community =
             state.communities.find(
                 item =>
-                    String(item.id) === String(communityId)
+                    String(item.id) ===
+                    String(communityId)
             );
 
         if (!community) {
             return;
         }
 
-        state.currentCommunity = community;
-
-        updateSelectedCommunityUI();
-
-        renderCommunityRail();
-
         await cleanupCommunityRealtime();
 
-        await loadChannels();
-
-        /*
-         * IMPORTANT:
-         *
-         * Members are loaded independently of presence.
-         * This prevents "zero members" when nobody is online.
-         */
-        await loadMembers();
-
-        await subscribeCommunityRealtime();
-
-        /*
-         * Prefer Mwaniki Scholars discussion/general channel.
-         */
-        const preferred =
-            findPreferredChannel();
-
-        if (preferred) {
-            await selectChannel(preferred.id);
-        }
-
-        updateCallButtons();
+        state.currentCommunity =
+            community;
 
         console.log(
             "✅ Community selected:",
             community.name
         );
+
+        renderCommunityRail();
+
+        await loadChannels(
+            community.id
+        );
+
+        await loadMembers(
+            community.id
+        );
+
+        await subscribeCommunityRealtime(
+            community.id
+        );
+
+        const preferred =
+            findPreferredChannel();
+
+        if (preferred) {
+            await selectChannel(
+                preferred.id
+            );
+        }
+
+        updateCallButtons();
     }
 
 
-    function updateSelectedCommunityUI() {
-        const community =
-            state.currentCommunity;
-
-        if (!community) {
-            return;
-        }
-
-        const name = $("selectedCommunityName");
-        const description =
-            $("selectedCommunityDescription");
-        const icon =
-            $("selectedCommunityIcon");
-
-        if (name) {
-            name.textContent =
-                community.name ||
-                "Mwaniki Scholars";
-        }
-
-        if (description) {
-            description.textContent =
-                community.description ||
-                "Academic community";
-        }
-
-        if (icon) {
-            const image =
-                community.icon_url ||
-                community.image ||
-                "";
-
-            if (image) {
-                icon.src = image;
-            }
-        }
-    }
-
-
-    /* ========================================================
+    /* ============================================================
        CHANNELS
-       ======================================================== */
+       ============================================================ */
 
-    async function loadChannels() {
-        if (!state.currentCommunity?.id) {
-            state.channels = [];
-            renderChannels();
+    async function loadChannels(
+        communityId
+    ) {
+        if (!communityId) {
             return [];
         }
 
@@ -703,45 +894,51 @@ import { supabase } from "./supabase.js";
                 data,
                 error
             } = await db
-                .from("chat_channels")
+                .from(
+                    "chat_channels"
+                )
                 .select("*")
                 .eq(
                     "community_id",
-                    state.currentCommunity.id
+                    communityId
                 )
-                .order("position", {
-                    ascending: true,
-                    nullsFirst: false
-                })
-                .order("created_at", {
-                    ascending: true
-                });
+                .order(
+                    "position",
+                    {
+                        ascending: true,
+                        nullsFirst: false
+                    }
+                )
+                .order(
+                    "name",
+                    {
+                        ascending: true
+                    }
+                );
 
             if (error) {
                 console.error(
-                    "❌ Channels query failed:",
+                    "❌ Channels loading:",
                     error
                 );
 
                 state.channels = [];
 
-                renderChannels();
-
                 return [];
             }
 
-            state.channels = data || [];
+            state.channels =
+                safeArray(data);
 
             renderChannels();
 
             return state.channels;
 
         } catch (error) {
-            console.error("loadChannels:", error);
-
-            state.channels = [];
-
-            renderChannels();
+            console.error(
+                "loadChannels:",
+                error
+            );
 
             return [];
         }
@@ -750,193 +947,242 @@ import { supabase } from "./supabase.js";
 
     function channelName(channel) {
         return (
-            channel.name ||
-            channel.title ||
-            "discussion"
+            channel?.name ||
+            channel?.title ||
+            "Discussion"
         );
     }
 
 
     function channelType(channel) {
         return String(
-            channel.type ||
-            channel.channel_type ||
-            channel.category ||
+            channel?.channel_type ||
+            channel?.type ||
             ""
         ).toLowerCase();
     }
 
 
-    function isInformationChannel(channel) {
-        const name =
-            channelName(channel).toLowerCase();
-
-        const type =
-            channelType(channel);
+    function isGamingChannel(channel) {
+        const text =
+            (
+                channelName(channel) +
+                " " +
+                channelType(channel)
+            )
+                .toLowerCase();
 
         return (
-            type.includes("info") ||
-            name.includes("general") ||
-            name.includes("rules") ||
-            name.includes("announcement")
+            text.includes("gaming") ||
+            text.includes("game")
         );
     }
 
 
-    function isCourseChannel(channel) {
-        return Boolean(
-            channel.course_id ||
-            channel.linked_course_id
+    function isMemeChannel(channel) {
+        const text =
+            (
+                channelName(channel) +
+                " " +
+                channelType(channel)
+            )
+                .toLowerCase();
+
+        return (
+            text.includes("meme")
         );
     }
 
 
-    function renderChannelGroup(
-        elementId,
-        channels
-    ) {
-        const element = $(elementId);
+    function isInfoChannel(channel) {
+        const text =
+            (
+                channelName(channel) +
+                " " +
+                channelType(channel)
+            )
+                .toLowerCase();
 
-        if (!element) {
-            return;
-        }
-
-        if (!channels.length) {
-            element.innerHTML = "";
-            return;
-        }
-
-        element.innerHTML = channels
-            .map(channel => {
-                const active =
-                    state.currentChannel?.id ===
-                    channel.id;
-
-                const name =
-                    channelName(channel);
-
-                return `
-                    <button
-                        type="button"
-                        class="channel-item ${active ? "active" : ""}"
-                        data-channel-id="${escapeHTML(channel.id)}"
-                    >
-                        <span class="channel-hash">#</span>
-                        <span class="channel-name">
-                            ${escapeHTML(name)}
-                        </span>
-                    </button>
-                `;
-            })
-            .join("");
-
-        element
-            .querySelectorAll("[data-channel-id]")
-            .forEach(button => {
-                button.addEventListener("click", () => {
-                    selectChannel(
-                        button.dataset.channelId
-                    );
-                });
-            });
-    }
-
-
-    function renderChannels() {
-        const information =
-            state.channels.filter(
-                isInformationChannel
-            );
-
-        const course =
-            state.channels.filter(
-                channel =>
-                    isCourseChannel(channel) &&
-                    !isInformationChannel(channel)
-            );
-
-        const community =
-            state.channels.filter(
-                channel =>
-                    !isInformationChannel(channel) &&
-                    !isCourseChannel(channel)
-            );
-
-        renderChannelGroup(
-            "informationChannels",
-            information
+        return (
+            text.includes("info") ||
+            text.includes("welcome") ||
+            text.includes("announcement") ||
+            text.includes("rules")
         );
-
-        renderChannelGroup(
-            "courseChannels",
-            course
-        );
-
-        renderChannelGroup(
-            "communityChannels",
-            community
-        );
-
-        const contest =
-            $("contestChannelButton");
-
-        if (contest) {
-            contest.onclick = () => {
-                openContestModal();
-            };
-        }
     }
 
 
     function findPreferredChannel() {
-        if (!state.channels.length) {
+        const channels =
+            state.channels;
+
+        if (!channels.length) {
             return null;
         }
 
-        const candidates = [
-            "general",
-            "discussion",
-            "mwaniki-scholars",
-            "chat",
-            "main"
-        ];
-
-        for (const candidate of candidates) {
-            const found =
-                state.channels.find(
-                    channel =>
-                        channelName(channel)
-                            .toLowerCase()
-                            .replace(/\s+/g, "-")
-                            === candidate
-                );
-
-            if (found) {
-                return found;
-            }
-        }
-
         /*
-         * Avoid opening Gaming or Memes by default.
+         * IMPORTANT:
+         * Never automatically open Gaming or Memes.
          */
-        const academic =
-            state.channels.find(channel => {
-                const name =
-                    channelName(channel)
-                        .toLowerCase();
 
-                return (
-                    !name.includes("gaming") &&
-                    !name.includes("meme") &&
-                    !name.includes("game")
-                );
-            });
+        const nonGaming =
+            channels.filter(
+                channel =>
+                    !isGamingChannel(
+                        channel
+                    ) &&
+                    !isMemeChannel(
+                        channel
+                    )
+            );
 
-        return academic || state.channels[0];
+        const discussion =
+            nonGaming.find(
+                channel => {
+                    const text =
+                        channelName(
+                            channel
+                        )
+                            .toLowerCase();
+
+                    return (
+                        text.includes(
+                            "discussion"
+                        ) ||
+                        text.includes(
+                            "general"
+                        ) ||
+                        text.includes(
+                            "chat"
+                        )
+                    );
+                }
+            );
+
+        return (
+            discussion ||
+            nonGaming.find(
+                channel =>
+                    !isInfoChannel(
+                        channel
+                    )
+            ) ||
+            nonGaming[0] ||
+            channels[0]
+        );
     }
 
 
-    async function selectChannel(channelId) {
+    function renderChannels() {
+        const list =
+            $("channelList");
+
+        if (!list) {
+            return;
+        }
+
+        const groups = {};
+
+        state.channels.forEach(
+            channel => {
+                const category =
+                    channel.category ||
+                    channel.category_name ||
+                    "Channels";
+
+                if (!groups[category]) {
+                    groups[category] = [];
+                }
+
+                groups[category].push(
+                    channel
+                );
+            }
+        );
+
+        list.innerHTML =
+            Object.entries(groups)
+                .map(
+                    ([category, channels]) =>
+                        `
+                            <section class="channel-group">
+                                <h4>
+                                    ${escapeHTML(
+                                        category
+                                    )}
+                                </h4>
+
+                                ${channels
+                                    .map(
+                                        channel => {
+                                            const active =
+                                                state.currentChannel
+                                                    ?.id ===
+                                                channel.id;
+
+                                            return `
+                                                <button
+                                                    type="button"
+                                                    class="channel-item ${
+                                                        active
+                                                            ? "active"
+                                                            : ""
+                                                    }"
+                                                    data-channel-id="${escapeHTML(
+                                                        channel.id
+                                                    )}"
+                                                >
+                                                    <span class="channel-icon">
+                                                        ${
+                                                            channelType(
+                                                                channel
+                                                            ).includes(
+                                                                "voice"
+                                                            )
+                                                                ? "🔊"
+                                                                : "#"
+                                                        }
+                                                    </span>
+
+                                                    <span>
+                                                        ${escapeHTML(
+                                                            channelName(
+                                                                channel
+                                                            )
+                                                        )}
+                                                    </span>
+                                                </button>
+                                            `;
+                                        }
+                                    )
+                                    .join("")}
+                            </section>
+                        `
+                )
+                .join("");
+
+        list
+            .querySelectorAll(
+                "[data-channel-id]"
+            )
+            .forEach(
+                button => {
+                    button.onclick =
+                        () =>
+                            selectChannel(
+                                button.dataset
+                                    .channelId
+                            );
+                }
+            );
+
+        filterChannels();
+    }
+
+
+    async function selectChannel(
+        channelId
+    ) {
         const channel =
             state.channels.find(
                 item =>
@@ -948,89 +1194,73 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        state.currentChannel = channel;
+        state.currentChannel =
+            channel;
 
         renderChannels();
 
-        const icon =
-            $("currentChannelIcon");
+        const title =
+            $("channelTitle");
 
-        const name =
-            $("currentChannelName");
+        if (title) {
+            title.textContent =
+                channelName(
+                    channel
+                );
+        }
 
         const description =
-            $("currentChannelDescription");
-
-        if (icon) {
-            icon.textContent = "#";
-        }
-
-        if (name) {
-            name.textContent =
-                channelName(channel);
-        }
+            $("channelDescription");
 
         if (description) {
             description.textContent =
                 channel.description ||
-                "Mwaniki Scholars discussion channel";
+                "";
         }
 
-        await loadMessages();
+        await loadMessages(
+            channel.id
+        );
 
-        await markChannelRead(channel.id);
+        await subscribeMessageRealtime(
+            channel.id
+        );
 
-        await subscribeMessageRealtime();
-
-        closeEmojiPanel();
-
-        closeStickerPanel();
-
-        closeGifPanel();
+        await markChannelRead(
+            channel.id
+        );
     }
 
 
-    /* ========================================================
+    /* ============================================================
        MEMBERS
-       ======================================================== */
+       ============================================================ */
 
-    async function loadMembers() {
-        if (!state.currentCommunity?.id) {
-            state.members = [];
-            renderMembers();
+    async function loadMembers(
+        communityId
+    ) {
+        if (!communityId) {
             return [];
         }
 
-        const communityId =
-            state.currentCommunity.id;
-
-        console.log(
-            "👥 Loading registered members:",
-            communityId
-        );
-
         try {
-            /*
-             * DO NOT use chat_presence here.
-             *
-             * chat_community_members is the source of truth
-             * for who belongs to the community.
-             */
             const {
-                data: membershipRows,
-                error: memberError
+                data: memberships,
+                error
             } = await db
-                .from("chat_community_members")
+                .from(
+                    "chat_community_members"
+                )
                 .select("*")
                 .eq(
                     "community_id",
                     communityId
                 );
 
-            if (memberError) {
+            if (error) {
                 console.error(
-                    "❌ Community members query failed:",
-                    memberError
+                    "❌ Membership loading:",
+                    error
                 );
 
                 state.members = [];
@@ -1040,52 +1270,42 @@ import { supabase } from "./supabase.js";
                 return [];
             }
 
-            const rows =
-                membershipRows || [];
-
             console.log(
                 "👥 Membership rows:",
-                rows.length
+                memberships?.length || 0
             );
 
-            if (!rows.length) {
-                state.members = [];
-
-                renderMembers();
-
-                return [];
-            }
-
-            const userIds = [
-                ...new Set(
-                    rows
-                        .map(
-                            row =>
-                                row.user_id ||
-                                row.profile_id
-                        )
-                        .filter(Boolean)
+            const ids =
+                safeArray(
+                    memberships
                 )
-            ];
+                    .map(
+                        row =>
+                            row.user_id ||
+                            row.profile_id ||
+                            row.member_id
+                    )
+                    .filter(Boolean);
 
             let profiles = [];
 
-            if (userIds.length) {
-                const {
-                    data,
-                    error
-                } = await db
-                    .from("chat_public_profiles")
-                    .select("*")
-                    .in("id", userIds);
+            if (ids.length) {
+                const result =
+                    await db
+                        .from(
+                            "chat_public_profiles"
+                        )
+                        .select("*")
+                        .in(
+                            "id",
+                            ids
+                        );
 
-                if (error) {
-                    console.warn(
-                        "⚠️ Public profile lookup failed:",
-                        error
-                    );
-                } else {
-                    profiles = data || [];
+                if (!result.error) {
+                    profiles =
+                        safeArray(
+                            result.data
+                        );
                 }
             }
 
@@ -1093,50 +1313,39 @@ import { supabase } from "./supabase.js";
                 new Map(
                     profiles.map(
                         profile => [
-                            profile.id,
+                            String(
+                                profile.id
+                            ),
                             profile
                         ]
                     )
                 );
 
             state.members =
-                rows.map(member => {
-                    const userId =
-                        member.user_id ||
-                        member.profile_id;
+                safeArray(
+                    memberships
+                ).map(
+                    membership => {
+                        const userId =
+                            membership.user_id ||
+                            membership.profile_id ||
+                            membership.member_id;
 
-                    const profile =
-                        profileMap.get(userId) ||
-                        null;
+                        const profile =
+                            profileMap.get(
+                                String(
+                                    userId
+                                )
+                            ) || {};
 
-                    return {
-                        ...member,
-
-                        user_id: userId,
-
-                        id: userId,
-
-                        profile,
-
-                        name:
-                            profile?.full_name ||
-                            profile?.display_name ||
-                            profile?.username ||
-                            profile?.name ||
-                            "Mwaniki Scholar",
-
-                        avatar:
-                            profile?.avatar_url ||
-                            profile?.photo_url ||
-                            profile?.avatar ||
-                            "",
-
-                        role:
-                            member.role ||
-                            profile?.role ||
-                            "Student"
-                    };
-                });
+                        return {
+                            ...membership,
+                            ...profile,
+                            user_id:
+                                userId
+                        };
+                    }
+                );
 
             console.log(
                 "✅ Registered community members:",
@@ -1145,19 +1354,13 @@ import { supabase } from "./supabase.js";
 
             renderMembers();
 
-            await updateMemberPresenceDots();
-
             return state.members;
 
         } catch (error) {
             console.error(
-                "❌ loadMembers() failed:",
+                "loadMembers:",
                 error
             );
-
-            state.members = [];
-
-            renderMembers();
 
             return [];
         }
@@ -1165,167 +1368,168 @@ import { supabase } from "./supabase.js";
 
 
     function renderMembers() {
-        const list =
+        const sidebar =
             $("memberList");
 
-        const count =
-            $("memberCount");
-
-        if (!list) {
+        if (!sidebar) {
             return;
         }
 
-        let members =
-            Array.isArray(state.members)
-                ? state.members
-                : [];
+        const query =
+            state.memberSearch
+                .toLowerCase()
+                .trim();
 
-        if (state.memberSearch) {
-            const query =
-                state.memberSearch
-                    .toLowerCase()
-                    .trim();
+        const members =
+            state.members.filter(
+                member => {
+                    if (!query) {
+                        return true;
+                    }
 
-            members =
-                members.filter(member =>
-                    String(
-                        member.name || ""
+                    return displayName(
+                        member
                     )
                         .toLowerCase()
-                        .includes(query)
-                );
-        }
+                        .includes(query);
+                }
+            );
 
-        if (count) {
-            count.textContent =
-                String(state.members.length);
-        }
-
-        if (!members.length) {
-            list.innerHTML = `
-                <div class="empty-members">
-                    No registered members found.
-                </div>
-            `;
-
-            return;
-        }
-
-        list.innerHTML =
+        sidebar.innerHTML =
             members
-                .map(member => {
-                    const name =
-                        member.name ||
-                        "Mwaniki Scholar";
+                .map(
+                    member => {
+                        const name =
+                            displayName(
+                                member
+                            );
 
-                    const avatar =
-                        member.avatar || "";
+                        const avatar =
+                            avatarURL(
+                                member
+                            );
 
-                    const userId =
-                        member.user_id ||
-                        member.id ||
-                        "";
+                        const userId =
+                            member.user_id;
 
-                    return `
-                        <div
-                            class="member-row"
-                            data-user-id="${escapeHTML(userId)}"
-                        >
-                            <div class="member-avatar">
+                        return `
+                            <div
+                                class="community-member"
+                                data-user-id="${escapeHTML(
+                                    userId
+                                )}"
+                            >
+                                <div class="member-avatar">
+                                    ${
+                                        avatar
+                                            ? `
+                                                <img
+                                                    src="${escapeHTML(
+                                                        avatar
+                                                    )}"
+                                                    alt="${escapeHTML(
+                                                        name
+                                                    )}"
+                                                >
+                                            `
+                                            : `
+                                                <span>
+                                                    ${escapeHTML(
+                                                        initialsForName(
+                                                            name
+                                                        )
+                                                    )}
+                                                </span>
+                                            `
+                                    }
+                                </div>
+
+                                <div class="member-info">
+                                    <strong>
+                                        ${escapeHTML(
+                                            name
+                                        )}
+                                    </strong>
+
+                                    <small>
+                                        ${escapeHTML(
+                                            member.role ||
+                                            "Student"
+                                        )}
+                                    </small>
+                                </div>
+
                                 ${
-                                    avatar
+                                    userId &&
+                                    userId !==
+                                        state.user?.id
                                         ? `
-                                            <img
-                                                src="${escapeHTML(avatar)}"
-                                                alt="${escapeHTML(name)}"
+                                            <button
+                                                type="button"
+                                                class="member-call-button"
+                                                title="Call ${escapeHTML(
+                                                    name
+                                                )}"
+                                                data-call-user="${escapeHTML(
+                                                    userId
+                                                )}"
                                             >
+                                                📞
+                                            </button>
                                         `
-                                        : `
-                                            <span>
-                                                ${escapeHTML(
-                                                    initialsForName(name)
-                                                )}
-                                            </span>
-                                        `
+                                        : ""
                                 }
-
-                                <span
-                                    class="member-presence-dot"
-                                    data-presence-user="${escapeHTML(userId)}"
-                                ></span>
                             </div>
-
-                            <div class="member-info">
-                                <strong>
-                                    ${escapeHTML(name)}
-                                </strong>
-
-                                <small>
-                                    ${escapeHTML(
-                                        member.role ||
-                                        "Student"
-                                    )}
-                                </small>
-                            </div>
-
-                            ${
-                                userId &&
-                                userId !== state.user?.id
-                                    ? `
-                                        <button
-                                            type="button"
-                                            class="member-call-button"
-                                            data-call-user="${escapeHTML(userId)}"
-                                            title="Call ${escapeHTML(name)}"
-                                        >
-                                            📞
-                                        </button>
-                                    `
-                                    : ""
-                            }
-                        </div>
-                    `;
-                })
+                        `;
+                    }
+                )
                 .join("");
 
-        list
+        sidebar
             .querySelectorAll(
                 "[data-call-user]"
             )
-            .forEach(button => {
-                button.addEventListener(
-                    "click",
-                    event => {
-                        event.stopPropagation();
+            .forEach(
+                button => {
+                    button.onclick =
+                        event => {
+                            event.stopPropagation();
 
-                        startDirectCall(
-                            button.dataset.callUser,
-                            "audio"
-                        );
-                    }
-                );
-            });
-
-        updateMemberPresenceDots();
+                            startDirectCall(
+                                button.dataset
+                                    .callUser,
+                                "audio"
+                            );
+                        };
+                }
+            );
     }
 
 
-    /* ========================================================
+    /* ============================================================
        PRESENCE
-       ======================================================== */
+       ============================================================ */
 
     async function updateOwnPresence(
         status = "online"
     ) {
         if (!state.user?.id) {
-            return;
+            return false;
         }
 
         try {
             const payload = {
-                user_id: state.user.id,
+                user_id:
+                    state.user.id,
+
                 status,
-                last_seen: new Date().toISOString()
+
+                /*
+                 * CORRECT COLUMN:
+                 * last_seen_at
+                 */
+                last_seen_at:
+                    new Date().toISOString()
             };
 
             const {
@@ -1342,16 +1546,22 @@ import { supabase } from "./supabase.js";
 
             if (error) {
                 console.warn(
-                    "Presence update failed:",
+                    "❌ Presence update failed:",
                     error
                 );
+
+                return false;
             }
+
+            return true;
 
         } catch (error) {
             console.warn(
-                "Presence error:",
+                "❌ Presence exception:",
                 error
             );
+
+            return false;
         }
     }
 
@@ -1364,16 +1574,23 @@ import { supabase } from "./supabase.js";
             } = await db
                 .from("chat_presence")
                 .select(
-                    "user_id,status,last_seen"
+                    "user_id,status,last_seen_at"
                 )
-                .eq("status", "online");
+                .eq(
+                    "status",
+                    "online"
+                );
 
             if (error) {
                 console.warn(
-                    "Online presence query failed:",
+                    "❌ Online presence query failed:",
                     error
                 );
 
+                /*
+                 * IMPORTANT:
+                 * Presence must never block calls.
+                 */
                 return [];
             }
 
@@ -1382,30 +1599,39 @@ import { supabase } from "./supabase.js";
 
             return safeArray(data)
                 .filter(row => {
-                    if (
-                        !row.user_id ||
-                        row.user_id ===
-                            state.user?.id
-                    ) {
+                    if (!row.user_id) {
                         return false;
                     }
 
-                    if (!row.last_seen) {
+                    if (
+                        !row.last_seen_at
+                    ) {
                         return true;
                     }
 
-                    const age =
-                        now -
+                    const lastSeen =
                         new Date(
-                            row.last_seen
+                            row.last_seen_at
                         ).getTime();
 
+                    if (
+                        !Number.isFinite(
+                            lastSeen
+                        )
+                    ) {
+                        return true;
+                    }
+
                     return (
-                        age <
+                        now -
+                            lastSeen <=
                         PRESENCE_TIMEOUT
                     );
                 })
-                .map(row => row.user_id);
+                .map(
+                    row =>
+                        row.user_id
+                );
 
         } catch (error) {
             console.warn(
@@ -1418,96 +1644,140 @@ import { supabase } from "./supabase.js";
     }
 
 
-    async function updateMemberPresenceDots() {
-        const onlineIds =
-            await getOnlineUserIds();
-
-        document
-            .querySelectorAll(
-                "[data-presence-user]"
-            )
-            .forEach(dot => {
-                const userId =
-                    dot.dataset.presenceUser;
-
-                dot.classList.toggle(
-                    "online",
-                    onlineIds.includes(userId)
-                );
-
-                dot.classList.toggle(
-                    "offline",
-                    !onlineIds.includes(userId)
-                );
-            });
-    }
-
-
     async function startPresence() {
+        if (!state.user?.id) {
+            return;
+        }
+
         await updateOwnPresence(
             "online"
         );
 
-        clearInterval(
-            state.presenceTimer
-        );
-
-        state.presenceTimer =
-            setInterval(() => {
-                updateOwnPresence("online");
-                updateMemberPresenceDots();
-            }, 60000);
-
-        if (state.presenceChannel) {
-            try {
-                await db.removeChannel(
-                    state.presenceChannel
-                );
-            } catch {}
+        if (state.presenceTimer) {
+            clearInterval(
+                state.presenceTimer
+            );
         }
 
-        state.presenceChannel =
-            db.channel(
-                `mwaniki-presence-${state.user.id}`
+        state.presenceTimer =
+            setInterval(
+                () =>
+                    updateOwnPresence(
+                        "online"
+                    ),
+                60 * 1000
             );
 
-        state.presenceChannel
-            .on(
-                "presence",
-                {
-                    event: "sync"
-                },
-                () => {
-                    updateMemberPresenceDots();
-                }
-            )
-            .subscribe();
+        window.addEventListener(
+            "beforeunload",
+            () => {
+                /*
+                 * Best effort only.
+                 */
+                updateOwnPresence(
+                    "offline"
+                );
+            }
+        );
     }
 
 
-    /* ========================================================
-       MESSAGES
-       ======================================================== */
+    async function getOnlineUsers(
+        communityId = null
+    ) {
+        try {
+            const onlineIds =
+                await getOnlineUserIds();
 
-    async function loadMessages() {
-        if (
-            !state.currentChannel?.id
-        ) {
-            state.messages = [];
+            if (!onlineIds.length) {
+                return [];
+            }
 
-            renderMessages();
+            const result =
+                await db
+                    .from(
+                        "chat_public_profiles"
+                    )
+                    .select("*")
+                    .in(
+                        "id",
+                        onlineIds
+                    );
+
+            if (result.error) {
+                console.warn(
+                    "Online profile loading:",
+                    result.error
+                );
+
+                return [];
+            }
+
+            let users =
+                safeArray(
+                    result.data
+                );
+
+            if (communityId) {
+                const communityMembers =
+                    state.members.length &&
+                    String(
+                        state.currentCommunity
+                            ?.id
+                    ) ===
+                        String(
+                            communityId
+                        )
+                        ? state.members
+                        : await loadMembers(
+                              communityId
+                          );
+
+                const memberIds =
+                    new Set(
+                        safeArray(
+                            communityMembers
+                        ).map(
+                            member =>
+                                String(
+                                    member.user_id
+                                )
+                        )
+                    );
+
+                users =
+                    users.filter(
+                        user =>
+                            memberIds.has(
+                                String(
+                                    user.id
+                                )
+                            )
+                    );
+            }
+
+            return users;
+
+        } catch (error) {
+            console.warn(
+                "getOnlineUsers:",
+                error
+            );
 
             return [];
         }
+    }
 
-        const channelId =
-            state.currentChannel.id;
 
-        const loading =
-            $("messageLoading");
+    /* ============================================================
+       MESSAGES
+       ============================================================ */
 
-        if (loading) {
-            loading.hidden = false;
+    async function loadMessages(
+        channelId
+    ) {
+        if (!channelId) {
+            return [];
         }
 
         try {
@@ -1515,7 +1785,9 @@ import { supabase } from "./supabase.js";
                 data,
                 error
             } = await db
-                .from("chat_messages")
+                .from(
+                    "chat_messages"
+                )
                 .select("*")
                 .eq(
                     "channel_id",
@@ -1533,7 +1805,7 @@ import { supabase } from "./supabase.js";
 
             if (error) {
                 console.error(
-                    "❌ Messages query failed:",
+                    "❌ Messages loading:",
                     error
                 );
 
@@ -1545,12 +1817,9 @@ import { supabase } from "./supabase.js";
             }
 
             state.messages =
-                data || [];
+                safeArray(data);
 
-            /*
-             * Enrich message authors.
-             */
-            await enrichMessageProfiles();
+            await enrichMessages();
 
             renderMessages();
 
@@ -1562,51 +1831,53 @@ import { supabase } from "./supabase.js";
                 error
             );
 
-            state.messages = [];
-
-            renderMessages();
-
             return [];
-
-        } finally {
-            if (loading) {
-                loading.hidden = true;
-            }
         }
     }
 
 
-    async function enrichMessageProfiles() {
-        const userIds = [
-            ...new Set(
-                state.messages
-                    .map(
-                        message =>
-                            message.user_id ||
-                            message.sender_id ||
-                            message.created_by
-                    )
-                    .filter(Boolean)
-            )
-        ];
+    async function enrichMessages() {
+        const ids =
+            state.messages
+                .map(
+                    message =>
+                        message.user_id ||
+                        message.sender_id
+                )
+                .filter(Boolean);
 
-        if (!userIds.length) {
+        const uniqueIds =
+            [...new Set(ids)];
+
+        if (!uniqueIds.length) {
             return;
         }
 
         try {
             const {
-                data
+                data,
+                error
             } = await db
-                .from("chat_public_profiles")
+                .from(
+                    "chat_public_profiles"
+                )
                 .select("*")
-                .in("id", userIds);
+                .in(
+                    "id",
+                    uniqueIds
+                );
 
-            const profiles =
+            if (error) {
+                return;
+            }
+
+            const map =
                 new Map(
                     safeArray(data).map(
                         profile => [
-                            profile.id,
+                            String(
+                                profile.id
+                            ),
                             profile
                         ]
                     )
@@ -1614,27 +1885,19 @@ import { supabase } from "./supabase.js";
 
             state.messages =
                 state.messages.map(
-                    message => {
-                        const id =
-                            message.user_id ||
-                            message.sender_id ||
-                            message.created_by;
-
-                        return {
-                            ...message,
-                            profile:
-                                profiles.get(id) ||
-                                null
-                        };
-                    }
+                    message => ({
+                        ...message,
+                        profile:
+                            map.get(
+                                String(
+                                    message.user_id ||
+                                    message.sender_id
+                                )
+                            ) || null
+                    })
                 );
 
-        } catch (error) {
-            console.warn(
-                "Message profile enrichment failed:",
-                error
-            );
-        }
+        } catch {}
     }
 
 
@@ -1646,126 +1909,150 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        let messages =
-            Array.isArray(state.messages)
-                ? state.messages
-                : [];
+        const query =
+            state.messageSearch
+                .toLowerCase()
+                .trim();
 
-        if (state.messageSearch) {
-            const query =
-                state.messageSearch
-                    .toLowerCase()
-                    .trim();
+        const messages =
+            state.messages.filter(
+                message => {
+                    if (!query) {
+                        return true;
+                    }
 
-            messages =
-                messages.filter(message =>
-                    String(
+                    return String(
                         message.content ||
-                        message.message ||
                         ""
                     )
                         .toLowerCase()
-                        .includes(query)
-                );
-        }
-
-        if (!messages.length) {
-            list.innerHTML = `
-                <div class="empty-messages">
-                    No messages yet. Start the discussion.
-                </div>
-            `;
-
-            return;
-        }
+                        .includes(
+                            query
+                        );
+                }
+            );
 
         list.innerHTML =
             messages
                 .map(
                     message =>
-                        renderMessage(message)
+                        renderMessage(
+                            message
+                        )
                 )
                 .join("");
 
-        bindMessageActions();
+        list
+            .querySelectorAll(
+                "[data-delete-message]"
+            )
+            .forEach(
+                button => {
+                    button.onclick =
+                        () =>
+                            deleteMessage(
+                                button.dataset
+                                    .deleteMessage
+                            );
+                }
+            );
+
+        list
+            .querySelectorAll(
+                "[data-reaction]"
+            )
+            .forEach(
+                button => {
+                    button.onclick =
+                        () =>
+                            toggleReaction(
+                                button.dataset
+                                    .reactionMessage,
+                                button.dataset
+                                    .reaction
+                            );
+                }
+            );
 
         list.scrollTop =
             list.scrollHeight;
     }
 
 
-    function renderMessage(message) {
-        const senderId =
+    function renderMessage(
+        message
+    ) {
+        const userId =
             message.user_id ||
-            message.sender_id ||
-            message.created_by ||
-            "";
-
-        const profile =
-            message.profile;
-
-        const name =
-            profile
-                ? displayName(profile)
-                : (
-                    senderId ===
-                    state.user?.id
-                        ? displayName(
-                            state.profile
-                        )
-                        : "Mwaniki Scholar"
-                );
-
-        const avatar =
-            profile
-                ? avatarURL(profile)
-                : "";
-
-        const content =
-            message.content ??
-            message.message ??
-            "";
-
-        const created =
-            message.created_at;
+            message.sender_id;
 
         const own =
-            senderId ===
-            state.user?.id;
+            String(userId) ===
+            String(state.user?.id);
 
-        const deleted =
-            message.deleted === true ||
-            message.is_deleted === true;
+        const profile =
+            message.profile || {};
 
-        const attachmentUrl =
-            message.file_url ||
+        const name =
+            displayName(
+                profile
+            );
+
+        const avatar =
+            avatarURL(
+                profile
+            );
+
+        const content =
+            message.content || "";
+
+        const attachment =
             message.attachment_url ||
-            message.url ||
-            "";
+            message.file_url;
 
         const attachmentName =
-            message.file_name ||
             message.attachment_name ||
-            "";
+            message.file_name ||
+            "Attachment";
+
+        const isVoice =
+            String(
+                message.message_type ||
+                message.type ||
+                ""
+            ).toLowerCase() ===
+            "voice";
 
         return `
             <article
-                class="chat-message ${own ? "own-message" : ""}"
-                data-message-id="${escapeHTML(message.id)}"
+                class="community-message ${
+                    own
+                        ? "own-message"
+                        : ""
+                }"
+                data-message-id="${escapeHTML(
+                    message.id
+                )}"
             >
                 <div class="message-avatar">
                     ${
                         avatar
                             ? `
                                 <img
-                                    src="${escapeHTML(avatar)}"
-                                    alt="${escapeHTML(name)}"
+                                    src="${escapeHTML(
+                                        avatar
+                                    )}"
+                                    alt="${escapeHTML(
+                                        name
+                                    )}"
                                 >
                             `
                             : `
                                 <span>
                                     ${escapeHTML(
-                                        initialsForName(name)
+                                        initialsForName(
+                                            name
+                                        )
                                     )}
                                 </span>
                             `
@@ -1775,79 +2062,99 @@ import { supabase } from "./supabase.js";
                 <div class="message-body">
                     <div class="message-meta">
                         <strong>
-                            ${escapeHTML(name)}
+                            ${escapeHTML(
+                                name
+                            )}
                         </strong>
 
                         <time>
                             ${escapeHTML(
-                                formatTime(created)
+                                formatTime(
+                                    message.created_at
+                                )
                             )}
                         </time>
                     </div>
 
-                    <div class="message-content">
-                        ${
-                            deleted
+                    ${
+                        content
+                            ? `
+                                <div class="message-content">
+                                    ${escapeHTML(
+                                        content
+                                    ).replace(
+                                        /\n/g,
+                                        "<br>"
+                                    )}
+                                </div>
+                            `
+                            : ""
+                    }
+
+                    ${
+                        attachment
+                            ? isVoice
                                 ? `
-                                    <em>
-                                        Message deleted
-                                    </em>
+                                    <div class="message-voice">
+                                        <audio
+                                            controls
+                                            src="${escapeHTML(
+                                                attachment
+                                            )}"
+                                        ></audio>
+                                    </div>
                                 `
                                 : `
-                                    ${
-                                        content
-                                            ? `
-                                                <div class="message-text">
-                                                    ${escapeHTML(
-                                                        content
-                                                    ).replace(
-                                                        /\n/g,
-                                                        "<br>"
-                                                    )}
-                                                </div>
-                                            `
-                                            : ""
-                                    }
-
-                                    ${
-                                        attachmentUrl
-                                            ? `
-                                                <div class="message-attachment">
-                                                    <a
-                                                        href="${escapeHTML(attachmentUrl)}"
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                    >
-                                                        📎
-                                                        ${escapeHTML(
-                                                            attachmentName ||
-                                                            "Attachment"
-                                                        )}
-                                                    </a>
-                                                </div>
-                                            `
-                                            : ""
-                                    }
+                                    <div class="message-attachment">
+                                        <a
+                                            href="${escapeHTML(
+                                                attachment
+                                            )}"
+                                            target="_blank"
+                                            rel="noopener"
+                                        >
+                                            📎
+                                            ${escapeHTML(
+                                                attachmentName
+                                            )}
+                                        </a>
+                                    </div>
                                 `
-                        }
-                    </div>
+                            : ""
+                    }
 
                     <div class="message-actions">
                         <button
                             type="button"
-                            data-react-message="${escapeHTML(message.id)}"
+                            data-reaction-message="${escapeHTML(
+                                message.id
+                            )}"
+                            data-reaction="👍"
+                        >
+                            👍
+                        </button>
+
+                        <button
+                            type="button"
+                            data-reaction-message="${escapeHTML(
+                                message.id
+                            )}"
+                            data-reaction="❤️"
                         >
                             ❤️
                         </button>
 
                         ${
-                            own && !deleted
+                            own
                                 ? `
                                     <button
                                         type="button"
-                                        data-delete-message="${escapeHTML(message.id)}"
+                                        class="delete-message-button"
+                                        data-delete-message="${escapeHTML(
+                                            message.id
+                                        )}"
                                     >
-                                        🗑️
+                                        Delete
                                     </button>
                                 `
                                 : ""
@@ -1859,41 +2166,27 @@ import { supabase } from "./supabase.js";
     }
 
 
-    function bindMessageActions() {
-        document
-            .querySelectorAll(
-                "[data-delete-message]"
-            )
-            .forEach(button => {
-                button.onclick = () => {
-                    deleteMessage(
-                        button.dataset.deleteMessage
-                    );
-                };
-            });
-
-        document
-            .querySelectorAll(
-                "[data-react-message]"
-            )
-            .forEach(button => {
-                button.onclick = () => {
-                    toggleReaction(
-                        button.dataset.reactMessage,
-                        "❤️"
-                    );
-                };
-            });
-    }
-
-
     async function sendMessage() {
         if (!state.user?.id) {
             showToast(
-                "Please sign in first.",
+                "You must be signed in.",
                 "error"
             );
 
+            return;
+        }
+
+        const input =
+            $("messageInput");
+
+        const content =
+            input?.value?.trim() ||
+            "";
+
+        if (
+            !content &&
+            !state.pendingAttachment
+        ) {
             return;
         }
 
@@ -1906,101 +2199,81 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        const input =
-            $("messageInput");
-
-        if (!input) {
-            return;
-        }
-
-        const content =
-            input.value.trim();
-
-        const hasAttachment =
-            Boolean(
-                state.pendingAttachment
-            );
-
-        if (!content && !hasAttachment) {
-            return;
-        }
-
-        let attachment =
-            null;
-
-        if (hasAttachment) {
-            attachment =
-                await uploadAttachment(
-                    state.pendingAttachment
-                );
-
-            if (!attachment) {
-                return;
-            }
-        }
-
-        const payload = {
-            channel_id:
-                state.currentChannel.id,
-
-            user_id:
-                state.user.id,
-
-            content:
-                content || null
-        };
-
-        if (attachment) {
-            payload.file_url =
-                attachment.url;
-
-            payload.file_name =
-                attachment.name;
-
-            payload.file_type =
-                attachment.type;
-
-            payload.file_size =
-                attachment.size;
-        }
-
         try {
+            let attachment = null;
+
+            if (
+                state.pendingAttachment
+            ) {
+                attachment =
+                    await uploadAttachment(
+                        state.pendingAttachment
+                    );
+            }
+
+            const payload = {
+                channel_id:
+                    state.currentChannel.id,
+
+                user_id:
+                    state.user.id,
+
+                content:
+                    content || null
+            };
+
+            if (attachment) {
+                payload.attachment_url =
+                    attachment.url;
+
+                payload.attachment_name =
+                    attachment.name;
+
+                payload.attachment_type =
+                    attachment.type;
+
+                payload.attachment_size =
+                    attachment.size;
+            }
+
             const {
                 error
             } = await db
-                .from("chat_messages")
-                .insert(payload);
+                .from(
+                    "chat_messages"
+                )
+                .insert(
+                    payload
+                );
 
             if (error) {
-                console.error(
-                    "❌ Send message failed:",
-                    error
-                );
-
-                showToast(
-                    "Message could not be sent.",
-                    "error"
-                );
-
-                return;
+                throw error;
             }
 
-            input.value = "";
+            if (input) {
+                input.value = "";
+            }
 
             clearAttachment();
 
+            await loadMessages(
+                state.currentChannel.id
+            );
+
         } catch (error) {
             console.error(
-                "sendMessage:",
+                "❌ Send message failed:",
                 error
+            );
+
+            showToast(
+                error?.message ||
+                    "Could not send message.",
+                "error"
             );
         }
     }
 
-
-    /* ========================================================
-       DELETE MESSAGE
-       ======================================================== */
 
     async function deleteMessage(
         messageId
@@ -2022,12 +2295,11 @@ import { supabase } from "./supabase.js";
 
         const owner =
             message.user_id ||
-            message.sender_id ||
-            message.created_by;
+            message.sender_id;
 
         if (
-            owner !==
-            state.user?.id
+            String(owner) !==
+            String(state.user?.id)
         ) {
             showToast(
                 "You can only delete your own messages.",
@@ -2037,38 +2309,48 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        if (
-            !window.confirm(
-                "Delete this message?"
-            )
-        ) {
-            return;
-        }
-
         try {
             /*
-             * Try soft deletion first.
+             * First attempt soft deletion if the
+             * schema has a deleted_at column.
              */
-            let result =
+            let softDeleteWorked =
+                false;
+
+            const soft =
                 await db
-                    .from("chat_messages")
+                    .from(
+                        "chat_messages"
+                    )
                     .update({
-                        deleted: true,
-                        content: "Message deleted"
+                        deleted_at:
+                            new Date().toISOString(),
+                        content:
+                            "[Message deleted]"
                     })
-                    .eq("id", messageId)
+                    .eq(
+                        "id",
+                        messageId
+                    )
                     .eq(
                         "user_id",
                         state.user.id
                     );
 
-            if (result.error) {
-                /*
-                 * Fallback to physical delete.
-                 */
-                result =
+            if (!soft.error) {
+                softDeleteWorked = true;
+            }
+
+            /*
+             * If deleted_at doesn't exist, use physical
+             * deletion. This also fixes old installations.
+             */
+            if (!softDeleteWorked) {
+                const hard =
                     await db
-                        .from("chat_messages")
+                        .from(
+                            "chat_messages"
+                        )
                         .delete()
                         .eq(
                             "id",
@@ -2078,20 +2360,10 @@ import { supabase } from "./supabase.js";
                             "user_id",
                             state.user.id
                         );
-            }
 
-            if (result.error) {
-                console.error(
-                    "❌ Message deletion failed:",
-                    result.error
-                );
-
-                showToast(
-                    "Message could not be deleted.",
-                    "error"
-                );
-
-                return;
+                if (hard.error) {
+                    throw hard.error;
+                }
             }
 
             state.messages =
@@ -2105,22 +2377,31 @@ import { supabase } from "./supabase.js";
 
         } catch (error) {
             console.error(
-                "deleteMessage:",
+                "❌ Delete message failed:",
                 error
+            );
+
+            showToast(
+                "Could not delete this message.",
+                "error"
             );
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        REACTIONS
-       ======================================================== */
+       ============================================================ */
 
     async function toggleReaction(
         messageId,
-        emoji
+        reaction
     ) {
-        if (!state.user?.id) {
+        if (
+            !state.user?.id ||
+            !messageId ||
+            !reaction
+        ) {
             return;
         }
 
@@ -2130,7 +2411,7 @@ import { supabase } from "./supabase.js";
                     .from(
                         "chat_message_reactions"
                     )
-                    .select("id")
+                    .select("*")
                     .eq(
                         "message_id",
                         messageId
@@ -2141,14 +2422,22 @@ import { supabase } from "./supabase.js";
                     )
                     .eq(
                         "reaction",
-                        emoji
+                        reaction
                     )
                     .maybeSingle();
 
             if (
-                existing.data?.id
+                existing.error &&
+                existing.error.code !==
+                    "PGRST116"
             ) {
-                await db
+                throw existing.error;
+            }
+
+            if (existing.data) {
+                const {
+                    error
+                } = await db
                     .from(
                         "chat_message_reactions"
                     )
@@ -2158,79 +2447,77 @@ import { supabase } from "./supabase.js";
                         existing.data.id
                     );
 
-                return;
-            }
-
-            const {
-                error
-            } = await db
-                .from(
-                    "chat_message_reactions"
-                )
-                .insert({
-                    message_id:
-                        messageId,
-                    user_id:
-                        state.user.id,
-                    reaction:
-                        emoji
-                });
-
-            if (error) {
-                console.warn(
-                    "Reaction failed:",
+                if (error) {
+                    throw error;
+                }
+            } else {
+                const {
                     error
-                );
+                } = await db
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .insert({
+                        message_id:
+                            messageId,
+
+                        user_id:
+                            state.user.id,
+
+                        reaction
+                    });
+
+                if (error) {
+                    throw error;
+                }
             }
 
         } catch (error) {
             console.warn(
-                "toggleReaction:",
+                "Reaction:",
                 error
             );
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        ATTACHMENTS
-       ======================================================== */
+       ============================================================ */
 
     function bindAttachmentInput() {
         const input =
             $("attachmentInput");
 
-        const button =
-            $("attachButton");
-
-        if (button && input) {
-            button.onclick = () => {
-                input.click();
-            };
-
-            input.onchange = () => {
-                const file =
-                    input.files?.[0];
-
-                if (file) {
-                    prepareAttachment(file);
-                }
-            };
-        }
-    }
-
-
-    function prepareAttachment(file) {
-        if (!file) {
+        if (!input) {
             return;
         }
 
+        input.onchange =
+            () => {
+                const file =
+                    input.files?.[0];
+
+                if (!file) {
+                    return;
+                }
+
+                prepareAttachment(
+                    file
+                );
+            };
+    }
+
+
+    function prepareAttachment(
+        file
+    ) {
         if (
             file.size >
             MAX_ATTACHMENT_SIZE
         ) {
             showToast(
-                "File is too large. Maximum size is 25 MB.",
+                "Attachment is larger than 25 MB.",
                 "error"
             );
 
@@ -2240,33 +2527,12 @@ import { supabase } from "./supabase.js";
         state.pendingAttachment =
             file;
 
-        const preview =
-            $("attachmentPreview");
+        const status =
+            $("attachmentStatus");
 
-        if (preview) {
-            preview.innerHTML = `
-                <div class="attachment-preview-item">
-                    <span>
-                        📎
-                        ${escapeHTML(file.name)}
-                    </span>
-
-                    <button
-                        type="button"
-                        id="removeAttachmentButton"
-                    >
-                        ✕
-                    </button>
-                </div>
-            `;
-
-            const remove =
-                $("removeAttachmentButton");
-
-            if (remove) {
-                remove.onclick =
-                    clearAttachment;
-            }
+        if (status) {
+            status.textContent =
+                file.name;
         }
     }
 
@@ -2275,18 +2541,18 @@ import { supabase } from "./supabase.js";
         state.pendingAttachment =
             null;
 
-        const preview =
-            $("attachmentPreview");
-
-        if (preview) {
-            preview.innerHTML = "";
-        }
-
         const input =
             $("attachmentInput");
 
         if (input) {
             input.value = "";
+        }
+
+        const status =
+            $("attachmentStatus");
+
+        if (status) {
+            status.textContent = "";
         }
     }
 
@@ -2298,91 +2564,111 @@ import { supabase } from "./supabase.js";
             return null;
         }
 
-        const safeName =
-            file.name
-                .replace(
-                    /[^a-zA-Z0-9._-]/g,
-                    "_"
-                );
-
-        const path =
-            `${state.user.id}/${Date.now()}-${safeName}`;
-
-        /*
-         * Try the existing common bucket names.
-         */
         const buckets = [
             "chat-attachments",
             "attachments",
             "community-attachments"
         ];
 
-        for (const bucket of buckets) {
-            try {
-                const {
-                    error
-                } = await db
-                    .storage
-                    .from(bucket)
-                    .upload(
-                        path,
-                        file,
-                        {
-                            upsert: false
-                        }
-                    );
+        const extension =
+            file.name.includes(".")
+                ? "." +
+                  file.name
+                      .split(".")
+                      .pop()
+                : "";
 
-                if (error) {
+        const path =
+            `${state.user.id}/` +
+            `${Date.now()}-` +
+            `${randomId(8)}` +
+            extension;
+
+        let lastError = null;
+
+        for (
+            const bucket
+            of buckets
+        ) {
+            try {
+                const upload =
+                    await db.storage
+                        .from(bucket)
+                        .upload(
+                            path,
+                            file,
+                            {
+                                upsert: false
+                            }
+                        );
+
+                if (upload.error) {
+                    lastError =
+                        upload.error;
+
                     continue;
                 }
 
-                const {
-                    data
-                } = db
-                    .storage
-                    .from(bucket)
-                    .getPublicUrl(path);
+                const publicResult =
+                    db.storage
+                        .from(bucket)
+                        .getPublicUrl(
+                            path
+                        );
 
                 return {
                     url:
-                        data?.publicUrl ||
+                        publicResult
+                            .data
+                            ?.publicUrl ||
                         "",
+
                     name:
                         file.name,
+
                     type:
                         file.type,
+
                     size:
-                        file.size
+                        file.size,
+
+                    bucket,
+
+                    path
                 };
 
-            } catch {}
+            } catch (error) {
+                lastError =
+                    error;
+            }
         }
 
-        showToast(
-            "Could not upload this file. Check your storage bucket.",
-            "error"
+        throw (
+            lastError ||
+            new Error(
+                "No attachment storage bucket is available."
+            )
         );
-
-        return null;
     }
 
 
-    /* ========================================================
+    /* ============================================================
        VOICE NOTES
-       ======================================================== */
+       ============================================================ */
 
     async function toggleVoiceRecording() {
         if (state.recording) {
             stopVoiceRecording();
+
             return;
         }
 
         if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices.getUserMedia
+            !navigator.mediaDevices
+                ?.getUserMedia
         ) {
             showToast(
-                "Voice recording is not supported in this browser.",
+                "Microphone is not available.",
                 "error"
             );
 
@@ -2391,22 +2677,33 @@ import { supabase } from "./supabase.js";
 
         try {
             const stream =
-                await navigator
-                    .mediaDevices
+                await navigator.mediaDevices
                     .getUserMedia({
                         audio: true
                     });
 
-            const mimeType =
-                VOICE_MIME_TYPES.find(
-                    type =>
-                        MediaRecorder
-                            .isTypeSupported(
-                                type
-                            )
-                ) || "";
+            let mimeType =
+                "";
 
-            state.voiceChunks = [];
+            for (
+                const type
+                of VOICE_MIME_TYPES
+            ) {
+                if (
+                    window.MediaRecorder
+                        ?.isTypeSupported?.(
+                            type
+                        )
+                ) {
+                    mimeType =
+                        type;
+
+                    break;
+                }
+            }
+
+            state.voiceChunks =
+                [];
 
             state.recorder =
                 new MediaRecorder(
@@ -2434,54 +2731,53 @@ import { supabase } from "./supabase.js";
                 async () => {
                     stream
                         .getTracks()
-                        .forEach(track =>
-                            track.stop()
+                        .forEach(
+                            track =>
+                                track.stop()
                         );
+
+                    const actualType =
+                        mimeType ||
+                        "audio/webm";
 
                     const blob =
                         new Blob(
                             state.voiceChunks,
                             {
                                 type:
-                                    mimeType ||
-                                    "audio/webm"
+                                    actualType
                             }
                         );
 
-                    await sendVoiceNote(blob);
+                    state.voiceChunks =
+                        [];
 
-                    state.voiceChunks = [];
+                    if (
+                        blob.size >
+                        0
+                    ) {
+                        await sendVoiceNote(
+                            blob,
+                            actualType
+                        );
+                    }
                 };
 
             state.recorder.start();
 
-            state.recording = true;
+            state.recording =
+                true;
 
-            const button =
-                $("voiceNoteButton");
-
-            if (button) {
-                button.classList.add(
-                    "recording"
-                );
-
-                button.textContent =
-                    "⏹️";
-            }
-
-            showToast(
-                "Recording voice note...",
-                "info"
-            );
+            updateVoiceButton();
 
         } catch (error) {
             console.error(
-                "Voice recording failed:",
+                "Voice recording:",
                 error
             );
 
             showToast(
-                "Microphone permission was denied or unavailable.",
+                "Microphone permission was not available.",
                 "error"
             );
         }
@@ -2491,93 +2787,130 @@ import { supabase } from "./supabase.js";
     function stopVoiceRecording() {
         if (
             state.recorder &&
-            state.recording
+            state.recorder.state !==
+                "inactive"
         ) {
             state.recorder.stop();
         }
 
-        state.recording = false;
+        state.recording =
+            false;
 
+        updateVoiceButton();
+    }
+
+
+    function updateVoiceButton() {
         const button =
             $("voiceNoteButton");
 
-        if (button) {
-            button.classList.remove(
-                "recording"
-            );
-
-            button.textContent =
-                "🎙️";
+        if (!button) {
+            return;
         }
+
+        button.textContent =
+            state.recording
+                ? "⏹️"
+                : "🎙️";
+
+        button.title =
+            state.recording
+                ? "Stop recording"
+                : "Voice note";
     }
 
 
     async function sendVoiceNote(
-        blob
+        blob,
+        mimeType
     ) {
-        if (!blob?.size) {
-            return;
-        }
-
-        const file =
-            new File(
-                [blob],
-                `voice-note-${Date.now()}.webm`,
-                {
-                    type:
-                        blob.type ||
-                        "audio/webm"
-                }
-            );
-
-        const attachment =
-            await uploadAttachment(file);
-
-        if (!attachment) {
+        if (
+            !state.currentChannel?.id ||
+            !state.user?.id
+        ) {
             return;
         }
 
         try {
+            const extension =
+                mimeType.includes("ogg")
+                    ? ".ogg"
+                    : ".webm";
+
+            const file =
+                new File(
+                    [
+                        blob
+                    ],
+                    `voice-${Date.now()}${extension}`,
+                    {
+                        type:
+                            mimeType
+                    }
+                );
+
+            const uploaded =
+                await uploadAttachment(
+                    file
+                );
+
             const {
                 error
             } = await db
-                .from("chat_messages")
+                .from(
+                    "chat_messages"
+                )
                 .insert({
                     channel_id:
                         state.currentChannel.id,
+
                     user_id:
                         state.user.id,
+
                     content:
-                        "🎙️ Voice note",
-                    file_url:
-                        attachment.url,
-                    file_name:
-                        attachment.name,
-                    file_type:
-                        attachment.type,
-                    file_size:
-                        attachment.size
+                        null,
+
+                    message_type:
+                        "voice",
+
+                    attachment_url:
+                        uploaded.url,
+
+                    attachment_name:
+                        uploaded.name,
+
+                    attachment_type:
+                        uploaded.type,
+
+                    attachment_size:
+                        uploaded.size
                 });
 
             if (error) {
-                console.error(
-                    "Voice note message failed:",
-                    error
-                );
+                throw error;
             }
+
+            await loadMessages(
+                state.currentChannel.id
+            );
 
         } catch (error) {
             console.error(
-                "sendVoiceNote:",
+                "❌ Voice note failed:",
                 error
+            );
+
+            showToast(
+                "Could not send the voice note.",
+                "error"
             );
         }
     }
 
 
-    /* ========================================================
-       EMOJI / STICKER / GIF
-       ======================================================== */
+    /* ============================================================
+       EMOJI / STICKERS / GIF
+       ============================================================ */
 
     function setupEmojiPanel() {
         const button =
@@ -2590,99 +2923,79 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        button.onclick = event => {
-            event.stopPropagation();
+        button.onclick =
+            event => {
+                event.stopPropagation();
 
-            if (
-                panel.classList.contains(
+                panel.classList.toggle(
                     "open"
-                )
-            ) {
-                closeEmojiPanel();
-            } else {
-                closeStickerPanel();
-                closeGifPanel();
+                );
 
-                renderEmojiGrid();
-
-                openElement(panel);
-            }
-        };
-
-        panel.onclick = event => {
-            event.stopPropagation();
-        };
-    }
-
-
-    function renderEmojiGrid() {
-        const grid =
-            $("emojiGrid");
-
-        if (!grid) {
-            return;
-        }
-
-        grid.innerHTML =
-            EMOJIS.map(
-                emoji => `
-                    <button
-                        type="button"
-                        class="emoji-item"
-                        data-emoji="${emoji}"
-                    >
-                        ${emoji}
-                    </button>
-                `
-            )
-            .join("");
-
-        grid
-            .querySelectorAll(
-                "[data-emoji]"
-            )
-            .forEach(button => {
-                button.onclick = () => {
-                    insertEmoji(
-                        button.dataset.emoji
+                panel.hidden =
+                    !panel.classList.contains(
+                        "open"
                     );
-                };
-            });
-    }
 
+                if (
+                    panel.classList.contains(
+                        "open"
+                    )
+                ) {
+                    panel.innerHTML =
+                        EMOJIS.map(
+                            emoji =>
+                                `
+                                    <button
+                                        type="button"
+                                        class="emoji-choice"
+                                    >
+                                        ${emoji}
+                                    </button>
+                                `
+                        ).join("");
 
-    function insertEmoji(emoji) {
-        const input =
-            $("messageInput");
+                    panel
+                        .querySelectorAll(
+                            ".emoji-choice"
+                        )
+                        .forEach(
+                            emojiButton => {
+                                emojiButton.onclick =
+                                    event => {
+                                        event.stopPropagation();
 
-        if (!input) {
-            return;
-        }
+                                        const input =
+                                            $("messageInput");
 
-        input.value += emoji;
+                                        if (input) {
+                                            input.value +=
+                                                emojiButton
+                                                    .textContent
+                                                    .trim();
 
-        input.focus();
+                                            input.focus();
+                                        }
+                                    };
+                            }
+                        );
+                }
+            };
     }
 
 
     function closeEmojiPanel() {
-        closeElement(
-            $("emojiPanel")
+        const panel =
+            $("emojiPanel");
+
+        if (!panel) {
+            return;
+        }
+
+        panel.classList.remove(
+            "open"
         );
-    }
 
-
-    function closeStickerPanel() {
-        closeElement(
-            $("stickerPanel")
-        );
-    }
-
-
-    function closeGifPanel() {
-        closeElement(
-            $("gifPanel")
-        );
+        panel.hidden = true;
     }
 
 
@@ -2697,79 +3010,35 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        button.onclick = event => {
-            event.stopPropagation();
+        button.onclick =
+            event => {
+                event.stopPropagation();
 
-            if (
-                panel.classList.contains(
+                panel.classList.toggle(
                     "open"
-                )
-            ) {
-                closeStickerPanel();
-            } else {
-                closeEmojiPanel();
-                closeGifPanel();
+                );
 
-                renderStickerGrid();
-
-                openElement(panel);
-            }
-        };
-
-        panel.onclick = event => {
-            event.stopPropagation();
-        };
+                panel.hidden =
+                    !panel.classList.contains(
+                        "open"
+                    );
+            };
     }
 
 
-    function renderStickerGrid() {
-        const grid =
-            $("stickerGrid");
+    function closeStickerPanel() {
+        const panel =
+            $("stickerPanel");
 
-        if (!grid) {
+        if (!panel) {
             return;
         }
 
-        const stickers = [
-            "👍",
-            "❤️",
-            "😂",
-            "🔥",
-            "🎉",
-            "👏",
-            "🙏",
-            "💯",
-            "🤣",
-            "😭"
-        ];
+        panel.classList.remove(
+            "open"
+        );
 
-        grid.innerHTML =
-            stickers
-                .map(
-                    sticker => `
-                        <button
-                            type="button"
-                            data-sticker="${sticker}"
-                        >
-                            ${sticker}
-                        </button>
-                    `
-                )
-                .join("");
-
-        grid
-            .querySelectorAll(
-                "[data-sticker]"
-            )
-            .forEach(button => {
-                button.onclick = () => {
-                    insertEmoji(
-                        button.dataset.sticker
-                    );
-
-                    closeStickerPanel();
-                };
-            });
+        panel.hidden = true;
     }
 
 
@@ -2784,32 +3053,41 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        button.onclick = event => {
-            event.stopPropagation();
+        button.onclick =
+            event => {
+                event.stopPropagation();
 
-            if (
-                panel.classList.contains(
+                panel.classList.toggle(
                     "open"
-                )
-            ) {
-                closeGifPanel();
-            } else {
-                closeEmojiPanel();
-                closeStickerPanel();
+                );
 
-                openElement(panel);
-            }
-        };
-
-        panel.onclick = event => {
-            event.stopPropagation();
-        };
+                panel.hidden =
+                    !panel.classList.contains(
+                        "open"
+                    );
+            };
     }
 
 
-    /* ========================================================
+    function closeGifPanel() {
+        const panel =
+            $("gifPanel");
+
+        if (!panel) {
+            return;
+        }
+
+        panel.classList.remove(
+            "open"
+        );
+
+        panel.hidden = true;
+    }
+
+
+    /* ============================================================
        READ STATUS
-       ======================================================== */
+       ============================================================ */
 
     async function markChannelRead(
         channelId
@@ -2822,122 +3100,116 @@ import { supabase } from "./supabase.js";
         }
 
         try {
-            /*
-             * Avoid relying on a nonexistent
-             * unique constraint.
-             */
-            const {
-                data: existing,
-                error: selectError
-            } = await db
-                .from("chat_read_status")
-                .select("id")
-                .eq(
-                    "channel_id",
-                    channelId
-                )
-                .eq(
-                    "user_id",
-                    state.user.id
-                )
-                .maybeSingle();
+            const existing =
+                await db
+                    .from(
+                        "chat_read_status"
+                    )
+                    .select("*")
+                    .eq(
+                        "channel_id",
+                        channelId
+                    )
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    )
+                    .maybeSingle();
 
-            if (selectError) {
-                console.warn(
-                    "Read status lookup:",
-                    selectError
-                );
-
+            if (
+                existing.error &&
+                existing.error.code !==
+                    "PGRST116"
+            ) {
                 return;
             }
 
-            const payload = {
-                channel_id:
-                    channelId,
-                user_id:
-                    state.user.id,
-                last_read_at:
-                    new Date().toISOString()
-            };
+            const now =
+                new Date().toISOString();
 
-            if (existing?.id) {
+            if (existing.data) {
                 await db
-                    .from("chat_read_status")
+                    .from(
+                        "chat_read_status"
+                    )
                     .update({
                         last_read_at:
-                            payload.last_read_at
+                            now
                     })
                     .eq(
                         "id",
-                        existing.id
+                        existing.data.id
                     );
             } else {
-                const {
-                    error
-                } = await db
-                    .from("chat_read_status")
-                    .insert(payload);
+                await db
+                    .from(
+                        "chat_read_status"
+                    )
+                    .insert({
+                        channel_id:
+                            channelId,
 
-                if (error) {
-                    console.warn(
-                        "Read status insert:",
-                        error
-                    );
-                }
+                        user_id:
+                            state.user.id,
+
+                        last_read_at:
+                            now
+                    });
             }
 
         } catch (error) {
             console.warn(
-                "markChannelRead:",
+                "Read status:",
                 error
             );
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        REALTIME
-       ======================================================== */
+       ============================================================ */
 
     async function cleanupCommunityRealtime() {
-        if (
-            state.communityRealtime
+        const channels =
+            [
+                state.communityChannel,
+                state.messageChannel,
+                state.presenceChannel
+            ].filter(Boolean);
+
+        for (
+            const channel
+            of channels
         ) {
             try {
                 await db.removeChannel(
-                    state.communityRealtime
+                    channel
                 );
             } catch {}
-
-            state.communityRealtime =
-                null;
         }
 
-        if (
-            state.messageRealtime
-        ) {
-            try {
-                await db.removeChannel(
-                    state.messageRealtime
-                );
-            } catch {}
+        state.communityChannel =
+            null;
 
-            state.messageRealtime =
-                null;
-        }
+        state.messageChannel =
+            null;
+
+        state.presenceChannel =
+            null;
     }
 
 
-    async function subscribeCommunityRealtime() {
-        if (
-            !state.currentCommunity?.id
-        ) {
+    async function subscribeCommunityRealtime(
+        communityId
+    ) {
+        if (!communityId) {
             return;
         }
 
         const channel =
             db.channel(
-                `community-${state.currentCommunity.id}`
+                `community-${communityId}`
             );
 
         channel.on(
@@ -2945,64 +3217,48 @@ import { supabase } from "./supabase.js";
             {
                 event: "*",
                 schema: "public",
-                table: "chat_community_members",
+                table:
+                    "chat_community_members",
                 filter:
-                    `community_id=eq.${state.currentCommunity.id}`
+                    `community_id=eq.${communityId}`
             },
             async () => {
-                await loadMembers();
+                await loadMembers(
+                    communityId
+                );
             }
         );
 
-        channel.on(
-            "postgres_changes",
-            {
-                event: "*",
-                schema: "public",
-                table: "chat_presence"
-            },
-            () => {
-                updateMemberPresenceDots();
-            }
-        );
-
-        state.communityRealtime =
+        state.communityChannel =
             channel;
 
         channel.subscribe(
             status => {
-                if (
-                    status ===
-                    "SUBSCRIBED"
-                ) {
-                    console.log(
-                        "Community realtime: SUBSCRIBED"
-                    );
-                }
+                console.log(
+                    "Community realtime:",
+                    status
+                );
             }
         );
     }
 
 
-    async function subscribeMessageRealtime() {
-        if (
-            !state.currentChannel?.id
-        ) {
+    async function subscribeMessageRealtime(
+        channelId
+    ) {
+        if (!channelId) {
             return;
         }
 
         if (
-            state.messageRealtime
+            state.messageChannel
         ) {
             try {
                 await db.removeChannel(
-                    state.messageRealtime
+                    state.messageChannel
                 );
             } catch {}
         }
-
-        const channelId =
-            state.currentChannel.id;
 
         const channel =
             db.channel(
@@ -3014,72 +3270,64 @@ import { supabase } from "./supabase.js";
             {
                 event: "*",
                 schema: "public",
-                table: "chat_messages",
+                table:
+                    "chat_messages",
                 filter:
                     `channel_id=eq.${channelId}`
             },
-            async payload => {
-                if (
-                    payload.eventType ===
-                    "INSERT"
-                ) {
-                    state.messages.push(
-                        payload.new
-                    );
-
-                    await enrichMessageProfiles();
-
-                    renderMessages();
-                } else {
-                    await loadMessages();
-                }
+            async () => {
+                await loadMessages(
+                    channelId
+                );
             }
         );
 
-        state.messageRealtime =
+        state.messageChannel =
             channel;
 
-        channel.subscribe();
+        channel.subscribe(
+            status => {
+                console.log(
+                    "Message realtime:",
+                    status
+                );
+            }
+        );
     }
 
 
-    /* ========================================================
-       CALL DATABASE
-       ======================================================== */
+    /* ============================================================
+       CALL DATABASE HELPERS
+       ============================================================ */
 
     async function createCallRoom({
         communityId = null,
         targetUserId = null,
         scope = "direct",
         mode = "audio"
-    }) {
+    } = {}) {
         if (!state.user?.id) {
             throw new Error(
-                "You must be signed in."
+                "You must be signed in before starting a call."
             );
         }
 
-        /*
-         * CRITICAL:
-         *
-         * room_code is NOT NULL in your database.
-         * Always generate it here.
-         */
         const roomCode =
             generateRoomCode();
+
+        /*
+         * IMPORTANT:
+         * Do not send optional NULL fields.
+         * This prevents failures caused by NOT NULL /
+         * foreign-key / schema differences.
+         */
 
         const payload = {
             room_code:
                 roomCode,
 
-            community_id:
-                communityId || null,
-
             created_by:
                 state.user.id,
-
-            target_user_id:
-                targetUserId || null,
 
             room_status:
                 "ringing",
@@ -3088,10 +3336,34 @@ import { supabase } from "./supabase.js";
                 scope,
 
             max_participants:
-                scope === "community"
-                    ? 100
-                    : 2
+                scope === "direct"
+                    ? 2
+                    : 100
         };
+
+        if (
+            communityId !== null &&
+            communityId !== undefined &&
+            communityId !== ""
+        ) {
+            payload.community_id =
+                communityId;
+        }
+
+        if (
+            targetUserId !== null &&
+            targetUserId !== undefined &&
+            targetUserId !== ""
+        ) {
+            payload.target_user_id =
+                targetUserId;
+        }
+
+        /*
+         * mode is intentionally not inserted unless the
+         * database actually has a mode column.
+         */
+        void mode;
 
         console.log(
             "📞 Creating call room:",
@@ -3102,68 +3374,58 @@ import { supabase } from "./supabase.js";
             data,
             error
         } = await db
-            .from("chat_call_rooms")
-            .insert(payload)
+            .from(
+                "chat_call_rooms"
+            )
+            .insert(
+                payload
+            )
             .select("*")
             .single();
 
         if (error) {
             console.error(
-                "❌ CALL ROOM CREATION FAILED:",
-                error
+                "❌ CALL ROOM CREATION FAILED"
+            );
+
+            console.error(
+                "Payload:",
+                payload
+            );
+
+            console.error(
+                "Code:",
+                error.code
+            );
+
+            console.error(
+                "Message:",
+                error.message
+            );
+
+            console.error(
+                "Details:",
+                error.details
+            );
+
+            console.error(
+                "Hint:",
+                error.hint
             );
 
             throw error;
         }
 
-        return {
-            ...data,
-            mode,
-            room_code:
-                data.room_code ||
-                roomCode
-        };
-    }
-
-
-    async function createCallInvite(
-        roomId,
-        receiverId
-    ) {
-        if (
-            !roomId ||
-            !receiverId ||
-            !state.user?.id
-        ) {
-            return null;
-        }
-
-        const {
-            data,
-            error
-        } = await db
-            .from("chat_call_invites")
-            .insert({
-                room_id:
-                    roomId,
-                sender_id:
-                    state.user.id,
-                receiver_id:
-                    receiverId,
-                status:
-                    "ringing"
-            })
-            .select("*")
-            .single();
-
-        if (error) {
-            console.error(
-                "❌ Call invite failed:",
-                error
+        if (!data?.id) {
+            throw new Error(
+                "Supabase created the room but returned no room ID."
             );
-
-            return null;
         }
+
+        console.log(
+            "✅ Call room created:",
+            data
+        );
 
         return data;
     }
@@ -3181,50 +3443,106 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        const {
-            error
-        } = await db
-            .from("chat_call_participants")
-            .upsert(
-                {
-                    room_id:
-                        roomId,
-                    user_id:
-                        userId,
-                    status,
-                    is_muted:
-                        false,
-                    camera:
-                        false,
-                    screen_share:
-                        false,
-                    joined_at:
-                        status === "joined"
-                            ? new Date().toISOString()
-                            : null
-                },
-                {
-                    onConflict:
-                        "room_id,user_id"
+        try {
+            const existing =
+                await db
+                    .from(
+                        "chat_call_participants"
+                    )
+                    .select("*")
+                    .eq(
+                        "room_id",
+                        roomId
+                    )
+                    .eq(
+                        "user_id",
+                        userId
+                    )
+                    .maybeSingle();
+
+            if (
+                existing.error &&
+                existing.error.code !==
+                    "PGRST116"
+            ) {
+                throw existing.error;
+            }
+
+            const payload = {
+                room_id:
+                    roomId,
+
+                user_id:
+                    userId,
+
+                status,
+
+                is_muted:
+                    false,
+
+                camera:
+                    false,
+
+                screen_share:
+                    false
+            };
+
+            if (
+                status ===
+                "joined"
+            ) {
+                payload.joined_at =
+                    new Date().toISOString();
+            }
+
+            if (existing.data) {
+                const {
+                    error
+                } = await db
+                    .from(
+                        "chat_call_participants"
+                    )
+                    .update(
+                        payload
+                    )
+                    .eq(
+                        "id",
+                        existing.data.id
+                    );
+
+                if (error) {
+                    throw error;
                 }
+
+                return existing.data;
+            }
+
+            const {
+                data,
+                error
+            } = await db
+                .from(
+                    "chat_call_participants"
+                )
+                .insert(
+                    payload
+                )
+                .select("*")
+                .single();
+
+            if (error) {
+                throw error;
+            }
+
+            return data;
+
+        } catch (error) {
+            console.warn(
+                "Call participant:",
+                error
             );
 
-        if (error) {
-            /*
-             * Duplicate rows should not destroy
-             * the call.
-             */
-            if (
-                !String(
-                    error.message || ""
-                ).toLowerCase()
-                    .includes("duplicate")
-            ) {
-                console.warn(
-                    "Participant insert:",
-                    error
-                );
-            }
+            return null;
         }
     }
 
@@ -3246,7 +3564,9 @@ import { supabase } from "./supabase.js";
                 .from(
                     "chat_call_participants"
                 )
-                .update(changes)
+                .update(
+                    changes
+                )
                 .eq(
                     "room_id",
                     roomId
@@ -3273,15 +3593,26 @@ import { supabase } from "./supabase.js";
         }
 
         try {
-            await db
+            const {
+                error
+            } = await db
                 .from(
                     "chat_call_rooms"
                 )
-                .update(changes)
+                .update(
+                    changes
+                )
                 .eq(
                     "id",
                     roomId
                 );
+
+            if (error) {
+                console.warn(
+                    "Call room update:",
+                    error
+                );
+            }
         } catch (error) {
             console.warn(
                 "Call room update:",
@@ -3291,116 +3622,73 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
-       ONLINE CALL RECIPIENTS
-       ======================================================== */
-
-    async function getOnlineUsers(
-        communityId = null
+    async function createCallInvite(
+        roomId,
+        receiverId
     ) {
-        const onlineIds =
-            await getOnlineUserIds();
+        const {
+            data,
+            error
+        } = await db
+            .from(
+                "chat_call_invites"
+            )
+            .insert({
+                room_id:
+                    roomId,
 
-        if (!onlineIds.length) {
-            return [];
+                sender_id:
+                    state.user.id,
+
+                receiver_id:
+                    receiverId,
+
+                status:
+                    "ringing"
+            })
+            .select("*")
+            .single();
+
+        if (error) {
+            throw error;
         }
 
-        let allowedIds =
-            onlineIds;
-
-        if (communityId) {
-            try {
-                const {
-                    data
-                } = await db
-                    .from(
-                        "chat_community_members"
-                    )
-                    .select(
-                        "user_id"
-                    )
-                    .eq(
-                        "community_id",
-                        communityId
-                    )
-                    .in(
-                        "user_id",
-                        onlineIds
-                    );
-
-                allowedIds =
-                    safeArray(data)
-                        .map(
-                            row =>
-                                row.user_id
-                        )
-                        .filter(Boolean);
-
-            } catch (error) {
-                console.warn(
-                    "Community online members:",
-                    error
-                );
-            }
-        }
-
-        if (!allowedIds.length) {
-            return [];
-        }
-
-        try {
-            const {
-                data,
-                error
-            } = await db
-                .from(
-                    "chat_public_profiles"
-                )
-                .select("*")
-                .in(
-                    "id",
-                    allowedIds
-                );
-
-            if (error) {
-                console.warn(
-                    "Online profile lookup:",
-                    error
-                );
-
-                return [];
-            }
-
-            return safeArray(data)
-                .filter(
-                    profile =>
-                        profile.id !==
-                        state.user?.id
-                )
-                .map(profile => ({
-                    id:
-                        profile.id,
-                    name:
-                        displayName(profile),
-                    avatar:
-                        avatarURL(profile),
-                    profile
-                }));
-
-        } catch (error) {
-            console.warn(
-                "getOnlineUsers:",
-                error
-            );
-
-            return [];
-        }
+        return data;
     }
 
 
-    /* ========================================================
-       CALL NOTIFICATION
-       ======================================================== */
+    async function getCallRoom(
+        roomId
+    ) {
+        if (!roomId) {
+            return null;
+        }
+
+        const {
+            data,
+            error
+        } = await db
+            .from(
+                "chat_call_rooms"
+            )
+            .select("*")
+            .eq(
+                "id",
+                roomId
+            )
+            .maybeSingle();
+
+        if (error) {
+            throw error;
+        }
+
+        return data;
+    }
+
+
+    /* ============================================================
+       INCOMING CALL NOTIFICATIONS
+       ============================================================ */
 
     async function subscribeIncomingCalls() {
         if (!state.user?.id) {
@@ -3428,54 +3716,54 @@ import { supabase } from "./supabase.js";
                 event:
                     "incoming-call"
             },
-            payload => {
-                const call =
-                    payload.payload;
+            async event => {
+                const payload =
+                    event?.payload ||
+                    event;
 
-                if (!call) {
-                    return;
-                }
-
-                if (
-                    call.callerId ===
-                    state.user.id
-                ) {
-                    return;
-                }
-
-                showIncomingCall(call);
+                await showIncomingInvite(
+                    payload
+                );
             }
         );
 
-        /*
-         * Also watch the database.
-         *
-         * This makes incoming calls more reliable
-         * than relying on a temporary broadcast alone.
-         */
         channel.on(
             "postgres_changes",
             {
                 event: "INSERT",
                 schema: "public",
-                table: "chat_call_invites",
+                table:
+                    "chat_call_invites",
                 filter:
                     `receiver_id=eq.${state.user.id}`
             },
-            async payload => {
+            async event => {
                 const invite =
-                    payload.new;
+                    event?.new;
+
+                if (!invite) {
+                    return;
+                }
 
                 if (
                     invite.status !==
-                    "ringing"
+                        "ringing" &&
+                    invite.status !==
+                        "pending"
                 ) {
                     return;
                 }
 
-                await showIncomingInvite(
-                    invite
-                );
+                await showIncomingInvite({
+                    roomId:
+                        invite.room_id,
+
+                    inviteId:
+                        invite.id,
+
+                    callerId:
+                        invite.sender_id
+                });
             }
         );
 
@@ -3497,81 +3785,94 @@ import { supabase } from "./supabase.js";
     }
 
 
-    async function notifyUserOfCall(
-        receiverId,
+    async function notifyUserOfCall({
         room,
-        mode
-    ) {
-        if (!receiverId) {
+        invite,
+        targetUserId,
+        mode = "audio"
+    }) {
+        if (
+            !state.user?.id ||
+            !targetUserId
+        ) {
             return;
         }
 
-        const payload = {
-            roomId:
-                room.id,
+        const channel =
+            db.channel(
+                `${INCOMING_PREFIX}${targetUserId}`
+            );
 
-            roomCode:
-                room.room_code,
+        const profile =
+            state.profile || {};
 
-            callerId:
-                state.user.id,
-
-            callerName:
-                displayName(
-                    state.profile
-                ),
-
-            callerAvatar:
-                avatarURL(
-                    state.profile
-                ),
-
-            mode:
-                mode || "audio",
-
-            communityId:
-                room.community_id,
-
-            timestamp:
-                Date.now()
-        };
-
-        /*
-         * Broadcast to currently connected recipient.
-         */
         try {
-            const channel =
-                db.channel(
-                    `${INCOMING_PREFIX}${receiverId}`
-                );
-
-            channel.subscribe(
+            await channel.subscribe(
                 async status => {
                     if (
-                        status !==
+                        status ===
                         "SUBSCRIBED"
                     ) {
-                        return;
-                    }
+                        await channel.send({
+                            type:
+                                "broadcast",
 
-                    await channel.send({
-                        type:
-                            "broadcast",
-                        event:
-                            "incoming-call",
-                        payload
-                    });
+                            event:
+                                "incoming-call",
 
-                    setTimeout(() => {
-                        db.removeChannel(
-                            channel
+                            payload: {
+                                roomId:
+                                    room.id,
+
+                                roomCode:
+                                    room.room_code,
+
+                                inviteId:
+                                    invite.id,
+
+                                callerId:
+                                    state.user.id,
+
+                                callerName:
+                                    displayName(
+                                        profile
+                                    ),
+
+                                callerAvatar:
+                                    avatarURL(
+                                        profile
+                                    ),
+
+                                targetUserId,
+
+                                communityId:
+                                    room.community_id ||
+                                    null,
+
+                                mode,
+
+                                timestamp:
+                                    Date.now()
+                            }
+                        });
+
+                        setTimeout(
+                            () => {
+                                try {
+                                    db.removeChannel(
+                                        channel
+                                    );
+                                } catch {}
+                            },
+                            3000
                         );
-                    }, 5000);
+                    }
                 }
             );
+
         } catch (error) {
             console.warn(
-                "Call broadcast failed:",
+                "Call notification:",
                 error
             );
         }
@@ -3579,93 +3880,115 @@ import { supabase } from "./supabase.js";
 
 
     async function showIncomingInvite(
-        invite
-    ) {
-        if (!invite?.room_id) {
-            return;
-        }
-
-        if (
-            invite.sender_id ===
-            state.user?.id
-        ) {
-            return;
-        }
-
-        let caller =
-            null;
-
-        try {
-            const {
-                data
-            } = await db
-                .from(
-                    "chat_public_profiles"
-                )
-                .select("*")
-                .eq(
-                    "id",
-                    invite.sender_id
-                )
-                .maybeSingle();
-
-            caller = data;
-        } catch {}
-
-        const room =
-            await getCallRoom(
-                invite.room_id
-            );
-
-        if (!room) {
-            return;
-        }
-
-        showIncomingCall({
-            roomId:
-                room.id,
-
-            roomCode:
-                room.room_code,
-
-            callerId:
-                invite.sender_id,
-
-            callerName:
-                displayName(caller),
-
-            callerAvatar:
-                avatarURL(caller),
-
-            mode:
-                room.call_mode ||
-                "audio",
-
-            communityId:
-                room.community_id,
-
-            inviteId:
-                invite.id
-        });
-    }
-
-
-    function showIncomingCall(
-        call
+        payload
     ) {
         if (
+            !payload ||
             state.incomingCallVisible
         ) {
             return;
         }
 
+        const roomId =
+            payload.roomId ||
+            payload.room_id;
+
+        if (!roomId) {
+            return;
+        }
+
+        try {
+            const room =
+                await getCallRoom(
+                    roomId
+                );
+
+            if (!room) {
+                return;
+            }
+
+            if (
+                room.room_status ===
+                "ended"
+            ) {
+                return;
+            }
+
+            let caller = null;
+
+            if (
+                payload.callerId
+            ) {
+                const result =
+                    await db
+                        .from(
+                            "chat_public_profiles"
+                        )
+                        .select("*")
+                        .eq(
+                            "id",
+                            payload.callerId
+                        )
+                        .maybeSingle();
+
+                if (
+                    !result.error
+                ) {
+                    caller =
+                        result.data;
+                }
+            }
+
+            caller =
+                caller || {
+                    id:
+                        payload.callerId,
+
+                    display_name:
+                        payload.callerName ||
+                        "Mwaniki Scholar",
+
+                    avatar_url:
+                        payload.callerAvatar ||
+                        ""
+                };
+
+            showIncomingCall({
+                room,
+                inviteId:
+                    payload.inviteId,
+                caller,
+                mode:
+                    payload.mode ||
+                    "audio"
+            });
+
+        } catch (error) {
+            console.warn(
+                "Incoming invite:",
+                error
+            );
+        }
+    }
+
+
+    function showIncomingCall({
+        room,
+        inviteId,
+        caller,
+        mode
+    }) {
+        removeIncomingCallUI();
+
         state.incomingCallVisible =
             true;
 
-        state.incomingCall =
-            call;
-
-        removeIncomingCallUI();
+        state.incomingCall = {
+            room,
+            inviteId,
+            caller,
+            mode
+        };
 
         const overlay =
             document.createElement(
@@ -3675,20 +3998,31 @@ import { supabase } from "./supabase.js";
         overlay.id =
             "mwanikiIncomingCall";
 
-        overlay.innerHTML = `
-            <div class="mwaniki-incoming-call-card">
+        overlay.className =
+            "mwaniki-incoming-call";
 
+        const name =
+            displayName(
+                caller
+            );
+
+        const avatar =
+            avatarURL(
+                caller
+            );
+
+        overlay.innerHTML = `
+            <div class="mwaniki-incoming-card">
                 <div class="mwaniki-incoming-avatar">
                     ${
-                        call.callerAvatar
+                        avatar
                             ? `
                                 <img
                                     src="${escapeHTML(
-                                        call.callerAvatar
+                                        avatar
                                     )}"
                                     alt="${escapeHTML(
-                                        call.callerName ||
-                                        "Caller"
+                                        name
                                     )}"
                                 >
                             `
@@ -3696,7 +4030,7 @@ import { supabase } from "./supabase.js";
                                 <span>
                                     ${escapeHTML(
                                         initialsForName(
-                                            call.callerName
+                                            name
                                         )
                                     )}
                                 </span>
@@ -3704,41 +4038,35 @@ import { supabase } from "./supabase.js";
                     }
                 </div>
 
+                <div class="mwaniki-incoming-label">
+                    Incoming ${
+                        mode === "video"
+                            ? "video"
+                            : "audio"
+                    } call
+                </div>
+
                 <h3>
                     ${escapeHTML(
-                        call.callerName ||
-                        "Mwaniki Scholar"
+                        name
                     )}
                 </h3>
 
-                <p>
-                    Incoming
-                    ${
-                        call.mode === "video"
-                            ? "video"
-                            : "audio"
-                    }
-                    call
-                </p>
-
                 <div class="mwaniki-incoming-actions">
-
                     <button
                         type="button"
-                        id="mwanikiAcceptCall"
+                        id="mwanikiAcceptIncoming"
                     >
                         📞 Accept
                     </button>
 
                     <button
                         type="button"
-                        id="mwanikiDeclineCall"
+                        id="mwanikiDeclineIncoming"
                     >
-                        ✕ Decline
+                        ❌ Decline
                     </button>
-
                 </div>
-
             </div>
         `;
 
@@ -3746,186 +4074,182 @@ import { supabase } from "./supabase.js";
             overlay
         );
 
-        installIncomingCallStyles();
+        $("mwanikiAcceptIncoming")
+            .onclick =
+            () =>
+                acceptIncomingCall();
 
-        $("mwanikiAcceptCall").onclick =
-            () => {
-                acceptIncomingCall(
-                    call
-                );
-            };
+        $("mwanikiDeclineIncoming")
+            .onclick =
+            () =>
+                declineIncomingCall();
 
-        $("mwanikiDeclineCall").onclick =
-            () => {
-                declineIncomingCall(
-                    call
-                );
-            };
-
-        clearTimeout(
-            showIncomingCall.timer
-        );
-
-        showIncomingCall.timer =
-            setTimeout(() => {
-                if (
-                    state.incomingCallVisible
-                ) {
+        state.incomingCall.timer =
+            setTimeout(
+                () =>
                     declineIncomingCall(
-                        call,
                         true
-                    );
-                }
-            }, CALL_RING_TIMEOUT);
+                    ),
+                CALL_RING_TIMEOUT
+            );
     }
 
 
     function removeIncomingCallUI() {
-        const existing =
+        const overlay =
             $("mwanikiIncomingCall");
 
-        if (existing) {
-            existing.remove();
+        if (overlay) {
+            overlay.remove();
         }
+
+        if (
+            state.incomingCall?.timer
+        ) {
+            clearTimeout(
+                state.incomingCall.timer
+            );
+        }
+
+        state.incomingCallVisible =
+            false;
+
+        state.incomingCall =
+            null;
     }
 
 
-    function installIncomingCallStyles() {
-        if (
-            $("mwanikiIncomingCallStyles")
-        ) {
+    async function acceptIncomingCall() {
+        const incoming =
+            state.incomingCall;
+
+        if (!incoming) {
             return;
         }
 
-        const style =
-            document.createElement(
-                "style"
+        const room =
+            incoming.room;
+
+        const inviteId =
+            incoming.inviteId;
+
+        const mode =
+            incoming.mode ||
+            "audio";
+
+        try {
+            if (inviteId) {
+                await db
+                    .from(
+                        "chat_call_invites"
+                    )
+                    .update({
+                        status:
+                            "accepted"
+                    })
+                    .eq(
+                        "id",
+                        inviteId
+                    );
+            }
+
+            removeIncomingCallUI();
+
+            await addCallParticipant(
+                room.id,
+                state.user.id,
+                "joined"
             );
 
-        style.id =
-            "mwanikiIncomingCallStyles";
+            window.location.href =
+                buildCallURL(
+                    room,
+                    "receiver",
+                    mode
+                );
 
-        style.textContent = `
-            #mwanikiIncomingCall {
-                position: fixed;
-                inset: 0;
-                z-index: 999999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0,0,0,.62);
-                padding: 20px;
-            }
+        } catch (error) {
+            console.error(
+                "Accept call:",
+                error
+            );
 
-            .mwaniki-incoming-call-card {
-                width: min(390px, 100%);
-                background: #fff;
-                border-radius: 22px;
-                padding: 30px;
-                text-align: center;
-                box-shadow: 0 25px 70px rgba(0,0,0,.35);
-            }
-
-            .mwaniki-incoming-avatar {
-                width: 86px;
-                height: 86px;
-                border-radius: 50%;
-                margin: 0 auto 15px;
-                overflow: hidden;
-                background: #087f73;
-                color: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 28px;
-                font-weight: 700;
-            }
-
-            .mwaniki-incoming-avatar img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            .mwaniki-incoming-call-card h3 {
-                margin: 0 0 7px;
-            }
-
-            .mwaniki-incoming-call-card p {
-                margin: 0 0 24px;
-                opacity: .7;
-            }
-
-            .mwaniki-incoming-actions {
-                display: flex;
-                gap: 12px;
-            }
-
-            .mwaniki-incoming-actions button {
-                flex: 1;
-                border: 0;
-                border-radius: 12px;
-                padding: 13px;
-                cursor: pointer;
-                font-weight: 700;
-            }
-        `;
-
-        document.head.appendChild(
-            style
-        );
+            showToast(
+                "Could not accept the call.",
+                "error"
+            );
+        }
     }
 
 
-    /* ========================================================
-       CALL ROOM
-       ======================================================== */
-
-    async function getCallRoom(
-        roomId
+    async function declineIncomingCall(
+        silent = false
     ) {
-        if (!roomId) {
-            return null;
+        const incoming =
+            state.incomingCall;
+
+        if (!incoming) {
+            return;
         }
 
         try {
-            const {
-                data,
-                error
-            } = await db
-                .from(
-                    "chat_call_rooms"
-                )
-                .select("*")
-                .eq(
-                    "id",
-                    roomId
-                )
-                .maybeSingle();
-
-            if (error) {
-                console.warn(
-                    "Call room lookup:",
-                    error
-                );
-
-                return null;
+            if (
+                incoming.inviteId
+            ) {
+                await db
+                    .from(
+                        "chat_call_invites"
+                    )
+                    .update({
+                        status:
+                            "declined"
+                    })
+                    .eq(
+                        "id",
+                        incoming.inviteId
+                    );
             }
 
-            return data || null;
+            if (
+                incoming.room?.id
+            ) {
+                await db
+                    .from(
+                        "chat_call_rooms"
+                    )
+                    .update({
+                        room_status:
+                            "ended"
+                    })
+                    .eq(
+                        "id",
+                        incoming.room.id
+                    );
+            }
 
         } catch (error) {
             console.warn(
-                "getCallRoom:",
+                "Decline call:",
                 error
             );
+        }
 
-            return null;
+        removeIncomingCallUI();
+
+        if (!silent) {
+            showToast(
+                "Call declined.",
+                "info"
+            );
         }
     }
 
 
-    function callURL(
+    /* ============================================================
+       CALL URL
+       ============================================================ */
+
+    function buildCallURL(
         room,
         role,
         mode
@@ -3934,7 +4258,7 @@ import { supabase } from "./supabase.js";
             new URLSearchParams();
 
         params.set(
-            "room",
+            "room_id",
             room.id
         );
 
@@ -3953,37 +4277,68 @@ import { supabase } from "./supabase.js";
             mode
         );
 
+        if (
+            room.community_id
+        ) {
+            params.set(
+                "community_id",
+                room.community_id
+            );
+        }
+
         return (
-            `${CALL_PAGE}?${params.toString()}`
+            CALL_PAGE +
+            "?" +
+            params.toString()
         );
     }
 
+
+    /* ============================================================
+       DIRECT CALL
+       ============================================================ */
 
     async function startDirectCall(
         targetUserId,
         mode = "audio"
     ) {
-        if (!targetUserId) {
-            showToast(
-                "Select a member to call.",
-                "error"
-            );
-
-            return;
-        }
-
-        if (
-            targetUserId ===
-            state.user?.id
-        ) {
-            return;
-        }
-
         try {
+            if (!state.user?.id) {
+                throw new Error(
+                    "You must be signed in."
+                );
+            }
+
+            if (!targetUserId) {
+                throw new Error(
+                    "No call recipient was selected."
+                );
+            }
+
+            if (
+                String(
+                    targetUserId
+                ) ===
+                String(
+                    state.user.id
+                )
+            ) {
+                throw new Error(
+                    "You cannot call yourself."
+                );
+            }
+
+            /*
+             * Presence is NOT required here.
+             * A user can still receive the invite even
+             * if presence is temporarily unavailable.
+             */
+
             const room =
                 await createCallRoom({
                     communityId:
-                        state.currentCommunity?.id ||
+                        state.currentCommunity
+                            ?.id ||
                         null,
 
                     targetUserId,
@@ -4012,33 +4367,15 @@ import { supabase } from "./supabase.js";
                     targetUserId
                 );
 
-            if (!invite) {
-                throw new Error(
-                    "Call invitation could not be created."
-                );
-            }
-
-            await notifyUserOfCall(
-                targetUserId,
+            await notifyUserOfCall({
                 room,
+                invite,
+                targetUserId,
                 mode
-            );
-
-            await updateCallRoom(
-                room.id,
-                {
-                    room_status:
-                        "ringing"
-                }
-            );
-
-            console.log(
-                "📞 Direct call created:",
-                room.room_code
-            );
+            });
 
             window.location.href =
-                callURL(
+                buildCallURL(
                     room,
                     "caller",
                     mode
@@ -4051,77 +4388,42 @@ import { supabase } from "./supabase.js";
             );
 
             showToast(
-                "Could not start the call.",
+                error?.message ||
+                    "Could not start the call.",
                 "error"
             );
         }
     }
 
 
+    /* ============================================================
+       COMMUNITY CALL
+       ============================================================ */
+
     async function startCommunityCall(
         communityId,
         mode = "audio"
     ) {
-        if (!communityId) {
-            showToast(
-                "No community selected.",
-                "error"
-            );
-
-            return;
-        }
-
         try {
-            /*
-             * Community calls use registered members,
-             * not the online-only member picker.
-             */
-            const {
-                data,
-                error
-            } = await db
-                .from(
-                    "chat_community_members"
-                )
-                .select(
-                    "user_id"
-                )
-                .eq(
-                    "community_id",
-                    communityId
+            if (!state.user?.id) {
+                throw new Error(
+                    "You must be signed in."
                 );
-
-            if (error) {
-                throw error;
             }
 
-            const recipients =
-                safeArray(data)
-                    .map(
-                        row =>
-                            row.user_id
-                    )
-                    .filter(
-                        id =>
-                            id &&
-                            id !==
-                                state.user.id
-                    );
-
-            if (!recipients.length) {
-                showToast(
-                    "There are no other members in this community.",
-                    "error"
+            if (!communityId) {
+                throw new Error(
+                    "No community was selected."
                 );
-
-                return;
             }
 
             const room =
                 await createCallRoom({
                     communityId,
+
                     scope:
                         "community",
+
                     mode
                 });
 
@@ -4131,41 +4433,70 @@ import { supabase } from "./supabase.js";
                 "joined"
             );
 
+            /*
+             * Invite registered community members.
+             */
+            const members =
+                await loadMembers(
+                    communityId
+                );
+
+            const others =
+                safeArray(
+                    members
+                ).filter(
+                    member =>
+                        String(
+                            member.user_id
+                        ) !==
+                        String(
+                            state.user.id
+                        )
+                );
+
             for (
-                const userId
-                of recipients
+                const member
+                of others
             ) {
+                const userId =
+                    member.user_id;
+
+                if (!userId) {
+                    continue;
+                }
+
                 await addCallParticipant(
                     room.id,
                     userId,
                     "invited"
                 );
 
-                const invite =
-                    await createCallInvite(
-                        room.id,
-                        userId
-                    );
+                try {
+                    const invite =
+                        await createCallInvite(
+                            room.id,
+                            userId
+                        );
 
-                if (invite) {
-                    await notifyUserOfCall(
-                        userId,
+                    await notifyUserOfCall({
                         room,
+                        invite,
+                        targetUserId:
+                            userId,
                         mode
+                    });
+                } catch (
+                    inviteError
+                ) {
+                    console.warn(
+                        "Community invite failed:",
+                        inviteError
                     );
                 }
             }
 
-            await updateCallRoom(
-                room.id,
-                {
-                    room_status:
-                        "ringing"
-                }
-            );
-
             window.location.href =
-                callURL(
+                buildCallURL(
                     room,
                     "caller",
                     mode
@@ -4173,42 +4504,37 @@ import { supabase } from "./supabase.js";
 
         } catch (error) {
             console.error(
-                "Community call failed:",
+                "❌ Community call failed:",
                 error
             );
 
             showToast(
-                "Could not start community call.",
+                error?.message ||
+                    "Could not start community call.",
                 "error"
             );
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        GENERAL CALL PICKER
-       ======================================================== */
+       ============================================================ */
 
     async function openGeneralCallPicker() {
-        const communityId =
-            state.currentCommunity?.id ||
-            null;
+        removeCallPicker();
 
         const users =
-            await getOnlineUsers(
-                communityId
-            );
+            await getOnlineUsers();
 
         if (!users.length) {
             showToast(
-                "There are no other online users available.",
-                "error"
+                "No online users are currently available.",
+                "info"
             );
 
             return;
         }
-
-        removeCallPicker();
 
         const overlay =
             document.createElement(
@@ -4218,96 +4544,133 @@ import { supabase } from "./supabase.js";
         overlay.id =
             "mwanikiCallPicker";
 
+        overlay.className =
+            "mwaniki-call-picker";
+
         overlay.innerHTML = `
-            <div class="mwaniki-call-picker">
+            <div class="mwaniki-call-picker-card">
 
                 <div class="mwaniki-call-picker-header">
-                    <h3>Start General Call</h3>
+                    <div>
+                        <h3>
+                            General Call
+                        </h3>
+
+                        <p>
+                            Select who should receive the call.
+                        </p>
+                    </div>
 
                     <button
                         type="button"
-                        id="closeMwanikiCallPicker"
+                        id="mwanikiCloseCallPicker"
                     >
                         ✕
                     </button>
                 </div>
 
-                <p>
-                    Select the online members you want
-                    to call.
-                </p>
-
                 <div class="mwaniki-call-picker-actions">
-
                     <button
                         type="button"
-                        id="selectAllOnlineUsers"
+                        id="mwanikiSelectAllOnline"
                     >
-                        Select Everyone Online
+                        Select everyone online
                     </button>
 
                     <button
                         type="button"
-                        id="clearOnlineUsers"
+                        id="mwanikiClearOnline"
                     >
                         Clear
                     </button>
-
                 </div>
 
                 <div
                     class="mwaniki-online-user-list"
                     id="mwanikiOnlineUserList"
                 >
-                    ${users.map(user => `
-                        <label
-                            class="mwaniki-online-user"
-                        >
-                            <input
-                                type="checkbox"
-                                value="${escapeHTML(user.id)}"
-                                data-online-user
-                            >
+                    ${users
+                        .map(
+                            user => {
+                                const name =
+                                    displayName(
+                                        user
+                                    );
 
-                            <span class="mwaniki-online-avatar">
-                                ${
-                                    user.avatar
-                                        ? `
-                                            <img
-                                                src="${escapeHTML(user.avatar)}"
-                                                alt="${escapeHTML(user.name)}"
-                                            >
-                                        `
-                                        : `
-                                            ${escapeHTML(
-                                                initialsForName(
-                                                    user.name
-                                                )
-                                            )}
-                                        `
-                                }
-                            </span>
+                                const avatar =
+                                    avatarURL(
+                                        user
+                                    );
 
-                            <span>
-                                ${escapeHTML(user.name)}
-                            </span>
+                                return `
+                                    <label
+                                        class="mwaniki-online-user"
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            value="${escapeHTML(
+                                                user.id
+                                            )}"
+                                            class="mwaniki-online-checkbox"
+                                        >
 
-                            <span class="mwaniki-online-dot">
-                                ●
-                            </span>
-                        </label>
-                    `).join("")}
+                                        <div class="online-user-avatar">
+                                            ${
+                                                avatar
+                                                    ? `
+                                                        <img
+                                                            src="${escapeHTML(
+                                                                avatar
+                                                            )}"
+                                                            alt="${escapeHTML(
+                                                                name
+                                                            )}"
+                                                        >
+                                                    `
+                                                    : `
+                                                        <span>
+                                                            ${escapeHTML(
+                                                                initialsForName(
+                                                                    name
+                                                                )
+                                                            )}
+                                                        </span>
+                                                    `
+                                            }
+                                        </div>
+
+                                        <div>
+                                            <strong>
+                                                ${escapeHTML(
+                                                    name
+                                                )}
+                                            </strong>
+
+                                            <small>
+                                                Online
+                                            </small>
+                                        </div>
+                                    </label>
+                                `;
+                            }
+                        )
+                        .join("")}
                 </div>
 
                 <div class="mwaniki-call-picker-footer">
+                    <button
+                        type="button"
+                        id="mwanikiStartSelectedCall"
+                    >
+                        📞 Start Audio Call
+                    </button>
 
                     <button
                         type="button"
-                        id="startSelectedGeneralCall"
+                        id="mwanikiStartSelectedVideoCall"
                     >
-                        📞 Start Call
+                        📹 Start Video Call
                     </button>
-
                 </div>
 
             </div>
@@ -4317,238 +4680,93 @@ import { supabase } from "./supabase.js";
             overlay
         );
 
-        installCallPickerStyles();
-
-        $("closeMwanikiCallPicker").onclick =
+        $("mwanikiCloseCallPicker")
+            .onclick =
             removeCallPicker;
 
-        $("selectAllOnlineUsers").onclick =
+        $("mwanikiSelectAllOnline")
+            .onclick =
             () => {
-                document
+                overlay
                     .querySelectorAll(
-                        "[data-online-user]"
+                        ".mwaniki-online-checkbox"
                     )
                     .forEach(
-                        checkbox => {
-                            checkbox.checked =
-                                true;
-                        }
-                    );
-            };
-
-        $("clearOnlineUsers").onclick =
-            () => {
-                document
-                    .querySelectorAll(
-                        "[data-online-user]"
-                    )
-                    .forEach(
-                        checkbox => {
-                            checkbox.checked =
-                                false;
-                        }
-                    );
-            };
-
-        $("startSelectedGeneralCall").onclick =
-            async () => {
-                const selected =
-                    [
-                        ...document.querySelectorAll(
-                            "[data-online-user]:checked"
-                        )
-                    ].map(
                         checkbox =>
-                            checkbox.value
+                            checkbox.checked =
+                                true
                     );
+            };
 
-                if (!selected.length) {
-                    showToast(
-                        "Select at least one online user.",
-                        "error"
+        $("mwanikiClearOnline")
+            .onclick =
+            () => {
+                overlay
+                    .querySelectorAll(
+                        ".mwaniki-online-checkbox"
+                    )
+                    .forEach(
+                        checkbox =>
+                            checkbox.checked =
+                                false
                     );
+            };
 
-                    return;
-                }
-
-                removeCallPicker();
-
-                await startGeneralCall(
-                    selected,
+        $("mwanikiStartSelectedCall")
+            .onclick =
+            () =>
+                startGeneralCall(
                     "audio"
                 );
-            };
+
+        $("mwanikiStartSelectedVideoCall")
+            .onclick =
+            () =>
+                startGeneralCall(
+                    "video"
+                );
     }
 
 
-    function removeCallPicker() {
+    function getSelectedCallUsers() {
         const picker =
             $("mwanikiCallPicker");
 
-        if (picker) {
-            picker.remove();
-        }
-    }
-
-
-    function installCallPickerStyles() {
-        if (
-            $("mwanikiCallPickerStyles")
-        ) {
-            return;
+        if (!picker) {
+            return [];
         }
 
-        const style =
-            document.createElement(
-                "style"
-            );
-
-        style.id =
-            "mwanikiCallPickerStyles";
-
-        style.textContent = `
-            #mwanikiCallPicker {
-                position: fixed;
-                inset: 0;
-                z-index: 999998;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0,0,0,.6);
-                padding: 20px;
-            }
-
-            .mwaniki-call-picker {
-                width: min(520px,100%);
-                max-height: 85vh;
-                overflow: auto;
-                background: #fff;
-                border-radius: 20px;
-                padding: 22px;
-                box-shadow: 0 25px 70px rgba(0,0,0,.3);
-            }
-
-            .mwaniki-call-picker-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .mwaniki-call-picker-header h3 {
-                margin: 0;
-            }
-
-            .mwaniki-call-picker-header button {
-                border: 0;
-                background: transparent;
-                cursor: pointer;
-                font-size: 20px;
-            }
-
-            .mwaniki-call-picker-actions {
-                display: flex;
-                gap: 8px;
-                margin: 15px 0;
-            }
-
-            .mwaniki-call-picker-actions button,
-            #startSelectedGeneralCall {
-                border: 0;
-                border-radius: 10px;
-                padding: 10px 14px;
-                cursor: pointer;
-            }
-
-            .mwaniki-online-user-list {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .mwaniki-online-user {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-                padding: 10px;
-                border-radius: 12px;
-                cursor: pointer;
-            }
-
-            .mwaniki-online-user:hover {
-                background: #f2f6f5;
-            }
-
-            .mwaniki-online-avatar {
-                width: 40px;
-                height: 40px;
-                border-radius: 50%;
-                overflow: hidden;
-                background: #087f73;
-                color: #fff;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                font-weight: 700;
-            }
-
-            .mwaniki-online-avatar img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-            }
-
-            .mwaniki-online-dot {
-                margin-left: auto;
-                color: #22a06b;
-            }
-
-            .mwaniki-call-picker-footer {
-                margin-top: 18px;
-            }
-
-            #startSelectedGeneralCall {
-                width: 100%;
-                background: #087f73;
-                color: #fff;
-                font-weight: 700;
-            }
-        `;
-
-        document.head.appendChild(
-            style
+        return [
+            ...picker.querySelectorAll(
+                ".mwaniki-online-checkbox:checked"
+            )
+        ].map(
+            checkbox =>
+                checkbox.value
         );
     }
 
 
     async function startGeneralCall(
-        userIds,
         mode = "audio"
     ) {
-        const recipients =
-            safeArray(userIds)
-                .filter(
-                    id =>
-                        id &&
-                        id !==
-                            state.user?.id
-                );
+        const selected =
+            getSelectedCallUsers();
 
-        if (!recipients.length) {
+        if (!selected.length) {
             showToast(
-                "Select at least one user.",
+                "Select at least one online user.",
                 "error"
             );
 
             return;
         }
 
+        removeCallPicker();
+
         try {
             const room =
                 await createCallRoom({
-                    communityId:
-                        state.currentCommunity?.id ||
-                        null,
-
                     scope:
                         "general",
 
@@ -4563,7 +4781,7 @@ import { supabase } from "./supabase.js";
 
             for (
                 const userId
-                of recipients
+                of selected
             ) {
                 await addCallParticipant(
                     room.id,
@@ -4571,23 +4789,32 @@ import { supabase } from "./supabase.js";
                     "invited"
                 );
 
-                const invite =
-                    await createCallInvite(
-                        room.id,
-                        userId
-                    );
+                try {
+                    const invite =
+                        await createCallInvite(
+                            room.id,
+                            userId
+                        );
 
-                if (invite) {
-                    await notifyUserOfCall(
-                        userId,
+                    await notifyUserOfCall({
                         room,
+                        invite,
+                        targetUserId:
+                            userId,
                         mode
+                    });
+                } catch (
+                    inviteError
+                ) {
+                    console.warn(
+                        "General call invite:",
+                        inviteError
                     );
                 }
             }
 
             window.location.href =
-                callURL(
+                buildCallURL(
                     room,
                     "caller",
                     mode
@@ -4595,166 +4822,39 @@ import { supabase } from "./supabase.js";
 
         } catch (error) {
             console.error(
-                "General call failed:",
+                "General call:",
                 error
             );
 
             showToast(
-                "Could not start the general call.",
+                error?.message ||
+                    "Could not start general call.",
                 "error"
             );
         }
     }
 
 
-    /* ========================================================
-       ACCEPT / DECLINE CALL
-       ======================================================== */
+    function removeCallPicker() {
+        const picker =
+            $("mwanikiCallPicker");
 
-    async function acceptIncomingCall(
-        call
-    ) {
-        clearTimeout(
-            showIncomingCall.timer
-        );
-
-        removeIncomingCallUI();
-
-        state.incomingCallVisible =
-            false;
-
-        try {
-            const room =
-                await getCallRoom(
-                    call.roomId
-                );
-
-            if (!room) {
-                throw new Error(
-                    "Call room no longer exists."
-                );
-            }
-
-            await addCallParticipant(
-                room.id,
-                state.user.id,
-                "joined"
-            );
-
-            if (call.inviteId) {
-                await db
-                    .from(
-                        "chat_call_invites"
-                    )
-                    .update({
-                        status:
-                            "accepted"
-                    })
-                    .eq(
-                        "id",
-                        call.inviteId
-                    );
-            } else {
-                await db
-                    .from(
-                        "chat_call_invites"
-                    )
-                    .update({
-                        status:
-                            "accepted"
-                    })
-                    .eq(
-                        "room_id",
-                        room.id
-                    )
-                    .eq(
-                        "receiver_id",
-                        state.user.id
-                    );
-            }
-
-            await updateCallRoom(
-                room.id,
-                {
-                    room_status:
-                        "active"
-                }
-            );
-
-            window.location.href =
-                callURL(
-                    room,
-                    "receiver",
-                    call.mode ||
-                        "audio"
-                );
-
-        } catch (error) {
-            console.error(
-                "Accept call failed:",
-                error
-            );
-
-            showToast(
-                "Could not accept the call.",
-                "error"
-            );
+        if (picker) {
+            picker.remove();
         }
     }
 
 
-    async function declineIncomingCall(
-        call,
-        expired = false
-    ) {
-        clearTimeout(
-            showIncomingCall.timer
-        );
-
-        removeIncomingCallUI();
-
-        state.incomingCallVisible =
-            false;
-
-        try {
-            await db
-                .from(
-                    "chat_call_invites"
-                )
-                .update({
-                    status:
-                        expired
-                            ? "expired"
-                            : "declined"
-                })
-                .eq(
-                    "room_id",
-                    call.roomId
-                )
-                .eq(
-                    "receiver_id",
-                    state.user.id
-                );
-
-        } catch (error) {
-            console.warn(
-                "Decline call update:",
-                error
-            );
-        }
-    }
-
-
-    /* ========================================================
-       CALL PAGE ENGINE
-       ======================================================== */
+    /* ============================================================
+       CALL PAGE
+       ============================================================ */
 
     function isCallPage() {
         return (
             window.location.pathname
                 .toLowerCase()
-                .endsWith(
-                    "community-calls.html"
+                .includes(
+                    "community-calls"
                 )
         );
     }
@@ -4768,7 +4868,9 @@ import { supabase } from "./supabase.js";
 
         return {
             roomId:
-                params.get("room"),
+                params.get(
+                    "room_id"
+                ),
 
             roomCode:
                 params.get(
@@ -4776,12 +4878,21 @@ import { supabase } from "./supabase.js";
                 ),
 
             role:
-                params.get("role") ||
+                params.get(
+                    "role"
+                ) ||
                 "receiver",
 
             mode:
-                params.get("mode") ||
-                "audio"
+                params.get(
+                    "mode"
+                ) ||
+                "audio",
+
+            communityId:
+                params.get(
+                    "community_id"
+                )
         };
     }
 
@@ -4798,25 +4909,26 @@ import { supabase } from "./supabase.js";
                 id="mwanikiCallApp"
                 class="mwaniki-call-app"
             >
-
-                <header class="mwaniki-call-header">
+                <header
+                    class="mwaniki-call-header"
+                >
                     <div>
                         <h1>
                             Mwaniki Scholars Call
                         </h1>
 
-                        <span
+                        <p
                             id="mwanikiCallStatus"
                         >
                             Connecting...
-                        </span>
+                        </p>
                     </div>
 
                     <button
                         type="button"
                         id="mwanikiLeaveCall"
                     >
-                        End Call
+                        Leave
                     </button>
                 </header>
 
@@ -4824,12 +4936,28 @@ import { supabase } from "./supabase.js";
                     id="mwanikiVideoGrid"
                     class="mwaniki-video-grid"
                 >
+                    <div
+                        class="mwaniki-video-tile mwaniki-local-tile"
+                        id="mwanikiLocalTile"
+                    >
+                        <video
+                            id="mwanikiLocalVideo"
+                            autoplay
+                            muted
+                            playsinline
+                        ></video>
+
+                        <span
+                            class="mwaniki-video-name"
+                        >
+                            You
+                        </span>
+                    </div>
                 </section>
 
-                <section
+                <footer
                     class="mwaniki-call-controls"
                 >
-
                     <button
                         type="button"
                         id="mwanikiMicButton"
@@ -4855,11 +4983,9 @@ import { supabase } from "./supabase.js";
                         type="button"
                         id="mwanikiEndButton"
                     >
-                        ☎️
+                        🔴
                     </button>
-
-                </section>
-
+                </footer>
             </main>
         `;
 
@@ -4869,7 +4995,7 @@ import { supabase } from "./supabase.js";
 
     function installCallPageStyles() {
         if (
-            $("mwanikiCallPageStyles")
+            $("mwanikiCallRuntimeStyles")
         ) {
             return;
         }
@@ -4880,74 +5006,58 @@ import { supabase } from "./supabase.js";
             );
 
         style.id =
-            "mwanikiCallPageStyles";
+            "mwanikiCallRuntimeStyles";
 
         style.textContent = `
-            * {
-                box-sizing: border-box;
-            }
-
-            body {
-                margin: 0;
-                font-family:
-                    Inter,
-                    system-ui,
-                    sans-serif;
-                background: #071a18;
-                color: #fff;
-            }
-
             .mwaniki-call-app {
                 min-height: 100vh;
                 display: flex;
                 flex-direction: column;
+                background: #071b1a;
+                color: #fff;
+                font-family: Inter, system-ui, sans-serif;
             }
 
             .mwaniki-call-header {
-                min-height: 74px;
                 display: flex;
-                align-items: center;
                 justify-content: space-between;
-                padding: 15px 20px;
-                background: #0b2925;
+                align-items: center;
+                padding: 18px 24px;
+                background: rgba(0,0,0,.25);
             }
 
             .mwaniki-call-header h1 {
                 margin: 0 0 4px;
-                font-size: 18px;
+                font-size: 20px;
             }
 
-            .mwaniki-call-header span {
-                opacity: .7;
-                font-size: 13px;
+            .mwaniki-call-header p {
+                margin: 0;
+                opacity: .75;
             }
 
             .mwaniki-call-header button {
                 border: 0;
                 border-radius: 10px;
-                padding: 10px 15px;
+                padding: 10px 16px;
                 cursor: pointer;
-                background: #d64545;
-                color: #fff;
-                font-weight: 700;
             }
 
             .mwaniki-video-grid {
                 flex: 1;
                 display: grid;
                 grid-template-columns:
-                    repeat(auto-fit,minmax(280px,1fr));
-                gap: 12px;
-                padding: 15px;
-                align-content: center;
+                    repeat(auto-fit, minmax(280px, 1fr));
+                gap: 14px;
+                padding: 18px;
             }
 
             .mwaniki-video-tile {
-                min-height: 240px;
                 position: relative;
+                min-height: 240px;
+                background: #102625;
+                border-radius: 16px;
                 overflow: hidden;
-                border-radius: 18px;
-                background: #102d2a;
             }
 
             .mwaniki-video-tile video {
@@ -4955,25 +5065,24 @@ import { supabase } from "./supabase.js";
                 height: 100%;
                 min-height: 240px;
                 object-fit: cover;
+                display: block;
             }
 
             .mwaniki-video-name {
                 position: absolute;
-                left: 10px;
-                bottom: 10px;
-                background: rgba(0,0,0,.55);
-                padding: 6px 9px;
+                left: 12px;
+                bottom: 12px;
+                padding: 5px 9px;
                 border-radius: 8px;
+                background: rgba(0,0,0,.6);
             }
 
             .mwaniki-call-controls {
-                min-height: 90px;
                 display: flex;
                 justify-content: center;
-                align-items: center;
                 gap: 12px;
-                padding: 15px;
-                background: #0b2925;
+                padding: 18px;
+                background: rgba(0,0,0,.35);
             }
 
             .mwaniki-call-controls button {
@@ -4985,9 +5094,163 @@ import { supabase } from "./supabase.js";
                 font-size: 20px;
             }
 
-            #mwanikiEndButton {
-                background: #d64545;
+            .mwaniki-incoming-call,
+            .mwaniki-call-picker {
+                position: fixed;
+                inset: 0;
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0,0,0,.72);
+                padding: 20px;
+            }
+
+            .mwaniki-incoming-card,
+            .mwaniki-call-picker-card {
+                width: min(520px, 100%);
+                max-height: 90vh;
+                overflow: auto;
+                background: #fff;
+                color: #14201f;
+                border-radius: 20px;
+                padding: 24px;
+                box-shadow: 0 25px 70px rgba(0,0,0,.35);
+            }
+
+            .mwaniki-incoming-avatar,
+            .online-user-avatar {
+                width: 58px;
+                height: 58px;
+                border-radius: 50%;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #087f73;
                 color: #fff;
+                font-weight: 700;
+            }
+
+            .mwaniki-incoming-avatar {
+                margin: 0 auto 14px;
+            }
+
+            .mwaniki-incoming-avatar img,
+            .online-user-avatar img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+            .mwaniki-incoming-label {
+                text-align: center;
+                opacity: .65;
+            }
+
+            .mwaniki-incoming-card h3 {
+                text-align: center;
+                margin: 8px 0 20px;
+            }
+
+            .mwaniki-incoming-actions,
+            .mwaniki-call-picker-footer {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .mwaniki-incoming-actions button,
+            .mwaniki-call-picker-footer button {
+                border: 0;
+                border-radius: 10px;
+                padding: 11px 16px;
+                cursor: pointer;
+            }
+
+            .mwaniki-call-picker-header {
+                display: flex;
+                justify-content: space-between;
+                gap: 12px;
+            }
+
+            .mwaniki-call-picker-header h3 {
+                margin: 0;
+            }
+
+            .mwaniki-call-picker-header p {
+                margin: 4px 0 0;
+                opacity: .65;
+            }
+
+            .mwaniki-call-picker-header button {
+                border: 0;
+                background: transparent;
+                cursor: pointer;
+                font-size: 20px;
+            }
+
+            .mwaniki-call-picker-actions {
+                display: flex;
+                gap: 8px;
+                margin: 18px 0;
+            }
+
+            .mwaniki-call-picker-actions button {
+                border: 1px solid #d8dfde;
+                background: #f7f9f9;
+                border-radius: 9px;
+                padding: 8px 10px;
+                cursor: pointer;
+            }
+
+            .mwaniki-online-user-list {
+                display: grid;
+                gap: 8px;
+                max-height: 430px;
+                overflow: auto;
+                margin-bottom: 18px;
+            }
+
+            .mwaniki-online-user {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 10px;
+                border: 1px solid #e2e8e7;
+                border-radius: 12px;
+                cursor: pointer;
+            }
+
+            .mwaniki-online-user input {
+                width: 18px;
+                height: 18px;
+            }
+
+            .mwaniki-online-user small {
+                display: block;
+                color: #087f73;
+            }
+
+            .mwaniki-toast {
+                position: fixed;
+                right: 20px;
+                bottom: 20px;
+                z-index: 100000;
+                padding: 12px 16px;
+                border-radius: 10px;
+                background: #17201f;
+                color: #fff;
+                transform: translateY(30px);
+                opacity: 0;
+                pointer-events: none;
+                transition: .2s ease;
+            }
+
+            .mwaniki-toast.show {
+                transform: translateY(0);
+                opacity: 1;
             }
         `;
 
@@ -4997,6 +5260,10 @@ import { supabase } from "./supabase.js";
     }
 
 
+    /* ============================================================
+       CALL PAGE INITIALIZATION
+       ============================================================ */
+
     async function initializeCallPage() {
         ensureCallPageUI();
 
@@ -5005,26 +5272,33 @@ import { supabase } from "./supabase.js";
 
         if (!params.roomId) {
             setCallStatus(
-                "Invalid call room."
+                "No call room was supplied."
             );
 
             return;
         }
 
-        state.call.role =
-            params.role;
+        let room = null;
 
-        state.call.mode =
-            params.mode;
-
-        state.call.currentRoom =
-            await getCallRoom(
-                params.roomId
+        try {
+            room =
+                await getCallRoom(
+                    params.roomId
+                );
+        } catch (error) {
+            console.error(
+                "Room loading:",
+                error
             );
 
-        if (
-            !state.call.currentRoom
-        ) {
+            setCallStatus(
+                "Could not load the call room."
+            );
+
+            return;
+        }
+
+        if (!room) {
             setCallStatus(
                 "Call room not found."
             );
@@ -5032,29 +5306,31 @@ import { supabase } from "./supabase.js";
             return;
         }
 
+        state.call.currentRoom =
+            room;
+
+        state.call.role =
+            params.role;
+
+        state.call.mode =
+            params.mode;
+
         state.call.communityId =
-            state.call.currentRoom
-                .community_id;
+            params.communityId ||
+            room.community_id ||
+            null;
+
+        state.call.ending =
+            false;
 
         await addCallParticipant(
-            state.call.currentRoom.id,
+            room.id,
             state.user.id,
             "joined"
         );
 
-        await updateCallParticipant(
-            state.call.currentRoom.id,
-            state.user.id,
-            {
-                status:
-                    "joined",
-                joined_at:
-                    new Date().toISOString()
-            }
-        );
-
         await updateCallRoom(
-            state.call.currentRoom.id,
+            room.id,
             {
                 room_status:
                     "active"
@@ -5063,14 +5339,19 @@ import { supabase } from "./supabase.js";
 
         bindCallControls();
 
-        await startLocalMedia();
+        await startLocalMedia(
+            params.mode
+        );
 
         await subscribeCallRoom();
 
         await discoverExistingParticipants();
 
+        state.call.started =
+            true;
+
         setCallStatus(
-            "Connected to call room. Waiting for participants..."
+            "Call connected. Waiting for participants..."
         );
     }
 
@@ -5078,141 +5359,131 @@ import { supabase } from "./supabase.js";
     function setCallStatus(
         message
     ) {
-        const element =
+        const status =
             $("mwanikiCallStatus");
 
-        if (element) {
-            element.textContent =
+        if (status) {
+            status.textContent =
                 message;
         }
+
+        console.log(
+            "📞",
+            message
+        );
     }
 
 
-    async function startLocalMedia() {
+    async function startLocalMedia(
+        mode
+    ) {
         if (
-            state.call.localStream
+            !navigator.mediaDevices
+                ?.getUserMedia
         ) {
-            return;
+            throw new Error(
+                "Your browser does not support microphone access."
+            );
         }
 
-        try {
-            const constraints = {
-                audio: true,
-                video:
-                    state.call.mode ===
-                    "video"
-            };
+        const wantsVideo =
+            mode === "video";
 
+        try {
             state.call.localStream =
-                await navigator
-                    .mediaDevices
-                    .getUserMedia(
-                        constraints
-                    );
+                await navigator.mediaDevices
+                    .getUserMedia({
+                        audio: true,
+                        video:
+                            wantsVideo
+                    });
 
             state.call.microphoneEnabled =
                 true;
 
             state.call.cameraEnabled =
-                state.call.mode ===
-                "video";
-
-            renderLocalVideo();
+                wantsVideo;
 
         } catch (error) {
-            console.error(
-                "Local media failed:",
+            console.warn(
+                "Requested media unavailable:",
                 error
             );
 
             /*
-             * Audio fallback.
+             * Fall back to audio if camera permission
+             * is denied/unavailable.
              */
             try {
                 state.call.localStream =
-                    await navigator
-                        .mediaDevices
+                    await navigator.mediaDevices
                         .getUserMedia({
-                            audio: true
+                            audio: true,
+                            video: false
                         });
 
                 state.call.microphoneEnabled =
                     true;
 
-                renderLocalVideo();
+                state.call.cameraEnabled =
+                    false;
 
-                setCallStatus(
-                    "Audio connected. Camera unavailable."
-                );
+                if (wantsVideo) {
+                    showToast(
+                        "Camera was unavailable. Continuing with audio.",
+                        "info"
+                    );
+                }
 
-            } catch (audioError) {
-                console.error(
-                    "Audio fallback failed:",
-                    audioError
-                );
-
-                setCallStatus(
-                    "Microphone/camera permission unavailable."
-                );
+            } catch (
+                audioError
+            ) {
+                throw audioError;
             }
         }
+
+        renderLocalVideo();
     }
 
 
     function renderLocalVideo() {
-        const grid =
-            $("mwanikiVideoGrid");
-
-        if (!grid) {
-            return;
-        }
-
-        let tile =
-            $("mwanikiLocalTile");
-
-        if (!tile) {
-            tile =
-                document.createElement(
-                    "div"
-                );
-
-            tile.id =
-                "mwanikiLocalTile";
-
-            tile.className =
-                "mwaniki-video-tile";
-
-            tile.innerHTML = `
-                <video
-                    id="mwanikiLocalVideo"
-                    autoplay
-                    muted
-                    playsinline
-                ></video>
-
-                <span
-                    class="mwaniki-video-name"
-                >
-                    You
-                </span>
-            `;
-
-            grid.prepend(tile);
-        }
-
         const video =
             $("mwanikiLocalVideo");
 
-        if (video) {
-            video.srcObject =
-                state.call.localStream;
+        if (!video) {
+            return;
+        }
+
+        video.srcObject =
+            state.call.localStream;
+
+        video.muted =
+            true;
+
+        video.autoplay =
+            true;
+
+        video.playsInline =
+            true;
+
+        /*
+         * Audio-only calls should not display
+         * a blank camera area.
+         */
+        if (
+            !state.call.localStream
+                ?.getVideoTracks()
+                .length
+        ) {
+            video.style.display =
+                "none";
         }
     }
 
 
-    /* ========================================================
-       WEBRTC
-       ======================================================== */
+    /* ============================================================
+       WEBRTC ROOM SIGNALING
+       ============================================================ */
 
     async function subscribeCallRoom() {
         const room =
@@ -5234,7 +5505,7 @@ import { supabase } from "./supabase.js";
 
         const channel =
             db.channel(
-                `call-room-${room.id}`
+                `${ROOM_PREFIX}${room.id}`
             );
 
         channel.on(
@@ -5243,14 +5514,20 @@ import { supabase } from "./supabase.js";
                 event:
                     "peer-ready"
             },
-            async payload => {
+            async event => {
+                const payload =
+                    event?.payload ||
+                    {};
+
                 const sender =
-                    payload.payload?.sender;
+                    payload.sender;
 
                 if (
                     !sender ||
-                    sender ===
-                        state.user.id
+                    String(sender) ===
+                        String(
+                            state.user.id
+                        )
                 ) {
                     return;
                 }
@@ -5259,11 +5536,6 @@ import { supabase } from "./supabase.js";
                     sender
                 );
 
-                /*
-                 * Both peers send readiness.
-                 * The deterministic offerer creates
-                 * the actual offer.
-                 */
                 await maybeCreateOffer(
                     sender
                 );
@@ -5276,9 +5548,10 @@ import { supabase } from "./supabase.js";
                 event:
                     "offer"
             },
-            async payload => {
+            async event => {
                 await handleOffer(
-                    payload.payload
+                    event?.payload ||
+                    {}
                 );
             }
         );
@@ -5289,9 +5562,10 @@ import { supabase } from "./supabase.js";
                 event:
                     "answer"
             },
-            async payload => {
+            async event => {
                 await handleAnswer(
-                    payload.payload
+                    event?.payload ||
+                    {}
                 );
             }
         );
@@ -5302,9 +5576,10 @@ import { supabase } from "./supabase.js";
                 event:
                     "ice-candidate"
             },
-            async payload => {
+            async event => {
                 await handleIceCandidate(
-                    payload.payload
+                    event?.payload ||
+                    {}
                 );
             }
         );
@@ -5315,9 +5590,9 @@ import { supabase } from "./supabase.js";
                 event:
                     "peer-left"
             },
-            payload => {
+            event => {
                 const userId =
-                    payload.payload
+                    event?.payload
                         ?.userId;
 
                 if (userId) {
@@ -5334,13 +5609,20 @@ import { supabase } from "./supabase.js";
                 event:
                     "call-ended"
             },
-            payload => {
+            event => {
+                const userId =
+                    event?.payload
+                        ?.userId;
+
                 if (
-                    payload.payload
-                        ?.userId !==
-                    state.user.id
+                    String(userId) !==
+                    String(
+                        state.user.id
+                    )
                 ) {
-                    finishCall(false);
+                    finishCall(
+                        false
+                    );
                 }
             }
         );
@@ -5358,45 +5640,41 @@ import { supabase } from "./supabase.js";
                         "Call signaling connected."
                     );
 
-                    await channel.send({
-                        type:
-                            "broadcast",
-                        event:
-                            "peer-ready",
-                        payload: {
+                    await sendCallBroadcast(
+                        "peer-ready",
+                        {
                             sender:
                                 state.user.id
                         }
-                    });
+                    );
 
                     /*
-                     * Repeat readiness because Broadcast
-                     * is ephemeral and a peer can join slightly
-                     * later.
+                     * Broadcast is ephemeral.
+                     * Retry readiness several times.
                      */
-                    setTimeout(
-                        async () => {
-                            if (
-                                state.call
-                                    .roomChannel
-                            ) {
-                                try {
-                                    await state.call
-                                        .roomChannel
-                                        .send({
-                                            type:
-                                                "broadcast",
-                                            event:
-                                                "peer-ready",
-                                            payload: {
+                    [1000, 2500, 5000].forEach(
+                        delay => {
+                            setTimeout(
+                                async () => {
+                                    if (
+                                        state.call
+                                            .roomChannel
+                                    ) {
+                                        await sendCallBroadcast(
+                                            "peer-ready",
+                                            {
                                                 sender:
-                                                    state.user.id
+                                                    state.user
+                                                        .id
                                             }
-                                        });
-                                } catch {}
-                            }
-                        },
-                        1500
+                                        );
+
+                                        await discoverExistingParticipants();
+                                    }
+                                },
+                                delay
+                            );
+                        }
                     );
                 }
             }
@@ -5406,7 +5684,8 @@ import { supabase } from "./supabase.js";
 
     async function discoverExistingParticipants() {
         const roomId =
-            state.call.currentRoom?.id;
+            state.call.currentRoom
+                ?.id;
 
         if (!roomId) {
             return;
@@ -5441,8 +5720,12 @@ import { supabase } from "./supabase.js";
             ) {
                 if (
                     participant.user_id &&
-                    participant.user_id !==
-                        state.user.id &&
+                    String(
+                        participant.user_id
+                    ) !==
+                        String(
+                            state.user.id
+                        ) &&
                     (
                         participant.status ===
                             "joined" ||
@@ -5454,9 +5737,6 @@ import { supabase } from "./supabase.js";
                         participant.user_id
                     );
 
-                    /*
-                     * Explicitly notify the peer.
-                     */
                     await sendCallBroadcast(
                         "peer-ready",
                         {
@@ -5491,11 +5771,14 @@ import { supabase } from "./supabase.js";
         }
 
         try {
-            await state.call.roomChannel
+            await state.call
+                .roomChannel
                 .send({
                     type:
                         "broadcast",
+
                     event,
+
                     payload
                 });
 
@@ -5512,6 +5795,10 @@ import { supabase } from "./supabase.js";
     }
 
 
+    /* ============================================================
+       WEBRTC PEERS
+       ============================================================ */
+
     async function ensurePeerConnection(
         peerId
     ) {
@@ -5519,14 +5806,14 @@ import { supabase } from "./supabase.js";
             return null;
         }
 
-        if (
-            state.call.peerConnections.has(
-                peerId
-            )
-        ) {
-            return state.call
-                .peerConnections
-                .get(peerId);
+        const existing =
+            state.call.peerConnections
+                .get(
+                    peerId
+                );
+
+        if (existing) {
+            return existing;
         }
 
         const configuration = {
@@ -5562,12 +5849,17 @@ import { supabase } from "./supabase.js";
         ) {
             state.call.localStream
                 .getTracks()
-                .forEach(track => {
-                    pc.addTrack(
-                        track,
-                        state.call.localStream
-                    );
-                });
+                .forEach(
+                    track => {
+                        try {
+                            pc.addTrack(
+                                track,
+                                state.call
+                                    .localStream
+                            );
+                        } catch {}
+                    }
+                );
         }
 
         pc.onicecandidate =
@@ -5580,8 +5872,10 @@ import { supabase } from "./supabase.js";
                         {
                             sender:
                                 state.user.id,
+
                             target:
                                 peerId,
+
                             candidate:
                                 event.candidate
                         }
@@ -5622,6 +5916,15 @@ import { supabase } from "./supabase.js";
 
                 if (
                     status ===
+                    "connected"
+                ) {
+                    setCallStatus(
+                        "Call connected."
+                    );
+                }
+
+                if (
+                    status ===
                         "failed" ||
                     status ===
                         "closed"
@@ -5639,13 +5942,13 @@ import { supabase } from "./supabase.js";
     function shouldOfferTo(
         peerId
     ) {
-        /*
-         * Deterministic negotiation:
-         * only one side offers.
-         */
         return (
-            String(state.user.id) <
-            String(peerId)
+            String(
+                state.user.id
+            ) <
+            String(
+                peerId
+            )
         );
     }
 
@@ -5688,8 +5991,10 @@ import { supabase } from "./supabase.js";
                 {
                     sender:
                         state.user.id,
+
                     target:
                         peerId,
+
                     description:
                         pc.localDescription
                 }
@@ -5713,8 +6018,12 @@ import { supabase } from "./supabase.js";
 
         if (
             payload.target &&
-            payload.target !==
-                state.user.id
+            String(
+                payload.target
+            ) !==
+                String(
+                    state.user.id
+                )
         ) {
             return;
         }
@@ -5732,6 +6041,18 @@ import { supabase } from "./supabase.js";
             );
 
         try {
+            /*
+             * Handle simultaneous offers safely.
+             */
+            if (
+                pc.signalingState !==
+                    "stable" &&
+                pc.signalingState !==
+                    "have-local-offer"
+            ) {
+                return;
+            }
+
             await pc.setRemoteDescription(
                 new RTCSessionDescription(
                     payload.description
@@ -5754,8 +6075,10 @@ import { supabase } from "./supabase.js";
                 {
                     sender:
                         state.user.id,
+
                     target:
                         sender,
+
                     description:
                         pc.localDescription
                 }
@@ -5779,8 +6102,12 @@ import { supabase } from "./supabase.js";
 
         if (
             payload.target &&
-            payload.target !==
-                state.user.id
+            String(
+                payload.target
+            ) !==
+                String(
+                    state.user.id
+                )
         ) {
             return;
         }
@@ -5793,9 +6120,10 @@ import { supabase } from "./supabase.js";
         }
 
         const pc =
-            state.call.peerConnections.get(
-                sender
-            );
+            state.call.peerConnections
+                .get(
+                    sender
+                );
 
         if (!pc) {
             return;
@@ -5830,8 +6158,12 @@ import { supabase } from "./supabase.js";
 
         if (
             payload.target &&
-            payload.target !==
-                state.user.id
+            String(
+                payload.target
+            ) !==
+                String(
+                    state.user.id
+                )
         ) {
             return;
         }
@@ -5849,18 +6181,17 @@ import { supabase } from "./supabase.js";
             );
 
         /*
-         * IMPORTANT:
-         *
-         * ICE can arrive before the remote description.
-         * Queue it instead of throwing it away.
+         * ICE can arrive BEFORE the remote
+         * description. Queue it.
          */
         if (
             !pc.remoteDescription
         ) {
             const queue =
-                state.call.pendingIce.get(
-                    sender
-                ) || [];
+                state.call.pendingIce
+                    .get(
+                        sender
+                    ) || [];
 
             queue.push(
                 payload.candidate
@@ -5894,9 +6225,10 @@ import { supabase } from "./supabase.js";
         peerId
     ) {
         const pc =
-            state.call.peerConnections.get(
-                peerId
-            );
+            state.call.peerConnections
+                .get(
+                    peerId
+                );
 
         if (
             !pc ||
@@ -5906,9 +6238,10 @@ import { supabase } from "./supabase.js";
         }
 
         const queue =
-            state.call.pendingIce.get(
-                peerId
-            ) || [];
+            state.call.pendingIce
+                .get(
+                    peerId
+                ) || [];
 
         if (!queue.length) {
             return;
@@ -5929,7 +6262,12 @@ import { supabase } from "./supabase.js";
                         candidate
                     )
                 );
-            } catch {}
+            } catch (error) {
+                console.warn(
+                    "Queued ICE candidate failed:",
+                    error
+                );
+            }
         }
     }
 
@@ -5975,7 +6313,9 @@ import { supabase } from "./supabase.js";
                 </span>
             `;
 
-            grid.appendChild(tile);
+            grid.appendChild(
+                tile
+            );
 
             try {
                 const {
@@ -6007,6 +6347,7 @@ import { supabase } from "./supabase.js";
                     label.textContent =
                         name;
                 }
+
             } catch {}
         }
 
@@ -6018,6 +6359,10 @@ import { supabase } from "./supabase.js";
         if (video) {
             video.srcObject =
                 stream;
+
+            try {
+                await video.play();
+            } catch {}
         }
     }
 
@@ -6026,9 +6371,10 @@ import { supabase } from "./supabase.js";
         peerId
     ) {
         const pc =
-            state.call.peerConnections.get(
-                peerId
-            );
+            state.call.peerConnections
+                .get(
+                    peerId
+                );
 
         if (pc) {
             try {
@@ -6059,9 +6405,9 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        CALL CONTROLS
-       ======================================================== */
+       ============================================================ */
 
     function bindCallControls() {
         const mic =
@@ -6096,12 +6442,18 @@ import { supabase } from "./supabase.js";
 
         if (end) {
             end.onclick =
-                () => finishCall(true);
+                () =>
+                    finishCall(
+                        true
+                    );
         }
 
         if (headerEnd) {
             headerEnd.onclick =
-                () => finishCall(true);
+                () =>
+                    finishCall(
+                        true
+                    );
         }
     }
 
@@ -6117,7 +6469,8 @@ import { supabase } from "./supabase.js";
         }
 
         state.call.microphoneEnabled =
-            !state.call.microphoneEnabled;
+            !state.call
+                .microphoneEnabled;
 
         tracks.forEach(
             track => {
@@ -6156,7 +6509,8 @@ import { supabase } from "./supabase.js";
         }
 
         state.call.cameraEnabled =
-            !state.call.cameraEnabled;
+            !state.call
+                .cameraEnabled;
 
         tracks.forEach(
             track => {
@@ -6183,7 +6537,7 @@ import { supabase } from "./supabase.js";
         if (
             state.call.screenSharing
         ) {
-            stopScreenShare();
+            await stopScreenShare();
 
             return;
         }
@@ -6244,6 +6598,14 @@ import { supabase } from "./supabase.js";
                     stopScreenShare();
                 };
 
+            const button =
+                $("mwanikiScreenButton");
+
+            if (button) {
+                button.textContent =
+                    "🛑";
+            }
+
         } catch (error) {
             console.warn(
                 "Screen sharing:",
@@ -6259,8 +6621,9 @@ import { supabase } from "./supabase.js";
         ) {
             state.call.screenStream
                 .getTracks()
-                .forEach(track =>
-                    track.stop()
+                .forEach(
+                    track =>
+                        track.stop()
                 );
         }
 
@@ -6275,35 +6638,45 @@ import { supabase } from "./supabase.js";
                 ?.getVideoTracks()
                 ?.[0];
 
-        if (!cameraTrack) {
-            return;
+        if (cameraTrack) {
+            for (
+                const pc
+                of state.call
+                    .peerConnections
+                    .values()
+            ) {
+                const sender =
+                    pc.getSenders()
+                        .find(
+                            item =>
+                                item.track
+                                    ?.kind ===
+                                "video"
+                        );
+
+                if (sender) {
+                    try {
+                        await sender.replaceTrack(
+                            cameraTrack
+                        );
+                    } catch {}
+                }
+            }
         }
 
-        for (
-            const pc
-            of state.call
-                .peerConnections
-                .values()
-        ) {
-            const sender =
-                pc.getSenders()
-                    .find(
-                        item =>
-                            item.track
-                                ?.kind ===
-                            "video"
-                    );
+        const button =
+            $("mwanikiScreenButton");
 
-            if (sender) {
-                try {
-                    await sender.replaceTrack(
-                        cameraTrack
-                    );
-                } catch {}
-            }
+        if (button) {
+            button.textContent =
+                "🖥️";
         }
     }
 
+
+    /* ============================================================
+       FINISH CALL
+       ============================================================ */
 
     async function finishCall(
         notifyOthers = true
@@ -6318,7 +6691,8 @@ import { supabase } from "./supabase.js";
             true;
 
         const roomId =
-            state.call.currentRoom?.id;
+            state.call.currentRoom
+                ?.id;
 
         if (
             notifyOthers &&
@@ -6340,18 +6714,33 @@ import { supabase } from "./supabase.js";
                 {
                     status:
                         "left",
+
                     left_at:
                         new Date().toISOString()
                 }
             );
 
-            await updateCallRoom(
-                roomId,
-                {
-                    room_status:
-                        "ended"
-                }
-            );
+            /*
+             * Only the room creator should normally
+             * end the entire room.
+             */
+            if (
+                String(
+                    state.call.currentRoom
+                        ?.created_by
+                ) ===
+                String(
+                    state.user.id
+                )
+            ) {
+                await updateCallRoom(
+                    roomId,
+                    {
+                        room_status:
+                            "ended"
+                    }
+                );
+            }
 
             try {
                 await db
@@ -6378,8 +6767,9 @@ import { supabase } from "./supabase.js";
         ) {
             state.call.localStream
                 .getTracks()
-                .forEach(track =>
-                    track.stop()
+                .forEach(
+                    track =>
+                        track.stop()
                 );
         }
 
@@ -6388,8 +6778,9 @@ import { supabase } from "./supabase.js";
         ) {
             state.call.screenStream
                 .getTracks()
-                .forEach(track =>
-                    track.stop()
+                .forEach(
+                    track =>
+                        track.stop()
                 );
         }
 
@@ -6429,6 +6820,12 @@ import { supabase } from "./supabase.js";
         state.call.screenStream =
             null;
 
+        state.call.currentRoom =
+            null;
+
+        state.call.currentInvite =
+            null;
+
         if (isCallPage()) {
             window.location.href =
                 "./community.html";
@@ -6436,9 +6833,9 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        CALL BUTTONS
-       ======================================================== */
+       ============================================================ */
 
     function updateCallButtons() {
         const general =
@@ -6470,9 +6867,9 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        SEARCH
-       ======================================================== */
+       ============================================================ */
 
     function setupSearch() {
         const input =
@@ -6532,23 +6929,27 @@ import { supabase } from "./supabase.js";
             .querySelectorAll(
                 ".channel-item"
             )
-            .forEach(item => {
-                const text =
-                    item.textContent
-                        .toLowerCase();
+            .forEach(
+                item => {
+                    const text =
+                        item.textContent
+                            .toLowerCase();
 
-                item.hidden =
-                    Boolean(
-                        query &&
-                        !text.includes(query)
-                    );
-            });
+                    item.hidden =
+                        Boolean(
+                            query &&
+                            !text.includes(
+                                query
+                            )
+                        );
+                }
+            );
     }
 
 
-    /* ========================================================
+    /* ============================================================
        UI EVENTS
-       ======================================================== */
+       ============================================================ */
 
     function bindUI() {
         const send =
@@ -6663,6 +7064,14 @@ import { supabase } from "./supabase.js";
                 openTicketModal;
         }
 
+        const contest =
+            $("contestButton");
+
+        if (contest) {
+            contest.onclick =
+                openContestModal;
+        }
+
         document.addEventListener(
             "click",
             event => {
@@ -6701,9 +7110,6 @@ import { supabase } from "./supabase.js";
             }
         );
 
-        /*
-         * Escape closes floating panels.
-         */
         document.addEventListener(
             "keydown",
             event => {
@@ -6712,8 +7118,11 @@ import { supabase } from "./supabase.js";
                     "Escape"
                 ) {
                     closeEmojiPanel();
+
                     closeStickerPanel();
+
                     closeGifPanel();
+
                     removeCallPicker();
                 }
             }
@@ -6721,9 +7130,9 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        BASIC MODALS
-       ======================================================== */
+       ============================================================ */
 
     function openRulesModal() {
         const modal =
@@ -6738,19 +7147,37 @@ import { supabase } from "./supabase.js";
 
         if (content) {
             content.innerHTML = `
-                <h3>Community Rules</h3>
+                <h3>
+                    Community Rules
+                </h3>
 
                 <ol>
-                    <li>Respect other Mwaniki Scholars.</li>
-                    <li>Keep discussions academic and constructive.</li>
-                    <li>No spam or harassment.</li>
-                    <li>Do not share private information.</li>
-                    <li>Use the appropriate channel.</li>
+                    <li>
+                        Respect other Mwaniki Scholars.
+                    </li>
+
+                    <li>
+                        Keep discussions academic and constructive.
+                    </li>
+
+                    <li>
+                        No spam or harassment.
+                    </li>
+
+                    <li>
+                        Do not share private information.
+                    </li>
+
+                    <li>
+                        Use the appropriate channel.
+                    </li>
                 </ol>
             `;
         }
 
-        openElement(modal);
+        openElement(
+            modal
+        );
     }
 
 
@@ -6775,7 +7202,9 @@ import { supabase } from "./supabase.js";
             `;
         }
 
-        openElement(modal);
+        openElement(
+            modal
+        );
     }
 
 
@@ -6807,21 +7236,29 @@ import { supabase } from "./supabase.js";
                         avatar
                             ? `
                                 <img
-                                    src="${escapeHTML(avatar)}"
-                                    alt="${escapeHTML(name)}"
+                                    src="${escapeHTML(
+                                        avatar
+                                    )}"
+                                    alt="${escapeHTML(
+                                        name
+                                    )}"
                                 >
                             `
                             : `
                                 <div>
                                     ${escapeHTML(
-                                        initialsForName(name)
+                                        initialsForName(
+                                            name
+                                        )
                                     )}
                                 </div>
                             `
                     }
 
                     <h3>
-                        ${escapeHTML(name)}
+                        ${escapeHTML(
+                            name
+                        )}
                     </h3>
 
                     <p>
@@ -6834,7 +7271,9 @@ import { supabase } from "./supabase.js";
             `;
         }
 
-        openElement(modal);
+        openElement(
+            modal
+        );
     }
 
 
@@ -6846,7 +7285,9 @@ import { supabase } from "./supabase.js";
             return;
         }
 
-        openElement(modal);
+        openElement(
+            modal
+        );
     }
 
 
@@ -6865,12 +7306,14 @@ import { supabase } from "./supabase.js";
             courseName.textContent =
                 state.currentChannel
                     ? channelName(
-                        state.currentChannel
-                    )
+                          state.currentChannel
+                      )
                     : "Mwaniki Scholars";
         }
 
-        openElement(modal);
+        openElement(
+            modal
+        );
     }
 
 
@@ -6887,7 +7330,8 @@ import { supabase } from "./supabase.js";
                     )
                 ) {
                     const modalId =
-                        target.dataset.closeModal;
+                        target.dataset
+                            .closeModal;
 
                     closeElement(
                         $(modalId)
@@ -6898,9 +7342,9 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        AUTH LISTENER
-       ======================================================== */
+       ============================================================ */
 
     function setupAuthListener() {
         db.auth.onAuthStateChange(
@@ -6918,7 +7362,8 @@ import { supabase } from "./supabase.js";
 
                     if (
                         event ===
-                        "SIGNED_IN"
+                            "SIGNED_IN" ||
+                        !state.incomingChannel
                     ) {
                         await startPresence();
 
@@ -6936,9 +7381,9 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        INITIALIZATION
-       ======================================================== */
+       ============================================================ */
 
     async function initializeCommunity() {
         if (
@@ -6961,6 +7406,8 @@ import { supabase } from "./supabase.js";
 
         setupModalClosers();
 
+        setupAuthListener();
+
         await startPresence();
 
         await subscribeIncomingCalls();
@@ -6972,8 +7419,8 @@ import { supabase } from "./supabase.js";
         /*
          * MAIN COMMUNITY FIRST.
          *
-         * This prevents the application from opening
-         * Mwaniki Gaming or Mwaniki Memes by accident.
+         * This deliberately prevents Mwaniki Gaming
+         * or Mwaniki Memes from opening first.
          */
         const main =
             findMainCommunity();
@@ -6992,32 +7439,41 @@ import { supabase } from "./supabase.js";
     }
 
 
-    /* ========================================================
+    /* ============================================================
        GLOBAL API
-       ======================================================== */
+       ============================================================ */
 
     window.MwanikiCommunity = {
         state,
 
         selectCommunity,
+
         selectChannel,
 
         loadMembers,
+
         loadCommunities,
+
         loadChannels,
+
         loadMessages,
 
         sendMessage,
+
         deleteMessage,
 
         startDirectCall,
+
         startCommunityCall,
+
         openGeneralCallPicker,
+
         startGeneralCall,
 
         getOnlineUsers,
 
         acceptIncomingCall,
+
         declineIncomingCall,
 
         finishCall
@@ -7025,12 +7481,13 @@ import { supabase } from "./supabase.js";
 
 
     /*
-     * Backwards-compatible calling API.
+     * BACKWARDS COMPATIBILITY
      *
-     * Other HTML elements or old code can still call:
+     * Existing buttons or old code can continue using:
      *
      * window.MwanikiCalls.callUser(...)
      */
+
     window.MwanikiCalls = {
         callUser:
             startDirectCall,
@@ -7045,20 +7502,23 @@ import { supabase } from "./supabase.js";
             startGeneralCall,
 
         leave:
-            () => finishCall(true),
+            () =>
+                finishCall(
+                    true
+                ),
 
         getOnlineUsers
     };
 
 
-    /* ========================================================
+    /* ============================================================
        START
-       ======================================================== */
+       ============================================================ */
 
     if (isCallPage()) {
         /*
-         * Call page needs authentication first,
-         * then initializes the WebRTC engine.
+         * The exact same community.js controls the
+         * call page. There is no second call engine.
          */
         (async () => {
             const authenticated =
