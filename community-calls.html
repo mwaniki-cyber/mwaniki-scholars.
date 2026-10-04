@@ -10,127 +10,35 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <title>
+        Mwaniki Call | Mwaniki Scholars
+    </title>
+
     <meta
         name="theme-color"
         content="#087f73"
     >
 
-    <title>
-        Mwaniki Scholars Call
-    </title>
+    <style>
 
-    <link
-        rel="stylesheet"
-        href="./style.css"
-    >
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
 
-    <link
-        rel="stylesheet"
-        href="./community.css"
-    >
+        body {
+            min-height: 100vh;
+        }
+
+    </style>
 
 </head>
 
-
-<body class="call-page">
-
-    <main class="call-screen">
-
-        <!-- =================================================
-             CALL HEADER
-             ================================================= -->
-
-        <header class="call-header">
-
-            <div>
-
-                <strong
-                    id="callRoomTitle"
-                >
-                    Mwaniki Scholars Call
-                </strong>
-
-                <span
-                    id="callRoomSubtitle"
-                >
-                    Connecting securely...
-                </span>
-
-            </div>
-
-
-            <div
-                id="callRoomStatus"
-                class="call-room-status"
-            >
-                Connecting
-            </div>
-
-        </header>
-
-
-        <!-- =================================================
-             PARTICIPANTS
-             ================================================= -->
-
-        <section
-            id="callParticipantGrid"
-            class="call-participant-grid"
-        ></section>
-
-
-        <!-- =================================================
-             CONTROLS
-             ================================================= -->
-
-        <footer class="call-controls">
-
-            <button
-                id="toggleMicrophoneButton"
-                class="call-control-button"
-                type="button"
-                title="Microphone"
-            >
-                🎙️
-            </button>
-
-
-            <button
-                id="toggleCameraButton"
-                class="call-control-button"
-                type="button"
-                title="Camera"
-            >
-                📹
-            </button>
-
-
-            <button
-                id="shareScreenButton"
-                class="call-control-button"
-                type="button"
-                title="Share screen"
-            >
-                🖥️
-            </button>
-
-
-            <button
-                id="leaveCallButton"
-                class="call-control-button leave-call-control"
-                type="button"
-                title="Leave call"
-            >
-                ☎
-            </button>
-
-        </footer>
-
-    </main>
-
+<body>
 
     <script
-        type="module"
         src="./supabase.js"
     ></script>
 
