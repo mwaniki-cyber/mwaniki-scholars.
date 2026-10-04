@@ -10,7 +10,14 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Mwaniki Scholars Call</title>
+    <meta
+        name="theme-color"
+        content="#087f73"
+    >
+
+    <title>
+        Mwaniki Scholars Call
+    </title>
 
     <link
         rel="stylesheet"
@@ -22,301 +29,114 @@
         href="./community.css"
     >
 
-    <style>
-
-        body.call-page {
-            margin: 0;
-            min-height: 100vh;
-            background:
-                radial-gradient(
-                    circle at top left,
-                    rgba(8, 127, 115, .20),
-                    transparent 40%
-                ),
-                linear-gradient(
-                    135deg,
-                    #eef8ff 0%,
-                    #ffffff 48%,
-                    #e8f7f5 100%
-                );
-        }
-
-        .call-page-shell {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .call-page-header {
-            height: 72px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
-            background: rgba(255,255,255,.92);
-            border-bottom: 1px solid rgba(8,127,115,.12);
-            box-shadow: 0 5px 25px rgba(15, 60, 80, .08);
-        }
-
-        .call-page-title {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .call-page-title-icon {
-            width: 42px;
-            height: 42px;
-            border-radius: 12px;
-            display: grid;
-            place-items: center;
-            background: #087f73;
-            color: white;
-            font-size: 20px;
-        }
-
-        .call-page-title h1 {
-            margin: 0;
-            font-size: 17px;
-        }
-
-        .call-page-title p {
-            margin: 2px 0 0;
-            color: #64748b;
-            font-size: 12px;
-        }
-
-        .call-room {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            gap: 18px;
-        }
-
-        .call-room-status {
-            display: flex;
-            justify-content: center;
-        }
-
-        #callRoomStatus {
-            padding: 8px 15px;
-            border-radius: 999px;
-            background: rgba(8,127,115,.08);
-            color: #087f73;
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        #callParticipantGrid {
-            flex: 1;
-            min-height: 420px;
-            display: grid;
-            grid-template-columns: repeat(
-                auto-fit,
-                minmax(260px, 1fr)
-            );
-            gap: 16px;
-        }
-
-        .call-video-tile {
-            position: relative;
-            min-height: 230px;
-            overflow: hidden;
-            border-radius: 20px;
-            background: #102a43;
-            box-shadow: 0 15px 35px rgba(15, 50, 70, .14);
-        }
-
-        .call-video-tile video {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .call-video-tile.audio-only {
-            display: grid;
-            place-items: center;
-            background:
-                linear-gradient(
-                    135deg,
-                    #087f73,
-                    #0b7285
-                );
-        }
-
-        .call-avatar-large {
-            width: 90px;
-            height: 90px;
-            border-radius: 50%;
-            overflow: hidden;
-            background: white;
-            display: grid;
-            place-items: center;
-            font-size: 42px;
-        }
-
-        .call-avatar-large img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .call-video-name {
-            position: absolute;
-            left: 12px;
-            bottom: 12px;
-            padding: 7px 10px;
-            border-radius: 8px;
-            color: white;
-            background: rgba(0,0,0,.55);
-            font-size: 13px;
-            font-weight: 700;
-        }
-
-        .call-page-controls {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .call-control {
-            width: 52px;
-            height: 52px;
-            border: 0;
-            border-radius: 50%;
-            cursor: pointer;
-            background: white;
-            box-shadow: 0 8px 25px rgba(15,50,70,.12);
-            font-size: 19px;
-        }
-
-        .call-control.active {
-            background: #087f73;
-            color: white;
-        }
-
-        .call-control.danger {
-            background: #c62828;
-            color: white;
-        }
-
-        @media (max-width: 700px) {
-
-            .call-room {
-                padding: 12px;
-            }
-
-            #callParticipantGrid {
-                grid-template-columns: 1fr;
-            }
-
-            .call-video-tile {
-                min-height: 250px;
-            }
-
-        }
-
-    </style>
-
 </head>
+
 
 <body class="call-page">
 
-<div class="call-page-shell">
+    <main class="call-screen">
 
-    <header class="call-page-header">
+        <!-- =================================================
+             CALL HEADER
+             ================================================= -->
 
-        <div class="call-page-title">
-
-            <span class="call-page-title-icon">
-                📞
-            </span>
+        <header class="call-header">
 
             <div>
 
-                <h1 id="callRoomTitle">
+                <strong
+                    id="callRoomTitle"
+                >
                     Mwaniki Scholars Call
-                </h1>
+                </strong>
 
-                <p id="callRoomSubtitle">
-                    Connecting securely…
-                </p>
+                <span
+                    id="callRoomSubtitle"
+                >
+                    Connecting securely...
+                </span>
 
             </div>
 
-        </div>
 
-        <span id="callRoomStatus">
-            Connecting
-        </span>
+            <div
+                id="callRoomStatus"
+                class="call-room-status"
+            >
+                Connecting
+            </div>
 
-    </header>
+        </header>
 
 
-    <main class="call-room">
+        <!-- =================================================
+             PARTICIPANTS
+             ================================================= -->
 
-        <div
+        <section
             id="callParticipantGrid"
             class="call-participant-grid"
-        ></div>
+        ></section>
 
 
-        <div class="call-page-controls">
+        <!-- =================================================
+             CONTROLS
+             ================================================= -->
+
+        <footer class="call-controls">
 
             <button
                 id="toggleMicrophoneButton"
-                class="call-control active"
+                class="call-control-button"
                 type="button"
                 title="Microphone"
             >
                 🎙️
             </button>
 
+
             <button
                 id="toggleCameraButton"
-                class="call-control active"
+                class="call-control-button"
                 type="button"
                 title="Camera"
             >
                 📹
             </button>
 
+
             <button
                 id="shareScreenButton"
-                class="call-control"
+                class="call-control-button"
                 type="button"
                 title="Share screen"
             >
                 🖥️
             </button>
 
+
             <button
                 id="leaveCallButton"
-                class="call-control danger"
+                class="call-control-button leave-call-control"
                 type="button"
                 title="Leave call"
             >
                 ☎
             </button>
 
-        </div>
+        </footer>
 
     </main>
 
-</div>
 
+    <script
+        type="module"
+        src="./supabase.js"
+    ></script>
 
-<script
-    type="module"
-    src="./supabase.js"
-></script>
-
-<script
-    src="./community-calls.js"
-></script>
+    <script
+        src="./community-calls.js"
+    ></script>
 
 </body>
 
