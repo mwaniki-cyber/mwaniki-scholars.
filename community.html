@@ -10,16 +10,21 @@
     >
 
     <meta
+        name="description"
+        content="Mwaniki Scholars Community"
+    >
+
+    <meta
         name="theme-color"
         content="#087f73"
     >
 
-    <meta
-        name="description"
-        content="Mwaniki Scholars academic community."
-    >
-
     <title>Mwaniki Scholars Community</title>
+
+    <link
+        rel="stylesheet"
+        href="./style.css"
+    >
 
     <link
         rel="stylesheet"
@@ -37,13 +42,13 @@
 
     <header class="community-header">
 
-        <div class="header-left">
+        <div class="brand-area">
 
             <button
                 id="mobileSidebarButton"
                 class="icon-button mobile-only"
                 type="button"
-                title="Menu"
+                aria-label="Open communities"
             >
                 ☰
             </button>
@@ -64,64 +69,50 @@
         </div>
 
 
-        <div class="header-center">
+        <div class="header-actions">
 
-            <div class="global-search">
-                <span>⌕</span>
+            <button
+                id="communityRulesButton"
+                class="header-button"
+                type="button"
+            >
+                📜 Rules
+            </button>
 
-                <input
-                    id="globalSearchInput"
-                    type="search"
-                    placeholder="Search messages, channels and members..."
-                    autocomplete="off"
-                >
-            </div>
-
-        </div>
-
-
-        <div class="header-right">
+            <button
+                id="ticketButton"
+                class="header-button"
+                type="button"
+            >
+                🎫 Ticket
+            </button>
 
             <button
                 id="friendsButton"
                 class="header-button"
                 type="button"
             >
-                👥
-                <span>Friends</span>
-                <b id="friendRequestBadge" class="badge hidden">0</b>
+                👥 Friends
+
+                <span
+                    id="friendRequestBadge"
+                    class="count-badge hidden"
+                >
+                    0
+                </span>
             </button>
 
             <button
                 id="generalCallButton"
-                class="header-button call-button"
+                class="header-button call-header-button"
                 type="button"
             >
-                📞
-                <span>Call</span>
-            </button>
-
-            <button
-                id="communityRulesButton"
-                class="icon-button"
-                type="button"
-                title="Community rules"
-            >
-                📜
-            </button>
-
-            <button
-                id="ticketButton"
-                class="icon-button"
-                type="button"
-                title="Support"
-            >
-                🎫
+                📞 General Call
             </button>
 
             <button
                 id="profileButton"
-                class="profile-button"
+                class="profile-header-button"
                 type="button"
             >
                 <span
@@ -131,7 +122,10 @@
                     👤
                 </span>
 
-                <span id="headerProfileName">
+                <span
+                    id="headerProfileName"
+                    class="header-profile-name"
+                >
                     Student
                 </span>
 
@@ -147,7 +141,7 @@
 
 
     <!-- =====================================================
-         MAIN
+         MAIN COMMUNITY WORKSPACE
          ===================================================== -->
 
     <main class="community-layout">
@@ -172,7 +166,7 @@
                 id="addCommunityButton"
                 class="rail-add-button"
                 type="button"
-                title="Create or request a community"
+                title="Communities"
             >
                 +
             </button>
@@ -187,16 +181,16 @@
             class="channel-sidebar"
         >
 
-            <div class="community-summary">
+            <div class="selected-community-card">
 
                 <div
                     id="selectedCommunityIcon"
-                    class="community-summary-icon"
+                    class="selected-community-icon"
                 >
                     🎓
                 </div>
 
-                <div class="community-summary-text">
+                <div class="selected-community-info">
 
                     <strong id="selectedCommunityName">
                         Mwaniki Scholars
@@ -208,14 +202,6 @@
 
                 </div>
 
-                <button
-                    id="communityMoreButton"
-                    class="icon-button small"
-                    type="button"
-                >
-                    ⋮
-                </button>
-
             </div>
 
 
@@ -225,120 +211,83 @@
                 type="button"
             >
                 <span>📞</span>
-                <span>
-                    <strong>Community Call</strong>
-                    <small>Start an audio/video room</small>
-                </span>
+                <span>Community Call</span>
             </button>
 
 
-            <div class="channel-scroll">
+            <!-- INFORMATION -->
 
-                <!-- INFORMATION -->
+            <div class="channel-section">
 
-                <section class="channel-group">
+                <div class="channel-section-title">
+                    <span>INFORMATION</span>
+                </div>
 
-                    <div class="channel-group-title">
-                        <span>INFORMATION</span>
-                    </div>
-
-                    <div id="informationChannels"></div>
-
-                </section>
-
-
-                <!-- COURSES -->
-
-                <section class="channel-group">
-
-                    <div class="channel-group-title">
-                        <span>COURSES</span>
-                    </div>
-
-                    <div id="courseChannels"></div>
-
-                </section>
-
-
-                <!-- COMMUNITY -->
-
-                <section class="channel-group">
-
-                    <div class="channel-group-title">
-                        <span>COMMUNITY</span>
-                    </div>
-
-                    <div id="communityChannels"></div>
-
-                </section>
-
-
-                <!-- EVENTS -->
-
-                <section class="channel-group">
-
-                    <div class="channel-group-title channel-group-action">
-                        <span>EVENTS</span>
-
-                        <button
-                            id="createEventButton"
-                            type="button"
-                            title="Create event"
-                        >
-                            +
-                        </button>
-                    </div>
-
-                    <button
-                        id="eventsChannelButton"
-                        class="channel-button"
-                        type="button"
-                    >
-                        <span>📅</span>
-                        <span>Events</span>
-                    </button>
-
-                </section>
-
-
-                <!-- CONTESTS -->
-
-                <section class="channel-group">
-
-                    <div class="channel-group-title">
-                        <span>ACTIVITIES</span>
-                    </div>
-
-                    <button
-                        id="contestChannelButton"
-                        class="channel-button"
-                        type="button"
-                    >
-                        <span>🏆</span>
-                        <span>Contests</span>
-                    </button>
-
-                </section>
+                <div
+                    id="informationChannels"
+                    class="channel-list"
+                ></div>
 
             </div>
 
 
-            <div class="sidebar-footer">
+            <!-- COURSES -->
 
-                <div class="connection-status">
-                    <span id="connectionDot"></span>
+            <div class="channel-section">
 
-                    <span id="connectionText">
-                        Connected
-                    </span>
+                <div class="channel-section-title">
+                    <span>COURSES</span>
                 </div>
+
+                <div
+                    id="courseChannels"
+                    class="channel-list"
+                ></div>
+
+            </div>
+
+
+            <!-- COMMUNITY -->
+
+            <div class="channel-section">
+
+                <div class="channel-section-title">
+                    <span>COMMUNITY</span>
+                </div>
+
+                <div
+                    id="communityChannels"
+                    class="channel-list"
+                ></div>
+
+            </div>
+
+
+            <!-- CONTEST -->
+
+            <div class="channel-section">
+
+                <div class="channel-section-title">
+                    <span>ACTIVITIES</span>
+                </div>
+
+                <button
+                    id="contestChannelButton"
+                    class="channel-button contest-button"
+                    type="button"
+                >
+                    <span>🏆</span>
+                    <span>Contests</span>
+                </button>
 
             </div>
 
         </aside>
 
 
-        <!-- CHAT -->
+        <!-- =================================================
+             CHAT AREA
+             ================================================= -->
 
         <section class="chat-area">
 
@@ -348,19 +297,19 @@
 
                     <span
                         id="currentChannelIcon"
-                        class="chat-channel-icon"
+                        class="channel-title-icon"
                     >
-                        #
+                        💬
                     </span>
 
                     <div>
 
                         <h1 id="currentChannelName">
-                            Welcome
+                            Select a channel
                         </h1>
 
                         <p id="currentChannelDescription">
-                            Select a channel
+                            Choose a community and channel.
                         </p>
 
                     </div>
@@ -374,7 +323,7 @@
                         id="channelSearchButton"
                         class="icon-button"
                         type="button"
-                        title="Search channel"
+                        title="Search messages"
                     >
                         🔎
                     </button>
@@ -393,17 +342,20 @@
             </header>
 
 
+            <!-- MESSAGES -->
+
             <div
                 id="messageList"
                 class="message-list"
-            ></div>
-
-
-            <div
-                id="messageLoading"
-                class="message-loading hidden"
             >
-                Loading messages...
+
+                <div
+                    id="messageLoading"
+                    class="empty-state"
+                >
+                    Select a channel to begin.
+                </div>
+
             </div>
 
 
@@ -411,102 +363,13 @@
                 id="typingIndicator"
                 class="typing-indicator hidden"
             >
-                Someone is typing...
+                Someone is typing…
             </div>
 
 
-            <!-- PICKERS -->
-
-            <div
-                id="emojiPanel"
-                class="picker-panel hidden"
-            >
-
-                <div class="picker-header">
-                    <strong>Emoji</strong>
-
-                    <button
-                        id="closeEmojiButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                <input
-                    id="emojiSearch"
-                    type="search"
-                    placeholder="Search emoji..."
-                >
-
-                <div
-                    id="emojiCategories"
-                    class="emoji-categories"
-                ></div>
-
-                <div
-                    id="emojiGrid"
-                    class="emoji-grid"
-                ></div>
-
-            </div>
-
-
-            <div
-                id="stickerPanel"
-                class="picker-panel hidden"
-            >
-
-                <div class="picker-header">
-                    <strong>Stickers</strong>
-
-                    <button
-                        id="closeStickerButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                <div
-                    id="stickerGrid"
-                    class="sticker-grid"
-                ></div>
-
-            </div>
-
-
-            <div
-                id="gifPanel"
-                class="picker-panel hidden"
-            >
-
-                <div class="picker-header">
-                    <strong>GIFs</strong>
-
-                    <button
-                        id="closeGifButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
-                </div>
-
-                <input
-                    id="gifSearch"
-                    type="search"
-                    placeholder="Search GIFs..."
-                >
-
-                <div
-                    id="gifGrid"
-                    class="gif-grid"
-                ></div>
-
-            </div>
-
-
-            <!-- COMPOSER -->
+            <!-- =================================================
+                 COMPOSER
+                 ================================================= -->
 
             <div class="composer-area">
 
@@ -517,64 +380,101 @@
 
 
                 <div
-                    id="voiceRecorder"
-                    class="voice-recorder hidden"
+                    id="emojiPanel"
+                    class="picker-panel hidden"
                 >
 
-                    <div class="voice-recorder-info">
+                    <div class="picker-header">
 
-                        <span class="recording-dot"></span>
-
-                        <strong id="voiceRecordingTimer">
-                            00:00
-                        </strong>
-
-                        <span>
-                            Recording voice note
-                        </span>
-
-                    </div>
-
-                    <canvas
-                        id="voiceWaveform"
-                        class="voice-waveform"
-                        width="500"
-                        height="60"
-                    ></canvas>
-
-                    <audio
-                        id="voicePreviewAudio"
-                        class="voice-preview-audio hidden"
-                        controls
-                    ></audio>
-
-                    <div class="voice-recorder-actions">
+                        <strong>Emoji</strong>
 
                         <button
-                            id="cancelVoiceButton"
-                            class="secondary-button"
+                            class="picker-close"
                             type="button"
+                            data-close-picker="emojiPanel"
                         >
-                            Cancel
-                        </button>
-
-                        <button
-                            id="stopVoiceButton"
-                            class="danger-button"
-                            type="button"
-                        >
-                            Stop
-                        </button>
-
-                        <button
-                            id="sendVoiceButton"
-                            class="primary-button hidden"
-                            type="button"
-                        >
-                            Send Voice Note
+                            ×
                         </button>
 
                     </div>
+
+                    <input
+                        id="emojiSearch"
+                        class="picker-search"
+                        type="search"
+                        placeholder="Search emoji"
+                    >
+
+                    <div
+                        id="emojiCategories"
+                        class="emoji-categories"
+                    ></div>
+
+                    <div
+                        id="emojiGrid"
+                        class="emoji-grid"
+                    ></div>
+
+                </div>
+
+
+                <div
+                    id="stickerPanel"
+                    class="picker-panel hidden"
+                >
+
+                    <div class="picker-header">
+
+                        <strong>Stickers</strong>
+
+                        <button
+                            class="picker-close"
+                            type="button"
+                            data-close-picker="stickerPanel"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+                    <div
+                        id="stickerGrid"
+                        class="sticker-grid"
+                    ></div>
+
+                </div>
+
+
+                <div
+                    id="gifPanel"
+                    class="picker-panel hidden"
+                >
+
+                    <div class="picker-header">
+
+                        <strong>GIFs</strong>
+
+                        <button
+                            class="picker-close"
+                            type="button"
+                            data-close-picker="gifPanel"
+                        >
+                            ×
+                        </button>
+
+                    </div>
+
+                    <input
+                        id="gifSearch"
+                        class="picker-search"
+                        type="search"
+                        placeholder="Search GIFs"
+                    >
+
+                    <div
+                        id="gifGrid"
+                        class="gif-grid"
+                    ></div>
 
                 </div>
 
@@ -585,7 +485,7 @@
                         id="attachButton"
                         class="composer-button"
                         type="button"
-                        title="Attach"
+                        title="Attach file"
                     >
                         📎
                     </button>
@@ -603,9 +503,9 @@
                         id="stickerButton"
                         class="composer-button"
                         type="button"
-                        title="Sticker"
+                        title="Stickers"
                     >
-                        🏷️
+                        🧩
                     </button>
 
                     <button
@@ -619,18 +519,22 @@
 
                     <button
                         id="voiceNoteButton"
-                        class="composer-button"
+                        class="composer-button voice-button"
                         type="button"
                         title="Voice note"
                     >
                         🎙️
                     </button>
 
+
                     <textarea
                         id="messageInput"
+                        class="message-input"
                         rows="1"
+                        maxlength="5000"
                         placeholder="Message this channel..."
                     ></textarea>
+
 
                     <button
                         id="sendMessageButton"
@@ -647,9 +551,9 @@
                 <input
                     id="attachmentInput"
                     type="file"
-                    multiple
                     hidden
-                    accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip,.rar,audio/*,video/*"
+                    multiple
+                    accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,audio/*"
                 >
 
             </div>
@@ -657,7 +561,9 @@
         </section>
 
 
-        <!-- MEMBER SIDEBAR -->
+        <!-- =================================================
+             MEMBER SIDEBAR
+             ================================================= -->
 
         <aside
             id="memberSidebar"
@@ -667,12 +573,9 @@
             <div class="member-sidebar-header">
 
                 <strong>
-                    Members
+                    Members —
+                    <span id="memberCount">0</span>
                 </strong>
-
-                <span id="memberCount">
-                    0
-                </span>
 
             </div>
 
@@ -697,29 +600,28 @@
     class="modal hidden"
 >
 
-    <div class="modal-card">
+    <div class="modal-card medium">
 
-        <button
-            class="modal-close"
-            data-close="filePreviewModal"
-            type="button"
-        >
-            ×
-        </button>
+        <div class="modal-header">
 
-        <h2>Attachment</h2>
-
-        <div id="filePreviewContent"></div>
-
-        <div class="modal-actions">
+            <h2>Attachment</h2>
 
             <button
-                id="cancelAttachmentButton"
-                class="secondary-button"
+                class="modal-close"
+                data-close-modal="filePreviewModal"
                 type="button"
             >
-                Cancel
+                ×
             </button>
+
+        </div>
+
+        <div
+            id="filePreviewContent"
+            class="modal-body"
+        ></div>
+
+        <div class="modal-footer">
 
             <button
                 id="confirmAttachmentButton"
@@ -747,37 +649,144 @@
 
     <div class="modal-card large">
 
-        <button
-            class="modal-close"
-            data-close="friendsModal"
-            type="button"
-        >
-            ×
-        </button>
+        <div class="modal-header">
 
-        <h2>Friends & People</h2>
-
-        <div class="tabs">
+            <h2>Friends & Online Students</h2>
 
             <button
-                class="tab-button active"
-                data-friend-tab="online"
+                class="modal-close"
+                data-close-modal="friendsModal"
                 type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <div class="friend-tabs">
+
+            <button
+                class="friend-tab active"
+                type="button"
+                data-friend-tab="online"
             >
                 Online
             </button>
 
             <button
-                class="tab-button"
-                data-friend-tab="members"
+                class="friend-tab"
                 type="button"
+                data-friend-tab="requests"
             >
-                Members
+                Requests
+                <span id="friendRequestsCount">0</span>
             </button>
 
         </div>
 
-        <div id="friendsContent"></div>
+        <div
+            id="friendsContent"
+            class="modal-body"
+        ></div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     TICKET
+     ========================================================= -->
+
+<div
+    id="ticketModal"
+    class="modal hidden"
+>
+
+    <div class="modal-card medium">
+
+        <div class="modal-header">
+
+            <h2>Support Ticket</h2>
+
+            <button
+                class="modal-close"
+                data-close-modal="ticketModal"
+                type="button"
+            >
+                ×
+            </button>
+
+        </div>
+
+        <form id="ticketForm">
+
+            <div class="form-group">
+
+                <label for="ticketType">
+                    Type
+                </label>
+
+                <select id="ticketType">
+
+                    <option value="technical">
+                        Technical issue
+                    </option>
+
+                    <option value="community">
+                        Community issue
+                    </option>
+
+                    <option value="report">
+                        Report
+                    </option>
+
+                    <option value="other">
+                        Other
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="ticketSubject">
+                    Subject
+                </label>
+
+                <input
+                    id="ticketSubject"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="ticketDescription">
+                    Description
+                </label>
+
+                <textarea
+                    id="ticketDescription"
+                    rows="6"
+                    required
+                ></textarea>
+
+            </div>
+
+
+            <button
+                class="primary-button"
+                type="submit"
+            >
+                Submit Ticket
+            </button>
+
+        </form>
 
     </div>
 
@@ -795,216 +804,23 @@
 
     <div class="modal-card large">
 
-        <button
-            class="modal-close"
-            data-close="rulesModal"
-            type="button"
-        >
-            ×
-        </button>
+        <div class="modal-header">
 
-        <div class="rules-heading">
-            <span id="rulesCommunityIcon">📜</span>
+            <h2>Community Rules</h2>
 
-            <div>
-                <h2 id="rulesCommunityName">
-                    Community Rules
-                </h2>
+            <button
+                class="modal-close"
+                data-close-modal="rulesModal"
+                type="button"
+            >
+                ×
+            </button>
 
-                <p>
-                    Read these rules before entering the community.
-                </p>
-            </div>
         </div>
 
         <div
             id="rulesContent"
             class="rules-content"
-        ></div>
-
-        <label
-            id="rulesAgreementArea"
-            class="agreement-box"
-        >
-            <input
-                id="rulesAgreementCheckbox"
-                type="checkbox"
-            >
-
-            <span>
-                I have read and agree to this community's rules.
-            </span>
-        </label>
-
-        <div class="modal-actions">
-
-            <button
-                id="agreeRulesButton"
-                class="primary-button"
-                type="button"
-                disabled
-            >
-                Agree & Continue
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     EVENTS
-     ========================================================= -->
-
-<div
-    id="eventModal"
-    class="modal hidden"
->
-
-    <div class="modal-card large">
-
-        <button
-            class="modal-close"
-            data-close="eventModal"
-            type="button"
-        >
-            ×
-        </button>
-
-        <h2>Create Community Event</h2>
-
-        <form id="eventForm">
-
-            <div class="form-grid">
-
-                <label>
-                    Event title
-                    <input
-                        id="eventTitle"
-                        required
-                        maxlength="120"
-                    >
-                </label>
-
-                <label>
-                    Event type
-                    <select id="eventType">
-                        <option value="audio">Audio</option>
-                        <option value="video">Video</option>
-                        <option value="audio_video">
-                            Audio + Video
-                        </option>
-                    </select>
-                </label>
-
-                <label>
-                    Starts
-                    <input
-                        id="eventStartsAt"
-                        type="datetime-local"
-                        required
-                    >
-                </label>
-
-                <label>
-                    Ends
-                    <input
-                        id="eventEndsAt"
-                        type="datetime-local"
-                    >
-                </label>
-
-            </div>
-
-            <label>
-                Description
-                <textarea
-                    id="eventDescription"
-                    rows="5"
-                    maxlength="3000"
-                ></textarea>
-            </label>
-
-            <label class="checkbox-row">
-                <input
-                    id="eventPublic"
-                    type="checkbox"
-                    checked
-                >
-
-                Public to community members
-            </label>
-
-            <div class="modal-actions">
-
-                <button
-                    class="secondary-button"
-                    data-close="eventModal"
-                    type="button"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    class="primary-button"
-                    type="submit"
-                >
-                    Create Event
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     EVENT LIST
-     ========================================================= -->
-
-<div
-    id="eventsModal"
-    class="modal hidden"
->
-
-    <div class="modal-card large">
-
-        <button
-            class="modal-close"
-            data-close="eventsModal"
-            type="button"
-        >
-            ×
-        </button>
-
-        <div class="modal-title-row">
-
-            <div>
-                <h2>Community Events</h2>
-
-                <p>
-                    Meetings, study sessions, talks and live rooms.
-                </p>
-            </div>
-
-            <button
-                id="eventsCreateButton"
-                class="primary-button"
-                type="button"
-            >
-                + Event
-            </button>
-
-        </div>
-
-        <div
-            id="eventsList"
-            class="events-list"
         ></div>
 
     </div>
@@ -1021,354 +837,76 @@
     class="modal hidden"
 >
 
-    <div class="modal-card">
+    <div class="modal-card medium">
 
-        <button
-            class="modal-close"
-            data-close="profileModal"
-            type="button"
-        >
-            ×
-        </button>
+        <div class="modal-header">
 
-        <div id="profileModalContent"></div>
+            <h2>Your Profile</h2>
 
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     SUPPORT
-     ========================================================= -->
-
-<div
-    id="ticketModal"
-    class="modal hidden"
->
-
-    <div class="modal-card">
-
-        <button
-            class="modal-close"
-            data-close="ticketModal"
-            type="button"
-        >
-            ×
-        </button>
-
-        <h2>Community Support</h2>
-
-        <form id="ticketForm">
-
-            <label>
-                Type
-
-                <select id="ticketType">
-                    <option value="technical">
-                        Technical issue
-                    </option>
-
-                    <option value="report">
-                        Report
-                    </option>
-
-                    <option value="community">
-                        Community issue
-                    </option>
-
-                    <option value="other">
-                        Other
-                    </option>
-                </select>
-            </label>
-
-            <label>
-                Subject
-
-                <input
-                    id="ticketSubject"
-                    maxlength="150"
-                    required
-                >
-            </label>
-
-            <label>
-                Description
-
-                <textarea
-                    id="ticketDescription"
-                    rows="6"
-                    required
-                ></textarea>
-            </label>
-
-            <div class="modal-actions">
-
-                <button
-                    class="secondary-button"
-                    data-close="ticketModal"
-                    type="button"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    class="primary-button"
-                    type="submit"
-                >
-                    Submit
-                </button>
-
-            </div>
-
-        </form>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     CALL PICKER
-     ========================================================= -->
-
-<div
-    id="callModal"
-    class="modal hidden"
->
-
-    <div class="modal-card large">
-
-        <button
-            class="modal-close"
-            data-close="callModal"
-            type="button"
-        >
-            ×
-        </button>
-
-        <div class="modal-title-row">
-
-            <div>
-                <h2 id="callModalTitle">
-                    Start a Call
-                </h2>
-
-                <p id="callModalDescription">
-                    Select who should receive the call.
-                </p>
-            </div>
+            <button
+                class="modal-close"
+                data-close-modal="profileModal"
+                type="button"
+            >
+                ×
+            </button>
 
         </div>
 
+        <div
+            id="profileModalContent"
+            class="profile-modal-content"
+        ></div>
 
-        <div class="call-mode-row">
+    </div>
 
-            <label class="radio-card">
-                <input
-                    type="radio"
-                    name="callMode"
-                    value="audio"
-                    checked
-                >
+</div>
 
-                <span>🎙️</span>
 
-                <strong>Audio</strong>
-            </label>
+<!-- =========================================================
+     CONTEST
+     ========================================================= -->
 
-            <label class="radio-card">
-                <input
-                    type="radio"
-                    name="callMode"
-                    value="video"
-                >
+<div
+    id="contestModal"
+    class="modal hidden"
+>
 
-                <span>📹</span>
+    <div class="modal-card extra-large">
 
-                <strong>Video</strong>
-            </label>
+        <div class="modal-header">
+
+            <div>
+
+                <h2>🏆 Course Contest</h2>
+
+                <p id="contestCourseName">
+                    Select a course contest.
+                </p>
+
+            </div>
+
+            <button
+                class="modal-close"
+                data-close-modal="contestModal"
+                type="button"
+            >
+                ×
+            </button>
 
         </div>
 
 
         <div
-            id="callPickerList"
-            class="call-picker-list"
+            id="contestCourseSelector"
+            class="contest-course-selector"
         ></div>
 
 
-        <div class="modal-actions">
-
-            <button
-                id="cancelCallPickerButton"
-                class="secondary-button"
-                type="button"
-            >
-                Cancel
-            </button>
-
-            <button
-                id="callSpecificPersonButton"
-                class="primary-button"
-                type="button"
-            >
-                Start Call
-            </button>
-
-            <button
-                id="callWholeCommunityButton"
-                class="primary-button hidden"
-                type="button"
-            >
-                Call Community
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =========================================================
-     ACTIVE CALL
-     ========================================================= -->
-
-<div
-    id="activeCallOverlay"
-    class="call-overlay hidden"
->
-
-    <div class="call-overlay-header">
-
-        <div>
-
-            <strong id="activeCallTitle">
-                Call
-            </strong>
-
-            <span id="activeCallStatus">
-                Connecting...
-            </span>
-
-        </div>
-
-        <span id="activeCallTimer">
-            00:00
-        </span>
-
-    </div>
-
-
-    <div
-        id="callParticipantGrid"
-        class="call-participant-grid"
-    ></div>
-
-
-    <div class="call-controls">
-
-        <button
-            id="toggleMicrophoneButton"
-            class="call-control active"
-            type="button"
-            title="Microphone"
-        >
-            🎙️
-        </button>
-
-        <button
-            id="toggleCameraButton"
-            class="call-control active"
-            type="button"
-            title="Camera"
-        >
-            📹
-        </button>
-
-        <button
-            id="shareScreenButton"
-            class="call-control"
-            type="button"
-            title="Share screen"
-        >
-            🖥️
-        </button>
-
-        <button
-            id="leaveCallButton"
-            class="call-control danger"
-            type="button"
-            title="Leave call"
-        >
-            ☎
-        </button>
-
-    </div>
-
-    <button
-        id="leaveCallButtonBottom"
-        class="danger-button hidden"
-        type="button"
-    >
-        Leave Call
-    </button>
-
-</div>
-
-
-<!-- =========================================================
-     INCOMING CALL
-     ========================================================= -->
-
-<div
-    id="incomingCallToast"
-    class="incoming-call hidden"
->
-
-    <div class="incoming-call-person">
-
-        <span
-            id="incomingCallAvatar"
-            class="avatar avatar-medium"
-        >
-            👤
-        </span>
-
-        <div>
-
-            <strong id="incomingCallerName">
-                Incoming call
-            </strong>
-
-            <small id="incomingCallType">
-                Audio call
-            </small>
-
-        </div>
-
-    </div>
-
-
-    <div class="incoming-call-actions">
-
-        <button
-            id="rejectCallButton"
-            class="danger-button"
-            type="button"
-        >
-            Decline
-        </button>
-
-        <button
-            id="acceptCallButton"
-            class="primary-button"
-            type="button"
-        >
-            Accept
-        </button>
+        <div
+            id="contestQuestionArea"
+            class="contest-question-area"
+        ></div>
 
     </div>
 
@@ -1385,15 +923,28 @@
 ></div>
 
 
+<!-- =========================================================
+     SCRIPTS
+     ========================================================= -->
+
 <script
     type="module"
+    src="./supabase.js"
+></script>
+
+<script
     src="./community.js"
 ></script>
 
+<!--
+    IMPORTANT:
+    community-calls.js is loaded on the community page so it
+    can hear incoming calls even before the call screen opens.
+-->
 <script
-    type="module"
-    src="./call.js"
+    src="./community-calls.js"
 ></script>
 
 </body>
+
 </html>
