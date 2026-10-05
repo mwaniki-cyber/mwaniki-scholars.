@@ -5580,7 +5580,420 @@
             );
         }
     }
+/* ============================================================
+   MESSAGE EVENTS
+   ============================================================ */
 
+function setupMessageEvents() {
+    console.log("💬 Community: Setting up message events...");
+
+    const messageInput = document.getElementById("messageInput");
+    const sendMessageButton = document.getElementById("sendMessageButton");
+    const messageList = document.getElementById("messageList");
+
+    /* --------------------------------------------------------
+       SEND MESSAGE BUTTON
+       -------------------------------------------------------- */
+
+    if (sendMessageButton) {
+        sendMessageButton.addEventListener("click", async (event) => {
+            event.preventDefault();
+
+            if (typeof sendMessage === "function") {
+                await sendMessage();
+            } else {
+                console.error("❌ sendMessage() is not defined");
+            }
+        });
+    }
+
+    /* --------------------------------------------------------
+       ENTER TO SEND
+       Shift + Enter = new line
+       -------------------------------------------------------- */
+
+    if (messageInput) {
+        messageInput.addEventListener("keydown", async (event) => {
+            if (event.key !== "Enter") {
+                return;
+            }
+
+            if (event.shiftKey) {
+                return;
+            }
+
+            event.preventDefault();
+
+            if (typeof sendMessage === "function") {
+                await sendMessage();
+            } else {
+                console.error("❌ sendMessage() is not defined");
+            }
+        });
+
+        /* Prevent mobile keyboards from causing the entire page
+           to jump when the user starts typing. */
+        messageInput.addEventListener("focus", () => {
+            requestAnimationFrame(() => {
+                keepMessageComposerVisible();
+            });
+        });
+
+        messageInput.addEventListener("input", () => {
+            if (typeof updateTypingState === "function") {
+                try {
+                    updateTypingState();
+                } catch (error) {
+                    console.warn(
+                        "⚠️ Typing-state update failed:",
+                        error
+                    );
+                }
+            }
+        });
+    }
+
+    /* --------------------------------------------------------
+       MESSAGE LIST
+       -------------------------------------------------------- */
+
+    if (messageList) {
+        messageList.addEventListener("click", async (event) => {
+            const target = event.target;
+
+            if (!(target instanceof Element)) {
+                return;
+            }
+
+            /* ----------------------------------------------
+               REPLY BUTTON
+               ---------------------------------------------- */
+
+            const replyButton = target.closest(
+                "[data-action='reply'], .reply-message-button, .message-reply-button"
+            );
+
+            if (replyButton) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const messageId =
+                    replyButton.dataset.messageId ||
+                    replyButton.closest("[data-message-id]")?.dataset.messageId;
+
+                if (!messageId) {
+                    console.warn("⚠️ Reply button has no message ID");
+                    return;
+                }
+
+                if (typeof startReply === "function") {
+                    startReply(messageId);
+                } else if (typeof replyToMessage === "function") {
+                    replyToMessage(messageId);
+                } else if (typeof setReplyMessage === "function") {
+                    setReplyMessage(messageId);
+                } else {
+                    console.warn(
+                        "⚠️ No reply handler found for message:",
+                        messageId
+                    );
+                }
+
+                return;
+            }
+
+            /* ----------------------------------------------
+               DELETE BUTTON
+               ---------------------------------------------- */
+
+            const deleteButton = target.closest(
+                "[data-action='delete'], .delete-message-button, .message-delete-button"
+            );
+
+            if (deleteButton) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const messageId =
+                    deleteButton.dataset.messageId ||
+                    deleteButton.closest("[data-message-id]")?.dataset.messageId;
+
+                if (!messageId) {
+                    console.warn("⚠️ Delete button has no message ID");
+                    return;
+                }
+
+                let message = null;
+
+                if (Array.isArray(state.messages)) {
+                    message =
+                        state.messages.find(
+                            item => String(item.id) === String(messageId)
+                        ) || null;
+                }
+
+                if (!message && typeof getMessageById === "function") {
+                    try {
+                        message = getMessageById(messageId);
+                    } catch (_) {}
+                }
+
+                if (typeof deleteMessage === "function") {
+                    await deleteMessage(message || { id: messageId });
+                } else {
+                    console.error("❌ deleteMessage() is not defined");
+                }
+
+                return;
+            }
+
+            /* ----------------------------------------------
+               REACTION BUTTON
+               ---------------------------------------------- */
+
+            const reactionButton = target.closest(
+                "[data-action='reaction'], .reaction-button, .message-reaction-button"
+            );
+
+            if (reactionButton) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const messageId =
+                    reactionButton.dataset.messageId ||
+                    reactionButton.closest("[data-message-id]")?.dataset.messageId;
+
+                const reaction =
+                    reactionButton.dataset.reaction ||
+                    reactionButton.dataset.emoji ||
+                    reactionButton.textContent.trim();
+
+                if (!messageId || !reaction) {
+                    return;
+                }
+
+                if (typeof toggleMessageReaction === "function") {
+                    await toggleMessageReaction(messageId, reaction);
+                } else if (typeof reactToMessage === "function") {
+                    await reactToMessage(messageId, reaction);
+                } else if (typeof addReaction === "function") {
+                    await addReaction(messageId, reaction);
+                } else {
+                    console.warn(
+                        "⚠️ No reaction handler found."
+                    );
+                }
+
+                return;
+            }
+
+            /* ----------------------------------------------
+               EMOJI REACTION
+               ---------------------------------------------- */
+
+            const emojiReaction = target.closest(
+                "[data-message-reaction]"
+            );
+
+            if (emojiReaction) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const messageId =
+                    emojiReaction.dataset.messageId ||
+                    emojiReaction.closest("[data-message-id]")?.dataset.messageId;
+
+                const reaction =
+                    emojiReaction.dataset.messageReaction;
+
+                if (
+                    messageId &&
+                    reaction &&
+                    typeof toggleMessageReaction === "function"
+                ) {
+                    await toggleMessageReaction(
+                        messageId,
+                        reaction
+                    );
+                }
+
+                return;
+            }
+        });
+
+        /* ----------------------------------------------------
+           RIGHT CLICK MESSAGE MENU
+           ---------------------------------------------------- */
+
+        messageList.addEventListener("contextmenu", event => {
+            const messageElement =
+                event.target.closest("[data-message-id]");
+
+            if (!messageElement) {
+                return;
+            }
+
+            event.preventDefault();
+
+            const messageId =
+                messageElement.dataset.messageId;
+
+            if (typeof showMessageContextMenu === "function") {
+                showMessageContextMenu(
+                    event,
+                    messageId
+                );
+            }
+        });
+    }
+
+    /* --------------------------------------------------------
+       CANCEL REPLY
+       -------------------------------------------------------- */
+
+    document.addEventListener("click", event => {
+        const target = event.target;
+
+        if (!(target instanceof Element)) {
+            return;
+        }
+
+        const cancelReplyButton = target.closest(
+            "#cancelReplyButton, .cancel-reply-button, [data-action='cancel-reply']"
+        );
+
+        if (!cancelReplyButton) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (typeof cancelReply === "function") {
+            cancelReply();
+        } else if (typeof clearReply === "function") {
+            clearReply();
+        } else {
+            clearReplyFallback();
+        }
+    });
+
+    /* --------------------------------------------------------
+       ESCAPE = CANCEL REPLY / CLOSE MESSAGE MENUS
+       -------------------------------------------------------- */
+
+    document.addEventListener("keydown", event => {
+        if (event.key !== "Escape") {
+            return;
+        }
+
+        if (typeof cancelReply === "function") {
+            try {
+                cancelReply();
+            } catch (_) {}
+        } else {
+            clearReplyFallback();
+        }
+
+        if (typeof closeMessageContextMenu === "function") {
+            try {
+                closeMessageContextMenu();
+            } catch (_) {}
+        }
+    });
+
+    /* --------------------------------------------------------
+       MOBILE KEYBOARD / VIEWPORT
+       -------------------------------------------------------- */
+
+    if (window.visualViewport) {
+        const viewportHandler = () => {
+            keepMessageComposerVisible();
+        };
+
+        window.visualViewport.addEventListener(
+            "resize",
+            viewportHandler
+        );
+
+        window.visualViewport.addEventListener(
+            "scroll",
+            viewportHandler
+        );
+    }
+
+    console.log("✅ Community: Message events ready.");
+}
+
+
+/* ============================================================
+   KEEP CHAT COMPOSER VISIBLE
+   ============================================================ */
+
+function keepMessageComposerVisible() {
+    const input = document.getElementById("messageInput");
+
+    if (!input) {
+        return;
+    }
+
+    const composer =
+        input.closest(
+            "#messageComposer, .message-composer, .chat-composer"
+        );
+
+    if (!composer) {
+        return;
+    }
+
+    if (window.visualViewport) {
+        const viewport = window.visualViewport;
+
+        const rect = composer.getBoundingClientRect();
+
+        const visibleBottom =
+            viewport.offsetTop + viewport.height;
+
+        if (rect.bottom > visibleBottom) {
+            const amount =
+                rect.bottom - visibleBottom + 16;
+
+            window.scrollBy({
+                top: amount,
+                behavior: "smooth"
+            });
+        }
+    }
+}
+
+
+/* ============================================================
+   FALLBACK REPLY CLEAR
+   ============================================================ */
+
+function clearReplyFallback() {
+    const replyPreview = document.getElementById(
+        "replyPreview"
+    );
+
+    if (replyPreview) {
+        replyPreview.classList.add("hidden");
+        replyPreview.innerHTML = "";
+    }
+
+    if (typeof state !== "undefined" && state) {
+        state.replyingTo = null;
+        state.replyToMessage = null;
+        state.replyMessage = null;
+    }
+
+    const input =
+        document.getElementById("messageInput");
+
+    if (input) {
+        input.removeAttribute("data-reply-id");
+        input.focus();
+    }
+}
 
     /* =========================================================
        GENERAL UI
