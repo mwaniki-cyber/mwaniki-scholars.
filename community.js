@@ -280,155 +280,354 @@
     };
 
 
-    /* =========================================================
-       HELPERS
-       ========================================================= */
+ /* =========================================================
+   HELPERS
+   ========================================================= */
 
-    function escapeHTML(value) {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+function escapeHTML(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function escapeAttribute(value) {
+    return escapeHTML(value);
+}
+
+
+/* =========================================================
+   INITIALS
+   ========================================================= */
+
+function initials(name) {
+    const cleanName = String(name || "Student")
+        .trim()
+        .replace(/\s+/g, " ");
+
+    if (!cleanName) {
+        return "S";
     }
 
-    function escapeAttribute(value) {
-        return escapeHTML(value);
-    }
+    const parts = cleanName
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2);
 
-    function initials(name) {
-        const parts = String(name || "Student")
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2);
-
+    if (parts.length === 1) {
         return (
-            parts
-                .map(part =>
-                    part.charAt(0).toUpperCase()
-                )
-                .join("") || "S"
+            parts[0]
+                .substring(0, 2)
+                .toUpperCase() || "S"
         );
     }
 
-    function avatarFallback(name) {
-        const text = initials(name);
+    return (
+        parts
+            .map(part =>
+                part.charAt(0).toUpperCase()
+            )
+            .join("") || "S"
+    );
+}
 
-        return (
-            "data:image/svg+xml;charset=UTF-8," +
-            encodeURIComponent(`
-                <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="96"
-                    height="96"
-                    viewBox="0 0 96 96"
-                >
-                    <rect
-                        width="96"
-                        height="96"
-                        rx="48"
-                        fill="#087f73"
-                    />
-                    <text
-                        x="48"
-                        y="58"
-                        text-anchor="middle"
-                        font-family="Arial,sans-serif"
-                        font-size="30"
-                        font-weight="700"
-                        fill="#ffffff"
-                    >${text}</text>
-                </svg>
-            `)
-        );
-    }
 
-    function safeURL(url) {
-        const value = String(url || "").trim();
+/* =========================================================
+   AVATAR FALLBACK
+   ========================================================= */
 
-        if (
-            /^https?:\/\//i.test(value) ||
-            value.startsWith("/") ||
-            value.startsWith("./") ||
-            value.startsWith("../") ||
-            value.startsWith("data:image/")
-        ) {
-            return value;
-        }
+function avatarFallback(name) {
+    const text = escapeHTML(
+        initials(name)
+    );
 
+    const svg = `
+        <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="96"
+            height="96"
+            viewBox="0 0 96 96"
+            role="img"
+            aria-label="${text}"
+        >
+            <rect
+                x="0"
+                y="0"
+                width="96"
+                height="96"
+                rx="48"
+                fill="#087f73"
+            />
+
+            <text
+                x="48"
+                y="58"
+                text-anchor="middle"
+                dominant-baseline="middle"
+                font-family="Arial, Helvetica, sans-serif"
+                font-size="30"
+                font-weight="700"
+                fill="#ffffff"
+            >${text}</text>
+        </svg>
+    `;
+
+    return (
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(svg)
+    );
+}
+
+
+/* =========================================================
+   SAFE URL
+   ========================================================= */
+
+function safeURL(url) {
+    const value = String(url || "")
+        .trim();
+
+    if (!value) {
         return "";
     }
 
-    function profileName(profile) {
-        return (
-            profile?.full_name ||
-            profile?.display_name ||
-            profile?.nickname ||
-            "Student"
-        );
+    /*
+     * Allow normal HTTPS/HTTP URLs.
+     * Supabase Storage photo URLs normally arrive here.
+     */
+    if (/^https?:\/\//i.test(value)) {
+        return value;
     }
 
-    function profilePhoto(profile) {
-        return (
-            safeURL(
-                profile?.photo_url ||
-                profile?.avatar_url
-            ) ||
-            avatarFallback(profileName(profile))
-        );
+    /*
+     * Allow local project paths.
+     */
+    if (
+        value.startsWith("/") ||
+        value.startsWith("./") ||
+        value.startsWith("../")
+    ) {
+        return value;
     }
 
-    function showToast(message) {
-        const element =
-            dom.toast ||
-            $("communityToast");
+    /*
+     * Allow image data URLs for generated
+     * initials/avatar fallbacks.
+     */
+    if (
+        /^data:image\/(png|jpe?g|gif|webp|svg\+xml);/i.test(
+            value
+        )
+    ) {
+        return value;
+    }
 
-        if (!element) {
-            console.log(message);
-            return;
+    return "";
+}
+
+
+/* =========================================================
+   PROFILE NAME
+   ========================================================= */
+
+function profileName(profile) {
+    if (!profile) {
+        return "Student";
+    }
+
+    const name =
+        profile.full_name ||
+        profile.display_name ||
+        profile.nickname ||
+        profile.name ||
+        profile.username ||
+        "";
+
+    const cleanName = String(name)
+        .trim()
+        .replace(/\s+/g, " ");
+
+    return cleanName || "Student";
+}
+
+
+/* =========================================================
+   PROFILE PHOTO
+   ========================================================= */
+
+function profilePhoto(profile) {
+    if (!profile) {
+        return avatarFallback("Student");
+    }
+
+    /*
+     * Support the different profile structures used
+     * throughout the Mwaniki Scholars community.
+     */
+    const possiblePhotos = [
+        profile.photo_url,
+        profile.avatar_url,
+        profile.profile_photo,
+        profile.profile_photo_url,
+        profile.image_url,
+        profile.photo,
+        profile.avatar
+    ];
+
+    for (const photo of possiblePhotos) {
+        const url = safeURL(photo);
+
+        if (url) {
+            return url;
         }
+    }
 
-        element.textContent = message;
-        element.classList.remove("hidden");
+    return avatarFallback(
+        profileName(profile)
+    );
+}
 
-        clearTimeout(
-            showToast.timer
+
+/* =========================================================
+   AVATAR ERROR HANDLER
+   ========================================================= */
+
+function avatarError(image, name) {
+    if (!image) {
+        return;
+    }
+
+    /*
+     * Prevent an invalid photo URL from repeatedly
+     * triggering the error handler.
+     */
+    image.onerror = null;
+
+    image.src = avatarFallback(
+        name || "Student"
+    );
+}
+
+
+/* =========================================================
+   SHOW TOAST
+   ========================================================= */
+
+function showToast(message) {
+    const element =
+        dom.toast ||
+        $("communityToast");
+
+    if (!element) {
+        console.log(
+            "[Mwaniki Scholars]",
+            message
         );
-
-        showToast.timer = setTimeout(() => {
-            element.classList.add("hidden");
-        }, 3000);
+        return;
     }
 
-    function setStatus(message) {
-        if (dom.communityStatus) {
-            dom.communityStatus.textContent =
-                message || "";
-        }
+    element.textContent =
+        String(message || "");
+
+    element.classList.remove(
+        "hidden"
+    );
+
+    if ("hidden" in element) {
+        element.hidden = false;
     }
 
-    function openElement(element) {
-        if (!element) return;
+    clearTimeout(
+        showToast.timer
+    );
 
-        element.classList.remove("hidden");
-
-        if ("hidden" in element) {
-            element.hidden = false;
-        }
-    }
-
-    function closeElement(element) {
-        if (!element) return;
-
-        element.classList.add("hidden");
+    showToast.timer = setTimeout(() => {
+        element.classList.add(
+            "hidden"
+        );
 
         if ("hidden" in element) {
             element.hidden = true;
         }
+    }, 3000);
+}
+
+
+/* =========================================================
+   COMMUNITY STATUS
+   ========================================================= */
+
+function setStatus(message) {
+    if (!dom.communityStatus) {
+        return;
     }
 
+    dom.communityStatus.textContent =
+        String(message || "");
+}
+
+
+/* =========================================================
+   OPEN ELEMENT
+   ========================================================= */
+
+function openElement(element) {
+    if (!element) {
+        return;
+    }
+
+    element.classList.remove(
+        "hidden"
+    );
+
+    if ("hidden" in element) {
+        element.hidden = false;
+    }
+
+    /*
+     * Support elements that may have been
+     * hidden through inline display styles.
+     */
+    if (
+        element.style.display === "none"
+    ) {
+        element.style.removeProperty(
+            "display"
+        );
+    }
+
+    element.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+}
+
+
+/* =========================================================
+   CLOSE ELEMENT
+   ========================================================= */
+
+function closeElement(element) {
+    if (!element) {
+        return;
+    }
+
+    element.classList.add(
+        "hidden"
+    );
+
+    if ("hidden" in element) {
+        element.hidden = true;
+    }
+
+    element.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+}
 
     /* =========================================================
        PROFILE
