@@ -1,7 +1,13 @@
 /* ============================================================
    MWANIKI SCHOLARS COMMUNITY
-   Professional Medical / Academic Community UI
-   White Professional Theme
+   Professional Medical / Academic Community
+   White + Teal UI
+   Complete Community CSS
+   ============================================================ */
+
+
+/* ============================================================
+   1. DESIGN TOKENS
    ============================================================ */
 
 :root {
@@ -13,37 +19,46 @@
     --ms-accent-light: #e9f7fa;
 
     --ms-white: #ffffff;
-    --ms-bg: #f7f9fb;
-    --ms-bg-soft: #f1f5f7;
+    --ms-bg: #f6f8f9;
+    --ms-bg-soft: #f0f4f5;
+    --ms-bg-hover: #f5f9f9;
 
-    --ms-border: #e2e8ec;
+    --ms-border: #dfe7ea;
     --ms-border-light: #edf1f3;
 
     --ms-text: #17252f;
     --ms-text-secondary: #52636d;
-    --ms-text-muted: #7a8992;
+    --ms-text-muted: #7b8991;
 
     --ms-success: #198754;
     --ms-danger: #dc3545;
     --ms-warning: #d99700;
 
+    --ms-header-height: 72px;
+
+    --ms-rail-width: 74px;
+
+    --ms-channel-width: 255px;
+
+    /*
+       Reduced from 250px.
+       This keeps the member area useful without stealing
+       excessive width from the actual conversation.
+    */
+    --ms-member-width: 225px;
+
+    --ms-radius-sm: 7px;
+    --ms-radius: 9px;
+    --ms-radius-lg: 14px;
+
     --ms-shadow-sm:
         0 1px 3px rgba(15, 23, 42, 0.05);
 
     --ms-shadow:
-        0 8px 24px rgba(15, 23, 42, 0.07);
+        0 7px 22px rgba(15, 23, 42, 0.07);
 
     --ms-shadow-lg:
-        0 18px 50px rgba(15, 23, 42, 0.12);
-
-    --ms-radius-sm: 7px;
-    --ms-radius: 10px;
-    --ms-radius-lg: 14px;
-
-    --ms-header-height: 72px;
-    --ms-rail-width: 76px;
-    --ms-channel-width: 270px;
-    --ms-member-width: 250px;
+        0 18px 50px rgba(15, 23, 42, 0.13);
 
     --ms-font:
         Inter,
@@ -57,27 +72,36 @@
 
 
 /* ============================================================
-   RESET
+   2. RESET
    ============================================================ */
 
-.community-page *,
-.mwaniki-community *,
-#communityApp *,
-#communityLayout * {
-    box-sizing: border-box;
-}
-
-html,
-body {
+html {
     margin: 0;
     padding: 0;
+    width: 100%;
     min-height: 100%;
 }
 
 body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+
     font-family: var(--ms-font);
+
     background: var(--ms-bg);
+
     color: var(--ms-text);
+
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
 }
 
 button,
@@ -91,8 +115,21 @@ button {
     cursor: pointer;
 }
 
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
 img {
     max-width: 100%;
+}
+
+video {
+    max-width: 100%;
+}
+
+a {
+    color: inherit;
 }
 
 .hidden {
@@ -101,73 +138,106 @@ img {
 
 
 /* ============================================================
-   MAIN COMMUNITY APP
+   3. SCROLLBARS
+   ============================================================ */
+
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd6da transparent;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #cbd6da;
+    border-radius: 20px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #aebdc2;
+}
+
+
+/* ============================================================
+   4. MAIN COMMUNITY APP
    ============================================================ */
 
 #communityApp,
 #mwanikiCommunity,
 .community-app,
 .community-page {
+    width: 100%;
     min-height: 100vh;
+
     background: var(--ms-bg);
 }
 
 
 /* ============================================================
-   COMMUNITY HEADER
+   5. COMMUNITY HEADER
    ============================================================ */
 
 .community-header,
 #communityHeader {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    width: 100%;
     height: var(--ms-header-height);
 
     display: flex;
     align-items: center;
 
+    padding: 0 18px;
+
     background: var(--ms-white);
 
     border-bottom: 1px solid var(--ms-border);
 
-    padding: 0 20px;
-
-    position: sticky;
-    top: 0;
-
-    z-index: 100;
-
     box-shadow: var(--ms-shadow-sm);
 }
 
-
-/* Logo / title */
-
 .community-header-brand,
 .community-brand {
+    min-width: 215px;
+
     display: flex;
     align-items: center;
-    gap: 12px;
 
-    min-width: 230px;
+    gap: 10px;
 }
 
 .community-header-brand img,
 .community-brand img {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
+
+    flex: 0 0 38px;
+
+    border-radius: 9px;
 
     object-fit: cover;
 
-    border-radius: 10px;
+    background: var(--ms-primary-light);
 }
 
 .community-header-brand h1,
 .community-brand h1 {
     margin: 0;
 
-    font-size: 18px;
-    font-weight: 750;
-
     color: var(--ms-text);
+
+    font-size: 17px;
+    line-height: 1.2;
+    font-weight: 750;
 }
 
 .community-header-brand span,
@@ -176,47 +246,54 @@ img {
 
     margin-top: 2px;
 
-    font-size: 11px;
-
     color: var(--ms-text-muted);
+
+    font-size: 10px;
+    line-height: 1.2;
 }
-
-
-/* Header actions */
 
 .community-header-actions {
     margin-left: auto;
 
     display: flex;
     align-items: center;
-    gap: 8px;
+
+    gap: 7px;
 }
 
 .community-header-actions button,
 .community-header button {
-    min-height: 40px;
-    min-width: 40px;
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+    min-height: 38px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 1px solid var(--ms-border);
+
+    border-radius: 8px;
 
     background: var(--ms-white);
 
     color: var(--ms-text-secondary);
 
-    border-radius: 9px;
-
     transition:
-        background 0.18s ease,
-        color 0.18s ease,
-        border-color 0.18s ease,
-        transform 0.18s ease;
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        transform 0.16s ease;
 }
 
 .community-header-actions button:hover,
 .community-header button:hover {
     background: var(--ms-primary-light);
 
-    border-color: #c4e6e1;
+    border-color: #c5e3df;
 
     color: var(--ms-primary);
 
@@ -225,11 +302,14 @@ img {
 
 
 /* ============================================================
-   MAIN COMMUNITY LAYOUT
+   6. COMMUNITY LAYOUT
    ============================================================ */
 
 .community-layout,
 #communityLayout {
+    width: 100%;
+    min-height: calc(100vh - var(--ms-header-height));
+
     display: grid;
 
     grid-template-columns:
@@ -238,61 +318,54 @@ img {
         minmax(0, 1fr)
         var(--ms-member-width);
 
-    min-height:
-        calc(100vh - var(--ms-header-height));
-
     background: var(--ms-white);
+
+    overflow: hidden;
 }
 
 
 /* ============================================================
-   COMMUNITY RAIL
+   7. COMMUNITY RAIL
    ============================================================ */
 
 #communityRail,
 .community-rail {
-    background: #f8fafb;
-
-    border-right: 1px solid var(--ms-border);
-
-    padding: 14px 10px;
+    min-width: 0;
 
     display: flex;
     flex-direction: column;
-
     align-items: center;
 
-    gap: 10px;
+    gap: 8px;
+
+    padding: 12px 8px;
 
     overflow-y: auto;
+
+    background: #f8fafb;
+
+    border-right: 1px solid var(--ms-border);
 }
-
-.community-rail::-webkit-scrollbar {
-    width: 4px;
-}
-
-.community-rail::-webkit-scrollbar-thumb {
-    background: #d8e0e4;
-    border-radius: 10px;
-}
-
-
-/* Rail community button */
 
 .community-rail-item,
 .community-rail button {
-    width: 48px;
-    height: 48px;
+    width: 46px;
+    min-width: 46px;
+
+    height: 46px;
+    min-height: 46px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 13px;
+    border-radius: 12px;
 
     background: var(--ms-white);
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
 
     color: var(--ms-text-secondary);
 
@@ -301,19 +374,20 @@ img {
     box-shadow: var(--ms-shadow-sm);
 
     transition:
-        border-radius 0.18s ease,
-        background 0.18s ease,
-        color 0.18s ease,
-        transform 0.18s ease;
+        background 0.16s ease,
+        border-color 0.16s ease,
+        color 0.16s ease,
+        border-radius 0.16s ease,
+        transform 0.16s ease;
 }
 
 .community-rail-item:hover,
 .community-rail button:hover {
     background: var(--ms-primary-light);
 
-    color: var(--ms-primary);
+    border-color: #c0e1dc;
 
-    border-color: #bfe1dc;
+    color: var(--ms-primary);
 
     transform: translateY(-1px);
 }
@@ -324,88 +398,95 @@ img {
 
     border-color: var(--ms-primary);
 
-    color: white;
+    color: #ffffff;
 
     border-radius: 10px;
 
     box-shadow:
-        0 6px 16px rgba(8, 127, 115, 0.22);
+        0 6px 15px rgba(8, 127, 115, 0.20);
 }
 
 
 /* ============================================================
-   CHANNEL SIDEBAR
+   8. CHANNEL SIDEBAR
    ============================================================ */
 
 #channelSidebar,
 .channel-sidebar {
-    background: var(--ms-white);
-
-    border-right: 1px solid var(--ms-border);
-
     min-width: 0;
 
     display: flex;
     flex-direction: column;
 
     overflow: hidden;
-}
-
-
-/* Community sidebar header */
-
-.channel-sidebar-header {
-    padding: 18px 16px;
-
-    border-bottom: 1px solid var(--ms-border-light);
 
     background: var(--ms-white);
+
+    border-right: 1px solid var(--ms-border);
+}
+
+.channel-sidebar-header {
+    flex: 0 0 auto;
+
+    padding: 15px 14px;
+
+    background: var(--ms-white);
+
+    border-bottom: 1px solid var(--ms-border-light);
 }
 
 .channel-sidebar-header h2 {
     margin: 0;
 
-    font-size: 16px;
-    font-weight: 750;
-
     color: var(--ms-text);
+
+    font-size: 15px;
+    line-height: 1.3;
+    font-weight: 750;
 }
 
 .channel-sidebar-header p {
-    margin: 5px 0 0;
+    margin: 4px 0 0;
 
     color: var(--ms-text-muted);
 
-    font-size: 12px;
+    font-size: 11px;
+    line-height: 1.4;
 }
 
 
-/* Search */
+/* ============================================================
+   9. SEARCH INPUTS
+   ============================================================ */
 
 .channel-search,
 #channelSearch,
 #memberSearch,
 #messageSearch {
     width: 100%;
+    min-width: 0;
 
-    min-height: 40px;
+    height: 36px;
+    min-height: 36px;
+
+    padding: 0 10px;
 
     border: 1px solid var(--ms-border);
 
     border-radius: 8px;
 
+    outline: none;
+
     background: #fbfcfd;
 
     color: var(--ms-text);
 
-    outline: none;
-
-    padding: 0 12px;
+    font-size: 12px;
 
     transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease,
-        background 0.18s ease;
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease;
 }
 
 .channel-search:focus,
@@ -417,7 +498,7 @@ img {
     border-color: var(--ms-primary);
 
     box-shadow:
-        0 0 0 3px rgba(8, 127, 115, 0.09);
+        0 0 0 3px rgba(8, 127, 115, 0.08);
 }
 
 .channel-search::placeholder,
@@ -428,83 +509,67 @@ img {
 }
 
 
-/* Channel list */
+/* ============================================================
+   10. CHANNEL LIST
+   ============================================================ */
 
 #channelList,
 .channel-list {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
 
     overflow-y: auto;
 
-    padding: 12px 9px;
+    padding: 9px 8px;
 }
-
-#channelList::-webkit-scrollbar,
-.channel-list::-webkit-scrollbar,
-#messageList::-webkit-scrollbar,
-#memberSidebar::-webkit-scrollbar {
-    width: 5px;
-}
-
-#channelList::-webkit-scrollbar-thumb,
-.channel-list::-webkit-scrollbar-thumb,
-#messageList::-webkit-scrollbar-thumb,
-#memberSidebar::-webkit-scrollbar-thumb {
-    background: #d8e0e4;
-
-    border-radius: 10px;
-}
-
-
-/* Channel category */
 
 .channel-category,
 .channel-group-title {
-    padding: 12px 9px 6px;
+    padding: 11px 8px 5px;
 
     color: var(--ms-text-muted);
 
-    font-size: 10px;
-
+    font-size: 9px;
     font-weight: 800;
 
-    letter-spacing: 0.08em;
+    letter-spacing: 0.09em;
 
     text-transform: uppercase;
 }
 
-
-/* Channel item */
-
 .channel-item {
     width: 100%;
+
+    min-height: 34px;
 
     display: flex;
     align-items: center;
 
-    gap: 9px;
+    gap: 8px;
+
+    padding: 7px 9px;
+
+    margin: 1px 0;
 
     border: 0;
+
+    border-radius: 7px;
 
     background: transparent;
 
     color: var(--ms-text-secondary);
 
-    padding: 9px 10px;
-
-    border-radius: 8px;
-
-    margin-bottom: 2px;
-
     text-align: left;
 
+    font-size: 12px;
+
     transition:
-        background 0.15s ease,
-        color 0.15s ease;
+        background 0.14s ease,
+        color 0.14s ease;
 }
 
 .channel-item:hover {
-    background: #f2f7f7;
+    background: #f1f7f6;
 
     color: var(--ms-primary);
 }
@@ -517,49 +582,46 @@ img {
     font-weight: 700;
 }
 
-.channel-item::before {
-    color: #8a999f;
-}
-
-.channel-item.active::before {
-    color: var(--ms-primary);
-}
-
 
 /* ============================================================
-   CHAT AREA
+   11. CHAT AREA
    ============================================================ */
 
 #messageArea,
 .message-area,
 .community-chat {
+    position: relative;
+
     min-width: 0;
+    min-height: 0;
 
     display: flex;
     flex-direction: column;
 
     background: var(--ms-white);
 
-    position: relative;
+    overflow: hidden;
 }
 
 
-/* Chat header */
+/* ============================================================
+   12. CHAT HEADER
+   ============================================================ */
 
 .chat-header,
 #chatHeader {
-    min-height: 68px;
+    flex: 0 0 auto;
+
+    min-height: 62px;
 
     display: flex;
     align-items: center;
 
-    padding: 0 20px;
-
-    border-bottom: 1px solid var(--ms-border);
+    padding: 0 16px;
 
     background: var(--ms-white);
 
-    flex-shrink: 0;
+    border-bottom: 1px solid var(--ms-border);
 }
 
 .chat-header-info {
@@ -569,25 +631,26 @@ img {
 .chat-header-info h2 {
     margin: 0;
 
-    font-size: 17px;
-
-    font-weight: 750;
-
     color: var(--ms-text);
 
+    font-size: 16px;
+    font-weight: 750;
+
     white-space: nowrap;
-
     overflow: hidden;
-
     text-overflow: ellipsis;
 }
 
 .chat-header-info p {
     margin: 3px 0 0;
 
-    font-size: 12px;
-
     color: var(--ms-text-muted);
+
+    font-size: 11px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .chat-header-actions {
@@ -596,12 +659,19 @@ img {
     display: flex;
     align-items: center;
 
-    gap: 6px;
+    gap: 5px;
 }
 
 .chat-header-actions button {
-    width: 38px;
-    height: 38px;
+    width: 35px;
+    height: 35px;
+    min-width: 35px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 1px solid transparent;
 
@@ -610,51 +680,53 @@ img {
     background: transparent;
 
     color: var(--ms-text-secondary);
-
-    transition:
-        background 0.18s ease,
-        color 0.18s ease;
 }
 
 .chat-header-actions button:hover {
     background: var(--ms-primary-light);
 
     color: var(--ms-primary);
+
+    border-color: #cce5e1;
 }
 
 
 /* ============================================================
-   MESSAGE LIST
+   13. MESSAGE LIST
    ============================================================ */
 
 #messageList,
 .message-list {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
 
     overflow-y: auto;
 
-    padding: 22px 24px 20px;
+    padding: 18px 20px;
 
     background:
         linear-gradient(
-            to bottom,
-            #ffffff,
-            #fbfcfd
+            180deg,
+            #ffffff 0%,
+            #fbfcfd 100%
         );
 }
 
 
-/* Empty state */
+/* ============================================================
+   14. EMPTY MESSAGE STATE
+   ============================================================ */
 
 .message-empty,
 .empty-message-state {
-    min-height: 260px;
+    min-height: 240px;
 
     display: flex;
     flex-direction: column;
-
     align-items: center;
     justify-content: center;
+
+    padding: 25px;
 
     text-align: center;
 
@@ -663,32 +735,33 @@ img {
 
 .message-empty h3,
 .empty-message-state h3 {
-    margin: 10px 0 5px;
+    margin: 8px 0 4px;
 
     color: var(--ms-text);
+
+    font-size: 16px;
 }
 
 
 /* ============================================================
-   MESSAGE
+   15. MESSAGE ROW
    ============================================================ */
 
 .message,
 .message-item {
-    display: flex;
-
-    align-items: flex-start;
-
-    gap: 11px;
-
-    padding: 9px 8px;
-
-    border-radius: 9px;
-
     position: relative;
 
+    display: flex;
+    align-items: flex-start;
+
+    gap: 10px;
+
+    padding: 7px 6px;
+
+    border-radius: 8px;
+
     transition:
-        background 0.15s ease;
+        background 0.14s ease;
 }
 
 .message:hover,
@@ -697,20 +770,18 @@ img {
 }
 
 
-/* Avatar */
+/* ============================================================
+   16. MESSAGE AVATAR
+   ============================================================ */
 
 .message-avatar,
 .message-item-avatar {
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
 
-    min-width: 38px;
+    min-width: 36px;
 
-    border-radius: 50%;
-
-    background: var(--ms-primary-light);
-
-    color: var(--ms-primary);
+    flex: 0 0 36px;
 
     display: flex;
     align-items: center;
@@ -718,7 +789,13 @@ img {
 
     overflow: hidden;
 
-    font-size: 12px;
+    border-radius: 50%;
+
+    background: var(--ms-primary-light);
+
+    color: var(--ms-primary);
+
+    font-size: 11px;
     font-weight: 800;
 }
 
@@ -727,53 +804,55 @@ img {
     width: 100%;
     height: 100%;
 
+    display: block;
+
     object-fit: cover;
 }
 
 
-/* Message body */
+/* ============================================================
+   17. MESSAGE CONTENT
+   ============================================================ */
 
 .message-content,
 .message-item-content {
+    flex: 1 1 auto;
     min-width: 0;
-
-    flex: 1;
 }
 
 .message-header,
 .message-item-header {
     display: flex;
-
     align-items: baseline;
 
-    gap: 8px;
+    gap: 7px;
 
-    margin-bottom: 3px;
+    margin-bottom: 2px;
 }
 
 .message-author,
 .message-item-author {
-    font-size: 13px;
+    color: var(--ms-text);
+
+    font-size: 12px;
 
     font-weight: 750;
-
-    color: var(--ms-text);
 }
 
 .message-time,
 .message-item-time {
-    font-size: 10px;
-
     color: var(--ms-text-muted);
+
+    font-size: 9px;
 }
 
 .message-text,
 .message-item-text {
-    font-size: 14px;
-
-    line-height: 1.6;
-
     color: #33434c;
+
+    font-size: 13px;
+
+    line-height: 1.55;
 
     white-space: pre-wrap;
 
@@ -781,29 +860,32 @@ img {
 }
 
 
-/* Message actions */
+/* ============================================================
+   18. MESSAGE ACTIONS
+   ============================================================ */
 
 .message-actions {
     position: absolute;
 
-    right: 10px;
-    top: -8px;
+    top: -7px;
+    right: 8px;
+
+    z-index: 5;
 
     display: none;
-
     align-items: center;
 
-    gap: 3px;
+    gap: 2px;
+
+    padding: 3px;
 
     background: var(--ms-white);
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 8px;
+    border-radius: 7px;
 
     box-shadow: var(--ms-shadow);
-
-    padding: 3px;
 }
 
 .message:hover .message-actions,
@@ -812,8 +894,14 @@ img {
 }
 
 .message-actions button {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 0;
 
@@ -838,53 +926,53 @@ img {
 
 
 /* ============================================================
-   ATTACHMENTS
+   19. ATTACHMENTS
    ============================================================ */
 
 .message-attachment,
 .chat-attachment {
-    margin-top: 9px;
+    max-width: min(430px, 100%);
 
-    max-width: 420px;
+    margin-top: 8px;
+
+    overflow: hidden;
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 10px;
-
-    overflow: hidden;
+    border-radius: 9px;
 
     background: #fafcfc;
 }
 
 .message-attachment img,
 .chat-attachment img {
-    display: block;
-
     width: 100%;
-    max-height: 360px;
+    max-height: 350px;
+
+    display: block;
 
     object-fit: contain;
 
-    background: #f4f7f8;
+    background: #f3f6f7;
 }
 
 .message-attachment a,
 .chat-attachment a {
-    display: flex;
+    min-height: 42px;
 
+    display: flex;
     align-items: center;
 
-    gap: 9px;
+    gap: 8px;
 
-    padding: 11px 13px;
+    padding: 8px 11px;
 
     color: var(--ms-primary);
 
-    text-decoration: none;
-
-    font-size: 13px;
-
+    font-size: 12px;
     font-weight: 650;
+
+    text-decoration: none;
 }
 
 .message-attachment a:hover,
@@ -894,78 +982,81 @@ img {
 
 
 /* ============================================================
-   REACTIONS
+   20. REACTIONS
    ============================================================ */
 
 .message-reactions {
     display: flex;
-
     flex-wrap: wrap;
 
-    gap: 5px;
+    gap: 4px;
 
-    margin-top: 6px;
+    margin-top: 5px;
 }
 
 .message-reaction {
-    min-height: 26px;
+    min-height: 24px;
 
-    padding: 3px 8px;
+    padding: 2px 7px;
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 20px;
+    border-radius: 18px;
 
     background: var(--ms-white);
 
-    font-size: 12px;
-
     color: var(--ms-text-secondary);
+
+    font-size: 11px;
 }
 
 .message-reaction:hover,
 .message-reaction.active {
-    border-color: #b8ddd8;
-
     background: var(--ms-primary-light);
+
+    border-color: #b9ddd8;
 
     color: var(--ms-primary);
 }
 
 
 /* ============================================================
-   MESSAGE COMPOSER
+   21. MESSAGE COMPOSER
    ============================================================ */
 
 .message-composer,
 #messageComposer {
-    padding: 12px 18px 16px;
+    position: relative;
+
+    flex: 0 0 auto;
+
+    padding: 9px 14px 13px;
 
     background: var(--ms-white);
 
     border-top: 1px solid var(--ms-border);
-
-    flex-shrink: 0;
 }
 
 .message-composer-inner {
-    display: flex;
+    width: 100%;
 
+    display: flex;
     align-items: flex-end;
 
-    gap: 8px;
+    gap: 5px;
 
-    padding: 7px;
+    padding: 5px;
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 12px;
+    border-radius: 11px;
 
     background: #fbfcfd;
 
     transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease;
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        background 0.16s ease;
 }
 
 .message-composer-inner:focus-within {
@@ -978,13 +1069,18 @@ img {
 }
 
 #messageInput {
-    flex: 1;
+    flex: 1 1 auto;
 
-    min-height: 42px;
+    width: 100%;
 
-    max-height: 150px;
+    min-width: 0;
+
+    min-height: 38px;
+    max-height: 140px;
 
     resize: none;
+
+    padding: 8px 6px;
 
     border: 0;
 
@@ -994,9 +1090,9 @@ img {
 
     color: var(--ms-text);
 
-    padding: 9px 6px;
+    font-size: 13px;
 
-    line-height: 1.5;
+    line-height: 1.45;
 }
 
 #messageInput::placeholder {
@@ -1004,7 +1100,9 @@ img {
 }
 
 
-/* Composer buttons */
+/* ============================================================
+   22. COMPOSER BUTTONS
+   ============================================================ */
 
 .message-composer button,
 #sendMessageButton,
@@ -1013,10 +1111,17 @@ img {
 #stickerButton,
 #gifButton,
 #attachmentButton {
-    width: 38px;
-    height: 38px;
+    width: 35px;
+    min-width: 35px;
 
-    min-width: 38px;
+    height: 35px;
+    min-height: 35px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 0;
 
@@ -1026,15 +1131,10 @@ img {
 
     color: var(--ms-text-secondary);
 
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
     transition:
-        background 0.16s ease,
-        color 0.16s ease,
-        transform 0.16s ease;
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
 }
 
 .message-composer button:hover,
@@ -1051,60 +1151,56 @@ img {
 #sendMessageButton {
     background: var(--ms-primary);
 
-    color: white;
-
-    font-weight: 700;
+    color: #ffffff;
 }
 
 #sendMessageButton:hover {
     background: var(--ms-primary-dark);
 
-    color: white;
+    color: #ffffff;
 
     transform: translateY(-1px);
 }
 
 
 /* ============================================================
-   VOICE RECORDING
+   23. VOICE RECORDING
    ============================================================ */
 
 .voice-recording,
 .recording-active {
-    background: #fff6f6 !important;
+    background: #fff5f6 !important;
+
+    border: 1px solid #ffd4d8 !important;
 
     color: var(--ms-danger) !important;
-
-    border: 1px solid #ffd4d7 !important;
 }
 
 .voice-note {
-    display: flex;
+    max-width: 380px;
 
+    display: flex;
     align-items: center;
 
-    gap: 10px;
+    gap: 9px;
 
-    padding: 10px 12px;
-
-    border-radius: 10px;
-
-    background: #f5f9f9;
+    padding: 8px 10px;
 
     border: 1px solid var(--ms-border);
 
-    max-width: 380px;
+    border-radius: 9px;
+
+    background: #f5f9f9;
 }
 
 .voice-note audio {
     width: 100%;
-
-    height: 34px;
+    height: 32px;
 }
 
 
 /* ============================================================
-   EMOJI / STICKER / GIF PANELS
+   24. EMOJI / STICKER / GIF PANELS
    ============================================================ */
 
 #emojiPanel,
@@ -1112,14 +1208,19 @@ img {
 #gifPanel {
     position: absolute;
 
-    right: 20px;
-    bottom: 78px;
+    right: 14px;
+    bottom: 68px;
 
-    width: 330px;
+    z-index: 200;
 
-    max-height: 390px;
+    width: 320px;
+    max-width: calc(100% - 20px);
+
+    max-height: 360px;
 
     overflow-y: auto;
+
+    padding: 10px;
 
     background: var(--ms-white);
 
@@ -1128,10 +1229,6 @@ img {
     border-radius: 12px;
 
     box-shadow: var(--ms-shadow-lg);
-
-    z-index: 200;
-
-    padding: 12px;
 }
 
 .emoji-grid,
@@ -1142,21 +1239,25 @@ img {
     grid-template-columns:
         repeat(6, minmax(0, 1fr));
 
-    gap: 5px;
+    gap: 4px;
 }
 
 .emoji-grid button,
 .sticker-grid button,
 .gif-grid button {
-    min-height: 42px;
+    min-height: 40px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 4px;
 
     border: 0;
 
+    border-radius: 7px;
+
     background: transparent;
-
-    border-radius: 8px;
-
-    cursor: pointer;
 }
 
 .emoji-grid button:hover,
@@ -1167,60 +1268,60 @@ img {
 
 
 /* ============================================================
-   MEMBER SIDEBAR
+   25. MEMBER SIDEBAR
    ============================================================ */
-/* ============================================================
-   MEMBER SIDEBAR — COMPACT PROFESSIONAL VERSION
-   ============================================================ */
+
+/*
+   IMPORTANT:
+   The member sidebar has intentionally been made narrower.
+   Member avatars are now 30x30 rather than 36x36.
+*/
 
 #memberSidebar,
 .member-sidebar {
-    background: #ffffff;
-    border-left: 1px solid var(--ms-border);
-
-    width: 235px;
-    min-width: 235px;
-    max-width: 235px;
+    min-width: 0;
+    width: 100%;
 
     overflow-y: auto;
 
     padding: 12px 9px;
 
-    min-height: 0;
+    background: #fbfcfd;
+
+    border-left: 1px solid var(--ms-border);
 }
-
-
-/* Member sidebar heading */
 
 .member-sidebar-header {
     padding: 3px 5px 9px;
 
-    border-bottom: 1px solid var(--ms-border-light);
-
     margin-bottom: 7px;
+
+    border-bottom: 1px solid var(--ms-border-light);
 }
 
 .member-sidebar-header h3 {
     margin: 0;
 
-    font-size: 11px;
-    line-height: 1.3;
+    color: var(--ms-text-muted);
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.07em;
 
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-
-    color: var(--ms-text-muted);
 }
 
 
 /* ============================================================
-   MEMBER ROW
+   26. MEMBER ROW
    ============================================================ */
 
 .member-item {
     width: 100%;
 
-    min-height: 42px;
+    min-height: 40px;
 
     display: flex;
     align-items: center;
@@ -1231,23 +1332,21 @@ img {
 
     margin: 1px 0;
 
-    border-radius: 7px;
+    border-radius: 8px;
 
-    overflow: hidden;
+    background: transparent;
 
     transition:
-        background 0.15s ease,
-        transform 0.15s ease;
+        background 0.14s ease;
 }
 
 .member-item:hover {
-    background: #f3f8f7;
+    background: #eef5f4;
 }
 
 
 /* ============================================================
-   MEMBER PHOTO
-   IMPORTANT: KEEP THIS SMALL
+   27. MEMBER AVATAR
    ============================================================ */
 
 .member-avatar {
@@ -1259,89 +1358,77 @@ img {
 
     flex: 0 0 30px;
 
-    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     overflow: hidden;
+
+    border-radius: 50%;
 
     background: var(--ms-primary-light);
 
     color: var(--ms-primary);
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 9px;
 
-    font-size: 10px;
-    font-weight: 750;
+    font-weight: 800;
 
     position: relative;
 }
 
 .member-avatar img {
+    width: 100% !important;
+    height: 100% !important;
+
+    max-width: none !important;
+
     display: block;
 
-    width: 30px !important;
-    height: 30px !important;
-
-    min-width: 30px !important;
-    min-height: 30px !important;
-
-    max-width: 30px !important;
-    max-height: 30px !important;
-
     object-fit: cover;
-
-    border-radius: 50%;
 }
 
-
-/* ============================================================
-   MEMBER INFORMATION
-   ============================================================ */
-
 .member-info {
-    min-width: 0;
-
     flex: 1 1 auto;
 
-    overflow: hidden;
+    min-width: 0;
 }
 
 .member-name {
-    display: block;
-
-    width: 100%;
-
-    font-size: 12px;
-    line-height: 1.25;
-
-    font-weight: 650;
+    overflow: hidden;
 
     color: var(--ms-text);
 
+    font-size: 11px;
+
+    line-height: 1.2;
+
+    font-weight: 650;
+
     white-space: nowrap;
-    overflow: hidden;
+
     text-overflow: ellipsis;
 }
 
 .member-role {
-    display: block;
+    margin-top: 2px;
 
-    margin-top: 1px;
-
-    font-size: 9px;
-    line-height: 1.2;
+    overflow: hidden;
 
     color: var(--ms-text-muted);
 
+    font-size: 9px;
+
+    line-height: 1.1;
+
     white-space: nowrap;
-    overflow: hidden;
+
     text-overflow: ellipsis;
 }
 
 
 /* ============================================================
-   ONLINE INDICATOR
+   28. MEMBER ONLINE INDICATOR
    ============================================================ */
 
 .member-online-dot {
@@ -1349,39 +1436,40 @@ img {
     height: 7px !important;
 
     min-width: 7px !important;
-    max-width: 7px !important;
 
     flex: 0 0 7px;
 
     border-radius: 50%;
 
-    background: #b9c2c6;
+    background: #b8c2c6;
 
-    border: 1px solid #ffffff;
-
-    box-shadow: 0 0 0 1px #d9e0e3;
+    border: 1px solid #fbfcfd;
 }
 
 .member-online-dot.online {
     background: var(--ms-success);
 
     box-shadow:
-        0 0 0 1px #ffffff,
-        0 0 0 2px rgba(25, 135, 84, 0.15);
+        0 0 0 2px rgba(25, 135, 84, 0.08);
 }
 
 
 /* ============================================================
-   MEMBER CALL BUTTON
+   29. MEMBER CALL BUTTON
    ============================================================ */
 
 .member-call-button {
     width: 27px !important;
-    height: 27px !important;
-
     min-width: 27px !important;
 
-    flex: 0 0 27px;
+    height: 27px !important;
+    min-height: 27px !important;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 0;
 
@@ -1391,112 +1479,58 @@ img {
 
     color: var(--ms-primary);
 
-    display: inline-flex;
-
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
     opacity: 0;
 
     transition:
-        opacity 0.15s ease,
-        background 0.15s ease;
+        opacity 0.14s ease,
+        background 0.14s ease;
 }
 
 .member-item:hover .member-call-button,
-.member-call-button:focus {
+.member-call-button:focus-visible {
     opacity: 1;
 }
 
 .member-call-button:hover {
     background: var(--ms-primary-light);
-
-    color: var(--ms-primary-dark);
 }
 
 
 /* ============================================================
-   MEMBER SEARCH
-   ============================================================ */
-
-#memberSearch {
-    min-height: 34px;
-
-    height: 34px;
-
-    padding: 0 9px;
-
-    font-size: 11px;
-
-    border-radius: 7px;
-
-    margin-bottom: 8px;
-}
-
-
-/* ============================================================
-   MEMBER SIDEBAR SCROLLBAR
-   ============================================================ */
-
-#memberSidebar::-webkit-scrollbar,
-.member-sidebar::-webkit-scrollbar {
-    width: 4px;
-}
-
-#memberSidebar::-webkit-scrollbar-track,
-.member-sidebar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-#memberSidebar::-webkit-scrollbar-thumb,
-.member-sidebar::-webkit-scrollbar-thumb {
-    background: #d5dfe2;
-
-    border-radius: 20px;
-}
-
-#memberSidebar::-webkit-scrollbar-thumb:hover,
-.member-sidebar::-webkit-scrollbar-thumb:hover {
-    background: #b8c7cb;
-}
-
-/* ============================================================
-   GENERAL CALL / COMMUNITY CALL BUTTONS
+   30. GENERAL / COMMUNITY CALL BUTTONS
    ============================================================ */
 
 #generalCallButton,
 #communityCallButton {
+    min-height: 38px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 12px;
+
     border: 0;
-
-    min-height: 40px;
-
-    padding: 0 13px;
 
     border-radius: 8px;
 
     background: var(--ms-primary);
 
-    color: white;
+    color: #ffffff;
+
+    font-size: 12px;
 
     font-weight: 700;
 
-    display: inline-flex;
-
-    align-items: center;
-
-    justify-content: center;
-
-    gap: 7px;
-
     box-shadow:
-        0 4px 12px rgba(8, 127, 115, 0.16);
+        0 4px 11px rgba(8, 127, 115, 0.15);
 
     transition:
-        background 0.18s ease,
-        transform 0.18s ease,
-        box-shadow 0.18s ease;
+        background 0.16s ease,
+        transform 0.16s ease,
+        box-shadow 0.16s ease;
 }
 
 #generalCallButton:hover,
@@ -1506,12 +1540,12 @@ img {
     transform: translateY(-1px);
 
     box-shadow:
-        0 7px 16px rgba(8, 127, 115, 0.22);
+        0 6px 15px rgba(8, 127, 115, 0.20);
 }
 
 
 /* ============================================================
-   GENERAL CALL PICKER
+   31. CALL PICKER OVERLAY
    ============================================================ */
 
 #mwanikiCallPicker,
@@ -1524,111 +1558,128 @@ img {
     z-index: 1000;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
-    padding: 20px;
+    padding: 18px;
 
-    background: rgba(15, 23, 42, 0.32);
+    background: rgba(15, 23, 42, 0.34);
 
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(5px);
 }
 
 .call-picker-card {
-    width: min(620px, 100%);
+    width: min(580px, 100%);
 
     max-height: 82vh;
 
     display: flex;
-
     flex-direction: column;
+
+    overflow: hidden;
 
     background: var(--ms-white);
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 16px;
+    border-radius: 15px;
 
     box-shadow: var(--ms-shadow-lg);
-
-    overflow: hidden;
 }
 
 .call-picker-header {
-    padding: 20px;
-
-    border-bottom: 1px solid var(--ms-border);
+    flex: 0 0 auto;
 
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 16px;
+
+    border-bottom: 1px solid var(--ms-border);
 }
 
 .call-picker-header h2 {
     margin: 0;
 
-    font-size: 18px;
-
     color: var(--ms-text);
+
+    font-size: 17px;
 }
 
 .call-picker-header p {
-    margin: 4px 0 0;
+    margin: 3px 0 0;
 
     color: var(--ms-text-muted);
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .call-picker-body {
-    padding: 15px;
+    flex: 1 1 auto;
+
+    min-height: 0;
 
     overflow-y: auto;
+
+    padding: 12px;
 }
 
 .call-picker-user {
-    display: flex;
+    width: 100%;
 
+    min-height: 58px;
+
+    display: flex;
     align-items: center;
 
-    gap: 11px;
+    gap: 9px;
 
-    padding: 11px;
+    padding: 8px;
+
+    margin-bottom: 6px;
 
     border: 1px solid var(--ms-border-light);
 
-    border-radius: 10px;
-
-    margin-bottom: 7px;
-
-    cursor: pointer;
+    border-radius: 9px;
 
     background: var(--ms-white);
 
+    cursor: pointer;
+
     transition:
-        background 0.15s ease,
-        border-color 0.15s ease;
+        background 0.14s ease,
+        border-color 0.14s ease;
 }
 
 .call-picker-user:hover {
-    background: #f7fbfb;
+    background: #f6fbfa;
 
-    border-color: #c9e5e1;
+    border-color: #c7e3df;
 }
 
 .call-picker-user.selected {
     background: var(--ms-primary-light);
 
-    border-color: #b8ddd8;
+    border-color: #acd6d0;
 }
 
 .call-picker-user img,
 .call-picker-avatar {
-    width: 42px;
-    height: 42px;
+    width: 38px;
+    height: 38px;
+
+    min-width: 38px;
+
+    flex: 0 0 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
 
     border-radius: 50%;
 
@@ -1638,23 +1689,26 @@ img {
 
     color: var(--ms-primary);
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
 }
 
 .call-picker-user-info {
-    flex: 1;
-
     min-width: 0;
+
+    flex: 1;
 }
 
 .call-picker-user-name {
-    font-weight: 700;
+    overflow: hidden;
 
     color: var(--ms-text);
 
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .call-picker-user-status {
@@ -1662,26 +1716,26 @@ img {
 
     color: var(--ms-text-muted);
 
-    font-size: 11px;
+    font-size: 10px;
 }
 
 .call-picker-footer {
-    padding: 14px 18px;
-
-    border-top: 1px solid var(--ms-border);
+    flex: 0 0 auto;
 
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
-    gap: 10px;
+    gap: 8px;
+
+    padding: 12px 15px;
+
+    border-top: 1px solid var(--ms-border);
 }
 
 
 /* ============================================================
-   INCOMING CALL
+   32. INCOMING CALL
    ============================================================ */
 
 #mwanikiIncomingCall,
@@ -1693,58 +1747,54 @@ img {
     z-index: 1200;
 
     display: flex;
-
     align-items: center;
-
     justify-content: center;
 
-    padding: 20px;
+    padding: 18px;
 
-    background: rgba(15, 23, 42, 0.35);
+    background: rgba(15, 23, 42, 0.36);
 
     backdrop-filter: blur(5px);
 }
 
 .incoming-call-card {
-    width: min(400px, 100%);
+    width: min(370px, 100%);
+
+    padding: 24px;
+
+    text-align: center;
 
     background: var(--ms-white);
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 18px;
-
-    padding: 28px;
-
-    text-align: center;
+    border-radius: 17px;
 
     box-shadow: var(--ms-shadow-lg);
 }
 
 .incoming-call-avatar {
-    width: 82px;
-    height: 82px;
+    width: 72px;
+    height: 72px;
 
-    margin: 0 auto 15px;
+    margin: 0 auto 13px;
 
-    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
     overflow: hidden;
+
+    border: 3px solid #e1f1ef;
+
+    border-radius: 50%;
 
     background: var(--ms-primary-light);
 
     color: var(--ms-primary);
 
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    font-size: 22px;
-
+    font-size: 20px;
     font-weight: 800;
-
-    border: 4px solid #e4f4f1;
 }
 
 .incoming-call-avatar img {
@@ -1757,160 +1807,179 @@ img {
 .incoming-call-card h2 {
     margin: 0;
 
-    font-size: 20px;
-
     color: var(--ms-text);
+
+    font-size: 19px;
 }
 
 .incoming-call-card p {
-    margin: 6px 0 20px;
+    margin: 5px 0 18px;
 
     color: var(--ms-text-muted);
 
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .incoming-call-actions {
     display: flex;
-
     justify-content: center;
 
-    gap: 10px;
+    gap: 8px;
 }
 
 .incoming-call-actions button {
-    min-width: 110px;
+    min-width: 105px;
+    min-height: 40px;
 
-    min-height: 42px;
+    padding: 0 12px;
 
-    border: 0;
+    border-radius: 8px;
 
-    border-radius: 9px;
+    font-size: 12px;
 
     font-weight: 700;
 }
 
 .incoming-call-accept {
+    border: 1px solid var(--ms-primary);
+
     background: var(--ms-primary);
 
-    color: white;
+    color: #ffffff;
+}
+
+.incoming-call-accept:hover {
+    background: var(--ms-primary-dark);
 }
 
 .incoming-call-decline {
+    border: 1px solid #ffd3d7 !important;
+
     background: #fff1f2;
 
     color: var(--ms-danger);
+}
 
-    border: 1px solid #ffd4d8 !important;
+.incoming-call-decline:hover {
+    background: #ffe4e7;
 }
 
 
 /* ============================================================
-   CALL PAGE
+   33. CALL PAGE
    ============================================================ */
 
 #mwanikiCallApp,
 .mwaniki-call-app {
+    width: 100%;
     min-height: 100vh;
+
+    display: flex;
+    flex-direction: column;
 
     background: #ffffff;
 
     color: var(--ms-text);
-
-    display: flex;
-
-    flex-direction: column;
 }
 
 
-/* Call header */
+/* ============================================================
+   34. CALL HEADER
+   ============================================================ */
 
 .mwaniki-call-header {
-    min-height: 68px;
+    position: relative;
+    z-index: 20;
+
+    flex: 0 0 auto;
+
+    min-height: 64px;
 
     display: flex;
-
     align-items: center;
 
-    padding: 0 22px;
+    padding: 0 18px;
 
     background: var(--ms-white);
 
     border-bottom: 1px solid var(--ms-border);
 
     box-shadow: var(--ms-shadow-sm);
-
-    z-index: 20;
 }
 
 .mwaniki-call-header h1 {
     margin: 0;
 
-    font-size: 17px;
+    color: var(--ms-text);
+
+    font-size: 16px;
 
     font-weight: 750;
 }
 
 .mwaniki-call-header p {
-    margin: 3px 0 0;
-
-    font-size: 11px;
+    margin: 2px 0 0;
 
     color: var(--ms-text-muted);
+
+    font-size: 10px;
 }
 
 #mwanikiCallStatus {
     margin-left: auto;
 
-    padding: 7px 11px;
+    padding: 6px 10px;
 
-    border-radius: 20px;
+    border-radius: 18px;
 
     background: var(--ms-primary-light);
 
     color: var(--ms-primary);
 
-    font-size: 11px;
+    font-size: 10px;
 
-    font-weight: 650;
+    font-weight: 700;
 }
 
 
-/* Video area */
+/* ============================================================
+   35. VIDEO GRID
+   ============================================================ */
 
 #mwanikiVideoGrid {
-    flex: 1;
+    flex: 1 1 auto;
 
     min-height: 0;
-
-    padding: 20px;
 
     display: grid;
 
     grid-template-columns:
         repeat(
             auto-fit,
-            minmax(280px, 1fr)
+            minmax(260px, 1fr)
         );
 
-    gap: 14px;
+    gap: 12px;
 
-    background:
-        #f6f8f9;
+    padding: 16px;
+
+    overflow: auto;
+
+    background: #f5f8f9;
 }
 
 .mwaniki-video-tile {
     position: relative;
 
-    min-height: 240px;
+    min-height: 220px;
 
     overflow: hidden;
 
-    border-radius: 14px;
-
-    background: #e9eef0;
-
     border: 1px solid var(--ms-border);
+
+    border-radius: 13px;
+
+    background: #e7edef;
 
     box-shadow: var(--ms-shadow);
 }
@@ -1919,51 +1988,91 @@ img {
     width: 100%;
     height: 100%;
 
-    min-height: 240px;
+    min-height: 220px;
 
     display: block;
 
     object-fit: cover;
 
-    background: #e9eef0;
+    background: #e7edef;
 }
 
 .mwaniki-video-name {
     position: absolute;
 
-    left: 12px;
-    bottom: 12px;
+    left: 10px;
+    bottom: 10px;
 
-    padding: 5px 9px;
+    max-width: calc(100% - 20px);
 
-    border-radius: 7px;
+    padding: 5px 8px;
+
+    overflow: hidden;
+
+    border-radius: 6px;
 
     background: rgba(255, 255, 255, 0.92);
 
     color: var(--ms-text);
 
-    font-size: 11px;
+    font-size: 10px;
 
     font-weight: 700;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
 
     box-shadow: var(--ms-shadow-sm);
 }
 
 
-/* Call controls */
+/* ============================================================
+   36. LOCAL VIDEO
+   ============================================================ */
+
+#mwanikiLocalVideo {
+    position: fixed;
+
+    right: 18px;
+    bottom: 100px;
+
+    z-index: 30;
+
+    width: 190px;
+    height: 135px;
+
+    object-fit: cover;
+
+    border: 3px solid #ffffff;
+
+    border-radius: 11px;
+
+    background: #e7edef;
+
+    box-shadow: var(--ms-shadow-lg);
+}
+
+
+/* ============================================================
+   37. CALL CONTROLS
+   ============================================================ */
 
 .mwaniki-call-controls {
-    min-height: 82px;
+    position: relative;
+    z-index: 20;
 
-    padding: 15px 20px;
+    flex: 0 0 auto;
+
+    min-height: 76px;
 
     display: flex;
-
     align-items: center;
-
     justify-content: center;
 
-    gap: 10px;
+    gap: 9px;
+
+    padding: 12px 18px;
 
     background: var(--ms-white);
 
@@ -1971,13 +2080,19 @@ img {
 
     box-shadow:
         0 -5px 18px rgba(15, 23, 42, 0.05);
-
-    z-index: 20;
 }
 
 .mwaniki-call-controls button {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
+
+    min-width: 44px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 1px solid var(--ms-border);
 
@@ -1987,22 +2102,17 @@ img {
 
     color: var(--ms-text-secondary);
 
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
     transition:
-        background 0.18s ease,
-        border-color 0.18s ease,
-        color 0.18s ease,
-        transform 0.18s ease;
+        background 0.15s ease,
+        border-color 0.15s ease,
+        color 0.15s ease,
+        transform 0.15s ease;
 }
 
 .mwaniki-call-controls button:hover {
     background: var(--ms-primary-light);
 
-    border-color: #c2e2de;
+    border-color: #c0e1dc;
 
     color: var(--ms-primary);
 
@@ -2010,101 +2120,84 @@ img {
 }
 
 #mwanikiEndButton {
-    width: 54px;
-    height: 46px;
+    width: 50px;
+    min-width: 50px;
 
-    border-radius: 12px;
+    height: 44px;
 
-    background: var(--ms-danger);
+    border-radius: 11px;
 
     border-color: var(--ms-danger);
 
-    color: white;
+    background: var(--ms-danger);
+
+    color: #ffffff;
 }
 
 #mwanikiEndButton:hover {
-    background: #bb2d3b;
-
     border-color: #bb2d3b;
 
-    color: white;
+    background: #bb2d3b;
+
+    color: #ffffff;
 }
 
 #mwanikiLeaveCall {
     margin-left: auto;
 
+    min-height: 36px;
+
+    padding: 0 11px;
+
     border: 1px solid #ffd2d5;
+
+    border-radius: 8px;
 
     background: #fff2f3;
 
     color: var(--ms-danger);
 
-    border-radius: 8px;
-
-    padding: 8px 12px;
+    font-size: 11px;
 
     font-weight: 700;
 }
 
-
-/* ============================================================
-   CALL PAGE LOCAL VIDEO
-   ============================================================ */
-
-#mwanikiLocalVideo {
-    position: fixed;
-
-    right: 20px;
-    bottom: 105px;
-
-    width: 210px;
-    height: 150px;
-
-    object-fit: cover;
-
-    border-radius: 12px;
-
-    border: 3px solid white;
-
-    background: #e9eef0;
-
-    box-shadow: var(--ms-shadow-lg);
-
-    z-index: 30;
+#mwanikiLeaveCall:hover {
+    background: #ffe7e9;
 }
 
 
 /* ============================================================
-   TOASTS
+   38. TOASTS
    ============================================================ */
 
 .mwaniki-toast,
 #toastContainer .toast {
     position: fixed;
 
-    right: 20px;
-    bottom: 20px;
+    right: 16px;
+    bottom: 16px;
 
-    max-width: 360px;
+    z-index: 2000;
 
-    padding: 12px 15px;
+    width: max-content;
+    max-width: min(360px, calc(100vw - 32px));
 
-    border-radius: 10px;
+    padding: 10px 13px;
+
+    border-radius: 9px;
 
     background: var(--ms-text);
 
-    color: white;
+    color: #ffffff;
 
-    font-size: 13px;
+    font-size: 12px;
 
     line-height: 1.4;
 
     box-shadow: var(--ms-shadow-lg);
 
-    z-index: 2000;
-
-    animation:
-        mwanikiToastIn 0.2s ease;
+    animation: mwanikiToastIn 0.2s ease;
 }
 
 .mwaniki-toast.success {
@@ -2117,6 +2210,7 @@ img {
 
 .mwaniki-toast.warning {
     background: var(--ms-warning);
+
     color: #1f2933;
 }
 
@@ -2134,7 +2228,7 @@ img {
 
 
 /* ============================================================
-   MODALS
+   39. MODALS
    ============================================================ */
 
 .modal,
@@ -2146,49 +2240,46 @@ img {
     z-index: 900;
 
     display: flex;
-
     align-items: center;
     justify-content: center;
 
-    padding: 20px;
+    padding: 18px;
 
-    background: rgba(15, 23, 42, 0.30);
+    background: rgba(15, 23, 42, 0.32);
 
-    backdrop-filter: blur(3px);
+    backdrop-filter: blur(4px);
 }
 
 .modal-content,
 .community-modal-content {
-    width: min(620px, 100%);
+    width: min(600px, 100%);
 
-    max-height: 85vh;
+    max-height: 84vh;
 
     overflow-y: auto;
+
+    padding: 20px;
 
     background: var(--ms-white);
 
     border: 1px solid var(--ms-border);
 
-    border-radius: 15px;
+    border-radius: 14px;
 
     box-shadow: var(--ms-shadow-lg);
-
-    padding: 22px;
 }
 
 .modal-header,
 .community-modal-header {
     display: flex;
-
     align-items: center;
-
     justify-content: space-between;
 
-    gap: 12px;
+    gap: 10px;
 
-    padding-bottom: 14px;
+    padding-bottom: 12px;
 
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 
     border-bottom: 1px solid var(--ms-border-light);
 }
@@ -2197,49 +2288,61 @@ img {
 .community-modal-header h2 {
     margin: 0;
 
-    font-size: 18px;
-
     color: var(--ms-text);
+
+    font-size: 17px;
 }
 
 .modal-close,
 [data-close-modal] {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
 
     border: 0;
 
-    border-radius: 8px;
+    border-radius: 7px;
 
-    background: #f3f6f7;
+    background: #f2f5f6;
 
     color: var(--ms-text-secondary);
 }
 
 .modal-close:hover,
 [data-close-modal]:hover {
-    background: #e8eeee;
+    background: #e7edef;
 
     color: var(--ms-text);
 }
 
 
 /* ============================================================
-   PROFILE PREVIEW
+   40. PROFILE PREVIEW
    ============================================================ */
 
 .profile-preview {
-    text-align: center;
+    padding: 14px;
 
-    padding: 15px;
+    text-align: center;
 }
 
 .profile-preview img,
 .profile-preview > div:first-child {
-    width: 82px;
-    height: 82px;
+    width: 78px;
+    height: 78px;
 
-    margin: 0 auto 12px;
+    margin: 0 auto 11px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
 
     border-radius: 50%;
 
@@ -2249,20 +2352,17 @@ img {
 
     color: var(--ms-primary);
 
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
+    font-size: 19px;
 
     font-weight: 800;
-
-    font-size: 20px;
 }
 
 .profile-preview h3 {
-    margin: 8px 0 4px;
+    margin: 7px 0 3px;
 
     color: var(--ms-text);
+
+    font-size: 16px;
 }
 
 .profile-preview p {
@@ -2270,20 +2370,20 @@ img {
 
     color: var(--ms-text-muted);
 
-    font-size: 13px;
+    font-size: 12px;
 }
 
 
 /* ============================================================
-   BUTTON SYSTEM
+   41. BUTTON SYSTEM
    ============================================================ */
 
 .ms-button,
 .primary-button,
 .btn-primary {
-    min-height: 40px;
+    min-height: 38px;
 
-    padding: 0 15px;
+    padding: 0 14px;
 
     border: 1px solid var(--ms-primary);
 
@@ -2291,13 +2391,15 @@ img {
 
     background: var(--ms-primary);
 
-    color: white;
+    color: #ffffff;
+
+    font-size: 12px;
 
     font-weight: 700;
 
     transition:
-        background 0.18s ease,
-        transform 0.18s ease;
+        background 0.16s ease,
+        transform 0.16s ease;
 }
 
 .ms-button:hover,
@@ -2310,9 +2412,9 @@ img {
 
 .secondary-button,
 .btn-secondary {
-    min-height: 40px;
+    min-height: 38px;
 
-    padding: 0 15px;
+    padding: 0 14px;
 
     border: 1px solid var(--ms-border);
 
@@ -2321,6 +2423,8 @@ img {
     background: var(--ms-white);
 
     color: var(--ms-text-secondary);
+
+    font-size: 12px;
 
     font-weight: 650;
 }
@@ -2334,7 +2438,7 @@ img {
 
 
 /* ============================================================
-   ONLINE STATUS
+   42. STATUS
    ============================================================ */
 
 .status-online {
@@ -2347,17 +2451,17 @@ img {
 
 
 /* ============================================================
-   LOADING
+   43. LOADING
    ============================================================ */
 
 .loading-state {
-    padding: 30px;
+    padding: 28px;
 
     text-align: center;
 
     color: var(--ms-text-muted);
 
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .loading-state::after {
@@ -2365,10 +2469,10 @@ img {
 
     display: block;
 
-    width: 22px;
-    height: 22px;
+    width: 21px;
+    height: 21px;
 
-    margin: 12px auto 0;
+    margin: 11px auto 0;
 
     border: 2px solid #dbe6e7;
 
@@ -2376,8 +2480,7 @@ img {
 
     border-radius: 50%;
 
-    animation:
-        mwanikiSpin 0.7s linear infinite;
+    animation: mwanikiSpin 0.7s linear infinite;
 }
 
 @keyframes mwanikiSpin {
@@ -2388,258 +2491,7 @@ img {
 
 
 /* ============================================================
-   SCROLLBARS
-   ============================================================ */
-
-* {
-    scrollbar-width: thin;
-
-    scrollbar-color:
-        #cfd9dd
-        transparent;
-}
-
-
-/* ============================================================
-   RESPONSIVE TABLET
-   ============================================================ */
-
-@media (max-width: 1100px) {
-
-    :root {
-        --ms-member-width: 215px;
-        --ms-channel-width: 240px;
-    }
-
-    .community-layout,
-    #communityLayout {
-        grid-template-columns:
-            var(--ms-rail-width)
-            var(--ms-channel-width)
-            minmax(0, 1fr)
-            var(--ms-member-width);
-    }
-
-    #messageList,
-    .message-list {
-        padding-left: 17px;
-        padding-right: 17px;
-    }
-}
-
-
-/* ============================================================
-   RESPONSIVE MOBILE
-   ============================================================ */
-
-@media (max-width: 850px) {
-
-    :root {
-        --ms-header-height: 64px;
-    }
-
-    .community-header,
-    #communityHeader {
-        padding: 0 12px;
-    }
-
-    .community-header-brand,
-    .community-brand {
-        min-width: auto;
-    }
-
-    .community-header-brand span,
-    .community-brand span {
-        display: none;
-    }
-
-    .community-layout,
-    #communityLayout {
-        display: grid;
-
-        grid-template-columns:
-            58px
-            minmax(0, 1fr);
-
-        min-height:
-            calc(100vh - var(--ms-header-height));
-    }
-
-    #communityRail,
-    .community-rail {
-        width: 58px;
-
-        padding-left: 5px;
-        padding-right: 5px;
-    }
-
-    .community-rail-item,
-    .community-rail button {
-        width: 42px;
-        height: 42px;
-    }
-
-    #channelSidebar,
-    .channel-sidebar {
-        position: fixed;
-
-        top: var(--ms-header-height);
-
-        left: 58px;
-
-        bottom: 0;
-
-        width: 280px;
-
-        z-index: 500;
-
-        transform: translateX(-105%);
-
-        transition:
-            transform 0.2s ease;
-
-        box-shadow: var(--ms-shadow-lg);
-    }
-
-    #channelSidebar.open,
-    .channel-sidebar.open {
-        transform: translateX(0);
-    }
-
-    #memberSidebar,
-    .member-sidebar {
-        display: none;
-    }
-
-    .chat-header {
-        padding: 0 13px;
-    }
-
-    #messageList,
-    .message-list {
-        padding: 15px 10px;
-    }
-
-    .message-composer,
-    #messageComposer {
-        padding:
-            8px
-            8px
-            calc(8px + env(safe-area-inset-bottom));
-    }
-
-    #emojiPanel,
-    #stickerPanel,
-    #gifPanel {
-        right: 8px;
-        bottom: 70px;
-
-        width:
-            min(
-                330px,
-                calc(100vw - 16px)
-            );
-    }
-
-    #mwanikiVideoGrid {
-        grid-template-columns:
-            1fr;
-
-        padding: 10px;
-    }
-
-    #mwanikiLocalVideo {
-        width: 145px;
-        height: 105px;
-
-        right: 10px;
-        bottom: 90px;
-    }
-
-    .mwaniki-call-controls {
-        min-height: 70px;
-
-        padding: 10px;
-
-        gap: 7px;
-    }
-
-    .mwaniki-call-controls button {
-        width: 42px;
-        height: 42px;
-    }
-
-    #mwanikiLeaveCall {
-        display: none;
-    }
-}
-
-
-/* ============================================================
-   SMALL MOBILE
-   ============================================================ */
-
-@media (max-width: 560px) {
-
-    .community-header-brand h1,
-    .community-brand h1 {
-        font-size: 15px;
-    }
-
-    .community-header-actions button {
-        width: 36px;
-        min-width: 36px;
-    }
-
-    .chat-header-info h2 {
-        font-size: 15px;
-    }
-
-    .chat-header-actions button {
-        width: 34px;
-        height: 34px;
-    }
-
-    .message-avatar,
-    .message-item-avatar {
-        width: 34px;
-        height: 34px;
-
-        min-width: 34px;
-    }
-
-    .message {
-        gap: 8px;
-
-        padding-left: 3px;
-        padding-right: 3px;
-    }
-
-    .message-text,
-    .message-item-text {
-        font-size: 13px;
-    }
-
-    .message-actions {
-        right: 3px;
-    }
-
-    .incoming-call-card {
-        padding: 23px 18px;
-    }
-
-    .incoming-call-actions {
-        flex-direction: column;
-    }
-
-    .incoming-call-actions button {
-        width: 100%;
-    }
-}
-
-
-/* ============================================================
-   ACCESSIBILITY
+   44. ACCESSIBILITY
    ============================================================ */
 
 button:focus-visible,
@@ -2653,7 +2505,485 @@ select:focus-visible {
 
 
 /* ============================================================
-   REDUCED MOTION
+   45. TABLET
+   ============================================================ */
+
+@media (max-width: 1200px) {
+
+    :root {
+        --ms-rail-width: 68px;
+        --ms-channel-width: 235px;
+        --ms-member-width: 205px;
+    }
+
+    .community-layout,
+    #communityLayout {
+        grid-template-columns:
+            var(--ms-rail-width)
+            var(--ms-channel-width)
+            minmax(0, 1fr)
+            var(--ms-member-width);
+    }
+
+    .community-header-brand,
+    .community-brand {
+        min-width: 190px;
+    }
+
+    #messageList,
+    .message-list {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+    .member-item {
+        gap: 6px;
+    }
+}
+
+
+/* ============================================================
+   46. SMALL TABLET / LARGE MOBILE
+   ============================================================ */
+
+@media (max-width: 950px) {
+
+    :root {
+        --ms-header-height: 64px;
+    }
+
+    .community-header {
+        padding: 0 12px;
+    }
+
+    .community-header-brand,
+    .community-brand {
+        min-width: 0;
+    }
+
+    .community-header-brand span,
+    .community-brand span {
+        display: none;
+    }
+
+    .community-layout,
+    #communityLayout {
+        grid-template-columns:
+            58px
+            minmax(0, 1fr);
+    }
+
+    #communityRail,
+    .community-rail {
+        width: 58px;
+
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    .community-rail-item,
+    .community-rail button {
+        width: 42px;
+        min-width: 42px;
+
+        height: 42px;
+        min-height: 42px;
+    }
+
+    /*
+       Member sidebar disappears here so the chat remains usable.
+    */
+
+    #memberSidebar,
+    .member-sidebar {
+        display: none;
+    }
+
+    /*
+       Channel sidebar becomes an off-canvas panel.
+    */
+
+    #channelSidebar,
+    .channel-sidebar {
+        position: fixed;
+
+        top: var(--ms-header-height);
+        left: 58px;
+        bottom: 0;
+
+        z-index: 500;
+
+        width: 275px;
+
+        transform: translateX(-110%);
+
+        box-shadow: var(--ms-shadow-lg);
+
+        transition:
+            transform 0.2s ease;
+    }
+
+    #channelSidebar.open,
+    .channel-sidebar.open {
+        transform: translateX(0);
+    }
+
+    .chat-header,
+    #chatHeader {
+        min-height: 58px;
+
+        padding: 0 12px;
+    }
+
+    #messageList,
+    .message-list {
+        padding: 13px 10px;
+    }
+
+    .message-composer,
+    #messageComposer {
+        padding:
+            7px
+            8px
+            calc(7px + env(safe-area-inset-bottom));
+    }
+
+    #emojiPanel,
+    #stickerPanel,
+    #gifPanel {
+        right: 8px;
+        bottom: 64px;
+
+        width: min(
+            320px,
+            calc(100vw - 16px)
+        );
+    }
+}
+
+
+/* ============================================================
+   47. MOBILE
+   ============================================================ */
+
+@media (max-width: 700px) {
+
+    .community-header-brand img,
+    .community-brand img {
+        width: 34px;
+        height: 34px;
+    }
+
+    .community-header-brand h1,
+    .community-brand h1 {
+        font-size: 15px;
+    }
+
+    .community-header-actions {
+        gap: 4px;
+    }
+
+    .community-header-actions button {
+        width: 35px;
+        min-width: 35px;
+
+        height: 35px;
+        min-height: 35px;
+    }
+
+    .chat-header-actions {
+        gap: 2px;
+    }
+
+    .chat-header-actions button {
+        width: 33px;
+        min-width: 33px;
+
+        height: 33px;
+    }
+
+    .message-avatar,
+    .message-item-avatar {
+        width: 34px;
+        height: 34px;
+
+        min-width: 34px;
+
+        flex-basis: 34px;
+    }
+
+    .message,
+    .message-item {
+        gap: 8px;
+
+        padding-left: 3px;
+        padding-right: 3px;
+    }
+
+    .message-author,
+    .message-item-author {
+        font-size: 11px;
+    }
+
+    .message-text,
+    .message-item-text {
+        font-size: 12px;
+
+        line-height: 1.5;
+    }
+
+    .message-actions {
+        right: 3px;
+    }
+
+    .message-composer-inner {
+        gap: 2px;
+
+        padding: 4px;
+    }
+
+    .message-composer button,
+    #sendMessageButton,
+    #voiceNoteButton,
+    #emojiButton,
+    #stickerButton,
+    #gifButton,
+    #attachmentButton {
+        width: 33px;
+        min-width: 33px;
+
+        height: 33px;
+        min-height: 33px;
+    }
+
+    #messageInput {
+        min-height: 35px;
+
+        font-size: 12px;
+    }
+
+    #mwanikiVideoGrid {
+        grid-template-columns: 1fr;
+
+        padding: 9px;
+    }
+
+    .mwaniki-video-tile {
+        min-height: 210px;
+    }
+
+    .mwaniki-video-tile video {
+        min-height: 210px;
+    }
+
+    #mwanikiLocalVideo {
+        right: 9px;
+        bottom: 86px;
+
+        width: 135px;
+        height: 96px;
+    }
+
+    .mwaniki-call-controls {
+        min-height: 66px;
+
+        gap: 6px;
+
+        padding: 9px;
+    }
+
+    .mwaniki-call-controls button {
+        width: 40px;
+        min-width: 40px;
+
+        height: 40px;
+    }
+
+    #mwanikiEndButton {
+        width: 47px;
+        min-width: 47px;
+
+        height: 40px;
+    }
+
+    #mwanikiLeaveCall {
+        display: none;
+    }
+}
+
+
+/* ============================================================
+   48. SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+    .community-layout,
+    #communityLayout {
+        grid-template-columns: 52px minmax(0, 1fr);
+    }
+
+    #communityRail,
+    .community-rail {
+        width: 52px;
+
+        padding-left: 4px;
+        padding-right: 4px;
+    }
+
+    .community-rail-item,
+    .community-rail button {
+        width: 40px;
+        min-width: 40px;
+
+        height: 40px;
+        min-height: 40px;
+    }
+
+    #channelSidebar,
+    .channel-sidebar {
+        left: 52px;
+
+        width: min(
+            275px,
+            calc(100vw - 52px)
+        );
+    }
+
+    .chat-header-info h2 {
+        font-size: 14px;
+    }
+
+    .chat-header-info p {
+        font-size: 9px;
+    }
+
+    .message-avatar,
+    .message-item-avatar {
+        width: 32px;
+        height: 32px;
+
+        min-width: 32px;
+
+        flex-basis: 32px;
+    }
+
+    .message-header,
+    .message-item-header {
+        gap: 5px;
+    }
+
+    .message-time,
+    .message-item-time {
+        font-size: 8px;
+    }
+
+    .message-actions {
+        position: static;
+
+        margin-top: 4px;
+
+        display: flex;
+
+        width: max-content;
+
+        box-shadow: none;
+    }
+
+    .incoming-call-card {
+        width: min(350px, calc(100vw - 28px));
+
+        padding: 21px 16px;
+    }
+
+    .incoming-call-avatar {
+        width: 66px;
+        height: 66px;
+    }
+
+    .incoming-call-actions {
+        flex-direction: column;
+
+        width: 100%;
+    }
+
+    .incoming-call-actions button {
+        width: 100%;
+    }
+
+    .call-picker-card {
+        max-height: 88vh;
+
+        border-radius: 13px;
+    }
+
+    .call-picker-header {
+        padding: 13px;
+    }
+
+    .call-picker-body {
+        padding: 9px;
+    }
+
+    .call-picker-footer {
+        padding: 10px;
+    }
+
+    .call-picker-user {
+        min-height: 53px;
+    }
+
+    .call-picker-user img,
+    .call-picker-avatar {
+        width: 36px;
+        height: 36px;
+
+        min-width: 36px;
+    }
+
+    .mwaniki-call-header {
+        min-height: 58px;
+
+        padding: 0 11px;
+    }
+
+    .mwaniki-call-header h1 {
+        font-size: 14px;
+    }
+
+    #mwanikiCallStatus {
+        padding: 5px 8px;
+
+        font-size: 9px;
+    }
+
+    #mwanikiVideoGrid {
+        padding: 7px;
+
+        gap: 7px;
+    }
+
+    .mwaniki-video-tile {
+        min-height: 185px;
+
+        border-radius: 10px;
+    }
+
+    .mwaniki-video-tile video {
+        min-height: 185px;
+    }
+
+    #mwanikiLocalVideo {
+        width: 120px;
+        height: 85px;
+
+        bottom: 79px;
+    }
+}
+
+
+/* ============================================================
+   49. REDUCED MOTION
    ============================================================ */
 
 @media (prefers-reduced-motion: reduce) {
@@ -2663,7 +2993,9 @@ select:focus-visible {
     *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
+
         transition-duration: 0.01ms !important;
+
         scroll-behavior: auto !important;
     }
 }
