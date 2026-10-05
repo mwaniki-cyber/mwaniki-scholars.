@@ -1,33 +1,84 @@
 /* ============================================================
    MWANIKI SCHOLARS COMMUNITY
-   CLEAN COMMUNITY ENGINE
-   VERSION: 2026
-   PRESENCE ENGINE: CORRECTED
+   COMPLETE COMMUNITY ENGINE
+   ============================================================
+
+   FIXES INCLUDED
+   ------------------------------------------------------------
+   1. Reliable online / away / offline presence
+   2. No false Away when another account is active
+   3. Presence heartbeat every 15 seconds
+   4. Activity-based Away / Idle detection
+   5. Community member presence refresh
+   6. Real reply support using parent_message_id
+   7. Reply preview + cancel reply
+   8. Message reaction support
+   9. Delete own messages
+   10. Moderator deletion
+   11. Message realtime INSERT / UPDATE
+   12. Typing indicator using Supabase broadcast
+   13. Mobile-friendly fixed chat workspace
+   14. Composer stays accessible without page scrolling
+   15. Enter sends message, Shift+Enter creates newline
+   16. Emoji picker support
+   17. Member search
+   18. Channel search
+   19. Community/channel loading
+   20. Course-linked channels
+   21. Keeps community-calls.js separate
    ============================================================ */
 
+import { supabase } from "./supabase.js";
+
+
 (() => {
+
     "use strict";
+
+
+    /* ============================================================
+       SUPABASE
+       ============================================================ */
+
+    const db = supabase;
+
+    if (!db) {
+
+        console.error(
+            "❌ Mwaniki Community: Supabase client unavailable."
+        );
+
+        return;
+
+    }
+
+
+    console.log(
+        "🚀 Mwaniki Scholars Community engine loading..."
+    );
 
 
     /* ============================================================
        CONFIGURATION
        ============================================================ */
 
-    const PRESENCE_HEARTBEAT = 15000;      // 15 seconds
+    const CONFIG = {
 
-    /*
-     * A heartbeat older than this is considered offline.
-     *
-     * Because the heartbeat is sent every 15 seconds,
-     * 60 seconds gives enough tolerance for a slow request.
-     */
-    const PRESENCE_STALE_AFTER = 60000;
+        presenceHeartbeat: 15000,
 
-    /*
-     * User becomes Away / Idle after 2 minutes
-     * without actual interaction.
-     */
-    const IDLE_AFTER = 120000;
+        presenceOnlineWindow: 60000,
+
+        presenceAwayWindow: 180000,
+
+        idleAfter: 120000,
+
+        messageLimit: 500,
+
+        typingTimeout: 2500,
+
+        typingThrottle: 1000
+
+    };
 
 
     /* ============================================================
@@ -35,313 +86,258 @@
        ============================================================ */
 
     const state = {
-        db: null,
+
         user: null,
+
         profile: null,
 
+        courses: [],
+
         communities: [],
+
         channels: [],
+
         members: [],
+
         messages: [],
 
+        reactions: [],
+
         currentCommunity: null,
+
         currentChannel: null,
 
-        presenceRows: new Map(),
+        currentRole: "student",
 
-        messageChannel: null,
-        presenceChannel: null,
+        currentReply: null,
+
+        currentCourse: null,
+
+        channelSearch: "",
+
+        memberSearch: "",
+
+        messageSearch: "",
+
+        realtimeChannels: [],
 
         presenceTimer: null,
-        presenceRefreshTimer: null,
+
+        presenceRefreshing: false,
 
         lastActivity: Date.now(),
 
-        currentPresenceStatus: "online",
+        lastPresenceWrite: 0,
 
-        presenceWriteInProgress: false,
+        typingTimer: null,
 
-        /*
-         * We keep references to every listener we install
-         * so stopPresence() can remove them correctly.
-         */
-        presenceActivityHandlers: [],
-
-        presenceVisibilityHandler: null,
+        lastTypingBroadcast: 0,
 
         initialized: false,
 
-        loadingMessages: false,
         sendingMessage: false,
 
-        recording: false,
-        mediaRecorder: null,
-        recordingStream: null,
-        recordingChunks: [],
+        loadingMessages: false,
 
-        courses: []
+        emojiOpen: false
+
     };
 
 
     /* ============================================================
-       DOM HELPERS
+       STORAGE
+       ============================================================ */
+
+    const STORAGE = {
+
+        communityId:
+            "mwanikiCommunityId",
+
+        courseId:
+            "communityCourseId",
+
+        courseName:
+            "communityCourseName"
+
+    };
+
+
+    /* ============================================================
+       DOM
        ============================================================ */
 
     const $ = id =>
         document.getElementById(id);
 
 
-    function show(element) {
-        if (element) {
-            element.classList.remove("hidden");
-        }
-    }
+    const q = (
+        selector,
+        parent = document
+    ) =>
+        parent.querySelector(selector);
 
 
-    function hide(element) {
-        if (element) {
-            element.classList.add("hidden");
-        }
-    }
+    const qa = (
+        selector,
+        parent = document
+    ) =>
+        Array.from(
+            parent.querySelectorAll(selector)
+        );
 
 
-    function setText(id, value) {
-        const element = $(id);
-
-        if (element) {
-            element.textContent =
-                value ?? "";
-        }
-    }
-
+    /* ============================================================
+       BASIC HELPERS
+       ============================================================ */
 
     function escapeHTML(value) {
-        return String(value ?? "")
+
+        return String(
+            value ?? ""
+        )
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
-    }
 
-
-    function escapeAttr(value) {
-        return escapeHTML(value);
-    }
-
-
-    /* ============================================================
-       TOAST
-       ============================================================ */
-
-    let toastTimer = null;
-
-
-    function notify(
-        message,
-        type = "info"
-    ) {
-        const toast =
-            $("toast");
-
-        if (!toast) {
-            console.log(
-                `[Community ${type}]`,
-                message
-            );
-
-            return;
-        }
-
-        toast.textContent =
-            message;
-
-        toast.dataset.type =
-            type;
-
-        show(toast);
-
-        clearTimeout(
-            toastTimer
-        );
-
-        toastTimer =
-            setTimeout(
-                () => {
-                    hide(toast);
-                },
-                3500
-            );
-    }
-
-
-    /* ============================================================
-       AVATAR SYSTEM
-       ============================================================ */
-
-    function validImage(url) {
-        if (
-            !url ||
-            typeof url !== "string"
-        ) {
-            return false;
-        }
-
-        const value =
-            url.trim();
-
-        return (
-            /^https?:\/\//i.test(value) ||
-            /^data:image\//i.test(value) ||
-            /^blob:/i.test(value)
-        );
     }
 
 
     function initials(name) {
-        const parts =
+
+        const clean =
             String(
                 name || "Student"
             )
                 .trim()
-                .split(/\s+/)
-                .filter(Boolean);
+                .replace(/\s+/g, " ");
 
-        if (!parts.length) {
-            return "S";
+        if (!clean) {
+            return "MS";
         }
 
+        const parts =
+            clean.split(" ");
+
         if (parts.length === 1) {
+
             return parts[0]
                 .substring(0, 2)
                 .toUpperCase();
+
         }
 
         return (
             parts[0][0] +
             parts[parts.length - 1][0]
         ).toUpperCase();
+
     }
 
 
-    function avatarMarkup(
-        name,
-        url,
-        className = ""
-    ) {
-        const safeName =
-            escapeAttr(
-                name || "Student"
-            );
+    function storageGet(key) {
 
-        if (validImage(url)) {
-            return `
-                <img
-                    class="${className} user-avatar-image"
-                    src="${escapeAttr(url)}"
-                    alt="${safeName}"
-                    loading="lazy"
-                    onerror="
-                        this.style.display='none';
-                        if(this.nextElementSibling){
-                            this.nextElementSibling.style.display='flex';
-                        }
-                    "
-                >
+        try {
 
-                <span
-                    class="${className} avatar-fallback"
-                    style="display:none"
-                >
-                    ${escapeHTML(
-                        initials(name)
-                    )}
-                </span>
-            `;
+            return localStorage.getItem(key);
+
+        } catch {
+
+            return null;
+
         }
 
-        return `
-            <span class="${className} avatar-fallback">
-                ${escapeHTML(
-                    initials(name)
-                )}
-            </span>
-        `;
     }
 
 
-    /* ============================================================
-       SUPABASE
-       ============================================================ */
+    function storageSet(
+        key,
+        value
+    ) {
 
-    async function waitForSupabase() {
-        for (
-            let attempt = 0;
-            attempt < 100;
-            attempt++
-        ) {
-            const client =
-                window.supabaseClient ||
-                window.mwanikiSupabase ||
-                window.sb ||
-                window.supabase;
+        try {
 
-            if (
-                client &&
-                client.auth &&
-                typeof client.from ===
-                    "function"
-            ) {
-                state.db =
-                    client;
+            localStorage.setItem(
+                key,
+                String(value)
+            );
 
-                console.log(
-                    "✅ Community: Supabase client ready."
+        } catch {}
+
+    }
+
+
+    function show(element) {
+
+        if (!element) return;
+
+        element.classList.remove(
+            "hidden"
+        );
+
+        element.hidden = false;
+
+    }
+
+
+    function hide(element) {
+
+        if (!element) return;
+
+        element.classList.add(
+            "hidden"
+        );
+
+        element.hidden = true;
+
+    }
+
+
+    function toast(
+        message,
+        type = "normal"
+    ) {
+
+        const element =
+            $("communityToast") ||
+            $("toast");
+
+        if (!element) {
+
+            console.log(
+                `[Community ${type}]`,
+                message
+            );
+
+            return;
+
+        }
+
+        element.textContent =
+            message || "";
+
+        element.classList.add(
+            "show",
+            "visible",
+            "active"
+        );
+
+        clearTimeout(
+            element.__mwanikiToastTimer
+        );
+
+        element.__mwanikiToastTimer =
+            setTimeout(() => {
+
+                element.classList.remove(
+                    "show",
+                    "visible",
+                    "active"
                 );
 
-                return client;
-            }
+            }, 3000);
 
-            await new Promise(
-                resolve =>
-                    setTimeout(
-                        resolve,
-                        100
-                    )
-            );
-        }
-
-        throw new Error(
-            "Supabase client was not found."
-        );
-    }
-
-
-    /* ============================================================
-       AUTH
-       ============================================================ */
-
-    async function loadUser() {
-        const result =
-            await state.db.auth.getUser();
-
-        if (result.error) {
-            throw result.error;
-        }
-
-        if (!result.data?.user) {
-            throw new Error(
-                "You must be signed in."
-            );
-        }
-
-        state.user =
-            result.data.user;
-
-        console.log(
-            "✅ Authenticated:",
-            state.user.id
-        );
     }
 
 
@@ -349,808 +345,161 @@
        PROFILE
        ============================================================ */
 
+    function getDisplayName(
+        profile = state.profile
+    ) {
+
+        return (
+            profile?.full_name ||
+            profile?.name ||
+            profile?.student_name ||
+            state.user?.user_metadata?.full_name ||
+            state.user?.user_metadata?.name ||
+            state.user?.email?.split("@")[0] ||
+            "Student"
+        );
+
+    }
+
+
+    function getAvatar(
+        profile = state.profile
+    ) {
+
+        return (
+            profile?.photo_url ||
+            profile?.avatar_url ||
+            state.user?.user_metadata?.avatar_url ||
+            state.user?.user_metadata?.picture ||
+            ""
+        );
+
+    }
+
+
     async function loadProfile() {
-        let publicProfile =
-            null;
 
-        let student =
-            null;
-
-        try {
-            const result =
-                await state.db
-                    .from(
-                        "chat_public_profiles"
-                    )
-                    .select(
-                        "id,full_name,photo_url,updated_at"
-                    )
-                    .eq(
-                        "id",
-                        state.user.id
-                    )
-                    .maybeSingle();
-
-            if (!result.error) {
-                publicProfile =
-                    result.data ||
-                    null;
-            }
-        } catch (error) {
-            console.warn(
-                "Public profile lookup failed:",
-                error
-            );
+        if (!state.user?.id) {
+            return;
         }
 
-        try {
-            const result =
-                await state.db
-                    .from("students")
-                    .select(
-                        "id,full_name,email,phone,course,level,photo_url"
-                    )
-                    .eq(
-                        "id",
-                        state.user.id
-                    )
-                    .maybeSingle();
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("students")
+                .select("*")
+                .eq(
+                    "id",
+                    state.user.id
+                )
+                .maybeSingle();
 
-            if (!result.error) {
-                student =
-                    result.data ||
-                    null;
-            }
-        } catch (error) {
+        if (error) {
+
             console.warn(
-                "Student profile lookup failed:",
+                "⚠️ Student profile load failed:",
                 error
             );
+
+            return;
+
         }
 
-        const metadata =
-            state.user.user_metadata ||
-            {};
-
-        const name =
-            publicProfile?.full_name ||
-            student?.full_name ||
-            metadata.full_name ||
-            metadata.name ||
-            metadata.display_name ||
-            metadata.username ||
-            state.user.email?.split(
-                "@"
-            )[0] ||
-            "Student";
-
-        const photo =
-            publicProfile?.photo_url ||
-            student?.photo_url ||
-            metadata.avatar_url ||
-            metadata.picture ||
-            null;
-
-        state.profile = {
-            id:
-                state.user.id,
-
-            name,
-
-            photo,
-
-            email:
-                state.user.email ||
-                "",
-
-            publicProfile,
-
-            student
-        };
+        state.profile =
+            data || null;
 
         updateHeaderProfile();
+
     }
 
 
     function updateHeaderProfile() {
-        const image =
-            $("headerProfileAvatar");
 
         const name =
-            state.profile?.name ||
-            "Student";
+            getDisplayName();
 
-        setText(
-            "headerProfileName",
-            name
-        );
+        const avatar =
+            getAvatar();
 
-        if (!image) {
-            return;
-        }
+        const nameElements = [
+            $("headerProfileName"),
+            $("profileName")
+        ];
 
-        if (
-            validImage(
-                state.profile?.photo
-            )
-        ) {
-            image.src =
-                state.profile.photo;
+        nameElements.forEach(
+            element => {
 
-            image.alt =
-                name;
-
-            image.style.display =
-                "block";
-        } else {
-            image.removeAttribute(
-                "src"
-            );
-
-            image.alt =
-                name;
-        }
-
-        /*
-         * Keep header presence synchronized
-         * with the current known status.
-         */
-        updateOwnPresenceUI(
-            state.currentPresenceStatus
-        );
-    }
-
-
-    /* ============================================================
-       COMMUNITY ICON
-       ============================================================ */
-
-    function getCommunityIcon(
-        community
-    ) {
-        const icon =
-            community?.icon_url;
-
-        if (validImage(icon)) {
-            return `
-                <img
-                    src="${escapeAttr(icon)}"
-                    class="community-icon-image"
-                    alt=""
-                >
-            `;
-        }
-
-        const name =
-            `${community?.name || ""} ${
-                community?.slug || ""
-            }`.toLowerCase();
-
-        if (
-            name.includes(
-                "gaming"
-            )
-        ) {
-            return "🎮";
-        }
-
-        if (
-            name.includes(
-                "meme"
-            )
-        ) {
-            return "😂";
-        }
-
-        if (
-            name.includes(
-                "mwaniki"
-            )
-        ) {
-            return "🎓";
-        }
-
-        return "💬";
-    }
-
-
-    /* ============================================================
-       COMMUNITIES
-       ============================================================ */
-
-    async function loadCommunities() {
-        const result =
-            await state.db
-                .from(
-                    "chat_communities"
-                )
-                .select("*")
-                .eq(
-                    "is_active",
-                    true
-                )
-                .order(
-                    "name",
-                    {
-                        ascending:
-                            true
-                    }
-                );
-
-        if (result.error) {
-            console.error(
-                "Community loading failed:",
-                result.error
-            );
-
-            throw result.error;
-        }
-
-        state.communities =
-            result.data || [];
-
-        state.communities.sort(
-            (a, b) => {
-                const aMain =
-                    String(
-                        a.name || ""
-                    )
-                        .toLowerCase()
-                        .includes(
-                            "mwaniki"
-                        );
-
-                const bMain =
-                    String(
-                        b.name || ""
-                    )
-                        .toLowerCase()
-                        .includes(
-                            "mwaniki"
-                        );
-
-                if (
-                    aMain &&
-                    !bMain
-                ) {
-                    return -1;
+                if (element) {
+                    element.textContent =
+                        name;
                 }
 
-                if (
-                    !aMain &&
-                    bMain
-                ) {
-                    return 1;
-                }
-
-                return String(
-                    a.name || ""
-                ).localeCompare(
-                    String(
-                        b.name || ""
-                    )
-                );
             }
         );
 
-        renderCommunityRail();
 
-        if (
-            !state.communities.length
-        ) {
-            notify(
-                "No active communities were found.",
-                "warning"
-            );
+        const avatarElements = [
+            $("headerProfileAvatar"),
+            $("profileLargeAvatar")
+        ];
 
-            return;
-        }
+        avatarElements.forEach(
+            element => {
 
-        /*
-         * Mwaniki Scholars is always the
-         * preferred default community.
-         */
-        const main =
-            state.communities.find(
-                community =>
-                    String(
-                        community.name ||
-                            ""
-                    )
-                        .toLowerCase()
-                        .includes(
-                            "mwaniki"
-                        )
-            ) ||
-            state.communities[0];
+                if (!element) return;
 
-        await selectCommunity(
-            main.id
-        );
-    }
+                if (avatar) {
 
+                    if (
+                        element.tagName ===
+                        "IMG"
+                    ) {
 
-    function renderCommunityRail() {
-        const rail =
-            $("communityRailList");
+                        element.src =
+                            avatar;
 
-        if (!rail) {
-            return;
-        }
+                        element.alt =
+                            name;
 
-        rail.innerHTML =
-            "";
+                    } else {
 
-        state.communities.forEach(
-            community => {
-                const button =
-                    document.createElement(
-                        "button"
-                    );
+                        element.innerHTML =
+                            `<img src="${escapeHTML(
+                                avatar
+                            )}" alt="${escapeHTML(
+                                name
+                            )}">`;
 
-                button.type =
-                    "button";
-
-                button.className =
-                    "community-rail-item";
-
-                if (
-                    state.currentCommunity &&
-                    String(
-                        state.currentCommunity
-                            .id
-                    ) ===
-                        String(
-                            community.id
-                        )
-                ) {
-                    button.classList.add(
-                        "active"
-                    );
-                }
-
-                button.title =
-                    community.name ||
-                    "Community";
-
-                button.innerHTML = `
-                    <span class="community-rail-icon">
-                        ${getCommunityIcon(
-                            community
-                        )}
-                    </span>
-                `;
-
-                button.addEventListener(
-                    "click",
-                    () =>
-                        selectCommunity(
-                            community.id
-                        )
-                );
-
-                rail.appendChild(
-                    button
-                );
-            }
-        );
-    }
-
-
-    function updateCommunityHeader() {
-        const community =
-            state.currentCommunity;
-
-        if (!community) {
-            return;
-        }
-
-        const icon =
-            $("selectedCommunityIcon");
-
-        if (icon) {
-            icon.innerHTML =
-                getCommunityIcon(
-                    community
-                );
-        }
-
-        setText(
-            "selectedCommunityName",
-            community.name ||
-                "Community"
-        );
-
-        setText(
-            "selectedCommunityDescription",
-            community.description ||
-                "Academic community"
-        );
-
-        renderCommunityRail();
-    }
-
-
-    /* ============================================================
-       CHANNELS
-       ============================================================ */
-
-    async function loadChannels() {
-        if (
-            !state.currentCommunity
-        ) {
-            return;
-        }
-
-        const result =
-            await state.db
-                .from(
-                    "chat_channels"
-                )
-                .select("*")
-                .eq(
-                    "community_id",
-                    state.currentCommunity.id
-                )
-                .eq(
-                    "is_active",
-                    true
-                )
-                .eq(
-                    "is_archived",
-                    false
-                )
-                .order(
-                    "position",
-                    {
-                        ascending:
-                            true
                     }
-                )
-                .order(
-                    "created_at",
-                    {
-                        ascending:
-                            true
-                    }
-                );
 
-        if (result.error) {
-            console.error(
-                "Channel loading failed:",
-                result.error
-            );
-
-            state.channels =
-                [];
-
-            renderChannels();
-
-            return;
-        }
-
-        state.channels =
-            result.data || [];
-
-        renderChannels();
-
-        if (
-            !state.channels.length
-        ) {
-            state.currentChannel =
-                null;
-
-            setText(
-                "currentChannelName",
-                "discussion"
-            );
-
-            setText(
-                "currentChannelDescription",
-                "No channels available"
-            );
-
-            return;
-        }
-
-        const preferred =
-            state.channels.find(
-                channel => {
-                    const name =
-                        `${
-                            channel.name ||
-                            ""
-                        } ${
-                            channel.slug ||
-                            ""
-                        }`.toLowerCase();
-
-                    return (
-                        name.includes(
-                            "discussion"
-                        ) ||
-                        name.includes(
-                            "general"
-                        )
-                    );
-                }
-            ) ||
-            state.channels[0];
-
-        await selectChannel(
-            preferred.id
-        );
-    }
-
-
-    function channelGroup(
-        channel
-    ) {
-        if (
-            channel.course_id ||
-            channel.channel_type ===
-                "course"
-        ) {
-            return "course";
-        }
-
-        if (
-            channel.channel_type ===
-                "announcement" ||
-            String(
-                channel.name || ""
-            )
-                .toLowerCase()
-                .includes(
-                    "announcement"
-                ) ||
-            String(
-                channel.name || ""
-            )
-                .toLowerCase()
-                .includes(
-                    "rules"
-                ) ||
-            String(
-                channel.name || ""
-            )
-                .toLowerCase()
-                .includes(
-                    "welcome"
-                )
-        ) {
-            return "information";
-        }
-
-        return "discussion";
-    }
-
-
-    function channelIcon(
-        channel
-    ) {
-        if (
-            channel.icon &&
-            !validImage(
-                channel.icon
-            )
-        ) {
-            return channel.icon;
-        }
-
-        switch (
-            channel.channel_type
-        ) {
-            case "announcement":
-                return "📢";
-
-            case "study":
-                return "📖";
-
-            case "course":
-                return "📚";
-
-            case "voice":
-                return "🔊";
-
-            default:
-                return "#";
-        }
-    }
-
-
-    function renderChannels() {
-        const info =
-            $("informationChannels");
-
-        const courses =
-            $("courseChannels");
-
-        const discussion =
-            $("communityChannels");
-
-        if (info) {
-            info.innerHTML =
-                "";
-        }
-
-        if (courses) {
-            courses.innerHTML =
-                "";
-        }
-
-        if (discussion) {
-            discussion.innerHTML =
-                "";
-        }
-
-        state.channels.forEach(
-            channel => {
-                const button =
-                    document.createElement(
-                        "button"
-                    );
-
-                button.type =
-                    "button";
-
-                button.className =
-                    "channel-button";
-
-                if (
-                    state.currentChannel &&
-                    String(
-                        state.currentChannel
-                            .id
-                    ) ===
-                        String(
-                            channel.id
-                        )
-                ) {
-                    button.classList.add(
-                        "active"
-                    );
-                }
-
-                button.dataset.channelName =
-                    channel.name ||
-                    "";
-
-                button.innerHTML = `
-                    <span class="channel-icon">
-                        ${escapeHTML(
-                            channelIcon(
-                                channel
-                            )
-                        )}
-                    </span>
-
-                    <span class="channel-name">
-                        ${escapeHTML(
-                            channel.name
-                        )}
-                    </span>
-                `;
-
-                button.addEventListener(
-                    "click",
-                    () =>
-                        selectChannel(
-                            channel.id
-                        )
-                );
-
-                const group =
-                    channelGroup(
-                        channel
-                    );
-
-                if (
-                    group ===
-                    "information"
-                ) {
-                    info?.appendChild(
-                        button
-                    );
-                } else if (
-                    group ===
-                    "course"
-                ) {
-                    courses?.appendChild(
-                        button
-                    );
                 } else {
-                    discussion?.appendChild(
-                        button
-                    );
+
+                    if (
+                        element.tagName ===
+                        "IMG"
+                    ) {
+
+                        element.removeAttribute(
+                            "src"
+                        );
+
+                        element.alt =
+                            initials(name);
+
+                    } else {
+
+                        element.textContent =
+                            initials(name);
+
+                    }
+
                 }
+
             }
         );
-    }
 
-
-    /* ============================================================
-       COMMUNITY / CHANNEL SELECTION
-       ============================================================ */
-
-    async function selectCommunity(
-        communityId
-    ) {
-        const community =
-            state.communities.find(
-                item =>
-                    String(
-                        item.id
-                    ) ===
-                    String(
-                        communityId
-                    )
-            );
-
-        if (!community) {
-            return;
-        }
-
-        state.currentCommunity =
-            community;
-
-        updateCommunityHeader();
-
-        await loadChannels();
-
-        await loadMembers();
-
-        subscribePresence();
-    }
-
-
-    async function selectChannel(
-        channelId
-    ) {
-        const channel =
-            state.channels.find(
-                item =>
-                    String(
-                        item.id
-                    ) ===
-                    String(
-                        channelId
-                    )
-            );
-
-        if (!channel) {
-            return;
-        }
-
-        state.currentChannel =
-            channel;
-
-        renderChannels();
-
-        setText(
-            "currentChannelName",
-            channel.name
-        );
-
-        setText(
-            "currentChannelDescription",
-            channel.description ||
-                "Community discussion"
-        );
-
-        const icon =
-            $("currentChannelIcon");
-
-        if (icon) {
-            icon.textContent =
-                channelIcon(
-                    channel
-                );
-        }
-
-        await loadMessages();
-
-        subscribeMessages();
     }
 
 
@@ -1158,276 +507,115 @@
        PRESENCE
        ============================================================ */
 
-    /*
-     * Return the status this browser should currently write.
-     *
-     * IMPORTANT:
-     * We do NOT use window.blur().
-     *
-     * Losing focus can simply mean the user opened another
-     * application or another browser window while remaining
-     * active. Blur is therefore NOT evidence of Away status.
-     */
-    function getPresenceStatus() {
-        if (
-            state.currentPresenceStatus ===
-            "dnd"
-        ) {
-            return "dnd";
-        }
-
-        /*
-         * A hidden tab is Away.
-         */
-        if (
-            document.hidden
-        ) {
-            return "away";
-        }
-
-        const inactiveFor =
-            Date.now() -
-            state.lastActivity;
-
-        /*
-         * Genuine inactivity.
-         */
-        if (
-            inactiveFor >=
-            IDLE_AFTER
-        ) {
-            return "away";
-        }
-
-        return "online";
-    }
-
-
-    /*
-     * Write presence to both tables.
-     *
-     * chat_presence is the authoritative global presence row.
-     *
-     * chat_community_members is kept synchronized for the
-     * currently logged-in member in every community.
-     */
-    async function writePresence(
-        forcedStatus = null
+    function presenceAge(
+        timestamp
     ) {
-        if (
-            !state.user ||
-            !state.db
-        ) {
-            return;
+
+        if (!timestamp) {
+            return Infinity;
         }
 
-        /*
-         * Prevent overlapping writes.
-         *
-         * We deliberately do not silently turn the next heartbeat
-         * into a different state. The following heartbeat will
-         * retry normally.
-         */
-        if (
-            state.presenceWriteInProgress
-        ) {
-            return;
+        const parsed =
+            Date.parse(timestamp);
+
+        if (!Number.isFinite(parsed)) {
+            return Infinity;
         }
 
-        state.presenceWriteInProgress =
-            true;
+        return Math.max(
+            0,
+            Date.now() - parsed
+        );
 
-        try {
-            let status =
-                forcedStatus ||
-                getPresenceStatus();
-
-            /*
-             * Never automatically create DND.
-             *
-             * DND must be explicitly requested by the user/system.
-             */
-            if (
-                status !== "dnd" &&
-                status !== "away" &&
-                status !== "online"
-            ) {
-                status =
-                    "online";
-            }
-
-            const now =
-                new Date()
-                    .toISOString();
-
-            const payload = {
-                user_id:
-                    state.user.id,
-
-                status,
-
-                custom_status:
-                    state.profile
-                        ?.publicProfile
-                        ?.custom_status ||
-                    "",
-
-                /*
-                 * THIS is the heartbeat timestamp.
-                 */
-                last_seen_at:
-                    now,
-
-                updated_at:
-                    now
-            };
-
-            const result =
-                await state.db
-                    .from(
-                        "chat_presence"
-                    )
-                    .upsert(
-                        payload,
-                        {
-                            onConflict:
-                                "user_id"
-                        }
-                    );
-
-            if (result.error) {
-                console.error(
-                    "❌ Presence write failed:",
-                    result.error
-                );
-
-                return;
-            }
-
-            /*
-             * Store the successful status locally.
-             */
-            state.currentPresenceStatus =
-                status;
-
-            /*
-             * Update our local cache immediately.
-             * This means the current browser does not have to
-             * wait for Supabase Realtime before updating its UI.
-             */
-            state.presenceRows.set(
-                String(
-                    state.user.id
-                ),
-                {
-                    user_id:
-                        state.user.id,
-
-                    status,
-
-                    custom_status:
-                        payload.custom_status,
-
-                    last_seen_at:
-                        now,
-
-                    updated_at:
-                        now
-                }
-            );
-
-            /*
-             * Keep community membership rows synchronized.
-             *
-             * Do NOT convert Away to Offline.
-             *
-             * The previous implementation did that and caused
-             * the two tables to disagree.
-             */
-            const memberUpdate =
-                await state.db
-                    .from(
-                        "chat_community_members"
-                    )
-                    .update({
-                        status,
-
-                        last_seen_at:
-                            now,
-
-                        last_active_at:
-                            now
-                    })
-                    .eq(
-                        "user_id",
-                        state.user.id
-                    );
-
-            if (
-                memberUpdate.error
-            ) {
-                console.warn(
-                    "Community member presence update failed:",
-                    memberUpdate.error
-                );
-            }
-
-            updateOwnPresenceUI(
-                status
-            );
-
-            /*
-             * Update our member row immediately.
-             */
-            state.members.forEach(
-                member => {
-                    if (
-                        String(
-                            member.userId
-                        ) ===
-                        String(
-                            state.user.id
-                        )
-                    ) {
-                        member.status =
-                            status;
-
-                        member.lastSeen =
-                            now;
-                    }
-                }
-            );
-
-            /*
-             * Only rerender when the member list already exists.
-             */
-            if (
-                state.members.length
-            ) {
-                renderMembers(
-                    $("memberSearchInput")
-                        ?.value || ""
-                );
-            }
-
-        } catch (error) {
-            console.error(
-                "Presence error:",
-                error
-            );
-        } finally {
-            state.presenceWriteInProgress =
-                false;
-        }
     }
 
 
     /*
-     * Header presence indicator.
-     */
-    function updateOwnPresenceUI(
+       IMPORTANT:
+
+       The timestamp is authoritative.
+
+       This prevents an old "away" database value from making
+       an account look Away even though its heartbeat is fresh.
+    */
+
+    function calculatePresence(
+        presence,
+        member = null
+    ) {
+
+        const lastSeen =
+            presence?.last_seen_at ||
+            member?.last_seen_at ||
+            presence?.updated_at ||
+            member?.last_active_at ||
+            null;
+
+        const age =
+            presenceAge(
+                lastSeen
+            );
+
+        if (
+            age <=
+            CONFIG.presenceOnlineWindow
+        ) {
+
+            if (
+                presence?.status ===
+                "dnd"
+            ) {
+
+                return "dnd";
+
+            }
+
+            return "online";
+
+        }
+
+
+        if (
+            age <=
+            CONFIG.presenceAwayWindow
+        ) {
+
+            return "away";
+
+        }
+
+        return "offline";
+
+    }
+
+
+    function presenceLabel(
         status
     ) {
+
+        switch (status) {
+
+            case "online":
+                return "Online";
+
+            case "away":
+                return "Away / Idle";
+
+            case "dnd":
+                return "Do Not Disturb";
+
+            default:
+                return "Offline";
+
+        }
+
+    }
+
+
+    function updateHeaderPresence(
+        status
+    ) {
+
         const dot =
             $("headerPresenceDot");
 
@@ -1443,126 +631,258 @@
         );
 
         dot.classList.add(
-            status ||
-                "offline"
+            status || "offline"
         );
 
-        dot.title =
+        const label =
             presenceLabel(
                 status
             );
+
+        dot.title =
+            label;
 
         dot.setAttribute(
             "aria-label",
-            presenceLabel(
-                status
-            )
+            label
         );
+
     }
 
 
-    /*
-     * Activity event.
-     *
-     * This does NOT write to Supabase on every mouse movement.
-     *
-     * It only updates lastActivity locally.
-     *
-     * The heartbeat writes the actual state every 15 seconds.
-     */
-    function markActivity() {
-        const wasAway =
-            state.currentPresenceStatus ===
-            "away";
+    function desiredPresence() {
+
+        if (
+            document.hidden
+        ) {
+
+            return "away";
+
+        }
+
+        const idleFor =
+            Date.now() -
+            state.lastActivity;
+
+        if (
+            idleFor >=
+            CONFIG.idleAfter
+        ) {
+
+            return "away";
+
+        }
+
+        return "online";
+
+    }
+
+
+    async function writePresence(
+        status
+    ) {
+
+        if (
+            !state.user?.id ||
+            state.presenceRefreshing
+        ) {
+
+            return;
+
+        }
+
+        state.presenceRefreshing =
+            true;
+
+        const now =
+            new Date().toISOString();
+
+        try {
+
+            const {
+                error
+            } =
+                await db
+                    .from("chat_presence")
+                    .upsert(
+                        {
+                            user_id:
+                                state.user.id,
+
+                            status:
+                                status,
+
+                            last_seen_at:
+                                now,
+
+                            updated_at:
+                                now
+                        },
+                        {
+                            onConflict:
+                                "user_id"
+                        }
+                    );
+
+            if (error) {
+
+                console.warn(
+                    "⚠️ Presence write failed:",
+                    error
+                );
+
+                return;
+
+            }
+
+
+            if (
+                state.currentCommunity?.id
+            ) {
+
+                const {
+                    error:
+                        memberError
+                } =
+                    await db
+                        .from(
+                            "chat_community_members"
+                        )
+                        .update(
+                            {
+                                status:
+                                    status,
+
+                                last_seen_at:
+                                    now,
+
+                                last_active_at:
+                                    now
+                            }
+                        )
+                        .eq(
+                            "community_id",
+                            state.currentCommunity.id
+                        )
+                        .eq(
+                            "user_id",
+                            state.user.id
+                        );
+
+                if (memberError) {
+
+                    console.warn(
+                        "⚠️ Member presence update failed:",
+                        memberError
+                    );
+
+                }
+
+            }
+
+            state.lastPresenceWrite =
+                Date.now();
+
+            updateHeaderPresence(
+                status
+            );
+
+        } finally {
+
+            state.presenceRefreshing =
+                false;
+
+        }
+
+    }
+
+
+    function registerActivity() {
 
         state.lastActivity =
             Date.now();
 
         /*
-         * If the user interacts after becoming Away,
-         * immediately restore Online.
-         *
-         * The visibility check prevents a hidden tab from
-         * becoming Online merely because of an unusual event.
-         */
+           If the user becomes active again after being idle,
+           the next heartbeat immediately restores Online.
+        */
+
         if (
-            !document.hidden &&
-            wasAway
+            Date.now() -
+            state.lastPresenceWrite >
+            10000
         ) {
+
             writePresence(
                 "online"
             );
+
         }
+
     }
 
 
-    /*
-     * Start the complete presence engine.
-     */
     function startPresence() {
-        stopPresence();
+
+        if (
+            state.presenceTimer
+        ) {
+
+            clearInterval(
+                state.presenceTimer
+            );
+
+        }
 
         state.lastActivity =
             Date.now();
 
-        state.currentPresenceStatus =
-            "online";
-
-        /*
-         * Immediately establish Online status.
-         */
         writePresence(
             "online"
         );
 
-        /*
-         * Heartbeat.
-         *
-         * Every 15 seconds:
-         * - calculate Online/Away
-         * - write current user's status
-         * - refresh other members
-         */
-        state.presenceTimer =
-            setInterval(
-                () => {
-                    const desired =
-                        getPresenceStatus();
 
-                    writePresence(
-                        desired
-                    );
-                },
-                PRESENCE_HEARTBEAT
-            );
+        const activityEvents = [
 
-        /*
-         * Refresh other members every 15 seconds.
-         */
-        state.presenceRefreshTimer =
-            setInterval(
-                () => {
-                    refreshMemberPresence();
-                },
-                PRESENCE_HEARTBEAT
-            );
+            "mousemove",
+            "mousedown",
+            "keydown",
+            "touchstart",
+            "scroll",
+            "pointerdown"
 
-        /*
-         * Visibility.
-         *
-         * Hidden tab = Away.
-         *
-         * Returning to the tab = Online immediately.
-         */
-        state.presenceVisibilityHandler =
+        ];
+
+
+        activityEvents.forEach(
+            eventName => {
+
+                window.addEventListener(
+                    eventName,
+                    registerActivity,
+                    {
+                        passive: true
+                    }
+                );
+
+            }
+        );
+
+
+        document.addEventListener(
+            "visibilitychange",
             () => {
+
                 if (
                     document.hidden
                 ) {
+
                     writePresence(
                         "away"
                     );
+
                 } else {
+
                     state.lastActivity =
                         Date.now();
 
@@ -1570,668 +890,70 @@
                         "online"
                     );
 
-                    refreshMemberPresence();
                 }
-            };
 
-        document.addEventListener(
-            "visibilitychange",
-            state.presenceVisibilityHandler
-        );
-
-        /*
-         * IMPORTANT:
-         *
-         * There is intentionally NO:
-         *
-         * window.addEventListener("blur", ...)
-         *
-         * because browser blur is not a reliable presence
-         * signal.
-         */
-
-        /*
-         * Real user activity.
-         */
-        const activityEvents = [
-            "mousemove",
-            "mousedown",
-            "keydown",
-            "scroll",
-            "touchstart",
-            "click",
-            "pointerdown"
-        ];
-
-        state.presenceActivityHandlers =
-            activityEvents.map(
-                eventName => {
-                    const handler =
-                        markActivity;
-
-                    document.addEventListener(
-                        eventName,
-                        handler,
-                        {
-                            passive:
-                                true
-                        }
-                    );
-
-                    return {
-                        eventName,
-                        handler
-                    };
-                }
-            );
-
-        /*
-         * Focus can restore Online, but focus alone is NOT
-         * used to mark Away.
-         */
-        const focusHandler =
-            () => {
-                state.lastActivity =
-                    Date.now();
-
-                if (
-                    !document.hidden
-                ) {
-                    writePresence(
-                        "online"
-                    );
-                }
-            };
-
-        window.addEventListener(
-            "focus",
-            focusHandler
-        );
-
-        state.presenceActivityHandlers.push(
-            {
-                eventName:
-                    "__window_focus__",
-
-                handler:
-                    focusHandler
             }
         );
-    }
 
 
-    /*
-     * Stop presence cleanly.
-     *
-     * This is important because your previous implementation
-     * added anonymous event listeners and never removed them.
-     */
-    function stopPresence() {
-        if (
-            state.presenceTimer
-        ) {
-            clearInterval(
-                state.presenceTimer
+        state.presenceTimer =
+            setInterval(
+                async () => {
+
+                    const status =
+                        desiredPresence();
+
+                    await writePresence(
+                        status
+                    );
+
+                    await refreshMemberPresence();
+
+                },
+                CONFIG.presenceHeartbeat
             );
 
-            state.presenceTimer =
-                null;
-        }
-
-        if (
-            state.presenceRefreshTimer
-        ) {
-            clearInterval(
-                state.presenceRefreshTimer
-            );
-
-            state.presenceRefreshTimer =
-                null;
-        }
-
-        if (
-            state.presenceVisibilityHandler
-        ) {
-            document.removeEventListener(
-                "visibilitychange",
-                state.presenceVisibilityHandler
-            );
-
-            state.presenceVisibilityHandler =
-                null;
-        }
-
-        /*
-         * Remove all activity listeners.
-         */
-        state.presenceActivityHandlers
-            .forEach(
-                item => {
-                    if (
-                        item.eventName ===
-                        "__window_focus__"
-                    ) {
-                        window.removeEventListener(
-                            "focus",
-                            item.handler
-                        );
-                    } else {
-                        document.removeEventListener(
-                            item.eventName,
-                            item.handler
-                        );
-                    }
-                }
-            );
-
-        state.presenceActivityHandlers =
-            [];
-    }
-
-
-    /*
-     * Calculate another user's visible status from the
-     * database row.
-     *
-     * last_seen_at is authoritative for freshness.
-     */
-    function calculatePresence(
-        row
-    ) {
-        if (!row) {
-            return "offline";
-        }
-
-        const rawTimestamp =
-            row.last_seen_at ||
-            row.updated_at ||
-            null;
-
-        if (!rawTimestamp) {
-            return "offline";
-        }
-
-        const timestamp =
-            Date.parse(
-                rawTimestamp
-            );
-
-        if (
-            !Number.isFinite(
-                timestamp
-            )
-        ) {
-            return "offline";
-        }
-
-        /*
-         * Protect against tiny client/server clock differences.
-         */
-        const age =
-            Math.max(
-                0,
-                Date.now() -
-                    timestamp
-            );
-
-        /*
-         * Older than one minute = offline.
-         */
-        if (
-            age >
-            PRESENCE_STALE_AFTER
-        ) {
-            return "offline";
-        }
-
-        /*
-         * DND is explicit.
-         */
-        if (
-            row.status === "dnd"
-        ) {
-            return "dnd";
-        }
-
-        /*
-         * Fresh Online heartbeat = Online.
-         */
-        if (
-            row.status === "online"
-        ) {
-            return "online";
-        }
-
-        /*
-         * Fresh Away heartbeat = Away.
-         */
-        if (
-            row.status === "away"
-        ) {
-            return "away";
-        }
-
-        return "offline";
-    }
-
-
-    function presenceLabel(
-        status
-    ) {
-        switch (status) {
-            case "online":
-                return "Online";
-
-            case "away":
-                return "Away / Idle";
-
-            case "dnd":
-                return "Do Not Disturb";
-
-            default:
-                return "Offline";
-        }
-    }
-
-
-    /*
-     * Presence realtime.
-     */
-    function subscribePresence() {
-        if (
-            state.presenceChannel
-        ) {
-            state.db.removeChannel(
-                state.presenceChannel
-            );
-
-            state.presenceChannel =
-                null;
-        }
-
-        state.presenceChannel =
-            state.db
-                .channel(
-                    "mwaniki-global-presence"
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "*",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_presence"
-                    },
-                    payload => {
-                        if (
-                            payload.new
-                                ?.user_id
-                        ) {
-                            state.presenceRows.set(
-                                String(
-                                    payload
-                                        .new
-                                        .user_id
-                                ),
-                                payload.new
-                            );
-                        }
-
-                        /*
-                         * Realtime immediately updates the member
-                         * sidebar without waiting for the next
-                         * heartbeat.
-                         */
-                        refreshMemberPresence();
-                    }
-                )
-                .subscribe(
-                    status => {
-                        if (
-                            status ===
-                            "SUBSCRIBED"
-                        ) {
-                            console.log(
-                                "🟢 Presence realtime: SUBSCRIBED"
-                            );
-                        }
-                    }
-                );
     }
 
 
     /* ============================================================
-       MEMBERS
+       MEMBER PRESENCE
        ============================================================ */
 
-    async function loadMembers() {
-        if (
-            !state.currentCommunity
-        ) {
-            return;
-        }
-
-        const result =
-            await state.db
-                .from(
-                    "chat_community_members"
-                )
-                .select("*")
-                .eq(
-                    "community_id",
-                    state.currentCommunity.id
-                )
-                .eq(
-                    "is_banned",
-                    false
-                );
-
-        if (result.error) {
-            console.error(
-                "Member query failed:",
-                result.error
-            );
-
-            state.members =
-                [];
-
-            renderMembers();
-
-            return;
-        }
-
-        const rows =
-            result.data || [];
-
-        if (!rows.length) {
-            state.members = [
-                {
-                    userId:
-                        state.user.id,
-
-                    name:
-                        state.profile
-                            ?.name ||
-                        "You",
-
-                    photo:
-                        state.profile
-                            ?.photo ||
-                        null,
-
-                    status:
-                        state.currentPresenceStatus ||
-                        "online",
-
-                    customStatus:
-                        "",
-
-                    role:
-                        "student"
-                }
-            ];
-
-            renderMembers();
-
-            updateOwnPresenceUI(
-                state.members[0]
-                    .status
-            );
-
-            return;
-        }
-
-        const userIds = [
-            ...new Set(
-                rows
-                    .map(
-                        row =>
-                            row.user_id
-                    )
-                    .filter(Boolean)
-            )
-        ];
-
-        let profiles = [];
-        let students = [];
-        let presence = [];
-
-        if (
-            userIds.length
-        ) {
-            const result =
-                await state.db
-                    .from(
-                        "chat_public_profiles"
-                    )
-                    .select(
-                        "id,full_name,photo_url,updated_at"
-                    )
-                    .in(
-                        "id",
-                        userIds
-                    );
-
-            if (!result.error) {
-                profiles =
-                    result.data ||
-                    [];
-            }
-        }
-
-        if (
-            userIds.length
-        ) {
-            const result =
-                await state.db
-                    .from("students")
-                    .select(
-                        "id,full_name,email,course,level,photo_url"
-                    )
-                    .in(
-                        "id",
-                        userIds
-                    );
-
-            if (!result.error) {
-                students =
-                    result.data ||
-                    [];
-            }
-        }
-
-        if (
-            userIds.length
-        ) {
-            const result =
-                await state.db
-                    .from(
-                        "chat_presence"
-                    )
-                    .select(
-                        "user_id,status,custom_status,last_seen_at,updated_at"
-                    )
-                    .in(
-                        "user_id",
-                        userIds
-                    );
-
-            if (!result.error) {
-                presence =
-                    result.data ||
-                    [];
-            }
-        }
-
-        presence.forEach(
-            row => {
-                state.presenceRows.set(
-                    String(
-                        row.user_id
-                    ),
-                    row
-                );
-            }
-        );
-
-        state.members =
-            rows.map(
-                member => {
-                    const userId =
-                        member.user_id;
-
-                    const profile =
-                        profiles.find(
-                            item =>
-                                String(
-                                    item.id
-                                ) ===
-                                String(
-                                    userId
-                                )
-                        );
-
-                    const student =
-                        students.find(
-                            item =>
-                                String(
-                                    item.id
-                                ) ===
-                                String(
-                                    userId
-                                )
-                        );
-
-                    const live =
-                        presence.find(
-                            item =>
-                                String(
-                                    item.user_id
-                                ) ===
-                                String(
-                                    userId
-                                )
-                        );
-
-                    /*
-                     * If this is the current user and the local
-                     * heartbeat has already succeeded, prefer that
-                     * known status.
-                     */
-                    let status =
-                        calculatePresence(
-                            live
-                        );
-
-                    if (
-                        String(
-                            userId
-                        ) ===
-                        String(
-                            state.user?.id
-                        ) &&
-                        state.currentPresenceStatus
-                    ) {
-                        status =
-                            state.currentPresenceStatus;
-                    }
-
-                    if (
-                        String(
-                            userId
-                        ) ===
-                        String(
-                            state.user?.id
-                        )
-                    ) {
-                        updateOwnPresenceUI(
-                            status
-                        );
-                    }
-
-                    return {
-                        membership:
-                            member,
-
-                        userId,
-
-                        name:
-                            member.display_name ||
-                            member.nickname ||
-                            profile?.full_name ||
-                            student?.full_name ||
-                            "Student",
-
-                        photo:
-                            member.avatar_url ||
-                            profile?.photo_url ||
-                            student?.photo_url ||
-                            null,
-
-                        status,
-
-                        customStatus:
-                            live?.custom_status ||
-                            "",
-
-                        role:
-                            member.role ||
-                            "student",
-
-                        course:
-                            student?.course ||
-                            "",
-
-                        level:
-                            student?.level ||
-                            "",
-
-                        lastSeen:
-                            live?.last_seen_at ||
-                            member.last_seen_at ||
-                            null
-                    };
-                }
-            );
-
-        renderMembers(
-            $("memberSearchInput")
-                ?.value || ""
-        );
-    }
-
-
     async function refreshMemberPresence() {
+
         if (
             !state.members.length
         ) {
+
             return;
+
         }
 
-        const ids = [
-            ...new Set(
-                state.members
-                    .map(
-                        member =>
-                            member.userId
-                    )
-                    .filter(Boolean)
-            )
-        ];
+
+        const ids =
+            [
+                ...new Set(
+                    state.members
+                        .map(
+                            member =>
+                                member.user_id
+                        )
+                        .filter(Boolean)
+                )
+            ];
 
         if (!ids.length) {
             return;
         }
 
-        const result =
-            await state.db
-                .from(
-                    "chat_presence"
-                )
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("chat_presence")
                 .select(
                     "user_id,status,custom_status,last_seen_at,updated_at"
                 )
@@ -2240,324 +962,1318 @@
                     ids
                 );
 
-        if (result.error) {
+        if (error) {
+
             console.warn(
-                "Presence refresh failed:",
-                result.error
+                "⚠️ Presence refresh failed:",
+                error
             );
 
             return;
+
         }
 
-        /*
-         * Replace cache entries with the latest database state.
-         */
-        (result.data || []).forEach(
+
+        const presenceMap =
+            new Map();
+
+        (
+            data || []
+        ).forEach(
             row => {
-                state.presenceRows.set(
-                    String(
-                        row.user_id
-                    ),
+
+                presenceMap.set(
+                    String(row.user_id),
                     row
                 );
+
             }
         );
 
-        state.members.forEach(
-            member => {
-                const row =
-                    state.presenceRows.get(
-                        String(
-                            member.userId
-                        )
-                    );
 
-                let status =
-                    calculatePresence(
-                        row
-                    );
+        state.members =
+            state.members.map(
+                member => {
 
-                /*
-                 * Current user's status has just been written by
-                 * this browser. Keep its locally confirmed state.
-                 */
-                if (
+                    const presence =
+                        presenceMap.get(
+                            String(
+                                member.user_id
+                            )
+                        ) || null;
+
+                    return {
+
+                        ...member,
+
+                        presence,
+
+                        computedPresence:
+                            calculatePresence(
+                                presence,
+                                member
+                            )
+
+                    };
+
+                }
+            );
+
+
+        renderMembers();
+
+
+        const me =
+            state.members.find(
+                member =>
                     String(
-                        member.userId
+                        member.user_id
                     ) ===
                     String(
                         state.user?.id
                     )
-                ) {
-                    status =
-                        state.currentPresenceStatus ||
-                        status;
+            );
 
-                    updateOwnPresenceUI(
-                        status
-                    );
-                }
+        if (me) {
 
-                member.status =
-                    status;
+            updateHeaderPresence(
+                me.computedPresence ||
+                "offline"
+            );
 
-                member.customStatus =
-                    row?.custom_status ||
-                    "";
+        }
 
-                member.lastSeen =
-                    row?.last_seen_at ||
-                    member.lastSeen ||
-                    null;
-            }
-        );
-
-        renderMembers(
-            $("memberSearchInput")
-                ?.value || ""
-        );
     }
 
 
-    function renderMembers(
-        searchValue = ""
-    ) {
-        const container =
-            $("memberList");
+    /* ============================================================
+       COURSES
+       ============================================================ */
 
-        if (!container) {
+    async function loadCourses() {
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("courses")
+                .select(
+                    "id,title,description,image,created_at"
+                )
+                .order(
+                    "title",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+
+            console.warn(
+                "⚠️ Courses could not be loaded:",
+                error
+            );
+
+            state.courses = [];
+
+            return;
+
+        }
+
+        state.courses =
+            data || [];
+
+        populateCourseSelects();
+
+    }
+
+
+    function populateCourseSelects() {
+
+        [
+            $("communityCourseSelect"),
+            $("channelCourseSelect")
+        ].forEach(
+            select => {
+
+                if (!select) {
+                    return;
+                }
+
+                const existing =
+                    select.value;
+
+                const first =
+                    select.options[0];
+
+                select.innerHTML =
+                    "";
+
+                if (first) {
+
+                    select.appendChild(
+                        first
+                    );
+
+                }
+
+                state.courses.forEach(
+                    course => {
+
+                        const option =
+                            document.createElement(
+                                "option"
+                            );
+
+                        option.value =
+                            String(
+                                course.id
+                            );
+
+                        option.textContent =
+                            course.title ||
+                            `Course ${course.id}`;
+
+                        select.appendChild(
+                            option
+                        );
+
+                    }
+                );
+
+                if (
+                    existing &&
+                    Array.from(
+                        select.options
+                    ).some(
+                        option =>
+                            option.value ===
+                            existing
+                    )
+                ) {
+
+                    select.value =
+                        existing;
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       COMMUNITIES
+       ============================================================ */
+
+    async function loadCommunities() {
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("chat_communities")
+                .select(
+                    `
+                    id,
+                    name,
+                    slug,
+                    description,
+                    icon_url,
+                    banner_url,
+                    is_public,
+                    is_active,
+                    created_by,
+                    created_at,
+                    updated_at
+                    `
+                )
+                .eq(
+                    "is_active",
+                    true
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+
+            console.error(
+                "❌ Communities failed:",
+                error
+            );
+
+            state.communities =
+                [];
+
+            renderCommunityRail();
+
+            return;
+
+        }
+
+        state.communities =
+            data || [];
+
+        renderCommunityRail();
+
+    }
+
+
+    function renderCommunityRail() {
+
+        const rail =
+            $("communityRail");
+
+        if (!rail) {
             return;
         }
 
-        const query =
-            String(
-                searchValue || ""
-            )
+        if (
+            !state.communities.length
+        ) {
+
+            rail.innerHTML =
+                `<div class="empty-state">
+                    No communities
+                </div>`;
+
+            return;
+
+        }
+
+
+        rail.innerHTML =
+            state.communities
+                .map(
+                    community => {
+
+                        const active =
+                            String(
+                                community.id
+                            ) ===
+                            String(
+                                state.currentCommunity?.id
+                            );
+
+                        const icon =
+                            community.icon_url;
+
+                        return `
+                            <button
+                                type="button"
+                                class="community-rail-item ${
+                                    active
+                                        ? "active"
+                                        : ""
+                                }"
+                                data-community-id="${escapeHTML(
+                                    community.id
+                                )}"
+                                title="${escapeHTML(
+                                    community.name
+                                )}"
+                            >
+
+                                ${
+                                    icon
+                                        ? `
+                                            <img
+                                                src="${escapeHTML(
+                                                    icon
+                                                )}"
+                                                alt=""
+                                            >
+                                        `
+                                        : `
+                                            <span>
+                                                ${escapeHTML(
+                                                    initials(
+                                                        community.name
+                                                    )
+                                                )}
+                                            </span>
+                                        `
+                                }
+
+                            </button>
+                        `;
+
+                    }
+                )
+                .join("");
+
+
+        qa(
+            "[data-community-id]",
+            rail
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const community =
+                            state.communities.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        button.dataset.communityId
+                                    )
+                            );
+
+                        if (community) {
+
+                            selectCommunity(
+                                community
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       COMMUNITY SELECTION
+       ============================================================ */
+
+    async function selectCommunity(
+        community
+    ) {
+
+        if (!community) {
+            return;
+        }
+
+        state.currentCommunity =
+            community;
+
+        storageSet(
+            STORAGE.communityId,
+            community.id
+        );
+
+        storageSet(
+            STORAGE.courseName,
+            community.name
+        );
+
+
+        renderCommunityRail();
+
+
+        await loadChannels();
+
+        await loadMembers();
+
+        subscribeCommunityRealtime();
+
+        /*
+           Always start in the discussion channel rather than
+           accidentally opening Gaming/Memes.
+        */
+
+        const discussion =
+            findDefaultDiscussionChannel();
+
+        if (discussion) {
+
+            await selectChannel(
+                discussion
+            );
+
+        } else if (
+            state.channels.length
+        ) {
+
+            await selectChannel(
+                state.channels[0]
+            );
+
+        } else {
+
+            clearChat();
+
+        }
+
+    }
+
+
+    function findDefaultDiscussionChannel() {
+
+        const preferred =
+            [
+                "general",
+                "discussion",
+                "main-discussion",
+                "chat",
+                "lounge"
+            ];
+
+        for (
+            const wanted of preferred
+        ) {
+
+            const found =
+                state.channels.find(
+                    channel =>
+                        String(
+                            channel.slug ||
+                            channel.name ||
+                            ""
+                        )
+                            .toLowerCase()
+                            .replace(/\s+/g, "-") ===
+                        wanted
+                );
+
+            if (found) {
+                return found;
+            }
+
+        }
+
+        return (
+            state.channels.find(
+                channel =>
+                    !/gaming|meme/i.test(
+                        channel.name || ""
+                    )
+            ) ||
+            null
+        );
+
+    }
+
+
+    /* ============================================================
+       CHANNELS
+       ============================================================ */
+
+    async function loadChannels() {
+
+        if (
+            !state.currentCommunity?.id
+        ) {
+
+            return;
+
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("chat_channels")
+                .select(
+                    `
+                    id,
+                    community_id,
+                    name,
+                    slug,
+                    description,
+                    channel_type,
+                    icon,
+                    position,
+                    is_private,
+                    is_archived,
+                    is_active,
+                    course_id,
+                    unit_id,
+                    created_by,
+                    created_at,
+                    updated_at
+                    `
+                )
+                .eq(
+                    "community_id",
+                    state.currentCommunity.id
+                )
+                .eq(
+                    "is_archived",
+                    false
+                )
+                .eq(
+                    "is_active",
+                    true
+                )
+                .order(
+                    "position",
+                    {
+                        ascending: true
+                    }
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+
+            console.error(
+                "❌ Channels failed:",
+                error
+            );
+
+            state.channels =
+                [];
+
+            renderChannels();
+
+            return;
+
+        }
+
+        state.channels =
+            data || [];
+
+        renderChannels();
+
+    }
+
+
+    function renderChannels() {
+
+        const list =
+            $("channelList");
+
+        if (!list) {
+            return;
+        }
+
+
+        let channels =
+            state.channels;
+
+        const search =
+            state.channelSearch
                 .trim()
                 .toLowerCase();
 
-        const visible =
-            state.members.filter(
-                member => {
-                    const name =
+        if (search) {
+
+            channels =
+                channels.filter(
+                    channel =>
                         String(
-                            member.name ||
-                                ""
+                            channel.name || ""
                         )
-                            .toLowerCase();
+                            .toLowerCase()
+                            .includes(
+                                search
+                            )
+                );
 
-                    const status =
-                        String(
-                            member.status ||
-                                ""
-                        )
-                            .toLowerCase();
+        }
 
-                    const custom =
-                        String(
-                            member.customStatus ||
-                                ""
-                        )
-                            .toLowerCase();
 
-                    return (
-                        !query ||
-                        name.includes(
-                            query
-                        ) ||
-                        status.includes(
-                            query
-                        ) ||
-                        custom.includes(
-                            query
-                        )
-                    );
-                }
-            );
+        if (!channels.length) {
 
-        setText(
-            "memberCount",
-            state.members.length
+            list.innerHTML =
+                `<div class="empty-state">
+                    No channels found.
+                </div>`;
+
+            return;
+
+        }
+
+
+        list.innerHTML =
+            channels
+                .map(
+                    channel => {
+
+                        const active =
+                            String(
+                                channel.id
+                            ) ===
+                            String(
+                                state.currentChannel?.id
+                            );
+
+                        return `
+                            <button
+                                type="button"
+                                class="channel-item ${
+                                    active
+                                        ? "active"
+                                        : ""
+                                }"
+                                data-channel-id="${escapeHTML(
+                                    channel.id
+                                )}"
+                            >
+
+                                <span class="channel-item-icon">
+                                    ${
+                                        escapeHTML(
+                                            channel.icon ||
+                                            "#"
+                                        )
+                                    }
+                                </span>
+
+                                <span class="channel-item-name">
+                                    ${escapeHTML(
+                                        channel.name ||
+                                        "channel"
+                                    )}
+                                </span>
+
+                            </button>
+                        `;
+
+                    }
+                )
+                .join("");
+
+
+        qa(
+            "[data-channel-id]",
+            list
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const channel =
+                            state.channels.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        button.dataset.channelId
+                                    )
+                            );
+
+                        if (channel) {
+
+                            selectChannel(
+                                channel
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
         );
 
-        container.innerHTML =
-            "";
+    }
 
-        if (
-            !visible.length
-        ) {
-            container.innerHTML = `
-                <div class="member-empty">
-                    <strong>No members found</strong>
-                    <span>Try another name.</span>
-                </div>
-            `;
 
+    async function selectChannel(
+        channel
+    ) {
+
+        if (!channel) {
             return;
         }
 
-        visible.forEach(
-            member => {
-                const row =
-                    document.createElement(
-                        "div"
+
+        state.currentChannel =
+            channel;
+
+        state.currentReply =
+            null;
+
+        storageSet(
+            STORAGE.courseId,
+            channel.course_id || ""
+        );
+
+
+        updateChannelHeader();
+
+        renderChannels();
+
+        cancelReply();
+
+        await loadMessages(
+            channel.id
+        );
+
+        subscribeMessageRealtime(
+            channel.id
+        );
+
+        setupTypingRealtime(
+            channel.id
+        );
+
+        focusMessageInput();
+
+    }
+
+
+    function updateChannelHeader() {
+
+        const channel =
+            state.currentChannel;
+
+        if (!channel) {
+            return;
+        }
+
+
+        const title =
+            $("channelTitle") ||
+            $("chatChannelTitle") ||
+            $("currentChannelName");
+
+        if (title) {
+
+            title.textContent =
+                channel.name ||
+                "channel";
+
+        }
+
+
+        const description =
+            $("channelDescription") ||
+            $("chatChannelDescription");
+
+        if (
+            description
+        ) {
+
+            description.textContent =
+                channel.description ||
+                "";
+
+        }
+
+
+        const input =
+            $("messageInput");
+
+        if (input) {
+
+            input.placeholder =
+                `Message #${
+                    channel.name ||
+                    "channel"
+                }`;
+
+        }
+
+    }
+
+
+    /* ============================================================
+       MEMBERS
+       ============================================================ */
+
+    async function loadMembers() {
+
+        if (
+            !state.currentCommunity?.id
+        ) {
+
+            state.members =
+                [];
+
+            renderMembers();
+
+            return;
+
+        }
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_community_members"
+                )
+                .select(
+                    `
+                    id,
+                    community_id,
+                    user_id,
+                    role,
+                    nickname,
+                    is_muted,
+                    is_banned,
+                    joined_at,
+                    last_seen_at,
+                    membership_status,
+                    badge,
+                    display_name,
+                    avatar_url,
+                    last_active_at,
+                    status
+                    `
+                )
+                .eq(
+                    "community_id",
+                    state.currentCommunity.id
+                )
+                .eq(
+                    "is_banned",
+                    false
+                )
+                .order(
+                    "joined_at",
+                    {
+                        ascending: true
+                    }
+                );
+
+        if (error) {
+
+            console.error(
+                "❌ Members failed:",
+                error
+            );
+
+            state.members =
+                [];
+
+            renderMembers();
+
+            return;
+
+        }
+
+
+        state.members =
+            data || [];
+
+
+        const ids =
+            [
+                ...new Set(
+                    state.members
+                        .map(
+                            member =>
+                                member.user_id
+                        )
+                        .filter(Boolean)
+                )
+            ];
+
+
+        let profiles = [];
+
+        if (ids.length) {
+
+            const {
+                data: students
+            } =
+                await db
+                    .from("students")
+                    .select(
+                        "id,full_name,email,photo_url"
+                    )
+                    .in(
+                        "id",
+                        ids
                     );
 
-                const status =
-                    member.status ||
-                    "offline";
+            profiles =
+                students || [];
 
-                row.className =
-                    `member-row status-${status}`;
+        }
 
-                const self =
+
+        const profileMap =
+            new Map();
+
+        profiles.forEach(
+            profile => {
+
+                profileMap.set(
                     String(
-                        member.userId
-                    ) ===
-                    String(
-                        state.user?.id
-                    );
+                        profile.id
+                    ),
+                    profile
+                );
 
-                const customStatus =
-                    String(
-                        member.customStatus ||
-                            ""
-                    ).trim();
+            }
+        );
 
-                row.innerHTML = `
-                    <div class="member-avatar-wrap">
 
-                        ${avatarMarkup(
-                            member.name,
-                            member.photo,
-                            "member-avatar"
-                        )}
+        state.members =
+            state.members.map(
+                member => {
 
-                        <span
-                            class="presence-dot ${escapeAttr(
-                                status
-                            )}"
-                            title="${escapeAttr(
-                                presenceLabel(
+                    const profile =
+                        profileMap.get(
+                            String(
+                                member.user_id
+                            )
+                        ) || null;
+
+                    return {
+
+                        ...member,
+
+                        profile
+
+                    };
+
+                }
+            );
+
+
+        await refreshMemberPresence();
+
+    }
+
+
+    function renderMembers() {
+
+        const list =
+            $("memberList");
+
+        if (!list) {
+            return;
+        }
+
+
+        const count =
+            $("memberCount");
+
+        if (count) {
+
+            count.textContent =
+                String(
+                    state.members.length
+                );
+
+        }
+
+
+        let members =
+            state.members;
+
+        const search =
+            state.memberSearch
+                .trim()
+                .toLowerCase();
+
+        if (search) {
+
+            members =
+                members.filter(
+                    member => {
+
+                        const name =
+                            getMemberName(
+                                member
+                            );
+
+                        return name
+                            .toLowerCase()
+                            .includes(
+                                search
+                            );
+
+                    }
+                );
+
+        }
+
+
+        if (!members.length) {
+
+            list.innerHTML =
+                `<div class="empty-state">
+                    No members found.
+                </div>`;
+
+            return;
+
+        }
+
+
+        members.sort(
+            (
+                a,
+                b
+            ) => {
+
+                const rank = {
+                    online: 0,
+                    dnd: 1,
+                    away: 2,
+                    offline: 3
+                };
+
+                return (
+                    (rank[
+                        a.computedPresence ||
+                        "offline"
+                    ] ?? 9) -
+                    (rank[
+                        b.computedPresence ||
+                        "offline"
+                    ] ?? 9)
+                );
+
+            }
+        );
+
+
+        list.innerHTML =
+            members
+                .map(
+                    member => {
+
+                        const name =
+                            getMemberName(
+                                member
+                            );
+
+                        const avatar =
+                            getMemberAvatar(
+                                member
+                            );
+
+                        const status =
+                            member.computedPresence ||
+                            "offline";
+
+                        const custom =
+                            member.presence
+                                ?.custom_status ||
+                            "";
+
+                        return `
+                            <div
+                                class="member-row status-${escapeHTML(
                                     status
-                                )
-                            )}"
-                            aria-label="${escapeAttr(
-                                presenceLabel(
-                                    status
-                                )
-                            )}"
-                        ></span>
+                                )}"
+                                data-member-id="${escapeHTML(
+                                    member.user_id
+                                )}"
+                            >
 
-                    </div>
+                                <div class="member-avatar-wrap">
 
-                    <div class="member-info">
+                                    ${
+                                        avatar
+                                            ? `
+                                                <img
+                                                    class="member-avatar"
+                                                    src="${escapeHTML(
+                                                        avatar
+                                                    )}"
+                                                    alt="${escapeHTML(
+                                                        name
+                                                    )}"
+                                                >
+                                            `
+                                            : `
+                                                <div class="member-avatar">
+                                                    ${escapeHTML(
+                                                        initials(
+                                                            name
+                                                        )
+                                                    )}
+                                                </div>
+                                            `
+                                    }
 
-                        <strong class="member-name">
-                            ${escapeHTML(
-                                member.name
-                            )}
-                        </strong>
+                                    <span
+                                        class="presence-dot ${escapeHTML(
+                                            status
+                                        )}"
+                                        title="${escapeHTML(
+                                            presenceLabel(
+                                                status
+                                            )
+                                        )}"
+                                    ></span>
 
-                        <span
-                            class="member-status-text ${escapeAttr(
-                                status
-                            )}"
-                        >
-                            <i></i>
-                            ${escapeHTML(
-                                presenceLabel(
-                                    status
-                                )
-                            )}
-                        </span>
+                                </div>
 
-                        ${
-                            customStatus
-                                ? `
-                                    <span class="member-custom-status">
+
+                                <div class="member-info">
+
+                                    <div class="member-name">
                                         ${escapeHTML(
-                                            customStatus
+                                            name
                                         )}
-                                    </span>
-                                `
-                                : ""
-                        }
+                                    </div>
 
-                    </div>
+                                    <div class="member-status-line">
 
-                    <div class="member-actions">
+                                        <span class="member-status-text">
+                                            ${escapeHTML(
+                                                presenceLabel(
+                                                    status
+                                                )
+                                            )}
+                                        </span>
 
-                        ${
-                            self
-                                ? `
-                                    <span class="member-you">
-                                        YOU
-                                    </span>
-                                `
-                                : `
-                                    <button
-                                        type="button"
-                                        class="member-action-button dm-member-button"
-                                        title="Message ${escapeAttr(
-                                            member.name
-                                        )}"
-                                        aria-label="Message ${escapeAttr(
-                                            member.name
-                                        )}"
-                                    >
-                                        💬
-                                    </button>
+                                    </div>
 
-                                    <button
-                                        type="button"
-                                        class="member-action-button call-member-button"
-                                        title="Call ${escapeAttr(
-                                            member.name
-                                        )}"
-                                        aria-label="Call ${escapeAttr(
-                                            member.name
-                                        )}"
-                                    >
-                                        📞
-                                    </button>
-                                `
-                        }
+                                    ${
+                                        custom
+                                            ? `
+                                                <div class="member-custom-status">
+                                                    ${escapeHTML(
+                                                        custom
+                                                    )}
+                                                </div>
+                                            `
+                                            : ""
+                                    }
 
-                    </div>
-                `;
+                                </div>
 
-                row.querySelector(
-                    ".dm-member-button"
-                )?.addEventListener(
+
+                                ${
+                                    String(
+                                        member.user_id
+                                    ) !==
+                                    String(
+                                        state.user?.id
+                                    )
+                                        ? `
+                                            <div class="member-actions">
+
+                                                <button
+                                                    type="button"
+                                                    class="member-action-button"
+                                                    data-direct-message="${escapeHTML(
+                                                        member.user_id
+                                                    )}"
+                                                    title="Message privately"
+                                                >
+                                                    💬
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="member-action-button"
+                                                    data-call-member="${escapeHTML(
+                                                        member.user_id
+                                                    )}"
+                                                    title="Call"
+                                                >
+                                                    📞
+                                                </button>
+
+                                            </div>
+                                        `
+                                        : ""
+                                }
+
+                            </div>
+                        `;
+
+                    }
+                )
+                .join("");
+
+
+        bindMemberActions();
+
+    }
+
+
+    function getMemberName(
+        member
+    ) {
+
+        return (
+            member.nickname ||
+            member.display_name ||
+            member.profile?.full_name ||
+            "Student"
+        );
+
+    }
+
+
+    function getMemberAvatar(
+        member
+    ) {
+
+        return (
+            member.avatar_url ||
+            member.profile?.photo_url ||
+            ""
+        );
+
+    }
+
+
+    function bindMemberActions() {
+
+        qa(
+            "[data-direct-message]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
                     "click",
                     event => {
+
                         event.stopPropagation();
 
                         openDirectMessage(
-                            member
+                            button.dataset.directMessage
                         );
+
                     }
                 );
 
-                row.querySelector(
-                    ".call-member-button"
-                )?.addEventListener(
+            }
+        );
+
+
+        qa(
+            "[data-call-member]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
                     "click",
                     event => {
+
                         event.stopPropagation();
 
                         callMember(
-                            member
+                            button.dataset.callMember
                         );
+
                     }
                 );
 
-                container.appendChild(
-                    row
-                );
             }
         );
+
     }
 
 
@@ -2565,148 +2281,130 @@
        MESSAGES
        ============================================================ */
 
-    function senderId(
-        message
+    async function loadMessages(
+        channelId
     ) {
-        return (
-            message.user_id ||
-            null
-        );
-    }
 
-
-    function messageContent(
-        message
-    ) {
-        return (
-            message.content ||
-            ""
-        );
-    }
-
-
-    async function loadMessages() {
-        if (
-            !state.currentChannel
-        ) {
+        if (!channelId) {
             return;
         }
 
-        const list =
-            $("messageList");
 
-        if (list) {
-            list.innerHTML =
-                "";
+        state.loadingMessages =
+            true;
+
+
+        const loading =
+            $("messageLoading");
+
+        if (loading) {
+            show(loading);
         }
 
-        show(
-            $("messageLoading")
-        );
 
-        try {
-            const result =
-                await state.db
-                    .from(
-                        "chat_messages"
-                    )
-                    .select("*")
-                    .eq(
-                        "channel_id",
-                        state.currentChannel.id
-                    )
-                    .eq(
-                        "is_deleted",
-                        false
-                    )
-                    .order(
-                        "created_at",
-                        {
-                            ascending:
-                                true
-                        }
-                    )
-                    .limit(150);
-
-            if (result.error) {
-                console.error(
-                    "Message loading failed:",
-                    result.error
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("chat_messages")
+                .select(
+                    `
+                    id,
+                    channel_id,
+                    user_id,
+                    parent_message_id,
+                    content,
+                    message_type,
+                    is_edited,
+                    is_deleted,
+                    is_pinned,
+                    edited_at,
+                    deleted_at,
+                    created_at,
+                    updated_at
+                    `
+                )
+                .eq(
+                    "channel_id",
+                    channelId
+                )
+                .order(
+                    "created_at",
+                    {
+                        ascending: true
+                    }
+                )
+                .limit(
+                    CONFIG.messageLimit
                 );
 
-                state.messages =
-                    [];
 
-                renderMessages();
+        state.loadingMessages =
+            false;
 
-                return;
-            }
+
+        if (loading) {
+            hide(loading);
+        }
+
+
+        if (error) {
+
+            console.error(
+                "❌ Messages failed:",
+                error
+            );
 
             state.messages =
-                result.data || [];
-
-            await enrichMessages();
+                [];
 
             renderMessages();
 
-        } finally {
-            hide(
-                $("messageLoading")
-            );
+            return;
+
         }
+
+
+        state.messages =
+            data || [];
+
+
+        await enrichMessages();
+
+        await loadReactions();
+
+        renderMessages();
+
+        scrollMessagesToBottom();
+
     }
 
 
     async function enrichMessages() {
-        if (
-            !state.messages.length
-        ) {
-            return;
-        }
 
-        const ids = [
-            ...new Set(
-                state.messages
-                    .map(
-                        message =>
-                            senderId(
-                                message
-                            )
-                    )
-                    .filter(Boolean)
-            )
-        ];
+        const ids =
+            [
+                ...new Set(
+                    state.messages
+                        .map(
+                            message =>
+                                message.user_id
+                        )
+                        .filter(Boolean)
+                )
+            ];
 
         if (!ids.length) {
             return;
         }
 
-        let profiles = [];
-        let students = [];
 
-        const profileResult =
-            await state.db
-                .from(
-                    "chat_public_profiles"
-                )
-                .select(
-                    "id,full_name,photo_url"
-                )
-                .in(
-                    "id",
-                    ids
-                );
-
-        if (
-            !profileResult.error
-        ) {
-            profiles =
-                profileResult.data ||
-                [];
-        }
-
-        const studentResult =
-            await state.db
+        const {
+            data,
+            error
+        } =
+            await db
                 .from("students")
                 .select(
                     "id,full_name,photo_url"
@@ -2716,75 +2414,779 @@
                     ids
                 );
 
-        if (
-            !studentResult.error
-        ) {
-            students =
-                studentResult.data ||
-                [];
+        if (error) {
+
+            console.warn(
+                "⚠️ Message profile enrichment failed:",
+                error
+            );
+
+            return;
+
         }
 
-        state.messages.forEach(
-            message => {
-                const id =
-                    senderId(
-                        message
-                    );
 
-                const profile =
-                    profiles.find(
-                        item =>
-                            String(
-                                item.id
-                            ) ===
-                            String(id)
-                    );
+        const map =
+            new Map();
 
-                const student =
-                    students.find(
-                        item =>
-                            String(
-                                item.id
-                            ) ===
-                            String(id)
-                    );
+        (
+            data || []
+        ).forEach(
+            profile => {
 
-                const member =
-                    state.members.find(
-                        item =>
-                            String(
-                                item.userId
-                            ) ===
-                            String(id)
-                    );
+                map.set(
+                    String(
+                        profile.id
+                    ),
+                    profile
+                );
 
-                message._name =
-                    profile?.full_name ||
-                    student?.full_name ||
-                    member?.name ||
-                    (
-                        String(id) ===
-                        String(
-                            state.user?.id
-                        )
-                            ? state.profile
-                                ?.name
-                            : "Student"
-                    );
-
-                message._photo =
-                    profile?.photo_url ||
-                    student?.photo_url ||
-                    member?.photo ||
-                    null;
             }
         );
+
+
+        state.messages =
+            state.messages.map(
+                message => ({
+
+                    ...message,
+
+                    profile:
+                        map.get(
+                            String(
+                                message.user_id
+                            )
+                        ) || null
+
+                })
+            );
+
     }
 
 
-    function formatTime(
+    /* ============================================================
+       REACTIONS
+       ============================================================ */
+
+    async function loadReactions() {
+
+        state.reactions =
+            [];
+
+        if (!state.messages.length) {
+            return;
+        }
+
+
+        const ids =
+            state.messages.map(
+                message =>
+                    message.id
+            );
+
+
+        /*
+           We use the common schema:
+
+           message_id
+           user_id
+           reaction
+
+           If your table uses emoji instead of reaction,
+           change REACTION_COLUMN below.
+        */
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from(
+                    "chat_message_reactions"
+                )
+                .select(
+                    "id,message_id,user_id,reaction"
+                )
+                .in(
+                    "message_id",
+                    ids
+                );
+
+
+        if (error) {
+
+            /*
+               Do not break the chat if the reaction table
+               has not yet been configured.
+            */
+
+            console.warn(
+                "⚠️ Reactions unavailable:",
+                error.message
+            );
+
+            return;
+
+        }
+
+
+        state.reactions =
+            data || [];
+
+    }
+
+
+    const REACTIONS = [
+        "👍",
+        "❤️",
+        "😂",
+        "😮",
+        "😢",
+        "👏"
+    ];
+
+
+    function getMessageReactions(
+        messageId
+    ) {
+
+        return state.reactions.filter(
+            reaction =>
+                String(
+                    reaction.message_id
+                ) ===
+                String(
+                    messageId
+                )
+        );
+
+    }
+
+
+    async function toggleReaction(
+        message,
+        emoji
+    ) {
+
+        if (
+            !state.user?.id ||
+            !message?.id
+        ) {
+
+            return;
+
+        }
+
+
+        const existing =
+            state.reactions.find(
+                reaction =>
+                    String(
+                        reaction.message_id
+                    ) ===
+                    String(
+                        message.id
+                    ) &&
+                    String(
+                        reaction.user_id
+                    ) ===
+                    String(
+                        state.user.id
+                    ) &&
+                    reaction.reaction ===
+                    emoji
+            );
+
+
+        if (existing) {
+
+            const {
+                error
+            } =
+                await db
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .delete()
+                    .eq(
+                        "id",
+                        existing.id
+                    );
+
+            if (error) {
+
+                console.error(
+                    "Reaction removal failed:",
+                    error
+                );
+
+                toast(
+                    "Could not remove reaction.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+        } else {
+
+            const {
+                data,
+                error
+            } =
+                await db
+                    .from(
+                        "chat_message_reactions"
+                    )
+                    .insert(
+                        {
+                            message_id:
+                                message.id,
+
+                            user_id:
+                                state.user.id,
+
+                            reaction:
+                                emoji
+                        }
+                    )
+                    .select()
+                    .single();
+
+            if (error) {
+
+                console.error(
+                    "Reaction failed:",
+                    error
+                );
+
+                toast(
+                    "Could not react to this message.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+            if (data) {
+
+                state.reactions.push(
+                    data
+                );
+
+            }
+
+        }
+
+
+        await loadReactions();
+
+        renderMessages();
+
+    }
+
+
+    function renderReactionBar(
+        message
+    ) {
+
+        const reactions =
+            getMessageReactions(
+                message.id
+            );
+
+        const counts =
+            new Map();
+
+        reactions.forEach(
+            reaction => {
+
+                const emoji =
+                    reaction.reaction;
+
+                counts.set(
+                    emoji,
+                    (
+                        counts.get(
+                            emoji
+                        ) || 0
+                    ) + 1
+                );
+
+            }
+        );
+
+
+        const existing =
+            Array.from(
+                counts.entries()
+            )
+                .map(
+                    ([emoji, count]) => {
+
+                        const mine =
+                            reactions.some(
+                                reaction =>
+                                    reaction.reaction ===
+                                    emoji &&
+                                    String(
+                                        reaction.user_id
+                                    ) ===
+                                    String(
+                                        state.user?.id
+                                    )
+                            );
+
+                        return `
+                            <button
+                                type="button"
+                                class="reaction-chip ${
+                                    mine
+                                        ? "mine"
+                                        : ""
+                                }"
+                                data-reaction="${escapeHTML(
+                                    emoji
+                                )}"
+                                data-message-id="${escapeHTML(
+                                    message.id
+                                )}"
+                                title="React ${escapeHTML(
+                                    emoji
+                                )}"
+                            >
+                                ${escapeHTML(
+                                    emoji
+                                )}
+                                <span>
+                                    ${count}
+                                </span>
+                            </button>
+                        `;
+
+                    }
+                )
+                .join("");
+
+
+        return `
+            <div
+                class="message-reactions"
+                data-message-reactions
+            >
+
+                ${existing}
+
+                <button
+                    type="button"
+                    class="reaction-add-button"
+                    data-reaction-menu="${escapeHTML(
+                        message.id
+                    )}"
+                    title="Add reaction"
+                >
+                    +
+                </button>
+
+            </div>
+        `;
+
+    }
+
+
+    /* ============================================================
+       MESSAGE RENDERING
+       ============================================================ */
+
+    function formatMessageContent(
+        content
+    ) {
+
+        return escapeHTML(
+            content
+        )
+            .replace(
+                /\n/g,
+                "<br>"
+            )
+            .replace(
+                /(^|[\s])@([a-zA-Z0-9._-]+)/g,
+                "$1<span class=\"mention\">@$2</span>"
+            );
+
+    }
+
+
+    function renderMessages() {
+
+        const list =
+            $("messageList");
+
+        if (!list) {
+            return;
+        }
+
+
+        let messages =
+            state.messages;
+
+
+        const search =
+            state.messageSearch
+                .trim()
+                .toLowerCase();
+
+        if (search) {
+
+            messages =
+                messages.filter(
+                    message =>
+                        String(
+                            message.content || ""
+                        )
+                            .toLowerCase()
+                            .includes(
+                                search
+                            )
+                );
+
+        }
+
+
+        if (!messages.length) {
+
+            list.innerHTML = `
+                <div class="empty-message-state">
+
+                    <div class="empty-message-icon">
+                        💬
+                    </div>
+
+                    <h3>
+                        No messages yet
+                    </h3>
+
+                    <p>
+                        Start the conversation.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        list.innerHTML =
+            messages
+                .map(
+                    renderMessage
+                )
+                .join("");
+
+
+        bindMessageActions();
+
+    }
+
+
+    function renderMessage(
+        message
+    ) {
+
+        const profile =
+            message.profile ||
+            {};
+
+        const name =
+            profile.full_name ||
+            "Student";
+
+        const avatar =
+            profile.photo_url ||
+            "";
+
+        const own =
+            String(
+                message.user_id
+            ) ===
+            String(
+                state.user?.id
+            );
+
+        const canDelete =
+            !message.is_deleted &&
+            (
+                own ||
+                hasModeratorPermission()
+            );
+
+
+        const parent =
+            message.parent_message_id
+                ? state.messages.find(
+                    item =>
+                        String(
+                            item.id
+                        ) ===
+                        String(
+                            message.parent_message_id
+                        )
+                )
+                : null;
+
+
+        if (
+            message.is_deleted
+        ) {
+
+            return `
+                <article
+                    class="message-row message-deleted"
+                    data-message-id="${escapeHTML(
+                        message.id
+                    )}"
+                >
+
+                    <div class="message-avatar">
+                        ${escapeHTML(
+                            initials(name)
+                        )}
+                    </div>
+
+                    <div class="message-content">
+
+                        <div class="message-deleted-text">
+                            This message was deleted.
+                        </div>
+
+                    </div>
+
+                </article>
+            `;
+
+        }
+
+
+        return `
+            <article
+                class="message-row ${
+                    own
+                        ? "own-message"
+                        : ""
+                } ${
+                    message.is_pinned
+                        ? "pinned"
+                        : ""
+                }"
+                data-message-id="${escapeHTML(
+                    message.id
+                )}"
+            >
+
+                <div class="message-avatar-wrap">
+
+                    ${
+                        avatar
+                            ? `
+                                <img
+                                    class="message-avatar"
+                                    src="${escapeHTML(
+                                        avatar
+                                    )}"
+                                    alt="${escapeHTML(
+                                        name
+                                    )}"
+                                    loading="lazy"
+                                >
+                            `
+                            : `
+                                <div class="message-avatar">
+                                    ${escapeHTML(
+                                        initials(name)
+                                    )}
+                                </div>
+                            `
+                    }
+
+                </div>
+
+
+                <div class="message-main">
+
+                    <div class="message-meta">
+
+                        <strong class="message-author">
+                            ${escapeHTML(
+                                name
+                            )}
+                        </strong>
+
+                        <span class="message-time">
+                            ${escapeHTML(
+                                formatMessageTime(
+                                    message.created_at
+                                )
+                            )}
+                        </span>
+
+                        ${
+                            message.is_edited
+                                ? `
+                                    <span class="message-edited">
+                                        edited
+                                    </span>
+                                `
+                                : ""
+                        }
+
+                    </div>
+
+
+                    ${
+                        parent
+                            ? `
+                                <button
+                                    type="button"
+                                    class="message-reply-reference"
+                                    data-jump-to-message="${escapeHTML(
+                                        parent.id
+                                    )}"
+                                >
+                                    ↩ Replying to
+                                    ${escapeHTML(
+                                        parent.profile?.full_name ||
+                                        "Student"
+                                    )}:
+                                    <span>
+                                        ${escapeHTML(
+                                            String(
+                                                parent.content || ""
+                                            )
+                                                .substring(
+                                                    0,
+                                                    100
+                                                )
+                                        )}
+                                    </span>
+                                </button>
+                            `
+                            : ""
+                    }
+
+
+                    <div class="message-body">
+
+                        ${formatMessageContent(
+                            message.content
+                        )}
+
+                    </div>
+
+
+                    ${renderReactionBar(
+                        message
+                    )}
+
+
+                    <div
+                        class="message-actions"
+                        data-message-actions
+                    >
+
+                        <button
+                            type="button"
+                            data-message-action="reply"
+                            data-message-id="${escapeHTML(
+                                message.id
+                            )}"
+                            title="Reply"
+                        >
+                            ↩
+                            <span>
+                                Reply
+                            </span>
+                        </button>
+
+
+                        <button
+                            type="button"
+                            data-message-action="react"
+                            data-message-id="${escapeHTML(
+                                message.id
+                            )}"
+                            title="React"
+                        >
+                            😊
+                            <span>
+                                React
+                            </span>
+                        </button>
+
+
+                        ${
+                            canDelete
+                                ? `
+                                    <button
+                                        type="button"
+                                        data-message-action="delete"
+                                        data-message-id="${escapeHTML(
+                                            message.id
+                                        )}"
+                                        title="Delete"
+                                    >
+                                        🗑
+                                        <span>
+                                            Delete
+                                        </span>
+                                    </button>
+                                `
+                                : ""
+                        }
+
+                    </div>
+
+
+                    <div
+                        class="reaction-picker hidden"
+                        data-reaction-picker="${escapeHTML(
+                            message.id
+                        )}"
+                    >
+
+                        ${REACTIONS.map(
+                            emoji => `
+                                <button
+                                    type="button"
+                                    data-reaction-emoji="${escapeHTML(
+                                        emoji
+                                    )}"
+                                    data-message-id="${escapeHTML(
+                                        message.id
+                                    )}"
+                                >
+                                    ${emoji}
+                                </button>
+                            `
+                        ).join("")}
+
+                    </div>
+
+                </div>
+
+            </article>
+        `;
+
+    }
+
+
+    function formatMessageTime(
         value
     ) {
+
         if (!value) {
             return "";
         }
@@ -2797,190 +3199,517 @@
                 date.getTime()
             )
         ) {
+
             return "";
+
         }
 
-        return date.toLocaleTimeString(
-            [],
+        return new Intl.DateTimeFormat(
+            undefined,
             {
-                hour:
-                    "2-digit",
-
-                minute:
-                    "2-digit"
+                hour: "2-digit",
+                minute: "2-digit"
             }
-        );
+        ).format(date);
+
     }
 
 
-    function renderMessages() {
-        const list =
-            $("messageList");
+    function bindMessageActions() {
 
-        if (!list) {
-            return;
-        }
+        qa(
+            "[data-message-action]"
+        ).forEach(
+            button => {
 
-        list.innerHTML =
-            "";
+                button.addEventListener(
+                    "click",
+                    event => {
 
-        if (
-            !state.messages.length
-        ) {
-            list.innerHTML = `
-                <div class="messages-empty">
+                        event.preventDefault();
+                        event.stopPropagation();
 
-                    <div class="messages-empty-icon">
-                        💬
-                    </div>
+                        const action =
+                            button.dataset.messageAction;
 
-                    <strong>
-                        No messages yet
-                    </strong>
+                        const message =
+                            state.messages.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        button.dataset.messageId
+                                    )
+                            );
 
-                    <span>
-                        Start the conversation.
-                    </span>
+                        if (!message) {
+                            return;
+                        }
 
-                </div>
-            `;
 
-            return;
-        }
+                        if (
+                            action ===
+                            "reply"
+                        ) {
 
-        state.messages.forEach(
-            message => {
-                list.appendChild(
-                    createMessageElement(
-                        message
-                    )
+                            startReply(
+                                message
+                            );
+
+                        }
+
+
+                        if (
+                            action ===
+                            "react"
+                        ) {
+
+                            toggleReactionPicker(
+                                message.id
+                            );
+
+                        }
+
+
+                        if (
+                            action ===
+                            "delete"
+                        ) {
+
+                            deleteMessage(
+                                message
+                            );
+
+                        }
+
+                    }
                 );
+
             }
         );
 
-        requestAnimationFrame(
-            () => {
-                list.scrollTop =
-                    list.scrollHeight;
+
+        qa(
+            "[data-reaction]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        const message =
+                            state.messages.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        button.dataset.messageId
+                                    )
+                            );
+
+                        if (
+                            message
+                        ) {
+
+                            toggleReaction(
+                                message,
+                                button.dataset.reaction
+                            );
+
+                        }
+
+                    }
+                );
+
             }
         );
+
+
+        qa(
+            "[data-reaction-emoji]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        const message =
+                            state.messages.find(
+                                item =>
+                                    String(
+                                        item.id
+                                    ) ===
+                                    String(
+                                        button.dataset.messageId
+                                    )
+                            );
+
+                        if (
+                            message
+                        ) {
+
+                            toggleReaction(
+                                message,
+                                button.dataset.reactionEmoji
+                            );
+
+                        }
+
+                        closeAllReactionPickers();
+
+                    }
+                );
+
+            }
+        );
+
+
+        qa(
+            "[data-reaction-menu]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    event => {
+
+                        event.preventDefault();
+                        event.stopPropagation();
+
+                        toggleReactionPicker(
+                            button.dataset.reactionMenu
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+
+        qa(
+            "[data-jump-to-message]"
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const target =
+                            q(
+                                `[data-message-id="${CSS.escape(
+                                    button.dataset.jumpToMessage
+                                )}"]`
+                            );
+
+                        if (target) {
+
+                            target.scrollIntoView(
+                                {
+                                    behavior:
+                                        "smooth",
+                                    block:
+                                        "center"
+                                }
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+        );
+
     }
 
 
-    function createMessageElement(
-        message
+    function toggleReactionPicker(
+        messageId
     ) {
-        const article =
-            document.createElement(
-                "article"
+
+        closeAllReactionPickers(
+            messageId
+        );
+
+        const picker =
+            q(
+                `[data-reaction-picker="${CSS.escape(
+                    messageId
+                )}"]`
             );
 
-        article.className =
-            "message-item";
+        if (!picker) {
+            return;
+        }
 
-        article.dataset.messageId =
-            message.id;
+        picker.classList.toggle(
+            "hidden"
+        );
 
-        const id =
-            senderId(
-                message
-            );
+    }
 
-        const own =
-            String(id) ===
-            String(
-                state.user?.id
-            );
 
-        const name =
-            message._name ||
-            "Student";
+    function closeAllReactionPickers(
+        except = null
+    ) {
 
-        const photo =
-            message._photo ||
-            null;
+        qa(
+            "[data-reaction-picker]"
+        ).forEach(
+            picker => {
 
-        const content =
-            messageContent(
-                message
-            );
+                if (
+                    String(
+                        picker.dataset.reactionPicker
+                    ) !==
+                    String(except)
+                ) {
 
-        article.innerHTML = `
-            <div class="message-avatar">
-                ${avatarMarkup(
-                    name,
-                    photo,
-                    "chat-avatar"
-                )}
-            </div>
+                    picker.classList.add(
+                        "hidden"
+                    );
 
-            <div class="message-content">
-
-                <div class="message-meta">
-
-                    <strong>
-                        ${escapeHTML(
-                            name
-                        )}
-                    </strong>
-
-                    <time>
-                        ${formatTime(
-                            message.created_at
-                        )}
-                    </time>
-
-                </div>
-
-                ${
-                    content
-                        ? `
-                            <div class="message-text">
-                                ${escapeHTML(
-                                    content
-                                ).replace(
-                                    /\n/g,
-                                    "<br>"
-                                )}
-                            </div>
-                        `
-                        : ""
                 }
 
-                <div class="message-actions">
+            }
+        );
 
-                    ${
-                        own
-                            ? `
-                                <button
-                                    type="button"
-                                    class="message-delete-button"
-                                    title="Delete message"
-                                >
-                                    🗑️
-                                </button>
-                            `
-                            : ""
-                    }
+    }
 
-                </div>
 
-            </div>
-        `;
+    /* ============================================================
+       REPLY
+       ============================================================ */
 
-        article
-            .querySelector(
-                ".message-delete-button"
+    function startReply(
+        message
+    ) {
+
+        state.currentReply =
+            message;
+
+        const preview =
+            $("replyPreview");
+
+        const text =
+            $("replyPreviewText");
+
+        if (preview) {
+            show(preview);
+        }
+
+        if (text) {
+
+            text.textContent =
+                `${message.profile?.full_name || "Student"}: ${
+                    String(
+                        message.content || ""
+                    )
+                        .substring(
+                            0,
+                            140
+                        )
+                }`;
+
+        }
+
+        focusMessageInput();
+
+    }
+
+
+    function cancelReply() {
+
+        state.currentReply =
+            null;
+
+        const preview =
+            $("replyPreview");
+
+        if (preview) {
+            hide(preview);
+        }
+
+        const text =
+            $("replyPreviewText");
+
+        if (text) {
+            text.textContent =
+                "";
+        }
+
+    }
+
+
+    /* ============================================================
+       DELETE
+       ============================================================ */
+
+    function hasModeratorPermission() {
+
+        const role =
+            String(
+                state.currentRole ||
+                "student"
+            ).toLowerCase();
+
+        return [
+            "moderator",
+            "admin",
+            "super_admin"
+        ].includes(
+            role
+        );
+
+    }
+
+
+    async function deleteMessage(
+        message
+    ) {
+
+        if (!message?.id) {
+            return;
+        }
+
+
+        const allowed =
+            String(
+                message.user_id
+            ) ===
+            String(
+                state.user?.id
+            ) ||
+            hasModeratorPermission();
+
+        if (!allowed) {
+
+            toast(
+                "You cannot delete this message.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (
+            !window.confirm(
+                "Delete this message?"
             )
-            ?.addEventListener(
-                "click",
-                () =>
-                    deleteMessage(
-                        message
+        ) {
+
+            return;
+
+        }
+
+
+        const now =
+            new Date().toISOString();
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("chat_messages")
+                .update(
+                    {
+                        is_deleted:
+                            true,
+
+                        deleted_at:
+                            now,
+
+                        deleted_by:
+                            state.user.id,
+
+                        updated_at:
+                            now
+                    }
+                )
+                .eq(
+                    "id",
+                    message.id
+                )
+                .select(
+                    "id,is_deleted,deleted_at"
+                )
+                .maybeSingle();
+
+
+        if (error) {
+
+            console.error(
+                "❌ Delete failed:",
+                error
+            );
+
+            toast(
+                "Message could not be deleted.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        if (!data) {
+
+            toast(
+                "The database did not allow this message to be deleted.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        const local =
+            state.messages.find(
+                item =>
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        message.id
                     )
             );
 
-        return article;
+        if (local) {
+
+            local.is_deleted =
+                true;
+
+            local.deleted_at =
+                now;
+
+        }
+
+
+        renderMessages();
+
+        toast(
+            "Message deleted.",
+            "success"
+        );
+
     }
 
 
@@ -2988,23 +3717,40 @@
        SEND MESSAGE
        ============================================================ */
 
-    async function sendMessage() {
+    async function sendMessage(
+        event
+    ) {
+
+        if (event) {
+
+            event.preventDefault();
+
+        }
+
+
         if (
             state.sendingMessage
         ) {
+
             return;
+
         }
 
+
         if (
-            !state.currentChannel
+            !state.user?.id ||
+            !state.currentChannel?.id
         ) {
-            notify(
+
+            toast(
                 "Select a channel first.",
-                "warning"
+                "error"
             );
 
             return;
+
         }
+
 
         const input =
             $("messageInput");
@@ -3012,6 +3758,7 @@
         if (!input) {
             return;
         }
+
 
         const content =
             input.value.trim();
@@ -3020,1978 +3767,196 @@
             return;
         }
 
+
         state.sendingMessage =
             true;
 
-        try {
-            const result =
-                await state.db
-                    .from(
-                        "chat_messages"
-                    )
-                    .insert({
-                        channel_id:
-                            state.currentChannel
-                                .id,
 
-                        user_id:
-                            state.user.id,
+        const button =
+            $("sendMessageButton");
 
-                        content,
-
-                        message_type:
-                            "text"
-                    })
-                    .select()
-                    .single();
-
-            if (result.error) {
-                console.error(
-                    "Send message failed:",
-                    result.error
-                );
-
-                notify(
-                    "Unable to send message.",
-                    "error"
-                );
-
-                return;
-            }
-
-            input.value =
-                "";
-
-            input.style.height =
-                "auto";
-
-        } finally {
-            state.sendingMessage =
-                false;
-        }
-    }
-
-
-    /* ============================================================
-       DELETE MESSAGE
-       ============================================================ */
-
-    async function deleteMessage(
-        message
-    ) {
-        if (
-            String(
-                senderId(message)
-            ) !==
-            String(
-                state.user?.id
-            )
-        ) {
-            return;
+        if (button) {
+            button.disabled =
+                true;
         }
 
-        if (
-            !window.confirm(
-                "Delete this message?"
-            )
-        ) {
-            return;
-        }
 
-        const result =
-            await state.db
-                .from(
-                    "chat_messages"
+        stopTypingBroadcast();
+
+
+        const payload = {
+
+            channel_id:
+                state.currentChannel.id,
+
+            user_id:
+                state.user.id,
+
+            content:
+
+                content,
+
+            message_type:
+                "text",
+
+            parent_message_id:
+                state.currentReply?.id ||
+                null
+
+        };
+
+
+        const {
+            data,
+            error
+        } =
+            await db
+                .from("chat_messages")
+                .insert(
+                    payload
                 )
-                .update({
-                    is_deleted:
-                        true,
-
-                    deleted_at:
-                        new Date()
-                            .toISOString(),
-
-                    deleted_by:
-                        state.user.id
-                })
-                .eq(
-                    "id",
-                    message.id
+                .select(
+                    `
+                    id,
+                    channel_id,
+                    user_id,
+                    parent_message_id,
+                    content,
+                    message_type,
+                    is_edited,
+                    is_deleted,
+                    is_pinned,
+                    created_at,
+                    updated_at
+                    `
                 )
-                .eq(
-                    "user_id",
-                    state.user.id
-                );
+                .single();
 
-        if (result.error) {
+
+        if (error) {
+
             console.error(
-                "Delete message failed:",
-                result.error
-            );
-
-            notify(
-                "Unable to delete message.",
-                "error"
-            );
-
-            return;
-        }
-
-        state.messages =
-            state.messages.filter(
-                item =>
-                    String(
-                        item.id
-                    ) !==
-                    String(
-                        message.id
-                    )
-            );
-
-        renderMessages();
-    }
-
-
-    /* ============================================================
-       MESSAGE REALTIME
-       ============================================================ */
-
-    function subscribeMessages() {
-        if (
-            !state.currentChannel
-        ) {
-            return;
-        }
-
-        if (
-            state.messageChannel
-        ) {
-            state.db.removeChannel(
-                state.messageChannel
-            );
-
-            state.messageChannel =
-                null;
-        }
-
-        state.messageChannel =
-            state.db
-                .channel(
-                    `mwaniki-channel-${state.currentChannel.id}`
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "INSERT",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_messages",
-
-                        filter:
-                            `channel_id=eq.${state.currentChannel.id}`
-                    },
-                    async payload => {
-                        if (
-                            state.messages.some(
-                                message =>
-                                    String(
-                                        message.id
-                                    ) ===
-                                    String(
-                                        payload
-                                            .new
-                                            .id
-                                    )
-                            )
-                        ) {
-                            return;
-                        }
-
-                        if (
-                            payload.new
-                                .is_deleted
-                        ) {
-                            return;
-                        }
-
-                        state.messages.push(
-                            payload.new
-                        );
-
-                        await enrichMessages();
-
-                        renderMessages();
-                    }
-                )
-                .on(
-                    "postgres_changes",
-                    {
-                        event:
-                            "UPDATE",
-
-                        schema:
-                            "public",
-
-                        table:
-                            "chat_messages",
-
-                        filter:
-                            `channel_id=eq.${state.currentChannel.id}`
-                    },
-                    async payload => {
-                        const index =
-                            state.messages.findIndex(
-                                message =>
-                                    String(
-                                        message.id
-                                    ) ===
-                                    String(
-                                        payload
-                                            .new
-                                            .id
-                                    )
-                            );
-
-                        if (
-                            payload.new
-                                .is_deleted
-                        ) {
-                            if (
-                                index >=
-                                0
-                            ) {
-                                state.messages.splice(
-                                    index,
-                                    1
-                                );
-                            }
-                        } else if (
-                            index >=
-                            0
-                        ) {
-                            state.messages[
-                                index
-                            ] =
-                                payload.new;
-                        }
-
-                        await enrichMessages();
-
-                        renderMessages();
-                    }
-                )
-                .subscribe(
-                    status => {
-                        if (
-                            status ===
-                            "SUBSCRIBED"
-                        ) {
-                            console.log(
-                                "💬 Message realtime: SUBSCRIBED"
-                            );
-                        }
-                    }
-                );
-    }
-
-
-    /* ============================================================
-       DIRECT MESSAGE
-       ============================================================ */
-
-    async function openDirectMessage(
-        member
-    ) {
-        if (
-            typeof window.openDirectMessage ===
-                "function" &&
-            window.openDirectMessage !==
-                openDirectMessage
-        ) {
-            try {
-                await window.openDirectMessage(
-                    member.userId
-                );
-
-                return;
-            } catch (error) {
-                console.warn(
-                    "Existing DM handler failed:",
-                    error
-                );
-            }
-        }
-
-        notify(
-            `Direct messaging with ${member.name} is separate from calling.`,
-            "info"
-        );
-    }
-
-
-    /* ============================================================
-       CALL ENGINE
-       ============================================================ */
-
-    /*
-     * IMPORTANT:
-     *
-     * This file does NOT create a second call engine.
-     *
-     * community-calls.js remains the real call engine.
-     */
-    function getCallEngine() {
-        return (
-            window.MwanikiCalls ||
-            window.mwanikiCalls ||
-            window.MwanikiCallEngine ||
-            null
-        );
-    }
-
-
-    async function callMember(
-        member
-    ) {
-        if (
-            !member?.userId
-        ) {
-            notify(
-                "This member cannot be called.",
-                "warning"
-            );
-
-            return;
-        }
-
-        if (
-            String(
-                member.userId
-            ) ===
-            String(
-                state.user?.id
-            )
-        ) {
-            notify(
-                "You cannot call yourself.",
-                "warning"
-            );
-
-            return;
-        }
-
-        const calls =
-            getCallEngine();
-
-        if (
-            calls &&
-            typeof calls.callUser ===
-                "function"
-        ) {
-            try {
-                await calls.callUser(
-                    member.userId,
-                    state.currentCommunity
-                        ?.id ||
-                        null
-                );
-
-                return;
-            } catch (error) {
-                console.error(
-                    "Call engine error:",
-                    error
-                );
-            }
-        }
-
-        /*
-         * Database fallback retained from your existing engine.
-         */
-        try {
-            const roomCode =
-                `direct-${crypto.randomUUID()}`;
-
-            const room =
-                await state.db
-                    .from(
-                        "chat_call_rooms"
-                    )
-                    .insert({
-                        community_id:
-                            state.currentCommunity
-                                ?.id ||
-                            null,
-
-                        room_code:
-                            roomCode,
-
-                        call_scope:
-                            "direct",
-
-                        call_type:
-                            "video",
-
-                        status:
-                            "waiting",
-
-                        created_by:
-                            state.user.id,
-
-                        target_user_id:
-                            member.userId,
-
-                        room_status:
-                            "ringing",
-
-                        max_participants:
-                            2
-                    })
-                    .select()
-                    .single();
-
-            if (room.error) {
-                throw room.error;
-            }
-
-            const roomId =
-                room.data.id;
-
-            await state.db
-                .from(
-                    "chat_call_participants"
-                )
-                .insert([
-                    {
-                        room_id:
-                            roomId,
-
-                        user_id:
-                            state.user.id,
-
-                        status:
-                            "joined",
-
-                        joined_at:
-                            new Date()
-                                .toISOString()
-                    },
-                    {
-                        room_id:
-                            roomId,
-
-                        user_id:
-                            member.userId,
-
-                        status:
-                            "invited"
-                    }
-                ]);
-
-            notify(
-                `Calling ${member.name}...`,
-                "success"
-            );
-
-        } catch (error) {
-            console.error(
-                "Personal call failed:",
+                "❌ Send message failed:",
                 error
             );
 
-            notify(
-                "Unable to start the call.",
-                "error"
-            );
-        }
-    }
-
-
-    async function generalCall() {
-        const calls =
-            getCallEngine();
-
-        if (
-            calls &&
-            typeof calls.openPicker ===
-                "function"
-        ) {
-            try {
-                await calls.openPicker(
-                    null
-                );
-
-                return;
-            } catch (error) {
-                console.error(
-                    "General call error:",
-                    error
-                );
-            }
-        }
-
-        notify(
-            "The call engine is still loading.",
-            "warning"
-        );
-    }
-
-
-    async function communityCall() {
-        const communityId =
-            state.currentCommunity?.id;
-
-        if (!communityId) {
-            return;
-        }
-
-        const calls =
-            getCallEngine();
-
-        if (
-            calls &&
-            typeof calls.callCommunity ===
-                "function"
-        ) {
-            try {
-                await calls.callCommunity(
-                    communityId
-                );
-
-                return;
-            } catch (error) {
-                console.error(
-                    "Community call error:",
-                    error
-                );
-            }
-        }
-
-        if (
-            calls &&
-            typeof calls.openPicker ===
-                "function"
-        ) {
-            try {
-                await calls.openPicker(
-                    communityId
-                );
-
-                return;
-            } catch (error) {
-                console.error(
-                    "Community picker error:",
-                    error
-                );
-            }
-        }
-
-        notify(
-            "The call engine is still loading.",
-            "warning"
-        );
-    }
-
-
-    /* ============================================================
-       ADD CHANNEL
-       ============================================================ */
-
-    function slugify(
-        value
-    ) {
-        return String(
-            value || ""
-        )
-            .toLowerCase()
-            .trim()
-            .replace(
-                /[^a-z0-9]+/g,
-                "-"
-            )
-            .replace(
-                /^-+|-+$/g,
-                ""
-            )
-            .substring(
-                0,
-                70
-            );
-    }
-
-
-    let dynamicDialog =
-        null;
-
-
-    function createDialog(
-        title
-    ) {
-        closeDynamicDialog();
-
-        const overlay =
-            document.createElement(
-                "div"
-            );
-
-        overlay.className =
-            "modal-overlay dynamic-community-dialog";
-
-        overlay.innerHTML = `
-            <div
-                class="dynamic-dialog"
-                role="dialog"
-                aria-modal="true"
-            >
-
-                <div class="dynamic-dialog-header">
-
-                    <strong>
-                        ${escapeHTML(
-                            title
-                        )}
-                    </strong>
-
-                    <button
-                        type="button"
-                        class="dynamic-dialog-close"
-                    >
-                        ✕
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-        overlay
-            .querySelector(
-                ".dynamic-dialog-close"
-            )
-            ?.addEventListener(
-                "click",
-                closeDynamicDialog
-            );
-
-        document.body.appendChild(
-            overlay
-        );
-
-        dynamicDialog =
-            overlay;
-
-        return overlay.querySelector(
-            ".dynamic-dialog"
-        );
-    }
-
-
-    function closeDynamicDialog() {
-        if (
-            dynamicDialog
-        ) {
-            dynamicDialog.remove();
-
-            dynamicDialog =
-                null;
-        }
-    }
-
-
-    async function openAddChannelDialog() {
-        const dialog =
-            createDialog(
-                "Create a New Channel"
-            );
-
-        dialog.innerHTML += `
-            <div class="dynamic-form">
-
-                <label>
-                    Channel name
-
-                    <input
-                        id="newChannelName"
-                        type="text"
-                        maxlength="80"
-                        placeholder="e.g. Pharmacology"
-                    >
-                </label>
-
-                <label>
-                    Description
-
-                    <textarea
-                        id="newChannelDescription"
-                        rows="3"
-                        placeholder="What is this channel for?"
-                    ></textarea>
-                </label>
-
-                <label>
-                    Channel type
-
-                    <select id="newChannelType">
-
-                        <option value="text">
-                            Text
-                        </option>
-
-                        <option value="announcement">
-                            Announcement
-                        </option>
-
-                        <option value="study">
-                            Study
-                        </option>
-
-                        <option value="course">
-                            Course
-                        </option>
-
-                        <option value="voice">
-                            Voice
-                        </option>
-
-                    </select>
-                </label>
-
-                <label>
-                    Icon
-
-                    <input
-                        id="newChannelIcon"
-                        type="text"
-                        maxlength="4"
-                        placeholder="#"
-                        value="#"
-                    >
-                </label>
-
-                <label class="dynamic-checkbox">
-
-                    <input
-                        id="newChannelPrivate"
-                        type="checkbox"
-                    >
-
-                    Private channel
-
-                </label>
-
-                <div class="dynamic-dialog-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-dialog-button"
-                        id="cancelNewChannel"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        class="primary-dialog-button"
-                        id="createNewChannel"
-                    >
-                        Create Channel
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-        showDynamicDialog();
-
-        $("cancelNewChannel")
-            ?.addEventListener(
-                "click",
-                closeDynamicDialog
-            );
-
-        $("createNewChannel")
-            ?.addEventListener(
-                "click",
-                createChannel
-            );
-
-        setTimeout(
-            () => {
-                $("newChannelName")
-                    ?.focus();
-            },
-            100
-        );
-    }
-
-
-    function showDynamicDialog() {
-        if (
-            !dynamicDialog
-        ) {
-            return;
-        }
-
-        requestAnimationFrame(
-            () => {
-                dynamicDialog.classList.add(
-                    "open"
-                );
-            }
-        );
-    }
-
-
-    async function createChannel() {
-        if (
-            !state.currentCommunity
-        ) {
-            notify(
-                "Select a community first.",
-                "warning"
-            );
-
-            return;
-        }
-
-        const name =
-            $("newChannelName")
-                ?.value
-                .trim();
-
-        const description =
-            $("newChannelDescription")
-                ?.value
-                .trim() ||
-            null;
-
-        const type =
-            $("newChannelType")
-                ?.value ||
-            "text";
-
-        const icon =
-            $("newChannelIcon")
-                ?.value
-                .trim() ||
-            "#";
-
-        const privateChannel =
-            Boolean(
-                $("newChannelPrivate")
-                    ?.checked
-            );
-
-        if (!name) {
-            notify(
-                "Enter a channel name.",
-                "warning"
-            );
-
-            return;
-        }
-
-        let position =
-            0;
-
-        try {
-            const positionResult =
-                await state.db
-                    .from(
-                        "chat_channels"
-                    )
-                    .select(
-                        "position"
-                    )
-                    .eq(
-                        "community_id",
-                        state.currentCommunity
-                            .id
-                    )
-                    .order(
-                        "position",
-                        {
-                            ascending:
-                                false
-                        }
-                    )
-                    .limit(1)
-                    .maybeSingle();
-
-            if (
-                !positionResult.error &&
-                positionResult.data
-            ) {
-                position =
-                    Number(
-                        positionResult
-                            .data
-                            .position
-                    ) + 1;
-            }
-        } catch {
-            position =
-                state.channels.length;
-        }
-
-        const result =
-            await state.db
-                .from(
-                    "chat_channels"
-                )
-                .insert({
-                    community_id:
-                        state.currentCommunity
-                            .id,
-
-                    name,
-
-                    slug:
-                        `${slugify(
-                            name
-                        )}-${Date.now()
-                            .toString(
-                                36
-                            )}`,
-
-                    description,
-
-                    channel_type:
-                        type,
-
-                    icon,
-
-                    position,
-
-                    is_private:
-                        privateChannel,
-
-                    is_archived:
-                        false,
-
-                    is_active:
-                        true,
-
-                    created_by:
-                        state.user.id
-                })
-                .select()
-                .single();
-
-        if (result.error) {
-            console.error(
-                "Create channel failed:",
-                result.error
-            );
-
-            notify(
-                result.error.message ||
-                    "Unable to create channel.",
+            toast(
+                "Message could not be sent.",
                 "error"
             );
 
-            return;
-        }
-
-        closeDynamicDialog();
-
-        notify(
-            `#${name} created successfully.`,
-            "success"
-        );
-
-        await loadChannels();
-
-        if (result.data) {
-            await selectChannel(
-                result.data.id
-            );
-        }
-    }
-
-
-    /* ============================================================
-       PROFILE
-       ============================================================ */
-
-    function openProfile() {
-        const profile =
-            state.profile;
-
-        const dialog =
-            createDialog(
-                "My Profile"
-            );
-
-        dialog.innerHTML += `
-            <div class="profile-dialog">
-
-                <div class="profile-dialog-avatar">
-
-                    ${avatarMarkup(
-                        profile?.name ||
-                            "Student",
-                        profile?.photo ||
-                            null,
-                        "profile-avatar-large"
-                    )}
-
-                </div>
-
-                <h2>
-                    ${escapeHTML(
-                        profile?.name ||
-                            "Student"
-                    )}
-                </h2>
-
-                <p class="profile-email">
-                    ${escapeHTML(
-                        profile?.email ||
-                            ""
-                    )}
-                </p>
-
-                <div class="profile-details">
-
-                    <div>
-                        <span>Course</span>
-                        <strong>
-                            ${escapeHTML(
-                                profile
-                                    ?.student
-                                    ?.course ||
-                                    "Not specified"
-                            )}
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>Level</span>
-                        <strong>
-                            ${escapeHTML(
-                                profile
-                                    ?.student
-                                    ?.level ||
-                                    "Not specified"
-                            )}
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>Status</span>
-                        <strong
-                            class="profile-online-status"
-                        >
-                            ● ${escapeHTML(
-                                presenceLabel(
-                                    state.currentPresenceStatus
-                                )
-                            )}
-                        </strong>
-                    </div>
-
-                </div>
-
-                <div class="dynamic-dialog-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-dialog-button"
-                        id="closeProfileDialog"
-                    >
-                        Close
-                    </button>
-
-                    <button
-                        type="button"
-                        class="primary-dialog-button"
-                        id="openFullProfile"
-                    >
-                        Open Full Profile
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-        showDynamicDialog();
-
-        $("closeProfileDialog")
-            ?.addEventListener(
-                "click",
-                closeDynamicDialog
-            );
-
-        $("openFullProfile")
-            ?.addEventListener(
-                "click",
-                () => {
-                    window.location.href =
-                        "./profile.html";
-                }
-            );
-    }
-
-
-    /* ============================================================
-       CONTEST / COURSE SELECTOR
-       ============================================================ */
-
-    async function loadCourses() {
-        const result =
-            await state.db
-                .from("courses")
-                .select(
-                    "id,title,description,image"
-                )
-                .order(
-                    "title",
-                    {
-                        ascending:
-                            true
-                    }
-                );
-
-        if (result.error) {
-            console.error(
-                "Courses failed:",
-                result.error
-            );
-
-            state.courses =
-                [];
-
-            return;
-        }
-
-        state.courses =
-            result.data || [];
-    }
-
-
-    async function openContestChooser() {
-        await loadCourses();
-
-        const dialog =
-            createDialog(
-                "Course Contests"
-            );
-
-        dialog.innerHTML += `
-            <div class="dynamic-form">
-
-                <div class="contest-heading">
-
-                    <span class="contest-heading-icon">
-                        🏆
-                    </span>
-
-                    <div>
-                        <strong>
-                            Choose Your Course
-                        </strong>
-
-                        <p>
-                            Select a medical course
-                            to open its quiz material.
-                        </p>
-                    </div>
-
-                </div>
-
-                <label>
-                    Course
-
-                    <select
-                        id="contestCourseSelect"
-                    >
-
-                        <option value="">
-                            Select a course
-                        </option>
-
-                        ${state.courses
-                            .map(
-                                course => `
-                                    <option
-                                        value="${escapeAttr(
-                                            course.id
-                                        )}"
-                                    >
-                                        ${escapeHTML(
-                                            course.title
-                                        )}
-                                    </option>
-                                `
-                            )
-                            .join("")}
-
-                    </select>
-
-                </label>
-
-                <div
-                    id="contestCourseContent"
-                    class="contest-course-content"
-                >
-                    <div class="picker-empty">
-                        Select a course above.
-                    </div>
-                </div>
-
-                <div class="dynamic-dialog-actions">
-
-                    <button
-                        type="button"
-                        class="secondary-dialog-button"
-                        id="closeContestChooser"
-                    >
-                        Close
-                    </button>
-
-                </div>
-
-            </div>
-        `;
-
-        showDynamicDialog();
-
-        $("closeContestChooser")
-            ?.addEventListener(
-                "click",
-                closeDynamicDialog
-            );
-
-        $("contestCourseSelect")
-            ?.addEventListener(
-                "change",
-                event =>
-                    loadCourseContestMaterial(
-                        event.target.value
-                    )
-            );
-    }
-
-
-    async function loadCourseContestMaterial(
-        courseId
-    ) {
-        const container =
-            $("contestCourseContent");
-
-        if (!container) {
-            return;
-        }
-
-        if (!courseId) {
-            container.innerHTML = `
-                <div class="picker-empty">
-                    Select a course above.
-                </div>
-            `;
-
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="picker-empty">
-                Loading course questions...
-            </div>
-        `;
-
-        let questions =
-            [];
-
-        const questionResult =
-            await state.db
-                .from(
-                    "quiz_questions"
-                )
-                .select(
-                    "id,course_id,unit_id,question,option_a,option_b,option_c,option_d,correct_answer"
-                )
-                .eq(
-                    "course_id",
-                    courseId
-                )
-                .limit(100);
-
-        if (
-            !questionResult.error &&
-            questionResult.data?.length
-        ) {
-            questions =
-                questionResult.data;
-        } else {
-            const fallback =
-                await state.db
-                    .from("quizzes")
-                    .select(
-                        "id,course_id,question,option_a,option_b,option_c,option_d,correct_answer"
-                    )
-                    .eq(
-                        "course_id",
-                        courseId
-                    )
-                    .limit(100);
-
-            if (
-                !fallback.error
-            ) {
-                questions =
-                    fallback.data ||
-                    [];
+            state.sendingMessage =
+                false;
+
+            if (button) {
+                button.disabled =
+                    false;
             }
+
+            return;
+
         }
 
-        const course =
-            state.courses.find(
+
+        input.value =
+            "";
+
+        autoResizeInput();
+
+
+        const localMessage = {
+
+            ...data,
+
+            profile:
+                state.profile
+
+        };
+
+
+        const exists =
+            state.messages.some(
                 item =>
                     String(
                         item.id
                     ) ===
                     String(
-                        courseId
+                        data.id
                     )
             );
 
-        if (
-            !questions.length
-        ) {
-            container.innerHTML = `
-                <div class="picker-empty">
+        if (!exists) {
 
-                    <strong>
-                        No questions found.
-                    </strong>
+            state.messages.push(
+                localMessage
+            );
 
-                    <span>
-                        This course currently
-                        has no quiz questions.
-                    </span>
+        }
 
-                </div>
-            `;
 
+        cancelReply();
+
+        renderMessages();
+
+        scrollMessagesToBottom(
+            true
+        );
+
+
+        state.sendingMessage =
+            false;
+
+        if (button) {
+            button.disabled =
+                false;
+        }
+
+    }
+
+
+    /* ============================================================
+       SCROLLING
+       ============================================================ */
+
+    function scrollMessagesToBottom(
+        force = false
+    ) {
+
+        const list =
+            $("messageList");
+
+        if (!list) {
             return;
         }
 
-        container.innerHTML = `
-            <div class="contest-preview">
 
-                <div class="contest-course-title">
-                    ${escapeHTML(
-                        course?.title ||
-                            "Selected Course"
-                    )}
-                </div>
+        const distance =
+            list.scrollHeight -
+            list.scrollTop -
+            list.clientHeight;
 
-                <div class="contest-stat">
-
-                    <span>
-                        Questions
-                    </span>
-
-                    <strong>
-                        ${questions.length}
-                    </strong>
-
-                </div>
-
-                <div class="contest-question-preview">
-
-                    ${questions
-                        .slice(0, 5)
-                        .map(
-                            (
-                                question,
-                                index
-                            ) => `
-                                <div>
-
-                                    <b>
-                                        ${index +
-                                        1}.
-                                    </b>
-
-                                    <span>
-                                        ${escapeHTML(
-                                            question.question
-                                        )}
-                                    </span>
-
-                                </div>
-                            `
-                        )
-                        .join("")}
-
-                </div>
-
-                <button
-                    type="button"
-                    class="contest-start-button"
-                    id="startCourseQuiz"
-                >
-                    Start ${escapeHTML(
-                        course?.title ||
-                            "Course"
-                    )} Quiz
-                </button>
-
-            </div>
-        `;
-
-        $("startCourseQuiz")
-            ?.addEventListener(
-                "click",
-                () => {
-                    window.location.href =
-                        `./quiz.html?course=${encodeURIComponent(
-                            courseId
-                        )}`;
-                }
-            );
-    }
-
-
-    /* ============================================================
-       CHANNEL SEARCH
-       ============================================================ */
-
-    function searchChannels(
-        value
-    ) {
-        const query =
-            String(
-                value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-        document
-            .querySelectorAll(
-                "#informationChannels .channel-button, " +
-                "#courseChannels .channel-button, " +
-                "#communityChannels .channel-button"
-            )
-            .forEach(
-                button => {
-                    const name =
-                        button.textContent
-                            .toLowerCase();
-
-                    button.style.display =
-                        !query ||
-                        name.includes(
-                            query
-                        )
-                            ? ""
-                            : "none";
-                }
-            );
-    }
-
-
-    function searchMembers(
-        value
-    ) {
-        renderMembers(
-            value
-        );
-    }
-
-
-    function searchMessages(
-        value
-    ) {
-        const query =
-            String(
-                value || ""
-            )
-                .trim()
-                .toLowerCase();
-
-        document
-            .querySelectorAll(
-                "#messageList .message-item"
-            )
-            .forEach(
-                message => {
-                    const matches =
-                        message.textContent
-                            .toLowerCase()
-                            .includes(
-                                query
-                            );
-
-                    message.style.display =
-                        !query ||
-                        matches
-                            ? ""
-                            : "none";
-                }
-            );
-    }
-
-
-    /* ============================================================
-       HOME BUTTON
-       ============================================================ */
-
-    function setupHomeButton() {
-        const button =
-            $("communityHomeButton");
-
-        if (button) {
-            button.addEventListener(
-                "click",
-                () => {
-                    window.location.href =
-                        "./dashboard.html";
-                }
-            );
-        }
-
-        const actions =
-            document.querySelector(
-                ".community-header-actions"
-            );
 
         if (
-            actions &&
-            !document.getElementById(
-                "communityHomeNavButton"
-            )
+            force ||
+            distance < 180
         ) {
-            const home =
-                document.createElement(
-                    "button"
-                );
 
-            home.type =
-                "button";
-
-            home.id =
-                "communityHomeNavButton";
-
-            home.className =
-                "header-home-button";
-
-            home.innerHTML = `
-                <span>⌂</span>
-                <span>Home</span>
-            `;
-
-            home.title =
-                "Back to dashboard";
-
-            home.addEventListener(
-                "click",
+            requestAnimationFrame(
                 () => {
-                    window.location.href =
-                        "./dashboard.html";
+
+                    list.scrollTop =
+                        list.scrollHeight;
+
                 }
             );
 
-            actions.insertBefore(
-                home,
-                actions.firstChild
-            );
-        }
-    }
-
-
-    /* ============================================================
-       EVENT BINDINGS
-       ============================================================ */
-
-    function bindEvents() {
-        setupHomeButton();
-
-        $("generalCallButton")
-            ?.addEventListener(
-                "click",
-                generalCall
-            );
-
-        $("communityCallButton")
-            ?.addEventListener(
-                "click",
-                communityCall
-            );
-
-        $("sendMessageButton")
-            ?.addEventListener(
-                "click",
-                sendMessage
-            );
-
-        $("messageInput")
-            ?.addEventListener(
-                "keydown",
-                event => {
-                    if (
-                        event.key ===
-                            "Enter" &&
-                        !event.shiftKey
-                    ) {
-                        event.preventDefault();
-
-                        sendMessage();
-                    }
-                }
-            );
-
-        $("messageInput")
-            ?.addEventListener(
-                "input",
-                event => {
-                    event.target.style.height =
-                        "auto";
-
-                    event.target.style.height =
-                        Math.min(
-                            event.target
-                                .scrollHeight,
-                            180
-                        ) +
-                        "px";
-                }
-            );
-
-        $("memberSearchInput")
-            ?.addEventListener(
-                "input",
-                event =>
-                    searchMembers(
-                        event.target.value
-                    )
-            );
-
-        $("channelSearchInput")
-            ?.addEventListener(
-                "input",
-                event =>
-                    searchChannels(
-                        event.target.value
-                    )
-            );
-
-        $("channelMembersButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    $("memberSidebar")
-                        ?.classList.toggle(
-                            "open"
-                        )
-            );
-
-        $("closeMemberSidebarButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    $("memberSidebar")
-                        ?.classList.remove(
-                            "open"
-                        )
-            );
-
-        $("communityMenuButton")
-            ?.addEventListener(
-                "click",
-                openAddChannelDialog
-            );
-
-        $("addCommunityButton")
-            ?.addEventListener(
-                "click",
-                openAddChannelDialog
-            );
-
-        $("profileButton")
-            ?.addEventListener(
-                "click",
-                openProfile
-            );
-
-        $("contestChannelButton")
-            ?.addEventListener(
-                "click",
-                openContestChooser
-            );
-
-        $("mobileSidebarButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    $("channelSidebar")
-                        ?.classList.toggle(
-                            "open"
-                        )
-            );
-
-        $("channelSearchButton")
-            ?.addEventListener(
-                "click",
-                () => {
-                    show(
-                        $("messageSearchBar")
-                    );
-
-                    $("messageSearchInput")
-                        ?.focus();
-                }
-            );
-
-        $("closeMessageSearchButton")
-            ?.addEventListener(
-                "click",
-                () => {
-                    hide(
-                        $("messageSearchBar")
-                    );
-
-                    const input =
-                        $("messageSearchInput");
-
-                    if (input) {
-                        input.value =
-                            "";
-                    }
-
-                    searchMessages(
-                        ""
-                    );
-                }
-            );
-
-        $("messageSearchInput")
-            ?.addEventListener(
-                "input",
-                event =>
-                    searchMessages(
-                        event.target.value
-                    )
-            );
-
-        /*
-         * Attachments.
-         *
-         * We retain your existing safe behavior instead of
-         * inventing database columns that are not in the schema.
-         */
-        $("attachButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    notify(
-                        "Attachment upload requires the configured chat storage bucket.",
-                        "info"
-                    )
-            );
-
-        /*
-         * Emoji.
-         */
-        $("emojiButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    openEmojiPanel()
-            );
-
-        $("closeEmojiButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    hide(
-                        $("emojiPanel")
-                    )
-            );
-
-        /*
-         * Stickers.
-         */
-        $("stickerButton")
-            ?.addEventListener(
-                "click",
-                () => {
-                    hide(
-                        $("emojiPanel")
-                    );
-
-                    hide(
-                        $("gifPanel")
-                    );
-
-                    show(
-                        $("stickerPanel")
-                    );
-                }
-            );
-
-        $("closeStickerButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    hide(
-                        $("stickerPanel")
-                    )
-            );
-
-        /*
-         * GIF.
-         */
-        $("gifButton")
-            ?.addEventListener(
-                "click",
-                () => {
-                    hide(
-                        $("emojiPanel")
-                    );
-
-                    hide(
-                        $("stickerPanel")
-                    );
-
-                    show(
-                        $("gifPanel")
-                    );
-                }
-            );
-
-        $("closeGifButton")
-            ?.addEventListener(
-                "click",
-                () =>
-                    hide(
-                        $("gifPanel")
-                    )
-            );
-
-        /*
-         * Voice.
-         */
-        $("voiceNoteButton")
-            ?.addEventListener(
-                "click",
-                toggleVoiceNote
-            );
-
-        /*
-         * Close pickers when clicking outside.
-         */
-        document.addEventListener(
-            "click",
-            event => {
-                const picker =
-                    event.target.closest(
-                        ".picker-panel"
-                    );
-
-                const button =
-                    event.target.closest(
-                        "#emojiButton,#stickerButton,#gifButton"
-                    );
-
-                if (
-                    !picker &&
-                    !button
-                ) {
-                    hide(
-                        $("emojiPanel")
-                    );
-
-                    hide(
-                        $("stickerPanel")
-                    );
-
-                    hide(
-                        $("gifPanel")
-                    );
-                }
-            }
-        );
-    }
-
-
-    /* ============================================================
-       EMOJI
-       ============================================================ */
-
-    const EMOJIS = [
-        "😀","😃","😄","😁","😆","😅",
-        "😂","🤣","😊","🙂","😉","😍",
-        "🥰","😘","😎","🤓","🤔","😐",
-        "🙄","😮","😴","🤗","🤩","🥳",
-        "😭","😢","😡","🤬","👍","👎",
-        "👏","🙌","🙏","❤️","🔥","🎉",
-        "✨","⭐","💯","🎓","📚","🧪",
-        "🔬","🧬","🩺","💉","💊","🩸",
-        "🧠","🫀","🫁","🦠","🧫","📖",
-        "✏️","💡","✅"
-    ];
-
-
-    function openEmojiPanel() {
-        hide(
-            $("stickerPanel")
-        );
-
-        hide(
-            $("gifPanel")
-        );
-
-        const grid =
-            $("emojiGrid");
-
-        if (grid) {
-            grid.innerHTML =
-                EMOJIS.map(
-                    emoji => `
-                        <button
-                            type="button"
-                            class="emoji-item"
-                        >
-                            ${emoji}
-                        </button>
-                    `
-                ).join("");
-
-            grid
-                .querySelectorAll(
-                    ".emoji-item"
-                )
-                .forEach(
-                    button =>
-                        button.addEventListener(
-                            "click",
-                            () =>
-                                insertEmoji(
-                                    button.textContent
-                                        .trim()
-                                )
-                        )
-                );
         }
 
-        show(
-            $("emojiPanel")
-        );
     }
 
 
-    function insertEmoji(
-        emoji
-    ) {
+    function focusMessageInput() {
+
         const input =
             $("messageInput");
 
@@ -4999,366 +3964,2038 @@
             return;
         }
 
-        const start =
-            input.selectionStart ??
-            input.value.length;
+        setTimeout(
+            () => {
 
-        const end =
-            input.selectionEnd ??
-            input.value.length;
+                try {
 
-        input.value =
-            input.value.slice(
-                0,
-                start
-            ) +
-            emoji +
-            input.value.slice(
-                end
-            );
+                    input.focus(
+                        {
+                            preventScroll:
+                                true
+                        }
+                    );
 
-        input.focus();
+                } catch {}
 
-        input.selectionStart =
-            input.selectionEnd =
-                start +
-                emoji.length;
+            },
+            50
+        );
+
     }
 
 
     /* ============================================================
-       VOICE NOTE
+       TYPING INDICATOR
        ============================================================ */
 
-    async function toggleVoiceNote() {
-        if (
-            state.recording
-        ) {
-            stopRecording();
-        } else {
-            await startRecording();
+    function setupTypingRealtime(
+        channelId
+    ) {
+
+        if (!channelId) {
+            return;
         }
+
+
+        state.realtimeChannels =
+            state.realtimeChannels.filter(
+                channel => {
+
+                    if (
+                        channel.__mwanikiTyping
+                    ) {
+
+                        try {
+
+                            db.removeChannel(
+                                channel
+                            );
+
+                        } catch {}
+
+                        return false;
+
+                    }
+
+                    return true;
+
+                }
+            );
+
+
+        const channel =
+            db.channel(
+                `typing:${channelId}`
+            );
+
+
+        channel.on(
+            "broadcast",
+            {
+                event:
+                    "typing"
+            },
+            payload => {
+
+                const user =
+                    payload?.payload;
+
+                if (
+                    !user ||
+                    String(
+                        user.user_id
+                    ) ===
+                    String(
+                        state.user?.id
+                    )
+                ) {
+
+                    return;
+
+                }
+
+
+                const indicator =
+                    $("typingIndicator");
+
+                if (!indicator) {
+                    return;
+                }
+
+
+                indicator.textContent =
+                    `${user.name || "Someone"} is typing…`;
+
+                show(
+                    indicator
+                );
+
+
+                clearTimeout(
+                    indicator.__mwanikiTypingTimer
+                );
+
+
+                indicator.__mwanikiTypingTimer =
+                    setTimeout(
+                        () => {
+
+                            hide(
+                                indicator
+                            );
+
+                        },
+                        CONFIG.typingTimeout
+                    );
+
+            }
+        );
+
+
+        channel.subscribe(
+            status => {
+
+                console.log(
+                    "Typing realtime:",
+                    status
+                );
+
+            }
+        );
+
+
+        channel.__mwanikiTyping =
+            true;
+
+        state.realtimeChannels.push(
+            channel
+        );
+
     }
 
 
-    async function startRecording() {
+    function broadcastTyping() {
+
         if (
-            !navigator.mediaDevices ||
-            !navigator.mediaDevices
-                .getUserMedia
+            !state.currentChannel?.id ||
+            !state.user?.id
         ) {
-            notify(
-                "Voice recording is not supported.",
-                "error"
+
+            return;
+
+        }
+
+
+        const now =
+            Date.now();
+
+        if (
+            now -
+            state.lastTypingBroadcast <
+            CONFIG.typingThrottle
+        ) {
+
+            return;
+
+        }
+
+
+        state.lastTypingBroadcast =
+            now;
+
+
+        const channel =
+            state.realtimeChannels.find(
+                item =>
+                    item.__mwanikiTyping
             );
 
+        if (!channel) {
             return;
         }
 
-        if (
-            !state.currentChannel
-        ) {
-            notify(
-                "Select a channel first.",
-                "warning"
-            );
 
-            return;
-        }
+        channel.send(
+            {
+                type:
+                    "broadcast",
 
-        try {
-            state.recordingStream =
-                await navigator.mediaDevices
-                    .getUserMedia({
-                        audio:
-                            true
-                    });
+                event:
+                    "typing",
 
-            state.recordingChunks =
-                [];
+                payload: {
 
-            state.mediaRecorder =
-                new MediaRecorder(
-                    state.recordingStream
-                );
+                    user_id:
+                        state.user.id,
 
-            state.mediaRecorder
-                .ondataavailable =
-                event => {
+                    name:
+                        getDisplayName()
+
+                }
+
+            }
+        );
+
+    }
+
+
+    function stopTypingBroadcast() {
+
+        clearTimeout(
+            state.typingTimer
+        );
+
+        state.typingTimer =
+            null;
+
+    }
+
+
+    /* ============================================================
+       MESSAGE REALTIME
+       ============================================================ */
+
+    function removeMessageRealtimeChannels() {
+
+        state.realtimeChannels =
+            state.realtimeChannels.filter(
+                channel => {
+
                     if (
-                        event.data?.size
+                        channel.__mwanikiMessages
                     ) {
-                        state.recordingChunks.push(
-                            event.data
-                        );
+
+                        try {
+
+                            db.removeChannel(
+                                channel
+                            );
+
+                        } catch {}
+
+                        return false;
+
                     }
-                };
 
-            state.mediaRecorder
-                .onstop =
-                async () => {
-                    const blob =
-                        new Blob(
-                            state.recordingChunks,
-                            {
-                                type:
-                                    state
-                                        .mediaRecorder
-                                        ?.mimeType ||
-                                    "audio/webm"
-                            }
-                        );
+                    return true;
 
-                    state.recordingStream
-                        ?.getTracks()
-                        .forEach(
-                            track =>
-                                track.stop()
-                        );
+                }
+            );
 
-                    state.recordingStream =
+    }
+
+
+    function subscribeMessageRealtime(
+        channelId
+    ) {
+
+        if (!channelId) {
+            return;
+        }
+
+
+        removeMessageRealtimeChannels();
+
+
+        const realtime =
+            db.channel(
+                `messages:${channelId}`
+            );
+
+
+        realtime.on(
+            "postgres_changes",
+            {
+                event:
+                    "INSERT",
+
+                schema:
+                    "public",
+
+                table:
+                    "chat_messages",
+
+                filter:
+                    `channel_id=eq.${channelId}`
+
+            },
+            async payload => {
+
+                const incoming =
+                    payload.new;
+
+                if (!incoming) {
+                    return;
+                }
+
+
+                const exists =
+                    state.messages.some(
+                        message =>
+                            String(
+                                message.id
+                            ) ===
+                            String(
+                                incoming.id
+                            )
+                    );
+
+
+                if (
+                    !exists
+                ) {
+
+                    const ids = [
+                        incoming.user_id
+                    ];
+
+
+                    let profile =
                         null;
 
+
                     if (
-                        blob.size
+                        incoming.user_id
                     ) {
-                        notify(
-                            "Voice recording complete. Configure the chat storage bucket to send it.",
-                            "info"
-                        );
+
+                        const {
+                            data
+                        } =
+                            await db
+                                .from(
+                                    "students"
+                                )
+                                .select(
+                                    "id,full_name,photo_url"
+                                )
+                                .eq(
+                                    "id",
+                                    incoming.user_id
+                                )
+                                .maybeSingle();
+
+                        profile =
+                            data || null;
+
                     }
-                };
 
-            state.mediaRecorder.start();
 
-            state.recording =
-                true;
+                    state.messages.push(
+                        {
+                            ...incoming,
+                            profile
+                        }
+                    );
 
-            const button =
-                $("voiceNoteButton");
 
-            if (button) {
-                button.textContent =
-                    "⏹";
+                    renderMessages();
 
-                button.classList.add(
-                    "recording"
-                );
+                    scrollMessagesToBottom();
+
+                }
+
             }
+        );
 
-            notify(
-                "Recording...",
-                "info"
+
+        realtime.on(
+            "postgres_changes",
+            {
+                event:
+                    "UPDATE",
+
+                schema:
+                    "public",
+
+                table:
+                    "chat_messages",
+
+                filter:
+                    `channel_id=eq.${channelId}`
+
+            },
+            payload => {
+
+                const updated =
+                    payload.new;
+
+                const index =
+                    state.messages.findIndex(
+                        message =>
+                            String(
+                                message.id
+                            ) ===
+                            String(
+                                updated.id
+                            )
+                    );
+
+
+                if (
+                    index >= 0
+                ) {
+
+                    state.messages[
+                        index
+                    ] = {
+
+                        ...state.messages[
+                            index
+                        ],
+
+                        ...updated
+
+                    };
+
+                }
+
+
+                renderMessages();
+
+            }
+        );
+
+
+        realtime.subscribe(
+            status => {
+
+                console.log(
+                    "Message realtime:",
+                    status
+                );
+
+            }
+        );
+
+
+        realtime.__mwanikiMessages =
+            true;
+
+        state.realtimeChannels.push(
+            realtime
+        );
+
+    }
+
+
+    /* ============================================================
+       COMMUNITY REALTIME
+       ============================================================ */
+
+    function subscribeCommunityRealtime() {
+
+        if (
+            !state.currentCommunity?.id
+        ) {
+
+            return;
+
+        }
+
+
+        const id =
+            state.currentCommunity.id;
+
+
+        state.realtimeChannels =
+            state.realtimeChannels.filter(
+                channel => {
+
+                    if (
+                        channel.__mwanikiCommunity
+                    ) {
+
+                        try {
+
+                            db.removeChannel(
+                                channel
+                            );
+
+                        } catch {}
+
+                        return false;
+
+                    }
+
+                    return true;
+
+                }
             );
 
-        } catch (error) {
+
+        const channel =
+            db.channel(
+                `community:${id}`
+            );
+
+
+        channel.on(
+            "postgres_changes",
+            {
+                event:
+                    "*",
+
+                schema:
+                    "public",
+
+                table:
+                    "chat_channels",
+
+                filter:
+                    `community_id=eq.${id}`
+
+            },
+            async () => {
+
+                await loadChannels();
+
+            }
+        );
+
+
+        channel.on(
+            "postgres_changes",
+            {
+                event:
+                    "*",
+
+                schema:
+                    "public",
+
+                table:
+                    "chat_community_members",
+
+                filter:
+                    `community_id=eq.${id}`
+
+            },
+            async () => {
+
+                await loadMembers();
+
+            }
+        );
+
+
+        channel.on(
+            "postgres_changes",
+            {
+                event:
+                    "*",
+
+                schema:
+                    "public",
+
+                table:
+                    "chat_presence"
+
+            },
+            async () => {
+
+                await refreshMemberPresence();
+
+            }
+        );
+
+
+        channel.subscribe(
+            status => {
+
+                console.log(
+                    "Community realtime:",
+                    status
+                );
+
+            }
+        );
+
+
+        channel.__mwanikiCommunity =
+            true;
+
+        state.realtimeChannels.push(
+            channel
+        );
+
+    }
+
+
+    /* ============================================================
+       DIRECT MESSAGES
+       ============================================================ */
+
+    function openDirectMessage(
+        userId
+    ) {
+
+        const member =
+            state.members.find(
+                item =>
+                    String(
+                        item.user_id
+                    ) ===
+                    String(
+                        userId
+                    )
+            );
+
+
+        if (
+            window.mwanikiDirectMessages &&
+            typeof
+            window.mwanikiDirectMessages.open ===
+            "function"
+        ) {
+
+            window.mwanikiDirectMessages.open(
+                userId
+            );
+
+            return;
+
+        }
+
+
+        /*
+           Keep this button functional even if the separate
+           DM module is not loaded yet.
+        */
+
+        toast(
+            member
+                ? `Private chat with ${getMemberName(
+                    member
+                )} is ready for the DM module.`
+                : "Private messaging is not available yet.",
+            "normal"
+        );
+
+    }
+
+
+    /* ============================================================
+       CALL ENGINE BRIDGE
+       ============================================================ */
+
+    function getCallEngine() {
+
+        return (
+            window.mwanikiCalls ||
+            window.mwanikiCallEngine ||
+            window.communityCalls ||
+            window.calls ||
+            null
+        );
+
+    }
+
+
+    async function callMember(
+        userId
+    ) {
+
+        if (!userId) {
+            return;
+        }
+
+
+        const engine =
+            getCallEngine();
+
+
+        if (
+            engine &&
+            typeof engine.callUser ===
+            "function"
+        ) {
+
+            await engine.callUser(
+                userId
+            );
+
+            return;
+
+        }
+
+
+        if (
+            engine &&
+            typeof engine.callMember ===
+            "function"
+        ) {
+
+            await engine.callMember(
+                userId
+            );
+
+            return;
+
+        }
+
+
+        toast(
+            "The real call engine is not ready.",
+            "error"
+        );
+
+    }
+
+
+    /* ============================================================
+       UI EVENTS
+       ============================================================ */
+
+    function setupEvents() {
+
+        const input =
+            $("messageInput");
+
+        if (input) {
+
+            input.addEventListener(
+                "input",
+                () => {
+
+                    autoResizeInput();
+
+                    broadcastTyping();
+
+                }
+            );
+
+
+            input.addEventListener(
+                "keydown",
+                event => {
+
+                    if (
+                        event.key ===
+                        "Enter" &&
+                        !event.shiftKey
+                    ) {
+
+                        event.preventDefault();
+
+                        sendMessage(
+                            event
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        const form =
+            $("messageForm");
+
+        if (form) {
+
+            form.addEventListener(
+                "submit",
+                sendMessage
+            );
+
+        }
+
+
+        const send =
+            $("sendMessageButton");
+
+        if (
+            send &&
+            !form
+        ) {
+
+            send.addEventListener(
+                "click",
+                sendMessage
+            );
+
+        }
+
+
+        const cancelReplyButton =
+            $("cancelReplyButton");
+
+        if (cancelReplyButton) {
+
+            cancelReplyButton.addEventListener(
+                "click",
+                cancelReply
+            );
+
+        }
+
+
+        const memberSearch =
+            $("memberSearchInput");
+
+        if (memberSearch) {
+
+            memberSearch.addEventListener(
+                "input",
+                () => {
+
+                    state.memberSearch =
+                        memberSearch.value;
+
+                    renderMembers();
+
+                }
+            );
+
+        }
+
+
+        const channelSearch =
+            $("channelSearchInput");
+
+        if (channelSearch) {
+
+            channelSearch.addEventListener(
+                "input",
+                () => {
+
+                    state.channelSearch =
+                        channelSearch.value;
+
+                    renderChannels();
+
+                }
+            );
+
+        }
+
+
+        const messageSearch =
+            $("messageSearchInput");
+
+        if (messageSearch) {
+
+            messageSearch.addEventListener(
+                "input",
+                () => {
+
+                    state.messageSearch =
+                        messageSearch.value;
+
+                    renderMessages();
+
+                }
+            );
+
+        }
+
+
+        setupPickerEvents();
+
+        setupDrawerEvents();
+
+        setupHomeButton();
+
+        setupGeneralCallButton();
+
+        setupProfileButton();
+
+        setupGlobalClickClose();
+
+    }
+
+
+    /* ============================================================
+       PICKERS
+       ============================================================ */
+
+    function setupPickerEvents() {
+
+        const emojiButton =
+            $("emojiButton");
+
+        const emojiPanel =
+            $("emojiPanel");
+
+        const closeEmoji =
+            $("closeEmojiButton");
+
+        if (
+            emojiButton &&
+            emojiPanel
+        ) {
+
+            emojiButton.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    closeAllPickers();
+
+                    emojiPanel.classList.toggle(
+                        "hidden"
+                    );
+
+                    state.emojiOpen =
+                        !emojiPanel.classList.contains(
+                            "hidden"
+                        );
+
+                    if (
+                        state.emojiOpen
+                    ) {
+
+                        renderEmojiGrid();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        if (closeEmoji) {
+
+            closeEmoji.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    closeAllPickers();
+
+                }
+            );
+
+        }
+
+    }
+
+
+    function renderEmojiGrid() {
+
+        const grid =
+            $("emojiGrid");
+
+        if (!grid) {
+            return;
+        }
+
+
+        const emojis = [
+            "😀",
+            "😂",
+            "🤣",
+            "😊",
+            "😍",
+            "🥰",
+            "😎",
+            "🤔",
+            "😮",
+            "😢",
+            "😭",
+            "😡",
+            "👍",
+            "👎",
+            "👏",
+            "🙏",
+            "❤️",
+            "🔥",
+            "🎉",
+            "💯",
+            "🧠",
+            "🫀",
+            "🩺",
+            "💊",
+            "🧪",
+            "📚",
+            "🎓",
+            "✅"
+        ];
+
+
+        grid.innerHTML =
+            emojis
+                .map(
+                    emoji => `
+                        <button
+                            type="button"
+                            class="emoji-choice"
+                            data-emoji="${emoji}"
+                        >
+                            ${emoji}
+                        </button>
+                    `
+                )
+                .join("");
+
+
+        qa(
+            "[data-emoji]",
+            grid
+        ).forEach(
+            button => {
+
+                button.addEventListener(
+                    "click",
+                    () => {
+
+                        const input =
+                            $("messageInput");
+
+                        if (!input) {
+                            return;
+                        }
+
+                        const start =
+                            input.selectionStart ??
+                            input.value.length;
+
+                        const end =
+                            input.selectionEnd ??
+                            input.value.length;
+
+                        input.value =
+                            input.value.substring(
+                                0,
+                                start
+                            ) +
+                            button.dataset.emoji +
+                            input.value.substring(
+                                end
+                            );
+
+                        input.focus();
+
+                        input.selectionStart =
+                            input.selectionEnd =
+                                start +
+                                button.dataset.emoji.length;
+
+                        autoResizeInput();
+
+                    }
+                );
+
+            }
+        );
+
+    }
+
+
+    function closeAllPickers() {
+
+        [
+            $("emojiPanel"),
+            $("stickerPanel"),
+            $("gifPanel")
+        ].forEach(
+            panel => {
+
+                if (panel) {
+                    hide(panel);
+                }
+
+            }
+        );
+
+        state.emojiOpen =
+            false;
+
+        closeAllReactionPickers();
+
+    }
+
+
+    function setupGlobalClickClose() {
+
+        document.addEventListener(
+            "click",
+            event => {
+
+                const emojiPanel =
+                    $("emojiPanel");
+
+                const emojiButton =
+                    $("emojiButton");
+
+
+                if (
+                    emojiPanel &&
+                    !emojiPanel.contains(
+                        event.target
+                    ) &&
+                    !emojiButton?.contains(
+                        event.target
+                    )
+                ) {
+
+                    hide(
+                        emojiPanel
+                    );
+
+                    state.emojiOpen =
+                        false;
+
+                }
+
+            }
+        );
+
+
+        document.addEventListener(
+            "keydown",
+            event => {
+
+                if (
+                    event.key ===
+                    "Escape"
+                ) {
+
+                    closeAllPickers();
+
+                    cancelReply();
+
+                }
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       COMPOSER / MOBILE LAYOUT
+       ============================================================ */
+
+    function autoResizeInput() {
+
+        const input =
+            $("messageInput");
+
+        if (!input) {
+            return;
+        }
+
+
+        /*
+           The textarea can grow, but never enough to push the
+           composer off-screen.
+        */
+
+        input.style.height =
+            "auto";
+
+        input.style.height =
+            Math.min(
+                input.scrollHeight,
+                120
+            ) + "px";
+
+    }
+
+
+    function injectResponsiveChatLayout() {
+
+        if (
+            $("mwanikiCommunityResponsiveCSS")
+        ) {
+
+            return;
+
+        }
+
+
+        const style =
+            document.createElement(
+                "style"
+            );
+
+        style.id =
+            "mwanikiCommunityResponsiveCSS";
+
+
+        style.textContent = `
+
+            html,
+            body {
+                height: 100%;
+                min-height: 100%;
+                overflow: hidden;
+            }
+
+            body {
+                overscroll-behavior: none;
+            }
+
+            .community-page,
+            .community-layout,
+            .app-shell,
+            .community-shell {
+                height: 100dvh;
+                min-height: 0;
+            }
+
+            .chat-main {
+                min-height: 0 !important;
+                height: 100%;
+                display: flex !important;
+                flex-direction: column !important;
+                overflow: hidden !important;
+            }
+
+            .message-list {
+                flex: 1 1 auto !important;
+                min-height: 0 !important;
+                overflow-y: auto !important;
+                overflow-x: hidden !important;
+                overscroll-behavior: contain;
+                -webkit-overflow-scrolling: touch;
+                padding-bottom: 18px;
+            }
+
+            .message-loading,
+            .typing-indicator {
+                flex: 0 0 auto;
+            }
+
+            .message-composer,
+            .chat-composer,
+            .message-input-area,
+            .chat-input-area {
+                flex: 0 0 auto !important;
+                position: relative !important;
+                bottom: auto !important;
+                width: 100%;
+                z-index: 20;
+            }
+
+            #messageInput {
+                min-height: 42px;
+                max-height: 120px;
+                resize: none;
+                overflow-y: auto;
+            }
+
+            .member-avatar-wrap {
+                position: relative;
+                width: 40px;
+                min-width: 40px;
+                height: 40px;
+            }
+
+            .member-avatar {
+                width: 40px !important;
+                height: 40px !important;
+                max-width: 40px !important;
+                max-height: 40px !important;
+                object-fit: cover;
+                border-radius: 50%;
+            }
+
+            .presence-dot {
+                position: absolute;
+                right: -1px;
+                bottom: -1px;
+                width: 11px;
+                height: 11px;
+                border-radius: 50%;
+                border: 2px solid var(--community-panel, #fff);
+                display: block;
+            }
+
+            .presence-dot.online {
+                background: #22c55e;
+            }
+
+            .presence-dot.away {
+                background: #f59e0b;
+            }
+
+            .presence-dot.dnd {
+                background: #ef4444;
+            }
+
+            .presence-dot.offline {
+                background: #94a3b8;
+            }
+
+            .member-row {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                min-width: 0;
+            }
+
+            .member-info {
+                min-width: 0;
+                flex: 1;
+            }
+
+            .member-name {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .member-status-line {
+                display: flex;
+                align-items: center;
+                min-height: 17px;
+            }
+
+            .member-status-text {
+                font-size: 11px;
+                opacity: .72;
+            }
+
+            .member-custom-status {
+                font-size: 11px;
+                opacity: .55;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            .member-actions {
+                display: flex;
+                gap: 4px;
+                flex-shrink: 0;
+            }
+
+            .member-action-button {
+                width: 30px;
+                height: 30px;
+                border: 0;
+                border-radius: 8px;
+                cursor: pointer;
+            }
+
+            .message-row {
+                position: relative;
+            }
+
+            .message-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                margin-top: 6px;
+            }
+
+            .message-actions button {
+                border: 0;
+                border-radius: 7px;
+                padding: 4px 7px;
+                cursor: pointer;
+                font-size: 12px;
+            }
+
+            .message-reactions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px;
+                margin-top: 5px;
+            }
+
+            .reaction-chip,
+            .reaction-add-button {
+                border: 1px solid rgba(0,0,0,.08);
+                border-radius: 999px;
+                padding: 2px 8px;
+                cursor: pointer;
+            }
+
+            .reaction-chip.mine {
+                outline: 2px solid rgba(8,127,115,.2);
+            }
+
+            .reaction-picker {
+                display: flex;
+                gap: 4px;
+                padding: 7px;
+                border-radius: 10px;
+                position: absolute;
+                z-index: 40;
+                margin-top: 4px;
+                box-shadow: 0 8px 28px rgba(0,0,0,.16);
+            }
+
+            .reaction-picker button {
+                width: 32px;
+                height: 32px;
+                border: 0;
+                background: transparent;
+                cursor: pointer;
+                border-radius: 7px;
+                font-size: 18px;
+            }
+
+            .reply-preview {
+                flex: 0 0 auto;
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            @media (max-width: 768px) {
+
+                .chat-main {
+                    width: 100%;
+                }
+
+                .message-list {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                }
+
+                .message-actions button span {
+                    display: none;
+                }
+
+                .message-actions button {
+                    min-width: 34px;
+                    min-height: 32px;
+                }
+
+                .message-composer,
+                .chat-composer,
+                .message-input-area,
+                .chat-input-area {
+                    padding:
+                        7px
+                        max(
+                            8px,
+                            env(safe-area-inset-right)
+                        )
+                        calc(
+                            7px +
+                            env(safe-area-inset-bottom)
+                        )
+                        max(
+                            8px,
+                            env(safe-area-inset-left)
+                        );
+                }
+
+                #messageInput {
+                    font-size: 16px !important;
+                }
+
+            }
+
+            @media (max-width: 480px) {
+
+                .message-avatar {
+                    width: 34px !important;
+                    height: 34px !important;
+                    max-width: 34px !important;
+                    max-height: 34px !important;
+                }
+
+                .message-avatar-wrap {
+                    width: 34px;
+                    min-width: 34px;
+                    height: 34px;
+                }
+
+                .presence-dot {
+                    width: 10px;
+                    height: 10px;
+                }
+
+                .message-row {
+                    gap: 7px;
+                }
+
+                .message-body {
+                    max-width: 100%;
+                    overflow-wrap: anywhere;
+                }
+
+                .message-composer input,
+                .message-composer textarea,
+                .chat-composer input,
+                .chat-composer textarea {
+                    font-size: 16px !important;
+                }
+
+            }
+
+        `;
+
+
+        document.head.appendChild(
+            style
+        );
+
+    }
+
+
+    /* ============================================================
+       DRAWERS
+       ============================================================ */
+
+    function setupDrawerEvents() {
+
+        const channelButton =
+            $("channelToggleButton");
+
+        if (channelButton) {
+
+            channelButton.addEventListener(
+                "click",
+                () => {
+
+                    const sidebar =
+                        $("channelSidebar");
+
+                    if (sidebar) {
+
+                        sidebar.classList.toggle(
+                            "open"
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        const memberButton =
+            $("channelMembersButton");
+
+        if (memberButton) {
+
+            memberButton.addEventListener(
+                "click",
+                () => {
+
+                    const sidebar =
+                        $("memberSidebar");
+
+                    if (sidebar) {
+
+                        sidebar.classList.toggle(
+                            "open"
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+    }
+
+
+    /* ============================================================
+       HOME
+       ============================================================ */
+
+    function setupHomeButton() {
+
+        const button =
+            $("communityHomeButton");
+
+        if (!button) {
+            return;
+        }
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    "./dashboard.html";
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       GENERAL CALL
+       ============================================================ */
+
+    function setupGeneralCallButton() {
+
+        const button =
+            $("generalCallButton");
+
+        if (!button) {
+            return;
+        }
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                if (
+                    window.mwanikiCalls &&
+                    typeof
+                    window.mwanikiCalls.openPicker ===
+                    "function"
+                ) {
+
+                    window.mwanikiCalls.openPicker(
+                        null
+                    );
+
+                    return;
+
+                }
+
+
+                if (
+                    window.mwanikiCallEngine &&
+                    typeof
+                    window.mwanikiCallEngine.openPicker ===
+                    "function"
+                ) {
+
+                    window.mwanikiCallEngine.openPicker(
+                        null
+                    );
+
+                    return;
+
+                }
+
+
+                toast(
+                    "The call engine is not ready.",
+                    "error"
+                );
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       PROFILE
+       ============================================================ */
+
+    function setupProfileButton() {
+
+        const button =
+            $("profileButton");
+
+        if (!button) {
+            return;
+        }
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                window.location.href =
+                    "./profile.html";
+
+            }
+        );
+
+    }
+
+
+    /* ============================================================
+       CLEAR CHAT
+       ============================================================ */
+
+    function clearChat() {
+
+        state.messages =
+            [];
+
+        state.currentChannel =
+            null;
+
+        const list =
+            $("messageList");
+
+        if (list) {
+
+            list.innerHTML =
+                `<div class="empty-message-state">
+                    Select a channel to start chatting.
+                </div>`;
+
+        }
+
+    }
+
+
+    /* ============================================================
+       AUTH
+       ============================================================ */
+
+    async function requireAuth() {
+
+        const {
+            data,
+            error
+        } =
+            await db.auth.getUser();
+
+        if (error) {
+
             console.error(
-                "Microphone error:",
+                "❌ Authentication error:",
                 error
             );
 
-            notify(
-                "Microphone access was denied.",
-                "error"
-            );
+            return false;
+
         }
+
+
+        if (!data?.user) {
+
+            window.location.href =
+                "./index.html";
+
+            return false;
+
+        }
+
+
+        state.user =
+            data.user;
+
+        return true;
+
     }
 
 
-    function stopRecording() {
-        if (
-            state.mediaRecorder &&
-            state.recording
-        ) {
-            state.recording =
-                false;
+    function setupAuthListener() {
 
-            state.mediaRecorder.stop();
-        }
-
-        const button =
-            $("voiceNoteButton");
-
-        if (button) {
-            button.textContent =
-                "🎙️";
-
-            button.classList.remove(
-                "recording"
-            );
-        }
-    }
-
-
-    /* ============================================================
-       AUTH LISTENER
-       ============================================================ */
-
-    function listenForAuth() {
-        state.db.auth.onAuthStateChange(
+        db.auth.onAuthStateChange(
             async (
                 event,
                 session
             ) => {
+
                 if (
                     event ===
                     "SIGNED_OUT"
                 ) {
-                    stopPresence();
+
+                    cleanup();
 
                     window.location.href =
                         "./index.html";
 
                     return;
+
                 }
+
 
                 if (
                     session?.user
                 ) {
+
                     state.user =
                         session.user;
 
-                    await loadProfile();
-
-                    /*
-                     * If the auth session changes to another
-                     * authenticated user, restart presence for
-                     * the new account.
-                     */
-                    state.lastActivity =
-                        Date.now();
-
-                    state.currentPresenceStatus =
-                        "online";
-
-                    startPresence();
-
-                    await loadMembers();
                 }
+
             }
         );
+
     }
+
+
+    /* ============================================================
+       CLEANUP
+       ============================================================ */
+
+    function cleanup() {
+
+        if (
+            state.presenceTimer
+        ) {
+
+            clearInterval(
+                state.presenceTimer
+            );
+
+            state.presenceTimer =
+                null;
+
+        }
+
+
+        state.realtimeChannels
+            .forEach(
+                channel => {
+
+                    try {
+
+                        db.removeChannel(
+                            channel
+                        );
+
+                    } catch {}
+
+                }
+            );
+
+
+        state.realtimeChannels =
+            [];
+
+    }
+
+
+    window.addEventListener(
+        "beforeunload",
+        () => {
+
+            /*
+               Do not make an awaited network request here.
+               The next user's heartbeat is authoritative.
+            */
+
+            cleanup();
+
+        }
+    );
+
+
+    /* ============================================================
+       INITIALIZATION
+       ============================================================ */
+
+    async function initialize() {
+
+        if (
+            state.initialized
+        ) {
+
+            return;
+
+        }
+
+
+        injectResponsiveChatLayout();
+
+
+        const authenticated =
+            await requireAuth();
+
+        if (!authenticated) {
+            return;
+        }
+
+
+        setupAuthListener();
+
+        setupEvents();
+
+        await loadProfile();
+
+        await loadCourses();
+
+        await loadCommunities();
+
+
+        if (
+            !state.communities.length
+        ) {
+
+            toast(
+                "No active communities were found.",
+                "error"
+            );
+
+            state.initialized =
+                true;
+
+            return;
+
+        }
+
+
+        /*
+           Restore stored community if valid.
+        */
+
+        const storedId =
+            storageGet(
+                STORAGE.communityId
+            );
+
+
+        let initial =
+            state.communities.find(
+                community =>
+                    String(
+                        community.id
+                    ) ===
+                    String(
+                        storedId
+                    )
+            );
+
+
+        /*
+           If no stored community exists, use the first
+           community — normally Mwaniki Scholars.
+        */
+
+        if (!initial) {
+
+            initial =
+                state.communities.find(
+                    community =>
+                        /mwaniki scholars/i.test(
+                            community.name || ""
+                        )
+                ) ||
+                state.communities[0];
+
+        }
+
+
+        await selectCommunity(
+            initial
+        );
+
+
+        startPresence();
+
+
+        state.initialized =
+            true;
+
+
+        console.log(
+            "✅ Mwaniki Scholars Community ready."
+        );
+
+    }
+
+
+    /* ============================================================
+       GLOBAL API
+       ============================================================ */
+
+    window.mwanikiCommunity = {
+
+        state,
+
+        refresh: async () => {
+
+            await loadCommunities();
+
+            if (
+                state.currentCommunity
+            ) {
+
+                await selectCommunity(
+                    state.currentCommunity
+                );
+
+            }
+
+        },
+
+        sendMessage,
+
+        deleteMessage,
+
+        startReply,
+
+        cancelReply,
+
+        toggleReaction,
+
+        selectChannel,
+
+        selectCommunity,
+
+        refreshPresence:
+            refreshMemberPresence,
+
+        openDirectMessage,
+
+        callMember
+
+    };
 
 
     /* ============================================================
        START
        ============================================================ */
 
-    async function start() {
-        if (
-            state.initialized
-        ) {
-            return;
-        }
+    initialize()
+        .catch(
+            error => {
 
-        state.initialized =
-            true;
+                console.error(
+                    "💥 Community initialization failed:",
+                    error
+                );
 
-        try {
-            console.log(
-                "🚀 Mwaniki Scholars Community starting..."
-            );
+                toast(
+                    "The community could not be initialized.",
+                    "error"
+                );
 
-            await waitForSupabase();
-
-            await loadUser();
-
-            await loadProfile();
-
-            bindEvents();
-
-            listenForAuth();
-
-            /*
-             * Start presence BEFORE loading the communities.
-             *
-             * This allows the current user to establish their
-             * Online heartbeat immediately.
-             */
-            startPresence();
-
-            await loadCommunities();
-
-            /*
-             * One final refresh after the community/member list
-             * has been populated.
-             */
-            await refreshMemberPresence();
-
-            console.log(
-                "✅ Mwaniki Scholars Community loaded."
-            );
-
-        } catch (error) {
-            console.error(
-                "❌ Community startup failed:",
-                error
-            );
-
-            notify(
-                error?.message ||
-                    "Unable to load community.",
-                "error"
-            );
-        }
-    }
-
-
-    /* ============================================================
-       PUBLIC API
-       ============================================================ */
-
-    window.MwanikiCommunity = {
-        state,
-
-        selectCommunity,
-        selectChannel,
-
-        loadMembers,
-        loadMessages,
-        refreshMemberPresence,
-
-        sendMessage,
-        deleteMessage,
-
-        callMember,
-        generalCall,
-        communityCall,
-
-        openDirectMessage,
-        openAddChannelDialog,
-        openContestChooser,
-
-        writePresence,
-
-        /*
-         * Expose these for controlled debugging/testing.
-         */
-        startPresence,
-        stopPresence,
-        calculatePresence,
-        getPresenceStatus
-    };
-
-
-    /* ============================================================
-       DOM READY
-       ============================================================ */
-
-    if (
-        document.readyState ===
-        "loading"
-    ) {
-        document.addEventListener(
-            "DOMContentLoaded",
-            start,
-            {
-                once:
-                    true
             }
         );
-    } else {
-        start();
-    }
+
 
 })();
