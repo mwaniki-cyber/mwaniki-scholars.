@@ -1,4 +1,4 @@
-```javascript
+
 /* ============================================================
    MWANIKI SCHOLARS COMMUNITY
    Complete community controller
@@ -5197,4 +5197,4 @@
     }
 
 })();
-```
+
