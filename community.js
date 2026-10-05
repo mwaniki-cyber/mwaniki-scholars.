@@ -2,18 +2,37 @@
    MWANIKI SCHOLARS COMMUNITY
    CLEAN COMMUNITY ENGINE
    VERSION: 2026
+   PRESENCE ENGINE: CORRECTED
    ============================================================ */
 
 (() => {
     "use strict";
 
+
     /* ============================================================
        CONFIGURATION
        ============================================================ */
 
-    const PRESENCE_HEARTBEAT = 15000;       // 15 seconds
-    const PRESENCE_STALE_AFTER = 60000;     // 60 seconds
-    const IDLE_AFTER = 120000;              // 2 minutes
+    const PRESENCE_HEARTBEAT = 15000;      // 15 seconds
+
+    /*
+     * A heartbeat older than this is considered offline.
+     *
+     * Because the heartbeat is sent every 15 seconds,
+     * 60 seconds gives enough tolerance for a slow request.
+     */
+    const PRESENCE_STALE_AFTER = 60000;
+
+    /*
+     * User becomes Away / Idle after 2 minutes
+     * without actual interaction.
+     */
+    const IDLE_AFTER = 120000;
+
+
+    /* ============================================================
+       STATE
+       ============================================================ */
 
     const state = {
         db: null,
@@ -37,10 +56,21 @@
         presenceRefreshTimer: null,
 
         lastActivity: Date.now(),
+
         currentPresenceStatus: "online",
+
         presenceWriteInProgress: false,
 
+        /*
+         * We keep references to every listener we install
+         * so stopPresence() can remove them correctly.
+         */
+        presenceActivityHandlers: [],
+
+        presenceVisibilityHandler: null,
+
         initialized: false,
+
         loadingMessages: false,
         sendingMessage: false,
 
@@ -57,7 +87,9 @@
        DOM HELPERS
        ============================================================ */
 
-    const $ = id => document.getElementById(id);
+    const $ = id =>
+        document.getElementById(id);
+
 
     function show(element) {
         if (element) {
@@ -65,19 +97,23 @@
         }
     }
 
+
     function hide(element) {
         if (element) {
             element.classList.add("hidden");
         }
     }
 
+
     function setText(id, value) {
         const element = $(id);
 
         if (element) {
-            element.textContent = value ?? "";
+            element.textContent =
+                value ?? "";
         }
     }
+
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -87,6 +123,7 @@
             .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
+
 
     function escapeAttr(value) {
         return escapeHTML(value);
@@ -99,24 +136,42 @@
 
     let toastTimer = null;
 
-    function notify(message, type = "info") {
-        const toast = $("toast");
+
+    function notify(
+        message,
+        type = "info"
+    ) {
+        const toast =
+            $("toast");
 
         if (!toast) {
-            console.log(`[Community ${type}]`, message);
+            console.log(
+                `[Community ${type}]`,
+                message
+            );
+
             return;
         }
 
-        toast.textContent = message;
-        toast.dataset.type = type;
+        toast.textContent =
+            message;
+
+        toast.dataset.type =
+            type;
 
         show(toast);
 
-        clearTimeout(toastTimer);
+        clearTimeout(
+            toastTimer
+        );
 
-        toastTimer = setTimeout(() => {
-            hide(toast);
-        }, 3500);
+        toastTimer =
+            setTimeout(
+                () => {
+                    hide(toast);
+                },
+                3500
+            );
     }
 
 
@@ -125,11 +180,15 @@
        ============================================================ */
 
     function validImage(url) {
-        if (!url || typeof url !== "string") {
+        if (
+            !url ||
+            typeof url !== "string"
+        ) {
             return false;
         }
 
-        const value = url.trim();
+        const value =
+            url.trim();
 
         return (
             /^https?:\/\//i.test(value) ||
@@ -138,11 +197,15 @@
         );
     }
 
+
     function initials(name) {
-        const parts = String(name || "Student")
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
+        const parts =
+            String(
+                name || "Student"
+            )
+                .trim()
+                .split(/\s+/)
+                .filter(Boolean);
 
         if (!parts.length) {
             return "S";
@@ -160,8 +223,16 @@
         ).toUpperCase();
     }
 
-    function avatarMarkup(name, url, className = "") {
-        const safeName = escapeAttr(name || "Student");
+
+    function avatarMarkup(
+        name,
+        url,
+        className = ""
+    ) {
+        const safeName =
+            escapeAttr(
+                name || "Student"
+            );
 
         if (validImage(url)) {
             return `
@@ -182,14 +253,18 @@
                     class="${className} avatar-fallback"
                     style="display:none"
                 >
-                    ${escapeHTML(initials(name))}
+                    ${escapeHTML(
+                        initials(name)
+                    )}
                 </span>
             `;
         }
 
         return `
             <span class="${className} avatar-fallback">
-                ${escapeHTML(initials(name))}
+                ${escapeHTML(
+                    initials(name)
+                )}
             </span>
         `;
     }
@@ -200,7 +275,11 @@
        ============================================================ */
 
     async function waitForSupabase() {
-        for (let attempt = 0; attempt < 100; attempt++) {
+        for (
+            let attempt = 0;
+            attempt < 100;
+            attempt++
+        ) {
             const client =
                 window.supabaseClient ||
                 window.mwanikiSupabase ||
@@ -210,9 +289,11 @@
             if (
                 client &&
                 client.auth &&
-                typeof client.from === "function"
+                typeof client.from ===
+                    "function"
             ) {
-                state.db = client;
+                state.db =
+                    client;
 
                 console.log(
                     "✅ Community: Supabase client ready."
@@ -221,8 +302,12 @@
                 return client;
             }
 
-            await new Promise(resolve =>
-                setTimeout(resolve, 100)
+            await new Promise(
+                resolve =>
+                    setTimeout(
+                        resolve,
+                        100
+                    )
             );
         }
 
@@ -250,7 +335,8 @@
             );
         }
 
-        state.user = result.data.user;
+        state.user =
+            result.data.user;
 
         console.log(
             "✅ Authenticated:",
@@ -264,13 +350,18 @@
        ============================================================ */
 
     async function loadProfile() {
-        let publicProfile = null;
-        let student = null;
+        let publicProfile =
+            null;
+
+        let student =
+            null;
 
         try {
             const result =
                 await state.db
-                    .from("chat_public_profiles")
+                    .from(
+                        "chat_public_profiles"
+                    )
                     .select(
                         "id,full_name,photo_url,updated_at"
                     )
@@ -282,7 +373,8 @@
 
             if (!result.error) {
                 publicProfile =
-                    result.data || null;
+                    result.data ||
+                    null;
             }
         } catch (error) {
             console.warn(
@@ -306,7 +398,8 @@
 
             if (!result.error) {
                 student =
-                    result.data || null;
+                    result.data ||
+                    null;
             }
         } catch (error) {
             console.warn(
@@ -316,7 +409,8 @@
         }
 
         const metadata =
-            state.user.user_metadata || {};
+            state.user.user_metadata ||
+            {};
 
         const name =
             publicProfile?.full_name ||
@@ -325,7 +419,9 @@
             metadata.name ||
             metadata.display_name ||
             metadata.username ||
-            state.user.email?.split("@")[0] ||
+            state.user.email?.split(
+                "@"
+            )[0] ||
             "Student";
 
         const photo =
@@ -336,17 +432,25 @@
             null;
 
         state.profile = {
-            id: state.user.id,
+            id:
+                state.user.id,
+
             name,
+
             photo,
+
             email:
-                state.user.email || "",
+                state.user.email ||
+                "",
+
             publicProfile,
+
             student
         };
 
         updateHeaderProfile();
     }
+
 
     function updateHeaderProfile() {
         const image =
@@ -365,17 +469,35 @@
             return;
         }
 
-        if (validImage(state.profile?.photo)) {
+        if (
+            validImage(
+                state.profile?.photo
+            )
+        ) {
             image.src =
                 state.profile.photo;
 
-            image.alt = name;
+            image.alt =
+                name;
+
             image.style.display =
                 "block";
         } else {
-            image.removeAttribute("src");
-            image.alt = name;
+            image.removeAttribute(
+                "src"
+            );
+
+            image.alt =
+                name;
         }
+
+        /*
+         * Keep header presence synchronized
+         * with the current known status.
+         */
+        updateOwnPresenceUI(
+            state.currentPresenceStatus
+        );
     }
 
 
@@ -383,7 +505,9 @@
        COMMUNITY ICON
        ============================================================ */
 
-    function getCommunityIcon(community) {
+    function getCommunityIcon(
+        community
+    ) {
         const icon =
             community?.icon_url;
 
@@ -398,18 +522,31 @@
         }
 
         const name =
-            `${community?.name || ""} ${community?.slug || ""}`
-                .toLowerCase();
+            `${community?.name || ""} ${
+                community?.slug || ""
+            }`.toLowerCase();
 
-        if (name.includes("gaming")) {
+        if (
+            name.includes(
+                "gaming"
+            )
+        ) {
             return "🎮";
         }
 
-        if (name.includes("meme")) {
+        if (
+            name.includes(
+                "meme"
+            )
+        ) {
             return "😂";
         }
 
-        if (name.includes("mwaniki")) {
+        if (
+            name.includes(
+                "mwaniki"
+            )
+        ) {
             return "🎓";
         }
 
@@ -424,7 +561,9 @@
     async function loadCommunities() {
         const result =
             await state.db
-                .from("chat_communities")
+                .from(
+                    "chat_communities"
+                )
                 .select("*")
                 .eq(
                     "is_active",
@@ -433,7 +572,8 @@
                 .order(
                     "name",
                     {
-                        ascending: true
+                        ascending:
+                            true
                     }
                 );
 
@@ -452,20 +592,34 @@
         state.communities.sort(
             (a, b) => {
                 const aMain =
-                    String(a.name || "")
+                    String(
+                        a.name || ""
+                    )
                         .toLowerCase()
-                        .includes("mwaniki");
+                        .includes(
+                            "mwaniki"
+                        );
 
                 const bMain =
-                    String(b.name || "")
+                    String(
+                        b.name || ""
+                    )
                         .toLowerCase()
-                        .includes("mwaniki");
+                        .includes(
+                            "mwaniki"
+                        );
 
-                if (aMain && !bMain) {
+                if (
+                    aMain &&
+                    !bMain
+                ) {
                     return -1;
                 }
 
-                if (!aMain && bMain) {
+                if (
+                    !aMain &&
+                    bMain
+                ) {
                     return 1;
                 }
 
@@ -481,7 +635,9 @@
 
         renderCommunityRail();
 
-        if (!state.communities.length) {
+        if (
+            !state.communities.length
+        ) {
             notify(
                 "No active communities were found.",
                 "warning"
@@ -490,11 +646,16 @@
             return;
         }
 
+        /*
+         * Mwaniki Scholars is always the
+         * preferred default community.
+         */
         const main =
             state.communities.find(
                 community =>
                     String(
-                        community.name || ""
+                        community.name ||
+                            ""
                     )
                         .toLowerCase()
                         .includes(
@@ -508,6 +669,7 @@
         );
     }
 
+
     function renderCommunityRail() {
         const rail =
             $("communityRailList");
@@ -516,7 +678,8 @@
             return;
         }
 
-        rail.innerHTML = "";
+        rail.innerHTML =
+            "";
 
         state.communities.forEach(
             community => {
@@ -525,7 +688,8 @@
                         "button"
                     );
 
-                button.type = "button";
+                button.type =
+                    "button";
 
                 button.className =
                     "community-rail-item";
@@ -533,7 +697,8 @@
                 if (
                     state.currentCommunity &&
                     String(
-                        state.currentCommunity.id
+                        state.currentCommunity
+                            .id
                     ) ===
                         String(
                             community.id
@@ -570,6 +735,7 @@
             }
         );
     }
+
 
     function updateCommunityHeader() {
         const community =
@@ -610,13 +776,17 @@
        ============================================================ */
 
     async function loadChannels() {
-        if (!state.currentCommunity) {
+        if (
+            !state.currentCommunity
+        ) {
             return;
         }
 
         const result =
             await state.db
-                .from("chat_channels")
+                .from(
+                    "chat_channels"
+                )
                 .select("*")
                 .eq(
                     "community_id",
@@ -633,13 +803,15 @@
                 .order(
                     "position",
                     {
-                        ascending: true
+                        ascending:
+                            true
                     }
                 )
                 .order(
                     "created_at",
                     {
-                        ascending: true
+                        ascending:
+                            true
                     }
                 );
 
@@ -649,7 +821,8 @@
                 result.error
             );
 
-            state.channels = [];
+            state.channels =
+                [];
 
             renderChannels();
 
@@ -661,8 +834,11 @@
 
         renderChannels();
 
-        if (!state.channels.length) {
-            state.currentChannel = null;
+        if (
+            !state.channels.length
+        ) {
+            state.currentChannel =
+                null;
 
             setText(
                 "currentChannelName",
@@ -681,8 +857,13 @@
             state.channels.find(
                 channel => {
                     const name =
-                        `${channel.name || ""} ${channel.slug || ""}`
-                            .toLowerCase();
+                        `${
+                            channel.name ||
+                            ""
+                        } ${
+                            channel.slug ||
+                            ""
+                        }`.toLowerCase();
 
                     return (
                         name.includes(
@@ -701,7 +882,10 @@
         );
     }
 
-    function channelGroup(channel) {
+
+    function channelGroup(
+        channel
+    ) {
         if (
             channel.course_id ||
             channel.channel_type ===
@@ -717,17 +901,23 @@
                 channel.name || ""
             )
                 .toLowerCase()
-                .includes("announcement") ||
+                .includes(
+                    "announcement"
+                ) ||
             String(
                 channel.name || ""
             )
                 .toLowerCase()
-                .includes("rules") ||
+                .includes(
+                    "rules"
+                ) ||
             String(
                 channel.name || ""
             )
                 .toLowerCase()
-                .includes("welcome")
+                .includes(
+                    "welcome"
+                )
         ) {
             return "information";
         }
@@ -735,10 +925,15 @@
         return "discussion";
     }
 
-    function channelIcon(channel) {
+
+    function channelIcon(
+        channel
+    ) {
         if (
             channel.icon &&
-            !validImage(channel.icon)
+            !validImage(
+                channel.icon
+            )
         ) {
             return channel.icon;
         }
@@ -763,6 +958,7 @@
         }
     }
 
+
     function renderChannels() {
         const info =
             $("informationChannels");
@@ -774,15 +970,18 @@
             $("communityChannels");
 
         if (info) {
-            info.innerHTML = "";
+            info.innerHTML =
+                "";
         }
 
         if (courses) {
-            courses.innerHTML = "";
+            courses.innerHTML =
+                "";
         }
 
         if (discussion) {
-            discussion.innerHTML = "";
+            discussion.innerHTML =
+                "";
         }
 
         state.channels.forEach(
@@ -792,7 +991,8 @@
                         "button"
                     );
 
-                button.type = "button";
+                button.type =
+                    "button";
 
                 button.className =
                     "channel-button";
@@ -800,7 +1000,8 @@
                 if (
                     state.currentChannel &&
                     String(
-                        state.currentChannel.id
+                        state.currentChannel
+                            .id
                     ) ===
                         String(
                             channel.id
@@ -812,7 +1013,8 @@
                 }
 
                 button.dataset.channelName =
-                    channel.name || "";
+                    channel.name ||
+                    "";
 
                 button.innerHTML = `
                     <span class="channel-icon">
@@ -877,8 +1079,12 @@
         const community =
             state.communities.find(
                 item =>
-                    String(item.id) ===
-                    String(communityId)
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        communityId
+                    )
             );
 
         if (!community) {
@@ -897,14 +1103,19 @@
         subscribePresence();
     }
 
+
     async function selectChannel(
         channelId
     ) {
         const channel =
             state.channels.find(
                 item =>
-                    String(item.id) ===
-                    String(channelId)
+                    String(
+                        item.id
+                    ) ===
+                    String(
+                        channelId
+                    )
             );
 
         if (!channel) {
@@ -944,23 +1155,20 @@
 
 
     /* ============================================================
-       PRESENCE — IMPORTANT FIX
+       PRESENCE
        ============================================================ */
 
+    /*
+     * Return the status this browser should currently write.
+     *
+     * IMPORTANT:
+     * We do NOT use window.blur().
+     *
+     * Losing focus can simply mean the user opened another
+     * application or another browser window while remaining
+     * active. Blur is therefore NOT evidence of Away status.
+     */
     function getPresenceStatus() {
-        const now =
-            Date.now();
-
-        const inactiveFor =
-            now -
-            state.lastActivity;
-
-        /*
-         * DND is an explicit server status.
-         * We never automatically change an
-         * account to DND.
-         */
-
         if (
             state.currentPresenceStatus ===
             "dnd"
@@ -969,17 +1177,21 @@
         }
 
         /*
-         * If the page is hidden, mark Away.
+         * A hidden tab is Away.
          */
-
-        if (document.hidden) {
+        if (
+            document.hidden
+        ) {
             return "away";
         }
 
-        /*
-         * Only mark Away after REAL inactivity.
-         */
+        const inactiveFor =
+            Date.now() -
+            state.lastActivity;
 
+        /*
+         * Genuine inactivity.
+         */
         if (
             inactiveFor >=
             IDLE_AFTER
@@ -987,19 +1199,36 @@
             return "away";
         }
 
-        /*
-         * Otherwise the user is ONLINE.
-         */
-
         return "online";
     }
 
+
+    /*
+     * Write presence to both tables.
+     *
+     * chat_presence is the authoritative global presence row.
+     *
+     * chat_community_members is kept synchronized for the
+     * currently logged-in member in every community.
+     */
     async function writePresence(
         forcedStatus = null
     ) {
         if (
             !state.user ||
-            !state.db ||
+            !state.db
+        ) {
+            return;
+        }
+
+        /*
+         * Prevent overlapping writes.
+         *
+         * We deliberately do not silently turn the next heartbeat
+         * into a different state. The following heartbeat will
+         * retry normally.
+         */
+        if (
             state.presenceWriteInProgress
         ) {
             return;
@@ -1009,22 +1238,27 @@
             true;
 
         try {
-            const status =
+            let status =
                 forcedStatus ||
                 getPresenceStatus();
 
-            const now =
-                new Date().toISOString();
-
             /*
-             * THIS MATCHES THE REAL TABLE:
+             * Never automatically create DND.
              *
-             * user_id
-             * status
-             * custom_status
-             * last_seen_at
-             * updated_at
+             * DND must be explicitly requested by the user/system.
              */
+            if (
+                status !== "dnd" &&
+                status !== "away" &&
+                status !== "online"
+            ) {
+                status =
+                    "online";
+            }
+
+            const now =
+                new Date()
+                    .toISOString();
 
             const payload = {
                 user_id:
@@ -1038,6 +1272,9 @@
                         ?.custom_status ||
                     "",
 
+                /*
+                 * THIS is the heartbeat timestamp.
+                 */
                 last_seen_at:
                     now,
 
@@ -1067,35 +1304,111 @@
                 return;
             }
 
+            /*
+             * Store the successful status locally.
+             */
             state.currentPresenceStatus =
                 status;
 
             /*
-             * Keep the membership row
-             * synchronized.
+             * Update our local cache immediately.
+             * This means the current browser does not have to
+             * wait for Supabase Realtime before updating its UI.
              */
+            state.presenceRows.set(
+                String(
+                    state.user.id
+                ),
+                {
+                    user_id:
+                        state.user.id,
 
-            await state.db
-                .from(
-                    "chat_community_members"
-                )
-                .update({
                     status,
+
+                    custom_status:
+                        payload.custom_status,
 
                     last_seen_at:
                         now,
 
-                    last_active_at:
+                    updated_at:
                         now
-                })
-                .eq(
-                    "user_id",
-                    state.user.id
+                }
+            );
+
+            /*
+             * Keep community membership rows synchronized.
+             *
+             * Do NOT convert Away to Offline.
+             *
+             * The previous implementation did that and caused
+             * the two tables to disagree.
+             */
+            const memberUpdate =
+                await state.db
+                    .from(
+                        "chat_community_members"
+                    )
+                    .update({
+                        status,
+
+                        last_seen_at:
+                            now,
+
+                        last_active_at:
+                            now
+                    })
+                    .eq(
+                        "user_id",
+                        state.user.id
+                    );
+
+            if (
+                memberUpdate.error
+            ) {
+                console.warn(
+                    "Community member presence update failed:",
+                    memberUpdate.error
                 );
+            }
 
             updateOwnPresenceUI(
                 status
             );
+
+            /*
+             * Update our member row immediately.
+             */
+            state.members.forEach(
+                member => {
+                    if (
+                        String(
+                            member.userId
+                        ) ===
+                        String(
+                            state.user.id
+                        )
+                    ) {
+                        member.status =
+                            status;
+
+                        member.lastSeen =
+                            now;
+                    }
+                }
+            );
+
+            /*
+             * Only rerender when the member list already exists.
+             */
+            if (
+                state.members.length
+            ) {
+                renderMembers(
+                    $("memberSearchInput")
+                        ?.value || ""
+                );
+            }
 
         } catch (error) {
             console.error(
@@ -1108,6 +1421,10 @@
         }
     }
 
+
+    /*
+     * Header presence indicator.
+     */
     function updateOwnPresenceUI(
         status
     ) {
@@ -1126,28 +1443,51 @@
         );
 
         dot.classList.add(
-            status
+            status ||
+                "offline"
         );
 
         dot.title =
             presenceLabel(
                 status
             );
+
+        dot.setAttribute(
+            "aria-label",
+            presenceLabel(
+                status
+            )
+        );
     }
 
+
+    /*
+     * Activity event.
+     *
+     * This does NOT write to Supabase on every mouse movement.
+     *
+     * It only updates lastActivity locally.
+     *
+     * The heartbeat writes the actual state every 15 seconds.
+     */
     function markActivity() {
+        const wasAway =
+            state.currentPresenceStatus ===
+            "away";
+
         state.lastActivity =
             Date.now();
 
         /*
-         * If the user becomes active again,
+         * If the user interacts after becoming Away,
          * immediately restore Online.
+         *
+         * The visibility check prevents a hidden tab from
+         * becoming Online merely because of an unusual event.
          */
-
         if (
             !document.hidden &&
-            state.currentPresenceStatus !==
-                "online"
+            wasAway
         ) {
             writePresence(
                 "online"
@@ -1155,6 +1495,10 @@
         }
     }
 
+
+    /*
+     * Start the complete presence engine.
+     */
     function startPresence() {
         stopPresence();
 
@@ -1164,27 +1508,37 @@
         state.currentPresenceStatus =
             "online";
 
+        /*
+         * Immediately establish Online status.
+         */
         writePresence(
             "online"
         );
 
         /*
-         * Heartbeat every 15 seconds.
+         * Heartbeat.
+         *
+         * Every 15 seconds:
+         * - calculate Online/Away
+         * - write current user's status
+         * - refresh other members
          */
-
         state.presenceTimer =
             setInterval(
                 () => {
-                    writePresence();
+                    const desired =
+                        getPresenceStatus();
+
+                    writePresence(
+                        desired
+                    );
                 },
                 PRESENCE_HEARTBEAT
             );
 
         /*
-         * Refresh other users' presence
-         * every 15 seconds too.
+         * Refresh other members every 15 seconds.
          */
-
         state.presenceRefreshTimer =
             setInterval(
                 () => {
@@ -1193,8 +1547,14 @@
                 PRESENCE_HEARTBEAT
             );
 
-        document.addEventListener(
-            "visibilitychange",
+        /*
+         * Visibility.
+         *
+         * Hidden tab = Away.
+         *
+         * Returning to the tab = Online immediately.
+         */
+        state.presenceVisibilityHandler =
             () => {
                 if (
                     document.hidden
@@ -1209,53 +1569,103 @@
                     writePresence(
                         "online"
                     );
+
+                    refreshMemberPresence();
                 }
-            }
+            };
+
+        document.addEventListener(
+            "visibilitychange",
+            state.presenceVisibilityHandler
         );
 
         /*
-         * DO NOT use blur to mark Away.
+         * IMPORTANT:
          *
-         * This was one of the problems
-         * in the previous implementation.
+         * There is intentionally NO:
+         *
+         * window.addEventListener("blur", ...)
+         *
+         * because browser blur is not a reliable presence
+         * signal.
          */
-
-        window.addEventListener(
-            "focus",
-            () => {
-                state.lastActivity =
-                    Date.now();
-
-                writePresence(
-                    "online"
-                );
-            }
-        );
 
         /*
-         * Real activity detection.
+         * Real user activity.
          */
-
-        [
+        const activityEvents = [
             "mousemove",
             "mousedown",
             "keydown",
             "scroll",
             "touchstart",
-            "click"
-        ].forEach(
-            eventName => {
-                document.addEventListener(
-                    eventName,
-                    markActivity,
-                    {
-                        passive: true
-                    }
-                );
+            "click",
+            "pointerdown"
+        ];
+
+        state.presenceActivityHandlers =
+            activityEvents.map(
+                eventName => {
+                    const handler =
+                        markActivity;
+
+                    document.addEventListener(
+                        eventName,
+                        handler,
+                        {
+                            passive:
+                                true
+                        }
+                    );
+
+                    return {
+                        eventName,
+                        handler
+                    };
+                }
+            );
+
+        /*
+         * Focus can restore Online, but focus alone is NOT
+         * used to mark Away.
+         */
+        const focusHandler =
+            () => {
+                state.lastActivity =
+                    Date.now();
+
+                if (
+                    !document.hidden
+                ) {
+                    writePresence(
+                        "online"
+                    );
+                }
+            };
+
+        window.addEventListener(
+            "focus",
+            focusHandler
+        );
+
+        state.presenceActivityHandlers.push(
+            {
+                eventName:
+                    "__window_focus__",
+
+                handler:
+                    focusHandler
             }
         );
     }
 
+
+    /*
+     * Stop presence cleanly.
+     *
+     * This is important because your previous implementation
+     * added anonymous event listeners and never removed them.
+     */
     function stopPresence() {
         if (
             state.presenceTimer
@@ -1278,13 +1688,53 @@
             state.presenceRefreshTimer =
                 null;
         }
+
+        if (
+            state.presenceVisibilityHandler
+        ) {
+            document.removeEventListener(
+                "visibilitychange",
+                state.presenceVisibilityHandler
+            );
+
+            state.presenceVisibilityHandler =
+                null;
+        }
+
+        /*
+         * Remove all activity listeners.
+         */
+        state.presenceActivityHandlers
+            .forEach(
+                item => {
+                    if (
+                        item.eventName ===
+                        "__window_focus__"
+                    ) {
+                        window.removeEventListener(
+                            "focus",
+                            item.handler
+                        );
+                    } else {
+                        document.removeEventListener(
+                            item.eventName,
+                            item.handler
+                        );
+                    }
+                }
+            );
+
+        state.presenceActivityHandlers =
+            [];
     }
 
-    /*
-     * A user is only considered online
-     * if their heartbeat is recent.
-     */
 
+    /*
+     * Calculate another user's visible status from the
+     * database row.
+     *
+     * last_seen_at is authoritative for freshness.
+     */
     function calculatePresence(
         row
     ) {
@@ -1292,12 +1742,19 @@
             return "offline";
         }
 
+        const rawTimestamp =
+            row.last_seen_at ||
+            row.updated_at ||
+            null;
+
+        if (!rawTimestamp) {
+            return "offline";
+        }
+
         const timestamp =
-            new Date(
-                row.last_seen_at ||
-                row.updated_at ||
-                0
-            ).getTime();
+            Date.parse(
+                rawTimestamp
+            );
 
         if (
             !Number.isFinite(
@@ -1307,15 +1764,19 @@
             return "offline";
         }
 
+        /*
+         * Protect against tiny client/server clock differences.
+         */
         const age =
-            Date.now() -
-            timestamp;
+            Math.max(
+                0,
+                Date.now() -
+                    timestamp
+            );
 
         /*
-         * No heartbeat for one minute:
-         * definitely offline.
+         * Older than one minute = offline.
          */
-
         if (
             age >
             PRESENCE_STALE_AFTER
@@ -1324,9 +1785,8 @@
         }
 
         /*
-         * Explicit DND remains DND.
+         * DND is explicit.
          */
-
         if (
             row.status === "dnd"
         ) {
@@ -1334,16 +1794,8 @@
         }
 
         /*
-         * IMPORTANT:
-         *
-         * We no longer blindly return
-         * "away" simply because the row
-         * says away.
-         *
-         * A fresh heartbeat + visible
-         * activity is treated as Online.
+         * Fresh Online heartbeat = Online.
          */
-
         if (
             row.status === "online"
         ) {
@@ -1351,11 +1803,8 @@
         }
 
         /*
-         * Away is valid when the heartbeat
-         * is recent but the user explicitly
-         * reported Away.
+         * Fresh Away heartbeat = Away.
          */
-
         if (
             row.status === "away"
         ) {
@@ -1365,6 +1814,7 @@
         return "offline";
     }
 
+
     function presenceLabel(
         status
     ) {
@@ -1373,7 +1823,7 @@
                 return "Online";
 
             case "away":
-                return "Away";
+                return "Away / Idle";
 
             case "dnd":
                 return "Do Not Disturb";
@@ -1383,6 +1833,10 @@
         }
     }
 
+
+    /*
+     * Presence realtime.
+     */
     function subscribePresence() {
         if (
             state.presenceChannel
@@ -1390,6 +1844,9 @@
             state.db.removeChannel(
                 state.presenceChannel
             );
+
+            state.presenceChannel =
+                null;
         }
 
         state.presenceChannel =
@@ -1400,8 +1857,12 @@
                 .on(
                     "postgres_changes",
                     {
-                        event: "*",
-                        schema: "public",
+                        event:
+                            "*",
+
+                        schema:
+                            "public",
+
                         table:
                             "chat_presence"
                     },
@@ -1412,13 +1873,19 @@
                         ) {
                             state.presenceRows.set(
                                 String(
-                                    payload.new
+                                    payload
+                                        .new
                                         .user_id
                                 ),
                                 payload.new
                             );
                         }
 
+                        /*
+                         * Realtime immediately updates the member
+                         * sidebar without waiting for the next
+                         * heartbeat.
+                         */
                         refreshMemberPresence();
                     }
                 )
@@ -1442,7 +1909,9 @@
        ============================================================ */
 
     async function loadMembers() {
-        if (!state.currentCommunity) {
+        if (
+            !state.currentCommunity
+        ) {
             return;
         }
 
@@ -1467,7 +1936,8 @@
                 result.error
             );
 
-            state.members = [];
+            state.members =
+                [];
 
             renderMembers();
 
@@ -1494,6 +1964,7 @@
                         null,
 
                     status:
+                        state.currentPresenceStatus ||
                         "online",
 
                     customStatus:
@@ -1506,26 +1977,32 @@
 
             renderMembers();
 
+            updateOwnPresenceUI(
+                state.members[0]
+                    .status
+            );
+
             return;
         }
 
-        const userIds =
-            [
-                ...new Set(
-                    rows
-                        .map(
-                            row =>
-                                row.user_id
-                        )
-                        .filter(Boolean)
-                )
-            ];
+        const userIds = [
+            ...new Set(
+                rows
+                    .map(
+                        row =>
+                            row.user_id
+                    )
+                    .filter(Boolean)
+            )
+        ];
 
         let profiles = [];
         let students = [];
         let presence = [];
 
-        if (userIds.length) {
+        if (
+            userIds.length
+        ) {
             const result =
                 await state.db
                     .from(
@@ -1541,11 +2018,14 @@
 
             if (!result.error) {
                 profiles =
-                    result.data || [];
+                    result.data ||
+                    [];
             }
         }
 
-        if (userIds.length) {
+        if (
+            userIds.length
+        ) {
             const result =
                 await state.db
                     .from("students")
@@ -1559,11 +2039,14 @@
 
             if (!result.error) {
                 students =
-                    result.data || [];
+                    result.data ||
+                    [];
             }
         }
 
-        if (userIds.length) {
+        if (
+            userIds.length
+        ) {
             const result =
                 await state.db
                     .from(
@@ -1579,7 +2062,8 @@
 
             if (!result.error) {
                 presence =
-                    result.data || [];
+                    result.data ||
+                    [];
             }
         }
 
@@ -1633,10 +2117,41 @@
                                 )
                         );
 
-                    const status =
+                    /*
+                     * If this is the current user and the local
+                     * heartbeat has already succeeded, prefer that
+                     * known status.
+                     */
+                    let status =
                         calculatePresence(
                             live
                         );
+
+                    if (
+                        String(
+                            userId
+                        ) ===
+                        String(
+                            state.user?.id
+                        ) &&
+                        state.currentPresenceStatus
+                    ) {
+                        status =
+                            state.currentPresenceStatus;
+                    }
+
+                    if (
+                        String(
+                            userId
+                        ) ===
+                        String(
+                            state.user?.id
+                        )
+                    ) {
+                        updateOwnPresenceUI(
+                            status
+                        );
+                    }
 
                     return {
                         membership:
@@ -1689,22 +2204,24 @@
         );
     }
 
+
     async function refreshMemberPresence() {
-        if (!state.members.length) {
+        if (
+            !state.members.length
+        ) {
             return;
         }
 
-        const ids =
-            [
-                ...new Set(
-                    state.members
-                        .map(
-                            member =>
-                                member.userId
-                        )
-                        .filter(Boolean)
-                )
-            ];
+        const ids = [
+            ...new Set(
+                state.members
+                    .map(
+                        member =>
+                            member.userId
+                    )
+                    .filter(Boolean)
+            )
+        ];
 
         if (!ids.length) {
             return;
@@ -1732,6 +2249,9 @@
             return;
         }
 
+        /*
+         * Replace cache entries with the latest database state.
+         */
         (result.data || []).forEach(
             row => {
                 state.presenceRows.set(
@@ -1752,14 +2272,43 @@
                         )
                     );
 
-                member.status =
+                let status =
                     calculatePresence(
                         row
                     );
 
+                /*
+                 * Current user's status has just been written by
+                 * this browser. Keep its locally confirmed state.
+                 */
+                if (
+                    String(
+                        member.userId
+                    ) ===
+                    String(
+                        state.user?.id
+                    )
+                ) {
+                    status =
+                        state.currentPresenceStatus ||
+                        status;
+
+                    updateOwnPresenceUI(
+                        status
+                    );
+                }
+
+                member.status =
+                    status;
+
                 member.customStatus =
                     row?.custom_status ||
                     "";
+
+                member.lastSeen =
+                    row?.last_seen_at ||
+                    member.lastSeen ||
+                    null;
             }
         );
 
@@ -1768,6 +2317,7 @@
                 ?.value || ""
         );
     }
+
 
     function renderMembers(
         searchValue = ""
@@ -1780,7 +2330,9 @@
         }
 
         const query =
-            String(searchValue || "")
+            String(
+                searchValue || ""
+            )
                 .trim()
                 .toLowerCase();
 
@@ -1801,12 +2353,22 @@
                         )
                             .toLowerCase();
 
+                    const custom =
+                        String(
+                            member.customStatus ||
+                                ""
+                        )
+                            .toLowerCase();
+
                     return (
                         !query ||
                         name.includes(
                             query
                         ) ||
                         status.includes(
+                            query
+                        ) ||
+                        custom.includes(
                             query
                         )
                     );
@@ -1818,9 +2380,12 @@
             state.members.length
         );
 
-        container.innerHTML = "";
+        container.innerHTML =
+            "";
 
-        if (!visible.length) {
+        if (
+            !visible.length
+        ) {
             container.innerHTML = `
                 <div class="member-empty">
                     <strong>No members found</strong>
@@ -1838,8 +2403,12 @@
                         "div"
                     );
 
+                const status =
+                    member.status ||
+                    "offline";
+
                 row.className =
-                    "member-row";
+                    `member-row status-${status}`;
 
                 const self =
                     String(
@@ -1849,9 +2418,11 @@
                         state.user?.id
                     );
 
-                const status =
-                    member.status ||
-                    "offline";
+                const customStatus =
+                    String(
+                        member.customStatus ||
+                            ""
+                    ).trim();
 
                 row.innerHTML = `
                     <div class="member-avatar-wrap">
@@ -1871,13 +2442,18 @@
                                     status
                                 )
                             )}"
+                            aria-label="${escapeAttr(
+                                presenceLabel(
+                                    status
+                                )
+                            )}"
                         ></span>
 
                     </div>
 
                     <div class="member-info">
 
-                        <strong>
+                        <strong class="member-name">
                             ${escapeHTML(
                                 member.name
                             )}
@@ -1895,6 +2471,18 @@
                                 )
                             )}
                         </span>
+
+                        ${
+                            customStatus
+                                ? `
+                                    <span class="member-custom-status">
+                                        ${escapeHTML(
+                                            customStatus
+                                        )}
+                                    </span>
+                                `
+                                : ""
+                        }
 
                     </div>
 
@@ -1914,6 +2502,9 @@
                                         title="Message ${escapeAttr(
                                             member.name
                                         )}"
+                                        aria-label="Message ${escapeAttr(
+                                            member.name
+                                        )}"
                                     >
                                         💬
                                     </button>
@@ -1922,6 +2513,9 @@
                                         type="button"
                                         class="member-action-button call-member-button"
                                         title="Call ${escapeAttr(
+                                            member.name
+                                        )}"
+                                        aria-label="Call ${escapeAttr(
                                             member.name
                                         )}"
                                     >
@@ -1971,22 +2565,30 @@
        MESSAGES
        ============================================================ */
 
-    function senderId(message) {
+    function senderId(
+        message
+    ) {
         return (
             message.user_id ||
             null
         );
     }
 
-    function messageContent(message) {
+
+    function messageContent(
+        message
+    ) {
         return (
             message.content ||
             ""
         );
     }
 
+
     async function loadMessages() {
-        if (!state.currentChannel) {
+        if (
+            !state.currentChannel
+        ) {
             return;
         }
 
@@ -1994,7 +2596,8 @@
             $("messageList");
 
         if (list) {
-            list.innerHTML = "";
+            list.innerHTML =
+                "";
         }
 
         show(
@@ -2031,7 +2634,8 @@
                     result.error
                 );
 
-                state.messages = [];
+                state.messages =
+                    [];
 
                 renderMessages();
 
@@ -2052,24 +2656,26 @@
         }
     }
 
+
     async function enrichMessages() {
-        if (!state.messages.length) {
+        if (
+            !state.messages.length
+        ) {
             return;
         }
 
-        const ids =
-            [
-                ...new Set(
-                    state.messages
-                        .map(
-                            message =>
-                                senderId(
-                                    message
-                                )
-                        )
-                        .filter(Boolean)
-                )
-            ];
+        const ids = [
+            ...new Set(
+                state.messages
+                    .map(
+                        message =>
+                            senderId(
+                                message
+                            )
+                    )
+                    .filter(Boolean)
+            )
+        ];
 
         if (!ids.length) {
             return;
@@ -2091,7 +2697,9 @@
                     ids
                 );
 
-        if (!profileResult.error) {
+        if (
+            !profileResult.error
+        ) {
             profiles =
                 profileResult.data ||
                 [];
@@ -2108,7 +2716,9 @@
                     ids
                 );
 
-        if (!studentResult.error) {
+        if (
+            !studentResult.error
+        ) {
             students =
                 studentResult.data ||
                 [];
@@ -2171,7 +2781,10 @@
         );
     }
 
-    function formatTime(value) {
+
+    function formatTime(
+        value
+    ) {
         if (!value) {
             return "";
         }
@@ -2190,11 +2803,15 @@
         return date.toLocaleTimeString(
             [],
             {
-                hour: "2-digit",
-                minute: "2-digit"
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit"
             }
         );
     }
+
 
     function renderMessages() {
         const list =
@@ -2204,9 +2821,12 @@
             return;
         }
 
-        list.innerHTML = "";
+        list.innerHTML =
+            "";
 
-        if (!state.messages.length) {
+        if (
+            !state.messages.length
+        ) {
             list.innerHTML = `
                 <div class="messages-empty">
 
@@ -2246,6 +2866,7 @@
         );
     }
 
+
     function createMessageElement(
         message
     ) {
@@ -2261,7 +2882,9 @@
             message.id;
 
         const id =
-            senderId(message);
+            senderId(
+                message
+            );
 
         const own =
             String(id) ===
@@ -2372,7 +2995,9 @@
             return;
         }
 
-        if (!state.currentChannel) {
+        if (
+            !state.currentChannel
+        ) {
             notify(
                 "Select a channel first.",
                 "warning"
@@ -2434,7 +3059,9 @@
                 return;
             }
 
-            input.value = "";
+            input.value =
+                "";
+
             input.style.height =
                 "auto";
 
@@ -2530,14 +3157,21 @@
        ============================================================ */
 
     function subscribeMessages() {
-        if (!state.currentChannel) {
+        if (
+            !state.currentChannel
+        ) {
             return;
         }
 
-        if (state.messageChannel) {
+        if (
+            state.messageChannel
+        ) {
             state.db.removeChannel(
                 state.messageChannel
             );
+
+            state.messageChannel =
+                null;
         }
 
         state.messageChannel =
@@ -2550,10 +3184,13 @@
                     {
                         event:
                             "INSERT",
+
                         schema:
                             "public",
+
                         table:
                             "chat_messages",
+
                         filter:
                             `channel_id=eq.${state.currentChannel.id}`
                     },
@@ -2595,10 +3232,13 @@
                     {
                         event:
                             "UPDATE",
+
                         schema:
                             "public",
+
                         table:
                             "chat_messages",
+
                         filter:
                             `channel_id=eq.${state.currentChannel.id}`
                     },
@@ -2668,7 +3308,7 @@
     ) {
         if (
             typeof window.openDirectMessage ===
-            "function" &&
+                "function" &&
             window.openDirectMessage !==
                 openDirectMessage
         ) {
@@ -2697,6 +3337,13 @@
        CALL ENGINE
        ============================================================ */
 
+    /*
+     * IMPORTANT:
+     *
+     * This file does NOT create a second call engine.
+     *
+     * community-calls.js remains the real call engine.
+     */
     function getCallEngine() {
         return (
             window.MwanikiCalls ||
@@ -2706,10 +3353,13 @@
         );
     }
 
+
     async function callMember(
         member
     ) {
-        if (!member?.userId) {
+        if (
+            !member?.userId
+        ) {
             notify(
                 "This member cannot be called.",
                 "warning"
@@ -2746,7 +3396,8 @@
                 await calls.callUser(
                     member.userId,
                     state.currentCommunity
-                        ?.id || null
+                        ?.id ||
+                        null
                 );
 
                 return;
@@ -2759,9 +3410,8 @@
         }
 
         /*
-         * Database fallback.
+         * Database fallback retained from your existing engine.
          */
-
         try {
             const roomCode =
                 `direct-${crypto.randomUUID()}`;
@@ -2860,6 +3510,7 @@
         }
     }
 
+
     async function generalCall() {
         const calls =
             getCallEngine();
@@ -2888,6 +3539,7 @@
             "warning"
         );
     }
+
 
     async function communityCall() {
         const communityId =
@@ -2949,8 +3601,12 @@
        ADD CHANNEL
        ============================================================ */
 
-    function slugify(value) {
-        return String(value || "")
+    function slugify(
+        value
+    ) {
+        return String(
+            value || ""
+        )
             .toLowerCase()
             .trim()
             .replace(
@@ -2967,7 +3623,10 @@
             );
     }
 
-    let dynamicDialog = null;
+
+    let dynamicDialog =
+        null;
+
 
     function createDialog(
         title
@@ -3030,12 +3689,18 @@
         );
     }
 
+
     function closeDynamicDialog() {
-        if (dynamicDialog) {
+        if (
+            dynamicDialog
+        ) {
             dynamicDialog.remove();
-            dynamicDialog = null;
+
+            dynamicDialog =
+                null;
         }
     }
+
 
     async function openAddChannelDialog() {
         const dialog =
@@ -3155,14 +3820,20 @@
                 createChannel
             );
 
-        setTimeout(() => {
-            $("newChannelName")
-                ?.focus();
-        }, 100);
+        setTimeout(
+            () => {
+                $("newChannelName")
+                    ?.focus();
+            },
+            100
+        );
     }
 
+
     function showDynamicDialog() {
-        if (!dynamicDialog) {
+        if (
+            !dynamicDialog
+        ) {
             return;
         }
 
@@ -3175,8 +3846,11 @@
         );
     }
 
+
     async function createChannel() {
-        if (!state.currentCommunity) {
+        if (
+            !state.currentCommunity
+        ) {
             notify(
                 "Select a community first.",
                 "warning"
@@ -3222,7 +3896,8 @@
             return;
         }
 
-        let position = 0;
+        let position =
+            0;
 
         try {
             const positionResult =
@@ -3254,7 +3929,8 @@
             ) {
                 position =
                     Number(
-                        positionResult.data
+                        positionResult
+                            .data
                             .position
                     ) + 1;
             }
@@ -3276,8 +3952,12 @@
                     name,
 
                     slug:
-                        `${slugify(name)}-${Date.now()
-                            .toString(36)}`,
+                        `${slugify(
+                            name
+                        )}-${Date.now()
+                            .toString(
+                                36
+                            )}`,
 
                     description,
 
@@ -3405,8 +4085,14 @@
 
                     <div>
                         <span>Status</span>
-                        <strong class="profile-online-status">
-                            ● Online
+                        <strong
+                            class="profile-online-status"
+                        >
+                            ● ${escapeHTML(
+                                presenceLabel(
+                                    state.currentPresenceStatus
+                                )
+                            )}
                         </strong>
                     </div>
 
@@ -3479,7 +4165,8 @@
                 result.error
             );
 
-            state.courses = [];
+            state.courses =
+                [];
 
             return;
         }
@@ -3487,6 +4174,7 @@
         state.courses =
             result.data || [];
     }
+
 
     async function openContestChooser() {
         await loadCourses();
@@ -3500,6 +4188,7 @@
             <div class="dynamic-form">
 
                 <div class="contest-heading">
+
                     <span class="contest-heading-icon">
                         🏆
                     </span>
@@ -3514,6 +4203,7 @@
                             to open its quiz material.
                         </p>
                     </div>
+
                 </div>
 
                 <label>
@@ -3589,6 +4279,7 @@
             );
     }
 
+
     async function loadCourseContestMaterial(
         courseId
     ) {
@@ -3615,11 +4306,8 @@
             </div>
         `;
 
-        let questions = [];
-
-        /*
-         * Preferred quiz table.
-         */
+        let questions =
+            [];
 
         const questionResult =
             await state.db
@@ -3642,10 +4330,6 @@
             questions =
                 questionResult.data;
         } else {
-            /*
-             * Fallback to quizzes.
-             */
-
             const fallback =
                 await state.db
                     .from("quizzes")
@@ -3658,9 +4342,12 @@
                     )
                     .limit(100);
 
-            if (!fallback.error) {
+            if (
+                !fallback.error
+            ) {
                 questions =
-                    fallback.data || [];
+                    fallback.data ||
+                    [];
             }
         }
 
@@ -3675,9 +4362,12 @@
                     )
             );
 
-        if (!questions.length) {
+        if (
+            !questions.length
+        ) {
             container.innerHTML = `
                 <div class="picker-empty">
+
                     <strong>
                         No questions found.
                     </strong>
@@ -3686,6 +4376,7 @@
                         This course currently
                         has no quiz questions.
                     </span>
+
                 </div>
             `;
 
@@ -3703,10 +4394,15 @@
                 </div>
 
                 <div class="contest-stat">
-                    <span>Questions</span>
+
+                    <span>
+                        Questions
+                    </span>
+
                     <strong>
                         ${questions.length}
                     </strong>
+
                 </div>
 
                 <div class="contest-question-preview">
@@ -3719,6 +4415,7 @@
                                 index
                             ) => `
                                 <div>
+
                                     <b>
                                         ${index +
                                         1}.
@@ -3729,6 +4426,7 @@
                                             question.question
                                         )}
                                     </span>
+
                                 </div>
                             `
                         )
@@ -3771,7 +4469,9 @@
         value
     ) {
         const query =
-            String(value || "")
+            String(
+                value || ""
+            )
                 .trim()
                 .toLowerCase();
 
@@ -3798,17 +4498,23 @@
             );
     }
 
+
     function searchMembers(
         value
     ) {
-        renderMembers(value);
+        renderMembers(
+            value
+        );
     }
+
 
     function searchMessages(
         value
     ) {
         const query =
-            String(value || "")
+            String(
+                value || ""
+            )
                 .trim()
                 .toLowerCase();
 
@@ -3840,7 +4546,7 @@
        ============================================================ */
 
     function setupHomeButton() {
-        let button =
+        const button =
             $("communityHomeButton");
 
         if (button) {
@@ -3852,10 +4558,6 @@
                 }
             );
         }
-
-        /*
-         * Create a visible Home button too.
-         */
 
         const actions =
             document.querySelector(
@@ -3873,7 +4575,8 @@
                     "button"
                 );
 
-            home.type = "button";
+            home.type =
+                "button";
 
             home.id =
                 "communityHomeNavButton";
@@ -3910,7 +4613,6 @@
        ============================================================ */
 
     function bindEvents() {
-
         setupHomeButton();
 
         $("generalCallButton")
@@ -4065,7 +4767,9 @@
                             "";
                     }
 
-                    searchMessages("");
+                    searchMessages(
+                        ""
+                    );
                 }
             );
 
@@ -4079,11 +4783,11 @@
             );
 
         /*
-         * Attachments are deliberately not
-         * writing unknown columns into
-         * chat_messages.
+         * Attachments.
+         *
+         * We retain your existing safe behavior instead of
+         * inventing database columns that are not in the schema.
          */
-
         $("attachButton")
             ?.addEventListener(
                 "click",
@@ -4097,7 +4801,6 @@
         /*
          * Emoji.
          */
-
         $("emojiButton")
             ?.addEventListener(
                 "click",
@@ -4117,7 +4820,6 @@
         /*
          * Stickers.
          */
-
         $("stickerButton")
             ?.addEventListener(
                 "click",
@@ -4148,7 +4850,6 @@
         /*
          * GIF.
          */
-
         $("gifButton")
             ?.addEventListener(
                 "click",
@@ -4179,7 +4880,6 @@
         /*
          * Voice.
          */
-
         $("voiceNoteButton")
             ?.addEventListener(
                 "click",
@@ -4189,7 +4889,6 @@
         /*
          * Close pickers when clicking outside.
          */
-
         document.addEventListener(
             "click",
             event => {
@@ -4241,6 +4940,7 @@
         "✏️","💡","✅"
     ];
 
+
     function openEmojiPanel() {
         hide(
             $("stickerPanel")
@@ -4288,6 +4988,7 @@
         );
     }
 
+
     function insertEmoji(
         emoji
     ) {
@@ -4330,12 +5031,15 @@
        ============================================================ */
 
     async function toggleVoiceNote() {
-        if (state.recording) {
+        if (
+            state.recording
+        ) {
             stopRecording();
         } else {
             await startRecording();
         }
     }
+
 
     async function startRecording() {
         if (
@@ -4351,7 +5055,9 @@
             return;
         }
 
-        if (!state.currentChannel) {
+        if (
+            !state.currentChannel
+        ) {
             notify(
                 "Select a channel first.",
                 "warning"
@@ -4364,7 +5070,8 @@
             state.recordingStream =
                 await navigator.mediaDevices
                     .getUserMedia({
-                        audio: true
+                        audio:
+                            true
                     });
 
             state.recordingChunks =
@@ -4395,7 +5102,8 @@
                             state.recordingChunks,
                             {
                                 type:
-                                    state.mediaRecorder
+                                    state
+                                        .mediaRecorder
                                         ?.mimeType ||
                                     "audio/webm"
                             }
@@ -4411,12 +5119,9 @@
                     state.recordingStream =
                         null;
 
-                    if (blob.size) {
-                        /*
-                         * Storage bucket is deliberately
-                         * not guessed here.
-                         */
-
+                    if (
+                        blob.size
+                    ) {
                         notify(
                             "Voice recording complete. Configure the chat storage bucket to send it.",
                             "info"
@@ -4426,7 +5131,8 @@
 
             state.mediaRecorder.start();
 
-            state.recording = true;
+            state.recording =
+                true;
 
             const button =
                 $("voiceNoteButton");
@@ -4457,6 +5163,7 @@
             );
         }
     }
+
 
     function stopRecording() {
         if (
@@ -4497,6 +5204,8 @@
                     event ===
                     "SIGNED_OUT"
                 ) {
+                    stopPresence();
+
                     window.location.href =
                         "./index.html";
 
@@ -4510,6 +5219,21 @@
                         session.user;
 
                     await loadProfile();
+
+                    /*
+                     * If the auth session changes to another
+                     * authenticated user, restart presence for
+                     * the new account.
+                     */
+                    state.lastActivity =
+                        Date.now();
+
+                    state.currentPresenceStatus =
+                        "online";
+
+                    startPresence();
+
+                    await loadMembers();
                 }
             }
         );
@@ -4521,7 +5245,9 @@
        ============================================================ */
 
     async function start() {
-        if (state.initialized) {
+        if (
+            state.initialized
+        ) {
             return;
         }
 
@@ -4543,9 +5269,21 @@
 
             listenForAuth();
 
+            /*
+             * Start presence BEFORE loading the communities.
+             *
+             * This allows the current user to establish their
+             * Online heartbeat immediately.
+             */
             startPresence();
 
             await loadCommunities();
+
+            /*
+             * One final refresh after the community/member list
+             * has been populated.
+             */
+            await refreshMemberPresence();
 
             console.log(
                 "✅ Mwaniki Scholars Community loaded."
@@ -4591,7 +5329,15 @@
         openAddChannelDialog,
         openContestChooser,
 
-        writePresence
+        writePresence,
+
+        /*
+         * Expose these for controlled debugging/testing.
+         */
+        startPresence,
+        stopPresence,
+        calculatePresence,
+        getPresenceStatus
     };
 
 
@@ -4607,7 +5353,8 @@
             "DOMContentLoaded",
             start,
             {
-                once: true
+                once:
+                    true
             }
         );
     } else {
