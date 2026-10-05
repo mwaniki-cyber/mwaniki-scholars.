@@ -1,7 +1,7 @@
 /* ============================================================
    MWANIKI SCHOLARS
-   SUPABASE GLOBAL CLIENT
-   Classic-script version
+   SUPABASE CLIENT
+   Classic browser build
    ============================================================ */
 
 (function () {
@@ -13,101 +13,125 @@
     const SUPABASE_PUBLISHABLE_KEY =
         "sb_publishable_LfHAT9AAQ03BAyo1bQhVTg_Agk7MmjB";
 
-    /*
-     * The Supabase CDN library normally creates:
-     *
-     * window.supabase
-     *
-     * We capture the library BEFORE replacing window.supabase
-     * with our actual client.
-     */
-
-    const supabaseLibrary = window.supabase;
-
-    if (
-        !supabaseLibrary ||
-        typeof supabaseLibrary.createClient !== "function"
-    ) {
-        console.error(
-            "❌ Supabase CDN library is not available."
-        );
-
-        console.error(
-            "Make sure the Supabase CDN script appears BEFORE supabase.js."
-        );
+    function createMwanikiClient() {
 
         /*
-         * Do NOT throw here.
-         *
-         * This is important because other Mwaniki Scholars
-         * scripts should still be able to wait for the client.
+         * The CDN library is stored temporarily in
+         * window.supabase before we replace it with
+         * the actual Supabase client.
          */
 
-        window.mwanikiSupabaseError = true;
+        const library = window.supabase;
 
+        if (
+            !library ||
+            typeof library.createClient !== "function"
+        ) {
+            console.error(
+                "❌ Supabase browser library is unavailable."
+            );
+
+            return false;
+        }
+
+        try {
+
+            const client = library.createClient(
+                SUPABASE_URL,
+                SUPABASE_PUBLISHABLE_KEY,
+                {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true,
+                        flowType: "pkce"
+                    }
+                }
+            );
+
+            /*
+             * Mwaniki Scholars global aliases.
+             */
+
+            window.supabaseClient = client;
+            window.sb = client;
+            window.mwanikiSupabase = client;
+            window.mwanikiSupabaseClient = client;
+
+            /*
+             * Existing Mwaniki Scholars files expect
+             * window.supabase to be the CLIENT.
+             */
+
+            window.supabase = client;
+
+            window.mwanikiSupabaseReady = true;
+            window.mwanikiSupabaseError = false;
+
+            console.log(
+                "✅ Mwaniki Scholars Supabase Connected"
+            );
+
+            console.log(
+                "✅ Global Supabase client available"
+            );
+
+            window.dispatchEvent(
+                new Event("mwaniki-supabase-ready")
+            );
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "❌ Supabase client creation failed:",
+                error
+            );
+
+            window.mwanikiSupabaseError = true;
+
+            return false;
+        }
+    }
+
+    /*
+     * The CDN should already be loaded.
+     */
+
+    if (createMwanikiClient()) {
         return;
     }
 
-    try {
+    /*
+     * If the library was not available, wait briefly for
+     * the browser CDN script to finish loading.
+     */
 
-        const client = supabaseLibrary.createClient(
-            SUPABASE_URL,
-            SUPABASE_PUBLISHABLE_KEY,
-            {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true,
-                    flowType: "pkce"
-                }
-            }
-        );
+    let attempts = 0;
 
-        /*
-         * Global aliases used throughout Mwaniki Scholars.
-         */
+    const waitForLibrary = setInterval(function () {
 
-        window.supabaseClient = client;
-        window.sb = client;
-        window.mwanikiSupabase = client;
-        window.mwanikiSupabaseClient = client;
+        attempts++;
 
-        /*
-         * Keep window.supabase pointing to the CLIENT.
-         *
-         * Your existing community.js and other files already
-         * expect this.
-         */
+        if (createMwanikiClient()) {
+            clearInterval(waitForLibrary);
+            return;
+        }
 
-        window.supabase = client;
+        if (attempts >= 50) {
 
-        window.mwanikiSupabaseReady = true;
-        window.mwanikiSupabaseError = false;
+            clearInterval(waitForLibrary);
 
-        console.log(
-            "✅ Mwaniki Scholars Supabase Connected"
-        );
+            console.error(
+                "❌ Supabase browser library could not be loaded."
+            );
 
-        console.log(
-            "✅ Global Supabase client available"
-        );
+            console.error(
+                "Check the Supabase CDN script in community.html."
+            );
+        }
 
-        /*
-         * Tell scripts that may have started waiting for Supabase.
-         */
-
-        window.dispatchEvent(
-            new CustomEvent("mwaniki-supabase-ready")
-        );
-
-    } catch (error) {
-
-        console.error(
-            "❌ Failed to create Supabase client:",
-            error
-        );
-
-        window.mwanikiSupabaseError = true;
-    }
+    }, 100);
 
 })();
