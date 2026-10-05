@@ -31,36 +31,86 @@
    - Screen sharing
    - One consolidated call engine
    ============================================================ */
+/* ============================================================
+   MWANIKI SCHOLARS COMMUNITY
+   SUPABASE STARTUP
+   ============================================================ */
 
-(() => {
+(function () {
     "use strict";
 
-    /* ============================================================
-       SUPABASE
-       ============================================================ */
+    let supabaseClient = null;
 
-    const db =
-        window.supabase ||
-        window.supabaseClient ||
-        window.sb ||
-        window.mwanikiSupabase;
+    function getSupabaseClient() {
 
-    if (!db) {
-        console.error(
-            "❌ Supabase client was not found."
+        return (
+            window.mwanikiSupabase ||
+            window.supabaseClient ||
+            window.mwanikiSupabaseClient ||
+            window.sb ||
+            (
+                window.supabase &&
+                typeof window.supabase.auth === "object"
+                    ? window.supabase
+                    : null
+            )
         );
+    }
+
+    function startCommunity() {
+
+        supabaseClient = getSupabaseClient();
+
+        if (!supabaseClient) {
+
+            console.error(
+                "❌ Supabase client was not found after Supabase initialization."
+            );
+
+            return;
+        }
+
+        console.log(
+            "✅ Community: Supabase client ready."
+        );
+
+        /*
+         * ------------------------------------------------------
+         * IMPORTANT
+         * ------------------------------------------------------
+         *
+         * Put your existing community initialization code here.
+         *
+         * The rest of your existing community.js should execute
+         * from this point onward.
+         */
+
+    }
+
+    /*
+     * Supabase may already be ready.
+     */
+
+    if (window.mwanikiSupabaseReady === true) {
+
+        startCommunity();
+
         return;
     }
 
-    console.log(
-        "🚀 Mwaniki Scholars Community starting..."
+    /*
+     * Otherwise wait for supabase.js.
+     */
+
+    window.addEventListener(
+        "mwaniki-supabase-ready",
+        startCommunity,
+        {
+            once: true
+        }
     );
 
-    console.log(
-        "✅ Supabase client ready"
-    );
-
-
+})();
     /* ============================================================
        CONSTANTS
        ============================================================ */
