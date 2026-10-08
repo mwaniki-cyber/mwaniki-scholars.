@@ -3316,3 +3316,1037 @@ select:focus-visible {
         overflow: visible !important;
     }
 }
+/* ============================================================
+   MWANIKI SCHOLARS COMMUNITY
+   FINAL PRECISION OVERRIDE
+   Fixes:
+   - HUGE MEMBER PHOTOS
+   - HUGE CHAT IMAGES
+   - MESSAGE LAYOUT
+   - MEMBER LIST SPACING
+   - CHAT WIDTH / SPACING
+   - COMPOSER SIZE
+   - HEADER CLUTTER
+   ============================================================ */
+
+
+/* ============================================================
+   1. REAL MEMBER AVATARS
+   Your JS creates:
+   .avatar.avatar-member
+   ============================================================ */
+
+#memberList .avatar.avatar-member,
+#memberList img.avatar-member,
+#memberList .avatar-wrap img {
+    width: 36px !important;
+    height: 36px !important;
+
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+
+    flex: 0 0 36px !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    display: block !important;
+
+    border-radius: 50% !important;
+    border: 1px solid #dce6e8 !important;
+
+    background: #e8f7f4 !important;
+}
+
+
+/* Member avatar wrapper */
+
+#memberList .avatar-wrap {
+    position: relative !important;
+
+    width: 36px !important;
+    height: 36px !important;
+
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+
+    flex: 0 0 36px !important;
+
+    display: inline-flex !important;
+}
+
+
+/* ============================================================
+   2. MEMBER ROWS
+   ============================================================ */
+
+#memberList .member-item,
+#memberList .member-row {
+    width: 100% !important;
+
+    min-height: 52px !important;
+    height: auto !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 9px !important;
+
+    padding: 6px 7px !important;
+    margin: 1px 0 !important;
+
+    border: 0 !important;
+    border-radius: 8px !important;
+
+    background: transparent !important;
+
+    text-align: left !important;
+}
+
+
+#memberList .member-item:hover,
+#memberList .member-row:hover {
+    background: #f3f8f7 !important;
+}
+
+
+/* Member text */
+
+#memberList .member-copy,
+#memberList .member-row-info {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+
+    overflow: hidden !important;
+}
+
+
+#memberList .member-name,
+#memberList .member-row-name {
+    display: block !important;
+
+    max-width: 100% !important;
+
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+
+    font-size: 12px !important;
+    line-height: 17px !important;
+
+    color: #17252d !important;
+    font-weight: 700 !important;
+}
+
+
+#memberList .member-status,
+#memberList .member-row-status {
+    display: block !important;
+
+    margin-top: 0 !important;
+
+    font-size: 9px !important;
+    line-height: 13px !important;
+
+    color: #89979e !important;
+}
+
+
+#memberList .member-role {
+    display: inline-block !important;
+
+    margin-top: 1px !important;
+
+    font-size: 8px !important;
+    line-height: 11px !important;
+
+    color: #087f73 !important;
+    font-weight: 800 !important;
+
+    text-transform: uppercase !important;
+}
+
+
+/* Member presence */
+
+#memberList .presence-dot {
+    position: absolute !important;
+
+    right: -1px !important;
+    bottom: 0 !important;
+
+    width: 9px !important;
+    height: 9px !important;
+
+    min-width: 9px !important;
+    min-height: 9px !important;
+
+    border: 2px solid #fff !important;
+    border-radius: 50% !important;
+}
+
+
+/* ============================================================
+   3. MEMBER SIDEBAR
+   ============================================================ */
+
+#memberSidebar {
+    width: 270px !important;
+
+    min-width: 270px !important;
+    max-width: 270px !important;
+
+    background: #fff !important;
+
+    border-left: 1px solid #e1e8eb !important;
+
+    box-shadow: none !important;
+}
+
+
+#memberSidebar .member-sidebar-header {
+    height: 52px !important;
+    min-height: 52px !important;
+
+    padding: 0 12px !important;
+}
+
+
+#memberSidebar .member-sidebar-title {
+    font-size: 13px !important;
+    font-weight: 800 !important;
+}
+
+
+#memberSidebar #memberSearchInput {
+    width: calc(100% - 20px) !important;
+
+    height: 36px !important;
+    min-height: 36px !important;
+
+    margin: 10px !important;
+
+    font-size: 11px !important;
+}
+
+
+/* ============================================================
+   4. ACTUAL CHAT MESSAGE AVATAR
+   Your JS creates:
+   .avatar.avatar-message
+   ============================================================ */
+
+#messageList img.avatar.avatar-message,
+#messageList .avatar-message {
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+    min-height: 34px !important;
+
+    max-width: 34px !important;
+    max-height: 34px !important;
+
+    flex: 0 0 34px !important;
+
+    display: block !important;
+
+    object-fit: cover !important;
+    object-position: center !important;
+
+    border-radius: 50% !important;
+
+    border: 1px solid #dce6e8 !important;
+
+    background: #e8f7f4 !important;
+}
+
+
+/* ============================================================
+   5. ACTUAL MESSAGE ROW
+   Your JS creates .message-row
+   ============================================================ */
+
+#messageList .message-row {
+    position: relative !important;
+
+    width: 100% !important;
+
+    display: flex !important;
+    align-items: flex-start !important;
+
+    gap: 9px !important;
+
+    padding: 7px 8px !important;
+    margin: 0 !important;
+
+    border-radius: 8px !important;
+
+    background: transparent !important;
+}
+
+
+#messageList .message-row:hover {
+    background: #f7faf9 !important;
+}
+
+
+/* ============================================================
+   6. ACTUAL MESSAGE CONTENT
+   ============================================================ */
+
+#messageList .message-content-wrap {
+    min-width: 0 !important;
+
+    flex: 1 1 auto !important;
+
+    max-width: 100% !important;
+}
+
+
+#messageList .message-meta {
+    min-height: 18px !important;
+
+    display: flex !important;
+    align-items: baseline !important;
+
+    gap: 7px !important;
+
+    flex-wrap: wrap !important;
+}
+
+
+#messageList .message-author {
+    font-size: 12px !important;
+
+    color: #17252d !important;
+
+    font-weight: 800 !important;
+}
+
+
+#messageList .message-time,
+#messageList .message-edited {
+    font-size: 9px !important;
+
+    color: #89979e !important;
+}
+
+
+#messageList .message-body {
+    width: 100% !important;
+
+    max-width: 100% !important;
+
+    color: #33444b !important;
+
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+
+/* ============================================================
+   7. THIS IS THE BIG ONE:
+      ACTUAL IMAGE CLASS = .attachment-image
+   ============================================================ */
+
+#messageList .attachment-card {
+    width: fit-content !important;
+    max-width: 100% !important;
+
+    margin-top: 6px !important;
+
+    overflow: hidden !important;
+
+    border-radius: 9px !important;
+}
+
+
+#messageList img.attachment-image {
+    display: block !important;
+
+    width: auto !important;
+
+    max-width: 280px !important;
+    max-height: 220px !important;
+
+    min-width: 0 !important;
+    min-height: 0 !important;
+
+    height: auto !important;
+
+    object-fit: contain !important;
+    object-position: center !important;
+
+    border-radius: 9px !important;
+
+    border: 1px solid #dfe7e9 !important;
+
+    background: #f5f8f9 !important;
+
+    cursor: pointer !important;
+}
+
+
+/* Never allow a normal image to explode */
+
+#messageList .message-attachments img {
+    width: auto !important;
+
+    max-width: 280px !important;
+    max-height: 220px !important;
+
+    height: auto !important;
+}
+
+
+/* ============================================================
+   8. ATTACHMENT CONTAINER
+   ============================================================ */
+
+#messageList .message-attachments {
+    display: flex !important;
+
+    flex-wrap: wrap !important;
+
+    gap: 7px !important;
+
+    max-width: 100% !important;
+
+    margin-top: 6px !important;
+}
+
+
+#messageList .attachment-card {
+    max-width: 280px !important;
+
+    background: transparent !important;
+
+    box-shadow: none !important;
+}
+
+
+/* ============================================================
+   9. AUDIO / VOICE NOTES
+   ============================================================ */
+
+#messageList .voice-attachment {
+    width: min(320px, 100%) !important;
+
+    max-width: 320px !important;
+
+    padding: 8px !important;
+
+    border: 1px solid #dfe7e9 !important;
+    border-radius: 9px !important;
+
+    background: #f7fafb !important;
+}
+
+
+#messageList .voice-attachment audio,
+#messageList .attachment-info audio {
+    width: 100% !important;
+
+    max-width: 300px !important;
+
+    height: 34px !important;
+}
+
+
+/* ============================================================
+   10. FILE ATTACHMENTS
+   ============================================================ */
+
+#messageList .attachment-file-icon {
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    border-radius: 7px !important;
+
+    background: #e8f7f4 !important;
+}
+
+
+#messageList .attachment-info {
+    min-width: 0 !important;
+
+    max-width: 260px !important;
+}
+
+
+#messageList .attachment-info strong {
+    display: block !important;
+
+    max-width: 250px !important;
+
+    overflow: hidden !important;
+
+    white-space: nowrap !important;
+
+    text-overflow: ellipsis !important;
+
+    font-size: 11px !important;
+}
+
+
+#messageList .attachment-download {
+    font-size: 10px !important;
+
+    color: #087f73 !important;
+}
+
+
+/* ============================================================
+   11. MESSAGE ACTIONS
+   ============================================================ */
+
+#messageList .message-actions {
+    position: absolute !important;
+
+    top: 4px !important;
+    right: 8px !important;
+
+    display: none !important;
+
+    align-items: center !important;
+
+    gap: 2px !important;
+
+    padding: 2px !important;
+
+    background: #fff !important;
+
+    border: 1px solid #dfe7e9 !important;
+
+    border-radius: 7px !important;
+
+    box-shadow: 0 3px 12px rgba(20,40,48,.08) !important;
+
+    z-index: 10 !important;
+}
+
+
+#messageList .message-row:hover .message-actions {
+    display: flex !important;
+}
+
+
+#messageList .message-actions button {
+    width: 28px !important;
+    height: 27px !important;
+
+    min-width: 28px !important;
+
+    padding: 0 !important;
+
+    border-radius: 6px !important;
+
+    background: transparent !important;
+
+    font-size: 11px !important;
+}
+
+
+/* ============================================================
+   12. CHAT HEADER — KEEP IT COMPACT
+   ============================================================ */
+
+#chatArea .chat-header,
+.chat-area .chat-header,
+.community-chat .chat-header {
+    height: 58px !important;
+
+    min-height: 58px !important;
+
+    max-height: 58px !important;
+
+    padding: 0 14px !important;
+
+    flex: 0 0 58px !important;
+
+    background: #fff !important;
+
+    border-bottom: 1px solid #e1e8eb !important;
+}
+
+
+#currentChannelIcon {
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+
+    margin-right: 8px !important;
+
+    border-radius: 8px !important;
+}
+
+
+#currentChannelName {
+    font-size: 14px !important;
+
+    max-width: 260px !important;
+}
+
+
+#currentChannelDescription {
+    font-size: 10px !important;
+}
+
+
+/* ============================================================
+   13. MESSAGE AREA
+   ============================================================ */
+
+#messageList {
+    padding: 12px 16px 8px !important;
+
+    min-height: 0 !important;
+
+    overflow-x: hidden !important;
+
+    overflow-y: auto !important;
+
+    background: #fff !important;
+}
+
+
+/* ============================================================
+   14. TYPING BAR
+   ============================================================ */
+
+#typingIndicator {
+    min-height: 20px !important;
+
+    height: auto !important;
+
+    padding: 2px 16px 4px !important;
+
+    font-size: 10px !important;
+
+    color: #89979e !important;
+
+    background: #fff !important;
+}
+
+
+/* ============================================================
+   15. COMPOSER
+   ============================================================ */
+
+#messageComposer,
+.chat-composer,
+.composer-area {
+    flex: 0 0 auto !important;
+
+    padding: 7px 12px 10px !important;
+
+    background: #fff !important;
+
+    border-top: 1px solid #e1e8eb !important;
+}
+
+
+#messageComposer .composer-inner,
+.chat-composer .composer-inner,
+.composer-area .composer-inner {
+    min-height: 44px !important;
+
+    padding: 4px 5px 4px 8px !important;
+
+    gap: 5px !important;
+
+    border-radius: 12px !important;
+
+    background: #f7fafb !important;
+}
+
+
+/* ============================================================
+   16. MESSAGE INPUT
+   ============================================================ */
+
+#messageInput {
+    min-height: 32px !important;
+
+    max-height: 100px !important;
+
+    padding: 7px 5px !important;
+
+    font-size: 13px !important;
+
+    line-height: 1.4 !important;
+}
+
+
+/* ============================================================
+   17. COMPOSER BUTTONS
+   ============================================================ */
+
+#messageComposer .composer-button,
+.chat-composer .composer-button,
+.composer-area .composer-button {
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+
+    flex: 0 0 32px !important;
+
+    border-radius: 8px !important;
+
+    font-size: 14px !important;
+}
+
+
+#sendMessageButton {
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+}
+
+
+/* ============================================================
+   18. ATTACHMENT PREVIEW
+   ============================================================ */
+
+#attachmentPreview {
+    max-width: 100% !important;
+
+    margin-bottom: 5px !important;
+
+    padding: 6px !important;
+
+    border-radius: 8px !important;
+}
+
+
+#attachmentPreview img {
+    width: 42px !important;
+    height: 42px !important;
+
+    max-width: 42px !important;
+    max-height: 42px !important;
+
+    object-fit: cover !important;
+
+    border-radius: 6px !important;
+}
+
+
+/* ============================================================
+   19. CHANNEL SIDEBAR — CLEANER
+   ============================================================ */
+
+#channelSidebar {
+    width: 250px !important;
+
+    min-width: 250px !important;
+    max-width: 250px !important;
+}
+
+
+#channelList {
+    padding: 4px 7px 10px !important;
+}
+
+
+.channel-button {
+    min-height: 34px !important;
+
+    padding: 5px 8px !important;
+
+    margin: 1px 0 !important;
+
+    border-radius: 7px !important;
+}
+
+
+.channel-button .channel-icon {
+    width: 18px !important;
+
+    min-width: 18px !important;
+
+    font-size: 14px !important;
+}
+
+
+.channel-button .channel-name {
+    font-size: 12px !important;
+}
+
+
+.channel-group {
+    margin-bottom: 8px !important;
+}
+
+
+.channel-group-title {
+    padding: 6px 7px 4px !important;
+
+    font-size: 9px !important;
+}
+
+
+/* ============================================================
+   20. COMMUNITY RAIL — SMALL AND CLEAN
+   ============================================================ */
+
+#communityRail {
+    width: 62px !important;
+
+    padding: 10px 7px !important;
+}
+
+
+#communityRailList {
+    gap: 7px !important;
+}
+
+
+#communityRail .community-rail-item,
+#communityRail .community-button,
+#communityRail .rail-community-button {
+    width: 42px !important;
+    height: 42px !important;
+
+    min-width: 42px !important;
+    min-height: 42px !important;
+
+    flex: 0 0 42px !important;
+
+    border-radius: 11px !important;
+}
+
+
+#communityRail .community-rail-item img,
+#communityRail .community-button img,
+#communityRail .rail-community-button img {
+    width: 24px !important;
+    height: 24px !important;
+}
+
+
+/* ============================================================
+   21. HEADER — REMOVE THE FAKE CSS ICONS
+   Your HTML already contains the buttons/icons.
+   ============================================================ */
+
+#communityHomeButton::before,
+#mobileSidebarButton::before,
+#friendsButton::before,
+#generalCallButton::before,
+#notificationButton::before,
+#channelMembersButton::before {
+    content: none !important;
+}
+
+
+.community-header {
+    height: 64px !important;
+
+    min-height: 64px !important;
+
+    padding: 0 12px !important;
+}
+
+
+/* ============================================================
+   22. HEADER BUTTONS
+   ============================================================ */
+
+#communityHomeButton,
+#mobileSidebarButton,
+#friendsButton,
+#generalCallButton,
+#notificationButton {
+    width: 38px !important;
+    height: 38px !important;
+
+    min-width: 38px !important;
+
+    border-radius: 9px !important;
+}
+
+
+/* ============================================================
+   23. HEADER PROFILE
+   ============================================================ */
+
+#headerProfileAvatar {
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+
+    max-width: 32px !important;
+    max-height: 32px !important;
+
+    object-fit: cover !important;
+
+    border-radius: 50% !important;
+}
+
+
+/* ============================================================
+   24. GENERAL IMAGE SAFETY
+   This prevents an image from taking over the entire chat.
+   Scoped ONLY to the community chat.
+   ============================================================ */
+
+#messageList img {
+    max-width: 100% !important;
+}
+
+
+/* But avatars must remain small */
+
+#messageList img.avatar-message {
+    width: 34px !important;
+    height: 34px !important;
+
+    max-width: 34px !important;
+}
+
+
+/* And attachment images stay compact */
+
+#messageList img.attachment-image {
+    width: auto !important;
+
+    max-width: 280px !important;
+    max-height: 220px !important;
+}
+
+
+/* ============================================================
+   25. DESKTOP CHAT GEOMETRY
+   ============================================================ */
+
+@media (min-width: 851px) {
+
+    #chatArea,
+    .chat-area,
+    .community-chat {
+        left: calc(62px + 250px) !important;
+
+        right: 270px !important;
+
+        top: 64px !important;
+
+        bottom: 0 !important;
+    }
+
+}
+
+
+/* ============================================================
+   26. TABLET
+   ============================================================ */
+
+@media (max-width: 1100px) {
+
+    #memberSidebar {
+        width: 245px !important;
+        min-width: 245px !important;
+        max-width: 245px !important;
+    }
+
+    #messageList img.attachment-image {
+        max-width: 260px !important;
+        max-height: 210px !important;
+    }
+
+}
+
+
+/* ============================================================
+   27. MOBILE
+   ============================================================ */
+
+@media (max-width: 850px) {
+
+    #memberSidebar {
+        width: 280px !important;
+
+        min-width: 280px !important;
+        max-width: 280px !important;
+    }
+
+
+    #messageList img.attachment-image {
+        max-width: min(260px, 80vw) !important;
+
+        max-height: 210px !important;
+    }
+
+
+    #messageList img.avatar-message {
+        width: 30px !important;
+        height: 30px !important;
+
+        max-width: 30px !important;
+        max-height: 30px !important;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    #memberSidebar {
+        width: 280px !important;
+    }
+
+
+    #messageList {
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+    }
+
+
+    #messageList img.attachment-image {
+        max-width: min(240px, 78vw) !important;
+
+        max-height: 190px !important;
+    }
+
+}
+
+
+/* ============================================================
+   28. VERY SMALL PHONES
+   ============================================================ */
+
+@media (max-width: 450px) {
+
+    #memberSidebar {
+        width: 270px !important;
+    }
+
+
+    #messageList img.attachment-image {
+        max-width: 220px !important;
+
+        max-height: 175px !important;
+    }
+
+}
