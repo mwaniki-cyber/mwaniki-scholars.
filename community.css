@@ -1,449 +1,445 @@
 /* ============================================================
-   MWANIKI SCHOLARS
-   COMMUNITY PAGE
-   Professional white + teal academic interface
-   Matched to community.html
+   MWANIKI SCHOLARS COMMUNITY
+   CLEAN STRUCTURED COMMUNITY UI
+   ------------------------------------------------------------
+   This stylesheet is intentionally scoped to .community-page
+   so it does not fight the main Mwaniki Scholars style.css.
    ============================================================ */
-
-/* ============================================================
-   THEME
-   ============================================================ */
-
-:root {
-    --ms-primary: #087f73;
-    --ms-primary-dark: #05665d;
-    --ms-primary-light: #e8f7f4;
-    --ms-primary-hover: #076f65;
-
-    --ms-accent: #0b7285;
-    --ms-accent-light: #eaf7fa;
-
-    --ms-white: #ffffff;
-    --ms-bg: #f4f7f8;
-    --ms-panel: #ffffff;
-    --ms-soft: #f8fafb;
-    --ms-soft-2: #f1f5f6;
-
-    --ms-border: #e0e7e9;
-    --ms-border-light: #edf1f2;
-
-    --ms-text: #18272e;
-    --ms-text-2: #506168;
-    --ms-muted: #8a989e;
-
-    --ms-success: #20a36a;
-    --ms-warning: #e2a33c;
-    --ms-danger: #d9534f;
-
-    --ms-shadow-sm: 0 1px 4px rgba(25, 50, 58, .06);
-    --ms-shadow: 0 5px 20px rgba(25, 50, 58, .08);
-    --ms-shadow-lg: 0 14px 40px rgba(25, 50, 58, .14);
-
-    --community-rail: 68px;
-    --channel-sidebar: 252px;
-    --member-sidebar: 250px;
-    --top-header: 64px;
-
-    --radius-sm: 8px;
-    --radius: 11px;
-    --radius-lg: 15px;
-
-    --transition: 160ms ease;
-}
 
 
 /* ============================================================
-   RESET
+   RESET / FOUNDATION
    ============================================================ */
 
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
+.community-page {
+    --community-header: 68px;
+    --community-rail: 72px;
+    --community-sidebar: 292px;
+    --community-members: 276px;
 
-html,
-body {
-    width: 100%;
-    height: 100%;
+    --community-bg: #f5f8f8;
+    --community-surface: #ffffff;
+    --community-surface-soft: #f8fbfb;
+
+    --community-border: #e1e9e9;
+    --community-border-strong: #d3dfdf;
+
+    --community-text: #17272b;
+    --community-text-soft: #607277;
+    --community-text-muted: #8a9a9e;
+
+    --community-primary: #087f73;
+    --community-primary-dark: #06695f;
+    --community-primary-soft: #e7f5f2;
+
+    --community-online: #20b26b;
+    --community-away: #e5a72b;
+    --community-dnd: #e25353;
+    --community-offline: #aab6b9;
+
     margin: 0;
-}
+    padding: 0;
 
-html {
-    overflow: hidden;
-}
+    width: 100%;
+    height: 100vh;
 
-body.community-page {
-    min-height: 100%;
     overflow: hidden;
 
-    background: var(--ms-bg);
-    color: var(--ms-text);
+    background: var(--community-bg);
+    color: var(--community-text);
 
     font-family:
         Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
         "Segoe UI",
-        Roboto,
-        Helvetica,
-        Arial,
         sans-serif;
-
-    font-size: 14px;
-    line-height: 1.45;
-
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
 }
 
-button,
-input,
-textarea,
-select {
-    font: inherit;
-}
 
-button {
-    cursor: pointer;
-}
+/* Prevent global style.css image rules from enlarging
+   community images. */
 
-img {
+.community-page img {
     max-width: 100%;
 }
 
-a {
-    color: inherit;
-    text-decoration: none;
-}
 
-.hidden {
-    display: none !important;
-}
+/* ============================================================
+   APP SHELL
+   ============================================================ */
 
-[hidden] {
-    display: none !important;
+.community-page .community-app {
+    width: 100%;
+    height: 100vh;
+
+    display: grid;
+
+    grid-template-rows:
+        var(--community-header)
+        minmax(0, 1fr);
+
+    overflow: hidden;
+
+    background: var(--community-bg);
 }
 
 
 /* ============================================================
-   SCROLLBARS
+   HEADER
    ============================================================ */
 
-* {
-    scrollbar-width: thin;
-    scrollbar-color: #c9d4d8 transparent;
-}
+.community-page .community-header {
+    position: relative;
+    z-index: 100;
 
-*::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
-}
+    width: 100%;
+    min-width: 0;
 
-*::-webkit-scrollbar-track {
-    background: transparent;
-}
+    display: grid;
 
-*::-webkit-scrollbar-thumb {
-    background: #c9d4d8;
-    border-radius: 20px;
-}
+    grid-template-columns:
+        auto
+        minmax(260px, 1fr)
+        auto;
 
-*::-webkit-scrollbar-thumb:hover {
-    background: #aebdc2;
-}
-
-
-/* ============================================================
-   TOP HEADER
-   IMPORTANT:
-   Use the actual header classes from community.html.
-   ============================================================ */
-
-.community-header {
-    position: fixed;
-    z-index: 1000;
-
-    top: 0;
-    left: 0;
-    right: 0;
-
-    height: var(--top-header);
-
-    display: flex;
     align-items: center;
 
-    padding: 0 12px;
+    gap: 18px;
 
-    background: rgba(255, 255, 255, .98);
+    padding: 0 18px;
 
-    border-bottom: 1px solid var(--ms-border);
+    background: #ffffff;
 
-    box-shadow: var(--ms-shadow-sm);
+    border-bottom: 1px solid var(--community-border);
 
-    backdrop-filter: blur(12px);
+    box-shadow:
+        0 1px 4px rgba(18, 45, 49, 0.04);
 }
 
-.header-left {
-    width: 68px;
-    flex: 0 0 68px;
 
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
+/* LEFT HEADER */
 
-.header-center {
-    flex: 1;
+.community-page .header-left {
     min-width: 0;
 
     display: flex;
-    justify-content: center;
     align-items: center;
+    gap: 10px;
 }
 
-.header-actions {
+
+.community-page .brand-button {
+    height: 46px;
+
     display: flex;
     align-items: center;
 
-    gap: 4px;
+    gap: 10px;
 
-    margin-left: 10px;
-}
-
-
-/* Header buttons */
-
-#mobileSidebarButton,
-#communityHomeButton,
-#friendsButton,
-#generalCallButton,
-#notificationButton,
-#profileButton {
-    position: relative;
-
-    width: 39px;
-    height: 39px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
+    padding: 5px 10px;
 
     border: 0;
     border-radius: 10px;
 
     background: transparent;
-    color: var(--ms-text-2);
 
-    transition:
-        background var(--transition),
-        color var(--transition),
-        transform var(--transition);
-}
+    color: var(--community-text);
 
-#mobileSidebarButton:hover,
-#communityHomeButton:hover,
-#friendsButton:hover,
-#generalCallButton:hover,
-#notificationButton:hover,
-#profileButton:hover {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-}
+    cursor: pointer;
 
-#mobileSidebarButton:active,
-#communityHomeButton:active,
-#friendsButton:active,
-#generalCallButton:active,
-#notificationButton:active,
-#profileButton:active {
-    transform: scale(.95);
-}
-
-#mobileSidebarButton {
-    display: none;
+    flex-shrink: 0;
 }
 
 
-/* Do NOT generate replacement icons with CSS.
-   The actual HTML icons remain untouched. */
+.community-page .brand-button:hover {
+    background: var(--community-surface-soft);
+}
+
+
+.community-page .brand-mark {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 9px;
+
+    background: var(--community-primary-soft);
+
+    font-size: 19px;
+
+    flex-shrink: 0;
+}
+
+
+.community-page .brand-copy {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    align-items: flex-start;
+
+    line-height: 1.15;
+}
+
+
+.community-page .brand-copy strong {
+    font-size: 14px;
+    font-weight: 750;
+
+    white-space: nowrap;
+}
+
+
+.community-page .brand-copy small {
+    margin-top: 3px;
+
+    color: var(--community-text-muted);
+
+    font-size: 10px;
+
+    white-space: nowrap;
+}
 
 
 /* ============================================================
    GLOBAL SEARCH
    ============================================================ */
 
-#globalSearchInput {
-    width: min(540px, 100%);
-    height: 39px;
+.community-page .global-search {
+    width: min(620px, 100%);
+    height: 38px;
 
-    padding: 0 15px 0 40px;
+    justify-self: center;
 
-    border: 1px solid var(--ms-border);
-    border-radius: 11px;
+    display: flex;
+    align-items: center;
 
-    outline: none;
+    gap: 8px;
 
-    background:
-        #f6f9fa
-        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17' viewBox='0 0 24 24' fill='none' stroke='%2389979e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-4-4'/%3E%3C/svg%3E")
-        no-repeat 14px center;
+    padding: 0 11px;
 
-    color: var(--ms-text);
+    border: 1px solid var(--community-border);
+
+    border-radius: 9px;
+
+    background: #f7fafb;
 
     transition:
-        border-color var(--transition),
-        background-color var(--transition),
-        box-shadow var(--transition);
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
 }
 
-#globalSearchInput::placeholder {
-    color: #96a3a8;
-}
 
-#globalSearchInput:focus {
-    border-color: rgba(8, 127, 115, .45);
+.community-page .global-search:focus-within {
+    background: #ffffff;
 
-    background-color: #fff;
+    border-color:
+        rgba(8, 127, 115, 0.45);
 
     box-shadow:
-        0 0 0 3px rgba(8, 127, 115, .07);
+        0 0 0 3px
+        rgba(8, 127, 115, 0.08);
+}
+
+
+.community-page .search-icon {
+    color: var(--community-text-muted);
+
+    font-size: 17px;
+
+    line-height: 1;
+}
+
+
+.community-page .global-search input {
+    min-width: 0;
+    width: 100%;
+
+    height: 34px;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    color: var(--community-text);
+
+    font-size: 13px;
+}
+
+
+.community-page .global-search input::placeholder {
+    color: #99a8ab;
+}
+
+
+.community-page .global-search kbd {
+    flex-shrink: 0;
+
+    padding: 3px 6px;
+
+    border:
+        1px solid var(--community-border);
+
+    border-radius: 5px;
+
+    background: #ffffff;
+
+    color: var(--community-text-muted);
+
+    font-size: 10px;
 }
 
 
 /* ============================================================
-   HEADER PROFILE
+   HEADER ACTIONS
    ============================================================ */
 
-#profileButton {
-    width: auto;
-    min-width: 42px;
+.community-page .header-actions {
+    min-width: 0;
 
-    padding: 2px 7px 2px 4px;
+    display: flex;
+    align-items: center;
 
-    gap: 7px;
-}
-
-#headerProfileAvatar {
-    width: 33px;
-    height: 33px;
-
-    flex: 0 0 33px;
-
-    object-fit: cover;
-
-    border-radius: 50%;
-
-    border: 2px solid #fff;
-
-    box-shadow:
-        0 0 0 1px var(--ms-border);
-
-    background: var(--ms-primary-light);
-}
-
-#headerProfileName {
-    max-width: 125px;
-
-    overflow: hidden;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    color: var(--ms-text);
-
-    font-size: 12px;
-    font-weight: 700;
-}
-
-#headerPresenceDot {
-    position: absolute;
-
-    right: 5px;
-    bottom: 5px;
-
-    width: 9px;
-    height: 9px;
-
-    border: 2px solid white;
-    border-radius: 50%;
+    gap: 5px;
 }
 
 
-/* ============================================================
-   BADGES
-   ============================================================ */
+.community-page .header-action,
+.community-page .header-profile,
+.community-page .icon-button {
+    appearance: none;
 
-#notificationBadge,
-#friendRequestBadge {
+    border: 0;
+
+    cursor: pointer;
+
+    font-family: inherit;
+}
+
+
+.community-page .header-action {
+    position: relative;
+
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: var(--community-text);
+
+    font-size: 17px;
+}
+
+
+.community-page .header-action:hover {
+    background: var(--community-primary-soft);
+}
+
+
+.community-page .notification-badge {
     position: absolute;
 
     top: 2px;
     right: 1px;
 
-    min-width: 17px;
-    height: 17px;
+    min-width: 15px;
+    height: 15px;
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
 
-    padding: 0 4px;
+    padding: 0 3px;
 
-    border: 2px solid white;
     border-radius: 999px;
 
-    background: var(--ms-danger);
-    color: white;
+    background: #e34e4e;
 
-    font-size: 9px;
+    color: #ffffff;
+
+    font-size: 8px;
     font-weight: 800;
 }
 
 
-/* ============================================================
-   PRESENCE
-   ============================================================ */
-
-.presence-online,
-.status-online {
-    background: var(--ms-success) !important;
-}
-
-.presence-away,
-.status-away {
-    background: var(--ms-warning) !important;
-}
-
-.presence-dnd,
-.status-dnd {
-    background: var(--ms-danger) !important;
-}
-
-.presence-offline,
-.status-offline {
-    background: #aeb9bd !important;
-}
-
-
-/* ============================================================
-   MAIN PAGE
-   ============================================================ */
-
-.community-main {
-    position: fixed;
-
-    top: var(--top-header);
-    left: 0;
-    right: 0;
-    bottom: 0;
-
+.community-page .header-profile {
     min-width: 0;
-    min-height: 0;
+
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 4px 7px;
+
+    border-radius: 9px;
+
+    background: transparent;
+
+    color: var(--community-text);
+}
+
+
+.community-page .header-profile:hover {
+    background: var(--community-surface-soft);
+}
+
+
+.community-page .header-profile-name {
+    max-width: 120px;
 
     overflow: hidden;
 
-    background: var(--ms-bg);
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.community-page .chevron {
+    color: var(--community-text-muted);
+}
+
+
+/* ============================================================
+   MAIN ARCHITECTURE
+   ============================================================ */
+
+.community-page .community-layout {
+    min-width: 0;
+    min-height: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        var(--community-rail)
+        var(--community-sidebar)
+        minmax(0, 1fr)
+        var(--community-members);
+
+    overflow: hidden;
+
+    background: var(--community-bg);
 }
 
 
@@ -451,131 +447,134 @@ a {
    COMMUNITY RAIL
    ============================================================ */
 
-#communityRail {
-    position: fixed;
-    z-index: 300;
-
-    top: var(--top-header);
-    bottom: 0;
-    left: 0;
-
-    width: var(--community-rail);
+.community-page .community-rail {
+    min-width: 0;
+    min-height: 0;
 
     display: flex;
     flex-direction: column;
     align-items: center;
 
-    padding: 11px 8px;
+    padding: 12px 8px;
 
-    background: #f2f6f7;
+    background: #f0f5f5;
 
-    border-right: 1px solid var(--ms-border);
+    border-right: 1px solid var(--community-border);
 
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
-#communityRailList {
+
+.community-page .rail-brand {
+    width: 40px;
+    height: 40px;
+
+    display: grid;
+    place-items: center;
+
+    margin-bottom: 10px;
+
+    border-radius: 11px;
+
+    background: var(--community-primary);
+
+    color: #ffffff;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    flex-shrink: 0;
+}
+
+
+.community-page .community-rail-list {
     width: 100%;
 
     display: flex;
     flex-direction: column;
+
     align-items: center;
 
-    gap: 8px;
+    gap: 7px;
 }
 
 
-/* Community buttons created by JS */
-
-.community-rail-item,
-.community-button,
-.rail-community-button {
+.community-page .rail-community-button {
     width: 44px;
     height: 44px;
 
-    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0;
 
-    border: 1px solid var(--ms-border);
+    border:
+        1px solid transparent;
+
     border-radius: 12px;
 
-    background: white;
-    color: var(--ms-text-2);
+    background: #ffffff;
 
-    box-shadow: var(--ms-shadow-sm);
+    color: var(--community-text);
+
+    font-size: 19px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.03);
 
     transition:
-        background var(--transition),
-        border-color var(--transition),
-        color var(--transition),
-        border-radius var(--transition),
-        transform var(--transition);
+        border-radius 0.15s ease,
+        background 0.15s ease,
+        transform 0.15s ease;
 }
 
-.community-rail-item:hover,
-.community-button:hover,
-.rail-community-button:hover {
-    background: var(--ms-primary-light);
-    border-color: #a9d2cd;
-    color: var(--ms-primary);
 
-    border-radius: 10px;
+.community-page .rail-community-button:hover {
+    border-color:
+        rgba(8, 127, 115, 0.25);
+
+    background: var(--community-primary-soft);
 
     transform: translateY(-1px);
 }
 
-.community-rail-item.active,
-.community-button.active,
-.rail-community-button.active {
-    background: var(--ms-primary);
-    border-color: var(--ms-primary);
 
-    color: white;
+.community-page .rail-community-button.active {
+    border-color:
+        rgba(8, 127, 115, 0.18);
 
-    border-radius: 10px;
-}
-
-.community-rail-item img,
-.community-button img,
-.rail-community-button img {
-    width: 25px;
-    height: 25px;
-
-    object-fit: cover;
-
-    border-radius: 8px;
-}
-
-#addCommunityButton {
-    width: 44px;
-    height: 44px;
-
-    flex: 0 0 44px;
-
-    margin-top: 9px;
-
-    border: 1px dashed #9bc9c3;
     border-radius: 12px;
 
-    background: white;
-    color: var(--ms-primary);
+    background:
+        var(--community-primary-soft);
 
-    font-size: 21px;
-
-    transition:
-        background var(--transition),
-        border-color var(--transition),
-        transform var(--transition);
+    box-shadow:
+        inset 3px 0 0 var(--community-primary);
 }
 
-#addCommunityButton:hover {
-    background: var(--ms-primary-light);
-    border-color: var(--ms-primary);
 
-    transform: translateY(-1px);
+.community-page .rail-divider {
+    width: 32px;
+    height: 1px;
+
+    margin: 10px 0;
+
+    background: var(--community-border-strong);
+}
+
+
+.community-page .rail-add {
+    border:
+        1px dashed #9ebbb7;
+
+    background: #ffffff;
+
+    color: var(--community-primary);
+
+    font-size: 22px;
 }
 
 
@@ -583,848 +582,591 @@ a {
    CHANNEL SIDEBAR
    ============================================================ */
 
-#channelSidebar {
-    position: fixed;
-    z-index: 250;
-
-    top: var(--top-header);
-    bottom: 0;
-    left: var(--community-rail);
-
-    width: var(--channel-sidebar);
-
-    display: flex;
-    flex-direction: column;
-
+.community-page .channel-sidebar {
+    min-width: 0;
     min-height: 0;
 
-    background: white;
+    display: grid;
 
-    border-right: 1px solid var(--ms-border);
-}
-
-
-/* ============================================================
-   SELECTED COMMUNITY
-   ============================================================ */
-
-.selected-community {
-    position: relative;
-
-    min-height: 72px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 11px 12px;
-
-    border-bottom: 1px solid var(--ms-border-light);
-
-    background: white;
-}
-
-#selectedCommunityIcon {
-    width: 38px;
-    height: 38px;
-
-    flex: 0 0 38px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-right: 9px;
+    grid-template-rows:
+        auto
+        auto
+        auto
+        minmax(0, 1fr)
+        auto;
 
     overflow: hidden;
 
+    background: #ffffff;
+
+    border-right: 1px solid var(--community-border);
+}
+
+
+/* SIDEBAR HEADER */
+
+.community-page .community-sidebar-header {
+    min-width: 0;
+
+    height: 66px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 8px;
+
+    padding: 10px 12px;
+
+    border-bottom:
+        1px solid var(--community-border);
+}
+
+
+.community-page .selected-community {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+}
+
+
+.community-page .selected-community-icon {
+    width: 38px;
+    height: 38px;
+
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
     border-radius: 10px;
 
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
+    background: var(--community-primary-soft);
 
     font-size: 18px;
 }
 
-#selectedCommunityIcon img {
-    width: 100%;
-    height: 100%;
 
-    object-fit: cover;
-}
-
-.selected-community-info {
+.community-page .selected-community-copy {
     min-width: 0;
-    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 3px;
 }
 
-#selectedCommunityName {
-    display: block;
 
+.community-page .selected-community-copy strong {
     overflow: hidden;
 
-    color: var(--ms-text);
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
 
     font-size: 13px;
-    font-weight: 800;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    font-weight: 750;
 }
 
-#selectedCommunityDescription {
-    display: block;
 
-    margin-top: 2px;
-
-    max-width: 150px;
-
+.community-page .selected-community-copy span {
     overflow: hidden;
 
-    color: var(--ms-muted);
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: var(--community-text-muted);
 
     font-size: 10px;
-    line-height: 1.3;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-#communityMenuButton,
-#communityCallButton {
-    width: 29px;
-    height: 29px;
-
-    flex: 0 0 29px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border-radius: 8px;
-
-    background: transparent;
-    color: var(--ms-text-2);
-}
-
-#communityMenuButton:hover,
-#communityCallButton:hover {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-}
-
-#communityCallButton {
-    color: var(--ms-success);
 }
 
 
-/* ============================================================
-   CHANNEL SEARCH
-   ============================================================ */
-
-.channel-search {
-    padding: 9px 10px 7px;
-}
-
-#channelSearchInput {
-    width: 100%;
-    height: 34px;
-
-    padding: 0 10px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
-
-    outline: none;
-
-    background: var(--ms-soft);
-    color: var(--ms-text);
-
-    font-size: 11px;
-}
-
-#channelSearchInput::placeholder {
-    color: var(--ms-muted);
-}
-
-#channelSearchInput:focus {
-    background: white;
-
-    border-color: rgba(8, 127, 115, .42);
-
-    box-shadow:
-        0 0 0 3px rgba(8, 127, 115, .06);
-}
-
-
-/* ============================================================
-   CHANNEL LIST
-   ============================================================ */
-
-#channelList {
-    flex: 1;
-
-    min-height: 0;
-
-    overflow-y: auto;
-
-    padding: 3px 8px 7px;
-}
-
-.channel-group {
-    margin: 0 0 10px;
-}
-
-.channel-group-title {
-    min-height: 27px;
-
-    display: flex;
-    align-items: center;
-
-    padding: 5px 7px 3px;
-
-    color: #87959a;
-
-    font-size: 9px;
-    font-weight: 800;
-
-    letter-spacing: .08em;
-    text-transform: uppercase;
-}
-
-.channel-button {
-    width: 100%;
-    min-height: 34px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 8px;
-
-    margin: 1px 0;
-    padding: 5px 8px;
-
-    border: 0;
-    border-radius: 8px;
-
-    background: transparent;
-    color: var(--ms-text-2);
-
-    text-align: left;
-
-    transition:
-        background var(--transition),
-        color var(--transition);
-}
-
-.channel-button:hover {
-    background: #f1f7f6;
-    color: var(--ms-text);
-}
-
-.channel-button.active {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-
-    font-weight: 700;
-}
-
-.channel-button .channel-icon {
-    width: 20px;
-
-    flex: 0 0 20px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    color: #89979c;
-
-    font-size: 14px;
-}
-
-.channel-button.active .channel-icon {
-    color: var(--ms-primary);
-}
-
-.channel-button .channel-name {
-    min-width: 0;
-    flex: 1;
-
-    overflow: hidden;
-
-    font-size: 12px;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-
-/* ============================================================
-   CURRENT USER PANEL
-   ============================================================ */
-
-.sidebar-user-panel {
-    position: relative;
-
-    min-height: 61px;
-
-    display: flex;
-    align-items: center;
-
-    gap: 8px;
-
-    padding: 8px 9px;
-
-    border-top: 1px solid var(--ms-border);
-
-    background: #f7fafb;
-}
-
-#profileLargeAvatar {
-    width: 36px;
-    height: 36px;
-
-    flex: 0 0 36px;
-
-    object-fit: cover;
-
-    border-radius: 50%;
-
-    border: 2px solid white;
-
-    box-shadow:
-        0 0 0 1px var(--ms-border);
-
-    background: var(--ms-primary-light);
-}
-
-.sidebar-user-info {
-    min-width: 0;
-    flex: 1;
-}
-
-#sidebarUserName {
-    display: block;
-
-    overflow: hidden;
-
-    color: var(--ms-text);
-
-    font-size: 11px;
-    font-weight: 800;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-#sidebarUserStatus {
-    display: block;
-
-    margin-top: 1px;
-
-    color: var(--ms-muted);
-
-    font-size: 9px;
-}
-
-#sidebarPresenceDot {
-    position: absolute;
-
-    left: 34px;
-    bottom: 16px;
-
-    width: 10px;
-    height: 10px;
-
-    border: 2px solid white;
-    border-radius: 50%;
-}
-
-.sidebar-user-actions {
-    display: flex;
-    align-items: center;
-
-    gap: 1px;
-}
-
-#muteButton,
-#headsetButton,
-#settingsButton {
-    width: 28px;
-    height: 28px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.community-page .icon-button {
+    width: 32px;
+    height: 32px;
+
+    display: grid;
+    place-items: center;
 
     padding: 0;
 
     border-radius: 7px;
 
     background: transparent;
-    color: var(--ms-muted);
 
-    font-size: 12px;
-}
+    color: var(--community-text-soft);
 
-#muteButton:hover,
-#headsetButton:hover,
-#settingsButton:hover {
-    background: #e8eff1;
-    color: var(--ms-text);
+    font-size: 17px;
 }
 
 
-/* ============================================================
-   CHAT AREA
-   ============================================================ */
+.community-page .icon-button:hover {
+    background: var(--community-primary-soft);
 
-#chatArea {
-    position: fixed;
-
-    top: var(--top-header);
-    bottom: 0;
-
-    left: calc(var(--community-rail) + var(--channel-sidebar));
-    right: var(--member-sidebar);
-
-    min-width: 0;
-    min-height: 0;
-
-    display: flex;
-    flex-direction: column;
-
-    background: white;
+    color: var(--community-primary);
 }
 
 
-/* ============================================================
-   CHAT HEADER
-   ============================================================ */
+/* CALL BUTTON */
 
-.chat-header {
-    min-height: 60px;
-    height: 60px;
+.community-page .community-sidebar-actions {
+    padding: 10px 12px 4px;
+}
+
+
+.community-page .sidebar-call-button {
+    width: 100%;
+    height: 36px;
 
     display: flex;
     align-items: center;
 
-    padding: 0 15px;
+    gap: 8px;
 
-    border-bottom: 1px solid var(--ms-border);
+    padding: 0 11px;
 
-    background: white;
-}
-
-.chat-header-left {
-    min-width: 0;
-    flex: 1;
-
-    display: flex;
-    align-items: center;
-}
-
-#currentChannelIcon {
-    width: 32px;
-    height: 32px;
-
-    flex: 0 0 32px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-right: 8px;
-
-    border-radius: 9px;
-
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-
-    font-size: 15px;
-}
-
-#currentChannelName {
-    max-width: 320px;
-
-    overflow: hidden;
-
-    color: var(--ms-text);
-
-    font-size: 13px;
-    font-weight: 800;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-#currentChannelType {
-    margin-left: 7px;
-
-    color: var(--ms-muted);
-
-    font-size: 9px;
-    font-weight: 700;
-
-    text-transform: uppercase;
-}
-
-#currentChannelDescription {
-    max-width: 340px;
-
-    margin-left: 11px;
-    padding-left: 11px;
-
-    overflow: hidden;
-
-    border-left: 1px solid var(--ms-border);
-
-    color: var(--ms-muted);
-
-    font-size: 10px;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.chat-header-actions {
-    display: flex;
-    align-items: center;
-
-    gap: 3px;
-}
-
-#channelSearchButton,
-#channelMembersButton {
-    height: 33px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    gap: 5px;
-
-    padding: 0 8px;
+    border: 1px solid
+        rgba(8, 127, 115, 0.16);
 
     border-radius: 8px;
 
-    background: transparent;
-    color: var(--ms-text-2);
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
 
     font-size: 11px;
-    font-weight: 600;
-}
+    font-weight: 700;
 
-#channelSearchButton:hover,
-#channelMembersButton:hover {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-}
-
-#channelMemberCount {
-    min-width: 18px;
-    height: 18px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 999px;
-
-    background: var(--ms-soft-2);
-    color: var(--ms-text-2);
-
-    font-size: 8px;
-    font-weight: 800;
+    cursor: pointer;
 }
 
 
-/* ============================================================
-   MESSAGE SEARCH
-   ============================================================ */
+.community-page .sidebar-call-button:hover {
+    background: #dff1ed;
+}
 
-#messageSearchBar {
-    min-height: 46px;
+
+/* CHANNEL SEARCH */
+
+.community-page .channel-search {
+    height: 42px;
 
     display: flex;
     align-items: center;
 
     gap: 7px;
 
-    padding: 6px 13px;
-
-    border-bottom: 1px solid var(--ms-border-light);
-
-    background: #fbfcfc;
-}
-
-#messageSearchInput {
-    flex: 1;
-
-    min-width: 0;
-
-    height: 33px;
+    margin: 7px 12px;
 
     padding: 0 10px;
 
-    border: 1px solid var(--ms-border);
+    border:
+        1px solid var(--community-border);
+
     border-radius: 8px;
 
-    outline: none;
+    background: #f8fafb;
+}
 
-    background: white;
-    color: var(--ms-text);
+
+.community-page .channel-search > span {
+    color: var(--community-text-muted);
+
+    font-size: 16px;
+}
+
+
+.community-page .channel-search input {
+    width: 100%;
+    min-width: 0;
+
+    height: 34px;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    font-size: 12px;
+
+    color: var(--community-text);
+}
+
+
+.community-page .channel-search input::placeholder {
+    color: #9aa8ab;
+}
+
+
+/* CHANNEL SCROLL */
+
+.community-page .channel-sidebar-scroll {
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding:
+        2px 7px 10px;
+}
+
+
+/* CATEGORY */
+
+.community-page .channel-category {
+    margin-bottom: 8px;
+}
+
+
+.community-page .channel-category-heading {
+    height: 31px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 3px;
+
+    padding: 0 3px;
+}
+
+
+.community-page .category-toggle {
+    min-width: 0;
+    flex: 1;
+
+    height: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 5px;
+
+    border: 0;
+
+    background: transparent;
+
+    color: #7b8b8e;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 0.05em;
+
+    cursor: pointer;
+
+    text-align: left;
+}
+
+
+.community-page .category-add-button {
+    width: 25px;
+    height: 25px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: transparent;
+
+    color: #8b9b9e;
+
+    font-size: 17px;
+
+    cursor: pointer;
+}
+
+
+.community-page .category-add-button:hover {
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+}
+
+
+.community-page .channel-list {
+    min-width: 0;
+}
+
+
+.community-page .channel-item {
+    width: 100%;
+    min-width: 0;
+
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    padding: 0 9px;
+
+    margin: 1px 0;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #5f7074;
+
+    cursor: pointer;
+
+    text-align: left;
+
+    font-family: inherit;
+
+    transition:
+        background 0.12s ease,
+        color 0.12s ease;
+}
+
+
+.community-page .channel-item:hover {
+    background: #f1f7f6;
+
+    color: var(--community-text);
+}
+
+
+.community-page .channel-item.active {
+    background:
+        var(--community-primary-soft);
+
+    color:
+        var(--community-primary);
+
+    font-weight: 700;
+}
+
+
+.community-page .channel-icon {
+    width: 21px;
+    min-width: 21px;
+
+    display: grid;
+    place-items: center;
+
+    font-size: 14px;
+}
+
+
+.community-page .channel-item-name {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 12px;
+}
+
+
+.community-page .empty-sidebar-message {
+    padding: 8px 10px;
+
+    color: var(--community-text-muted);
 
     font-size: 11px;
 }
 
-#messageSearchInput:focus {
-    border-color: rgba(8, 127, 115, .4);
 
-    box-shadow:
-        0 0 0 3px rgba(8, 127, 115, .06);
-}
+/* SIDEBAR USER */
 
-#closeMessageSearchButton {
-    width: 31px;
-    height: 31px;
-
-    flex: 0 0 31px;
-
-    border-radius: 7px;
-
-    background: transparent;
-    color: var(--ms-muted);
-}
-
-#closeMessageSearchButton:hover {
-    background: var(--ms-soft-2);
-    color: var(--ms-text);
-}
-
-
-/* ============================================================
-   MESSAGE LIST
-   ============================================================ */
-
-#messageList {
-    flex: 1;
-
+.community-page .sidebar-user-panel {
     min-width: 0;
-    min-height: 0;
 
-    overflow-x: hidden;
-    overflow-y: auto;
-
-    padding: 13px 17px 7px;
-
-    background:
-        linear-gradient(
-            180deg,
-            #ffffff 0%,
-            #fbfdfd 100%
-        );
-}
-
-
-/* ============================================================
-   INDIVIDUAL MESSAGE
-   ============================================================ */
-
-.message {
-    position: relative;
-
-    width: 100%;
+    min-height: 60px;
 
     display: flex;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: space-between;
 
-    gap: 9px;
+    gap: 8px;
 
-    padding: 5px 7px;
+    padding: 8px 10px;
 
-    border-radius: 8px;
+    background: #f7fafa;
 
-    transition:
-        background var(--transition);
-}
-
-.message:hover {
-    background: #f8fafb;
-}
-
-.message + .message {
-    margin-top: 1px;
+    border-top:
+        1px solid var(--community-border);
 }
 
 
-/* CRITICAL:
-   avatar is explicitly separated from .message
-   so photos cannot become huge. */
+.community-page .sidebar-user-profile {
+    min-width: 0;
 
-.message-avatar-wrap {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+}
+
+
+.community-page .sidebar-user-copy {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.community-page .sidebar-user-copy strong {
+    max-width: 120px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 11px;
+}
+
+
+.community-page .sidebar-user-copy span {
+    font-size: 9px;
+
+    color: var(--community-text-muted);
+}
+
+
+.community-page .sidebar-user-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 2px;
+}
+
+
+.community-page .sidebar-user-actions button {
+    width: 28px;
+    height: 28px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: transparent;
+
+    color: #728286;
+
+    cursor: pointer;
+}
+
+
+.community-page .sidebar-user-actions button:hover {
+    background: #eaf1f1;
+
+    color: var(--community-primary);
+}
+
+
+/* ============================================================
+   AVATARS
+   ============================================================ */
+
+.community-page .avatar-wrap {
     position: relative;
 
-    width: 34px;
-    height: 34px;
+    display: inline-flex;
 
-    flex: 0 0 34px;
+    width: fit-content;
+    height: fit-content;
 
-    display: block;
+    flex-shrink: 0;
 }
 
-.message-avatar {
-    width: 34px !important;
-    height: 34px !important;
 
-    max-width: 34px !important;
-    max-height: 34px !important;
-
+.community-page .avatar {
     display: block;
 
     object-fit: cover;
 
     border-radius: 50%;
 
-    border: 1px solid var(--ms-border);
-
-    background: var(--ms-primary-light);
+    flex-shrink: 0;
 }
 
-.message-avatar.small {
-    width: 28px !important;
-    height: 28px !important;
 
-    max-width: 28px !important;
-    max-height: 28px !important;
+/* Header */
+
+.community-page .avatar-small {
+    width: 32px !important;
+    height: 32px !important;
+
+    min-width: 32px !important;
+    min-height: 32px !important;
+
+    max-width: 32px !important;
+    max-height: 32px !important;
 }
 
-.message-avatar.large {
-    width: 42px !important;
-    height: 42px !important;
 
-    max-width: 42px !important;
-    max-height: 42px !important;
+/* Sidebar */
+
+.community-page .avatar-medium {
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+    min-height: 34px !important;
+
+    max-width: 34px !important;
+    max-height: 34px !important;
 }
 
-.message-content {
-    min-width: 0;
-    flex: 1;
 
-    overflow: hidden;
+/* Members */
+
+.community-page .avatar-member {
+    width: 34px !important;
+    height: 34px !important;
+
+    min-width: 34px !important;
+    min-height: 34px !important;
+
+    max-width: 34px !important;
+    max-height: 34px !important;
 }
 
-.message-header {
-    min-height: 18px;
 
-    display: flex;
-    align-items: baseline;
+/* Messages */
 
-    gap: 6px;
-}
+.community-page .avatar-message {
+    width: 38px !important;
+    height: 38px !important;
 
-.message-author {
-    color: var(--ms-text);
+    min-width: 38px !important;
+    min-height: 38px !important;
 
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.message-time {
-    color: var(--ms-muted);
-
-    font-size: 9px;
-}
-
-.message-edited {
-    color: var(--ms-muted);
-
-    font-size: 8px;
-}
-
-.message-body,
-.message-text {
-    color: #35474e;
-
-    font-size: 12px;
-    line-height: 1.5;
-
-    overflow-wrap: anywhere;
-    word-break: break-word;
-}
-
-.message-body p {
-    margin: 0;
+    max-width: 38px !important;
+    max-height: 38px !important;
 }
 
 
 /* ============================================================
-   MESSAGE ACTIONS
+   PRESENCE DOTS
    ============================================================ */
 
-.message-actions {
-    position: absolute;
-
-    top: -8px;
-    right: 7px;
-
-    z-index: 20;
-
-    display: none;
-    align-items: center;
-
-    gap: 2px;
-
-    padding: 2px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 7px;
-
-    background: white;
-
-    box-shadow: var(--ms-shadow-sm);
-}
-
-.message:hover .message-actions {
-    display: flex;
-}
-
-.message-actions button {
-    min-width: 27px;
-    height: 25px;
-
-    padding: 0 5px;
-
-    border-radius: 6px;
-
-    background: transparent;
-    color: var(--ms-text-2);
-
-    font-size: 9px;
-    font-weight: 700;
-}
-
-.message-actions button:hover {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-}
-
-.message-actions button[data-delete-message] {
-    color: var(--ms-danger);
-}
-
-.message-actions button[data-delete-message]:hover {
-    background: #fff0ef;
-}
-
-
-/* ============================================================
-   MESSAGE PRESENCE
-   ============================================================ */
-
-.message-avatar-wrap .member-presence-dot {
+.community-page .presence-dot {
     position: absolute;
 
     right: -1px;
@@ -1433,39 +1175,473 @@ a {
     width: 9px;
     height: 9px;
 
-    border: 2px solid white;
+    border: 2px solid #ffffff;
+
     border-radius: 50%;
+
+    background: var(--community-offline);
+
+    box-sizing: content-box;
+}
+
+
+.community-page .presence-online {
+    background: var(--community-online) !important;
+}
+
+
+.community-page .presence-away {
+    background: var(--community-away) !important;
+}
+
+
+.community-page .presence-dnd {
+    background: var(--community-dnd) !important;
+}
+
+
+.community-page .presence-offline {
+    background: var(--community-offline) !important;
 }
 
 
 /* ============================================================
-   DELETED MESSAGE
+   CHAT AREA
    ============================================================ */
 
-.message-deleted {
-    color: var(--ms-muted);
+.community-page .chat-area {
+    min-width: 0;
+    min-height: 0;
 
-    font-size: 11px;
+    display: grid;
+
+    grid-template-rows:
+        62px
+        auto
+        minmax(0, 1fr)
+        auto
+        auto;
+
+    overflow: hidden;
+
+    background: #ffffff;
+}
+
+
+/* CHAT HEADER */
+
+.community-page .chat-header {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding: 0 16px;
+
+    background: #ffffff;
+
+    border-bottom:
+        1px solid var(--community-border);
+}
+
+
+.community-page .chat-header-main {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+.community-page .current-channel-icon {
+    width: 34px;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #f1f6f6;
+
+    color: var(--community-primary);
+
+    font-size: 17px;
+}
+
+
+.community-page .chat-title-row {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+}
+
+
+.community-page .chat-title-row h1 {
+    min-width: 0;
+
+    max-width: 360px;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 14px;
+    font-weight: 750;
+}
+
+
+.community-page .channel-type-label {
+    padding: 2px 6px;
+
+    border-radius: 5px;
+
+    background: #f1f5f5;
+
+    color: #829194;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    text-transform: uppercase;
+}
+
+
+.community-page .chat-header-main p {
+    max-width: 500px;
+
+    margin: 3px 0 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: var(--community-text-muted);
+
+    font-size: 10px;
+}
+
+
+.community-page .chat-header-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 3px;
+
+    flex-shrink: 0;
+}
+
+
+.community-page .chat-header-button {
+    min-width: 34px;
+    height: 34px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 4px;
+
+    padding: 0 7px;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #637477;
+
+    cursor: pointer;
+
+    font-family: inherit;
+
+    font-size: 15px;
+}
+
+
+.community-page .chat-header-button:hover {
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+}
+
+
+.community-page #channelMemberCount {
+    font-size: 9px;
+    font-weight: 700;
+}
+
+
+/* ============================================================
+   MESSAGE SEARCH
+   ============================================================ */
+
+.community-page .message-search-bar {
+    min-width: 0;
+
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin: 7px 14px;
+
+    padding: 0 10px;
+
+    border:
+        1px solid var(--community-border);
+
+    border-radius: 8px;
+
+    background: #f8fafb;
+}
+
+
+.community-page .message-search-bar input {
+    min-width: 0;
+    flex: 1;
+
+    height: 34px;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
+
+    font-size: 12px;
+}
+
+
+.community-page .message-search-bar button {
+    width: 28px;
+    height: 28px;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: transparent;
+
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   MESSAGE LIST
+   ============================================================ */
+
+.community-page .message-list {
+    min-width: 0;
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding:
+        14px 18px 18px;
+
+    background: #ffffff;
+}
+
+
+/* MESSAGE ROW */
+
+.community-page .message-row {
+    position: relative;
+
+    min-width: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        38px
+        minmax(0, 1fr);
+
+    column-gap: 10px;
+
+    padding: 7px 8px;
+
+    border-radius: 8px;
+}
+
+
+.community-page .message-row:hover {
+    background: #fafcfc;
+}
+
+
+.community-page .message-content-wrap {
+    min-width: 0;
+
+    overflow: hidden;
+}
+
+
+.community-page .message-meta {
+    min-width: 0;
+
+    display: flex;
+    align-items: baseline;
+
+    gap: 7px;
+
+    line-height: 1.2;
+}
+
+
+.community-page .message-author {
+    max-width: 220px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color: var(--community-text);
+
+    font-size: 12px;
+    font-weight: 750;
+}
+
+
+.community-page .message-time {
+    color: var(--community-text-muted);
+
+    font-size: 9px;
+
+    white-space: nowrap;
+}
+
+
+.community-page .message-edited {
+    color: var(--community-text-muted);
+
+    font-size: 9px;
+}
+
+
+.community-page .message-body {
+    min-width: 0;
+
+    margin-top: 3px;
+
+    color: #405256;
+
+    font-size: 12px;
+
+    line-height: 1.55;
+
+    overflow-wrap: anywhere;
+}
+
+
+.community-page .deleted-message {
+    color: #9aa7aa;
+
     font-style: italic;
 }
 
 
 /* ============================================================
-   MESSAGE ATTACHMENTS
+   MESSAGE ACTIONS
    ============================================================ */
 
-.message-attachments {
+.community-page .message-actions {
+    position: absolute;
+
+    top: 2px;
+    right: 8px;
+
+    display: none;
+
+    align-items: center;
+
+    gap: 2px;
+
+    padding: 3px;
+
+    border:
+        1px solid var(--community-border);
+
+    border-radius: 7px;
+
+    background: #ffffff;
+
+    box-shadow:
+        0 3px 12px rgba(21, 42, 45, 0.08);
+}
+
+
+.community-page .message-row:hover .message-actions {
+    display: flex;
+}
+
+
+.community-page .message-actions button {
+    width: 27px;
+    height: 27px;
+
+    display: grid;
+    place-items: center;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 5px;
+
+    background: transparent;
+
+    color: #647579;
+
+    cursor: pointer;
+}
+
+
+.community-page .message-actions button:hover {
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+}
+
+
+/* ============================================================
+   ATTACHMENTS
+   ============================================================ */
+
+.community-page .message-attachments {
+    min-width: 0;
+
     display: flex;
     flex-wrap: wrap;
 
-    gap: 6px;
+    gap: 8px;
 
-    margin-top: 6px;
-
-    max-width: 100%;
+    margin-top: 7px;
 }
 
-.message-image {
+
+.community-page .message-attachments img,
+.community-page .message-attachment-image,
+.community-page .attachment-image,
+.community-page .message-media img {
     display: block;
 
     width: auto !important;
@@ -1474,83 +1650,199 @@ a {
     max-width: min(280px, 100%) !important;
     max-height: 220px !important;
 
-    object-fit: contain;
+    object-fit: cover;
 
-    border: 1px solid var(--ms-border);
-    border-radius: 9px;
+    border:
+        1px solid var(--community-border);
 
-    background: #f3f6f7;
-
-    cursor: pointer;
+    border-radius: 8px;
 }
 
-.message-audio,
-.message-attachments audio {
-    width: min(330px, 100%);
 
-    height: 36px;
-}
-
-.message-file,
-.attachment-file-link {
-    max-width: min(320px, 100%);
+.community-page .message-attachment {
+    max-width: 320px;
 
     display: flex;
     align-items: center;
 
-    gap: 7px;
+    gap: 9px;
 
-    padding: 8px 10px;
+    padding: 9px 10px;
 
-    border: 1px solid var(--ms-border);
+    border:
+        1px solid var(--community-border);
+
     border-radius: 8px;
 
-    background: #f7fafb;
+    background: #f8fbfb;
+}
 
-    color: var(--ms-accent);
+
+.community-page .attachment-file-icon {
+    width: 30px;
+    height: 30px;
+
+    display: grid;
+    place-items: center;
+
+    flex-shrink: 0;
+
+    border-radius: 7px;
+
+    background: var(--community-primary-soft);
+}
+
+
+.community-page .attachment-file-copy {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.community-page .attachment-file-copy strong {
+    max-width: 210px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    font-size: 11px;
+}
+
+
+.community-page .attachment-file-copy span {
+    color: var(--community-text-muted);
+
+    font-size: 9px;
+}
+
+
+.community-page .attachment-download {
+    color: var(--community-primary);
 
     font-size: 10px;
     font-weight: 700;
 
-    overflow-wrap: anywhere;
+    text-decoration: none;
 }
 
-.message-file:hover,
-.attachment-file-link:hover {
-    background: var(--ms-primary-light);
+
+.community-page .attachment-download:hover {
+    text-decoration: underline;
+}
+
+
+/* VOICE */
+
+.community-page .message-attachments audio {
+    display: block;
+
+    width: min(300px, 100%);
+
+    max-width: 100%;
+
+    height: 38px;
 }
 
 
 /* ============================================================
-   LOADING / EMPTY MESSAGE STATES
+   WELCOME MESSAGE
    ============================================================ */
 
-#messageLoading {
-    padding: 10px;
+.community-page .channel-welcome {
+    max-width: 560px;
 
-    color: var(--ms-muted);
+    margin: 80px auto;
+
+    padding: 26px;
 
     text-align: center;
-
-    font-size: 10px;
 }
 
-.empty-message,
-.no-messages,
-.channel-empty {
-    min-height: 100px;
+
+.community-page .channel-welcome-icon {
+    width: 54px;
+    height: 54px;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0 auto 12px;
+
+    border-radius: 14px;
+
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+
+    font-size: 25px;
+}
+
+
+.community-page .channel-welcome h2 {
+    margin: 0 0 7px;
+
+    font-size: 20px;
+}
+
+
+.community-page .channel-welcome p {
+    margin: 0;
+
+    color: var(--community-text-muted);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+
+.community-page .message-loading {
+    height: 30px;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    padding: 20px;
+    gap: 7px;
 
-    color: var(--ms-muted);
+    color: var(--community-text-muted);
 
-    text-align: center;
+    font-size: 10px;
+}
 
-    font-size: 11px;
+
+.community-page .loading-spinner {
+    width: 14px;
+    height: 14px;
+
+    border:
+        2px solid #dce7e7;
+
+    border-top-color:
+        var(--community-primary);
+
+    border-radius: 50%;
+
+    animation:
+        community-spin 0.7s linear infinite;
+}
+
+
+@keyframes community-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 
@@ -1558,29 +1850,71 @@ a {
    TYPING INDICATOR
    ============================================================ */
 
-#typingIndicator {
-    flex: 0 0 auto;
+.community-page .typing-indicator {
+    min-height: 25px;
 
-    min-height: 22px;
+    display: flex;
+    align-items: center;
 
-    padding: 2px 18px 4px;
+    gap: 7px;
 
-    color: var(--ms-muted);
+    padding:
+        2px 20px 4px;
+
+    background: #ffffff;
+
+    color: var(--community-text-muted);
 
     font-size: 10px;
-    font-weight: 600;
 }
 
-#typingIndicator:not(.hidden)::before {
-    content: "•";
 
-    margin-right: 5px;
+.community-page .typing-dots {
+    display: inline-flex;
 
-    color: var(--ms-primary);
+    align-items: center;
+
+    gap: 2px;
 }
 
-#typingText {
-    color: var(--ms-muted);
+
+.community-page .typing-dots i {
+    width: 4px;
+    height: 4px;
+
+    border-radius: 50%;
+
+    background: var(--community-primary);
+
+    animation:
+        community-typing 1.1s infinite ease-in-out;
+}
+
+
+.community-page .typing-dots i:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+
+.community-page .typing-dots i:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+
+@keyframes community-typing {
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+
+        opacity: 0.45;
+    }
+
+    30% {
+        transform: translateY(-3px);
+
+        opacity: 1;
+    }
 }
 
 
@@ -1588,88 +1922,68 @@ a {
    ATTACHMENT PREVIEW
    ============================================================ */
 
-#attachmentPreview {
-    width: 100%;
-
-    margin-bottom: 6px;
-
-    padding: 7px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 9px;
-
-    background: #f8fafb;
-}
-
-.attachment-preview-item {
+.community-page .attachment-preview {
     min-width: 0;
 
     display: flex;
-    align-items: center;
+    flex-wrap: wrap;
 
-    gap: 8px;
+    gap: 6px;
 
-    padding: 5px;
+    padding:
+        7px 14px;
 
-    border-radius: 7px;
+    border-top:
+        1px solid var(--community-border);
 
-    background: white;
+    background: #fafcfc;
 }
 
-.attachment-preview-item + .attachment-preview-item {
-    margin-top: 4px;
-}
 
-.attachment-preview-item img {
-    width: 42px !important;
-    height: 42px !important;
-
-    flex: 0 0 42px;
-
-    object-fit: cover;
-
-    border-radius: 7px;
-}
-
-.preview-file-icon {
-    width: 42px;
-    height: 42px;
-
-    flex: 0 0 42px;
+.community-page .pending-file {
+    max-width: 220px;
 
     display: flex;
     align-items: center;
-    justify-content: center;
 
-    border-radius: 7px;
+    gap: 6px;
 
-    background: var(--ms-primary-light);
+    padding: 5px 7px;
 
-    font-size: 18px;
-}
+    border:
+        1px solid var(--community-border);
 
-.attachment-preview-item strong,
-.attachment-preview-item small {
-    display: block;
+    border-radius: 6px;
 
-    overflow: hidden;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.attachment-preview-item strong {
-    color: var(--ms-text);
+    background: #ffffff;
 
     font-size: 10px;
 }
 
-.attachment-preview-item small {
-    margin-top: 2px;
 
-    color: var(--ms-muted);
+.community-page .pending-file-name {
+    min-width: 0;
 
-    font-size: 8px;
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+.community-page .pending-file-remove {
+    width: 20px;
+    height: 20px;
+
+    flex-shrink: 0;
+
+    border: 0;
+    border-radius: 4px;
+
+    background: #f3f6f6;
+
+    cursor: pointer;
 }
 
 
@@ -1677,442 +1991,209 @@ a {
    COMPOSER
    ============================================================ */
 
-.composer {
-    position: relative;
-
-    flex: 0 0 auto;
-
-    padding: 7px 12px 10px;
-
-    background: white;
-
-    border-top: 1px solid var(--ms-border);
-
-    z-index: 50;
-}
-
-.composer-main {
+.community-page .composer {
     position: relative;
 
     min-width: 0;
 
+    padding:
+        9px 14px 8px;
+
+    background: #ffffff;
+
+    border-top:
+        1px solid var(--community-border);
+
+    z-index: 30;
+}
+
+
+.community-page .composer-main {
+    min-width: 0;
+
+    min-height: 44px;
+
     display: flex;
     align-items: flex-end;
 
-    gap: 4px;
+    gap: 5px;
 
-    min-height: 47px;
+    padding: 5px;
 
-    padding: 5px 5px 5px 7px;
+    border:
+        1px solid var(--community-border-strong);
 
-    border: 1px solid #d8e2e4;
-    border-radius: 13px;
+    border-radius: 10px;
 
-    background: #f8fafb;
-
-    box-shadow:
-        0 2px 8px rgba(25, 50, 58, .035);
-
-    transition:
-        border-color var(--transition),
-        background var(--transition),
-        box-shadow var(--transition);
-}
-
-.composer-main:focus-within {
-    border-color: rgba(8, 127, 115, .42);
-
-    background: white;
+    background: #f9fbfb;
 
     box-shadow:
-        0 0 0 3px rgba(8, 127, 115, .06);
+        0 1px 2px rgba(10, 35, 39, 0.02);
 }
 
 
-/* Composer tools */
+.community-page .composer-main:focus-within {
+    border-color:
+        rgba(8, 127, 115, 0.42);
 
-.composer-tools {
-    display: flex;
-    align-items: flex-end;
+    box-shadow:
+        0 0 0 3px
+        rgba(8, 127, 115, 0.07);
 
-    gap: 1px;
-
-    flex: 0 0 auto;
+    background: #ffffff;
 }
 
-.composer-tool {
-    width: 31px;
-    height: 31px;
 
-    flex: 0 0 31px;
+.community-page .composer-tool,
+.community-page .send-button {
+    width: 34px;
+    min-width: 34px;
 
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    height: 34px;
+
+    display: grid;
+    place-items: center;
 
     padding: 0;
 
-    border-radius: 8px;
+    border: 0;
+    border-radius: 7px;
 
+    cursor: pointer;
+
+    font-family: inherit;
+
+    flex-shrink: 0;
+}
+
+
+.community-page .composer-tool {
     background: transparent;
-    color: var(--ms-text-2);
+
+    color: #637578;
+
+    font-size: 16px;
+}
+
+
+.community-page .composer-tool:hover {
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+}
+
+
+.community-page .send-button {
+    background:
+        var(--community-primary);
+
+    color: #ffffff;
 
     font-size: 15px;
-
-    transition:
-        background var(--transition),
-        color var(--transition),
-        transform var(--transition);
-}
-
-.composer-tool:hover {
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-}
-
-.composer-tool:active {
-    transform: scale(.93);
+    font-weight: 800;
 }
 
 
-/* Message input */
+.community-page .send-button:hover {
+    background:
+        var(--community-primary-dark);
+}
 
-#messageInput {
-    flex: 1;
 
+.community-page #messageInput {
     min-width: 0;
 
-    min-height: 31px;
-    max-height: 125px;
+    flex: 1;
+
+    width: 100%;
+
+    min-height: 34px;
+    max-height: 160px;
 
     resize: none;
 
-    padding: 7px 4px;
+    padding:
+        8px 7px;
 
-    border: 0;
-    outline: 0;
+    border: 0 !important;
+    outline: 0 !important;
 
-    background: transparent;
+    background: transparent !important;
 
-    color: var(--ms-text);
+    color: var(--community-text);
+
+    font-family: inherit;
 
     font-size: 12px;
+
     line-height: 1.45;
-}
 
-#messageInput::placeholder {
-    color: #96a4a9;
-}
-
-
-/* Send button */
-
-#sendMessageButton {
-    width: 33px;
-    height: 33px;
-
-    flex: 0 0 33px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    padding: 0;
-
-    border-radius: 9px;
-
-    background: var(--ms-primary);
-    color: white;
-
-    font-size: 14px;
-
-    transition:
-        background var(--transition),
-        transform var(--transition);
-}
-
-#sendMessageButton:hover {
-    background: var(--ms-primary-dark);
-}
-
-#sendMessageButton:active {
-    transform: scale(.94);
+    overflow-y: auto;
 }
 
 
-/* Voice recording */
-
-#voiceNoteButton.recording {
-    background: #fff0ef;
-    color: var(--ms-danger);
-
-    animation: msVoicePulse 1.1s infinite;
-}
-
-@keyframes msVoicePulse {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(217, 83, 79, .12);
-    }
-
-    50% {
-        box-shadow: 0 0 0 5px rgba(217, 83, 79, .06);
-    }
+.community-page #messageInput::placeholder {
+    color: #9aa8ab;
 }
 
 
-/* Character count */
-
-#messageCharacterCount {
-    position: absolute;
-
-    right: 13px;
-    bottom: -16px;
-
-    color: var(--ms-muted);
-
-    font-size: 8px;
-}
-
-
-/* ============================================================
-   PICKER PANELS
-   ============================================================ */
-
-.picker-panel {
-    position: absolute;
-
-    z-index: 500;
-
-    left: 7px;
-    bottom: calc(100% + 8px);
-
-    width: min(360px, calc(100vw - 24px));
-    max-height: 380px;
-
-    overflow: hidden;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 13px;
-
-    background: white;
-
-    box-shadow: var(--ms-shadow-lg);
-}
-
-.picker-header {
-    min-height: 43px;
+.community-page .composer-footer {
+    min-height: 16px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    padding: 0 9px 0 12px;
+    padding:
+        4px 4px 0;
 
-    border-bottom: 1px solid var(--ms-border-light);
-
-    color: var(--ms-text);
-
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.picker-header button {
-    width: 27px;
-    height: 27px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 7px;
-
-    background: transparent;
-    color: var(--ms-muted);
-}
-
-.picker-header button:hover {
-    background: var(--ms-soft-2);
-    color: var(--ms-text);
-}
-
-#emojiSearch,
-#gifSearch {
-    width: calc(100% - 18px);
-    height: 31px;
-
-    margin: 7px 9px;
-
-    padding: 0 9px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
-
-    outline: none;
-
-    background: var(--ms-soft);
-}
-
-#emojiSearch:focus,
-#gifSearch:focus {
-    background: white;
-
-    border-color: rgba(8, 127, 115, .4);
-}
-
-
-/* Emoji categories */
-
-#emojiCategories {
-    display: flex;
-
-    gap: 2px;
-
-    padding: 2px 8px;
-
-    overflow-x: auto;
-}
-
-.emoji-category-button {
-    min-width: 28px;
-    height: 27px;
-
-    border-radius: 7px;
-
-    background: transparent;
-}
-
-.emoji-category-button:hover,
-.emoji-category-button.active {
-    background: var(--ms-primary-light);
-}
-
-
-/* Emoji / sticker / GIF grids */
-
-#emojiGrid,
-#stickerGrid,
-#gifGrid {
-    display: grid;
-
-    grid-template-columns: repeat(7, 1fr);
-
-    gap: 2px;
-
-    max-height: 275px;
-
-    padding: 8px;
-
-    overflow-y: auto;
-}
-
-.emoji-item,
-.sticker-item {
-    width: 100%;
-    height: 37px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 7px;
-
-    background: transparent;
-
-    font-size: 20px;
-
-    transition:
-        background var(--transition),
-        transform var(--transition);
-}
-
-.emoji-item:hover,
-.sticker-item:hover {
-    background: var(--ms-primary-light);
-
-    transform: scale(1.04);
-}
-
-.gif-empty {
-    grid-column: 1 / -1;
-
-    min-height: 160px;
-
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    padding: 20px;
-
-    color: var(--ms-muted);
-
-    text-align: center;
-}
-
-.gif-empty span {
-    width: 48px;
-    height: 34px;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin-bottom: 9px;
-
-    border-radius: 8px;
-
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-
-    font-size: 11px;
-    font-weight: 900;
-}
-
-.gif-empty strong {
-    color: var(--ms-text);
-
-    font-size: 12px;
-}
-
-.gif-empty small {
-    max-width: 230px;
-
-    margin-top: 4px;
+    color: #9aa7aa;
 
     font-size: 9px;
 }
 
 
+.community-page .composer-footer span:last-child {
+    white-space: nowrap;
+}
+
+
 /* ============================================================
-   MEMBER SIDEBAR
+   COMPOSER POPOVERS
    ============================================================ */
 
-#memberSidebar {
-    position: fixed;
-    z-index: 400;
+.community-page .composer-popover {
+    position: absolute;
 
-    top: var(--top-header);
-    right: 0;
-    bottom: 0;
+    left: 14px;
+    bottom: 82px;
 
-    width: var(--member-sidebar);
+    z-index: 80;
+
+    width: min(360px, calc(100% - 28px));
+
+    max-height: 390px;
 
     display: flex;
     flex-direction: column;
 
-    min-height: 0;
+    overflow: hidden;
 
-    background: white;
+    border:
+        1px solid var(--community-border-strong);
 
-    border-left: 1px solid var(--ms-border);
+    border-radius: 10px;
+
+    background: #ffffff;
 
     box-shadow:
-        -3px 0 15px rgba(25, 50, 58, .025);
+        0 12px 35px
+        rgba(18, 43, 47, 0.14);
 }
 
-.member-sidebar-header {
-    min-height: 56px;
+
+.community-page .popover-header {
+    height: 42px;
 
     display: flex;
     align-items: center;
@@ -2120,292 +2201,354 @@ a {
 
     padding: 0 11px;
 
-    border-bottom: 1px solid var(--ms-border);
+    border-bottom:
+        1px solid var(--community-border);
 }
 
-.member-sidebar-title {
-    color: var(--ms-text);
 
-    font-size: 11px;
-    font-weight: 800;
+.community-page .popover-header strong {
+    font-size: 12px;
 }
 
-#memberCount {
-    margin-left: 3px;
 
-    color: var(--ms-muted);
+.community-page .popover-header button {
+    width: 28px;
+    height: 28px;
 
-    font-size: 9px;
-}
-
-#closeMemberSidebarButton {
-    width: 29px;
-    height: 29px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 7px;
+    border: 0;
+    border-radius: 6px;
 
     background: transparent;
-    color: var(--ms-muted);
-}
 
-#closeMemberSidebarButton:hover {
-    background: var(--ms-soft-2);
-    color: var(--ms-text);
+    cursor: pointer;
 }
 
 
-/* Member search */
+.community-page .popover-search {
+    height: 34px;
 
-#memberSearchInput {
-    width: calc(100% - 18px);
-    height: 33px;
-
-    margin: 9px;
+    margin: 8px;
 
     padding: 0 9px;
 
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
+    border:
+        1px solid var(--community-border);
 
-    outline: none;
+    border-radius: 7px;
 
-    background: var(--ms-soft);
+    outline: 0;
 
-    color: var(--ms-text);
-
-    font-size: 10px;
-}
-
-#memberSearchInput:focus {
-    background: white;
-
-    border-color: rgba(8, 127, 115, .4);
+    font-size: 11px;
 }
 
 
-/* Member list */
+.community-page .emoji-categories {
+    display: flex;
 
-#memberList {
-    flex: 1;
+    gap: 3px;
 
+    padding: 0 8px 7px;
+
+    overflow-x: auto;
+}
+
+
+.community-page .emoji-categories button {
+    width: 31px;
+    height: 28px;
+
+    flex-shrink: 0;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: #f5f8f8;
+
+    cursor: pointer;
+}
+
+
+.community-page .emoji-grid {
     min-height: 0;
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(8, 1fr);
+
+    gap: 3px;
 
     overflow-y: auto;
 
-    padding: 2px 7px 10px;
+    padding: 8px;
 }
 
-.member-row {
-    width: 100%;
 
-    min-height: 45px;
+.community-page .emoji-grid button {
+    aspect-ratio: 1;
 
-    display: flex;
-    align-items: center;
-
-    gap: 8px;
-
-    padding: 5px 6px;
-
-    border-radius: 8px;
+    border: 0;
+    border-radius: 6px;
 
     background: transparent;
 
-    text-align: left;
+    font-size: 19px;
 
-    transition:
-        background var(--transition);
-}
-
-.member-row:hover {
-    background: var(--ms-soft);
+    cursor: pointer;
 }
 
 
-/* CRITICAL MEMBER IMAGE SIZE */
-
-.member-row .member-avatar,
-.member-avatar {
-    width: 31px !important;
-    height: 31px !important;
-
-    max-width: 31px !important;
-    max-height: 31px !important;
-
-    flex: 0 0 31px;
-
-    object-fit: cover;
-
-    border-radius: 50%;
-
-    border: 1px solid var(--ms-border);
-
-    background: var(--ms-primary-light);
+.community-page .emoji-grid button:hover {
+    background: var(--community-primary-soft);
 }
 
-.member-avatar-wrap {
-    position: relative;
 
-    width: 31px;
-    height: 31px;
+.community-page .sticker-grid,
+.community-page .gif-grid {
+    display: grid;
 
-    flex: 0 0 31px;
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 7px;
+
+    overflow-y: auto;
+
+    padding: 10px;
 }
 
-.member-avatar-wrap .member-avatar {
-    width: 31px !important;
-    height: 31px !important;
+
+.community-page .sticker-grid button,
+.community-page .gif-grid button {
+    min-height: 58px;
+
+    border:
+        1px solid var(--community-border);
+
+    border-radius: 8px;
+
+    background: #f8fbfb;
+
+    cursor: pointer;
 }
 
-.member-row-info {
-    min-width: 0;
-    flex: 1;
-}
 
-.member-row-name {
-    display: block;
+.community-page .sticker-grid button:hover,
+.community-page .gif-grid button:hover {
+    border-color:
+        rgba(8, 127, 115, 0.35);
 
-    overflow: hidden;
-
-    color: var(--ms-text);
-
-    font-size: 10px;
-    font-weight: 700;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.member-row-status {
-    display: block;
-
-    margin-top: 1px;
-
-    overflow: hidden;
-
-    color: var(--ms-muted);
-
-    font-size: 8px;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-.member-role {
-    color: var(--ms-primary);
-
-    font-size: 7px;
-    font-weight: 800;
-
-    letter-spacing: .04em;
-
-    text-transform: uppercase;
-}
-
-.member-presence-dot {
-    position: absolute;
-
-    right: -1px;
-    bottom: -1px;
-
-    width: 9px;
-    height: 9px;
-
-    border: 2px solid white;
-    border-radius: 50%;
+    background: var(--community-primary-soft);
 }
 
 
 /* ============================================================
-   FRIENDS
+   MEMBER SIDEBAR
    ============================================================ */
 
-.friends-online-summary {
-    margin-bottom: 10px;
+.community-page .member-sidebar {
+    min-width: 0;
+    min-height: 0;
 
-    padding: 9px 11px;
+    display: grid;
 
-    border-radius: 9px;
+    grid-template-rows:
+        58px
+        48px
+        minmax(0, 1fr);
 
-    background: var(--ms-primary-light);
+    overflow: hidden;
 
-    color: var(--ms-primary);
+    background: #ffffff;
+
+    border-left:
+        1px solid var(--community-border);
+}
+
+
+.community-page .member-sidebar-header {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 0 12px;
+
+    border-bottom:
+        1px solid var(--community-border);
+}
+
+
+.community-page .member-sidebar-header > div {
+    display: flex;
+    align-items: baseline;
+
+    gap: 5px;
+}
+
+
+.community-page .member-sidebar-header strong {
+    font-size: 11px;
+
+    letter-spacing: 0.04em;
+}
+
+
+.community-page .member-sidebar-header span {
+    color: var(--community-text-muted);
+
+    font-size: 9px;
+}
+
+
+.community-page .member-search {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    margin: 8px 10px;
+
+    padding: 0 8px;
+
+    border:
+        1px solid var(--community-border);
+
+    border-radius: 7px;
+
+    background: #fafcfc;
+}
+
+
+.community-page .member-search > span {
+    color: var(--community-text-muted);
+}
+
+
+.community-page .member-search input {
+    min-width: 0;
+    width: 100%;
+
+    height: 30px;
+
+    border: 0;
+    outline: 0;
+
+    background: transparent;
 
     font-size: 10px;
 }
 
-.friends-online-summary strong {
-    font-size: 17px;
+
+.community-page .member-list {
+    min-height: 0;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    padding: 5px 7px 12px;
 }
 
-.friends-member-list {
+
+.community-page .member-section-label {
+    padding:
+        9px 6px 5px;
+
+    color: #819094;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 0.04em;
+}
+
+
+.community-page .member-item {
+    width: 100%;
+    min-width: 0;
+
+    min-height: 56px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 6px 7px;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: transparent;
+
+    color: var(--community-text);
+
+    text-align: left;
+
+    cursor: pointer;
+
+    font-family: inherit;
+}
+
+
+.community-page .member-item:hover {
+    background: #f5f9f8;
+}
+
+
+.community-page .member-copy {
+    min-width: 0;
+
     display: flex;
     flex-direction: column;
 
     gap: 2px;
 }
 
-.friend-row {
-    display: flex;
-    align-items: center;
 
-    gap: 8px;
-
-    padding: 7px;
-
-    border-radius: 8px;
-}
-
-.friend-row:hover {
-    background: var(--ms-soft);
-}
-
-.friend-avatar {
-    width: 34px !important;
-    height: 34px !important;
-
-    max-width: 34px !important;
-    max-height: 34px !important;
-
-    flex: 0 0 34px;
-
-    object-fit: cover;
-
-    border-radius: 50%;
-
-    border: 1px solid var(--ms-border);
-}
-
-.friend-info {
+.community-page .member-name-row {
     min-width: 0;
 }
 
-.friend-info strong,
-.friend-info small {
-    display: block;
-}
 
-.friend-info strong {
+.community-page .member-name {
+    display: block;
+
+    max-width: 170px;
+
     overflow: hidden;
 
-    color: var(--ms-text);
-
-    font-size: 10px;
+    text-overflow: ellipsis;
 
     white-space: nowrap;
-    text-overflow: ellipsis;
+
+    font-size: 11px;
+    font-weight: 700;
 }
 
-.friend-info small {
-    margin-top: 1px;
 
-    color: var(--ms-muted);
+.community-page .member-status {
+    color: var(--community-text-muted);
 
-    font-size: 8px;
+    font-size: 9px;
+}
+
+
+.community-page .member-role {
+    width: fit-content;
+
+    padding: 1px 4px;
+
+    border-radius: 3px;
+
+    background: #f1f5f5;
+
+    color: #7a898c;
+
+    font-size: 7px;
+
+    text-transform: uppercase;
 }
 
 
@@ -2413,1940 +2556,497 @@ a {
    MODALS
    ============================================================ */
 
-#friendsModal,
-#profileModal,
-#rulesModal,
-#filePreviewModal,
-#contestModal,
-#createChannelModal,
-#callPickerModal {
+.community-page .modal-overlay {
     position: fixed;
-    z-index: 2000;
 
     inset: 0;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    z-index: 500;
 
-    padding: 18px;
+    display: grid;
+    place-items: center;
 
-    background: rgba(18, 35, 42, .42);
+    padding: 20px;
 
-    backdrop-filter: blur(3px);
-}
-
-#friendsModal.hidden,
-#profileModal.hidden,
-#rulesModal.hidden,
-#filePreviewModal.hidden,
-#contestModal.hidden,
-#createChannelModal.hidden,
-#callPickerModal.hidden {
-    display: none !important;
+    background:
+        rgba(20, 38, 41, 0.38);
 }
 
 
-/* Modal panels */
-
-.modal-panel,
-.friends-modal-content,
-.profile-modal-content,
-.rules-modal-content,
-.file-modal-content,
-.contest-modal-content,
-.call-picker-content {
+.community-page .modal-card {
     width: min(560px, 100%);
-    max-height: min(760px, 90vh);
+    max-height: min(720px, calc(100vh - 40px));
 
-    overflow-y: auto;
+    overflow: auto;
 
-    padding: 19px;
+    border:
+        1px solid var(--community-border);
 
-    border: 1px solid var(--ms-border);
-    border-radius: 15px;
+    border-radius: 13px;
 
-    background: white;
+    background: #ffffff;
 
-    box-shadow: var(--ms-shadow-lg);
+    box-shadow:
+        0 25px 70px
+        rgba(15, 35, 39, 0.20);
 }
 
-.modal-header {
-    min-height: 35px;
 
+.community-page .modal-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
 
-    margin-bottom: 13px;
+    gap: 15px;
+
+    padding: 17px;
+
+    border-bottom:
+        1px solid var(--community-border);
 }
 
-.modal-header h2,
-.modal-header h3 {
+
+.community-page .modal-header h2 {
     margin: 0;
 
-    color: var(--ms-text);
-
-    font-size: 16px;
-}
-
-.modal-close,
-.modal-header button {
-    width: 31px;
-    height: 31px;
-
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 8px;
-
-    background: transparent;
-    color: var(--ms-muted);
-
-    font-size: 15px;
-}
-
-.modal-close:hover,
-.modal-header button:hover {
-    background: var(--ms-soft-2);
-    color: var(--ms-text);
+    font-size: 17px;
 }
 
 
-/* ============================================================
-   PROFILE MODAL
-   ============================================================ */
+.community-page .modal-header p {
+    margin: 4px 0 0;
 
-.profile-card-content {
-    text-align: center;
-}
-
-.profile-modal-avatar {
-    width: 82px !important;
-    height: 82px !important;
-
-    max-width: 82px !important;
-    max-height: 82px !important;
-
-    object-fit: cover;
-
-    border-radius: 50%;
-
-    border: 4px solid white;
-
-    box-shadow:
-        0 0 0 1px var(--ms-border),
-        0 8px 20px rgba(20, 40, 48, .08);
-
-    background: var(--ms-primary-light);
-}
-
-.profile-card-content h2 {
-    margin: 11px 0 2px;
-
-    color: var(--ms-text);
-
-    font-size: 18px;
-}
-
-.profile-card-content p {
-    color: var(--ms-muted);
+    color: var(--community-text-muted);
 
     font-size: 10px;
 }
 
-.profile-status {
-    display: inline-flex;
-    align-items: center;
 
-    gap: 5px;
+.community-page .modal-header > button {
+    width: 30px;
+    height: 30px;
 
-    padding: 5px 9px;
+    border: 0;
+    border-radius: 6px;
 
-    border-radius: 999px;
-
-    background: var(--ms-soft);
-
-    font-size: 9px;
-    font-weight: 700;
-}
-
-.profile-status-dot {
-    width: 7px;
-    height: 7px;
-
-    border-radius: 50%;
-
-    background: currentColor;
-}
-
-.profile-status-actions {
-    display: flex;
-    justify-content: center;
-
-    flex-wrap: wrap;
-
-    gap: 5px;
-
-    margin-top: 14px;
-}
-
-.profile-status-actions button {
-    padding: 6px 9px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 7px;
-
-    background: white;
-    color: var(--ms-text-2);
-
-    font-size: 9px;
-    font-weight: 700;
-}
-
-.profile-status-actions button:hover {
-    border-color: #9bcac4;
-    background: var(--ms-primary-light);
-    color: var(--ms-primary);
-}
-
-
-/* ============================================================
-   FORMS
-   ============================================================ */
-
-input,
-textarea,
-select {
-    color: var(--ms-text);
-}
-
-.form-group {
-    margin-bottom: 12px;
-}
-
-.form-group label {
-    display: block;
-
-    margin-bottom: 4px;
-
-    color: var(--ms-text);
-
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.form-group input,
-.form-group textarea,
-.form-group select,
-#createChannelForm input,
-#createChannelForm textarea,
-#createChannelForm select {
-    width: 100%;
-
-    padding: 8px 9px;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 8px;
-
-    outline: none;
-
-    background: white;
-
-    font-size: 11px;
-}
-
-.form-group textarea,
-#createChannelForm textarea {
-    min-height: 85px;
-
-    resize: vertical;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus,
-#createChannelForm input:focus,
-#createChannelForm textarea:focus,
-#createChannelForm select:focus {
-    border-color: rgba(8, 127, 115, .45);
-
-    box-shadow:
-        0 0 0 3px rgba(8, 127, 115, .06);
-}
-
-
-/* ============================================================
-   CALL PICKER
-   ============================================================ */
-
-#callMemberList {
-    max-height: 350px;
-
-    overflow-y: auto;
-
-    margin: 9px 0;
-
-    border: 1px solid var(--ms-border);
-
-    border-radius: 9px;
-}
-
-.call-member-row {
-    display: flex;
-    align-items: center;
-
-    gap: 8px;
-
-    padding: 8px;
-
-    border-bottom: 1px solid var(--ms-border-light);
+    background: #f3f6f6;
 
     cursor: pointer;
 }
 
-.call-member-row:last-child {
-    border-bottom: 0;
+
+/* ============================================================
+   FRIENDS
+   ============================================================ */
+
+.community-page .friends-tabs {
+    display: flex;
+
+    gap: 5px;
+
+    padding: 10px 14px;
+
+    border-bottom:
+        1px solid var(--community-border);
 }
 
-.call-member-row:hover {
-    background: var(--ms-soft);
+
+.community-page .friends-tab {
+    height: 31px;
+
+    padding: 0 10px;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: transparent;
+
+    color: var(--community-text-soft);
+
+    font-size: 10px;
+
+    cursor: pointer;
 }
 
-.call-member-row.selected {
-    background: var(--ms-primary-light);
+
+.community-page .friends-tab.active {
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+
+    font-weight: 700;
 }
 
-.call-member-avatar {
-    width: 32px !important;
-    height: 32px !important;
 
-    max-width: 32px !important;
-    max-height: 32px !important;
+.community-page .friends-content {
+    padding: 10px;
+}
 
-    flex: 0 0 32px;
+
+.community-page .friend-item {
+    min-height: 52px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 6px 8px;
+
+    border-radius: 8px;
+}
+
+
+.community-page .friend-item:hover {
+    background: #f7fafa;
+}
+
+
+.community-page .friend-item-copy {
+    min-width: 0;
+
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+
+.community-page .friend-item-copy strong {
+    font-size: 11px;
+}
+
+
+.community-page .friend-item-copy span {
+    color: var(--community-text-muted);
+
+    font-size: 9px;
+}
+
+
+.community-page .secondary-button {
+    width: 30px;
+    height: 30px;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: var(--community-primary-soft);
+
+    color: var(--community-primary);
+
+    cursor: pointer;
+}
+
+
+/* ============================================================
+   PROFILE
+   ============================================================ */
+
+.community-page .profile-hero {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 18px;
+
+    border-bottom:
+        1px solid var(--community-border);
+}
+
+
+.community-page .profile-hero img {
+    width: 58px !important;
+    height: 58px !important;
+
+    min-width: 58px !important;
+    min-height: 58px !important;
+
+    max-width: 58px !important;
+    max-height: 58px !important;
 
     object-fit: cover;
 
     border-radius: 50%;
 }
 
-.selected-call-count,
-#selectedCallMemberCount {
-    color: var(--ms-primary);
+
+.community-page .profile-hero-copy {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+
+.community-page .profile-hero-copy strong {
+    font-size: 14px;
+}
+
+
+.community-page .profile-hero-copy span {
+    color: var(--community-text-muted);
 
     font-size: 10px;
-    font-weight: 800;
 }
 
 
-/* ============================================================
-   NOTIFICATION PANEL
-   ============================================================ */
+.community-page .status-options {
+    display: grid;
 
-#notificationPanel {
-    position: fixed;
-    z-index: 3000;
+    grid-template-columns:
+        repeat(2, 1fr);
 
-    top: calc(var(--top-header) - 3px);
-    right: 10px;
+    gap: 7px;
 
-    width: min(360px, calc(100vw - 20px));
-    max-height: 510px;
-
-    overflow-y: auto;
-
-    border: 1px solid var(--ms-border);
-    border-radius: 13px;
-
-    background: white;
-
-    box-shadow: var(--ms-shadow-lg);
-}
-
-#notificationPanel.hidden {
-    display: none !important;
-}
-
-.notification-panel-header {
-    padding: 12px;
-
-    border-bottom: 1px solid var(--ms-border);
-
-    color: var(--ms-text);
-
-    font-size: 11px;
-    font-weight: 800;
+    padding: 14px;
 }
 
 
-/* ============================================================
-   BUTTONS
-   ============================================================ */
+.community-page .status-option {
+    height: 38px;
 
-.primary-button,
-.btn-primary,
-#startSelectedCallButton,
-#confirmAttachmentButton {
-    min-height: 35px;
+    border:
+        1px solid var(--community-border);
 
-    padding: 0 12px;
+    border-radius: 7px;
 
-    border: 0;
-    border-radius: 8px;
+    background: #ffffff;
 
-    background: var(--ms-primary);
-    color: white;
+    cursor: pointer;
 
     font-size: 10px;
-    font-weight: 800;
 }
 
-.primary-button:hover,
-.btn-primary:hover,
-#startSelectedCallButton:hover,
-#confirmAttachmentButton:hover {
-    background: var(--ms-primary-dark);
-}
 
-.secondary-button,
-.btn-secondary,
-#cancelAttachmentButton {
-    min-height: 35px;
+.community-page .status-option.active {
+    border-color:
+        rgba(8, 127, 115, 0.35);
 
-    padding: 0 12px;
+    background:
+        var(--community-primary-soft);
 
-    border: 0;
-    border-radius: 8px;
+    color: var(--community-primary);
 
-    background: var(--ms-soft-2);
-    color: var(--ms-text-2);
-
-    font-size: 10px;
     font-weight: 700;
 }
 
-.secondary-button:hover,
-.btn-secondary:hover,
-#cancelAttachmentButton:hover {
-    background: #e4ebed;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-
-    gap: 6px;
-
-    margin-top: 14px;
-}
-
 
 /* ============================================================
-   TOAST
+   HIDDEN
    ============================================================ */
 
-#toast {
-    position: fixed;
-    z-index: 5000;
-
-    left: 50%;
-    bottom: 22px;
-
-    max-width: min(420px, calc(100vw - 24px));
-
-    padding: 10px 14px;
-
-    transform: translateX(-50%);
-
-    border-radius: 9px;
-
-    background: #17272e;
-    color: white;
-
-    box-shadow: var(--ms-shadow-lg);
-
-    font-size: 10px;
-    font-weight: 600;
-}
-
-#toast.hidden {
+.community-page .hidden {
     display: none !important;
 }
 
 
 /* ============================================================
-   MOBILE OVERLAY
+   MOBILE
    ============================================================ */
 
-.community-mobile-overlay {
-    position: fixed;
-
-    z-index: 1100;
-
-    inset: 0;
-
-    background: rgba(15, 30, 36, .35);
-}
-
-.community-mobile-overlay.hidden {
-    display: none !important;
+.community-page .mobile-only {
+    display: none;
 }
 
 
-/* ============================================================
-   FOCUS
-   ============================================================ */
+@media (max-width: 1150px) {
 
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-    outline: 2px solid rgba(8, 127, 115, .3);
-    outline-offset: 2px;
-}
-
-
-/* ============================================================
-   TABLET
-   ============================================================ */
-
-@media (max-width: 1100px) {
-
-    :root {
-        --channel-sidebar: 225px;
-        --member-sidebar: 215px;
+    .community-page {
+        --community-sidebar: 260px;
+        --community-members: 245px;
     }
 
-    #currentChannelDescription {
+    .community-page .global-search {
+        max-width: 440px;
+    }
+
+    .community-page .header-profile-name {
         display: none;
-    }
-
-    #headerProfileName {
-        display: none;
-    }
-
-    .message-image {
-        max-width: min(280px, 100%) !important;
-        max-height: 210px !important;
     }
 }
 
 
-/* ============================================================
-   SMALL TABLET
-   ============================================================ */
+@media (max-width: 900px) {
 
-@media (max-width: 850px) {
-
-    :root {
-        --community-rail: 58px;
-        --channel-sidebar: 220px;
-        --member-sidebar: 0px;
+    .community-page {
+        --community-rail: 60px;
     }
 
-    #chatArea {
-        right: 0;
+    .community-page .community-layout {
+        grid-template-columns:
+            var(--community-rail)
+            minmax(0, 1fr);
     }
 
-    #memberSidebar {
-        width: 280px;
+    .community-page .channel-sidebar {
+        position: fixed;
 
-        transform: translateX(100%);
-
-        transition: transform .22s ease;
-
-        box-shadow: var(--ms-shadow-lg);
-    }
-
-    #memberSidebar.open {
-        transform: translateX(0);
-    }
-
-    #currentChannelType {
-        display: none;
-    }
-
-    #channelMembersButton {
-        padding: 0 7px;
-    }
-}
-
-
-/* ============================================================
-   PHONE
-   ============================================================ */
-
-@media (max-width: 700px) {
-
-    :root {
-        --top-header: 57px;
-        --community-rail: 0px;
-        --channel-sidebar: 270px;
-    }
-
-    .community-header {
-        height: var(--top-header);
-
-        padding: 0 7px;
-    }
-
-    .header-left {
-        width: 40px;
-        flex: 0 0 40px;
-    }
-
-    #mobileSidebarButton {
-        display: inline-flex;
-
-        width: 37px;
-        height: 37px;
-    }
-
-    #communityHomeButton {
-        display: none;
-    }
-
-    #globalSearchInput {
-        width: 100%;
-        height: 35px;
-
-        padding-left: 35px;
-
-        background-position: 11px center;
-
-        font-size: 10px;
-    }
-
-    .header-actions {
-        gap: 1px;
-
-        margin-left: 3px;
-    }
-
-    #friendsButton,
-    #generalCallButton,
-    #notificationButton {
-        width: 34px;
-        height: 34px;
-    }
-
-    #profileButton {
-        min-width: 35px;
-
-        padding: 2px;
-    }
-
-    #headerProfileName {
-        display: none;
-    }
-
-    #communityRail {
-        display: none;
-    }
-
-    #channelSidebar {
-        top: var(--top-header);
+        top: var(--community-header);
         left: 0;
+        bottom: 0;
 
-        width: var(--channel-sidebar);
+        z-index: 250;
 
-        transform: translateX(-105%);
+        width: 290px;
 
-        transition: transform .22s ease;
+        transform:
+            translateX(-105%);
 
-        box-shadow: var(--ms-shadow-lg);
+        transition:
+            transform 0.2s ease;
 
-        z-index: 1200;
+        box-shadow:
+            10px 0 30px
+            rgba(0, 0, 0, 0.10);
     }
 
-    #channelSidebar.mobile-open,
-    #channelSidebar.open {
-        transform: translateX(0);
+    .community-page .channel-sidebar.mobile-open {
+        transform:
+            translateX(0);
     }
 
-    #chatArea {
-        top: var(--top-header);
-        left: 0;
+    .community-page .member-sidebar {
+        position: fixed;
+
+        top: var(--community-header);
         right: 0;
+        bottom: 0;
+
+        z-index: 260;
+
+        width: 285px;
+
+        transform:
+            translateX(105%);
+
+        transition:
+            transform 0.2s ease;
+
+        box-shadow:
+            -10px 0 30px
+            rgba(0, 0, 0, 0.10);
     }
 
-    .chat-header {
-        height: 54px;
-        min-height: 54px;
-
-        padding: 0 9px;
+    .community-page .member-sidebar.mobile-open {
+        transform:
+            translateX(0);
     }
 
-    #currentChannelName {
-        max-width: 180px;
+    .community-page .mobile-only {
+        display: grid;
     }
 
-    #currentChannelDescription {
+    .community-page .global-search {
+        max-width: none;
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .community-page .community-header {
+        grid-template-columns:
+            auto
+            minmax(0, 1fr)
+            auto;
+
+        gap: 5px;
+
+        padding: 0 8px;
+    }
+
+    .community-page .brand-copy {
         display: none;
     }
 
-    #channelSearchButton {
+    .community-page .global-search {
+        height: 36px;
+    }
+
+    .community-page .global-search kbd {
         display: none;
     }
 
-    #messageList {
-        padding: 10px 7px 5px;
-    }
-
-    .message {
-        gap: 7px;
-
-        padding: 4px 3px;
-    }
-
-    .message-avatar-wrap {
-        width: 30px;
-        height: 30px;
-
-        flex-basis: 30px;
-    }
-
-    .message-avatar {
-        width: 30px !important;
-        height: 30px !important;
-
-        max-width: 30px !important;
-        max-height: 30px !important;
-    }
-
-    .message-body,
-    .message-text {
-        font-size: 11px;
-    }
-
-    .message-author {
-        font-size: 10px;
-    }
-
-    .message-time {
-        font-size: 8px;
-    }
-
-    .message-actions {
-        position: static;
-
-        display: flex;
-
-        width: fit-content;
-
-        margin-top: 3px;
-
-        box-shadow: none;
-    }
-
-    .message:hover .message-actions {
-        display: flex;
-    }
-
-    .message-image {
-        max-width: min(250px, 100%) !important;
-        max-height: 190px !important;
-    }
-
-    .composer {
-        padding: 6px 6px 8px;
-    }
-
-    .composer-main {
-        gap: 2px;
-
-        padding-left: 4px;
-    }
-
-    .composer-tools {
+    .community-page .header-actions {
         gap: 0;
     }
 
-    .composer-tool {
-        width: 29px;
-        height: 29px;
-
-        flex-basis: 29px;
-
-        font-size: 13px;
-    }
-
-    #messageInput {
-        min-height: 29px;
-
-        font-size: 11px;
-    }
-
-    #sendMessageButton {
-        width: 31px;
-        height: 31px;
-
-        flex-basis: 31px;
-    }
-
-    #attachmentPreview {
-        max-height: 125px;
-
-        overflow-y: auto;
-    }
-
-    .picker-panel {
-        left: 4px;
-        right: 4px;
-
-        width: auto;
-    }
-
-    #memberSidebar {
-        width: min(300px, 88vw);
-    }
-}
-
-
-/* ============================================================
-   VERY SMALL PHONE
-   ============================================================ */
-
-@media (max-width: 450px) {
-
-    #friendsButton,
-    #generalCallButton {
-        display: none;
-    }
-
-    #notificationButton {
-        width: 33px;
-        height: 33px;
-    }
-
-    #profileButton {
-        width: 35px;
-    }
-
-    #headerProfileAvatar {
-        width: 31px;
-        height: 31px;
-    }
-
-    .chat-header-actions {
-        gap: 0;
-    }
-
-    #channelMembersButton {
+    .community-page .header-action {
         width: 32px;
-
-        padding: 0;
-
-        font-size: 0;
+        height: 32px;
     }
 
-    #channelMembersButton::before {
-        content: "👥";
-
-        font-size: 14px;
+    .community-page .chat-header {
+        padding: 0 10px;
     }
 
-    #currentChannelName {
-        max-width: 145px;
+    .community-page .chat-header-main p,
+    .community-page .channel-type-label {
+        display: none;
     }
 
-    #currentChannelIcon {
-        width: 29px;
-        height: 29px;
-
-        flex-basis: 29px;
+    .community-page .message-list {
+        padding:
+            10px 8px 14px;
     }
 
-    #typingIndicator {
-        padding-left: 11px;
+    .community-page .composer {
+        padding:
+            7px;
     }
 
-    #messageList {
-        padding-left: 4px;
-        padding-right: 4px;
+    .community-page .composer-tool {
+        width: 30px;
+        min-width: 30px;
+
+        height: 30px;
     }
 
-    .composer-tool {
-        width: 27px;
-        height: 27px;
+    .community-page .send-button {
+        width: 30px;
+        min-width: 30px;
 
-        flex-basis: 27px;
+        height: 30px;
     }
 
-    #sendMessageButton {
-        width: 29px;
-        height: 29px;
-
-        flex-basis: 29px;
-    }
-
-    #messageInput {
-        min-width: 0;
-
-        font-size: 11px;
+    .community-page .composer-footer {
+        display: none;
     }
 }
 
 
 /* ============================================================
-   PRINT
+   SCROLLBARS
    ============================================================ */
 
-@media print {
+.community-page * {
+    scrollbar-width: thin;
 
-    .community-header,
-    #communityRail,
-    #channelSidebar,
-    #memberSidebar,
-    .composer,
-    #typingIndicator {
-        display: none !important;
-    }
-
-    #chatArea {
-        position: static !important;
-
-        width: 100% !important;
-        height: auto !important;
-    }
-
-    #messageList {
-        overflow: visible !important;
-    }
-}
-/* ============================================================
-   MWANIKI SCHOLARS COMMUNITY
-   FINAL PRECISION OVERRIDE
-   Fixes:
-   - HUGE MEMBER PHOTOS
-   - HUGE CHAT IMAGES
-   - MESSAGE LAYOUT
-   - MEMBER LIST SPACING
-   - CHAT WIDTH / SPACING
-   - COMPOSER SIZE
-   - HEADER CLUTTER
-   ============================================================ */
-
-
-/* ============================================================
-   1. REAL MEMBER AVATARS
-   Your JS creates:
-   .avatar.avatar-member
-   ============================================================ */
-
-#memberList .avatar.avatar-member,
-#memberList img.avatar-member,
-#memberList .avatar-wrap img {
-    width: 36px !important;
-    height: 36px !important;
-
-    min-width: 36px !important;
-    min-height: 36px !important;
-    max-width: 36px !important;
-    max-height: 36px !important;
-
-    flex: 0 0 36px !important;
-
-    object-fit: cover !important;
-    object-position: center !important;
-
-    display: block !important;
-
-    border-radius: 50% !important;
-    border: 1px solid #dce6e8 !important;
-
-    background: #e8f7f4 !important;
-}
-
-
-/* Member avatar wrapper */
-
-#memberList .avatar-wrap {
-    position: relative !important;
-
-    width: 36px !important;
-    height: 36px !important;
-
-    min-width: 36px !important;
-    min-height: 36px !important;
-    max-width: 36px !important;
-    max-height: 36px !important;
-
-    flex: 0 0 36px !important;
-
-    display: inline-flex !important;
-}
-
-
-/* ============================================================
-   2. MEMBER ROWS
-   ============================================================ */
-
-#memberList .member-item,
-#memberList .member-row {
-    width: 100% !important;
-
-    min-height: 52px !important;
-    height: auto !important;
-
-    display: flex !important;
-    align-items: center !important;
-
-    gap: 9px !important;
-
-    padding: 6px 7px !important;
-    margin: 1px 0 !important;
-
-    border: 0 !important;
-    border-radius: 8px !important;
-
-    background: transparent !important;
-
-    text-align: left !important;
-}
-
-
-#memberList .member-item:hover,
-#memberList .member-row:hover {
-    background: #f3f8f7 !important;
-}
-
-
-/* Member text */
-
-#memberList .member-copy,
-#memberList .member-row-info {
-    min-width: 0 !important;
-    flex: 1 1 auto !important;
-
-    overflow: hidden !important;
-}
-
-
-#memberList .member-name,
-#memberList .member-row-name {
-    display: block !important;
-
-    max-width: 100% !important;
-
-    overflow: hidden !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-
-    font-size: 12px !important;
-    line-height: 17px !important;
-
-    color: #17252d !important;
-    font-weight: 700 !important;
-}
-
-
-#memberList .member-status,
-#memberList .member-row-status {
-    display: block !important;
-
-    margin-top: 0 !important;
-
-    font-size: 9px !important;
-    line-height: 13px !important;
-
-    color: #89979e !important;
-}
-
-
-#memberList .member-role {
-    display: inline-block !important;
-
-    margin-top: 1px !important;
-
-    font-size: 8px !important;
-    line-height: 11px !important;
-
-    color: #087f73 !important;
-    font-weight: 800 !important;
-
-    text-transform: uppercase !important;
-}
-
-
-/* Member presence */
-
-#memberList .presence-dot {
-    position: absolute !important;
-
-    right: -1px !important;
-    bottom: 0 !important;
-
-    width: 9px !important;
-    height: 9px !important;
-
-    min-width: 9px !important;
-    min-height: 9px !important;
-
-    border: 2px solid #fff !important;
-    border-radius: 50% !important;
-}
-
-
-/* ============================================================
-   3. MEMBER SIDEBAR
-   ============================================================ */
-
-#memberSidebar {
-    width: 270px !important;
-
-    min-width: 270px !important;
-    max-width: 270px !important;
-
-    background: #fff !important;
-
-    border-left: 1px solid #e1e8eb !important;
-
-    box-shadow: none !important;
-}
-
-
-#memberSidebar .member-sidebar-header {
-    height: 52px !important;
-    min-height: 52px !important;
-
-    padding: 0 12px !important;
-}
-
-
-#memberSidebar .member-sidebar-title {
-    font-size: 13px !important;
-    font-weight: 800 !important;
-}
-
-
-#memberSidebar #memberSearchInput {
-    width: calc(100% - 20px) !important;
-
-    height: 36px !important;
-    min-height: 36px !important;
-
-    margin: 10px !important;
-
-    font-size: 11px !important;
-}
-
-
-/* ============================================================
-   4. ACTUAL CHAT MESSAGE AVATAR
-   Your JS creates:
-   .avatar.avatar-message
-   ============================================================ */
-
-#messageList img.avatar.avatar-message,
-#messageList .avatar-message {
-    width: 34px !important;
-    height: 34px !important;
-
-    min-width: 34px !important;
-    min-height: 34px !important;
-
-    max-width: 34px !important;
-    max-height: 34px !important;
-
-    flex: 0 0 34px !important;
-
-    display: block !important;
-
-    object-fit: cover !important;
-    object-position: center !important;
-
-    border-radius: 50% !important;
-
-    border: 1px solid #dce6e8 !important;
-
-    background: #e8f7f4 !important;
-}
-
-
-/* ============================================================
-   5. ACTUAL MESSAGE ROW
-   Your JS creates .message-row
-   ============================================================ */
-
-#messageList .message-row {
-    position: relative !important;
-
-    width: 100% !important;
-
-    display: flex !important;
-    align-items: flex-start !important;
-
-    gap: 9px !important;
-
-    padding: 7px 8px !important;
-    margin: 0 !important;
-
-    border-radius: 8px !important;
-
-    background: transparent !important;
-}
-
-
-#messageList .message-row:hover {
-    background: #f7faf9 !important;
-}
-
-
-/* ============================================================
-   6. ACTUAL MESSAGE CONTENT
-   ============================================================ */
-
-#messageList .message-content-wrap {
-    min-width: 0 !important;
-
-    flex: 1 1 auto !important;
-
-    max-width: 100% !important;
-}
-
-
-#messageList .message-meta {
-    min-height: 18px !important;
-
-    display: flex !important;
-    align-items: baseline !important;
-
-    gap: 7px !important;
-
-    flex-wrap: wrap !important;
-}
-
-
-#messageList .message-author {
-    font-size: 12px !important;
-
-    color: #17252d !important;
-
-    font-weight: 800 !important;
-}
-
-
-#messageList .message-time,
-#messageList .message-edited {
-    font-size: 9px !important;
-
-    color: #89979e !important;
-}
-
-
-#messageList .message-body {
-    width: 100% !important;
-
-    max-width: 100% !important;
-
-    color: #33444b !important;
-
-    font-size: 13px !important;
-    line-height: 1.5 !important;
-
-    overflow-wrap: anywhere !important;
-    word-break: break-word !important;
-}
-
-
-/* ============================================================
-   7. THIS IS THE BIG ONE:
-      ACTUAL IMAGE CLASS = .attachment-image
-   ============================================================ */
-
-#messageList .attachment-card {
-    width: fit-content !important;
-    max-width: 100% !important;
-
-    margin-top: 6px !important;
-
-    overflow: hidden !important;
-
-    border-radius: 9px !important;
-}
-
-
-#messageList img.attachment-image {
-    display: block !important;
-
-    width: auto !important;
-
-    max-width: 280px !important;
-    max-height: 220px !important;
-
-    min-width: 0 !important;
-    min-height: 0 !important;
-
-    height: auto !important;
-
-    object-fit: contain !important;
-    object-position: center !important;
-
-    border-radius: 9px !important;
-
-    border: 1px solid #dfe7e9 !important;
-
-    background: #f5f8f9 !important;
-
-    cursor: pointer !important;
-}
-
-
-/* Never allow a normal image to explode */
-
-#messageList .message-attachments img {
-    width: auto !important;
-
-    max-width: 280px !important;
-    max-height: 220px !important;
-
-    height: auto !important;
-}
-
-
-/* ============================================================
-   8. ATTACHMENT CONTAINER
-   ============================================================ */
-
-#messageList .message-attachments {
-    display: flex !important;
-
-    flex-wrap: wrap !important;
-
-    gap: 7px !important;
-
-    max-width: 100% !important;
-
-    margin-top: 6px !important;
-}
-
-
-#messageList .attachment-card {
-    max-width: 280px !important;
-
-    background: transparent !important;
-
-    box-shadow: none !important;
-}
-
-
-/* ============================================================
-   9. AUDIO / VOICE NOTES
-   ============================================================ */
-
-#messageList .voice-attachment {
-    width: min(320px, 100%) !important;
-
-    max-width: 320px !important;
-
-    padding: 8px !important;
-
-    border: 1px solid #dfe7e9 !important;
-    border-radius: 9px !important;
-
-    background: #f7fafb !important;
-}
-
-
-#messageList .voice-attachment audio,
-#messageList .attachment-info audio {
-    width: 100% !important;
-
-    max-width: 300px !important;
-
-    height: 34px !important;
-}
-
-
-/* ============================================================
-   10. FILE ATTACHMENTS
-   ============================================================ */
-
-#messageList .attachment-file-icon {
-    width: 34px !important;
-    height: 34px !important;
-
-    min-width: 34px !important;
-
-    display: inline-flex !important;
-
-    align-items: center !important;
-    justify-content: center !important;
-
-    border-radius: 7px !important;
-
-    background: #e8f7f4 !important;
-}
-
-
-#messageList .attachment-info {
-    min-width: 0 !important;
-
-    max-width: 260px !important;
-}
-
-
-#messageList .attachment-info strong {
-    display: block !important;
-
-    max-width: 250px !important;
-
-    overflow: hidden !important;
-
-    white-space: nowrap !important;
-
-    text-overflow: ellipsis !important;
-
-    font-size: 11px !important;
-}
-
-
-#messageList .attachment-download {
-    font-size: 10px !important;
-
-    color: #087f73 !important;
-}
-
-
-/* ============================================================
-   11. MESSAGE ACTIONS
-   ============================================================ */
-
-#messageList .message-actions {
-    position: absolute !important;
-
-    top: 4px !important;
-    right: 8px !important;
-
-    display: none !important;
-
-    align-items: center !important;
-
-    gap: 2px !important;
-
-    padding: 2px !important;
-
-    background: #fff !important;
-
-    border: 1px solid #dfe7e9 !important;
-
-    border-radius: 7px !important;
-
-    box-shadow: 0 3px 12px rgba(20,40,48,.08) !important;
-
-    z-index: 10 !important;
-}
-
-
-#messageList .message-row:hover .message-actions {
-    display: flex !important;
-}
-
-
-#messageList .message-actions button {
-    width: 28px !important;
-    height: 27px !important;
-
-    min-width: 28px !important;
-
-    padding: 0 !important;
-
-    border-radius: 6px !important;
-
-    background: transparent !important;
-
-    font-size: 11px !important;
-}
-
-
-/* ============================================================
-   12. CHAT HEADER — KEEP IT COMPACT
-   ============================================================ */
-
-#chatArea .chat-header,
-.chat-area .chat-header,
-.community-chat .chat-header {
-    height: 58px !important;
-
-    min-height: 58px !important;
-
-    max-height: 58px !important;
-
-    padding: 0 14px !important;
-
-    flex: 0 0 58px !important;
-
-    background: #fff !important;
-
-    border-bottom: 1px solid #e1e8eb !important;
-}
-
-
-#currentChannelIcon {
-    width: 32px !important;
-    height: 32px !important;
-
-    min-width: 32px !important;
-    min-height: 32px !important;
-
-    margin-right: 8px !important;
-
-    border-radius: 8px !important;
-}
-
-
-#currentChannelName {
-    font-size: 14px !important;
-
-    max-width: 260px !important;
-}
-
-
-#currentChannelDescription {
-    font-size: 10px !important;
-}
-
-
-/* ============================================================
-   13. MESSAGE AREA
-   ============================================================ */
-
-#messageList {
-    padding: 12px 16px 8px !important;
-
-    min-height: 0 !important;
-
-    overflow-x: hidden !important;
-
-    overflow-y: auto !important;
-
-    background: #fff !important;
-}
-
-
-/* ============================================================
-   14. TYPING BAR
-   ============================================================ */
-
-#typingIndicator {
-    min-height: 20px !important;
-
-    height: auto !important;
-
-    padding: 2px 16px 4px !important;
-
-    font-size: 10px !important;
-
-    color: #89979e !important;
-
-    background: #fff !important;
-}
-
-
-/* ============================================================
-   15. COMPOSER
-   ============================================================ */
-
-#messageComposer,
-.chat-composer,
-.composer-area {
-    flex: 0 0 auto !important;
-
-    padding: 7px 12px 10px !important;
-
-    background: #fff !important;
-
-    border-top: 1px solid #e1e8eb !important;
-}
-
-
-#messageComposer .composer-inner,
-.chat-composer .composer-inner,
-.composer-area .composer-inner {
-    min-height: 44px !important;
-
-    padding: 4px 5px 4px 8px !important;
-
-    gap: 5px !important;
-
-    border-radius: 12px !important;
-
-    background: #f7fafb !important;
-}
-
-
-/* ============================================================
-   16. MESSAGE INPUT
-   ============================================================ */
-
-#messageInput {
-    min-height: 32px !important;
-
-    max-height: 100px !important;
-
-    padding: 7px 5px !important;
-
-    font-size: 13px !important;
-
-    line-height: 1.4 !important;
-}
-
-
-/* ============================================================
-   17. COMPOSER BUTTONS
-   ============================================================ */
-
-#messageComposer .composer-button,
-.chat-composer .composer-button,
-.composer-area .composer-button {
-    width: 32px !important;
-    height: 32px !important;
-
-    min-width: 32px !important;
-
-    flex: 0 0 32px !important;
-
-    border-radius: 8px !important;
-
-    font-size: 14px !important;
-}
-
-
-#sendMessageButton {
-    width: 34px !important;
-    height: 34px !important;
-
-    min-width: 34px !important;
-}
-
-
-/* ============================================================
-   18. ATTACHMENT PREVIEW
-   ============================================================ */
-
-#attachmentPreview {
-    max-width: 100% !important;
-
-    margin-bottom: 5px !important;
-
-    padding: 6px !important;
-
-    border-radius: 8px !important;
-}
-
-
-#attachmentPreview img {
-    width: 42px !important;
-    height: 42px !important;
-
-    max-width: 42px !important;
-    max-height: 42px !important;
-
-    object-fit: cover !important;
-
-    border-radius: 6px !important;
-}
-
-
-/* ============================================================
-   19. CHANNEL SIDEBAR — CLEANER
-   ============================================================ */
-
-#channelSidebar {
-    width: 250px !important;
-
-    min-width: 250px !important;
-    max-width: 250px !important;
-}
-
-
-#channelList {
-    padding: 4px 7px 10px !important;
+    scrollbar-color:
+        #cbd7d8
+        transparent;
 }
 
 
-.channel-button {
-    min-height: 34px !important;
-
-    padding: 5px 8px !important;
-
-    margin: 1px 0 !important;
-
-    border-radius: 7px !important;
-}
-
-
-.channel-button .channel-icon {
-    width: 18px !important;
-
-    min-width: 18px !important;
-
-    font-size: 14px !important;
-}
-
-
-.channel-button .channel-name {
-    font-size: 12px !important;
-}
-
-
-.channel-group {
-    margin-bottom: 8px !important;
-}
-
-
-.channel-group-title {
-    padding: 6px 7px 4px !important;
-
-    font-size: 9px !important;
-}
-
-
-/* ============================================================
-   20. COMMUNITY RAIL — SMALL AND CLEAN
-   ============================================================ */
-
-#communityRail {
-    width: 62px !important;
-
-    padding: 10px 7px !important;
-}
-
-
-#communityRailList {
-    gap: 7px !important;
-}
-
-
-#communityRail .community-rail-item,
-#communityRail .community-button,
-#communityRail .rail-community-button {
-    width: 42px !important;
-    height: 42px !important;
-
-    min-width: 42px !important;
-    min-height: 42px !important;
-
-    flex: 0 0 42px !important;
-
-    border-radius: 11px !important;
-}
-
-
-#communityRail .community-rail-item img,
-#communityRail .community-button img,
-#communityRail .rail-community-button img {
-    width: 24px !important;
-    height: 24px !important;
-}
-
-
-/* ============================================================
-   21. HEADER — REMOVE THE FAKE CSS ICONS
-   Your HTML already contains the buttons/icons.
-   ============================================================ */
-
-#communityHomeButton::before,
-#mobileSidebarButton::before,
-#friendsButton::before,
-#generalCallButton::before,
-#notificationButton::before,
-#channelMembersButton::before {
-    content: none !important;
-}
-
-
-.community-header {
-    height: 64px !important;
-
-    min-height: 64px !important;
-
-    padding: 0 12px !important;
-}
-
-
-/* ============================================================
-   22. HEADER BUTTONS
-   ============================================================ */
-
-#communityHomeButton,
-#mobileSidebarButton,
-#friendsButton,
-#generalCallButton,
-#notificationButton {
-    width: 38px !important;
-    height: 38px !important;
-
-    min-width: 38px !important;
-
-    border-radius: 9px !important;
-}
-
-
-/* ============================================================
-   23. HEADER PROFILE
-   ============================================================ */
-
-#headerProfileAvatar {
-    width: 32px !important;
-    height: 32px !important;
-
-    min-width: 32px !important;
-    min-height: 32px !important;
-
-    max-width: 32px !important;
-    max-height: 32px !important;
-
-    object-fit: cover !important;
-
-    border-radius: 50% !important;
-}
-
-
-/* ============================================================
-   24. GENERAL IMAGE SAFETY
-   This prevents an image from taking over the entire chat.
-   Scoped ONLY to the community chat.
-   ============================================================ */
-
-#messageList img {
-    max-width: 100% !important;
-}
-
-
-/* But avatars must remain small */
-
-#messageList img.avatar-message {
-    width: 34px !important;
-    height: 34px !important;
-
-    max-width: 34px !important;
-}
-
-
-/* And attachment images stay compact */
-
-#messageList img.attachment-image {
-    width: auto !important;
-
-    max-width: 280px !important;
-    max-height: 220px !important;
-}
-
-
-/* ============================================================
-   25. DESKTOP CHAT GEOMETRY
-   ============================================================ */
-
-@media (min-width: 851px) {
-
-    #chatArea,
-    .chat-area,
-    .community-chat {
-        left: calc(62px + 250px) !important;
-
-        right: 270px !important;
-
-        top: 64px !important;
-
-        bottom: 0 !important;
-    }
-
-}
-
-
-/* ============================================================
-   26. TABLET
-   ============================================================ */
-
-@media (max-width: 1100px) {
-
-    #memberSidebar {
-        width: 245px !important;
-        min-width: 245px !important;
-        max-width: 245px !important;
-    }
-
-    #messageList img.attachment-image {
-        max-width: 260px !important;
-        max-height: 210px !important;
-    }
-
-}
-
-
-/* ============================================================
-   27. MOBILE
-   ============================================================ */
-
-@media (max-width: 850px) {
-
-    #memberSidebar {
-        width: 280px !important;
-
-        min-width: 280px !important;
-        max-width: 280px !important;
-    }
-
-
-    #messageList img.attachment-image {
-        max-width: min(260px, 80vw) !important;
-
-        max-height: 210px !important;
-    }
-
-
-    #messageList img.avatar-message {
-        width: 30px !important;
-        height: 30px !important;
-
-        max-width: 30px !important;
-        max-height: 30px !important;
-    }
-
+.community-page *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
-
-
-@media (max-width: 700px) {
-
-    #memberSidebar {
-        width: 280px !important;
-    }
-
 
-    #messageList {
-        padding-left: 8px !important;
-        padding-right: 8px !important;
-    }
 
-
-    #messageList img.attachment-image {
-        max-width: min(240px, 78vw) !important;
-
-        max-height: 190px !important;
-    }
-
+.community-page *::-webkit-scrollbar-track {
+    background: transparent;
 }
-
-
-/* ============================================================
-   28. VERY SMALL PHONES
-   ============================================================ */
-
-@media (max-width: 450px) {
-
-    #memberSidebar {
-        width: 270px !important;
-    }
-
 
-    #messageList img.attachment-image {
-        max-width: 220px !important;
 
-        max-height: 175px !important;
-    }
+.community-page *::-webkit-scrollbar-thumb {
+    border-radius: 999px;
 
+    background: #cbd7d8;
 }
