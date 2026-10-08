@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Mwaniki Scholars Call</title>
+
+    <style>
+        :root {
+            --bg: #f4f8f8;
+            --panel: #ffffff;
+            --panel-soft: #f7fbfb;
+            --border: #dce9e8;
+            --text: #173234;
+            --muted: #718486;
+            --primary: #087f73;
+            --primary-dark: #05685f;
+            --primary-soft: #e7f5f3;
+            --danger: #dc4f5b;
+            --danger-dark: #bd3945;
+            --shadow: 0 14px 40px rgba(23, 50, 52, .08);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family:
+                Inter,
+                system-ui,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+        }
+
+        button {
+            font: inherit;
+        }
+
+        .call-app {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-rows: 72px minmax(0, 1fr) 82px;
+            background: var(--bg);
+        }
+
+        /* =====================================================
+           HEADER
+           ===================================================== */
+
+        .call-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 0 24px;
+            background: var(--panel);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 12px rgba(23, 50, 52, .04);
+            z-index: 5;
+        }
+
+        .call-title {
+            min-width: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .call-title-icon {
+            width: 42px;
+            height: 42px;
+            flex: 0 0 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            font-size: 19px;
+        }
+
+        .call-title-copy {
+            min-width: 0;
+        }
+
+        .call-title-copy strong {
+            display: block;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 15px;
+            font-weight: 750;
+        }
+
+        .call-title-copy span {
+            display: block;
+            margin-top: 3px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .call-status {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .call-status::before {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #a9b8b9;
+        }
+
+        .call-status.connected::before {
+            background: #2caf6d;
+        }
+
+        .call-status.error::before {
+            background: var(--danger);
+        }
+
+        /* =====================================================
+           STAGE
+           ===================================================== */
+
+        .call-stage {
+            min-height: 0;
+            overflow: hidden;
+            padding: 18px;
+        }
+
+        .video-grid {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(280px, 1fr));
+
+            grid-auto-rows: minmax(220px, 1fr);
+            gap: 14px;
+
+            overflow: auto;
+        }
+
+        .video-tile {
+            position: relative;
+            min-width: 0;
+            min-height: 220px;
+
+            overflow: hidden;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border: 1px solid var(--border);
+            border-radius: 18px;
+
+            background:
+                radial-gradient(
+                    circle at 50% 35%,
+                    #e9f4f3,
+                    #dfeceb 60%,
+                    #d6e5e4
+                );
+
+            box-shadow: var(--shadow);
+        }
+
+        .video-tile video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            background: #dfeceb;
+        }
+
+        .video-tile.local video {
+            transform: scaleX(-1);
+        }
+
+        .video-placeholder {
+            position: absolute;
+            inset: 0;
+
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 9px;
+
+            color: var(--muted);
+        }
+
+        .video-placeholder-avatar {
+            width: 72px;
+            height: 72px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 50%;
+
+            background: var(--primary);
+            color: white;
+
+            font-size: 22px;
+            font-weight: 800;
+
+            box-shadow:
+                0 8px 22px rgba(8, 127, 115, .2);
+        }
+
+        .video-placeholder span {
+            font-size: 11px;
+            font-weight: 650;
+        }
+
+        .video-label {
+            position: absolute;
+            left: 11px;
+            bottom: 11px;
+
+            max-width: calc(100% - 22px);
+
+            padding: 6px 9px;
+
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+
+            border-radius: 8px;
+
+            background: rgba(20, 39, 40, .82);
+            color: white;
+
+            font-size: 10px;
+            font-weight: 650;
+        }
+
+        .video-mute {
+            position: absolute;
+            right: 11px;
+            bottom: 11px;
+
+            width: 28px;
+            height: 28px;
+
+            display: grid;
+            place-items: center;
+
+            border-radius: 50%;
+
+            background: rgba(20, 39, 40, .82);
+            color: white;
+
+            font-size: 12px;
+        }
+
+        /* =====================================================
+           CONTROLS
+           ===================================================== */
+
+        .call-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+
+            padding: 0 18px;
+
+            background: var(--panel);
+            border-top: 1px solid var(--border);
+
+            box-shadow:
+                0 -5px 20px rgba(23, 50, 52, .04);
+
+            z-index: 5;
+        }
+
+        .call-control {
+            width: 48px;
+            height: 48px;
+
+            display: grid;
+            place-items: center;
+
+            border: 1px solid var(--border);
+            border-radius: 50%;
+
+            background: var(--panel-soft);
+            color: var(--text);
+
+            cursor: pointer;
+
+            transition:
+                transform .15s ease,
+                background .15s ease,
+                border-color .15s ease;
+        }
+
+        .call-control:hover {
+            transform: translateY(-1px);
+            background: var(--primary-soft);
+            border-color: #b8d9d6;
+        }
+
+        .call-control.active {
+            background: var(--primary-soft);
+            border-color: #9ed0ca;
+            color: var(--primary);
+        }
+
+        .call-control.end {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+
+        .call-control.end:hover {
+            background: var(--danger-dark);
+            border-color: var(--danger-dark);
+        }
+
+        /* =====================================================
+           ERROR
+           ===================================================== */
+
+        .call-error {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+
+            width: min(440px, calc(100% - 30px));
+
+            transform: translate(-50%, -50%);
+
+            padding: 18px;
+
+            border: 1px solid #f0b7bb;
+            border-radius: 14px;
+
+            background: #fff5f5;
+            color: #8f2630;
+
+            box-shadow: var(--shadow);
+
+            font-size: 12px;
+            line-height: 1.55;
+
+            text-align: center;
+
+            z-index: 100;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* =====================================================
+           MOBILE
+           ===================================================== */
+
+        @media (max-width: 700px) {
+
+            .call-app {
+                grid-template-rows:
+                    62px
+                    minmax(0, 1fr)
+                    74px;
+            }
+
+            .call-header {
+                padding: 0 13px;
+            }
+
+            .call-title-icon {
+                width: 37px;
+                height: 37px;
+                flex-basis: 37px;
+            }
+
+            .call-status {
+                font-size: 9px;
+            }
+
+            .call-stage {
+                padding: 10px;
+            }
+
+            .video-grid {
+                grid-template-columns:
+                    repeat(auto-fit, minmax(150px, 1fr));
+
+                grid-auto-rows:
+                    minmax(150px, 1fr);
+
+                gap: 8px;
+            }
+
+            .video-tile {
+                min-height: 150px;
+                border-radius: 12px;
+            }
+
+            .video-placeholder-avatar {
+                width: 54px;
+                height: 54px;
+                font-size: 17px;
+            }
+
+            .call-control {
+                width: 43px;
+                height: 43px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="call-app">
+
+    <!-- =====================================================
+         HEADER
+         ===================================================== -->
+
+    <header class="call-header">
+
+        <div class="call-title">
+
+            <div class="call-title-icon">
+                📞
+            </div>
+
+            <div class="call-title-copy">
+
+                <strong id="callTitle">
+                    Mwaniki Scholars Call
+                </strong>
+
+                <span id="callSubtitle">
+                    Connecting...
+                </span>
+
+            </div>
+
+        </div>
+
+        <div
+            id="callStatus"
+            class="call-status"
+        >
+            Preparing call...
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         VIDEO AREA
+         ===================================================== -->
+
+    <main class="call-stage">
+
+        <div
+            id="videoGrid"
+            class="video-grid"
+        >
+
+            <!-- LOCAL USER -->
+
+            <div
+                id="localTile"
+                class="video-tile local"
+            >
+
+                <video
+                    id="localVideo"
+                    autoplay
+                    playsinline
+                    muted
+                ></video>
+
+                <div
+                    id="localPlaceholder"
+                    class="video-placeholder"
+                >
+
+                    <div
+                        id="localAvatar"
+                        class="video-placeholder-avatar"
+                    >
+                        MS
+                    </div>
+
+                    <span>
+                        You
+                    </span>
+
+                </div>
+
+                <span
+                    id="localLabel"
+                    class="video-label"
+                >
+                    You
+                </span>
+
+                <span
+                    id="localMuteIndicator"
+                    class="video-mute hidden"
+                >
+                    🔇
+                </span>
+
+            </div>
+
+        </div>
+
+    </main>
+
+
+    <!-- =====================================================
+         CONTROLS
+         ===================================================== -->
+
+    <footer class="call-controls">
+
+        <button
+            id="muteButton"
+            class="call-control"
+            type="button"
+            title="Mute microphone"
+            aria-label="Mute microphone"
+        >
+            🎙
+        </button>
+
+        <button
+            id="cameraButton"
+            class="call-control"
+            type="button"
+            title="Turn camera on or off"
+            aria-label="Turn camera on or off"
+        >
+            📹
+        </button>
+
+        <button
+            id="screenButton"
+            class="call-control"
+            type="button"
+            title="Share screen"
+            aria-label="Share screen"
+        >
+            🖥
+        </button>
+
+        <button
+            id="endCallButton"
+            class="call-control end"
+            type="button"
+            title="End call"
+            aria-label="End call"
+        >
+            ☎
+        </button>
+
+    </footer>
+
+</div>
+
+
+<div
+    id="callError"
+    class="call-error hidden"
+></div>
+
+
+<script
+    type="module"
+    src="./community-call.js"
+></script>
+
+</body>
+</html>
