@@ -133,28 +133,41 @@ function userName(user) {
     );
 }
 
-
 function profileName(profile) {
+    if (!profile) return "Mwaniki Scholar";
+
+    const fullName = [
+        profile.first_name,
+        profile.last_name
+    ].filter(Boolean).join(" ").trim();
 
     return (
-        profile?.full_name ||
-        profile?.name ||
-        profile?.display_name ||
+        profile.full_name ||
+        profile.display_name ||
+        profile.name ||
+        fullName ||
+        [profile.firstName, profile.lastName]
+            .filter(Boolean)
+            .join(" ")
+            .trim() ||
         "Mwaniki Scholar"
     );
 }
 
-
 function profileAvatar(profile) {
+    if (!profile) return "";
 
     return (
-        profile?.avatar_url ||
-        profile?.photo_url ||
-        profile?.image_url ||
+        profile.avatar_url ||
+        profile.photo_url ||
+        profile.profile_photo_url ||
+        profile.profile_picture ||
+        profile.profile_image ||
+        profile.image_url ||
+        profile.avatar ||
         ""
     );
 }
-
 
 function formatTime(value) {
 
@@ -268,7 +281,7 @@ async function loadProfile() {
         data,
         error
     } = await supabase
-        .from("student_profiles")
+        .from("chat_public_profiles")
         .select("*")
         .eq("id", state.user.id)
         .maybeSingle();
