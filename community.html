@@ -1,1362 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <meta
-        name="theme-color"
-        content="#087f73"
-    >
-
-    <meta
-        name="description"
-        content="Mwaniki Scholars Medical Community"
-    >
-
-    <title>Mwaniki Scholars Community</title>
-
-    <link rel="stylesheet" href="./style.css">
-    <link rel="stylesheet" href="./community.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087f73">
+  <meta name="description" content="Mwaniki Scholars Medical Community">
+  <title>Mwaniki Scholars Community</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./community.css">
 </head>
-
 <body class="community-page">
-
 <div id="app" class="community-app">
+  <header class="community-header">
+    <div class="header-left">
+      <button id="mobileSidebarButton" class="icon-button mobile-only" aria-label="Toggle navigation">☰</button>
+      <button id="communityHomeButton" class="brand-button" title="Return to dashboard">
+        <span class="brand-mark">🩺</span>
+        <span class="brand-copy"><strong>Mwaniki Scholars</strong><small>Medical Community</small></span>
+      </button>
+    </div>
 
-    <!-- =====================================================
-         HEADER
-         ===================================================== -->
+    <label class="global-search">
+      <span>⌕</span>
+      <input id="globalSearchInput" type="search" placeholder="Search conversations…" autocomplete="off">
+      <kbd>Ctrl K</kbd>
+    </label>
 
-    <header class="community-header">
+    <div class="header-actions">
+      <button id="friendsButton" class="header-action" title="Friends">👥<b id="friendRequestBadge" class="notification-badge hidden">0</b></button>
+      <button id="generalCallButton" class="header-action" title="Start a call">📞</button>
+      <button id="notificationButton" class="header-action" title="Notifications">🔔<b id="notificationBadge" class="notification-badge hidden">0</b></button>
+      <button id="profileButton" class="header-profile" title="Your profile">
+        <span class="avatar-wrap"><img id="headerProfileAvatar" class="avatar avatar-small" alt="Your profile"><span id="headerPresenceDot" class="presence-dot online"></span></span>
+        <span id="headerProfileName" class="header-profile-name">Loading…</span>
+        <span class="chevron">⌄</span>
+      </button>
+    </div>
+  </header>
 
-        <div class="header-left">
+  <main class="community-layout">
+    <aside id="communityRail" class="community-rail">
+      <button id="railHomeButton" class="rail-community-button" title="Mwaniki Scholars">🩺</button>
+      <div id="communityRailList" class="community-rail-list"></div>
+      <div class="rail-divider"></div>
+      <button id="addCommunityButton" class="rail-community-button" title="Add community">＋</button>
+    </aside>
 
-            <button
-                id="mobileSidebarButton"
-                class="icon-button mobile-only"
-                type="button"
-                aria-label="Open navigation"
-            >
-                ☰
-            </button>
-
-            <button
-                id="communityHomeButton"
-                class="brand-button"
-                type="button"
-                title="Dashboard"
-            >
-                <span class="brand-mark">🩺</span>
-
-                <span class="brand-copy">
-                    <strong>Mwaniki Scholars</strong>
-                    <small>Medical Community</small>
-                </span>
-            </button>
-
+    <aside id="channelSidebar" class="channel-sidebar">
+      <div class="community-sidebar-header">
+        <div class="selected-community">
+          <div id="selectedCommunityIcon" class="selected-community-icon">🩺</div>
+          <div class="selected-community-copy">
+            <strong id="selectedCommunityName">Mwaniki Scholars</strong>
+            <span id="selectedCommunityDescription">Medical Community</span>
+          </div>
         </div>
-
-
-        <div class="global-search">
-
-            <span>⌕</span>
-
-            <input
-                id="globalSearchInput"
-                type="search"
-                placeholder="Search conversations..."
-                autocomplete="off"
-            >
-
-            <kbd>Ctrl K</kbd>
-
-        </div>
-
-
-        <div class="header-actions">
-
-            <button
-                id="friendsButton"
-                class="header-action"
-                type="button"
-                title="Friends"
-            >
-                👥
-                <b
-                    id="friendRequestBadge"
-                    class="notification-badge hidden"
-                >0</b>
-            </button>
-
-            <button
-                id="generalCallButton"
-                class="header-action"
-                type="button"
-                title="General call"
-            >
-                📞
-            </button>
-
-            <button
-                id="notificationButton"
-                class="header-action"
-                type="button"
-                title="Notifications"
-            >
-                🔔
-                <b
-                    id="notificationBadge"
-                    class="notification-badge hidden"
-                >0</b>
-            </button>
-
-            <button
-                id="profileButton"
-                class="header-profile"
-                type="button"
-            >
-
-                <span class="avatar-wrap">
-
-                    <img
-                        id="headerProfileAvatar"
-                        class="avatar avatar-small"
-                        alt=""
-                    >
-
-                    <span
-                        id="headerPresenceDot"
-                        class="presence-dot online"
-                    ></span>
-
-                </span>
-
-                <span
-                    id="headerProfileName"
-                    class="header-profile-name"
-                >
-                    Loading...
-                </span>
-
-                <span class="chevron">⌄</span>
-
-            </button>
-
-        </div>
-
-    </header>
-
-
-    <!-- =====================================================
-         MAIN APPLICATION
-         ===================================================== -->
-
-    <main class="community-layout">
-
-
-        <!-- =================================================
-             COMMUNITY RAIL
-             ================================================= -->
-
-        <aside
-            id="communityRail"
-            class="community-rail"
-        >
-
-            <div class="rail-brand">
-                MS
-            </div>
-
-            <div
-                id="communityRailList"
-                class="community-rail-list"
-            ></div>
-
-            <div class="rail-divider"></div>
-
-            <button
-                id="addCommunityButton"
-                class="rail-community-button rail-add"
-                type="button"
-                title="Add community"
-            >
-                +
-            </button>
-
-        </aside>
-
-
-        <!-- =================================================
-             CHANNEL SIDEBAR
-             ================================================= -->
-
-        <aside
-            id="channelSidebar"
-            class="channel-sidebar"
-        >
-
-            <div class="community-sidebar-header">
-
-                <div class="selected-community">
-
-                    <div
-                        id="selectedCommunityIcon"
-                        class="selected-community-icon"
-                    >
-                        🩺
-                    </div>
-
-                    <div class="selected-community-copy">
-
-                        <strong id="selectedCommunityName">
-                            Mwaniki Scholars
-                        </strong>
-
-                        <span id="selectedCommunityDescription">
-                            Medical Community
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <button
-                    id="communityMenuButton"
-                    class="icon-button"
-                    type="button"
-                    title="Community menu"
-                >
-                    ⋮
-                </button>
-
-            </div>
-
-
-            <div class="community-sidebar-actions">
-
-                <button
-                    id="communityCallButton"
-                    class="sidebar-call-button"
-                    type="button"
-                >
-                    <span>📞</span>
-                    <span>Start Community Call</span>
-                </button>
-
-            </div>
-
-
-            <div class="channel-search">
-
-                <span>⌕</span>
-
-                <input
-                    id="channelSearchInput"
-                    type="search"
-                    placeholder="Find a channel..."
-                    autocomplete="off"
-                >
-
-            </div>
-
-
-            <div
-                id="channelSidebarScroll"
-                class="channel-sidebar-scroll"
-            >
-
-                <section
-                    class="channel-category"
-                    data-category="information"
-                >
-
-                    <div class="channel-category-heading">
-
-                        <button
-                            class="category-toggle"
-                            type="button"
-                        >
-                            <span>INFORMATION</span>
-                            <span>⌄</span>
-                        </button>
-
-                        <button
-                            class="category-add-button"
-                            type="button"
-                            data-category-add="information"
-                        >
-                            +
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="informationChannels"
-                        class="channel-list"
-                    ></div>
-
-                </section>
-
-
-                <section
-                    class="channel-category"
-                    data-category="general"
-                >
-
-                    <div class="channel-category-heading">
-
-                        <button
-                            class="category-toggle"
-                            type="button"
-                        >
-                            <span>GENERAL</span>
-                            <span>⌄</span>
-                        </button>
-
-                        <button
-                            class="category-add-button"
-                            type="button"
-                            data-category-add="general"
-                        >
-                            +
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="generalChannels"
-                        class="channel-list"
-                    ></div>
-
-                </section>
-
-
-                <section
-                    class="channel-category"
-                    data-category="study"
-                >
-
-                    <div class="channel-category-heading">
-
-                        <button
-                            class="category-toggle"
-                            type="button"
-                        >
-                            <span>STUDY</span>
-                            <span>⌄</span>
-                        </button>
-
-                        <button
-                            class="category-add-button"
-                            type="button"
-                            data-category-add="study"
-                        >
-                            +
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="studyChannels"
-                        class="channel-list"
-                    ></div>
-
-                </section>
-
-
-                <section
-                    class="channel-category"
-                    data-category="courses"
-                >
-
-                    <div class="channel-category-heading">
-
-                        <button
-                            class="category-toggle"
-                            type="button"
-                        >
-                            <span>COURSES</span>
-                            <span id="courseChannelCount"></span>
-                        </button>
-
-                        <button
-                            class="category-add-button"
-                            type="button"
-                            data-category-add="courses"
-                        >
-                            +
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="courseChannels"
-                        class="channel-list"
-                    ></div>
-
-                </section>
-
-
-                <section
-                    class="channel-category"
-                    data-category="community"
-                >
-
-                    <div class="channel-category-heading">
-
-                        <button
-                            class="category-toggle"
-                            type="button"
-                        >
-                            <span>COMMUNITY</span>
-                            <span>⌄</span>
-                        </button>
-
-                        <button
-                            class="category-add-button"
-                            type="button"
-                            data-category-add="community"
-                        >
-                            +
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="communityChannels"
-                        class="channel-list"
-                    ></div>
-
-                </section>
-
-
-                <section
-                    class="channel-category"
-                    data-category="voice"
-                >
-
-                    <div class="channel-category-heading">
-
-                        <button
-                            class="category-toggle"
-                            type="button"
-                        >
-                            <span>VOICE</span>
-                            <span>⌄</span>
-                        </button>
-
-                    </div>
-
-                    <div
-                        id="voiceChannels"
-                        class="channel-list"
-                    ></div>
-
-                </section>
-
-            </div>
-
-
-            <!-- USER PANEL -->
-
-            <div class="sidebar-user-panel">
-
-                <div class="sidebar-user-profile">
-
-                    <span class="avatar-wrap">
-
-                        <img
-                            id="profileLargeAvatar"
-                            class="avatar avatar-medium"
-                            alt=""
-                        >
-
-                        <span
-                            id="sidebarPresenceDot"
-                            class="presence-dot online"
-                        ></span>
-
-                    </span>
-
-                    <div class="sidebar-user-copy">
-
-                        <strong id="sidebarUserName">
-                            Loading...
-                        </strong>
-
-                        <span id="sidebarUserStatus">
-                            Online
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <div class="sidebar-user-actions">
-
-                    <button
-                        id="sidebarMuteButton"
-                        type="button"
-                        title="Mute"
-                    >
-                        🎙
-                    </button>
-
-                    <button
-                        id="sidebarHeadsetButton"
-                        type="button"
-                        title="Deafen"
-                    >
-                        🎧
-                    </button>
-
-                    <button
-                        id="sidebarSettingsButton"
-                        type="button"
-                        title="Settings"
-                    >
-                        ⚙
-                    </button>
-
-                </div>
-
-            </div>
-
-        </aside>
-
-
-        <!-- =================================================
-             CHAT
-             ================================================= -->
-
-        <section class="chat-area">
-
-            <header class="chat-header">
-
-                <div class="chat-header-main">
-
-                    <span
-                        id="currentChannelIcon"
-                        class="current-channel-icon"
-                    >
-                        #
-                    </span>
-
-                    <div>
-
-                        <div class="chat-title-row">
-
-                            <h1 id="currentChannelName">
-                                general
-                            </h1>
-
-                            <span
-                                id="currentChannelType"
-                                class="channel-type-label"
-                            >
-                                Text
-                            </span>
-
-                        </div>
-
-                        <p id="currentChannelDescription">
-                            General discussion
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-                <div class="chat-header-actions">
-
-                    <button
-                        id="channelSearchButton"
-                        class="chat-header-button"
-                        type="button"
-                        title="Search"
-                    >
-                        🔍
-                    </button>
-
-                    <button
-                        id="channelMembersButton"
-                        class="chat-header-button"
-                        type="button"
-                        title="Members"
-                    >
-                        👥
-                        <span id="channelMemberCount">0</span>
-                    </button>
-
-                </div>
-
-            </header>
-
-
-            <div
-                id="messageSearchBar"
-                class="message-search-bar hidden"
-            >
-
-                <span>🔍</span>
-
-                <input
-                    id="messageSearchInput"
-                    type="search"
-                    placeholder="Search this channel..."
-                >
-
-                <button
-                    id="closeMessageSearchButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <!-- MESSAGES -->
-
-            <div
-                id="messageList"
-                class="message-list"
-            ></div>
-
-
-            <div
-                id="messageLoading"
-                class="message-loading hidden"
-            >
-                <span class="loading-spinner"></span>
-                Loading messages...
-            </div>
-
-
-            <div
-                id="typingIndicator"
-                class="typing-indicator hidden"
-            >
-                <span class="typing-dots">
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                </span>
-
-                <span id="typingText">
-                    Someone is typing...
-                </span>
-            </div>
-
-
-            <!-- REPLY BAR -->
-
-            <div
-                id="replyBar"
-                class="reply-bar hidden"
-            >
-
-                <div>
-                    <strong>Replying to</strong>
-                    <span id="replyPreview"></span>
-                </div>
-
-                <button
-                    id="cancelReplyButton"
-                    type="button"
-                    title="Cancel reply"
-                >
-                    ×
-                </button>
-
-            </div>
-
-
-            <!-- ATTACHMENT PREVIEW -->
-
-            <div
-                id="attachmentPreview"
-                class="attachment-preview hidden"
-            ></div>
-
-
-            <!-- EMOJI -->
-
-            <div
-                id="emojiPanel"
-                class="composer-popover emoji-panel hidden"
-            >
-
-                <div class="popover-header">
-
-                    <strong>Emoji</strong>
-
-                    <button
-                        id="closeEmojiButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-                <input
-                    id="emojiSearch"
-                    class="popover-search"
-                    type="search"
-                    placeholder="Search emoji..."
-                >
-
-                <div
-                    id="emojiGrid"
-                    class="emoji-grid"
-                ></div>
-
-            </div>
-
-
-            <!-- STICKERS -->
-
-            <div
-                id="stickerPanel"
-                class="composer-popover sticker-panel hidden"
-            >
-
-                <div class="popover-header">
-
-                    <strong>Stickers</strong>
-
-                    <button
-                        id="closeStickerButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-                <div
-                    id="stickerGrid"
-                    class="sticker-grid"
-                ></div>
-
-            </div>
-
-
-            <!-- GIF -->
-
-            <div
-                id="gifPanel"
-                class="composer-popover gif-panel hidden"
-            >
-
-                <div class="popover-header">
-
-                    <strong>GIF</strong>
-
-                    <button
-                        id="closeGifButton"
-                        type="button"
-                    >
-                        ×
-                    </button>
-
-                </div>
-
-                <input
-                    id="gifSearch"
-                    class="popover-search"
-                    type="search"
-                    placeholder="Search GIFs..."
-                >
-
-                <div
-                    id="gifGrid"
-                    class="gif-grid"
-                ></div>
-
-            </div>
-
-
-            <!-- COMPOSER -->
-
-            <footer class="composer">
-
-                <input
-                    id="attachmentInput"
-                    type="file"
-                    hidden
-                    multiple
-                >
-
-                <div class="composer-main">
-
-                    <button
-                        id="attachButton"
-                        class="composer-tool"
-                        type="button"
-                        title="Attach"
-                    >
-                        +
-                    </button>
-
-                    <textarea
-                        id="messageInput"
-                        rows="1"
-                        maxlength="5000"
-                        placeholder="Message #general..."
-                        autocomplete="off"
-                    ></textarea>
-
-                    <button
-                        id="emojiButton"
-                        class="composer-tool"
-                        type="button"
-                        title="Emoji"
-                    >
-                        😊
-                    </button>
-
-                    <button
-                        id="stickerButton"
-                        class="composer-tool"
-                        type="button"
-                        title="Sticker"
-                    >
-                        🏷
-                    </button>
-
-                    <button
-                        id="gifButton"
-                        class="composer-tool"
-                        type="button"
-                        title="GIF"
-                    >
-                        GIF
-                    </button>
-
-                    <button
-                        id="voiceNoteButton"
-                        class="composer-tool"
-                        type="button"
-                        title="Voice note"
-                    >
-                        🎙
-                    </button>
-
-                    <button
-                        id="sendMessageButton"
-                        class="send-button"
-                        type="button"
-                        title="Send"
-                    >
-                        ➤
-                    </button>
-
-                </div>
-
-                <div class="composer-footer">
-
-                    <span>
-                        Enter to send · Shift + Enter for new line
-                    </span>
-
-                    <span id="messageCharacterCount">
-                        0 / 5000
-                    </span>
-
-                </div>
-
-            </footer>
-
+        <button id="communityMenuButton" class="icon-button" title="Community options">⋮</button>
+      </div>
+
+      <div class="community-sidebar-actions">
+        <button id="communityCallButton" class="sidebar-call-button">📞 <span>Start Community Call</span></button>
+      </div>
+
+      <label class="channel-search"><span>⌕</span><input id="channelSearchInput" type="search" placeholder="Find a channel…"></label>
+
+      <div id="channelSidebarScroll" class="channel-sidebar-scroll">
+        <section class="channel-category" data-category="information">
+          <div class="channel-category-heading"><button class="category-toggle" type="button">▾ INFORMATION</button><button class="category-add-button" data-category-add="information" title="Create channel">＋</button></div>
+          <div id="informationChannels" class="channel-list"></div>
         </section>
+        <section class="channel-category" data-category="general">
+          <div class="channel-category-heading"><button class="category-toggle" type="button">▾ GENERAL</button><button class="category-add-button" data-category-add="general" title="Create channel">＋</button></div>
+          <div id="generalChannels" class="channel-list"></div>
+        </section>
+        <section class="channel-category" data-category="study">
+          <div class="channel-category-heading"><button class="category-toggle" type="button">▾ STUDY</button><button class="category-add-button" data-category-add="study" title="Create channel">＋</button></div>
+          <div id="studyChannels" class="channel-list"></div>
+        </section>
+        <section class="channel-category" data-category="courses">
+          <div class="channel-category-heading"><button class="category-toggle" type="button">▾ COURSES <span id="courseChannelCount"></span></button><button class="category-add-button" data-category-add="courses" title="Create channel">＋</button></div>
+          <div id="courseChannels" class="channel-list"></div>
+        </section>
+        <section class="channel-category" data-category="community">
+          <div class="channel-category-heading"><button class="category-toggle" type="button">▾ COMMUNITY</button><button class="category-add-button" data-category-add="community" title="Create channel">＋</button></div>
+          <div id="communityChannels" class="channel-list"></div>
+        </section>
+        <section class="channel-category" data-category="voice">
+          <div class="channel-category-heading"><button class="category-toggle" type="button">▾ VOICE</button></div>
+          <div id="voiceChannels" class="channel-list"></div>
+        </section>
+      </div>
 
-
-        <!-- =================================================
-             MEMBERS
-             ================================================= -->
-
-        <aside
-            id="memberSidebar"
-            class="member-sidebar"
-        >
-
-            <div class="member-sidebar-header">
-
-                <div>
-                    <strong>MEMBERS</strong>
-                    <span id="memberCount">0</span>
-                </div>
-
-                <button
-                    id="closeMemberSidebarButton"
-                    class="icon-button"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </div>
-
-            <div class="member-search">
-
-                <span>⌕</span>
-
-                <input
-                    id="memberSearchInput"
-                    type="search"
-                    placeholder="Search members..."
-                >
-
-            </div>
-
-            <div
-                id="memberList"
-                class="member-list"
-            ></div>
-
-        </aside>
-
-    </main>
-
-
-    <!-- =====================================================
-         FRIENDS
-         ===================================================== -->
-
-    <div
-        id="friendsModal"
-        class="modal-overlay hidden"
-    >
-
-        <div class="modal-card">
-
-            <header class="modal-header">
-
-                <div>
-                    <h2>Friends</h2>
-                    <p>Connect with Mwaniki Scholars members.</p>
-                </div>
-
-                <button
-                    id="closeFriendsButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-            <div class="friends-tabs">
-
-                <button
-                    class="friends-tab active"
-                    data-friends-tab="online"
-                    type="button"
-                >
-                    Online
-                </button>
-
-                <button
-                    class="friends-tab"
-                    data-friends-tab="all"
-                    type="button"
-                >
-                    All Members
-                </button>
-
-            </div>
-
-            <div
-                id="friendsContent"
-                class="friends-content"
-            ></div>
-
+      <div class="sidebar-user-panel">
+        <div class="sidebar-user-profile">
+          <span class="avatar-wrap"><img id="profileLargeAvatar" class="avatar avatar-medium" alt="Your profile"><span id="sidebarPresenceDot" class="presence-dot online"></span></span>
+          <div class="sidebar-user-copy"><strong id="sidebarUserName">Loading…</strong><span id="sidebarUserStatus">Connecting…</span></div>
         </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         PROFILE
-         ===================================================== -->
-
-    <div
-        id="profileModal"
-        class="modal-overlay hidden"
-    >
-
-        <div class="modal-card">
-
-            <header class="modal-header">
-
-                <div>
-                    <h2>Your Profile</h2>
-                    <p>Manage your community presence.</p>
-                </div>
-
-                <button
-                    id="closeProfileButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-            <div
-                id="profileModalContent"
-                class="profile-modal-content"
-            ></div>
-
+        <div class="sidebar-user-actions">
+          <button id="sidebarMuteButton" title="Mute microphone">🎙</button>
+          <button id="sidebarHeadsetButton" title="Deafen">🎧</button>
+          <button id="sidebarSettingsButton" title="Profile settings">⚙</button>
         </div>
+      </div>
+    </aside>
 
-    </div>
-
-
-    <!-- =====================================================
-         RULES
-         ===================================================== -->
-
-    <div
-        id="rulesModal"
-        class="modal-overlay hidden"
-    >
-
-        <div class="modal-card">
-
-            <header class="modal-header">
-
-                <div>
-                    <h2>Community Rules</h2>
-                    <p>Keep Mwaniki Scholars useful and welcoming.</p>
-                </div>
-
-                <button
-                    id="closeRulesButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-            <div class="rules-content">
-
-                <ol>
-                    <li>Respect other learners and tutors.</li>
-                    <li>Keep discussions academic and constructive.</li>
-                    <li>Do not impersonate another member.</li>
-                    <li>Do not spam channels.</li>
-                    <li>Use course channels for course discussions.</li>
-                    <li>Report harmful content to moderators.</li>
-                </ol>
-
-            </div>
-
+    <section class="chat-area">
+      <header class="chat-header">
+        <div class="chat-header-main">
+          <span id="currentChannelIcon" class="current-channel-icon">#</span>
+          <div class="channel-heading-copy">
+            <div class="chat-title-row"><h1 id="currentChannelName">general</h1><span id="currentChannelType" class="channel-type-label">Text</span></div>
+            <p id="currentChannelDescription">Academic discussion and collaboration</p>
+          </div>
         </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         CREATE CHANNEL
-         ===================================================== -->
-
-    <div
-        id="createChannelModal"
-        class="modal-overlay hidden"
-    >
-
-        <div class="modal-card">
-
-            <header class="modal-header">
-
-                <div>
-                    <h2>Create Channel</h2>
-                    <p>Add a channel to this community.</p>
-                </div>
-
-                <button
-                    id="closeCreateChannelButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-            <form id="createChannelForm">
-
-                <label>
-                    Channel name
-                    <input
-                        id="newChannelName"
-                        type="text"
-                        maxlength="80"
-                        required
-                        placeholder="clinical-discussion"
-                    >
-                </label>
-
-                <label>
-                    Description
-                    <textarea
-                        id="newChannelDescription"
-                        rows="3"
-                        maxlength="300"
-                        placeholder="Discuss clinical topics..."
-                    ></textarea>
-                </label>
-
-                <label>
-                    Channel type
-
-                    <select id="newChannelType">
-                        <option value="text">Text</option>
-                        <option value="study">Study</option>
-                        <option value="announcement">Announcement</option>
-                        <option value="voice">Voice</option>
-                    </select>
-
-                </label>
-
-                <label class="checkbox-label">
-
-                    <input
-                        id="newChannelPrivate"
-                        type="checkbox"
-                    >
-
-                    Private channel
-
-                </label>
-
-                <footer class="modal-footer">
-
-                    <button
-                        id="cancelCreateChannelButton"
-                        class="secondary-button"
-                        type="button"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        class="primary-button"
-                        type="submit"
-                    >
-                        Create Channel
-                    </button>
-
-                </footer>
-
-            </form>
-
+        <div class="chat-header-actions">
+          <button id="channelSearchButton" class="chat-header-button" title="Search messages">🔍</button>
+          <button id="channelMembersButton" class="chat-header-button" title="Toggle members">👥 <span id="channelMemberCount">0</span></button>
         </div>
+      </header>
 
-    </div>
+      <div id="messageSearchBar" class="message-search-bar hidden">
+        <span>🔍</span><input id="messageSearchInput" type="search" placeholder="Search this channel…">
+        <button id="closeMessageSearchButton" aria-label="Close search">×</button>
+      </div>
 
+      <div id="messageList" class="message-list" aria-live="polite"></div>
+      <div id="messageLoading" class="message-loading hidden"><span class="loading-spinner"></span> Loading messages…</div>
+      <div id="typingIndicator" class="typing-indicator hidden"><span class="typing-dots"><i></i><i></i><i></i></span><span id="typingText"></span></div>
 
-    <!-- =====================================================
-         CALL PICKER
-         ===================================================== -->
+      <div id="replyBar" class="reply-bar hidden">
+        <div><strong>Replying to</strong><span id="replyPreview"></span></div>
+        <button id="cancelReplyButton" title="Cancel reply">×</button>
+      </div>
 
-    <div
-        id="callPickerModal"
-        class="modal-overlay hidden"
-    >
+      <div id="attachmentPreview" class="attachment-preview hidden"></div>
 
-        <div class="modal-card call-picker-card">
+      <div id="emojiPanel" class="composer-popover emoji-panel hidden">
+        <div class="popover-header"><strong>Emoji</strong><button id="closeEmojiButton">×</button></div>
+        <input id="emojiSearch" class="popover-search" type="search" placeholder="Search or paste an emoji…">
+        <div id="emojiGrid" class="emoji-grid"></div>
+      </div>
+      <div id="stickerPanel" class="composer-popover sticker-panel hidden">
+        <div class="popover-header"><strong>Stickers</strong><button id="closeStickerButton">×</button></div>
+        <div id="stickerGrid" class="sticker-grid"></div>
+      </div>
+      <div id="gifPanel" class="composer-popover gif-panel hidden">
+        <div class="popover-header"><strong>GIF</strong><button id="closeGifButton">×</button></div>
+        <input id="gifSearch" class="popover-search" type="search" placeholder="Search GIFs by URL or keyword…">
+        <div id="gifGrid" class="gif-grid"></div>
+      </div>
 
-            <header class="modal-header">
-
-                <div>
-                    <h2>📞 Start a Call</h2>
-                    <p>Select members by name or photo.</p>
-                </div>
-
-                <button
-                    id="closeCallPickerButton"
-                    type="button"
-                >
-                    ×
-                </button>
-
-            </header>
-
-            <div class="call-type-switch">
-
-                <button
-                    type="button"
-                    class="call-type-button active"
-                    data-call-type="video"
-                >
-                    📹 Video
-                </button>
-
-                <button
-                    type="button"
-                    class="call-type-button"
-                    data-call-type="audio"
-                >
-                    🎙 Audio
-                </button>
-
-            </div>
-
-            <div class="call-picker-toolbar">
-
-                <input
-                    id="callMemberSearch"
-                    type="search"
-                    placeholder="Search online members..."
-                >
-
-                <button
-                    id="callSelectAllButton"
-                    type="button"
-                    class="secondary-button"
-                >
-                    Everyone Online
-                </button>
-
-            </div>
-
-            <div
-                id="callMemberList"
-                class="call-member-list"
-            ></div>
-
-            <footer class="modal-footer">
-
-                <span id="selectedCallMemberCount">
-                    0 selected
-                </span>
-
-                <button
-                    id="startSelectedCallButton"
-                    class="primary-button"
-                    type="button"
-                >
-                    Start Call
-                </button>
-
-            </footer>
-
+      <footer class="composer">
+        <input id="attachmentInput" type="file" hidden multiple>
+        <div class="composer-main">
+          <button id="attachButton" class="composer-tool" title="Attach files">＋</button>
+          <textarea id="messageInput" rows="1" maxlength="5000" placeholder="Write a message…" autocomplete="off"></textarea>
+          <button id="emojiButton" class="composer-tool" title="Emoji">😊</button>
+          <button id="stickerButton" class="composer-tool" title="Stickers">🏷</button>
+          <button id="gifButton" class="composer-tool" title="GIF">GIF</button>
+          <button id="voiceNoteButton" class="composer-tool" title="Record voice note">🎙</button>
+          <button id="sendMessageButton" class="send-button" title="Send message">➤</button>
         </div>
+        <div class="composer-footer"><span>Enter to send · Shift + Enter for a new line</span><span id="messageCharacterCount">0 / 5000</span></div>
+      </footer>
+    </section>
 
-    </div>
+    <aside id="memberSidebar" class="member-sidebar">
+      <div class="member-sidebar-header"><div><strong>MEMBERS</strong> <span id="memberCount">0</span></div><button id="closeMemberSidebarButton" class="icon-button">×</button></div>
+      <label class="member-search"><span>⌕</span><input id="memberSearchInput" type="search" placeholder="Search members…"></label>
+      <div id="memberList" class="member-list"></div>
+    </aside>
+  </main>
 
+  <div id="friendsModal" class="modal-overlay hidden">
+    <section class="modal-card"><header class="modal-header"><div><h2>Community members</h2><p>Find people to study and collaborate with.</p></div><button id="closeFriendsButton">×</button></header><div id="friendsContent" class="modal-content"></div></section>
+  </div>
 
-    <!-- =====================================================
-         INCOMING CALL
-         ===================================================== -->
+  <div id="profileModal" class="modal-overlay hidden">
+    <section class="modal-card"><header class="modal-header"><h2>Your profile</h2><button id="closeProfileButton">×</button></header><div id="profileModalContent" class="modal-content"></div></section>
+  </div>
 
-    <div
-        id="incomingCallModal"
-        class="modal-overlay hidden"
-    >
+  <div id="rulesModal" class="modal-overlay hidden">
+    <section class="modal-card"><header class="modal-header"><h2>Community rules</h2><button id="closeRulesButton">×</button></header><div class="modal-content"><p>Be respectful, protect private information, and keep discussions relevant to learning.</p><p>Only authorized administrators may post in the Rules channel.</p></div></section>
+  </div>
 
-        <div class="incoming-call-card">
+  <div id="createChannelModal" class="modal-overlay hidden">
+    <section class="modal-card"><header class="modal-header"><h2>Create a channel</h2><button id="closeCreateChannelButton">×</button></header>
+      <form id="createChannelForm" class="modal-content">
+        <label>Channel name<input id="newChannelName" required maxlength="70" placeholder="e.g. clinical-medicine"></label>
+        <label>Description<textarea id="newChannelDescription" maxlength="300" placeholder="What is this channel for?"></textarea></label>
+        <label>Channel type<select id="newChannelType"><option value="text">Text</option><option value="rules">Rules</option><option value="voice">Voice</option></select></label>
+        <label class="inline-check"><input id="newChannelPrivate" type="checkbox"> Private channel</label>
+        <div class="modal-actions"><button id="cancelCreateChannelButton" type="button" class="secondary-button">Cancel</button><button type="submit" class="primary-button">Create channel</button></div>
+      </form>
+    </section>
+  </div>
 
-            <div
-                id="incomingCallAvatar"
-                class="incoming-call-avatar"
-            >
-                MS
-            </div>
+  <div id="callPickerModal" class="modal-overlay hidden">
+    <section class="modal-card call-picker-card"><header class="modal-header"><div><h2>Start a call</h2><p>Select online members to invite.</p></div><button id="closeCallPickerButton">×</button></header>
+      <div class="call-type-switch"><button class="call-type-button active" data-call-type="video">📹 Video</button><button class="call-type-button" data-call-type="audio">🎙 Audio</button></div>
+      <div class="call-picker-toolbar"><input id="callMemberSearch" type="search" placeholder="Search online members…"><button id="callSelectAllButton" class="secondary-button">Everyone online</button></div>
+      <div id="callMemberList" class="call-member-list"></div>
+      <footer class="modal-footer"><span id="selectedCallMemberCount">0 selected</span><button id="startSelectedCallButton" class="primary-button">Start call</button></footer>
+    </section>
+  </div>
 
-            <span class="incoming-call-label">
-                Incoming call
-            </span>
+  <div id="incomingCallModal" class="modal-overlay hidden">
+    <section class="incoming-call-card"><div id="incomingCallAvatar" class="incoming-call-avatar">MS</div><span class="incoming-call-label">Incoming call</span><h2 id="incomingCallName">Mwaniki Scholar</h2><p id="incomingCallType">Video call</p><div class="incoming-call-actions"><button id="declineIncomingCallButton" class="call-decline-button">✕</button><button id="acceptIncomingCallButton" class="call-accept-button">✓</button></div></section>
+  </div>
 
-            <h2 id="incomingCallName">
-                Mwaniki Scholar
-            </h2>
-
-            <p id="incomingCallType">
-                Video call
-            </p>
-
-            <div class="incoming-call-actions">
-
-                <button
-                    id="declineIncomingCallButton"
-                    class="call-decline-button"
-                    type="button"
-                >
-                    ✕
-                </button>
-
-                <button
-                    id="acceptIncomingCallButton"
-                    class="call-accept-button"
-                    type="button"
-                >
-                    ✓
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         NOTIFICATIONS
-         ===================================================== -->
-
-    <div
-        id="notificationPanel"
-        class="notification-panel hidden"
-    >
-
-        <div class="notification-panel-header">
-
-            <strong>Notifications</strong>
-
-            <button
-                id="closeNotificationPanelButton"
-                type="button"
-            >
-                ×
-            </button>
-
-        </div>
-
-        <div id="notificationPanelContent">
-            No new notifications.
-        </div>
-
-    </div>
-
-
-    <div
-        id="toast"
-        class="toast"
-        aria-live="polite"
-    ></div>
-
+  <div id="notificationPanel" class="notification-panel hidden"><div class="notification-panel-header"><strong>Notifications</strong><button id="closeNotificationPanelButton">×</button></div><div id="notificationPanelContent">No new notifications.</div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </div>
 
-
-<script
-    type="module"
-    src="./supabase.js"
-></script>
-
-<script
-    type="module"
-    src="./community.js"
-></script>
-
+<script type="module" src="./community.js"></script>
 </body>
 </html>
