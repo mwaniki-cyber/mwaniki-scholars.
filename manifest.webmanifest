@@ -1,0 +1,23 @@
+
+{
+  "id": "./",
+  "name": "Mwaniki Scholars",
+  "short_name": "Mwaniki",
+  "description": "Medical learning, notes, quizzes and academic community.",
+  "lang": "en",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f5fbfa",
+  "theme_color": "#087f73",
+  "categories": ["education", "medical"],
+  "icons": [
+    {
+      "src": "./app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
