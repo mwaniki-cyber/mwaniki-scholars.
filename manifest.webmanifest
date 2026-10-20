@@ -11,7 +11,10 @@
   "orientation": "any",
   "background_color": "#f5fbfa",
   "theme_color": "#087f73",
-  "categories": ["education", "medical"],
+  "categories": [
+    "education",
+    "medical"
+  ],
   "icons": [
     {
       "src": "./icon-192.png",
@@ -25,23 +28,20 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "./pwa-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Mwaniki Scholars desktop dashboard"
+    },
+    {
+      "src": "./pwa-mobile.png",
+      "sizes": "720x1280",
+      "type": "image/png",
+      "label": "Mwaniki Scholars mobile dashboard"
+    }
   ]
-
-"screenshots": [
-  {
-    "src": "./pwa-desktop.png",
-    "sizes": "1280x720",
-    "type": "image/png",
-    "form_factor": "wide",
-    "label": "Mwaniki Scholars desktop learning dashboard"
-  },
-  {
-    "src": "./pwa-mobile.png",
-    "sizes": "720x1280",
-    "type": "image/png",
-    "label": "Mwaniki Scholars mobile learning dashboard"
-  }
-]
-
 }
-
