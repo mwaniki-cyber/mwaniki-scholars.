@@ -1,0 +1,15 @@
+
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.mwaniki_cyber.twa",
+      "sha256_cert_fingerprints": [
+        "B4:3B:0F:24:CC:37:AA:E7:F6:A2:FE:24:92:40:45:B1:E0:F8:AE:1D:A2:4F:75:D8:A7:AE:A0:7B:A9:E4:C3:7C"
+      ]
+    }
+  }
+]
