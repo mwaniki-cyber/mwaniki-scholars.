@@ -1,11 +1,9 @@
-
 /* ============================================================
-   MWANIKI SCHOLARS — SUPABASE CLIENT
-   Shared client for the website
+   MWANIKI SCHOLARS — SHARED SUPABASE CLIENT
    ============================================================ */
 
 import { createClient } from
-  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL =
   "https://bazixdwtysmkkdeloerx.supabase.co";
@@ -26,23 +24,25 @@ const supabase = createClient(
   }
 );
 
-// ES module and legacy global aliases
+// Publish aliases for older scripts.
 window.supabase = supabase;
 window.supabaseClient = supabase;
 window.mwanikiSupabase = supabase;
 window.mwanikiSupabaseClient = supabase;
 window.sb = supabase;
+
 window.mwanikiSupabaseReady = true;
 window.mwanikiSupabaseError = false;
 
-// Notify scripts that wait for the client
+console.log(
+  "✅ Mwaniki Scholars Supabase client initialized"
+);
+
 window.dispatchEvent(
   new CustomEvent("mwaniki-supabase-ready", {
     detail: { client: supabase }
   })
 );
-
-console.log("✅ Mwaniki Scholars Supabase client initialized");
 
 export { supabase };
 export default supabase;
