@@ -6,15 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#087f73">
 
-    <title>Mwaniki Scholars | Administration</title>
+    <title>Platform Administration | Mwaniki Scholars</title>
 
     <link rel="stylesheet" href="./admin.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 
 <body>
 
 <div id="adminLoading" class="admin-loading">
-    <div class="loading-spinner"></div>
+    <div class="admin-loader"></div>
+    <h2>Mwaniki Scholars</h2>
     <p>Verifying administrator access...</p>
 </div>
 
@@ -23,329 +25,340 @@
     <!-- SIDEBAR -->
     <aside class="sidebar" id="adminSidebar">
 
-        <div class="brand">
-            <div class="brand-icon">
-                <span>MS</span>
+        <div class="sidebar-brand">
+            <div class="brand-logo">
+                <i class="fas fa-graduation-cap"></i>
             </div>
 
             <div class="brand-text">
                 <strong>Mwaniki Scholars</strong>
-                <small>Administration Portal</small>
+                <small>Platform Administration</small>
             </div>
 
-            <button class="sidebar-close" id="sidebarClose"
-                    aria-label="Close navigation">
-                &times;
+            <button id="sidebarClose" class="sidebar-close" aria-label="Close sidebar">
+                <i class="fas fa-times"></i>
             </button>
         </div>
 
-        <div class="sidebar-label">PLATFORM MANAGEMENT</div>
+        <div class="sidebar-admin">
+            <div class="admin-avatar">
+                <i class="fas fa-user-shield"></i>
+            </div>
 
-        <nav class="sidebar-nav">
+            <div>
+                <strong>Platform Administrator</strong>
+                <small><i class="fas fa-circle"></i> Super Admin Access</small>
+            </div>
+        </div>
+
+        <nav class="admin-navigation">
+
+            <div class="nav-section-title">MAIN</div>
 
             <button class="nav-item active" data-view="overview">
-                <span class="nav-icon">▦</span>
+                <i class="fas fa-chart-pie"></i>
                 <span>Overview</span>
             </button>
 
-            <div class="nav-divider"></div>
-
-            <div class="sidebar-label">PEOPLE</div>
-
             <button class="nav-item" data-view="students">
-                <span class="nav-icon">♙</span>
+                <i class="fas fa-user-graduate"></i>
                 <span>Students</span>
                 <span class="nav-count" id="sidebarStudentCount">0</span>
             </button>
 
             <button class="nav-item" data-view="tutors">
-                <span class="nav-icon">♧</span>
+                <i class="fas fa-chalkboard-teacher"></i>
                 <span>Tutors</span>
             </button>
 
-            <div class="nav-divider"></div>
-
-            <div class="sidebar-label">ACADEMICS</div>
-
             <button class="nav-item" data-view="courses">
-                <span class="nav-icon">▤</span>
+                <i class="fas fa-book-open"></i>
                 <span>Courses</span>
             </button>
 
             <button class="nav-item" data-view="learning">
-                <span class="nav-icon">▣</span>
-                <span>Notes & Quizzes</span>
+                <i class="fas fa-file-medical-alt"></i>
+                <span>Learning Resources</span>
             </button>
 
-            <div class="nav-divider"></div>
-
-            <div class="sidebar-label">COMMUNITY</div>
+            <div class="nav-section-title">COMMUNITY</div>
 
             <button class="nav-item" data-view="community">
-                <span class="nav-icon">◎</span>
+                <i class="fas fa-users"></i>
                 <span>Communities</span>
             </button>
 
+            <button class="nav-item" data-view="channels">
+                <i class="fas fa-hashtag"></i>
+                <span>Channels</span>
+            </button>
+
             <button class="nav-item" data-view="moderation">
-                <span class="nav-icon">⚑</span>
+                <i class="fas fa-shield-alt"></i>
                 <span>Moderation</span>
             </button>
 
-            <div class="nav-divider"></div>
-
-            <div class="sidebar-label">PLATFORM CONTROL</div>
+            <div class="nav-section-title">PLATFORM CONTROL</div>
 
             <button class="nav-item" data-view="analytics">
-                <span class="nav-icon">▥</span>
+                <i class="fas fa-chart-line"></i>
                 <span>Analytics</span>
             </button>
 
             <button class="nav-item" data-view="permissions">
-                <span class="nav-icon">♜</span>
+                <i class="fas fa-user-lock"></i>
                 <span>Permissions</span>
             </button>
 
             <button class="nav-item" data-view="audit">
-                <span class="nav-icon">☷</span>
+                <i class="fas fa-history"></i>
                 <span>Audit Logs</span>
             </button>
 
             <button class="nav-item" data-view="settings">
-                <span class="nav-icon">⚙</span>
+                <i class="fas fa-cog"></i>
                 <span>Settings</span>
             </button>
 
         </nav>
 
-        <div class="sidebar-bottom">
-            <div class="admin-mini-profile">
-                <div class="admin-avatar">A</div>
-                <div class="admin-mini-info">
-                    <strong>Platform Admin</strong>
-                    <small>Super Administrator</small>
-                </div>
-            </div>
+        <div class="sidebar-footer">
+            <a href="./index.html">
+                <i class="fas fa-home"></i>
+                Return to Platform
+            </a>
 
             <button id="adminLogoutButton" class="logout-button">
-                <span>↪</span> Sign out
+                <i class="fas fa-sign-out-alt"></i>
+                Sign Out
             </button>
         </div>
 
     </aside>
 
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
 
     <!-- MAIN AREA -->
     <main class="main-area">
 
-        <!-- TOP BAR -->
         <header class="topbar">
 
             <div class="topbar-left">
-                <button id="sidebarToggle" class="icon-button"
-                        aria-label="Toggle sidebar">
-                    ☰
+                <button id="sidebarToggle" class="sidebar-toggle" aria-label="Open sidebar">
+                    <i class="fas fa-bars"></i>
                 </button>
 
                 <div>
-                    <div class="breadcrumb">Mwaniki Scholars / Administration</div>
                     <h1 id="workspaceTitle">Overview</h1>
+                    <p>Manage and monitor Mwaniki Scholars</p>
                 </div>
             </div>
 
             <div class="topbar-right">
-                <div class="admin-status">
-                    <span class="online-indicator"></span>
-                    Platform operational
-                </div>
+                <span class="admin-access-label">
+                    <i class="fas fa-shield-alt"></i>
+                    Super Administrator
+                </span>
 
                 <button id="refreshAdminButton" class="refresh-button">
-                    ↻ <span>Refresh</span>
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
                 </button>
             </div>
 
         </header>
 
-        <!-- WORKSPACE -->
-        <div class="workspace">
+        <div id="adminStatus" class="admin-alert" hidden></div>
 
-            <div id="adminStatus" class="admin-alert" hidden></div>
+        <section class="workspace">
 
             <!-- OVERVIEW -->
-            <section class="workspace-view active" id="view-overview">
+            <section id="view-overview" class="workspace-view active">
 
-                <div class="welcome-section">
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">PLATFORM CONTROL CENTRE</p>
-                        <h2>Welcome to Mwaniki Scholars</h2>
-                        <p>Monitor and manage the entire learning platform.</p>
+                        <h2>Platform Overview</h2>
+                        <p>Monitor the overall performance of Mwaniki Scholars.</p>
                     </div>
                 </div>
 
                 <div class="stats-grid">
 
                     <article class="stat-card">
-                        <div class="stat-top">
-                            <span class="stat-icon teal">♙</span>
-                            <span class="stat-label">REGISTERED ACCOUNTS</span>
+                        <div class="stat-icon teal">
+                            <i class="fas fa-user-graduate"></i>
                         </div>
-                        <strong id="studentCount">—</strong>
-                        <small>All registered accounts</small>
+                        <div>
+                            <span>Registered Students</span>
+                            <strong id="studentCount">0</strong>
+                        </div>
                     </article>
 
                     <article class="stat-card">
-                        <div class="stat-top">
-                            <span class="stat-icon blue">▤</span>
-                            <span class="stat-label">COURSES</span>
+                        <div class="stat-icon blue">
+                            <i class="fas fa-book"></i>
                         </div>
-                        <strong id="courseCount">—</strong>
-                        <small>Available courses</small>
+                        <div>
+                            <span>Courses</span>
+                            <strong id="courseCount">0</strong>
+                        </div>
                     </article>
 
                     <article class="stat-card">
-                        <div class="stat-top">
-                            <span class="stat-icon purple">◎</span>
-                            <span class="stat-label">COMMUNITIES</span>
+                        <div class="stat-icon purple">
+                            <i class="fas fa-users"></i>
                         </div>
-                        <strong id="communityCount">—</strong>
-                        <small>Registered communities</small>
+                        <div>
+                            <span>Communities</span>
+                            <strong id="communityCount">0</strong>
+                        </div>
                     </article>
 
                     <article class="stat-card">
-                        <div class="stat-top">
-                            <span class="stat-icon orange">▣</span>
-                            <span class="stat-label">CHANNELS</span>
+                        <div class="stat-icon orange">
+                            <i class="fas fa-hashtag"></i>
                         </div>
-                        <strong id="channelCount">—</strong>
-                        <small>Community channels</small>
+                        <div>
+                            <span>Channels</span>
+                            <strong id="channelCount">0</strong>
+                        </div>
                     </article>
 
                     <article class="stat-card">
-                        <div class="stat-top">
-                            <span class="stat-icon green">◉</span>
-                            <span class="stat-label">ONLINE USERS</span>
+                        <div class="stat-icon green">
+                            <i class="fas fa-circle"></i>
                         </div>
-                        <strong id="onlineCount">—</strong>
-                        <small>Currently online</small>
+                        <div>
+                            <span>Online Members</span>
+                            <strong id="onlineCount">0</strong>
+                        </div>
                     </article>
 
                     <article class="stat-card">
-                        <div class="stat-top">
-                            <span class="stat-icon red">⚑</span>
-                            <span class="stat-label">REPORTS</span>
+                        <div class="stat-icon red">
+                            <i class="fas fa-flag"></i>
                         </div>
-                        <strong id="reportCount">—</strong>
-                        <small>Community reports</small>
+                        <div>
+                            <span>Reports</span>
+                            <strong id="reportCount">0</strong>
+                        </div>
                     </article>
 
                 </div>
 
                 <div class="dashboard-grid">
 
-                    <section class="panel">
-                        <div class="panel-heading">
+                    <article class="panel">
+                        <div class="panel-header">
                             <div>
-                                <h3>Quick management</h3>
-                                <p>Frequently used administration areas.</p>
+                                <h3>Platform Activity</h3>
+                                <p>Recent platform statistics</p>
+                            </div>
+                        </div>
+
+                        <div class="activity-summary">
+                            <div>
+                                <span>Total Messages</span>
+                                <strong id="messageCount">0</strong>
+                            </div>
+
+                            <div>
+                                <span>Registered Accounts</span>
+                                <strong id="registeredAccountCount">0</strong>
+                            </div>
+
+                            <div>
+                                <span>Active Courses</span>
+                                <strong id="courseWorkspaceCount">0</strong>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Administrative Shortcuts</h3>
+                                <p>Quick access to platform modules</p>
                             </div>
                         </div>
 
                         <div class="quick-actions">
-                            <button data-view="students" class="quick-action">
-                                <span>♙</span>
-                                <strong>Manage students</strong>
-                                <small>View registered accounts</small>
+                            <button data-view="students">
+                                <i class="fas fa-users"></i>
+                                Students
                             </button>
 
-                            <button data-view="courses" class="quick-action">
-                                <span>▤</span>
-                                <strong>Manage courses</strong>
-                                <small>Create and organize courses</small>
+                            <button data-view="courses">
+                                <i class="fas fa-book"></i>
+                                Courses
                             </button>
 
-                            <button data-view="community" class="quick-action">
-                                <span>◎</span>
-                                <strong>Manage community</strong>
-                                <small>View communities and channels</small>
+                            <button data-view="community">
+                                <i class="fas fa-comments"></i>
+                                Communities
                             </button>
 
-                            <button data-view="permissions" class="quick-action">
-                                <span>♜</span>
-                                <strong>Administration</strong>
-                                <small>Review platform access</small>
+                            <button data-view="moderation">
+                                <i class="fas fa-shield-alt"></i>
+                                Moderation
+                            </button>
+
+                            <button data-view="analytics">
+                                <i class="fas fa-chart-line"></i>
+                                Analytics
+                            </button>
+
+                            <button data-view="audit">
+                                <i class="fas fa-history"></i>
+                                Audit Logs
                             </button>
                         </div>
-                    </section>
-
-                    <section class="panel">
-                        <div class="panel-heading">
-                            <div>
-                                <h3>Platform information</h3>
-                                <p>Administration status.</p>
-                            </div>
-                        </div>
-
-                        <div class="information-list">
-                            <div>
-                                <span>Platform</span>
-                                <strong>Mwaniki Scholars</strong>
-                            </div>
-                            <div>
-                                <span>Administrator access</span>
-                                <strong class="success-text">Verified</strong>
-                            </div>
-                            <div>
-                                <span>Authentication</span>
-                                <strong>Supabase</strong>
-                            </div>
-                            <div>
-                                <span>Dashboard</span>
-                                <strong>Platform administration</strong>
-                            </div>
-                        </div>
-                    </section>
+                    </article>
 
                 </div>
 
             </section>
 
             <!-- STUDENTS -->
-            <section class="workspace-view" id="view-students">
+            <section id="view-students" class="workspace-view">
 
-                <div class="page-heading">
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">PEOPLE MANAGEMENT</p>
                         <h2>Student Management</h2>
-                        <p>View registered accounts and available student information.</p>
+                        <p>Review registered accounts and student profiles.</p>
                     </div>
 
-                    <button class="primary-button" id="reloadStudentsButton">
-                        ↻ Refresh students
+                    <button id="reloadStudentsButton" class="primary-button">
+                        <i class="fas fa-sync-alt"></i>
+                        Reload Students
                     </button>
                 </div>
 
                 <div class="mini-stats-grid">
+
                     <div class="mini-stat">
-                        <span>Registered accounts</span>
+                        <span>Registered Accounts</span>
                         <strong id="registeredAccountCount">0</strong>
                     </div>
 
                     <div class="mini-stat">
-                        <span>Student records</span>
+                        <span>Complete Profiles</span>
                         <strong id="completeStudentCount">0</strong>
                     </div>
 
                     <div class="mini-stat">
-                        <span>Missing student records</span>
+                        <span>Incomplete Profiles</span>
                         <strong id="incompleteStudentCount">0</strong>
                     </div>
+
                 </div>
 
-                <section class="panel">
+                <article class="panel">
+
                     <div class="directory-toolbar">
                         <div>
-                            <h3>Registered student accounts</h3>
-                            <p>Account and academic information available in the database.</p>
+                            <h3>Student Directory</h3>
+                            <p>Registered student accounts</p>
                         </div>
 
                         <input
@@ -359,310 +372,893 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>STUDENT</th>
-                                    <th>EMAIL</th>
-                                    <th>PHONE</th>
-                                    <th>COURSE</th>
-                                    <th>LEVEL</th>
-                                    <th>PROFILE</th>
-                                    <th>REGISTERED</th>
-                                    <th>ACTION</th>
+                                    <th>Student</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Course</th>
+                                    <th>Level</th>
+                                    <th>Profile</th>
+                                    <th>Registered</th>
+                                    <th>Action</th>
                                 </tr>
                             </thead>
 
                             <tbody id="studentsTableBody">
                                 <tr>
-                                    <td colspan="8">Loading students...</td>
+                                    <td colspan="8">Student records will appear here.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                </section>
+
+                </article>
 
             </section>
 
             <!-- TUTORS -->
-            <section class="workspace-view" id="view-tutors">
-                <div class="page-heading">
+            <section id="view-tutors" class="workspace-view">
+
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">PEOPLE MANAGEMENT</p>
                         <h2>Tutor Management</h2>
-                        <p>Manage tutor access and teaching resources.</p>
+                        <p>Manage teaching staff and tutor access.</p>
+                    </div>
+
+                    <a href="./createTutor.html" class="primary-button">
+                        <i class="fas fa-user-plus"></i>
+                        Create Tutor
+                    </a>
+                </div>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Tutor Administration</h3>
+                            <p>Manage tutor accounts through the existing tutor tools.</p>
+                        </div>
+                    </div>
+
+                    <div class="module-grid">
+
+                        <a href="./createTutor.html" class="module-card">
+                            <i class="fas fa-user-plus"></i>
+                            <strong>Create Tutor Account</strong>
+                            <span>Register a new tutor.</span>
+                        </a>
+
+                        <a href="./tutor.html" class="module-card">
+                            <i class="fas fa-chalkboard-teacher"></i>
+                            <strong>Tutor Workspace</strong>
+                            <span>Open the tutor workspace.</span>
+                        </a>
+
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- COURSES -->
+            <section id="view-courses" class="workspace-view">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Course Management</h2>
+                        <p>Create and manage medical learning courses.</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid">
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Create New Course</h3>
+                                <p>Add a course to the learning platform.</p>
+                            </div>
+                        </div>
+
+                        <form id="courseForm" class="admin-form">
+
+                            <label for="courseName">Course Title</label>
+                            <input
+                                type="text"
+                                id="courseName"
+                                placeholder="Enter course title"
+                                required
+                            >
+
+                            <label for="courseDescription">Description</label>
+                            <textarea
+                                id="courseDescription"
+                                rows="5"
+                                placeholder="Describe the course..."
+                            ></textarea>
+
+                            <input type="hidden" id="courseStatus" value="">
+
+                            <button type="submit" class="primary-button">
+                                <i class="fas fa-plus"></i>
+                                Create Course
+                            </button>
+
+                            <p id="courseStatusMessage" class="form-status"></p>
+
+                        </form>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Course Resources</h3>
+                                <p>Manage existing course content.</p>
+                            </div>
+                        </div>
+
+                        <div class="module-grid">
+
+                            <a href="./course.html" class="module-card">
+                                <i class="fas fa-book-open"></i>
+                                <strong>Course Workspace</strong>
+                                <span>Open course learning pages.</span>
+                            </a>
+
+                            <a href="./uploadNotes.html" class="module-card">
+                                <i class="fas fa-file-upload"></i>
+                                <strong>Upload Notes</strong>
+                                <span>Add learning materials.</span>
+                            </a>
+
+                        </div>
+                    </article>
+
+                </div>
+
+            </section>
+
+            <!-- LEARNING RESOURCES -->
+            <section id="view-learning" class="workspace-view">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Learning Resources</h2>
+                        <p>Manage educational materials and assessments.</p>
                     </div>
                 </div>
 
                 <div class="module-grid">
-                    <a class="module-card" href="createTutor.html">
-                        <span class="module-icon">＋</span>
-                        <h3>Create tutor account</h3>
-                        <p>Open the existing tutor account creation page.</p>
-                        <span class="module-link">Open module →</span>
+
+                    <a href="./uploadNotes.html" class="module-card">
+                        <i class="fas fa-file-medical"></i>
+                        <strong>Notes Library</strong>
+                        <span>Upload and manage student notes.</span>
                     </a>
 
-                    <a class="module-card" href="tutor.html">
-                        <span class="module-icon">♧</span>
-                        <h3>Tutor portal</h3>
-                        <p>Open the tutor portal.</p>
-                        <span class="module-link">Open module →</span>
+                    <a href="./quizAdmin.html" class="module-card">
+                        <i class="fas fa-clipboard-question"></i>
+                        <strong>Quiz Administration</strong>
+                        <span>Manage quizzes and assessments.</span>
                     </a>
+
                 </div>
+
             </section>
 
-            <!-- COURSES -->
-            <section class="workspace-view" id="view-courses">
+            <!-- COMMUNITIES -->
+            <section id="view-community" class="workspace-view">
 
-                <div class="page-heading">
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">ACADEMIC MANAGEMENT</p>
-                        <h2>Course Management</h2>
-                        <p>Create and manage the platform's academic courses.</p>
+                        <h2>Community Management</h2>
+                        <p>Manage all Mwaniki Scholars communities.</p>
+                    </div>
+                </div>
+
+                <article class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Communities</h3>
+                            <p>Create, manage, activate or deactivate communities.</p>
+                        </div>
+                    </div>
+
+                    <form id="communityForm" class="admin-form compact-form">
+
+                        <input
+                            type="hidden"
+                            id="communityEditId"
+                        >
+
+                        <label for="communityName">Community Name</label>
+                        <input
+                            type="text"
+                            id="communityName"
+                            placeholder="Enter community name"
+                            required
+                        >
+
+                        <label for="communityDescription">Description</label>
+                        <textarea
+                            id="communityDescription"
+                            rows="3"
+                            placeholder="Community description"
+                        ></textarea>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button" id="communitySubmitButton">
+                                <i class="fas fa-plus"></i>
+                                Create Community
+                            </button>
+
+                            <button type="button" id="cancelCommunityEdit" class="secondary-button" hidden>
+                                Cancel
+                            </button>
+                        </div>
+
+                        <p id="communityFormStatus" class="form-status"></p>
+
+                    </form>
+
+                    <div id="communityList" class="community-list">
+                        Loading communities...
+                    </div>
+
+                </article>
+
+            </section>
+
+            <!-- CHANNELS -->
+            <section id="view-channels" class="workspace-view">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Channel Management</h2>
+                        <p>Manage text, study, announcement, course and voice channels.</p>
+                    </div>
+                </div>
+
+                <article class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Create or Edit Channel</h3>
+                            <p>Channels belong to a specific community.</p>
+                        </div>
+                    </div>
+
+                    <form id="channelForm" class="admin-form">
+
+                        <input type="hidden" id="channelEditId">
+
+                        <label for="channelCommunity">Community</label>
+                        <select id="channelCommunity" required>
+                            <option value="">Select community</option>
+                        </select>
+
+                        <label for="channelName">Channel Name</label>
+                        <input
+                            type="text"
+                            id="channelName"
+                            placeholder="e.g. general"
+                            required
+                        >
+
+                        <label for="channelDescription">Description</label>
+                        <textarea
+                            id="channelDescription"
+                            rows="3"
+                            placeholder="Describe the channel"
+                        ></textarea>
+
+                        <label for="channelType">Channel Type</label>
+                        <select id="channelType" required>
+                            <option value="text">Text</option>
+                            <option value="announcement">Announcement</option>
+                            <option value="study">Study</option>
+                            <option value="course">Course</option>
+                            <option value="voice">Voice</option>
+                        </select>
+
+                        <label for="channelIcon">Icon</label>
+                        <input
+                            type="text"
+                            id="channelIcon"
+                            placeholder="e.g. 📚"
+                        >
+
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="channelPrivate">
+                            Private channel
+                        </label>
+
+                        <div class="form-actions">
+                            <button type="submit" class="primary-button" id="channelSubmitButton">
+                                <i class="fas fa-plus"></i>
+                                Create Channel
+                            </button>
+
+                            <button type="button" id="cancelChannelEdit" class="secondary-button" hidden>
+                                Cancel
+                            </button>
+                        </div>
+
+                        <p id="channelFormStatus" class="form-status"></p>
+
+                    </form>
+
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Existing Channels</h3>
+                            <p>Review and manage community channels.</p>
+                        </div>
+                    </div>
+
+                    <div class="directory-toolbar">
+                        <select id="channelCommunityFilter">
+                            <option value="">All communities</option>
+                        </select>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Channel</th>
+                                    <th>Community</th>
+                                    <th>Type</th>
+                                    <th>Visibility</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="channelsTableBody">
+                                <tr>
+                                    <td colspan="6">Channels will appear here.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </article>
+
+            </section>
+
+            <!-- MODERATION -->
+            <section id="view-moderation" class="workspace-view">
+
+                <div class="section-heading">
+                    <div>
+                        <h2>Community Moderation</h2>
+                        <p>Review reports, moderation events and member warnings.</p>
                     </div>
                 </div>
 
                 <div class="mini-stats-grid">
                     <div class="mini-stat">
-                        <span>Total courses</span>
-                        <strong id="courseWorkspaceCount">—</strong>
+                        <span>Pending Reports</span>
+                        <strong id="pendingReportCount">0</strong>
+                    </div>
+
+                    <div class="mini-stat">
+                        <span>Under Review</span>
+                        <strong id="reviewingReportCount">0</strong>
+                    </div>
+
+                    <div class="mini-stat">
+                        <span>Moderation Events</span>
+                        <strong id="moderationEventCount">0</strong>
                     </div>
                 </div>
 
-                <section class="panel">
-                    <div class="panel-heading">
+                <article class="panel">
+
+                    <div class="panel-header">
                         <div>
-                            <h3>Create a course</h3>
-                            <p>Add a new course to Mwaniki Scholars.</p>
+                            <h3>Member Reports</h3>
+                            <p>Review submitted community reports.</p>
                         </div>
-                    </div>
 
-                    <form id="courseForm" class="admin-form">
-                        <label for="courseName">Course title</label>
-                        <input id="courseName" type="text"
-                               placeholder="Enter course title" required>
-
-                        <label for="courseDescription">Description</label>
-                        <textarea id="courseDescription"
-                                  placeholder="Describe the course"></textarea>
-
-                        <button class="primary-button" type="submit">
-                            Create course
+                        <button id="reloadReportsButton" class="secondary-button">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
                         </button>
-
-                        <p id="courseStatus" class="form-status"></p>
-                    </form>
-                </section>
-
-            </section>
-
-            <!-- LEARNING MATERIALS -->
-            <section class="workspace-view" id="view-learning">
-
-                <div class="page-heading">
-                    <div>
-                        <p class="eyebrow">ACADEMIC MANAGEMENT</p>
-                        <h2>Learning Resources</h2>
-                        <p>Manage notes, quizzes and learning materials.</p>
-                    </div>
-                </div>
-
-                <div class="module-grid">
-
-                    <a class="module-card" href="uploadNotes.html">
-                        <span class="module-icon">▤</span>
-                        <h3>Notes Library</h3>
-                        <p>Upload and manage medical learning notes.</p>
-                        <span class="module-link">Open notes manager →</span>
-                    </a>
-
-                    <a class="module-card" href="quizAdmin.html">
-                        <span class="module-icon">✓</span>
-                        <h3>Quiz Management</h3>
-                        <p>Manage quizzes and academic assessments.</p>
-                        <span class="module-link">Open quiz manager →</span>
-                    </a>
-
-                </div>
-
-            </section>
-
-            <!-- COMMUNITY -->
-            <section class="workspace-view" id="view-community">
-
-                <div class="page-heading">
-                    <div>
-                        <p class="eyebrow">COMMUNITY MANAGEMENT</p>
-                        <h2>Communities</h2>
-                        <p>Monitor and administer Mwaniki Scholars communities.</p>
                     </div>
 
-                    <a class="secondary-button" href="community.html">
-                        Open community
-                    </a>
-                </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Reason</th>
+                                    <th>Reported User</th>
+                                    <th>Reporter</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
 
-                <section class="panel">
-                    <div class="panel-heading">
+                            <tbody id="reportsTableBody">
+                                <tr>
+                                    <td colspan="6">Reports will appear here.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </article>
+
+                <article class="panel">
+
+                    <div class="panel-header">
                         <div>
-                            <h3>Registered communities</h3>
-                            <p>Communities currently available in the database.</p>
+                            <h3>Moderation Events</h3>
+                            <p>Review automated and manual moderation records.</p>
                         </div>
                     </div>
 
-                    <div id="communityList" class="community-list">
-                        Loading communities...
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Severity</th>
+                                    <th>Explanation</th>
+                                    <th>Action Taken</th>
+                                    <th>Date</th>
+                                    <th>Review</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="moderationEventsTableBody">
+                                <tr>
+                                    <td colspan="6">Moderation events will appear here.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                </section>
 
-            </section>
+                </article>
 
-            <!-- MODERATION -->
-            <section class="workspace-view" id="view-moderation">
-                <div class="page-heading">
-                    <div>
-                        <p class="eyebrow">COMMUNITY GOVERNANCE</p>
-                        <h2>Moderation</h2>
-                        <p>Access community moderation tools.</p>
+                <article class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Member Warnings</h3>
+                            <p>Review warnings issued to community members.</p>
+                        </div>
                     </div>
-                </div>
 
-                <div class="module-grid">
-                    <a class="module-card" href="community.html">
-                        <span class="module-icon">⚑</span>
-                        <h3>Community moderation</h3>
-                        <p>Open the community interface to review available moderation tools.</p>
-                        <span class="module-link">Open community →</span>
-                    </a>
-                </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member ID</th>
+                                    <th>Community</th>
+                                    <th>Warning Level</th>
+                                    <th>Reason</th>
+                                    <th>Issued</th>
+                                    <th>Expires</th>
+                                </tr>
+                            </thead>
 
-                <div class="notice-panel">
-                    <strong>Moderation management</strong>
-                    <p>Centralized report review, warnings, suspensions and moderation history will be connected after the report and moderation table structures are verified.</p>
-                </div>
+                            <tbody id="warningsTableBody">
+                                <tr>
+                                    <td colspan="6">Warnings will appear here.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </article>
+
             </section>
 
             <!-- ANALYTICS -->
-            <section class="workspace-view" id="view-analytics">
-                <div class="page-heading">
+            <section id="view-analytics" class="workspace-view">
+
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">PLATFORM INSIGHTS</p>
-                        <h2>Analytics</h2>
-                        <p>Monitor platform activity and growth.</p>
+                        <h2>Platform Analytics</h2>
+                        <p>Measure registrations, messages and moderation activity.</p>
                     </div>
+
+                    <select id="analyticsPeriod">
+                        <option value="7">Last 7 days</option>
+                        <option value="30" selected>Last 30 days</option>
+                        <option value="90">Last 90 days</option>
+                        <option value="365">Last 12 months</option>
+                    </select>
                 </div>
 
-                <div class="notice-panel">
-                    <strong>Analytics workspace</strong>
-                    <p>Platform totals are available in Overview. Detailed registration trends, course engagement and community activity reports will be added using verified database records.</p>
+                <div class="stats-grid">
+                    <article class="stat-card">
+                        <div class="stat-icon teal">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <span>Registered Accounts</span>
+                            <strong id="analyticsRegistrations">0</strong>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon blue">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <div>
+                            <span>Courses</span>
+                            <strong id="analyticsCourses">0</strong>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon purple">
+                            <i class="fas fa-comments"></i>
+                        </div>
+                        <div>
+                            <span>Messages</span>
+                            <strong id="analyticsMessages">0</strong>
+                        </div>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-icon red">
+                            <i class="fas fa-flag"></i>
+                        </div>
+                        <div>
+                            <span>Reports</span>
+                            <strong id="analyticsReports">0</strong>
+                        </div>
+                    </article>
                 </div>
+
+                <div class="dashboard-grid">
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Registration Trends</h3>
+                                <p>New accounts over time.</p>
+                            </div>
+                        </div>
+
+                        <div id="registrationChart" class="chart-container">
+                            Analytics chart will appear here.
+                        </div>
+                    </article>
+
+                    <article class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Community Activity</h3>
+                                <p>Messages and reports over time.</p>
+                            </div>
+                        </div>
+
+                        <div id="activityChart" class="chart-container">
+                            Analytics chart will appear here.
+                        </div>
+                    </article>
+
+                </div>
+
+                <p id="analyticsGeneratedAt" class="muted-text"></p>
+
             </section>
 
             <!-- PERMISSIONS -->
-            <section class="workspace-view" id="view-permissions">
-                <div class="page-heading">
+            <section id="view-permissions" class="workspace-view">
+
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">SECURITY & ACCESS</p>
-                        <h2>Permissions</h2>
-                        <p>Platform administration and access control.</p>
+                        <h2>Permissions and Access Control</h2>
+                        <p>Manage community roles and member access.</p>
                     </div>
                 </div>
-
-                <section class="panel">
-                    <div class="panel-heading">
-                        <div>
-                            <h3>Platform Super Admin</h3>
-                            <p>Administrators registered in the admin_users table.</p>
-                        </div>
-                    </div>
-
-                    <div class="information-list">
-                        <div>
-                            <span>Access level</span>
-                            <strong>Platform Super Admin</strong>
-                        </div>
-                        <div>
-                            <span>Verification</span>
-                            <strong class="success-text">Verified through Supabase RPC</strong>
-                        </div>
-                        <div>
-                            <span>Community access</span>
-                            <strong>Platform-wide</strong>
-                        </div>
-                    </div>
-                </section>
 
                 <div class="notice-panel">
-                    <strong>Permission safety</strong>
-                    <p>This workspace currently displays the verified access model. Changes to administrator roles and community permissions will require explicit database operations and audit logging.</p>
+                    <i class="fas fa-shield-alt"></i>
+                    <div>
+                        <strong>Platform Super Administrator</strong>
+                        <p>
+                            Accounts registered in admin_users have platform-wide
+                            administrative access. Community roles do not replace
+                            platform administrator privileges.
+                        </p>
+                    </div>
                 </div>
+
+                <article class="panel">
+
+                    <div class="panel-header">
+                        <div>
+                            <h3>Community Membership Management</h3>
+                            <p>Find members and manage their community access.</p>
+                        </div>
+                    </div>
+
+                    <div class="admin-form">
+
+                        <label for="permissionCommunity">Community</label>
+                        <select id="permissionCommunity">
+                            <option value="">Select community</option>
+                        </select>
+
+                        <input
+                            type="search"
+                            id="memberSearch"
+                            placeholder="Search member by name or user ID..."
+                        >
+
+                        <button type="button" id="loadMembersButton" class="primary-button">
+                            <i class="fas fa-search"></i>
+                            Load Members
+                        </button>
+
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>User ID</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Muted</th>
+                                    <th>Banned</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="membersTableBody">
+                                <tr>
+                                    <td colspan="7">Select a community to load members.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </article>
+
+                <article class="panel">
+                    <div class="panel-header">
+                        <div>
+                            <h3>Community Role Reference</h3>
+                            <p>Available membership roles in your database.</p>
+                        </div>
+                    </div>
+
+                    <div class="role-reference">
+
+                        <div>
+                            <strong>Student</strong>
+                            <span>Standard community member.</span>
+                        </div>
+
+                        <div>
+                            <strong>Moderator</strong>
+                            <span>Community moderation responsibilities.</span>
+                        </div>
+
+                        <div>
+                            <strong>Tutor</strong>
+                            <span>Teaching and academic responsibilities.</span>
+                        </div>
+
+                        <div>
+                            <strong>Admin</strong>
+                            <span>Community administration.</span>
+                        </div>
+
+                        <div>
+                            <strong>Super Admin</strong>
+                            <span>Community-level super administrator.</span>
+                        </div>
+
+                    </div>
+                </article>
+
             </section>
 
-            <!-- AUDIT -->
-            <section class="workspace-view" id="view-audit">
-                <div class="page-heading">
+            <!-- AUDIT LOGS -->
+            <section id="view-audit" class="workspace-view">
+
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">ACCOUNTABILITY</p>
-                        <h2>Audit Logs</h2>
-                        <p>Review administrative activity.</p>
+                        <h2>Administrative Audit Logs</h2>
+                        <p>Track administrative actions across the platform.</p>
                     </div>
+
+                    <button id="reloadAuditButton" class="primary-button">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Logs
+                    </button>
                 </div>
 
-                <div class="notice-panel">
-                    <strong>Audit log integration pending</strong>
-                    <p>We will connect this workspace to a dedicated audit log table after verifying its schema. No activity history is being fabricated.</p>
-                </div>
+                <article class="panel">
+
+                    <div class="directory-toolbar">
+
+                        <div>
+                            <h3>Activity History</h3>
+                            <p>Administrative actions and system changes.</p>
+                        </div>
+
+                        <select id="auditCategoryFilter">
+                            <option value="">All Categories</option>
+                            <option value="students">Students</option>
+                            <option value="tutors">Tutors</option>
+                            <option value="courses">Courses</option>
+                            <option value="communities">Communities</option>
+                            <option value="channels">Channels</option>
+                            <option value="moderation">Moderation</option>
+                            <option value="permissions">Permissions</option>
+                            <option value="settings">Settings</option>
+                            <option value="authentication">Authentication</option>
+                        </select>
+
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Administrator ID</th>
+                                    <th>Action</th>
+                                    <th>Category</th>
+                                    <th>Target</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="auditTableBody">
+                                <tr>
+                                    <td colspan="6">Audit records will appear here.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </article>
+
             </section>
 
             <!-- SETTINGS -->
-            <section class="workspace-view" id="view-settings">
-                <div class="page-heading">
+            <section id="view-settings" class="workspace-view">
+
+                <div class="section-heading">
                     <div>
-                        <p class="eyebrow">PLATFORM CONFIGURATION</p>
-                        <h2>Settings</h2>
-                        <p>Platform information and administrator session.</p>
+                        <h2>Platform Settings</h2>
+                        <p>Administrative configuration and platform tools.</p>
                     </div>
                 </div>
 
-                <section class="panel">
-                    <div class="information-list">
+                <article class="panel">
+                    <div class="panel-header">
                         <div>
-                            <span>Platform name</span>
-                            <strong>Mwaniki Scholars</strong>
-                        </div>
-                        <div>
-                            <span>Backend</span>
-                            <strong>Supabase</strong>
-                        </div>
-                        <div>
-                            <span>Dashboard version</span>
-                            <strong>Administration Portal</strong>
+                            <h3>Platform Administration</h3>
+                            <p>System-level administration tools.</p>
                         </div>
                     </div>
-                </section>
+
+                    <div class="settings-list">
+
+                        <div class="settings-item">
+                            <div>
+                                <strong>Platform Identity</strong>
+                                <p>Mwaniki Scholars Medical Learning Platform</p>
+                            </div>
+                            <span class="settings-value">Active</span>
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <strong>Database</strong>
+                                <p>Supabase backend connection</p>
+                            </div>
+                            <span class="settings-value">Configured</span>
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <strong>Administration Security</strong>
+                                <p>Authenticated platform administrator access</p>
+                            </div>
+                            <span class="settings-value">Enabled</span>
+                        </div>
+
+                        <div class="settings-item">
+                            <div>
+                                <strong>Community System</strong>
+                                <p>Community channels, messages and membership</p>
+                            </div>
+                            <a href="./community.html">Open Community</a>
+                        </div>
+
+                    </div>
+                </article>
+
             </section>
 
-            <footer class="admin-footer">
-                <span>Mwaniki Scholars Administration</span>
-                <span>Platform Management Portal</span>
-            </footer>
+        </section>
 
-        </div>
+        <footer class="admin-footer">
+            <p>© <span id="adminYear">2026</span> Mwaniki Scholars. Platform Administration.</p>
+        </footer>
+
     </main>
+
 </div>
 
 <!-- STUDENT DETAILS MODAL -->
-<div class="student-modal" id="studentDetailsModal" hidden>
-    <div class="student-modal-card">
-        <div class="modal-heading">
+<div id="studentDetailsModal" class="student-modal" hidden>
+
+    <div class="student-modal-content">
+
+        <div class="modal-header">
             <div>
-                <p class="eyebrow">STUDENT ACCOUNT</p>
-                <h2>Student details</h2>
+                <h2>Student Account Details</h2>
+                <p>Registered account information</p>
             </div>
 
-            <button id="studentDetailsClose" class="icon-button"
-                    aria-label="Close details">&times;</button>
+            <button id="studentDetailsClose" aria-label="Close modal">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
         <div id="studentDetailsContent"></div>
+
     </div>
+
+</div>
+
+<!-- REPORT DETAILS MODAL -->
+<div id="reportDetailsModal" class="student-modal" hidden>
+
+    <div class="student-modal-content">
+
+        <div class="modal-header">
+            <div>
+                <h2>Report Details</h2>
+                <p>Community moderation report</p>
+            </div>
+
+            <button id="reportDetailsClose" aria-label="Close report">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="reportDetailsContent"></div>
+
+    </div>
+
+</div>
+
+<!-- MEMBER ACTION MODAL -->
+<div id="memberActionModal" class="student-modal" hidden>
+
+    <div class="student-modal-content">
+
+        <div class="modal-header">
+            <div>
+                <h2>Member Management</h2>
+                <p>Review member access and permissions.</p>
+            </div>
+
+            <button id="memberActionClose" aria-label="Close member management">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div id="memberActionContent"></div>
+
+    </div>
+
 </div>
 
 <!-- AUTHENTICATION GUARD -->
@@ -672,39 +1268,58 @@
     const loading = document.getElementById("adminLoading");
     const app = document.getElementById("adminApp");
 
-    async function protectAdminDashboard() {
+    async function verifyAdministrator() {
         try {
-            const { data, error } = await supabase.auth.getSession();
+            const {
+                data: sessionData,
+                error: sessionError
+            } = await supabase.auth.getSession();
 
-            if (error || !data.session) {
+            if (sessionError) throw sessionError;
+
+            const session = sessionData?.session;
+
+            if (!session) {
                 window.location.replace("adminLogin.html");
                 return;
             }
 
-            const { data: isAdmin, error: adminError } =
-                await supabase.rpc("is_platform_admin");
+            const {
+                data: isAdmin,
+                error: adminError
+            } = await supabase.rpc("is_platform_admin");
 
-            if (adminError || isAdmin !== true) {
+            if (adminError) throw adminError;
+
+            if (isAdmin !== true) {
                 await supabase.auth.signOut();
                 window.location.replace("adminLogin.html");
                 return;
             }
 
-            app.hidden = false;
             loading.hidden = true;
+            app.hidden = false;
+
+            document.getElementById("adminYear").textContent =
+                new Date().getFullYear();
 
             await import("./admin.js");
 
-            console.log("Mwaniki Scholars Platform Admin verified.");
-
         } catch (error) {
-            console.error("Admin verification failed:", error);
-            await supabase.auth.signOut();
-            window.location.replace("adminLogin.html");
+            console.error("Administrator verification failed:", error);
+
+            loading.innerHTML = `
+                <div class="admin-error">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h2>Administration Access Error</h2>
+                    <p>${String(error.message || "Unable to verify administrator access.")}</p>
+                    <a href="./adminLogin.html">Return to Admin Login</a>
+                </div>
+            `;
         }
     }
 
-    protectAdminDashboard();
+    verifyAdministrator();
 </script>
 
 </body>
