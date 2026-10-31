@@ -1,310 +1,44 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Mwaniki Scholars Admin Dashboard</title>
-
-
-<style>
-
-*{
-
-box-sizing:border-box;
-font-family:"Segoe UI",Arial;
-
-}
-
-
-body{
-
-margin:0;
-
-background:#f4f9ff;
-
-}
-
-
-
-header{
-
-background:linear-gradient(135deg,#063970,#0b7285);
-
-color:white;
-
-padding:20px;
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-}
-
-
-
-.logo{
-
-font-size:25px;
-
-font-weight:bold;
-
-}
-
-
-
-.container{
-
-padding:30px;
-
-}
-
-
-
-.card{
-
-background:white;
-
-padding:25px;
-
-border-radius:20px;
-
-box-shadow:0 8px 25px rgba(0,0,0,.12);
-
-margin-bottom:20px;
-
-}
-
-
-
-button{
-
-background:#0b7285;
-
-color:white;
-
-border:none;
-
-padding:12px 20px;
-
-border-radius:10px;
-
-cursor:pointer;
-
-margin:5px;
-
-font-size:15px;
-
-}
-
-
-
-button:hover{
-
-background:#063970;
-
-}
-
-
-
-a{
-
-text-decoration:none;
-
-}
-
-
-
-</style>
-
-
-</head>
-
-
-
-<body>
-
-
-
-<header>
-
-
-<div class="logo">
-
-⚙️ Mwaniki Scholars Admin
-
-</div>
-
-
-<div>
-
-Administrator Portal
-
-</div>
-
-
-</header>
-
-
-
-
-
-<div class="container">
-
-
-<div class="card">
-
-
-<h2>
-
-📚 Learning Management
-
-</h2>
-
-
-<a href="uploadNotes.html">
-
-<button>
-
-📤 Upload Notes
-
-</button>
-
-</a>
-
-
-
-<a href="quizAdmin.html">
-
-<button>
-
-📝 Manage Quizzes
-
-</button>
-
-</a>
-
-
-
-</div>
-
-
-
-
-
-<div class="card">
-
-
-<h2>
-
-👨‍🏫 Tutor Management
-
-</h2>
-
-
-<a href="createTutor.html">
-
-<button>
-
-➕ Create Tutor Account
-
-</button>
-
-</a>
-
-
-
-<a href="tutor.html">
-
-<button>
-
-👨‍🏫 View Tutor Portal
-
-</button>
-
-</a>
-
-
-</div>
-
-
-
-
-
-<div class="card">
-
-
-<h2>
-
-🎓 Student Management
-
-</h2>
-
-
-<p>
-
-Monitor students, courses and progress.
-
-</p>
-
-
-<a href="dashboard.html">
-
-<button>
-
-🎓 Student Dashboard
-
-</button>
-
-</a>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-
-
-
 
 <script type="module">
+    import { supabase } from "./supabase.js";
 
+    async function protectAdminDashboard() {
+        try {
+            const {
+                data: { session },
+                error
+            } = await supabase.auth.getSession();
 
-import {supabase} from "./supabase.js";
+            if (error || !session) {
+                window.location.replace("adminLogin.html");
+                return;
+            }
 
+            const {
+                data: isAdmin,
+                error: adminError
+            } = await supabase.rpc("is_platform_admin");
 
-const {data}=await supabase.auth.getSession();
+            if (adminError || isAdmin !== true) {
+                await supabase.auth.signOut();
+                window.location.replace("adminLogin.html");
+                return;
+            }
 
+            document.documentElement.style.visibility = "visible";
 
+            console.log(
+                "Mwaniki Scholars Platform Admin verified."
+            );
 
-if(!data.session){
+        } catch (error) {
+            console.error("Dashboard security error:", error);
 
+            await supabase.auth.signOut();
+            window.location.replace("adminLogin.html");
+        }
+    }
 
-window.location.href="adminLogin.html";
-
-
-}
-
-
-
+    document.documentElement.style.visibility = "hidden";
+    protectAdminDashboard();
 </script>
-
-
-
-<script type="module" src="admin.js"></script>
-
-
-</body>
-
-
-</html>
