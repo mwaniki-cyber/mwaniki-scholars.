@@ -1,44 +1,717 @@
 
-<script type="module">
-    import { supabase } from "./supabase.js";
+<!DOCTYPE html>
+<html lang="en">
 
-    async function protectAdminDashboard() {
-        try {
-            const {
-                data: { session },
-                error
-            } = await supabase.auth.getSession();
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-            if (error || !session) {
-                window.location.replace("adminLogin.html");
-                return;
-            }
+    <title>Mwaniki Scholars | Admin Dashboard</title>
 
-            const {
-                data: isAdmin,
-                error: adminError
-            } = await supabase.rpc("is_platform_admin");
+    <meta name="theme-color" content="#087f73">
 
-            if (adminError || isAdmin !== true) {
-                await supabase.auth.signOut();
-                window.location.replace("adminLogin.html");
-                return;
-            }
-
-            document.documentElement.style.visibility = "visible";
-
-            console.log(
-                "Mwaniki Scholars Platform Admin verified."
-            );
-
-        } catch (error) {
-            console.error("Dashboard security error:", error);
-
-            await supabase.auth.signOut();
-            window.location.replace("adminLogin.html");
+    <style>
+        :root {
+            --primary: #087f73;
+            --primary-dark: #065f58;
+            --secondary: #0b7285;
+            --navy: #102a43;
+            --background: #f3f7f8;
+            --white: #ffffff;
+            --muted: #64748b;
+            --border: #e5eaf0;
+            --danger: #dc2626;
+            --success: #15803d;
+            --shadow: 0 5px 20px rgba(15, 40, 60, 0.06);
         }
-    }
 
-    document.documentElement.style.visibility = "hidden";
-    protectAdminDashboard();
-</script>
+        * {
+            box-sizing: border-box;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            background: var(--background);
+            color: #243447;
+        }
+
+        button, input, textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        header {
+            background: linear-gradient(120deg, #063f3b, #087f73, #0b7285);
+            color: white;
+            min-height: 75px;
+            padding: 16px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .logo {
+            font-size: 21px;
+            font-weight: 750;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .admin-badge {
+            background: rgba(255,255,255,.15);
+            padding: 8px 13px;
+            border-radius: 20px;
+        }
+
+        .logout-button {
+            background: white;
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 8px;
+            padding: 9px 14px;
+            font-weight: 650;
+        }
+
+        .page {
+            max-width: 1500px;
+            margin: auto;
+            padding: 28px;
+        }
+
+        .welcome {
+            margin-bottom: 25px;
+        }
+
+        .welcome h1 {
+            margin: 0 0 7px;
+            color: var(--navy);
+            font-size: 27px;
+        }
+
+        .welcome p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .section-title {
+            color: var(--navy);
+            font-size: 19px;
+            margin: 0 0 17px;
+        }
+
+        .statistics {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 17px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .stat-number {
+            font-size: 29px;
+            font-weight: 750;
+            color: var(--navy);
+            margin-top: 9px;
+        }
+
+        .stat-icon {
+            font-size: 22px;
+            margin-bottom: 12px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 23px;
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            min-width: 0;
+        }
+
+        .card p {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .action-button {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 11px 16px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 650;
+            margin: 5px 5px 5px 0;
+            text-decoration: none;
+        }
+
+        .action-button:hover {
+            background: var(--primary-dark);
+        }
+
+        .secondary-button {
+            background: #e7f4f2;
+            color: var(--primary-dark);
+        }
+
+        .secondary-button:hover {
+            background: #d5ebe7;
+        }
+
+        .course-form {
+            display: grid;
+            gap: 12px;
+        }
+
+        .course-form input,
+        .course-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            outline: none;
+        }
+
+        .course-form input:focus,
+        .course-form textarea:focus {
+            border-color: var(--primary);
+        }
+
+        .course-form textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .status {
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .community-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .admin-community-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+        }
+
+        .admin-community-information {
+            min-width: 150px;
+            flex: 1;
+        }
+
+        .admin-community-information h3 {
+            font-size: 15px;
+            margin: 0 0 5px;
+            color: var(--navy);
+        }
+
+        .admin-community-information p {
+            margin: 0;
+            font-size: 12px;
+        }
+
+        .admin-community-status {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .refresh-button {
+            background: var(--navy);
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+        }
+
+        .notice {
+            background: #edf7f6;
+            border-left: 4px solid var(--primary);
+            padding: 13px 15px;
+            border-radius: 7px;
+            font-size: 13px;
+            color: #315b57;
+            line-height: 1.6;
+        }
+
+        footer {
+            padding: 25px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        #adminLoading {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: var(--background);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 650;
+            color: var(--primary-dark);
+        }
+
+        @media(max-width: 950px) {
+            .statistics {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media(max-width: 650px) {
+            .page {
+                padding: 17px;
+            }
+
+            header {
+                padding: 16px;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .welcome h1 {
+                font-size: 22px;
+            }
+
+            .statistics {
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 14px;
+            }
+
+            .stat-number {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="adminLoading">
+        Verifying administrator access...
+    </div>
+
+    <header>
+
+        <div class="logo">
+            ⚕ Mwaniki Scholars Administration
+        </div>
+
+        <div class="header-right">
+
+            <span class="admin-badge">
+                Platform Super Admin
+            </span>
+
+            <button
+                type="button"
+                class="logout-button"
+                id="adminLogoutButton">
+                Sign Out
+            </button>
+
+        </div>
+
+    </header>
+
+    <main class="page">
+
+        <section class="welcome">
+
+            <h1>Administrator Dashboard</h1>
+
+            <p>
+                Manage the Mwaniki Scholars learning platform,
+                academic services and communities.
+            </p>
+
+        </section>
+
+
+        <!-- PLATFORM STATISTICS -->
+
+        <section>
+
+            <h2 class="section-title">
+                Platform Overview
+            </h2>
+
+            <div class="statistics">
+
+                <div class="stat-card">
+                    <div class="stat-icon">🎓</div>
+                    <div class="stat-label">Registered Students</div>
+                    <div class="stat-number" id="studentCount">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-label">Courses</div>
+                    <div class="stat-number" id="courseCount">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-label">Communities</div>
+                    <div class="stat-number" id="communityCount">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">💬</div>
+                    <div class="stat-label">Channels</div>
+                    <div class="stat-number" id="channelCount">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">✉️</div>
+                    <div class="stat-label">Community Messages</div>
+                    <div class="stat-number" id="messageCount">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🟢</div>
+                    <div class="stat-label">Online Users</div>
+                    <div class="stat-number" id="onlineCount">—</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-icon">🚩</div>
+                    <div class="stat-label">Submitted Reports</div>
+                    <div class="stat-number" id="reportCount">—</div>
+                </div>
+
+            </div>
+
+            <button
+                type="button"
+                class="refresh-button"
+                id="refreshAdminButton"
+                onclick="refreshAdminDashboard()">
+                ↻ Refresh Dashboard
+            </button>
+
+        </section>
+
+
+        <!-- MAIN ADMINISTRATION -->
+
+        <div class="dashboard-grid">
+
+            <!-- LEARNING MANAGEMENT -->
+
+            <section class="card">
+
+                <h2 class="section-title">
+                    📚 Learning Management
+                </h2>
+
+                <p>
+                    Manage learning resources, notes and assessments.
+                </p>
+
+                <a href="uploadNotes.html" class="action-button">
+                    📤 Upload Notes
+                </a>
+
+                <a href="quizAdmin.html" class="action-button">
+                    📝 Manage Quizzes
+                </a>
+
+            </section>
+
+
+            <!-- COURSE MANAGEMENT -->
+
+            <section class="card">
+
+                <h2 class="section-title">
+                    ➕ Course Management
+                </h2>
+
+                <p>
+                    Create new courses for the Mwaniki Scholars
+                    learning platform.
+                </p>
+
+                <form
+                    class="course-form"
+                    id="courseForm"
+                    onsubmit="event.preventDefault(); addCourse();">
+
+                    <input
+                        id="courseName"
+                        type="text"
+                        placeholder="Course title"
+                        required
+                    >
+
+                    <textarea
+                        id="courseDescription"
+                        placeholder="Course description">
+                    </textarea>
+
+                    <button type="submit" class="action-button">
+                        Add Course
+                    </button>
+
+                </form>
+
+                <div id="courseStatus" class="status"></div>
+
+            </section>
+
+
+            <!-- TUTOR MANAGEMENT -->
+
+            <section class="card">
+
+                <h2 class="section-title">
+                    👨‍🏫 Tutor Management
+                </h2>
+
+                <p>
+                    Create tutor accounts and access the tutor portal.
+                </p>
+
+                <a href="createTutor.html" class="action-button">
+                    ➕ Create Tutor Account
+                </a>
+
+                <a href="tutor.html" class="action-button secondary-button">
+                    👨‍🏫 View Tutor Portal
+                </a>
+
+            </section>
+
+
+            <!-- STUDENT MANAGEMENT -->
+
+            <section class="card">
+
+                <h2 class="section-title">
+                    🎓 Student Management
+                </h2>
+
+                <p>
+                    Access the student dashboard to review
+                    learning activities and platform services.
+                </p>
+
+                <a href="dashboard.html" class="action-button">
+                    Open Student Dashboard
+                </a>
+
+            </section>
+
+        </div>
+
+
+        <!-- COMMUNITY MANAGEMENT -->
+
+        <section class="card">
+
+            <h2 class="section-title">
+                🌐 Community Administration
+            </h2>
+
+            <p>
+                Monitor registered communities and open
+                their administration workspace.
+            </p>
+
+            <div class="notice">
+                Platform Super Admins can oversee all communities.
+                Community-specific management tools will be added
+                in the next implementation stage.
+            </div>
+
+            <br>
+
+            <div class="community-list" id="communityList">
+                Loading communities...
+            </div>
+
+        </section>
+
+
+        <!-- PLATFORM MONITORING -->
+
+        <section class="card">
+
+            <h2 class="section-title">
+                🛡️ Platform Monitoring
+            </h2>
+
+            <p>
+                This section provides an overview of platform
+                activity and community safety indicators.
+            </p>
+
+            <a href="community.html" class="action-button">
+                Open Community
+            </a>
+
+            <a href="dashboard.html" class="action-button secondary-button">
+                Open Learning Platform
+            </a>
+
+            <p>
+                Detailed report investigation, member moderation,
+                warning management and audit logs will be connected
+                after the database permissions and schemas are verified.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <footer>
+        © 2026 Mwaniki Scholars — Administration Portal
+    </footer>
+
+
+    <!-- AUTHENTICATION AND ADMIN CONTROLLER -->
+
+    <script type="module">
+
+        import { supabase } from "./supabase.js";
+
+        async function protectAdminDashboard() {
+
+            try {
+
+                const {
+                    data: { session },
+                    error
+                } = await supabase.auth.getSession();
+
+                if (error || !session) {
+
+                    window.location.replace("adminLogin.html");
+                    return;
+
+                }
+
+                const {
+                    data: isAdmin,
+                    error: adminError
+                } = await supabase.rpc("is_platform_admin");
+
+                if (adminError || isAdmin !== true) {
+
+                    await supabase.auth.signOut();
+
+                    window.location.replace("adminLogin.html");
+                    return;
+
+                }
+
+                // Load the dashboard controller only after authorization.
+                await import("./admin.js");
+
+                document.getElementById("adminLoading").remove();
+
+                console.log(
+                    "Mwaniki Scholars Platform Admin verified."
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Dashboard security error:",
+                    error
+                );
+
+                await supabase.auth.signOut();
+
+                window.location.replace("adminLogin.html");
+
+            }
+
+        }
+
+
+        // Sign out.
+        document
+            .getElementById("adminLogoutButton")
+            .addEventListener("click", async () => {
+
+                const { error } = await supabase.auth.signOut();
+
+                if (error) {
+                    console.error("Sign out error:", error);
+                    alert("Unable to sign out. Please try again.");
+                    return;
+                }
+
+                window.location.replace("adminLogin.html");
+
+            });
+
+
+        // Detect session termination.
+        supabase.auth.onAuthStateChange((event, session) => {
+
+            if (event === "SIGNED_OUT" || !session) {
+
+                window.location.replace("adminLogin.html");
+
+            }
+
+        });
+
+
+        protectAdminDashboard();
+
+    </script>
+
+</body>
+</html>
