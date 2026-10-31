@@ -329,6 +329,64 @@
                 font-size: 24px;
             }
         }
+        
+/* =========================================
+   STUDENT PHOTO SIZE FIX
+   ========================================= */
+
+/* Student directory photo */
+.student-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px;
+    max-width: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 50%;
+    display: block;
+    flex-shrink: 0;
+}
+
+/* Placeholder when no photo exists */
+.student-avatar-placeholder {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px;
+    max-width: 42px;
+    min-height: 42px;
+    max-height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 16px;
+}
+
+/* Prevent images from expanding student rows */
+.student-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 190px;
+}
+
+.student-identity img {
+    width: 42px !important;
+    height: 42px !important;
+    object-fit: cover !important;
+    border-radius: 50% !important;
+    flex-shrink: 0;
+}
+
+/* Keep table rows compact */
+.student-table td {
+    vertical-align: middle;
+    height: 62px;
+}
+
     </style>
 </head>
 
