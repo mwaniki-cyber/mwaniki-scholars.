@@ -1,848 +1,711 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Mwaniki Scholars | Admin Dashboard</title>
-
     <meta name="theme-color" content="#087f73">
 
-    <style>
-        :root {
-            --primary: #087f73;
-            --primary-dark: #065f58;
-            --secondary: #0b7285;
-            --navy: #102a43;
-            --background: #f3f7f8;
-            --white: #ffffff;
-            --muted: #64748b;
-            --border: #e5eaf0;
-            --danger: #dc2626;
-            --success: #15803d;
-            --shadow: 0 5px 20px rgba(15, 40, 60, 0.06);
-        }
+    <title>Mwaniki Scholars | Administration</title>
 
-        * {
-            box-sizing: border-box;
-            font-family: "Segoe UI", Arial, sans-serif;
-        }
-
-        body {
-            margin: 0;
-            background: var(--background);
-            color: #243447;
-        }
-
-        button, input, textarea {
-            font: inherit;
-        }
-
-        button {
-            cursor: pointer;
-        }
-
-        header {
-            background: linear-gradient(120deg, #063f3b, #087f73, #0b7285);
-            color: white;
-            min-height: 75px;
-            padding: 16px 28px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .logo {
-            font-size: 21px;
-            font-weight: 750;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 13px;
-        }
-
-        .admin-badge {
-            background: rgba(255,255,255,.15);
-            padding: 8px 13px;
-            border-radius: 20px;
-        }
-
-        .logout-button {
-            background: white;
-            color: var(--primary-dark);
-            border: none;
-            border-radius: 8px;
-            padding: 9px 14px;
-            font-weight: 650;
-        }
-
-        .page {
-            max-width: 1500px;
-            margin: auto;
-            padding: 28px;
-        }
-
-        .welcome {
-            margin-bottom: 25px;
-        }
-
-        .welcome h1 {
-            margin: 0 0 7px;
-            color: var(--navy);
-            font-size: 27px;
-        }
-
-        .welcome p {
-            margin: 0;
-            color: var(--muted);
-            font-size: 14px;
-        }
-
-        .section-title {
-            color: var(--navy);
-            font-size: 19px;
-            margin: 0 0 17px;
-        }
-
-        .statistics {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 17px;
-            margin-bottom: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 20px;
-            box-shadow: var(--shadow);
-        }
-
-        .stat-label {
-            color: var(--muted);
-            font-size: 13px;
-        }
-
-        .stat-number {
-            font-size: 29px;
-            font-weight: 750;
-            color: var(--navy);
-            margin-top: 9px;
-        }
-
-        .stat-icon {
-            font-size: 22px;
-            margin-bottom: 12px;
-        }
-
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 23px;
-            border: 1px solid var(--border);
-            border-radius: 15px;
-            box-shadow: var(--shadow);
-            margin-bottom: 20px;
-            min-width: 0;
-        }
-
-        .card p {
-            color: var(--muted);
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .action-button {
-            display: inline-block;
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 11px 16px;
-            border-radius: 9px;
-            font-size: 13px;
-            font-weight: 650;
-            margin: 5px 5px 5px 0;
-            text-decoration: none;
-        }
-
-        .action-button:hover {
-            background: var(--primary-dark);
-        }
-
-        .secondary-button {
-            background: #e7f4f2;
-            color: var(--primary-dark);
-        }
-
-        .secondary-button:hover {
-            background: #d5ebe7;
-        }
-
-        .course-form {
-            display: grid;
-            gap: 12px;
-        }
-
-        .course-form input,
-        .course-form textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 9px;
-            outline: none;
-        }
-
-        .course-form input:focus,
-        .course-form textarea:focus {
-            border-color: var(--primary);
-        }
-
-        .course-form textarea {
-            min-height: 90px;
-            resize: vertical;
-        }
-
-        .status {
-            font-size: 13px;
-            margin-top: 8px;
-        }
-
-        .community-list {
-            display: grid;
-            gap: 12px;
-        }
-
-        .admin-community-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 12px;
-            padding: 15px;
-            border: 1px solid var(--border);
-            border-radius: 11px;
-        }
-
-        .admin-community-information {
-            min-width: 150px;
-            flex: 1;
-        }
-
-        .admin-community-information h3 {
-            font-size: 15px;
-            margin: 0 0 5px;
-            color: var(--navy);
-        }
-
-        .admin-community-information p {
-            margin: 0;
-            font-size: 12px;
-        }
-
-        .admin-community-status {
-            font-size: 12px;
-            font-weight: 700;
-        }
-
-        .refresh-button {
-            background: var(--navy);
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-        }
-
-        .notice {
-            background: #edf7f6;
-            border-left: 4px solid var(--primary);
-            padding: 13px 15px;
-            border-radius: 7px;
-            font-size: 13px;
-            color: #315b57;
-            line-height: 1.6;
-        }
-
-        footer {
-            padding: 25px;
-            text-align: center;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        #adminLoading {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: var(--background);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 650;
-            color: var(--primary-dark);
-        }
-
-        @media(max-width: 950px) {
-            .statistics {
-                grid-template-columns: repeat(2, minmax(0, 1fr));
-            }
-        }
-
-        @media(max-width: 650px) {
-            .page {
-                padding: 17px;
-            }
-
-            header {
-                padding: 16px;
-            }
-
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .welcome h1 {
-                font-size: 22px;
-            }
-
-            .statistics {
-                gap: 10px;
-            }
-
-            .stat-card {
-                padding: 14px;
-            }
-
-            .stat-number {
-                font-size: 24px;
-            }
-        }
-        
-/* =========================================
-   STUDENT PHOTO SIZE FIX
-   ========================================= */
-
-/* Student directory photo */
-.student-avatar {
-    width: 42px !important;
-    height: 42px !important;
-    min-width: 42px;
-    max-width: 42px;
-    min-height: 42px;
-    max-height: 42px;
-    object-fit: cover;
-    object-position: center;
-    border-radius: 50%;
-    display: block;
-    flex-shrink: 0;
-}
-
-/* Placeholder when no photo exists */
-.student-avatar-placeholder {
-    width: 42px !important;
-    height: 42px !important;
-    min-width: 42px;
-    max-width: 42px;
-    min-height: 42px;
-    max-height: 42px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    font-size: 16px;
-}
-
-/* Prevent images from expanding student rows */
-.student-identity {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 190px;
-}
-
-.student-identity img {
-    width: 42px !important;
-    height: 42px !important;
-    object-fit: cover !important;
-    border-radius: 50% !important;
-    flex-shrink: 0;
-}
-
-/* Keep table rows compact */
-.student-table td {
-    vertical-align: middle;
-    height: 62px;
-}
-
-    </style>
+    <link rel="stylesheet" href="./admin.css">
 </head>
 
 <body>
 
-    <div id="adminLoading">
-        Verifying administrator access...
-    </div>
+<div id="adminLoading" class="admin-loading">
+    <div class="loading-spinner"></div>
+    <p>Verifying administrator access...</p>
+</div>
 
-    <header>
+<div id="adminApp" class="admin-app" hidden>
 
-        <div class="logo">
-            ⚕ Mwaniki Scholars Administration
-        </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="adminSidebar">
 
-        <div class="header-right">
-
-            <span class="admin-badge">
-                Platform Super Admin
-            </span>
-
-            <button
-                type="button"
-                class="logout-button"
-                id="adminLogoutButton">
-                Sign Out
-            </button>
-
-        </div>
-
-    </header>
-
-    <main class="page">
-
-        <section class="welcome">
-
-            <h1>Administrator Dashboard</h1>
-
-            <p>
-                Manage the Mwaniki Scholars learning platform,
-                academic services and communities.
-            </p>
-
-        </section>
-
-
-        <!-- PLATFORM STATISTICS -->
-
-        <section>
-
-            <h2 class="section-title">
-                Platform Overview
-            </h2>
-
-            <div class="statistics">
-
-                <div class="stat-card">
-                    <div class="stat-icon">🎓</div>
-                    <div class="stat-label">Registered Students</div>
-                    <div class="stat-number" id="studentCount">—</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">📚</div>
-                    <div class="stat-label">Courses</div>
-                    <div class="stat-number" id="courseCount">—</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">👥</div>
-                    <div class="stat-label">Communities</div>
-                    <div class="stat-number" id="communityCount">—</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">💬</div>
-                    <div class="stat-label">Channels</div>
-                    <div class="stat-number" id="channelCount">—</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">✉️</div>
-                    <div class="stat-label">Community Messages</div>
-                    <div class="stat-number" id="messageCount">—</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">🟢</div>
-                    <div class="stat-label">Online Users</div>
-                    <div class="stat-number" id="onlineCount">—</div>
-                </div>
-
-                <div class="stat-card">
-                    <div class="stat-icon">🚩</div>
-                    <div class="stat-label">Submitted Reports</div>
-                    <div class="stat-number" id="reportCount">—</div>
-                </div>
-
+        <div class="brand">
+            <div class="brand-icon">
+                <span>MS</span>
             </div>
 
-            <button
-                type="button"
-                class="refresh-button"
-                id="refreshAdminButton"
-                onclick="refreshAdminDashboard()">
-                ↻ Refresh Dashboard
+            <div class="brand-text">
+                <strong>Mwaniki Scholars</strong>
+                <small>Administration Portal</small>
+            </div>
+
+            <button class="sidebar-close" id="sidebarClose"
+                    aria-label="Close navigation">
+                &times;
+            </button>
+        </div>
+
+        <div class="sidebar-label">PLATFORM MANAGEMENT</div>
+
+        <nav class="sidebar-nav">
+
+            <button class="nav-item active" data-view="overview">
+                <span class="nav-icon">▦</span>
+                <span>Overview</span>
             </button>
 
-        </section>
+            <div class="nav-divider"></div>
 
+            <div class="sidebar-label">PEOPLE</div>
 
-        <!-- MAIN ADMINISTRATION -->
+            <button class="nav-item" data-view="students">
+                <span class="nav-icon">♙</span>
+                <span>Students</span>
+                <span class="nav-count" id="sidebarStudentCount">0</span>
+            </button>
 
-        <div class="dashboard-grid">
+            <button class="nav-item" data-view="tutors">
+                <span class="nav-icon">♧</span>
+                <span>Tutors</span>
+            </button>
 
-            <!-- LEARNING MANAGEMENT -->
+            <div class="nav-divider"></div>
 
-            <section class="card">
+            <div class="sidebar-label">ACADEMICS</div>
 
-                <h2 class="section-title">
-                    📚 Learning Management
-                </h2>
+            <button class="nav-item" data-view="courses">
+                <span class="nav-icon">▤</span>
+                <span>Courses</span>
+            </button>
 
-                <p>
-                    Manage learning resources, notes and assessments.
-                </p>
+            <button class="nav-item" data-view="learning">
+                <span class="nav-icon">▣</span>
+                <span>Notes & Quizzes</span>
+            </button>
 
-                <a href="uploadNotes.html" class="action-button">
-                    📤 Upload Notes
-                </a>
+            <div class="nav-divider"></div>
 
-                <a href="quizAdmin.html" class="action-button">
-                    📝 Manage Quizzes
-                </a>
+            <div class="sidebar-label">COMMUNITY</div>
+
+            <button class="nav-item" data-view="community">
+                <span class="nav-icon">◎</span>
+                <span>Communities</span>
+            </button>
+
+            <button class="nav-item" data-view="moderation">
+                <span class="nav-icon">⚑</span>
+                <span>Moderation</span>
+            </button>
+
+            <div class="nav-divider"></div>
+
+            <div class="sidebar-label">PLATFORM CONTROL</div>
+
+            <button class="nav-item" data-view="analytics">
+                <span class="nav-icon">▥</span>
+                <span>Analytics</span>
+            </button>
+
+            <button class="nav-item" data-view="permissions">
+                <span class="nav-icon">♜</span>
+                <span>Permissions</span>
+            </button>
+
+            <button class="nav-item" data-view="audit">
+                <span class="nav-icon">☷</span>
+                <span>Audit Logs</span>
+            </button>
+
+            <button class="nav-item" data-view="settings">
+                <span class="nav-icon">⚙</span>
+                <span>Settings</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="admin-mini-profile">
+                <div class="admin-avatar">A</div>
+                <div class="admin-mini-info">
+                    <strong>Platform Admin</strong>
+                    <small>Super Administrator</small>
+                </div>
+            </div>
+
+            <button id="adminLogoutButton" class="logout-button">
+                <span>↪</span> Sign out
+            </button>
+        </div>
+
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- MAIN AREA -->
+    <main class="main-area">
+
+        <!-- TOP BAR -->
+        <header class="topbar">
+
+            <div class="topbar-left">
+                <button id="sidebarToggle" class="icon-button"
+                        aria-label="Toggle sidebar">
+                    ☰
+                </button>
+
+                <div>
+                    <div class="breadcrumb">Mwaniki Scholars / Administration</div>
+                    <h1 id="workspaceTitle">Overview</h1>
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <div class="admin-status">
+                    <span class="online-indicator"></span>
+                    Platform operational
+                </div>
+
+                <button id="refreshAdminButton" class="refresh-button">
+                    ↻ <span>Refresh</span>
+                </button>
+            </div>
+
+        </header>
+
+        <!-- WORKSPACE -->
+        <div class="workspace">
+
+            <div id="adminStatus" class="admin-alert" hidden></div>
+
+            <!-- OVERVIEW -->
+            <section class="workspace-view active" id="view-overview">
+
+                <div class="welcome-section">
+                    <div>
+                        <p class="eyebrow">PLATFORM CONTROL CENTRE</p>
+                        <h2>Welcome to Mwaniki Scholars</h2>
+                        <p>Monitor and manage the entire learning platform.</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon teal">♙</span>
+                            <span class="stat-label">REGISTERED ACCOUNTS</span>
+                        </div>
+                        <strong id="studentCount">—</strong>
+                        <small>All registered accounts</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon blue">▤</span>
+                            <span class="stat-label">COURSES</span>
+                        </div>
+                        <strong id="courseCount">—</strong>
+                        <small>Available courses</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon purple">◎</span>
+                            <span class="stat-label">COMMUNITIES</span>
+                        </div>
+                        <strong id="communityCount">—</strong>
+                        <small>Registered communities</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon orange">▣</span>
+                            <span class="stat-label">CHANNELS</span>
+                        </div>
+                        <strong id="channelCount">—</strong>
+                        <small>Community channels</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon green">◉</span>
+                            <span class="stat-label">ONLINE USERS</span>
+                        </div>
+                        <strong id="onlineCount">—</strong>
+                        <small>Currently online</small>
+                    </article>
+
+                    <article class="stat-card">
+                        <div class="stat-top">
+                            <span class="stat-icon red">⚑</span>
+                            <span class="stat-label">REPORTS</span>
+                        </div>
+                        <strong id="reportCount">—</strong>
+                        <small>Community reports</small>
+                    </article>
+
+                </div>
+
+                <div class="dashboard-grid">
+
+                    <section class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Quick management</h3>
+                                <p>Frequently used administration areas.</p>
+                            </div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <button data-view="students" class="quick-action">
+                                <span>♙</span>
+                                <strong>Manage students</strong>
+                                <small>View registered accounts</small>
+                            </button>
+
+                            <button data-view="courses" class="quick-action">
+                                <span>▤</span>
+                                <strong>Manage courses</strong>
+                                <small>Create and organize courses</small>
+                            </button>
+
+                            <button data-view="community" class="quick-action">
+                                <span>◎</span>
+                                <strong>Manage community</strong>
+                                <small>View communities and channels</small>
+                            </button>
+
+                            <button data-view="permissions" class="quick-action">
+                                <span>♜</span>
+                                <strong>Administration</strong>
+                                <small>Review platform access</small>
+                            </button>
+                        </div>
+                    </section>
+
+                    <section class="panel">
+                        <div class="panel-heading">
+                            <div>
+                                <h3>Platform information</h3>
+                                <p>Administration status.</p>
+                            </div>
+                        </div>
+
+                        <div class="information-list">
+                            <div>
+                                <span>Platform</span>
+                                <strong>Mwaniki Scholars</strong>
+                            </div>
+                            <div>
+                                <span>Administrator access</span>
+                                <strong class="success-text">Verified</strong>
+                            </div>
+                            <div>
+                                <span>Authentication</span>
+                                <strong>Supabase</strong>
+                            </div>
+                            <div>
+                                <span>Dashboard</span>
+                                <strong>Platform administration</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
 
             </section>
 
+            <!-- STUDENTS -->
+            <section class="workspace-view" id="view-students">
 
-            <!-- COURSE MANAGEMENT -->
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">PEOPLE MANAGEMENT</p>
+                        <h2>Student Management</h2>
+                        <p>View registered accounts and available student information.</p>
+                    </div>
 
-            <section class="card">
-
-                <h2 class="section-title">
-                    ➕ Course Management
-                </h2>
-
-                <p>
-                    Create new courses for the Mwaniki Scholars
-                    learning platform.
-                </p>
-
-                <form
-                    class="course-form"
-                    id="courseForm"
-                    onsubmit="event.preventDefault(); addCourse();">
-
-                    <input
-                        id="courseName"
-                        type="text"
-                        placeholder="Course title"
-                        required
-                    >
-
-                    <textarea
-                        id="courseDescription"
-                        placeholder="Course description">
-                    </textarea>
-
-                    <button type="submit" class="action-button">
-                        Add Course
+                    <button class="primary-button" id="reloadStudentsButton">
+                        ↻ Refresh students
                     </button>
+                </div>
 
-                </form>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat">
+                        <span>Registered accounts</span>
+                        <strong id="registeredAccountCount">0</strong>
+                    </div>
 
-                <div id="courseStatus" class="status"></div>
+                    <div class="mini-stat">
+                        <span>Student records</span>
+                        <strong id="completeStudentCount">0</strong>
+                    </div>
+
+                    <div class="mini-stat">
+                        <span>Missing student records</span>
+                        <strong id="incompleteStudentCount">0</strong>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="directory-toolbar">
+                        <div>
+                            <h3>Registered student accounts</h3>
+                            <p>Account and academic information available in the database.</p>
+                        </div>
+
+                        <input
+                            type="search"
+                            id="studentSearch"
+                            placeholder="Search name, email, course or phone..."
+                        >
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>STUDENT</th>
+                                    <th>EMAIL</th>
+                                    <th>PHONE</th>
+                                    <th>COURSE</th>
+                                    <th>LEVEL</th>
+                                    <th>PROFILE</th>
+                                    <th>REGISTERED</th>
+                                    <th>ACTION</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="studentsTableBody">
+                                <tr>
+                                    <td colspan="8">Loading students...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
 
             </section>
 
+            <!-- TUTORS -->
+            <section class="workspace-view" id="view-tutors">
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">PEOPLE MANAGEMENT</p>
+                        <h2>Tutor Management</h2>
+                        <p>Manage tutor access and teaching resources.</p>
+                    </div>
+                </div>
 
-            <!-- TUTOR MANAGEMENT -->
+                <div class="module-grid">
+                    <a class="module-card" href="createTutor.html">
+                        <span class="module-icon">＋</span>
+                        <h3>Create tutor account</h3>
+                        <p>Open the existing tutor account creation page.</p>
+                        <span class="module-link">Open module →</span>
+                    </a>
 
-            <section class="card">
+                    <a class="module-card" href="tutor.html">
+                        <span class="module-icon">♧</span>
+                        <h3>Tutor portal</h3>
+                        <p>Open the tutor portal.</p>
+                        <span class="module-link">Open module →</span>
+                    </a>
+                </div>
+            </section>
 
-                <h2 class="section-title">
-                    👨‍🏫 Tutor Management
-                </h2>
+            <!-- COURSES -->
+            <section class="workspace-view" id="view-courses">
 
-                <p>
-                    Create tutor accounts and access the tutor portal.
-                </p>
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">ACADEMIC MANAGEMENT</p>
+                        <h2>Course Management</h2>
+                        <p>Create and manage the platform's academic courses.</p>
+                    </div>
+                </div>
 
-                <a href="createTutor.html" class="action-button">
-                    ➕ Create Tutor Account
-                </a>
+                <div class="mini-stats-grid">
+                    <div class="mini-stat">
+                        <span>Total courses</span>
+                        <strong id="courseWorkspaceCount">—</strong>
+                    </div>
+                </div>
 
-                <a href="tutor.html" class="action-button secondary-button">
-                    👨‍🏫 View Tutor Portal
-                </a>
+                <section class="panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h3>Create a course</h3>
+                            <p>Add a new course to Mwaniki Scholars.</p>
+                        </div>
+                    </div>
+
+                    <form id="courseForm" class="admin-form">
+                        <label for="courseName">Course title</label>
+                        <input id="courseName" type="text"
+                               placeholder="Enter course title" required>
+
+                        <label for="courseDescription">Description</label>
+                        <textarea id="courseDescription"
+                                  placeholder="Describe the course"></textarea>
+
+                        <button class="primary-button" type="submit">
+                            Create course
+                        </button>
+
+                        <p id="courseStatus" class="form-status"></p>
+                    </form>
+                </section>
 
             </section>
 
+            <!-- LEARNING MATERIALS -->
+            <section class="workspace-view" id="view-learning">
 
-<section class="admin-section" id="studentManagement">
-    <div class="section-heading">
-        <div>
-            <h2>Student Management</h2>
-            <p>Registered accounts and student academic information.</p>
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">ACADEMIC MANAGEMENT</p>
+                        <h2>Learning Resources</h2>
+                        <p>Manage notes, quizzes and learning materials.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+
+                    <a class="module-card" href="uploadNotes.html">
+                        <span class="module-icon">▤</span>
+                        <h3>Notes Library</h3>
+                        <p>Upload and manage medical learning notes.</p>
+                        <span class="module-link">Open notes manager →</span>
+                    </a>
+
+                    <a class="module-card" href="quizAdmin.html">
+                        <span class="module-icon">✓</span>
+                        <h3>Quiz Management</h3>
+                        <p>Manage quizzes and academic assessments.</p>
+                        <span class="module-link">Open quiz manager →</span>
+                    </a>
+
+                </div>
+
+            </section>
+
+            <!-- COMMUNITY -->
+            <section class="workspace-view" id="view-community">
+
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">COMMUNITY MANAGEMENT</p>
+                        <h2>Communities</h2>
+                        <p>Monitor and administer Mwaniki Scholars communities.</p>
+                    </div>
+
+                    <a class="secondary-button" href="community.html">
+                        Open community
+                    </a>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h3>Registered communities</h3>
+                            <p>Communities currently available in the database.</p>
+                        </div>
+                    </div>
+
+                    <div id="communityList" class="community-list">
+                        Loading communities...
+                    </div>
+                </section>
+
+            </section>
+
+            <!-- MODERATION -->
+            <section class="workspace-view" id="view-moderation">
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">COMMUNITY GOVERNANCE</p>
+                        <h2>Moderation</h2>
+                        <p>Access community moderation tools.</p>
+                    </div>
+                </div>
+
+                <div class="module-grid">
+                    <a class="module-card" href="community.html">
+                        <span class="module-icon">⚑</span>
+                        <h3>Community moderation</h3>
+                        <p>Open the community interface to review available moderation tools.</p>
+                        <span class="module-link">Open community →</span>
+                    </a>
+                </div>
+
+                <div class="notice-panel">
+                    <strong>Moderation management</strong>
+                    <p>Centralized report review, warnings, suspensions and moderation history will be connected after the report and moderation table structures are verified.</p>
+                </div>
+            </section>
+
+            <!-- ANALYTICS -->
+            <section class="workspace-view" id="view-analytics">
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">PLATFORM INSIGHTS</p>
+                        <h2>Analytics</h2>
+                        <p>Monitor platform activity and growth.</p>
+                    </div>
+                </div>
+
+                <div class="notice-panel">
+                    <strong>Analytics workspace</strong>
+                    <p>Platform totals are available in Overview. Detailed registration trends, course engagement and community activity reports will be added using verified database records.</p>
+                </div>
+            </section>
+
+            <!-- PERMISSIONS -->
+            <section class="workspace-view" id="view-permissions">
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">SECURITY & ACCESS</p>
+                        <h2>Permissions</h2>
+                        <p>Platform administration and access control.</p>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="panel-heading">
+                        <div>
+                            <h3>Platform Super Admin</h3>
+                            <p>Administrators registered in the admin_users table.</p>
+                        </div>
+                    </div>
+
+                    <div class="information-list">
+                        <div>
+                            <span>Access level</span>
+                            <strong>Platform Super Admin</strong>
+                        </div>
+                        <div>
+                            <span>Verification</span>
+                            <strong class="success-text">Verified through Supabase RPC</strong>
+                        </div>
+                        <div>
+                            <span>Community access</span>
+                            <strong>Platform-wide</strong>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="notice-panel">
+                    <strong>Permission safety</strong>
+                    <p>This workspace currently displays the verified access model. Changes to administrator roles and community permissions will require explicit database operations and audit logging.</p>
+                </div>
+            </section>
+
+            <!-- AUDIT -->
+            <section class="workspace-view" id="view-audit">
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">ACCOUNTABILITY</p>
+                        <h2>Audit Logs</h2>
+                        <p>Review administrative activity.</p>
+                    </div>
+                </div>
+
+                <div class="notice-panel">
+                    <strong>Audit log integration pending</strong>
+                    <p>We will connect this workspace to a dedicated audit log table after verifying its schema. No activity history is being fabricated.</p>
+                </div>
+            </section>
+
+            <!-- SETTINGS -->
+            <section class="workspace-view" id="view-settings">
+                <div class="page-heading">
+                    <div>
+                        <p class="eyebrow">PLATFORM CONFIGURATION</p>
+                        <h2>Settings</h2>
+                        <p>Platform information and administrator session.</p>
+                    </div>
+                </div>
+
+                <section class="panel">
+                    <div class="information-list">
+                        <div>
+                            <span>Platform name</span>
+                            <strong>Mwaniki Scholars</strong>
+                        </div>
+                        <div>
+                            <span>Backend</span>
+                            <strong>Supabase</strong>
+                        </div>
+                        <div>
+                            <span>Dashboard version</span>
+                            <strong>Administration Portal</strong>
+                        </div>
+                    </div>
+                </section>
+            </section>
+
+            <footer class="admin-footer">
+                <span>Mwaniki Scholars Administration</span>
+                <span>Platform Management Portal</span>
+            </footer>
+
         </div>
+    </main>
+</div>
 
-        <button type="button" onclick="loadAdminStudents()">
-            Refresh Students
-        </button>
-    </div>
-
-    <div class="student-statistics">
-        <div class="admin-stat-card">
-            <h3 id="registeredAccountCount">0</h3>
-            <p>Registered Accounts</p>
-        </div>
-
-        <div class="admin-stat-card">
-            <h3 id="completeStudentCount">0</h3>
-            <p>Student Profiles</p>
-        </div>
-
-        <div class="admin-stat-card">
-            <h3 id="incompleteStudentCount">0</h3>
-            <p>Incomplete Profiles</p>
-        </div>
-    </div>
-
-    <div class="student-directory">
-        <input
-            type="search"
-            id="studentSearch"
-            placeholder="Search name, email, phone, course or account ID..."
-        >
-
-        <div class="table-wrapper">
-            <table class="student-table">
-                <thead>
-                    <tr>
-                        <th>Student</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Course</th>
-                        <th>Level</th>
-                        <th>Profile</th>
-                        <th>Registered</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-
-                <tbody id="studentsTableBody">
-                    <tr>
-                        <td colspan="8">Loading students...</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
-<div id="studentDetailsModal" class="student-modal" hidden>
+<!-- STUDENT DETAILS MODAL -->
+<div class="student-modal" id="studentDetailsModal" hidden>
     <div class="student-modal-card">
-        <button type="button" id="studentDetailsClose">
-            Close
-        </button>
+        <div class="modal-heading">
+            <div>
+                <p class="eyebrow">STUDENT ACCOUNT</p>
+                <h2>Student details</h2>
+            </div>
+
+            <button id="studentDetailsClose" class="icon-button"
+                    aria-label="Close details">&times;</button>
+        </div>
 
         <div id="studentDetailsContent"></div>
     </div>
 </div>
 
-<div id="adminStatus" role="status" hidden></div>
+<!-- AUTHENTICATION GUARD -->
+<script type="module">
+    import { supabase } from "./supabase.js";
 
-            <!-- STUDENT MANAGEMENT -->
+    const loading = document.getElementById("adminLoading");
+    const app = document.getElementById("adminApp");
 
-            <section class="card">
+    async function protectAdminDashboard() {
+        try {
+            const { data, error } = await supabase.auth.getSession();
 
-                <h2 class="section-title">
-                    🎓 Student Management
-                </h2>
+            if (error || !data.session) {
+                window.location.replace("adminLogin.html");
+                return;
+            }
 
-                <p>
-                    Access the student dashboard to review
-                    learning activities and platform services.
-                </p>
+            const { data: isAdmin, error: adminError } =
+                await supabase.rpc("is_platform_admin");
 
-                <a href="dashboard.html" class="action-button">
-                    Open Student Dashboard
-                </a>
-
-            </section>
-
-        </div>
-
-
-        <!-- COMMUNITY MANAGEMENT -->
-
-        <section class="card">
-
-            <h2 class="section-title">
-                🌐 Community Administration
-            </h2>
-
-            <p>
-                Monitor registered communities and open
-                their administration workspace.
-            </p>
-
-            <div class="notice">
-                Platform Super Admins can oversee all communities.
-                Community-specific management tools will be added
-                in the next implementation stage.
-            </div>
-
-            <br>
-
-            <div class="community-list" id="communityList">
-                Loading communities...
-            </div>
-
-        </section>
-
-
-        <!-- PLATFORM MONITORING -->
-
-        <section class="card">
-
-            <h2 class="section-title">
-                🛡️ Platform Monitoring
-            </h2>
-
-            <p>
-                This section provides an overview of platform
-                activity and community safety indicators.
-            </p>
-
-            <a href="community.html" class="action-button">
-                Open Community
-            </a>
-
-            <a href="dashboard.html" class="action-button secondary-button">
-                Open Learning Platform
-            </a>
-
-            <p>
-                Detailed report investigation, member moderation,
-                warning management and audit logs will be connected
-                after the database permissions and schemas are verified.
-            </p>
-
-        </section>
-
-    </main>
-
-
-    <footer>
-        © 2026 Mwaniki Scholars — Administration Portal
-    </footer>
-
-
-    <!-- AUTHENTICATION AND ADMIN CONTROLLER -->
-
-    <script type="module">
-
-        import { supabase } from "./supabase.js";
-
-        async function protectAdminDashboard() {
-
-            try {
-
-                const {
-                    data: { session },
-                    error
-                } = await supabase.auth.getSession();
-
-                if (error || !session) {
-
-                    window.location.replace("adminLogin.html");
-                    return;
-
-                }
-
-                const {
-                    data: isAdmin,
-                    error: adminError
-                } = await supabase.rpc("is_platform_admin");
-
-                if (adminError || isAdmin !== true) {
-
-                    await supabase.auth.signOut();
-
-                    window.location.replace("adminLogin.html");
-                    return;
-
-                }
-
-                // Load the dashboard controller only after authorization.
-                await import("./admin.js");
-
-                document.getElementById("adminLoading").remove();
-
-                console.log(
-                    "Mwaniki Scholars Platform Admin verified."
-                );
-
-            } catch (error) {
-
-                console.error(
-                    "Dashboard security error:",
-                    error
-                );
-
+            if (adminError || isAdmin !== true) {
                 await supabase.auth.signOut();
-
                 window.location.replace("adminLogin.html");
-
+                return;
             }
 
+            app.hidden = false;
+            loading.hidden = true;
+
+            await import("./admin.js");
+
+            console.log("Mwaniki Scholars Platform Admin verified.");
+
+        } catch (error) {
+            console.error("Admin verification failed:", error);
+            await supabase.auth.signOut();
+            window.location.replace("adminLogin.html");
         }
+    }
 
-
-        // Sign out.
-        document
-            .getElementById("adminLogoutButton")
-            .addEventListener("click", async () => {
-
-                const { error } = await supabase.auth.signOut();
-
-                if (error) {
-                    console.error("Sign out error:", error);
-                    alert("Unable to sign out. Please try again.");
-                    return;
-                }
-
-                window.location.replace("adminLogin.html");
-
-            });
-
-
-        // Detect session termination.
-        supabase.auth.onAuthStateChange((event, session) => {
-
-            if (event === "SIGNED_OUT" || !session) {
-
-                window.location.replace("adminLogin.html");
-
-            }
-
-        });
-
-
-        protectAdminDashboard();
-
-    </script>
+    protectAdminDashboard();
+</script>
 
 </body>
 </html>
