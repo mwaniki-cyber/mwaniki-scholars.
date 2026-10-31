@@ -2,49 +2,26 @@
 import { supabase } from "./supabase.js";
 
 /* =========================================================
-   MWANIKI SCHOLARS
-   PLATFORM ADMINISTRATION CONTROLLER
-
-   Modules:
-   1. Course management
-   2. Student statistics
-   3. Platform statistics
-   4. Community monitoring
-   5. Channel statistics
-   6. Message monitoring statistics
-   7. Online user statistics
-   8. Report monitoring statistics
-
-   Existing community and calling systems are not modified.
-========================================================= */
-
-
-/* =========================================================
-   GENERAL HELPERS
-========================================================= */
+   MWANIKI SCHOLARS — PLATFORM ADMIN DASHBOARD
+   Student management + platform monitoring
+   ========================================================= */
 
 const $ = (id) => document.getElementById(id);
 
+const state = {
+    students: [],
+    filteredStudents: [],
+    studentSearch: "",
+    initialized: false
+};
+
 function setText(id, value) {
     const element = $(id);
-    if (element) element.textContent = value;
-}
-
-function setHTML(id, value) {
-    const element = $(id);
-    if (element) element.innerHTML = value;
-}
-
-function showStatus(id, message, success = false) {
-    const element = $(id);
-    if (!element) return;
-
-    element.textContent = message;
-    element.style.color = success ? "#087f73" : "#dc2626";
+    if (element) element.textContent = value ?? "0";
 }
 
 function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, char => ({
+    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
@@ -53,356 +30,405 @@ function escapeHTML(value) {
     })[char]);
 }
 
+function showAdminMessage(message, type = "info") {
+    const element = $("adminStatus");
+    if (!element) {
+        console.log(message);
+        return;
+    }
+
+    element.textContent = message;
+    element.dataset.type = type;
+    element.hidden = false;
+}
+
 async function getCount(table, filters = []) {
     let query = supabase
         .from(table)
         .select("*", { count: "exact", head: true });
 
-    for (const filter of filters) {
-        query = query.eq(filter.column, filter.value);
+    for (const [column, operator, value] of filters) {
+        query = query.filter(column, operator, value);
     }
 
     const { count, error } = await query;
 
     if (error) {
-        console.error(`Unable to count ${table}:`, error);
+        console.error(`Could not count ${table}:`, error);
         return null;
     }
 
     return count ?? 0;
 }
 
-function displayCount(id, count, label = "Unavailable") {
-    setText(id, count === null ? label : count.toLocaleString());
+/* =========================================================
+   ADMIN OVERVIEW
+   ========================================================= */
+
+async function loadOverview() {
+    const tasks = [
+        ["studentCount", getCount("students")],
+        ["courseCount", getCount("courses")],
+        ["communityCount", getCount("chat_communities")],
+        ["channelCount", getCount("chat_channels")],
+        ["messageCount", getCount("chat_messages")],
+        ["onlineCount", getCount("chat_presence", [
+            ["status", "eq", "online"]
+        ])],
+        ["reportCount", getCount("chat_reports")]
+    ];
+
+    await Promise.all(tasks.map(async ([id, promise]) => {
+        const count = await promise;
+        if (count !== null) setText(id, count);
+    }));
+
+    // The student directory count is based on actual
+    // authenticated accounts, not only profile records.
+    await loadStudents();
 }
 
-
 /* =========================================================
-   1. ADD COURSE
-========================================================= */
+   STUDENT MANAGEMENT
+   ========================================================= */
 
-window.addCourse = async function () {
+async function loadStudents() {
+    const tableBody = $("studentsTableBody");
 
-    const name = $("courseName")?.value.trim();
-    const description = $("courseDescription")?.value.trim() || "";
+    if (tableBody) {
+        tableBody.innerHTML =
+            `<tr><td colspan="7">Loading registered students...</td></tr>`;
+    }
 
-    if (!name) {
-        showStatus("courseStatus", "Please enter a course title.");
+    try {
+        const { data, error } = await supabase.rpc("admin_list_students");
+
+        if (error) throw error;
+
+        state.students = Array.isArray(data) ? data : [];
+
+        setText("studentCount", state.students.length);
+        setText("registeredAccountCount", state.students.length);
+
+        const complete = state.students.filter(
+            student => student.has_student_record
+        ).length;
+
+        setText("completeStudentCount", complete);
+        setText(
+            "incompleteStudentCount",
+            state.students.length - complete
+        );
+
+        filterStudents();
+
+    } catch (error) {
+        console.error("Student directory error:", error);
+
+        if (tableBody) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7">
+                        Unable to load students.
+                        Check administrator permissions and the RPC function.
+                    </td>
+                </tr>`;
+        }
+
+        showAdminMessage(
+            "Could not load student accounts: " + error.message,
+            "error"
+        );
+    }
+}
+
+function filterStudents() {
+    const term = state.studentSearch.trim().toLowerCase();
+
+    state.filteredStudents = state.students.filter(student => {
+        const searchable = [
+            student.full_name,
+            student.email,
+            student.phone,
+            student.course,
+            student.level,
+            student.user_id
+        ].join(" ").toLowerCase();
+
+        return searchable.includes(term);
+    });
+
+    renderStudents();
+}
+
+function renderStudents() {
+    const tableBody = $("studentsTableBody");
+    if (!tableBody) return;
+
+    if (!state.filteredStudents.length) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    No matching registered students found.
+                </td>
+            </tr>`;
         return;
     }
 
-    showStatus("courseStatus", "Adding course...", true);
+    tableBody.innerHTML = state.filteredStudents.map(student => {
+        const name = student.full_name || "Profile incomplete";
+        const email = student.email || "No email";
+        const profileStatus = student.has_student_record
+            ? "Complete"
+            : "Incomplete";
+
+        const date = student.registered_at
+            ? new Date(student.registered_at).toLocaleDateString()
+            : "Unavailable";
+
+        return `
+            <tr>
+                <td>
+                    <div class="student-identity">
+                        ${
+                            student.photo_url
+                            ? `<img class="student-avatar"
+                                src="${escapeHTML(student.photo_url)}"
+                                alt=""
+                                onerror="this.style.display='none'">`
+                            : `<span class="student-avatar-placeholder">
+                                ${escapeHTML(name.charAt(0).toUpperCase())}
+                               </span>`
+                        }
+                        <div>
+                            <strong>${escapeHTML(name)}</strong>
+                            <small>${escapeHTML(student.user_id)}</small>
+                        </div>
+                    </div>
+                </td>
+
+                <td>${escapeHTML(email)}</td>
+                <td>${escapeHTML(student.phone || "Not provided")}</td>
+                <td>${escapeHTML(student.course || "Not provided")}</td>
+                <td>${escapeHTML(student.level || "Not provided")}</td>
+                <td>
+                    <span class="profile-status ${
+                        student.has_student_record ? "complete" : "incomplete"
+                    }">
+                        ${profileStatus}
+                    </span>
+                </td>
+                <td>${escapeHTML(date)}</td>
+                <td>
+                    <button type="button"
+                        class="student-view-button"
+                        data-student-id="${escapeHTML(student.user_id)}">
+                        View details
+                    </button>
+                </td>
+            </tr>`;
+    }).join("");
+
+    tableBody.querySelectorAll("[data-student-id]").forEach(button => {
+        button.addEventListener("click", () => {
+            openStudentDetails(button.dataset.studentId);
+        });
+    });
+}
+
+/* =========================================================
+   INDIVIDUAL STUDENT DETAILS
+   ========================================================= */
+
+function openStudentDetails(userId) {
+    const student = state.students.find(
+        item => item.user_id === userId
+    );
+
+    if (!student) return;
+
+    const modal = $("studentDetailsModal");
+    const content = $("studentDetailsContent");
+
+    if (!modal || !content) {
+        showAdminMessage(
+            "Student details: " +
+            (student.full_name || student.email || student.user_id)
+        );
+        return;
+    }
+
+    const details = [
+        ["Full name", student.full_name],
+        ["Email", student.email],
+        ["Phone", student.phone],
+        ["Course", student.course],
+        ["Level", student.level],
+        ["Account ID", student.user_id],
+        ["Registration date", student.registered_at],
+        ["Last sign-in", student.last_sign_in_at],
+        ["Email confirmed", student.email_confirmed_at ? "Yes" : "No"],
+        ["Student profile", student.has_student_record ? "Available" : "Incomplete"]
+    ];
+
+    content.innerHTML = `
+        <h3>${escapeHTML(student.full_name || "Student account")}</h3>
+        <div class="student-detail-grid">
+            ${details.map(([label, value]) => `
+                <div class="student-detail">
+                    <small>${escapeHTML(label)}</small>
+                    <strong>${escapeHTML(value || "Not provided")}</strong>
+                </div>
+            `).join("")}
+        </div>
+    `;
+
+    modal.hidden = false;
+}
+
+function closeStudentDetails() {
+    const modal = $("studentDetailsModal");
+    if (modal) modal.hidden = true;
+}
+
+/* =========================================================
+   COURSE MANAGEMENT
+   ========================================================= */
+
+window.addCourse = async function () {
+    const title = $("courseName")?.value.trim();
+    const description = $("courseDescription")?.value.trim();
+    const status = $("courseStatus");
+
+    if (!title) {
+        showAdminMessage("Enter a course title.", "error");
+        return;
+    }
+
+    if (status) status.textContent = "Creating course...";
 
     try {
         const { error } = await supabase
             .from("courses")
             .insert({
-                title: name,
-                description: description
+                title,
+                description
             });
 
         if (error) throw error;
 
-        showStatus(
-            "courseStatus",
-            "Course added successfully.",
-            true
-        );
-
         if ($("courseName")) $("courseName").value = "";
-        if ($("courseDescription")) {
-            $("courseDescription").value = "";
-        }
+        if ($("courseDescription")) $("courseDescription").value = "";
 
-        await loadCourseCount();
+        if (status) status.textContent = "Course created successfully.";
+
+        const count = await getCount("courses");
+        if (count !== null) setText("courseCount", count);
 
     } catch (error) {
-        console.error("Add course error:", error);
-
-        showStatus(
-            "courseStatus",
-            "Unable to add course: " + error.message
-        );
+        console.error(error);
+        if (status) status.textContent = error.message;
     }
 };
 
-
 /* =========================================================
-   2. STUDENT STATISTICS
-========================================================= */
-
-async function loadStudents() {
-
-    const count = await getCount("profiles");
-
-    displayCount("studentCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   3. COURSE STATISTICS
-========================================================= */
-
-async function loadCourseCount() {
-
-    const count = await getCount("courses");
-
-    displayCount("courseCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   4. COMMUNITY STATISTICS
-========================================================= */
-
-async function loadCommunityCount() {
-
-    const count = await getCount("chat_communities");
-
-    displayCount("communityCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   5. CHANNEL STATISTICS
-========================================================= */
-
-async function loadChannelCount() {
-
-    const count = await getCount("chat_channels");
-
-    displayCount("channelCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   6. MESSAGE STATISTICS
-========================================================= */
-
-async function loadMessageCount() {
-
-    const count = await getCount("chat_messages");
-
-    displayCount("messageCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   7. ONLINE USER MONITORING
-========================================================= */
-
-async function loadOnlineUsers() {
-
-    const count = await getCount("chat_presence", [
-        {
-            column: "status",
-            value: "online"
-        }
-    ]);
-
-    displayCount("onlineCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   8. REPORT MONITORING
-========================================================= */
-
-async function loadReportCount() {
-
-    const count = await getCount("chat_reports");
-
-    displayCount("reportCount", count);
-
-    return count;
-}
-
-
-/* =========================================================
-   9. COMMUNITY DIRECTORY
-========================================================= */
+   COMMUNITY DIRECTORY
+   ========================================================= */
 
 window.loadAdminCommunities = async function () {
-
     const container = $("communityList");
-
     if (!container) return;
 
     container.textContent = "Loading communities...";
 
     try {
-
         const { data, error } = await supabase
             .from("chat_communities")
-            .select(`
-                id,
-                name,
-                description,
-                is_active,
-                created_at
-            `)
+            .select("id,name,description,is_active,created_at")
             .order("created_at", { ascending: false });
 
         if (error) throw error;
 
-        if (!data || data.length === 0) {
+        if (!data?.length) {
             container.textContent = "No communities found.";
             return;
         }
 
         container.innerHTML = data.map(community => `
-
-            <div class="admin-community-item"
-                 data-community-id="${escapeHTML(community.id)}">
-
-                <div class="admin-community-information">
-
-                    <h3>${escapeHTML(community.name)}</h3>
-
-                    <p>
-                        ${escapeHTML(
-                            community.description || "No description"
-                        )}
-                    </p>
-
+            <div class="community-admin-item">
+                <div>
+                    <strong>${escapeHTML(community.name)}</strong>
+                    <p>${escapeHTML(community.description || "")}</p>
+                    <small>${community.is_active ? "Active" : "Inactive"}</small>
                 </div>
-
-                <span class="admin-community-status"
-                      style="color:${
-                          community.is_active ? "#087f73" : "#dc2626"
-                      }">
-
-                    ${community.is_active ? "Active" : "Inactive"}
-
-                </span>
-
-                <button
-                    type="button"
-                    onclick="openCommunityAdmin('${escapeHTML(community.id)}')">
-
-                    Manage Community
-
+                <button type="button"
+                    data-community-id="${escapeHTML(community.id)}">
+                    Manage
                 </button>
-
             </div>
-
         `).join("");
 
+        container.querySelectorAll("[data-community-id]").forEach(button => {
+            button.addEventListener("click", () => {
+                window.openCommunityAdmin(button.dataset.communityId);
+            });
+        });
+
     } catch (error) {
-
-        console.error("Community loading error:", error);
-
-        container.textContent =
-            "Unable to load communities: " + error.message;
+        console.error(error);
+        container.textContent = "Unable to load communities: " + error.message;
     }
 };
-
-
-/* =========================================================
-   10. OPEN COMMUNITY ADMINISTRATION
-========================================================= */
 
 window.openCommunityAdmin = function (communityId) {
-
-    if (!communityId) return;
-
-    const params = new URLSearchParams({
-        community: communityId
-    });
-
     window.location.href =
-        "communityAdmin.html?" + params.toString();
+        "communityAdmin.html?community=" +
+        encodeURIComponent(communityId);
 };
 
-
 /* =========================================================
-   11. PLATFORM OVERVIEW
-========================================================= */
-
-window.loadAdminOverview = async function () {
-
-    const results = await Promise.allSettled([
-
-        loadStudents(),
-        loadCourseCount(),
-        loadCommunityCount(),
-        loadChannelCount(),
-        loadMessageCount(),
-        loadOnlineUsers(),
-        loadReportCount()
-
-    ]);
-
-    console.log("Mwaniki Scholars statistics loaded.");
-
-    return results;
-};
-
-
-/* =========================================================
-   12. REFRESH DASHBOARD
-========================================================= */
+   REFRESH AND INITIALIZATION
+   ========================================================= */
 
 window.refreshAdminDashboard = async function () {
-
-    const button = $("refreshAdminButton");
-
-    if (button) {
-        button.disabled = true;
-        button.textContent = "Refreshing...";
-    }
-
-    try {
-
-        await window.loadAdminOverview();
-
-        await window.loadAdminCommunities();
-
-        console.log("Admin dashboard refreshed.");
-
-    } finally {
-
-        if (button) {
-            button.disabled = false;
-            button.textContent = "Refresh Dashboard";
-        }
-    }
+    showAdminMessage("Refreshing dashboard...");
+    await loadOverview();
+    await window.loadAdminCommunities();
+    showAdminMessage("Dashboard refreshed.", "success");
 };
 
-
-/* =========================================================
-   13. INITIALIZATION
-========================================================= */
+window.loadAdminStudents = loadStudents;
+window.filterAdminStudents = filterStudents;
+window.closeStudentDetails = closeStudentDetails;
 
 async function initializeAdminDashboard() {
+    if (state.initialized) return;
+    state.initialized = true;
 
-    console.log("Initializing Mwaniki Scholars Admin Dashboard...");
+    const search = $("studentSearch");
 
-    try {
-
-        await window.loadAdminOverview();
-
-        await window.loadAdminCommunities();
-
-        console.log("Admin Dashboard Connected.");
-
-    } catch (error) {
-
-        console.error("Admin initialization error:", error);
-
+    if (search) {
+        search.addEventListener("input", event => {
+            state.studentSearch = event.target.value;
+            filterStudents();
+        });
     }
+
+    $("studentDetailsClose")?.addEventListener(
+        "click",
+        closeStudentDetails
+    );
+
+    $("studentDetailsModal")?.addEventListener("click", event => {
+        if (event.target.id === "studentDetailsModal") {
+            closeStudentDetails();
+        }
+    });
+
+    await Promise.all([
+        loadOverview(),
+        window.loadAdminCommunities()
+    ]);
 }
 
 initializeAdminDashboard();
