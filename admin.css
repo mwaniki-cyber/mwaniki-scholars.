@@ -1,0 +1,177 @@
+
+.student-statistics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.admin-stat-card {
+    background: #f0fdfa;
+    border: 1px solid #ccfbf1;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.admin-stat-card h3 {
+    color: #087f73;
+    font-size: 28px;
+    margin: 0 0 8px;
+}
+
+.admin-stat-card p {
+    margin: 0;
+    color: #52616b;
+}
+
+.student-directory {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 18px;
+    overflow: hidden;
+}
+
+#studentSearch {
+    width: 100%;
+    max-width: 520px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.student-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 950px;
+}
+
+.student-table th,
+.student-table td {
+    padding: 13px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+    font-size: 13px;
+}
+
+.student-table th {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.student-identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 190px;
+}
+
+.student-identity small {
+    display: block;
+    color: #64748b;
+    max-width: 180px;
+    overflow-wrap: anywhere;
+    font-size: 10px;
+}
+
+.student-avatar,
+.student-avatar-placeholder {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.student-avatar-placeholder {
+    display: grid;
+    place-items: center;
+    background: #ccfbf1;
+    color: #087f73;
+    font-weight: bold;
+}
+
+.profile-status {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+}
+
+.profile-status.complete {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.profile-status.incomplete {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.student-view-button {
+    background: #087f73;
+    color: white;
+    border: 0;
+    padding: 8px 12px;
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.student-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    background: rgba(15, 23, 42, .55);
+    display: grid;
+    place-items: center;
+    padding: 18px;
+}
+
+.student-modal[hidden] {
+    display: none;
+}
+
+.student-modal-card {
+    background: white;
+    width: min(650px, 100%);
+    max-height: 85vh;
+    overflow-y: auto;
+    border-radius: 14px;
+    padding: 24px;
+}
+
+.student-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.student-detail {
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    overflow-wrap: anywhere;
+}
+
+.student-detail small,
+.student-detail strong {
+    display: block;
+}
+
+.student-detail small {
+    color: #64748b;
+    margin-bottom: 5px;
+}
+
+@media (max-width: 600px) {
+    .student-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
