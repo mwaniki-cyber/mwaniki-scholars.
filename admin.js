@@ -1,27 +1,40 @@
 
 import { supabase } from "./supabase.js";
 
-/* =========================================================
-   MWANIKI SCHOLARS — PLATFORM ADMIN DASHBOARD
-   Student management + platform monitoring
-   ========================================================= */
+/* ======================================================
+   MWANIKI SCHOLARS
+   PLATFORM ADMINISTRATION CONTROLLER
+   ====================================================== */
 
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
 const state = {
     students: [],
-    filteredStudents: [],
-    studentSearch: "",
-    initialized: false
+    communities: [],
+    activeView: "overview",
+    search: ""
 };
 
-function setText(id, value) {
-    const element = $(id);
-    if (element) element.textContent = value ?? "0";
-}
+const viewTitles = {
+    overview: "Overview",
+    students: "Student Management",
+    tutors: "Tutor Management",
+    courses: "Course Management",
+    learning: "Learning Resources",
+    community: "Community Management",
+    moderation: "Moderation",
+    analytics: "Analytics",
+    permissions: "Permissions",
+    audit: "Audit Logs",
+    settings: "Settings"
+};
+
+/* ======================================================
+   GENERAL HELPERS
+   ====================================================== */
 
 function escapeHTML(value) {
-    return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
@@ -30,74 +43,190 @@ function escapeHTML(value) {
     })[char]);
 }
 
-function showAdminMessage(message, type = "info") {
-    const element = $("adminStatus");
-    if (!element) {
-        console.log(message);
+function setText(id, value) {
+    const element = $(id);
+    if (element) element.textContent = value ?? "—";
+}
+
+function showStatus(message, type = "success") {
+    const box = $("adminStatus");
+    if (!box) return;
+
+    box.textContent = message;
+    box.dataset.type = type;
+    box.hidden = false;
+
+    if (type !== "error") {
+        window.setTimeout(() => {
+            if (box.textContent === message) box.hidden = true;
+        }, 4500);
+    }
+}
+
+function formatDate(value) {
+    if (!value) return "Not available";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "Not available";
+
+    return date.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+    });
+}
+
+function formatDateTime(value) {
+    if (!value) return "Never recorded";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) return "Not available";
+
+    return date.toLocaleString();
+}
+
+/* ======================================================
+   WORKSPACE NAVIGATION
+   ====================================================== */
+
+function openWorkspace(viewName) {
+    const target = $("view-" + viewName);
+
+    if (!target) {
+        console.warn("Unknown dashboard workspace:", viewName);
         return;
     }
 
-    element.textContent = message;
-    element.dataset.type = type;
-    element.hidden = false;
-}
+    state.activeView = viewName;
 
-async function getCount(table, filters = []) {
-    let query = supabase
-        .from(table)
-        .select("*", { count: "exact", head: true });
+    document.querySelectorAll(".workspace-view").forEach(view => {
+        view.classList.toggle("active", view === target);
+    });
 
-    for (const [column, operator, value] of filters) {
-        query = query.filter(column, operator, value);
+    document.querySelectorAll(".nav-item").forEach(button => {
+        button.classList.toggle(
+            "active",
+            button.dataset.view === viewName
+        );
+    });
+
+    setText("workspaceTitle", viewTitles[viewName] || "Administration");
+
+    closeMobileSidebar();
+
+    if (viewName === "students" && state.students.length === 0) {
+        loadStudents();
     }
 
-    const { count, error } = await query;
+    if (viewName === "community" && state.communities.length === 0) {
+        loadCommunities();
+    }
+}
 
-    if (error) {
-        console.error(`Could not count ${table}:`, error);
+function initializeNavigation() {
+    document.querySelectorAll("[data-view]").forEach(button => {
+        button.addEventListener("click", () => {
+            openWorkspace(button.dataset.view);
+        });
+    });
+
+    openWorkspace("overview");
+}
+
+/* ======================================================
+   RESPONSIVE SIDEBAR
+   ====================================================== */
+
+function openMobileSidebar() {
+    $("adminSidebar")?.classList.add("mobile-open");
+    $("sidebarOverlay")?.classList.add("active");
+}
+
+function closeMobileSidebar() {
+    $("adminSidebar")?.classList.remove("mobile-open");
+    $("sidebarOverlay")?.classList.remove("active");
+}
+
+function initializeSidebar() {
+    $("sidebarToggle")?.addEventListener("click", openMobileSidebar);
+    $("sidebarClose")?.addEventListener("click", closeMobileSidebar);
+    $("sidebarOverlay")?.addEventListener("click", closeMobileSidebar);
+}
+
+/* ======================================================
+   DATABASE COUNTS
+   ====================================================== */
+
+async function countRows(table, filters = []) {
+    try {
+        let query = supabase
+            .from(table)
+            .select("*", { count: "exact", head: true });
+
+        for (const [column, operator, value] of filters) {
+            query = query.filter(column, operator, value);
+        }
+
+        const { count, error } = await query;
+
+        if (error) {
+            console.error(`Count failed for ${table}:`, error);
+            return null;
+        }
+
+        return count ?? 0;
+
+    } catch (error) {
+        console.error(`Count failed for ${table}:`, error);
         return null;
     }
-
-    return count ?? 0;
 }
 
-/* =========================================================
-   ADMIN OVERVIEW
-   ========================================================= */
-
-async function loadOverview() {
-    const tasks = [
-        ["studentCount", getCount("students")],
-        ["courseCount", getCount("courses")],
-        ["communityCount", getCount("chat_communities")],
-        ["channelCount", getCount("chat_channels")],
-        ["messageCount", getCount("chat_messages")],
-        ["onlineCount", getCount("chat_presence", [
+async function loadOverviewCounts() {
+    const requests = [
+        ["courseCount", "courses"],
+        ["communityCount", "chat_communities"],
+        ["channelCount", "chat_channels"],
+        ["messageCount", "chat_messages"],
+        ["onlineCount", "chat_presence", [
             ["status", "eq", "online"]
-        ])],
-        ["reportCount", getCount("chat_reports")]
+        ]],
+        ["reportCount", "chat_reports"]
     ];
 
-    await Promise.all(tasks.map(async ([id, promise]) => {
-        const count = await promise;
-        if (count !== null) setText(id, count);
-    }));
+    const results = await Promise.all(
+        requests.map(async ([id, table, filters = []]) => ({
+            id,
+            count: await countRows(table, filters)
+        }))
+    );
 
-    // The student directory count is based on actual
-    // authenticated accounts, not only profile records.
+    results.forEach(({ id, count }) => {
+        if (count !== null) setText(id, count);
+    });
+
+    const courseCount = results.find(item => item.id === "courseCount");
+    if (courseCount?.count !== null && courseCount?.count !== undefined) {
+        setText("courseWorkspaceCount", courseCount.count);
+    }
+
     await loadStudents();
 }
 
-/* =========================================================
-   STUDENT MANAGEMENT
-   ========================================================= */
+/* ======================================================
+   STUDENT DIRECTORY
+   ====================================================== */
 
 async function loadStudents() {
-    const tableBody = $("studentsTableBody");
+    const body = $("studentsTableBody");
 
-    if (tableBody) {
-        tableBody.innerHTML =
-            `<tr><td colspan="7">Loading registered students...</td></tr>`;
+    if (body) {
+        body.innerHTML = `
+            <tr>
+                <td colspan="8">Loading registered accounts...</td>
+            </tr>`;
     }
 
     try {
@@ -107,99 +236,98 @@ async function loadStudents() {
 
         state.students = Array.isArray(data) ? data : [];
 
-        setText("studentCount", state.students.length);
-        setText("registeredAccountCount", state.students.length);
+        const total = state.students.length;
 
         const complete = state.students.filter(
-            student => student.has_student_record
+            student => student.has_student_record === true
         ).length;
 
+        const incomplete = total - complete;
+
+        setText("studentCount", total);
+        setText("sidebarStudentCount", total);
+        setText("registeredAccountCount", total);
         setText("completeStudentCount", complete);
-        setText(
-            "incompleteStudentCount",
-            state.students.length - complete
-        );
+        setText("incompleteStudentCount", incomplete);
 
         filterStudents();
 
     } catch (error) {
-        console.error("Student directory error:", error);
+        console.error("Could not load student directory:", error);
 
-        if (tableBody) {
-            tableBody.innerHTML = `
+        if (body) {
+            body.innerHTML = `
                 <tr>
-                    <td colspan="7">
-                        Unable to load students.
-                        Check administrator permissions and the RPC function.
+                    <td colspan="8">
+                        Student directory could not be loaded.
+                        ${escapeHTML(error.message)}
                     </td>
                 </tr>`;
         }
 
-        showAdminMessage(
-            "Could not load student accounts: " + error.message,
+        showStatus(
+            "Student directory error: " + error.message,
             "error"
         );
     }
 }
 
 function filterStudents() {
-    const term = state.studentSearch.trim().toLowerCase();
+    const search = state.search.trim().toLowerCase();
 
-    state.filteredStudents = state.students.filter(student => {
-        const searchable = [
+    const filtered = state.students.filter(student => {
+        const fields = [
             student.full_name,
             student.email,
             student.phone,
             student.course,
             student.level,
             student.user_id
-        ].join(" ").toLowerCase();
+        ];
 
-        return searchable.includes(term);
+        return fields.some(value =>
+            String(value ?? "").toLowerCase().includes(search)
+        );
     });
 
-    renderStudents();
+    renderStudents(filtered);
 }
 
-function renderStudents() {
-    const tableBody = $("studentsTableBody");
-    if (!tableBody) return;
+function renderStudents(students) {
+    const body = $("studentsTableBody");
+    if (!body) return;
 
-    if (!state.filteredStudents.length) {
-        tableBody.innerHTML = `
+    if (!students.length) {
+        body.innerHTML = `
             <tr>
-                <td colspan="7">
-                    No matching registered students found.
-                </td>
+                <td colspan="8">No matching registered accounts found.</td>
             </tr>`;
         return;
     }
 
-    tableBody.innerHTML = state.filteredStudents.map(student => {
+    body.innerHTML = students.map(student => {
         const name = student.full_name || "Profile incomplete";
-        const email = student.email || "No email";
-        const profileStatus = student.has_student_record
-            ? "Complete"
-            : "Incomplete";
+        const firstLetter = name.trim().charAt(0).toUpperCase() || "S";
 
-        const date = student.registered_at
-            ? new Date(student.registered_at).toLocaleDateString()
-            : "Unavailable";
+        const photo = student.photo_url
+            ? `<img
+                src="${escapeHTML(student.photo_url)}"
+                alt=""
+                class="student-avatar"
+                loading="lazy"
+                onerror="this.style.display='none';this.nextElementSibling.hidden=false">
+               <span class="student-avatar-placeholder" hidden>${escapeHTML(firstLetter)}</span>`
+            : `<span class="student-avatar-placeholder">${escapeHTML(firstLetter)}</span>`;
+
+        const profileStatus = student.has_student_record
+            ? `<span class="profile-status complete">Available</span>`
+            : `<span class="profile-status incomplete">Incomplete</span>`;
 
         return `
             <tr>
                 <td>
                     <div class="student-identity">
-                        ${
-                            student.photo_url
-                            ? `<img class="student-avatar"
-                                src="${escapeHTML(student.photo_url)}"
-                                alt=""
-                                onerror="this.style.display='none'">`
-                            : `<span class="student-avatar-placeholder">
-                                ${escapeHTML(name.charAt(0).toUpperCase())}
-                               </span>`
-                        }
+                        ${photo}
                         <div>
                             <strong>${escapeHTML(name)}</strong>
                             <small>${escapeHTML(student.user_id)}</small>
@@ -207,38 +335,33 @@ function renderStudents() {
                     </div>
                 </td>
 
-                <td>${escapeHTML(email)}</td>
+                <td>${escapeHTML(student.email || "Unavailable")}</td>
                 <td>${escapeHTML(student.phone || "Not provided")}</td>
                 <td>${escapeHTML(student.course || "Not provided")}</td>
                 <td>${escapeHTML(student.level || "Not provided")}</td>
+                <td>${profileStatus}</td>
+                <td>${escapeHTML(formatDate(student.registered_at))}</td>
                 <td>
-                    <span class="profile-status ${
-                        student.has_student_record ? "complete" : "incomplete"
-                    }">
-                        ${profileStatus}
-                    </span>
-                </td>
-                <td>${escapeHTML(date)}</td>
-                <td>
-                    <button type="button"
+                    <button
+                        type="button"
                         class="student-view-button"
                         data-student-id="${escapeHTML(student.user_id)}">
-                        View details
+                        View
                     </button>
                 </td>
             </tr>`;
     }).join("");
 
-    tableBody.querySelectorAll("[data-student-id]").forEach(button => {
+    body.querySelectorAll("[data-student-id]").forEach(button => {
         button.addEventListener("click", () => {
             openStudentDetails(button.dataset.studentId);
         });
     });
 }
 
-/* =========================================================
-   INDIVIDUAL STUDENT DETAILS
-   ========================================================= */
+/* ======================================================
+   STUDENT DETAILS
+   ====================================================== */
 
 function openStudentDetails(userId) {
     const student = state.students.find(
@@ -247,32 +370,25 @@ function openStudentDetails(userId) {
 
     if (!student) return;
 
-    const modal = $("studentDetailsModal");
     const content = $("studentDetailsContent");
+    const modal = $("studentDetailsModal");
 
-    if (!modal || !content) {
-        showAdminMessage(
-            "Student details: " +
-            (student.full_name || student.email || student.user_id)
-        );
-        return;
-    }
+    if (!content || !modal) return;
 
     const details = [
         ["Full name", student.full_name],
-        ["Email", student.email],
-        ["Phone", student.phone],
+        ["Email address", student.email],
+        ["Phone number", student.phone],
         ["Course", student.course],
         ["Level", student.level],
         ["Account ID", student.user_id],
-        ["Registration date", student.registered_at],
-        ["Last sign-in", student.last_sign_in_at],
+        ["Registration date", formatDateTime(student.registered_at)],
+        ["Last sign-in", formatDateTime(student.last_sign_in_at)],
         ["Email confirmed", student.email_confirmed_at ? "Yes" : "No"],
-        ["Student profile", student.has_student_record ? "Available" : "Incomplete"]
+        ["Student record", student.has_student_record ? "Available" : "Incomplete"]
     ];
 
     content.innerHTML = `
-        <h3>${escapeHTML(student.full_name || "Student account")}</h3>
         <div class="student-detail-grid">
             ${details.map(([label, value]) => `
                 <div class="student-detail">
@@ -291,20 +407,26 @@ function closeStudentDetails() {
     if (modal) modal.hidden = true;
 }
 
-/* =========================================================
+/* ======================================================
    COURSE MANAGEMENT
-   ========================================================= */
+   ====================================================== */
 
-window.addCourse = async function () {
+async function createCourse(event) {
+    event.preventDefault();
+
     const title = $("courseName")?.value.trim();
     const description = $("courseDescription")?.value.trim();
     const status = $("courseStatus");
+    const submitButton = $("courseForm")?.querySelector(
+        'button[type="submit"]'
+    );
 
     if (!title) {
-        showAdminMessage("Enter a course title.", "error");
+        if (status) status.textContent = "Please enter a course title.";
         return;
     }
 
+    if (submitButton) submitButton.disabled = true;
     if (status) status.textContent = "Creating course...";
 
     try {
@@ -312,30 +434,43 @@ window.addCourse = async function () {
             .from("courses")
             .insert({
                 title,
-                description
+                description: description || null
             });
 
         if (error) throw error;
 
-        if ($("courseName")) $("courseName").value = "";
-        if ($("courseDescription")) $("courseDescription").value = "";
+        $("courseForm")?.reset();
 
-        if (status) status.textContent = "Course created successfully.";
+        if (status) {
+            status.textContent = "Course created successfully.";
+        }
 
-        const count = await getCount("courses");
-        if (count !== null) setText("courseCount", count);
+        const count = await countRows("courses");
+
+        if (count !== null) {
+            setText("courseCount", count);
+            setText("courseWorkspaceCount", count);
+        }
+
+        showStatus("Course created successfully.");
 
     } catch (error) {
-        console.error(error);
+        console.error("Course creation failed:", error);
+
         if (status) status.textContent = error.message;
+
+        showStatus("Could not create course: " + error.message, "error");
+
+    } finally {
+        if (submitButton) submitButton.disabled = false;
     }
-};
+}
 
-/* =========================================================
-   COMMUNITY DIRECTORY
-   ========================================================= */
+/* ======================================================
+   COMMUNITY MANAGEMENT
+   ====================================================== */
 
-window.loadAdminCommunities = async function () {
+async function loadCommunities() {
     const container = $("communityList");
     if (!container) return;
 
@@ -349,19 +484,23 @@ window.loadAdminCommunities = async function () {
 
         if (error) throw error;
 
-        if (!data?.length) {
+        state.communities = data || [];
+
+        if (!state.communities.length) {
             container.textContent = "No communities found.";
             return;
         }
 
-        container.innerHTML = data.map(community => `
+        container.innerHTML = state.communities.map(community => `
             <div class="community-admin-item">
                 <div>
                     <strong>${escapeHTML(community.name)}</strong>
-                    <p>${escapeHTML(community.description || "")}</p>
+                    <p>${escapeHTML(community.description || "No description")}</p>
                     <small>${community.is_active ? "Active" : "Inactive"}</small>
                 </div>
-                <button type="button"
+
+                <button
+                    type="button"
                     data-community-id="${escapeHTML(community.id)}">
                     Manage
                 </button>
@@ -370,49 +509,92 @@ window.loadAdminCommunities = async function () {
 
         container.querySelectorAll("[data-community-id]").forEach(button => {
             button.addEventListener("click", () => {
-                window.openCommunityAdmin(button.dataset.communityId);
+                window.location.href =
+                    "communityAdmin.html?community=" +
+                    encodeURIComponent(button.dataset.communityId);
             });
         });
 
     } catch (error) {
-        console.error(error);
-        container.textContent = "Unable to load communities: " + error.message;
+        console.error("Community loading failed:", error);
+        container.textContent =
+            "Could not load communities: " + error.message;
     }
-};
+}
 
-window.openCommunityAdmin = function (communityId) {
-    window.location.href =
-        "communityAdmin.html?community=" +
-        encodeURIComponent(communityId);
-};
+/* ======================================================
+   DASHBOARD REFRESH
+   ====================================================== */
 
-/* =========================================================
-   REFRESH AND INITIALIZATION
-   ========================================================= */
+async function refreshDashboard() {
+    const button = $("refreshAdminButton");
 
-window.refreshAdminDashboard = async function () {
-    showAdminMessage("Refreshing dashboard...");
-    await loadOverview();
-    await window.loadAdminCommunities();
-    showAdminMessage("Dashboard refreshed.", "success");
-};
+    if (button) button.disabled = true;
 
-window.loadAdminStudents = loadStudents;
-window.filterAdminStudents = filterStudents;
-window.closeStudentDetails = closeStudentDetails;
+    try {
+        await Promise.all([
+            loadOverviewCounts(),
+            loadCommunities()
+        ]);
 
-async function initializeAdminDashboard() {
-    if (state.initialized) return;
-    state.initialized = true;
+        showStatus("Dashboard data refreshed.");
 
-    const search = $("studentSearch");
-
-    if (search) {
-        search.addEventListener("input", event => {
-            state.studentSearch = event.target.value;
-            filterStudents();
-        });
+    } finally {
+        if (button) button.disabled = false;
     }
+}
+
+/* ======================================================
+   SIGN OUT
+   ====================================================== */
+
+async function logoutAdmin() {
+    const button = $("adminLogoutButton");
+
+    if (button) button.disabled = true;
+
+    try {
+        const { error } = await supabase.auth.signOut();
+
+        if (error) throw error;
+
+        window.location.replace("adminLogin.html");
+
+    } catch (error) {
+        console.error("Sign out failed:", error);
+
+        showStatus("Could not sign out: " + error.message, "error");
+
+        if (button) button.disabled = false;
+    }
+}
+
+/* ======================================================
+   INITIALIZATION
+   ====================================================== */
+
+function initializeDashboardEvents() {
+    initializeNavigation();
+    initializeSidebar();
+
+    $("studentSearch")?.addEventListener("input", event => {
+        state.search = event.target.value;
+        filterStudents();
+    });
+
+    $("reloadStudentsButton")?.addEventListener("click", loadStudents);
+
+    $("courseForm")?.addEventListener("submit", createCourse);
+
+    $("refreshAdminButton")?.addEventListener(
+        "click",
+        refreshDashboard
+    );
+
+    $("adminLogoutButton")?.addEventListener(
+        "click",
+        logoutAdmin
+    );
 
     $("studentDetailsClose")?.addEventListener(
         "click",
@@ -425,10 +607,26 @@ async function initializeAdminDashboard() {
         }
     });
 
-    await Promise.all([
-        loadOverview(),
-        window.loadAdminCommunities()
-    ]);
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape") {
+            closeStudentDetails();
+            closeMobileSidebar();
+        }
+    });
+}
+
+async function initializeAdminDashboard() {
+    initializeDashboardEvents();
+
+    await refreshDashboard();
+
+    console.log("Mwaniki Scholars Administration Portal loaded.");
 }
 
 initializeAdminDashboard();
+
+/* Public functions for any existing integrations */
+window.loadAdminStudents = loadStudents;
+window.refreshAdminDashboard = refreshDashboard;
+window.openAdminWorkspace = openWorkspace;
+window.closeStudentDetails = closeStudentDetails;
