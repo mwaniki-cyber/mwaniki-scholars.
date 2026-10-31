@@ -531,6 +531,79 @@
             </section>
 
 
+<section class="admin-section" id="studentManagement">
+    <div class="section-heading">
+        <div>
+            <h2>Student Management</h2>
+            <p>Registered accounts and student academic information.</p>
+        </div>
+
+        <button type="button" onclick="loadAdminStudents()">
+            Refresh Students
+        </button>
+    </div>
+
+    <div class="student-statistics">
+        <div class="admin-stat-card">
+            <h3 id="registeredAccountCount">0</h3>
+            <p>Registered Accounts</p>
+        </div>
+
+        <div class="admin-stat-card">
+            <h3 id="completeStudentCount">0</h3>
+            <p>Student Profiles</p>
+        </div>
+
+        <div class="admin-stat-card">
+            <h3 id="incompleteStudentCount">0</h3>
+            <p>Incomplete Profiles</p>
+        </div>
+    </div>
+
+    <div class="student-directory">
+        <input
+            type="search"
+            id="studentSearch"
+            placeholder="Search name, email, phone, course or account ID..."
+        >
+
+        <div class="table-wrapper">
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Course</th>
+                        <th>Level</th>
+                        <th>Profile</th>
+                        <th>Registered</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="studentsTableBody">
+                    <tr>
+                        <td colspan="8">Loading students...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<div id="studentDetailsModal" class="student-modal" hidden>
+    <div class="student-modal-card">
+        <button type="button" id="studentDetailsClose">
+            Close
+        </button>
+
+        <div id="studentDetailsContent"></div>
+    </div>
+</div>
+
+<div id="adminStatus" role="status" hidden></div>
+
             <!-- STUDENT MANAGEMENT -->
 
             <section class="card">
